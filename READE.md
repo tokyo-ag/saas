@@ -48,29 +48,225 @@
 
 ---
 
-## 4. 画面一覧
+## 4. 画面一覧・UI仕様
 
 ### 参加者向け（LIFF画面）
 
-| 画面名 | パス | 説明 |
-|--------|------|------|
-| 団体トップ | `/liff/:tenantId` | 団体紹介・友だち追加ボタン・イベント一覧（横2列） |
-| イベント詳細 | `/liff/:tenantId/events/:eventId` | イベント詳細・予約ボタン |
-| 予約フォーム | `/liff/:tenantId/events/:eventId/reserve` | 名前・学年・性別を入力して予約 |
-| 予約完了 | `/liff/:tenantId/events/:eventId/done` | 完了メッセージ |
+#### 団体トップ `/liff/:tenantId`
+
+**表示要素**
+- 団体名（大見出し）
+- 団体説明文
+- 友だち未追加の場合：「友だち追加」ボタンのみ表示、イベント一覧は非表示
+- 友だち追加済みの場合：イベントカード一覧（横2列グリッド）
+
+**イベントカード（1枚）**
+- イベントタイトル
+- 開催日時（例：6/1（日）14:00）
+- 残席数（例：「残り5席」「満席」「キャンセル待ち受付中」）
+- タップでイベント詳細へ遷移
+
+**空状態**
+- イベントが0件：「現在募集中のイベントはありません」
+
+---
+
+#### イベント詳細 `/liff/:tenantId/events/:eventId`
+
+**表示要素**
+- イベントタイトル（大見出し）
+- 開催日時
+- 開催場所
+- 参加料（0円の場合「無料」）
+- 定員・残席数（定員NULLの場合「定員なし」）
+- イベント説明文
+
+**ボタン**
+- 残席あり：「予約する」→ 予約フォームへ
+- 満席（payment_requiredなし）：「キャンセル待ちに登録する」→ 予約フォームへ（status=waitlisted で登録）
+- status=closed：「受付終了」（ボタン無効）
+
+---
+
+#### 予約フォーム `/liff/:tenantId/events/:eventId/reserve`
+
+**フォーム項目**
+| フィールド | 種類 | 必須 | 選択肢 |
+|---|---|---|---|
+| 名前 | テキスト入力 | ○ | - |
+| 学年 | セレクト | ○ | 高校1年〜3年 / 大学1年〜4年 / 大学院生 / 社会人 / その他 |
+| 性別 | ラジオ | ○ | 男性 / 女性 / その他・回答しない |
+
+**バリデーション**
+- 名前：1〜50文字
+- 全項目必須
+
+**ボタン**
+- 「予約を確定する」→ POST /api/liff/:tenantId/reservations
+
+**エラー表示**
+- 重複予約（3回目）：「このイベントへの予約上限（2回）に達しています」
+- 定員超過（payment_required=true のイベント）：「満席のため予約できません」
+
+---
+
+#### 予約完了 `/liff/:tenantId/events/:eventId/done`
+
+**表示パターン**
+- 通常予約：「ご予約ありがとうございます！」+ イベント名・日時・場所
+- キャンセル待ち：「キャンセル待ちN番目に登録しました」+ イベント名・日時・場所
+- 「LINEに戻る」ボタン（liff.closeWindow()）
+
+---
 
 ### 主催者向け（管理画面）
 
-| 画面名 | パス | 説明 |
-|--------|------|------|
-| ダッシュボード | `/admin` | 直近イベント・参加者数サマリー |
-| イベント一覧 | `/admin/events` | 過去・予定のイベント一覧 |
-| イベント作成・編集 | `/admin/events/new` | 日時・場所・定員・メモ |
-| イベント詳細 | `/admin/events/:eventId` | 参加者リスト・出欠管理 |
-| 参加者名簿 | `/admin/members` | 全参加者一覧・検索・絞り込み |
-| 参加者詳細 | `/admin/members/:memberId` | プロフィール・参加履歴 |
-| LINE設定 | `/admin/settings/line` | Channel ID・Channel Secret登録（ステップ形式） |
-| アカウント設定 | `/admin/settings` | 団体名・プロフィール・ログイン情報 |
+#### ダッシュボード `/admin`
+
+**表示要素**
+- サマリーカード（横並び）
+  - 今月のイベント数（フリープランは「2件中N件使用」）
+  - 累計参加者数（フリープランは「50人中N人」）
+- 直近イベント一覧（最大5件）
+  - タイトル・開催日時・予約数/定員・ステータスバッジ
+  - 「詳細を見る」リンク
+
+**ボタン**
+- 右上に「＋ イベントを作成」
+
+**空状態**
+- イベント0件：「まだイベントがありません。最初のイベントを作成しましょう」＋作成ボタン
+
+---
+
+#### イベント一覧 `/admin/events`
+
+**タブ**
+- 「予定」（held_at > 現在 かつ status=open/draft）
+- 「過去」（held_at <= 現在 または status=closed）
+- 「下書き」（status=draft）
+
+**イベントカード**
+- タイトル
+- 開催日時・場所
+- 予約数 / 定員（例：「23 / 30人」、定員なしは「23人」）
+- ステータスバッジ（draft=グレー / open=緑 / closed=赤）
+- 「詳細」「編集」「削除」アクション
+
+**ボタン**
+- 右上に「＋ 新規作成」
+
+---
+
+#### イベント作成・編集 `/admin/events/new` / `/admin/events/:eventId/edit`
+
+**フォーム項目**
+| フィールド | 種類 | 必須 | 備考 |
+|---|---|---|---|
+| タイトル | テキスト | ○ | 最大100文字 |
+| 説明 | テキストエリア | - | |
+| 開催日時 | 日時ピッカー | ○ | |
+| 開催場所 | テキスト | ○ | 最大200文字 |
+| 定員 | 数値入力 | - | 空欄で無制限 |
+| ステータス | セレクト | ○ | draft / open / closed |
+| 参加料（円） | 数値入力 | ○ | 0で無料 |
+| 前払い必須 | トグル | - | 参加料 > 0 のときのみ表示 |
+| 予約完了メッセージ | トグル | - | デフォルトON |
+| リマインドメッセージ | トグル | - | フリープランはON不可（アップグレード案内） |
+
+**リマインド日時サブフォーム（リマインドON時）**
+```
+○ 前日18:00
+○ 当日09:00
+○ カスタム → 日時ピッカー表示
+```
+
+**ボタン**
+- 「保存」「キャンセル」
+- 編集時のみ「削除」（確認ダイアログあり）
+
+---
+
+#### イベント詳細 `/admin/events/:eventId`
+
+**ヘッダー**
+- タイトル・日時・場所・ステータスバッジ
+- 「編集」ボタン
+
+**予約一覧テーブル**
+| 列 | 内容 |
+|---|---|
+| 名前 | テキスト |
+| 学年 | テキスト |
+| 性別 | テキスト |
+| 予約日時 | 日時 |
+| ステータス | バッジ（予約確定 / キャンセル待ち / 参加済 / キャンセル） |
+| 出欠操作 | 「参加済にする」「キャンセルにする」ボタン |
+
+**ステータスバッジの色分け**
+- reserved：青
+- waitlisted：黄
+- attended：緑
+- cancelled：グレー
+- waiting_payment：オレンジ
+
+**ボタン**
+- 「CSVダウンロード」
+- 「リマインド手動送信」（確認ダイアログあり）
+
+---
+
+#### 参加者名簿 `/admin/members`
+
+**検索・フィルター**
+- テキスト検索（名前）
+- 学年フィルター（セレクト）
+- 性別フィルター（セレクト）
+
+**テーブル**
+| 列 | 内容 |
+|---|---|
+| 名前 | テキスト（詳細ページへのリンク） |
+| 学年 | テキスト |
+| 性別 | テキスト |
+| 登録日 | 日付 |
+| 参加イベント数 | 数値 |
+
+**ボタン**
+- 「名簿CSVダウンロード」
+
+---
+
+#### 参加者詳細 `/admin/members/:memberId`
+
+**プロフィール**
+- 名前・学年・性別
+- 登録日
+- LINE ID（先頭4文字＋マスク、例：`Uabc****`）
+
+**参加履歴テーブル**
+| 列 | 内容 |
+|---|---|
+| イベント名 | テキスト（イベント詳細へのリンク） |
+| 開催日時 | 日時 |
+| ステータス | バッジ |
+| 支払い状況 | 支払済 / 未払い / 無料 |
+
+---
+
+#### LINE設定 `/admin/settings/line`
+
+ステップ形式（§6参照）。
+
+---
+
+#### アカウント設定 `/admin/settings`
+
+**フォーム項目**
+- 団体名
+- 団体説明文
+- メールアドレス（変更時は現在のパスワード必要）
+- パスワード変更（現在のパスワード・新しいパスワード・確認）
 
 ---
 
@@ -90,6 +286,10 @@
 | `line_channel_access_token` | TEXT | LINE Channel Access Token |
 | `liff_id` | VARCHAR(100) | LIFF ID |
 | `stripe_account_id` | VARCHAR(100) | Stripe ConnectアカウントID（前払い集金用） |
+| `plan` | ENUM | `free` / `standard` |
+| `plan_started_at` | TIMESTAMP | 課金開始日時 |
+| `stripe_customer_id` | VARCHAR(100) | StripeカスタマーID |
+| `stripe_subscription_id` | VARCHAR(100) | StripeサブスクリプションID |
 | `created_at` | TIMESTAMP | 作成日時 |
 | `updated_at` | TIMESTAMP | 更新日時 |
 
@@ -282,37 +482,286 @@ reminded_at に送信日時を記録
 
 ### 参加者向け（認証：LIFF token）
 
-| メソッド | パス | 説明 |
-|--------|------|------|
-| GET | `/api/liff/:tenantId/events` | イベント一覧取得 |
-| GET | `/api/liff/:tenantId/events/:eventId` | イベント詳細取得 |
-| POST | `/api/liff/:tenantId/reservations` | 予約登録 |
+#### GET `/api/liff/:tenantId/events`
+イベント一覧取得（status=open のみ）
 
-### 主催者向け（認証：JWT）
-
-| メソッド | パス | 説明 |
-|--------|------|------|
-| POST | `/api/auth/login` | ログイン |
-| GET | `/api/admin/events` | イベント一覧 |
-| POST | `/api/admin/events` | イベント作成 |
-| PUT | `/api/admin/events/:eventId` | イベント更新 |
-| GET | `/api/admin/events/:eventId/reservations` | 予約一覧 |
-| PATCH | `/api/admin/reservations/:id/status` | 出欠ステータス更新 |
-| GET | `/api/admin/members` | 参加者名簿 |
-| POST | `/api/admin/events/:eventId/remind` | リマインド手動送信 |
-| GET | `/api/admin/events/:eventId/export` | 参加者CSVダウンロード |
-| GET | `/api/admin/members/export` | 名簿CSVダウンロード |
-| DELETE | `/api/liff/:tenantId/reservations/:id` | 予約キャンセル（参加者） |
-
-### LINE Webhook
-
-| メソッド | パス | 説明 |
-|--------|------|------|
-| POST | `/api/webhook/:tenantId` | LINEイベント受信（follow / postback） |
+**Response 200**
+```json
+[
+  {
+    "id": "uuid",
+    "title": "春の交流会",
+    "description": "みんなで楽しく交流しましょう",
+    "held_at": "2025-06-01T14:00:00",
+    "location": "渋谷カフェ",
+    "capacity": 30,
+    "reserved_count": 25,
+    "status": "open",
+    "price": 0
+  }
+]
+```
 
 ---
 
-## 11. 技術スタック（案）
+#### GET `/api/liff/:tenantId/events/:eventId`
+イベント詳細取得
+
+**Response 200**
+```json
+{
+  "id": "uuid",
+  "title": "春の交流会",
+  "description": "みんなで楽しく交流しましょう",
+  "held_at": "2025-06-01T14:00:00",
+  "location": "渋谷カフェ",
+  "capacity": 30,
+  "reserved_count": 25,
+  "status": "open",
+  "price": 0,
+  "payment_required": false
+}
+```
+
+---
+
+#### POST `/api/liff/:tenantId/reservations`
+予約登録
+
+**Request**
+```json
+{
+  "event_id": "uuid",
+  "line_user_id": "Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "name": "山田太郎",
+  "grade": "大学2年",
+  "gender": "男性"
+}
+```
+
+**Response 201**
+```json
+{
+  "id": "uuid",
+  "status": "reserved",
+  "waitlist_order": null
+}
+```
+
+キャンセル待ちの場合：
+```json
+{
+  "id": "uuid",
+  "status": "waitlisted",
+  "waitlist_order": 3
+}
+```
+
+**Error 409**（重複予約上限超過）
+```json
+{ "message": "このイベントへの予約上限（2回）に達しています" }
+```
+
+---
+
+#### DELETE `/api/liff/:tenantId/reservations/:id`
+予約キャンセル（参加者）
+
+**Response 200**
+```json
+{ "message": "キャンセルしました" }
+```
+
+---
+
+### 主催者向け（認証：JWT、Authorizationヘッダー）
+
+#### POST `/api/auth/login`
+
+**Request**
+```json
+{
+  "email": "organizer@example.com",
+  "password": "password123"
+}
+```
+
+**Response 200**
+```json
+{
+  "access_token": "eyJhbGci..."
+}
+```
+
+**Error 401**
+```json
+{ "message": "メールアドレスまたはパスワードが正しくありません" }
+```
+
+---
+
+#### GET `/api/admin/events`
+イベント一覧（全ステータス）
+
+**Response 200**
+```json
+[
+  {
+    "id": "uuid",
+    "title": "春の交流会",
+    "held_at": "2025-06-01T14:00:00",
+    "location": "渋谷カフェ",
+    "capacity": 30,
+    "reserved_count": 25,
+    "waitlisted_count": 2,
+    "status": "open",
+    "price": 0
+  }
+]
+```
+
+---
+
+#### POST `/api/admin/events`
+イベント作成
+
+**Request**
+```json
+{
+  "title": "春の交流会",
+  "description": "みんなで楽しく交流しましょう",
+  "held_at": "2025-06-01T14:00:00",
+  "location": "渋谷カフェ",
+  "capacity": 30,
+  "status": "draft",
+  "price": 0,
+  "payment_required": false,
+  "notify_on_reserve": true,
+  "remind_enabled": true,
+  "remind_at": "2025-05-31T18:00:00"
+}
+```
+
+**Response 201**
+```json
+{ "id": "uuid", ...イベント全フィールド }
+```
+
+**Error 403**（フリープランの上限超過）
+```json
+{ "message": "今月のイベント作成上限（2件）に達しました", "upgrade_required": true }
+```
+
+---
+
+#### PUT `/api/admin/events/:eventId`
+イベント更新（POSTと同じbody）
+
+**Response 200**：更新後のイベント全フィールド
+
+---
+
+#### GET `/api/admin/events/:eventId/reservations`
+予約一覧取得
+
+**Response 200**
+```json
+[
+  {
+    "id": "uuid",
+    "member": {
+      "id": "uuid",
+      "name": "山田太郎",
+      "grade": "大学2年",
+      "gender": "男性"
+    },
+    "status": "reserved",
+    "waitlist_order": null,
+    "paid_at": null,
+    "reserved_at": "2025-05-10T18:32:00"
+  }
+]
+```
+
+---
+
+#### PATCH `/api/admin/reservations/:id/status`
+出欠ステータス更新
+
+**Request**
+```json
+{ "status": "attended" }
+```
+
+**Response 200**：更新後の予約データ
+
+---
+
+#### GET `/api/admin/members`
+参加者名簿
+
+**Query params**：`?name=山田&grade=大学2年&gender=男性`
+
+**Response 200**
+```json
+[
+  {
+    "id": "uuid",
+    "name": "山田太郎",
+    "grade": "大学2年",
+    "gender": "男性",
+    "created_at": "2025-04-01T10:00:00",
+    "event_count": 3
+  }
+]
+```
+
+---
+
+#### POST `/api/admin/events/:eventId/remind`
+リマインド手動送信
+
+**Response 200**
+```json
+{ "sent_count": 25 }
+```
+
+---
+
+#### GET `/api/admin/events/:eventId/export`
+参加者CSV（Content-Type: text/csv）
+
+```
+名前,学年,性別,予約日時,ステータス,支払い状況
+山田太郎,大学2年,男性,2025-05-01 18:32,参加確定,支払済
+```
+
+---
+
+#### GET `/api/admin/members/export`
+名簿CSV（Content-Type: text/csv）
+
+```
+名前,学年,性別,登録日,参加イベント数
+山田太郎,大学2年,男性,2025-04-01,3
+```
+
+---
+
+### LINE Webhook
+
+#### POST `/api/webhook/:tenantId`
+LINEイベント受信
+
+**受信するイベント種別**
+| type | 処理 |
+|---|---|
+| `follow` | line_user_id を members に保存（なければ新規作成） |
+| `unfollow` | 特になし（将来的に通知も可） |
+
+---
+
+## 11. 技術スタック
 
 | レイヤー | 技術 | 備考 |
 |--------|------|------|
@@ -346,15 +795,6 @@ reminded_at に送信日時を記録
 ### 決済
 
 Stripeを使用。サブスクリプション管理・Webhookによるプラン状態の同期をおこなう。
-
-### `tenants`テーブルへの追加カラム
-
-| カラム名 | 型 | 説明 |
-|---|---|---|
-| `plan` | ENUM | `free` / `standard` |
-| `plan_started_at` | TIMESTAMP | 課金開始日時 |
-| `stripe_customer_id` | VARCHAR(100) | StripeカスタマーID |
-| `stripe_subscription_id` | VARCHAR(100) | StripeサブスクリプションID |
 
 ### プランチェックのタイミング
 
@@ -487,16 +927,59 @@ liff.getFriendship() で友だち登録状態を確認
 
 ## 16. フェーズ別実装計画
 
-### Phase 1：自分用で動くものを作る
-- [ ] 自テナント固定でイベント作成・参加者管理
-- [ ] LIFFでイベント一覧・予約フォーム
-- [ ] LINE友だち登録強制（liff.getFriendship()）
-- [ ] LINE Messaging APIで予約完了メッセージ送信（ON/OFF）
-- [ ] リマインドメッセージ送信（ON/OFF・日時指定）
-- [ ] キャンセル・キャンセル待ち・自動繰り上げ通知
-- [ ] 重複予約チェック（上限2回）
-- [ ] 主催者管理画面（イベント・名簿・出欠）
-- [ ] CSVエクスポート
+### Phase 1：自分用で動くものを作る（実装順）
+
+#### Step 1：バックエンド基盤
+- [ ] NestJSプロジェクト作成（`backend/`）
+- [ ] Prismaセットアップ・スキーマ定義（tenants / users / events / members / reservations）
+- [ ] PostgreSQL接続設定（ローカルはDockerで起動）
+- [ ] 環境変数設定（`.env`：DATABASE_URL / JWT_SECRET / LINE_* ）
+
+#### Step 2：管理画面の骨格（フロント）
+- [ ] `/admin` レイアウト（サイドバー＋ヘッダー）コンポーネント作成
+- [ ] サイドバー：ダッシュボード / イベント / 参加者名簿 / 設定 へのリンク
+- [ ] APIクライアント（fetch wrapper）作成：`src/lib/api.ts`
+- [ ] 認証なし（Phase 1は固定テナントで動作確認）
+
+#### Step 3：イベント機能（バック＋フロント）
+- [ ] バック：`GET/POST/PUT /api/admin/events` 実装
+- [ ] フロント：イベント一覧画面 `/admin/events`
+- [ ] フロント：イベント作成・編集フォーム `/admin/events/new`
+- [ ] フロント：イベント詳細画面 `/admin/events/:eventId`（予約一覧・出欠管理含む）
+
+#### Step 4：参加者・予約機能（バック＋フロント）
+- [ ] バック：`GET /api/admin/members` 実装
+- [ ] バック：`PATCH /api/admin/reservations/:id/status` 実装
+- [ ] フロント：参加者名簿 `/admin/members`
+- [ ] フロント：参加者詳細 `/admin/members/:memberId`
+
+#### Step 5：LIFF画面
+- [ ] LIFF SDKのインストール・`liff.init()` 設定
+- [ ] バック：`GET /api/liff/:tenantId/events` 実装
+- [ ] バック：`POST /api/liff/:tenantId/reservations` 実装（重複チェック含む）
+- [ ] フロント：団体トップ `/liff/:tenantId`（友だち登録チェック）
+- [ ] フロント：イベント詳細 `/liff/:tenantId/events/:eventId`
+- [ ] フロント：予約フォーム・完了画面
+
+#### Step 6：LINE連携
+- [ ] `@line/bot-sdk` インストール
+- [ ] バック：Webhook受信エンドポイント `POST /api/webhook/:tenantId`
+  - `follow` イベントで line_user_id を保存
+- [ ] 予約完了時にプッシュメッセージ送信
+- [ ] リマインドcronジョブ（node-cron）実装
+
+#### Step 7：キャンセル・キャンセル待ち
+- [ ] バック：`DELETE /api/liff/:tenantId/reservations/:id` 実装
+- [ ] キャンセル時の自動繰り上げロジック
+- [ ] 主催者へのキャンセル通知
+- [ ] キャンセル待ち昇格通知
+
+#### Step 8：CSVエクスポート
+- [ ] バック：`GET /api/admin/events/:eventId/export`
+- [ ] バック：`GET /api/admin/members/export`
+- [ ] フロント：各画面にダウンロードボタン追加
+
+---
 
 ### Phase 2：マルチテナント対応
 - [ ] 主催者登録・ログイン機能
@@ -512,5 +995,4 @@ liff.getFriendship() で友だち登録状態を確認
 - [ ] 参加者への一斉メッセージ送信
 - [ ] 統計・分析ダッシュボード
 
-### 備考
-- next.js、nestJS、reactを教えながら一緒に開発をしてください。
+---
