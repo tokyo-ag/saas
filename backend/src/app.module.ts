@@ -9,6 +9,7 @@ import { LiffModule } from './liff/liff.module';
 import { WebhookModule } from './webhook/webhook.module';
 import { LineMessagingModule } from './line-messaging/line-messaging.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
+import { TenantModule } from './tenant/tenant.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { SchedulerModule } from './scheduler/scheduler.module';
     WebhookModule,
     LineMessagingModule,
     SchedulerModule,
+    TenantModule,
   ],
 })
 export class AppModule {}

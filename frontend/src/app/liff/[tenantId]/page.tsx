@@ -3,18 +3,42 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { apiFetch, formatDate, LiffEvent } from '@/lib/api';
+import { apiFetch, formatDate, LiffEvent, Tenant } from '@/lib/api';
+import { initLiff, checkFriendship } from '@/lib/liff';
 
 export default function LiffTopPage() {
   const { tenantId } = useParams<{ tenantId: string }>();
+  const [tenant, setTenant] = useState<Tenant | null>(null);
   const [events, setEvents] = useState<LiffEvent[]>([]);
+  const [isFriend, setIsFriend] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiFetch<LiffEvent[]>(`/liff/${tenantId}/events`)
-      .then(setEvents)
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    async function init() {
+      // LIFF SDK 初期化（LIFF IDがなければスキップ）
+      const ok = await initLiff();
+
+      if (ok) {
+        const friend = await checkFriendship();
+        setIsFriend(friend);
+        if (!friend) {
+          setLoading(false);
+          return;
+        }
+      } else {
+        // 開発中：LIFF IDなしの場合はフレンドチェックをスキップ
+        setIsFriend(true);
+      }
+
+      const [t, e] = await Promise.all([
+        apiFetch<Tenant>('/admin/tenant').catch(() => null),
+        apiFetch<LiffEvent[]>(`/liff/${tenantId}/events`).catch(() => []),
+      ]);
+      setTenant(t);
+      setEvents(e);
+      setLoading(false);
+    }
+    init();
   }, [tenantId]);
 
   function seatLabel(event: LiffEvent) {
@@ -25,16 +49,48 @@ export default function LiffTopPage() {
     return null;
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-400">
+        読み込み中...
+      </div>
+    );
+  }
+
+  // 友だち未追加
+  if (isFriend === false) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-indigo-600 text-white px-4 py-6">
+          <h1 className="text-xl font-bold">{tenant?.name ?? '交流会'}</h1>
+          {tenant?.description && <p className="text-indigo-200 text-sm mt-1">{tenant.description}</p>}
+        </div>
+        <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
+          <p className="text-gray-600 mb-6 leading-relaxed">
+            イベントを予約するには<br />LINE公式アカウントを友だち追加してください
+          </p>
+          <a
+            href={`https://line.me/R/ti/p/${tenant?.lineChannelId ?? ''}`}
+            className="bg-green-500 text-white px-8 py-3 rounded-xl font-medium text-lg"
+          >
+            友だち追加
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-indigo-600 text-white px-4 py-6">
-        <h1 className="text-xl font-bold">イベント一覧</h1>
+        <h1 className="text-xl font-bold">{tenant?.name ?? 'イベント一覧'}</h1>
+        {tenant?.description && (
+          <p className="text-indigo-200 text-sm mt-1">{tenant.description}</p>
+        )}
       </div>
 
       <div className="px-4 py-6">
-        {loading ? (
-          <div className="text-center py-12 text-gray-400">読み込み中...</div>
-        ) : events.length === 0 ? (
+        {events.length === 0 ? (
           <div className="text-center py-12 text-gray-400">現在募集中のイベントはありません</div>
         ) : (
           <div className="grid grid-cols-2 gap-3">

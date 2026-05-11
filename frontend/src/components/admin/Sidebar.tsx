@@ -6,6 +6,7 @@ const links = [
   { href: '/admin', label: 'ダッシュボード', icon: '🏠' },
   { href: '/admin/events', label: 'イベント管理', icon: '📅' },
   { href: '/admin/members', label: '参加者名簿', icon: '👥' },
+  { href: '/admin/settings', label: '設定', icon: '⚙️' },
 ];
 
 export default function Sidebar() {

@@ -3,6 +3,7 @@
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { apiFetch, formatDate, LiffEvent } from '@/lib/api';
+import { initLiff, closeLiff } from '@/lib/liff';
 
 export default function DonePage() {
   const { tenantId, eventId } = useParams<{ tenantId: string; eventId: string }>();
@@ -12,12 +13,22 @@ export default function DonePage() {
   const order = searchParams.get('order');
 
   const [event, setEvent] = useState<LiffEvent | null>(null);
+  const [inLiff, setInLiff] = useState(false);
 
   useEffect(() => {
+    initLiff().then((ok) => setInLiff(ok));
     apiFetch<LiffEvent>(`/liff/${tenantId}/events/${eventId}`).then(setEvent).catch(console.error);
   }, [tenantId, eventId]);
 
   const isWaitlist = status === 'waitlisted';
+
+  function handleClose() {
+    if (inLiff) {
+      closeLiff();
+    } else {
+      router.push(`/liff/${tenantId}`);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-6 text-center">
@@ -37,10 +48,10 @@ export default function DonePage() {
       )}
 
       <button
-        onClick={() => router.push(`/liff/${tenantId}`)}
+        onClick={handleClose}
         className="mt-8 bg-indigo-600 text-white px-8 py-3 rounded-xl font-medium active:bg-indigo-700"
       >
-        イベント一覧に戻る
+        {inLiff ? 'LINEに戻る' : 'イベント一覧に戻る'}
       </button>
     </div>
   );

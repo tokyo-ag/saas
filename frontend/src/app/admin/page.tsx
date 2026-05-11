@@ -7,10 +7,17 @@ import { EventStatusBadge } from '@/components/ui/StatusBadge';
 
 export default function DashboardPage() {
   const [events, setEvents] = useState<Event[]>([]);
+  const [memberCount, setMemberCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.events.list().then(setEvents).finally(() => setLoading(false));
+    Promise.all([
+      api.events.list(),
+      api.tenant.stats(),
+    ]).then(([evts, stats]) => {
+      setEvents(evts);
+      setMemberCount(stats.memberCount);
+    }).finally(() => setLoading(false));
   }, []);
 
   const now = new Date();
@@ -35,8 +42,7 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* サマリーカード */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-3 gap-4 mb-8">
         <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
           <p className="text-sm text-gray-500 mb-1">今月のイベント数</p>
           <p className="text-3xl font-bold text-gray-900">{thisMonthCount}<span className="text-sm font-normal text-gray-500 ml-1">件</span></p>
@@ -45,9 +51,14 @@ export default function DashboardPage() {
           <p className="text-sm text-gray-500 mb-1">直近のイベント</p>
           <p className="text-3xl font-bold text-gray-900">{upcoming.length}<span className="text-sm font-normal text-gray-500 ml-1">件</span></p>
         </div>
+        <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+          <p className="text-sm text-gray-500 mb-1">累計参加者数</p>
+          <p className="text-3xl font-bold text-gray-900">
+            {memberCount ?? '-'}<span className="text-sm font-normal text-gray-500 ml-1">人</span>
+          </p>
+        </div>
       </div>
 
-      {/* 直近イベント一覧 */}
       <h2 className="text-lg font-semibold text-gray-800 mb-3">直近のイベント</h2>
       {loading ? (
         <p className="text-gray-500">読み込み中...</p>

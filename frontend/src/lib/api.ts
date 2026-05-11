@@ -64,6 +64,12 @@ export const api = {
     cancel: (tenantId: string, reservationId: string) =>
       fetch(`${BASE}/liff/${tenantId}/reservations/${reservationId}`, { method: 'DELETE' }),
   },
+  tenant: {
+    get: () => request<Tenant>('/admin/tenant'),
+    update: (data: Partial<TenantInput>) =>
+      request<Tenant>('/admin/tenant', { method: 'PUT', body: JSON.stringify(data) }),
+    stats: () => request<{ memberCount: number }>('/admin/tenant/stats'),
+  },
 };
 
 // ---- 型定義 ----
@@ -157,6 +163,28 @@ export interface ReserveInput {
   name: string;
   grade: string;
   gender: string;
+}
+
+export interface Tenant {
+  id: string;
+  name: string;
+  description?: string;
+  lineChannelId?: string;
+  lineChannelSecret?: string;
+  lineChannelAccessToken?: string;
+  liffId?: string;
+  plan: 'free' | 'standard';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TenantInput {
+  name: string;
+  description?: string;
+  lineChannelId?: string;
+  lineChannelSecret?: string;
+  lineChannelAccessToken?: string;
+  liffId?: string;
 }
 
 export interface ReserveResult {
