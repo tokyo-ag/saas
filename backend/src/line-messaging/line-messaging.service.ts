@@ -11,13 +11,17 @@ export class LineMessagingService {
   }
 
   async sendPushMessage(accessToken: string, lineUserId: string, text: string): Promise<void> {
-    if (!accessToken || !lineUserId) return;
+    if (!accessToken || !lineUserId) {
+      this.logger.log(`[DEV] LINE未設定のため送信スキップ → to: ${lineUserId || '(不明)'}\n${text}`);
+      return;
+    }
     try {
       const client = this.getClient(accessToken);
       await client.pushMessage({
         to: lineUserId,
         messages: [{ type: 'text', text }],
       });
+      this.logger.log(`LINE push sent → to: ${lineUserId}`);
     } catch (err) {
       this.logger.error(`LINE push failed to ${lineUserId}: ${err}`);
     }
@@ -29,12 +33,32 @@ export class LineMessagingService {
     eventTitle: string,
     heldAt: Date,
     location: string,
+    price?: number,
+    description?: string | null,
   ): Promise<void> {
     const dateStr = this.formatDate(heldAt);
+    const priceStr = price != null ? (price === 0 ? '無料' : `¥${price.toLocaleString()}`) : null;
+    const lines = [
+      `【${eventTitle}】ご予約ありがとうございます！`,
+      `日時：${dateStr}`,
+      `場所：${location}`,
+      ...(priceStr ? [`料金：${priceStr}`] : []),
+      ...(description ? [`\n${description.slice(0, 100)}${description.length > 100 ? '…' : ''}`] : []),
+    ];
+    await this.sendPushMessage(accessToken, lineUserId, lines.join('\n'));
+  }
+
+  async sendTalkNotification(
+    accessToken: string,
+    lineUserId: string,
+    senderName: string,
+    content: string,
+  ): Promise<void> {
+    const preview = content.length > 50 ? content.slice(0, 50) + '…' : content;
     await this.sendPushMessage(
       accessToken,
       lineUserId,
-      `【${eventTitle}】ご予約ありがとうございます！\n日時：${dateStr}\n場所：${location}`,
+      `💬 ${senderName}さんからメッセージが届きました\n「${preview}」`,
     );
   }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { apiFetch, formatDateOnly, Member } from '@/lib/api';
+import { apiFetch, formatDateOnly, downloadWithAuth, Member } from '@/lib/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -32,27 +32,27 @@ export default function MembersPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-900">参加者名簿</h2>
-        <a
-          href={`${API_URL}/api/admin/members/export`}
+        <button
+          onClick={() => downloadWithAuth(`${API_URL}/api/admin/members/export`, 'members.csv').catch(() => alert('ダウンロードに失敗しました'))}
           className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 transition-colors"
         >
           名簿CSVダウンロード
-        </a>
+        </button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4 flex gap-3">
         <input
           type="text" placeholder="名前で検索" value={name} onChange={(e) => setName(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
         />
         <select value={grade} onChange={(e) => setGrade(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
         >
           <option value="">学年 すべて</option>
           {grades.map((g) => <option key={g} value={g}>{g}</option>)}
         </select>
         <select value={gender} onChange={(e) => setGender(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
         >
           <option value="">性別 すべて</option>
           <option value="男性">男性</option>
@@ -60,8 +60,8 @@ export default function MembersPage() {
           <option value="その他・回答しない">その他・回答しない</option>
         </select>
         <button
-          onClick={() => { setLoading(true); load().finally(() => setLoading(false)); }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 transition-colors"
+          onClick={() => { setLoading(true); load().catch(console.error).finally(() => setLoading(false)); }}
+          className="bg-[#06C755] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#05a847] transition-colors"
         >
           検索
         </button>
@@ -85,11 +85,16 @@ export default function MembersPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {members.map((m) => (
-                <tr key={m.id} className="hover:bg-gray-50">
+                <tr key={m.id} className={`hover:bg-gray-50 ${m.blockedAt ? 'opacity-60' : ''}`}>
                   <td className="px-6 py-4">
-                    <Link href={`/admin/members/${m.id}`} className="text-indigo-600 font-medium hover:underline">
-                      {m.name ?? '未入力'}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/admin/members/${m.id}`} className="text-[#06C755] font-medium hover:underline">
+                        {m.name ?? '未入力'}
+                      </Link>
+                      {m.blockedAt && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-500 font-medium">ブロック</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-gray-600">{m.grade ?? '-'}</td>
                   <td className="px-6 py-4 text-gray-600">{m.gender ?? '-'}</td>

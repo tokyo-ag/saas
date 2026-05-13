@@ -1,11 +1,11 @@
 'use client';
 
+import { Suspense, useEffect, useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import { apiFetch, formatDate, LiffEvent } from '@/lib/api';
 import { initLiff, closeLiff } from '@/lib/liff';
 
-export default function DonePage() {
+function DonePageInner() {
   const { tenantId, eventId } = useParams<{ tenantId: string; eventId: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -23,36 +23,45 @@ export default function DonePage() {
   const isWaitlist = status === 'waitlisted';
 
   function handleClose() {
-    if (inLiff) {
-      closeLiff();
-    } else {
-      router.push(`/liff/${tenantId}`);
-    }
+    if (inLiff) { closeLiff(); } else { router.push(`/liff/${tenantId}`); }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-6 text-center">
-      <div className="text-5xl mb-6">{isWaitlist ? '⏳' : '✅'}</div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-3">
-        {isWaitlist
-          ? `キャンセル待ち${order}番目に登録しました`
-          : 'ご予約ありがとうございます！'}
+    <div className="min-h-screen bg-[#F7F8FA] flex flex-col items-center justify-center px-6 text-center">
+      <div className={`w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-6 ${isWaitlist ? 'bg-yellow-100' : 'bg-[#06C755]/10'}`}>
+        {isWaitlist ? '⏳' : '✓'}
+      </div>
+      <h1 className="text-xl font-bold text-gray-900 mb-2">
+        {isWaitlist ? `キャンセル待ち\n${order}番目に登録しました` : 'ご予約ありがとうございます！'}
       </h1>
+      {!isWaitlist && <p className="text-sm text-gray-500 mb-6">予約確認メッセージをLINEで送りました</p>}
 
       {event && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 w-full max-w-sm mt-4 text-left space-y-2">
-          <p className="font-semibold text-gray-900">{event.title}</p>
-          <p className="text-sm text-gray-600">📅 {formatDate(event.heldAt)}</p>
-          <p className="text-sm text-gray-600">📍 {event.location}</p>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 w-full max-w-sm mt-2 mb-8 text-left space-y-2">
+          <p className="font-semibold text-gray-900 text-sm">{event.title}</p>
+          <p className="text-xs text-gray-500">📅 {formatDate(event.heldAt)}</p>
+          <p className="text-xs text-gray-500">📍 {event.location}</p>
         </div>
       )}
 
       <button
         onClick={handleClose}
-        className="mt-8 bg-indigo-600 text-white px-8 py-3 rounded-xl font-medium active:bg-indigo-700"
+        className="w-full max-w-sm bg-[#06C755] text-white py-4 rounded-2xl font-bold text-base active:bg-[#05a847] transition-colors shadow-sm"
       >
         {inLiff ? 'LINEに戻る' : 'イベント一覧に戻る'}
       </button>
     </div>
+  );
+}
+
+export default function DonePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#06C755] text-sm">読み込み中...</div>
+      </div>
+    }>
+      <DonePageInner />
+    </Suspense>
   );
 }

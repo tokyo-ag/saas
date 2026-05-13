@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { apiFetch, formatDate, Event, Reservation } from '@/lib/api';
+import { apiFetch, formatDate, downloadWithAuth, Event, Reservation } from '@/lib/api';
 import { EventBadge, ReservationBadge } from '@/components/ui/Badge';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -29,12 +29,16 @@ export default function EventDetailPage() {
   }, [eventId]);
 
   async function updateStatus(reservationId: string, status: string) {
-    await apiFetch(`/admin/reservations/${reservationId}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status }),
-    });
-    const updated = await apiFetch<Reservation[]>(`/admin/events/${eventId}/reservations`);
-    setReservations(updated);
+    try {
+      await apiFetch(`/admin/reservations/${reservationId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+      const updated = await apiFetch<Reservation[]>(`/admin/events/${eventId}/reservations`);
+      setReservations(updated);
+    } catch {
+      alert('ステータスの更新に失敗しました');
+    }
   }
 
   async function sendRemind() {
@@ -43,6 +47,8 @@ export default function EventDetailPage() {
     try {
       const result = await apiFetch<{ sentCount: number }>(`/admin/events/${eventId}/remind`, { method: 'POST' });
       alert(`${result.sentCount}人に送信しました`);
+    } catch {
+      alert('送信に失敗しました');
     } finally {
       setReminding(false);
     }
@@ -53,9 +59,16 @@ export default function EventDetailPage() {
 
   return (
     <div>
+      {event.imageUrl && (
+        <img src={`${API_URL}${event.imageUrl}`} alt={event.title}
+          className="w-full h-48 object-cover rounded-xl mb-6 border border-gray-200" />
+      )}
       <div className="flex items-start justify-between mb-6">
         <div>
           <div className="flex items-center gap-3 mb-2">
+            {event.iconUrl && (
+              <img src={`${API_URL}${event.iconUrl}`} className="w-10 h-10 rounded-full object-cover shrink-0" alt="" />
+            )}
             <h2 className="text-2xl font-bold text-gray-900">{event.title}</h2>
             <EventBadge status={event.status} />
           </div>
@@ -66,21 +79,26 @@ export default function EventDetailPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <a
-            href={`${API_URL}/api/admin/events/${eventId}/export`}
+          <button
+            onClick={() => downloadWithAuth(`${API_URL}/api/admin/events/${eventId}/export`, `event-${eventId}.csv`).catch(() => alert('ダウンロードに失敗しました'))}
             className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 transition-colors"
           >
             CSVダウンロード
-          </a>
-          <button
-            onClick={sendRemind} disabled={reminding}
-            className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 transition-colors"
-          >
-            {reminding ? '送信中...' : 'リマインド送信'}
           </button>
+          <div className="flex flex-col items-end gap-1">
+            <button
+              onClick={sendRemind} disabled={reminding}
+              className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              {reminding ? '送信中...' : 'リマインド送信'}
+            </button>
+            {event.remindedAt && (
+              <span className="text-xs text-gray-400">最終送信: {formatDate(event.remindedAt)}</span>
+            )}
+          </div>
           <Link
             href={`/admin/events/${eventId}/edit`}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 transition-colors"
+            className="bg-[#06C755] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#05a847] transition-colors"
           >
             編集
           </Link>
@@ -110,7 +128,7 @@ export default function EventDetailPage() {
                 {reservations.map((r) => (
                   <tr key={r.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium text-gray-900">
-                      <Link href={`/admin/members/${r.member.id}`} className="hover:underline text-indigo-600">
+                      <Link href={`/admin/members/${r.member.id}`} className="hover:underline text-[#06C755]">
                         {r.member.name ?? '未入力'}
                       </Link>
                     </td>

@@ -1,8 +1,8 @@
 import { Controller, Patch, Param, Body } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { IsEnum } from 'class-validator';
 import { ReservationsService } from './reservations.service';
 import type { ReservationStatusType } from './reservations.service';
-import { IsEnum } from 'class-validator';
+import { TenantId } from '../auth/tenant-id.decorator';
 
 class UpdateStatusDto {
   @IsEnum(['reserved', 'attended', 'cancelled', 'waitlisted', 'waiting_payment'])
@@ -11,17 +11,10 @@ class UpdateStatusDto {
 
 @Controller('admin/reservations')
 export class ReservationsController {
-  constructor(
-    private readonly reservationsService: ReservationsService,
-    private readonly config: ConfigService,
-  ) {}
-
-  private get tenantId() {
-    return this.config.get<string>('TENANT_ID')!;
-  }
+  constructor(private readonly reservationsService: ReservationsService) {}
 
   @Patch(':id/status')
-  updateStatus(@Param('id') id: string, @Body() dto: UpdateStatusDto) {
-    return this.reservationsService.updateStatus(this.tenantId, id, dto.status);
+  updateStatus(@TenantId() tenantId: string, @Param('id') id: string, @Body() dto: UpdateStatusDto) {
+    return this.reservationsService.updateStatus(tenantId, id, dto.status);
   }
 }

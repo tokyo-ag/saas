@@ -1,11 +1,11 @@
 import type { ReservationStatus, EventStatus } from '@/lib/api';
 
 const reservationColors: Record<ReservationStatus, string> = {
-  reserved: 'bg-blue-100 text-blue-800',
-  waitlisted: 'bg-yellow-100 text-yellow-800',
-  attended: 'bg-green-100 text-green-800',
-  cancelled: 'bg-gray-100 text-gray-600',
-  waiting_payment: 'bg-orange-100 text-orange-800',
+  reserved: 'bg-[#06C755]/10 text-[#06C755]',
+  waitlisted: 'bg-yellow-100 text-yellow-700',
+  attended: 'bg-blue-100 text-blue-700',
+  cancelled: 'bg-gray-100 text-gray-500',
+  waiting_payment: 'bg-orange-100 text-orange-700',
 };
 
 const reservationLabels: Record<ReservationStatus, string> = {
@@ -17,9 +17,9 @@ const reservationLabels: Record<ReservationStatus, string> = {
 };
 
 const eventColors: Record<EventStatus, string> = {
-  draft: 'bg-gray-100 text-gray-600',
-  open: 'bg-green-100 text-green-800',
-  closed: 'bg-red-100 text-red-800',
+  draft: 'bg-gray-100 text-gray-500',
+  open: 'bg-[#06C755]/10 text-[#06C755]',
+  closed: 'bg-red-100 text-red-600',
 };
 
 const eventLabels: Record<EventStatus, string> = {

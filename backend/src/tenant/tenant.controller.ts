@@ -1,31 +1,38 @@
-import { Controller, Get, Put, Body } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Controller, Get, Put, Post, Body } from '@nestjs/common';
 import { TenantService, UpdateTenantDto } from './tenant.service';
+import { TenantId } from '../auth/tenant-id.decorator';
 
 @Controller('admin/tenant')
 export class TenantController {
-  constructor(
-    private readonly tenantService: TenantService,
-    private readonly config: ConfigService,
-  ) {}
-
-  private get tenantId() {
-    return this.config.get<string>('TENANT_ID')!;
-  }
+  constructor(private readonly tenantService: TenantService) {}
 
   @Get()
-  findOne() {
-    return this.tenantService.findOne(this.tenantId);
+  findOne(@TenantId() tenantId: string) {
+    return this.tenantService.findOne(tenantId);
   }
 
   @Put()
-  update(@Body() dto: UpdateTenantDto) {
-    return this.tenantService.update(this.tenantId, dto);
+  update(@TenantId() tenantId: string, @Body() dto: UpdateTenantDto) {
+    return this.tenantService.update(tenantId, dto);
   }
 
   @Get('stats')
-  async getStats() {
-    const memberCount = await this.tenantService.getMemberCount(this.tenantId);
-    return { memberCount };
+  getStats(@TenantId() tenantId: string) {
+    return this.tenantService.getDashboardStats(tenantId);
+  }
+
+  @Get('growth')
+  getGrowth(@TenantId() tenantId: string) {
+    return this.tenantService.getGrowthData(tenantId);
+  }
+
+  @Get('activity')
+  getActivity(@TenantId() tenantId: string) {
+    return this.tenantService.getActivityFeed(tenantId);
+  }
+
+  @Post('sync-line-profile')
+  syncLineProfile(@TenantId() tenantId: string) {
+    return this.tenantService.syncLineProfile(tenantId);
   }
 }

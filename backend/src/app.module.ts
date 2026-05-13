@@ -10,6 +10,11 @@ import { WebhookModule } from './webhook/webhook.module';
 import { LineMessagingModule } from './line-messaging/line-messaging.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { TenantModule } from './tenant/tenant.module';
+import { UploadModule } from './upload/upload.module';
+import { SuperadminModule } from './superadmin/superadmin.module';
+import { StripeModule } from './stripe/stripe.module';
+import { AuthModule } from './auth/auth.module';
+import { PublicModule } from './public/public.module';
 
 @Module({
   imports: [
@@ -24,6 +29,11 @@ import { TenantModule } from './tenant/tenant.module';
     LineMessagingModule,
     SchedulerModule,
     TenantModule,
+    UploadModule,
+    SuperadminModule,
+    StripeModule,
+    AuthModule,
+    PublicModule,
   ],
 })
 export class AppModule {}

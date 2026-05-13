@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LineMessagingService } from '../line-messaging/line-messaging.service';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -69,6 +69,8 @@ export class EventsService {
         remindEnabled: e.remindEnabled,
         remindAt: e.remindAt,
         remindedAt: e.remindedAt,
+        imageUrl: e.imageUrl,
+        iconUrl: e.iconUrl,
         createdAt: e.createdAt,
         updatedAt: e.updatedAt,
         reservedCount: reserved,
@@ -92,6 +94,20 @@ export class EventsService {
   }
 
   async create(tenantId: string, dto: CreateEventDto) {
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (tenant?.plan === 'free') {
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const count = await this.prisma.event.count({
+        where: { tenantId, createdAt: { gte: monthStart } },
+      });
+      if (count >= 2) {
+        throw new ForbiddenException('今月のイベント作成上限（2件）に達しました。スタンダードプランにアップグレードしてください。');
+      }
+      if (dto.remindEnabled) {
+        throw new ForbiddenException('リマインド機能はスタンダードプランでご利用いただけます。');
+      }
+    }
     return this.prisma.event.create({
       data: {
         tenantId,
@@ -99,19 +115,35 @@ export class EventsService {
         description: dto.description,
         heldAt: new Date(dto.heldAt),
         location: dto.location,
+        locationUrl: dto.locationUrl ?? null,
         capacity: dto.capacity ?? null,
+        capacityMale: dto.capacityMale ?? null,
+        capacityFemale: dto.capacityFemale ?? null,
         status: dto.status as any,
         price: dto.price,
-        paymentRequired: dto.paymentRequired,
+        priceMale: dto.priceMale ?? null,
+        priceFemale: dto.priceFemale ?? null,
+        paymentRequired: dto.paymentTiming === 'prepay',
+        paymentTiming: dto.paymentTiming ?? 'onsite',
         notifyOnReserve: dto.notifyOnReserve,
+        notifyOnReserveApp: dto.notifyOnReserveApp ?? false,
         remindEnabled: dto.remindEnabled,
+        remindApp: dto.remindApp ?? false,
         remindAt: dto.remindAt ? new Date(dto.remindAt) : null,
+        imageUrl: dto.imageUrl ?? null,
+        iconUrl: dto.iconUrl ?? null,
       },
     });
   }
 
   async update(tenantId: string, id: string, dto: Partial<CreateEventDto>) {
     await this.findOne(tenantId, id);
+    if (dto.remindEnabled) {
+      const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+      if (tenant?.plan === 'free') {
+        throw new ForbiddenException('リマインド機能はスタンダードプランでご利用いただけます。');
+      }
+    }
     return this.prisma.event.update({
       where: { id },
       data: {
@@ -123,11 +155,21 @@ export class EventsService {
         ...(dto.status !== undefined && { status: dto.status as any }),
         ...(dto.price !== undefined && { price: dto.price }),
         ...(dto.paymentRequired !== undefined && { paymentRequired: dto.paymentRequired }),
+        ...(dto.locationUrl !== undefined && { locationUrl: dto.locationUrl ?? null }),
+        ...(dto.capacityMale !== undefined && { capacityMale: dto.capacityMale ?? null }),
+        ...(dto.capacityFemale !== undefined && { capacityFemale: dto.capacityFemale ?? null }),
+        ...(dto.priceMale !== undefined && { priceMale: dto.priceMale ?? null }),
+        ...(dto.priceFemale !== undefined && { priceFemale: dto.priceFemale ?? null }),
+        ...(dto.paymentTiming !== undefined && { paymentTiming: dto.paymentTiming, paymentRequired: dto.paymentTiming === 'prepay' }),
         ...(dto.notifyOnReserve !== undefined && { notifyOnReserve: dto.notifyOnReserve }),
+        ...(dto.notifyOnReserveApp !== undefined && { notifyOnReserveApp: dto.notifyOnReserveApp }),
         ...(dto.remindEnabled !== undefined && { remindEnabled: dto.remindEnabled }),
+        ...(dto.remindApp !== undefined && { remindApp: dto.remindApp }),
         ...(dto.remindAt !== undefined && {
           remindAt: dto.remindAt ? new Date(dto.remindAt) : null,
         }),
+        ...(dto.imageUrl !== undefined && { imageUrl: dto.imageUrl || null }),
+        ...(dto.iconUrl !== undefined && { iconUrl: dto.iconUrl || null }),
       },
     });
   }

@@ -26,6 +26,7 @@ export class MembersService {
       name: m.name,
       grade: m.grade,
       gender: m.gender,
+      blockedAt: m.blockedAt,
       createdAt: m.createdAt,
       eventCount: m._count.reservations,
     }));
@@ -43,6 +44,39 @@ export class MembersService {
     });
     if (!member) throw new NotFoundException('Member not found');
     return member;
+  }
+
+  async block(tenantId: string, id: string) {
+    const member = await this.prisma.member.findFirst({ where: { id, tenantId } });
+    if (!member) throw new NotFoundException('Member not found');
+    return this.prisma.member.update({ where: { id }, data: { blockedAt: new Date() } });
+  }
+
+  async unblock(tenantId: string, id: string) {
+    const member = await this.prisma.member.findFirst({ where: { id, tenantId } });
+    if (!member) throw new NotFoundException('Member not found');
+    return this.prisma.member.update({ where: { id }, data: { blockedAt: null } });
+  }
+
+  async getMessages(tenantId: string, memberId: string) {
+    const member = await this.prisma.member.findFirst({ where: { id: memberId, tenantId } });
+    if (!member) throw new NotFoundException('Member not found');
+    await this.prisma.adminMemberMessage.updateMany({
+      where: { memberId, tenantId, fromAdmin: false, read: false },
+      data: { read: true },
+    });
+    return this.prisma.adminMemberMessage.findMany({
+      where: { memberId, tenantId },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async sendMessage(tenantId: string, memberId: string, content: string) {
+    const member = await this.prisma.member.findFirst({ where: { id: memberId, tenantId } });
+    if (!member) throw new NotFoundException('Member not found');
+    return this.prisma.adminMemberMessage.create({
+      data: { tenantId, memberId, content, fromAdmin: true },
+    });
   }
 
   async exportCsv(tenantId: string): Promise<string> {

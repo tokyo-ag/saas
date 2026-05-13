@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500" viewBox="0 0 400 500">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#16a34a"/>
+      <stop offset="100%" stop-color="#14532d"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="500" fill="url(#g)"/>
+  <circle cx="340" cy="75" r="130" fill="rgba(255,255,255,0.08)"/>
+  <circle cx="60" cy="440" r="150" fill="rgba(255,255,255,0.06)"/>
+  <circle cx="365" cy="395" r="75" fill="rgba(255,255,255,0.05)"/>
+  <circle cx="30" cy="80" r="55" fill="rgba(255,255,255,0.07)"/>
+  <text x="200" y="270" text-anchor="middle" font-size="90" font-family="Arial">🏔️</text>
+</svg>

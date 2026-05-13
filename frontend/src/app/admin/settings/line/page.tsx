@@ -17,6 +17,7 @@ export default function LineSettingsPage() {
     lineChannelAccessToken: '',
     liffId: '',
   });
+  const [organizerLineUserId, setOrganizerLineUserId] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
@@ -30,6 +31,7 @@ export default function LineSettingsPage() {
         lineChannelAccessToken: t.lineChannelAccessToken ?? '',
         liffId: t.liffId ?? '',
       });
+      setOrganizerLineUserId(t.organizerLineUserId ?? '');
       if (t.lineChannelAccessToken) setStep(3);
       if (t.liffId) setStep(4);
     });
@@ -66,11 +68,11 @@ export default function LineSettingsPage() {
     <div className="p-6 max-w-2xl">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">設定</h1>
 
-      <div className="flex gap-4 mb-8 border-b border-gray-200">
-        <Link href="/admin/settings" className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700">
-          団体情報
-        </Link>
-        <span className="px-4 py-2 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600">LINE連携</span>
+      <div className="flex gap-0 mb-8 border-b border-gray-200 overflow-x-auto">
+        <Link href="/admin/settings" className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent whitespace-nowrap">団体情報</Link>
+        <span className="px-4 py-2 text-sm font-medium border-b-2 border-[#06C755] text-[#06C755] whitespace-nowrap">LINE連携</span>
+        <Link href="/admin/settings/stripe" className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent whitespace-nowrap">Stripe決済</Link>
+        <Link href="/admin/settings/plan" className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent whitespace-nowrap">プラン</Link>
       </div>
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">{error}</div>}
@@ -84,7 +86,7 @@ export default function LineSettingsPage() {
           </p>
           <button
             onClick={() => setStep(2)}
-            className="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-indigo-700"
+            className="bg-[#06C755] text-white px-5 py-2 rounded-lg text-sm hover:bg-[#05a847]"
           >
             作成済み・次へ
           </button>
@@ -100,19 +102,19 @@ export default function LineSettingsPage() {
               <label className="block text-xs font-medium text-gray-600 mb-1">Channel ID</label>
               <input value={form.lineChannelId} onChange={(e) => set('lineChannelId', e.target.value)}
                 placeholder="1234567890"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Channel Secret</label>
               <input value={form.lineChannelSecret} onChange={(e) => set('lineChannelSecret', e.target.value)}
                 type="password" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Channel Access Token</label>
               <input value={form.lineChannelAccessToken} onChange={(e) => set('lineChannelAccessToken', e.target.value)}
                 type="password" placeholder="長い文字列"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
             </div>
           </div>
           <button
@@ -121,7 +123,7 @@ export default function LineSettingsPage() {
               const ok = await save({ lineChannelId: form.lineChannelId, lineChannelSecret: form.lineChannelSecret, lineChannelAccessToken: form.lineChannelAccessToken });
               if (ok) setStep(3);
             }}
-            className="mt-4 bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50"
+            className="mt-4 bg-[#06C755] text-white px-5 py-2 rounded-lg text-sm hover:bg-[#05a847] disabled:opacity-50"
           >
             {saving ? '保存中...' : '保存して次へ'}
           </button>
@@ -135,13 +137,13 @@ export default function LineSettingsPage() {
           <div className="bg-gray-100 rounded-lg px-3 py-2 text-sm font-mono text-gray-800 mb-4 flex items-center justify-between">
             <span className="truncate">{liffEndpoint}</span>
             <button onClick={() => navigator.clipboard.writeText(liffEndpoint)}
-              className="ml-2 text-xs text-indigo-600 hover:underline shrink-0">コピー</button>
+              className="ml-2 text-xs text-[#06C755] hover:underline shrink-0">コピー</button>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">LIFF ID</label>
             <input value={form.liffId} onChange={(e) => set('liffId', e.target.value)}
               placeholder="1234567890-xxxxxxxx"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
           </div>
           <button
             disabled={saving || !form.liffId}
@@ -149,7 +151,7 @@ export default function LineSettingsPage() {
               const ok = await save({ liffId: form.liffId });
               if (ok) setStep(4);
             }}
-            className="mt-4 bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50"
+            className="mt-4 bg-[#06C755] text-white px-5 py-2 rounded-lg text-sm hover:bg-[#05a847] disabled:opacity-50"
           >
             {saving ? '保存中...' : '保存して次へ'}
           </button>
@@ -163,12 +165,31 @@ export default function LineSettingsPage() {
           <div className="bg-gray-100 rounded-lg px-3 py-2 text-sm font-mono text-gray-800 mb-4 flex items-center justify-between">
             <span className="truncate">{webhookUrl}</span>
             <button onClick={() => navigator.clipboard.writeText(webhookUrl)}
-              className="ml-2 text-xs text-indigo-600 hover:underline shrink-0">コピー</button>
+              className="ml-2 text-xs text-[#06C755] hover:underline shrink-0">コピー</button>
           </div>
           <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-800">
             設定完了です！LINE公式アカウントを友だち追加するとWebhookが届きます。
           </div>
         </StepCard>
+
+        {/* 主催者LINE ID */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <h3 className="font-semibold text-gray-900 text-sm mb-1">主催者のLINE ユーザーID</h3>
+          <p className="text-xs text-gray-500 mb-3">キャンセル通知など、管理者向けメッセージの送信先です。LINE Developersの「Messaging API」→「Webhook」でテスト送信すると確認できます。</p>
+          <input
+            value={organizerLineUserId}
+            onChange={(e) => setOrganizerLineUserId(e.target.value)}
+            placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755] mb-3"
+          />
+          <button
+            disabled={saving}
+            onClick={() => save({ organizerLineUserId: organizerLineUserId || undefined })}
+            className="bg-[#06C755] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#05a847] disabled:opacity-50"
+          >
+            {saving ? '保存中...' : '保存'}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -180,9 +201,9 @@ function StepCard({ step, currentStep, title, children }: {
   const done = currentStep > step;
   const active = currentStep === step;
   return (
-    <div className={`bg-white rounded-xl border p-5 transition-all ${active ? 'border-indigo-300 shadow-sm' : 'border-gray-200 opacity-60'}`}>
+    <div className={`bg-white rounded-xl border p-5 transition-all ${active ? 'border-[#06C755]/50 shadow-sm' : 'border-gray-200 opacity-60'}`}>
       <div className="flex items-center gap-3 mb-3">
-        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${done ? 'bg-green-500 text-white' : active ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
+        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${done ? 'bg-green-500 text-white' : active ? 'bg-[#06C755] text-white' : 'bg-gray-200 text-gray-500'}`}>
           {done ? '✓' : step}
         </span>
         <h3 className="font-semibold text-gray-900 text-sm">{title}</h3>

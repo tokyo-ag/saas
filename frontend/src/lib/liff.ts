@@ -17,6 +17,12 @@ export async function initLiff(liffId?: string): Promise<boolean> {
   }
 }
 
+export async function loginIfNeeded(): Promise<void> {
+  if (!liff.isLoggedIn()) {
+    liff.login();
+  }
+}
+
 export async function getLiffUserId(): Promise<string | null> {
   if (!liff.isLoggedIn()) return null;
   const profile = await liff.getProfile();
@@ -35,6 +41,15 @@ export async function checkFriendship(): Promise<boolean> {
 export function closeLiff() {
   if (liff.isInClient()) {
     liff.closeWindow();
+  }
+}
+
+export async function scanQrCode(): Promise<string | null> {
+  try {
+    const result = await liff.scanCodeV2();
+    return result.value ?? null;
+  } catch {
+    return null;
   }
 }
 

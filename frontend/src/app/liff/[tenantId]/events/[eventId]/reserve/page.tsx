@@ -1,125 +1,187 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { apiFetch, LiffEvent } from '@/lib/api';
-import { initLiff, getLiffUserId } from '@/lib/liff';
+import { api, LiffEvent, LiffProfile, ReserveResult } from '@/lib/api';
+import { initLiff, getLiffUserId, loginIfNeeded } from '@/lib/liff';
 
 const GRADES = ['高校1年', '高校2年', '高校3年', '大学1年', '大学2年', '大学3年', '大学4年', '大学院生', '社会人', 'その他'];
 const GENDERS = ['男性', '女性', 'その他・回答しない'];
 
-export default function ReservePage() {
+function ReservePageInner() {
   const { tenantId, eventId } = useParams<{ tenantId: string; eventId: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
   const isWaitlist = searchParams.get('waitlist') === '1';
 
   const [event, setEvent] = useState<LiffEvent | null>(null);
-  const [lineUserId, setLineUserId] = useState<string>('');
+  const [lineUserId, setLineUserId] = useState('');
+  const [profile, setProfile] = useState<LiffProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // フォーム状態（プロフィール未登録時のみ使用）
   const [name, setName] = useState('');
   const [grade, setGrade] = useState('');
   const [gender, setGender] = useState('');
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     async function init() {
       const ok = await initLiff();
-      if (ok) {
-        const uid = await getLiffUserId();
-        setLineUserId(uid ?? `demo-${Date.now()}`);
-      } else {
-        // 開発中：LIFF未設定時はデモIDを使用
-        setLineUserId(`demo-${Date.now()}`);
-      }
-      apiFetch<LiffEvent>(`/liff/${tenantId}/events/${eventId}`).then(setEvent).catch(console.error);
+      const uid = ok ? (await getLiffUserId()) ?? '' : `demo-${Date.now()}`;
+      setLineUserId(uid);
+
+      const [ev, prof] = await Promise.allSettled([
+        api.liff.event(tenantId, eventId),
+        uid ? api.liff.profile(tenantId, uid).catch(() => null) : Promise.resolve(null),
+      ]);
+      if (ev.status === 'fulfilled') setEvent(ev.value);
+      if (prof.status === 'fulfilled') setProfile(prof.value);
+      setLoading(false);
     }
     init();
   }, [tenantId, eventId]);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function submit(overrides?: { name: string; grade: string; gender: string }) {
+    if (!lineUserId) { await loginIfNeeded(); return; }
     setError('');
     setSubmitting(true);
     try {
-      const result = await apiFetch<{ id: string; status: string; waitlistOrder: number | null }>(
-        `/liff/${tenantId}/reservations`,
-        {
-          method: 'POST',
-          body: JSON.stringify({ eventId, lineUserId, name, grade, gender }),
-        },
-      );
+      const body: Record<string, string> = { eventId, lineUserId, ...(overrides ?? {}) };
+      const result = await api.liff.reserve(tenantId, body as any);
+      if (result.stripeCheckoutUrl) { window.location.href = result.stripeCheckoutUrl; return; }
       router.push(`/liff/${tenantId}/events/${eventId}/done?status=${result.status}&order=${result.waitlistOrder ?? ''}`);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : '予約に失敗しました');
     } finally {
       setSubmitting(false);
     }
   }
 
+  const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#06C755] focus:border-transparent';
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#06C755] text-sm">読み込み中...</div>
+      </div>
+    );
+  }
+
+  const hasProfile = profile && profile.name && profile.grade && profile.gender;
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-indigo-600 text-white px-4 py-4 flex items-center gap-3">
-        <button onClick={() => router.back()} className="text-white/80 hover:text-white">←</button>
-        <h1 className="text-lg font-bold">{isWaitlist ? 'キャンセル待ち登録' : '予約フォーム'}</h1>
+    <div className="min-h-screen bg-[#F7F8FA]">
+      <div className="bg-[#06C755] text-white px-4 py-4 flex items-center gap-3">
+        <button onClick={() => router.push(`/liff/${tenantId}/events/${eventId}`)} className="text-white text-xl leading-none">‹</button>
+        <h1 className="text-base font-bold">{isWaitlist ? 'キャンセル待ち登録' : '予約確認'}</h1>
       </div>
 
-      <div className="px-4 py-6">
+      <div className="px-4 py-5 space-y-4">
         {event && (
-          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-6 text-sm text-indigo-800">
-            <p className="font-semibold">{event.title}</p>
-            <p className="mt-0.5 text-indigo-600">{event.location}</p>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+            <p className="font-semibold text-gray-900 text-sm">{event.title}</p>
+            <p className="text-xs text-[#06C755] mt-1">{event.location}</p>
           </div>
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-4">{error}</div>
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">お名前 <span className="text-red-500">*</span></label>
-            <input
-              required minLength={1} maxLength={50}
-              value={name} onChange={(e) => setName(e.target.value)}
-              placeholder="山田太郎"
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">学年 <span className="text-red-500">*</span></label>
-            <select
-              required value={grade} onChange={(e) => setGrade(e.target.value)}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-            >
-              <option value="">選択してください</option>
-              {GRADES.map((g) => <option key={g} value={g}>{g}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">性別 <span className="text-red-500">*</span></label>
-            <div className="flex gap-3">
-              {GENDERS.map((g) => (
-                <label key={g} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
-                  <input type="radio" name="gender" value={g} required checked={gender === g} onChange={() => setGender(g)} />
-                  {g}
-                </label>
-              ))}
+        {hasProfile ? (
+          /* ── 登録済みユーザー：確認画面 ── */
+          <>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+              <p className="text-xs font-medium text-gray-500 mb-1">参加者情報</p>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">お名前</span>
+                <span className="font-medium text-gray-900">{profile.name}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">学年</span>
+                <span className="font-medium text-gray-900">{profile.grade}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">性別</span>
+                <span className="font-medium text-gray-900">{profile.gender}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => router.push(`/liff/${tenantId}/profile/edit`)}
+                className="text-xs text-[#06C755] hover:underline pt-1"
+              >
+                情報を変更する →
+              </button>
             </div>
-          </div>
 
-          <div className="pt-2">
             <button
-              type="submit" disabled={submitting || !lineUserId}
-              className="w-full bg-indigo-600 text-white py-3 rounded-xl font-medium disabled:opacity-50 active:bg-indigo-700 transition-colors"
+              onClick={() => submit()}
+              disabled={submitting}
+              className="w-full bg-[#06C755] text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[#05a847] transition-colors shadow-sm"
             >
               {submitting ? '送信中...' : isWaitlist ? 'キャンセル待ちに登録する' : '予約を確定する'}
             </button>
-          </div>
-        </form>
+          </>
+        ) : (
+          /* ── 初回ユーザー：入力フォーム ── */
+          <form
+            onSubmit={(e) => { e.preventDefault(); submit({ name, grade, gender }); }}
+            className="space-y-4"
+          >
+            <p className="text-xs text-gray-500 px-1">初回のみ情報を入力してください。次回以降は省略できます。</p>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">お名前 <span className="text-red-400">*</span></label>
+                <input required minLength={1} maxLength={50}
+                  value={name} onChange={(e) => setName(e.target.value)}
+                  placeholder="山田太郎"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">学年 <span className="text-red-400">*</span></label>
+                <select required value={grade} onChange={(e) => setGrade(e.target.value)} className={inputClass}>
+                  <option value="">選択してください</option>
+                  {GRADES.map((g) => <option key={g} value={g}>{g}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-2">性別 <span className="text-red-400">*</span></label>
+                <div className="flex gap-4">
+                  {GENDERS.map((g) => (
+                    <label key={g} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
+                      <input type="radio" name="gender" value={g} required checked={gender === g} onChange={() => setGender(g)} className="accent-[#06C755]" />
+                      {g}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="submit" disabled={submitting}
+              className="w-full bg-[#06C755] text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[#05a847] transition-colors shadow-sm"
+            >
+              {submitting ? '送信中...' : isWaitlist ? 'キャンセル待ちに登録する' : '予約を確定する'}
+            </button>
+          </form>
+        )}
       </div>
     </div>
+  );
+}
+
+export default function ReservePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#06C755] text-sm">読み込み中...</div>
+      </div>
+    }>
+      <ReservePageInner />
+    </Suspense>
   );
 }

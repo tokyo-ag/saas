@@ -1,0 +1,173 @@
+
+> backend@0.0.1 start:dev
+> nest start --watch
+
+[2J[3J[H[[90m7:34:34[0m] Starting compilation in watch mode...
+
+[[90m7:34:38[0m] Found 0 errors. Watching for file changes.
+
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +12ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +11ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLineMessagingModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +13ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSchedulerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mScheduleModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStripeModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPublicModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTenantModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEventsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMembersModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mReservationsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWebhookModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSuperadminModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLiffModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUploadModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mEventsController {/api/admin/events}:[39m[38;5;3m +4ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/events, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/events/:eventId, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/events, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/events/:eventId, PUT} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/events/:eventId, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/events/:eventId/reservations, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/events/:eventId/remind, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/events/:eventId/export, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMembersController {/api/admin/members}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/members, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/members/export, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/members/:memberId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/members/:memberId/block, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/members/:memberId/unblock, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/members/:memberId/messages, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/members/:memberId/messages, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mReservationsController {/api/admin/reservations}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/reservations/:id/status, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mLiffController {/api/liff/:tenantId}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/events, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/events/:eventId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/events/:eventId/my-reservation, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/reservations, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/reservations/:reservationId, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/profile, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/profile, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/profile/settings, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/members/:memberId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/connections, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/connections, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/connections/:connectionId/messages, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/connections/:connectionId/messages, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/notifications, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/notifications/:notificationId/read, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/notifications/read-all, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/admin-messages, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/admin-messages, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/support, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/liff/:tenantId/support, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mStripeWebhookController {/api/stripe-webhook}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/stripe-webhook/:tenantId, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWebhookController {/api/webhook}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/webhook/:tenantId, POST} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mTenantController {/api/admin/tenant}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/tenant, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/tenant, PUT} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/tenant/stats, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/tenant/growth, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/tenant/activity, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/tenant/sync-line-profile, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUploadController {/api/admin/upload}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/admin/upload, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSuperadminController {/api/superadmin}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/superadmin/tenants, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/superadmin/tenants, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/superadmin/tenants/:id, PUT} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/superadmin/tenants/:id/deactivate, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/superadmin/tenants/:id/restore, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/superadmin/tenants/:id/ban, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/superadmin/tenants/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/superadmin/banned-users, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/superadmin/banned-users, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/superadmin/banned-users/:lineUserId, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/superadmin/support, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/superadmin/support/:lineUserId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/superadmin/support/:lineUserId/reply, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/api/auth}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/register, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/login, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/line, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/line/callback, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/line/complete, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/auth/me, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPublicController {/api/public}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/public/events, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/public/events/:id/like, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 11360  - [39m2026/05/14 7:34:39 [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/public/tenants, GET} route[39m[38;5;3m +0ms[39m
+c:\saas\backend\node_modules\@prisma\client\runtime\library.js:112
+You may have to run ${qe("prisma generate")} for your changes to take effect.`,this.config.clientVersion);return t}}parseEngineResponse(t){if(!t)throw new B("Response from the Engine was empty",{clientVersion:this.config.clientVersion});try{return JSON.parse(t)}catch{throw new B("Unable to JSON.parse response from engine",{clientVersion:this.config.clientVersion})}}async loadEngine(){if(!this.engine){this.QueryEngineConstructor||(this.library=await this.libraryLoader.loadLibrary(this.config),this.QueryEngineConstructor=this.library.QueryEngine);try{let t=new WeakRef(this),{adapter:r}=this.config;r&&Ae("Using driver adapter: %O",r),this.engine=new this.QueryEngineConstructor({datamodel:this.datamodel,env:process.env,logQueries:this.config.logQueries??!1,ignoreEnvVarErrors:!0,datasourceOverrides:this.datasourceOverrides??{},logLevel:this.logLevel,configDir:this.config.cwd,engineProtocol:"json"},n=>{t.deref()?.logger(n)},r)}catch(t){let r=t,n=this.parseInitError(r.message);throw typeof n=="string"?r:new R(n.message,this.config.clientVersion,n.error_code)}}}logger(t){let r=this.parseEngineResponse(t);if(r){if("span"in r){this.config.tracingHelper.createEngineSpan(r);return}r.level=r?.level.toLowerCase()??"unknown",fm(r)?this.logEmitter.emit("query",{timestamp:new Date,query:r.query,params:r.params,duration:Number(r.duration_ms),target:r.module_path}):gm(r)?this.loggerRustPanic=new le(lo(this,`${r.message}: ${r.reason} in ${r.file}:${r.line}:${r.column}`),this.config.clientVersion):this.logEmitter.emit(r.level,{timestamp:new Date,message:r.message,target:r.module_path})}}parseInitError(t){try{return JSON.parse(t)}catch{}return t}parseRequestError(t){try{return JSON.parse(t)}catch{}return t}onBeforeExit(){throw new Error('"beforeExit" hook is not applicable to the library engine since Prisma 5.0.0, it is only relevant and implemented for the binary engine. Please add your event listener to the `process` object directly instead.')}async start(){if(await this.libraryInstantiationPromise,await this.libraryStoppingPromise,this.libraryStartingPromise)return Ae(`library already starting, this.libraryStarted: ${this.libraryStarted}`),this.libraryStartingPromise;if(this.libraryStarted)return;let t=async()=>{Ae("library starting");try{let r={traceparent:this.config.tracingHelper.getTraceParent()};await this.engine?.connect(JSON.stringify(r)),this.libraryStarted=!0,Ae("library started")}catch(r){let n=this.parseInitError(r.message);throw typeof n=="string"?r:new R(n.message,this.config.clientVersion,n.error_code)}finally{this.libraryStartingPromise=void 0}};return this.libraryStartingPromise=this.config.tracingHelper.runInChildSpan("connect",t),this.libraryStartingPromise}async stop(){if(await this.libraryStartingPromise,await this.executingQueryPromise,this.libraryStoppingPromise)return Ae("library is already stopping"),this.libraryStoppingPromise;if(!this.libraryStarted)return;let t=async()=>{await new Promise(n=>setTimeout(n,5)),Ae("library stopping");let r={traceparent:this.config.tracingHelper.getTraceParent()};await this.engine?.disconnect(JSON.stringify(r)),this.libraryStarted=!1,this.libraryStoppingPromise=void 0,Ae("library stopped")};return this.libraryStoppingPromise=this.config.tracingHelper.runInChildSpan("disconnect",t),this.libraryStoppingPromise}version(){return this.versionInfo=this.library?.version(),this.versionInfo?.version??"unknown"}debugPanic(t){return this.library?.debugPanic(t)}async request(t,{traceparent:r,interactiveTransaction:n}){Ae(`sending request, this.libraryStarted: ${this.libraryStarted}`);let i=JSON.stringify({traceparent:r}),o=JSON.stringify(t);try{await this.start(),this.executingQueryPromise=this.engine?.query(o,i,n?.id),this.lastQuery=o;let s=this.parseEngineResponse(await this.executingQueryPromise);if(s.errors)throw s.errors.length===1?this.buildQueryError(s.errors[0]):new B(JSON.stringify(s.errors),{clientVersion:this.config.clientVersion});if(this.loggerRustPanic)throw this.loggerRustPanic;return{data:s,elapsed:0}}catch(s){if(s instanceof R)throw s;if(s.code==="GenericFailure"&&s.message?.startsWith("PANIC:"))throw new le(lo(this,s.message),this.config.clientVersion);let a=this.parseRequestError(s.message);throw typeof a=="string"?s:new B(`${a.message}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+
+PrismaClientInitializationError: Can't reach database server at `localhost:5432`
+
+Please make sure your database server is running at `localhost:5432`.
+    at t (c:\saas\backend\node_modules\@prisma\client\runtime\library.js:112:2488)
+    at async Proxy.onModuleInit (c:\saas\backend\src\prisma\prisma.service.ts:9:9)
+    at async Promise.all (index 0)
+    at async callModuleInitHook (c:\saas\backend\node_modules\@nestjs\core\hooks\on-module-init.hook.js:43:5)
+    at async NestApplication.callInitHook (c:\saas\backend\node_modules\@nestjs\core\nest-application-context.js:252:13)
+    at async NestApplication.init (c:\saas\backend\node_modules\@nestjs\core\nest-application.js:103:9)
+    at async NestApplication.listen (c:\saas\backend\node_modules\@nestjs\core\nest-application.js:175:13)
+    at async bootstrap (c:\saas\backend\src\main.ts:13:3) {
+  clientVersion: '5.22.0',
+  errorCode: 'P1001'
+}
+
+Node.js v24.15.0
+[2J[3J[H[[90m7:46:31[0m] File change detected. Starting incremental compilation...
+
+[[90m7:46:31[0m] Found 0 errors. Watching for file changes.
+
+node:internal/modules/cjs/loader:1479
+  throw err;
+  ^
+
+Error: Cannot find module 'c:\saas\backend\dist\main'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1476:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1049:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1073:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1094:12)
+    at Module._load (node:internal/modules/cjs/loader:1262:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v24.15.0
+[2J[3J[H[[90m7:46:33[0m] File change detected. Starting incremental compilation...
+
+[[90m7:46:35[0m] Found 0 errors. Watching for file changes.
+
+node:internal/modules/cjs/loader:1479
+  throw err;
+  ^
+
+Error: Cannot find module 'c:\saas\backend\dist\main'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1476:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1049:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1073:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1094:12)
+    at Module._load (node:internal/modules/cjs/loader:1262:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v24.15.0

@@ -3,17 +3,19 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { IsString } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 import { LineMessagingService } from '../line-messaging/line-messaging.service';
+import { StripeService } from '../stripe/stripe.service';
 
 export class CreateReservationDto {
   @IsString() eventId!: string;
   @IsString() lineUserId!: string;
-  @IsString() name!: string;
-  @IsString() grade!: string;
-  @IsString() gender!: string;
+  name?: string;
+  grade?: string;
+  gender?: string;
 }
 
 @Injectable()
@@ -21,10 +23,27 @@ export class LiffService {
   constructor(
     private prisma: PrismaService,
     private lineMessaging: LineMessagingService,
+    private stripeService: StripeService,
   ) {}
 
+  // テナント公開情報（認証不要）
+  async getTenantInfo(tenantId: string) {
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { id: tenantId, deletedAt: null },
+    });
+    if (!tenant) throw new NotFoundException('テナントが見つかりません');
+    return {
+      id: tenant.id,
+      name: tenant.name,
+      description: tenant.description,
+      lineDisplayName: tenant.lineDisplayName,
+      linePictureUrl: tenant.linePictureUrl,
+      lineChannelId: tenant.lineChannelId,
+    };
+  }
+
   // イベント一覧（status=open のものだけ）
-  async getEvents(tenantId: string) {
+  async getEvents(tenantId: string, lineUserId?: string) {
     const events = await this.prisma.event.findMany({
       where: { tenantId, status: 'open' },
       include: {
@@ -36,7 +55,7 @@ export class LiffService {
       orderBy: { heldAt: 'asc' },
     });
 
-    return events.map((e) => ({
+    const mapped = events.map((e) => ({
       id: e.id,
       title: e.title,
       description: e.description,
@@ -47,6 +66,48 @@ export class LiffService {
       price: e.price,
       paymentRequired: e.paymentRequired,
       reservedCount: e.reservations.length,
+      imageUrl: e.imageUrl,
+      iconUrl: e.iconUrl,
+      friendAttendees: [] as { id: string; name: string | null }[],
+    }));
+
+    if (!lineUserId) return mapped;
+
+    const me = await this.prisma.member.findUnique({
+      where: { tenantId_lineUserId: { tenantId, lineUserId } },
+    });
+    if (!me) return mapped;
+
+    const connections = await this.prisma.connection.findMany({
+      where: { OR: [{ member1Id: me.id }, { member2Id: me.id }] },
+    });
+    const partnerIds = connections.map((c) =>
+      c.member1Id === me.id ? c.member2Id : c.member1Id,
+    );
+    if (partnerIds.length === 0) return mapped;
+
+    const partners = await this.prisma.member.findMany({
+      where: { id: { in: partnerIds }, showEventsToConnections: true },
+      select: { id: true, name: true },
+    });
+    if (partners.length === 0) return mapped;
+
+    const partnerReservations = await this.prisma.reservation.findMany({
+      where: {
+        memberId: { in: partners.map((p) => p.id) },
+        tenantId,
+        status: { in: ['reserved', 'waitlisted'] },
+      },
+      select: { eventId: true, memberId: true },
+    });
+
+    const partnerMap = new Map(partners.map((p) => [p.id, p]));
+    return mapped.map((event) => ({
+      ...event,
+      friendAttendees: partnerReservations
+        .filter((r) => r.eventId === event.id)
+        .map((r) => partnerMap.get(r.memberId)!)
+        .filter(Boolean),
     }));
   }
 
@@ -71,20 +132,44 @@ export class LiffService {
     });
     if (!event) throw new NotFoundException('Event not found or not open');
 
+    // グローバルBAN チェック
+    const globalBan = await this.prisma.bannedLineUser.findUnique({ where: { lineUserId: dto.lineUserId } });
+    if (globalBan) throw new ForbiddenException('このアカウントは利用できません');
+
+    // フリープラン：参加者50人上限チェック
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (tenant?.plan === 'free') {
+      const memberCount = await this.prisma.member.count({ where: { tenantId } });
+      if (memberCount >= 50) {
+        throw new ForbiddenException('参加者数の上限（50人）に達しました。スタンダードプランにアップグレードしてください。');
+      }
+    }
+
     // 参加者を登録 or 情報更新（LINEユーザーIDで一意に管理）
     let member = await this.prisma.member.findUnique({
       where: { tenantId_lineUserId: { tenantId, lineUserId: dto.lineUserId } },
     });
     if (!member) {
+      if (!dto.name || !dto.grade || !dto.gender) {
+        throw new BadRequestException('初回予約時はお名前・学年・性別を入力してください');
+      }
       member = await this.prisma.member.create({
         data: { tenantId, lineUserId: dto.lineUserId, name: dto.name, grade: dto.grade, gender: dto.gender },
       });
-    } else {
+    } else if (dto.name || dto.grade || dto.gender) {
+      // 送られてきた場合のみ更新（プロフィール変更時）
       member = await this.prisma.member.update({
         where: { id: member.id },
-        data: { name: dto.name, grade: dto.grade, gender: dto.gender },
+        data: {
+          ...(dto.name && { name: dto.name }),
+          ...(dto.grade && { grade: dto.grade }),
+          ...(dto.gender && { gender: dto.gender }),
+        },
       });
     }
+
+    // テナントブロックチェック
+    if (member.blockedAt) throw new ForbiddenException('この団体から利用制限されています');
 
     // 同じイベントへの予約は2回まで（キャンセル済みを除く）
     const existingCount = await this.prisma.reservation.count({
@@ -105,7 +190,12 @@ export class LiffService {
       throw new BadRequestException('満席のため予約できません');
     }
 
-    const status: 'reserved' | 'waitlisted' = isFull ? 'waitlisted' : 'reserved';
+    const needsPayment = event.paymentRequired && event.price > 0 && !isFull;
+    const status: 'reserved' | 'waitlisted' | 'waiting_payment' = isFull
+      ? 'waitlisted'
+      : needsPayment
+        ? 'waiting_payment'
+        : 'reserved';
     let waitlistOrder: number | null = null;
 
     if (status === 'waitlisted') {
@@ -120,25 +210,238 @@ export class LiffService {
       data: { tenantId, eventId: dto.eventId, memberId: member.id, status, waitlistOrder },
     });
 
-    // LINE通知（notifyOnReserve=true のときだけ）
-    if (event.notifyOnReserve) {
+    // Stripe 決済セッション作成
+    let stripeCheckoutUrl: string | undefined;
+    if (status === 'waiting_payment') {
       const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
-      if (tenant?.lineChannelAccessToken) {
-        if (status === 'reserved') {
-          await this.lineMessaging.sendReservationConfirm(
-            tenant.lineChannelAccessToken, dto.lineUserId,
-            event.title, event.heldAt, event.location,
-          );
-        } else {
-          await this.lineMessaging.sendWaitlistRegistered(
-            tenant.lineChannelAccessToken, dto.lineUserId,
-            event.title, waitlistOrder!,
-          );
-        }
+      if (tenant?.stripeSecretKey) {
+        const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+        const session = await this.stripeService.createCheckoutSession(tenant.stripeSecretKey, {
+          eventTitle: event.title,
+          price: event.price,
+          reservationId: reservation.id,
+          tenantId,
+          successUrl: `${frontendUrl}/liff/${tenantId}/events/${event.id}/done?status=reserved`,
+          cancelUrl: `${frontendUrl}/liff/${tenantId}/events/${event.id}/reserve`,
+        });
+        stripeCheckoutUrl = session.url ?? undefined;
+        await this.prisma.reservation.update({
+          where: { id: reservation.id },
+          data: { stripePaymentIntentId: session.id },
+        });
       }
     }
 
-    return { id: reservation.id, status, waitlistOrder };
+    // LINE通知
+    if (event.notifyOnReserve && status !== 'waiting_payment') {
+      const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+      const token = tenant?.lineChannelAccessToken ?? '';
+      if (status === 'reserved') {
+        await this.lineMessaging.sendReservationConfirm(
+          token, dto.lineUserId,
+          event.title, event.heldAt, event.location,
+          event.price, event.description,
+        );
+      } else {
+        await this.lineMessaging.sendWaitlistRegistered(
+          token, dto.lineUserId,
+          event.title, waitlistOrder!,
+        );
+      }
+    }
+
+    // アプリ内通知
+    if (event.notifyOnReserveApp && status !== 'waiting_payment') {
+      const body = status === 'reserved'
+        ? `${event.title}の予約が完了しました。\n日時：${new Date(event.heldAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}\n場所：${event.location}`
+        : `${event.title}はキャンセル待ち${waitlistOrder}番目に登録されました。`;
+      await this.prisma.notification.create({
+        data: { tenantId, memberId: member.id, title: '予約完了', body },
+      });
+    }
+
+    return { id: reservation.id, status, waitlistOrder, stripeCheckoutUrl };
+  }
+
+  // 自分の予約を確認（lineUserId で検索）
+  async getMyReservation(tenantId: string, eventId: string, lineUserId: string) {
+    const member = await this.prisma.member.findUnique({
+      where: { tenantId_lineUserId: { tenantId, lineUserId } },
+    });
+    if (!member) return null;
+
+    const reservation = await this.prisma.reservation.findFirst({
+      where: {
+        tenantId,
+        eventId,
+        memberId: member.id,
+        status: { in: ['reserved', 'waitlisted', 'waiting_payment'] },
+      },
+      orderBy: { reservedAt: 'desc' },
+    });
+    return reservation;
+  }
+
+  // ---- 繋がり / チャット ----
+
+  async getProfile(tenantId: string, lineUserId: string) {
+    const member = await this.prisma.member.findUnique({
+      where: { tenantId_lineUserId: { tenantId, lineUserId } },
+    });
+    if (!member) throw new NotFoundException('プロフィールが見つかりません。先にイベントに予約してください。');
+    return {
+      id: member.id,
+      name: member.name,
+      grade: member.grade,
+      gender: member.gender,
+      showEventsToConnections: member.showEventsToConnections,
+    };
+  }
+
+  async updateProfile(tenantId: string, lineUserId: string, data: { name: string; grade: string; gender: string }) {
+    const member = await this.prisma.member.findUnique({
+      where: { tenantId_lineUserId: { tenantId, lineUserId } },
+    });
+    if (!member) throw new NotFoundException('プロフィールが見つかりません');
+    const updated = await this.prisma.member.update({
+      where: { id: member.id },
+      data: { name: data.name, grade: data.grade, gender: data.gender },
+    });
+    return { id: updated.id, name: updated.name, grade: updated.grade, gender: updated.gender, showEventsToConnections: updated.showEventsToConnections };
+  }
+
+  async updateSettings(tenantId: string, lineUserId: string, showEventsToConnections: boolean) {
+    const member = await this.prisma.member.update({
+      where: { tenantId_lineUserId: { tenantId, lineUserId } },
+      data: { showEventsToConnections },
+    });
+    return { showEventsToConnections: member.showEventsToConnections };
+  }
+
+  async getMemberProfile(tenantId: string, memberId: string) {
+    const member = await this.prisma.member.findFirst({ where: { id: memberId, tenantId } });
+    if (!member) throw new NotFoundException('メンバーが見つかりません');
+    return { id: member.id, name: member.name, grade: member.grade, gender: member.gender };
+  }
+
+  async createConnection(tenantId: string, myLineUserId: string, targetMemberId: string) {
+    const me = await this.prisma.member.findUnique({
+      where: { tenantId_lineUserId: { tenantId, lineUserId: myLineUserId } },
+    });
+    if (!me) throw new NotFoundException('自分のプロフィールが見つかりません');
+    if (me.id === targetMemberId) throw new BadRequestException('自分自身と繋がることはできません');
+
+    const target = await this.prisma.member.findFirst({ where: { id: targetMemberId, tenantId } });
+    if (!target) throw new NotFoundException('相手が見つかりません');
+
+    const [m1, m2] = [me.id, targetMemberId].sort();
+    const existing = await this.prisma.connection.findUnique({
+      where: { member1Id_member2Id: { member1Id: m1, member2Id: m2 } },
+    });
+    if (existing) return { ...existing, alreadyConnected: true };
+
+    const conn = await this.prisma.connection.create({
+      data: { tenantId, member1Id: m1, member2Id: m2 },
+    });
+    return { ...conn, alreadyConnected: false };
+  }
+
+  async getConnections(tenantId: string, lineUserId: string) {
+    const me = await this.prisma.member.findUnique({
+      where: { tenantId_lineUserId: { tenantId, lineUserId } },
+    });
+    if (!me) return [];
+
+    const conns = await this.prisma.connection.findMany({
+      where: { tenantId, OR: [{ member1Id: me.id }, { member2Id: me.id }] },
+      include: {
+        member1: { select: { id: true, name: true, grade: true } },
+        member2: { select: { id: true, name: true, grade: true } },
+        messages: { orderBy: { createdAt: 'desc' }, take: 1 },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return conns.map((c) => {
+      const partner = c.member1Id === me.id ? c.member2 : c.member1;
+      const last = c.messages[0];
+      return {
+        id: c.id,
+        partner,
+        lastMessage: last ? { content: last.content, createdAt: last.createdAt } : null,
+        createdAt: c.createdAt,
+      };
+    });
+  }
+
+  async getMessages(tenantId: string, connectionId: string, lineUserId: string) {
+    const me = await this.prisma.member.findUnique({
+      where: { tenantId_lineUserId: { tenantId, lineUserId } },
+    });
+    if (!me) throw new NotFoundException('メンバーが見つかりません');
+
+    const conn = await this.prisma.connection.findFirst({
+      where: { id: connectionId, tenantId, OR: [{ member1Id: me.id }, { member2Id: me.id }] },
+      include: {
+        member1: { select: { id: true, name: true } },
+        member2: { select: { id: true, name: true } },
+      },
+    });
+    if (!conn) throw new NotFoundException('会話が見つかりません');
+
+    const partner = conn.member1Id === me.id ? conn.member2 : conn.member1;
+
+    const messages = await this.prisma.message.findMany({
+      where: { connectionId },
+      orderBy: { createdAt: 'asc' },
+      take: 100,
+    });
+
+    return {
+      partnerId: partner.id,
+      partnerName: partner.name,
+      myMemberId: me.id,
+      messages: messages.map((m) => ({
+        id: m.id,
+        content: m.content,
+        senderId: m.senderId,
+        createdAt: m.createdAt,
+      })),
+    };
+  }
+
+  async sendMessage(tenantId: string, connectionId: string, lineUserId: string, content: string) {
+    const me = await this.prisma.member.findUnique({
+      where: { tenantId_lineUserId: { tenantId, lineUserId } },
+    });
+    if (!me) throw new NotFoundException('メンバーが見つかりません');
+
+    const conn = await this.prisma.connection.findFirst({
+      where: { id: connectionId, tenantId, OR: [{ member1Id: me.id }, { member2Id: me.id }] },
+      include: {
+        member1: { select: { id: true, lineUserId: true } },
+        member2: { select: { id: true, lineUserId: true } },
+      },
+    });
+    if (!conn) throw new NotFoundException('会話が見つかりません');
+
+    const message = await this.prisma.message.create({
+      data: { connectionId, senderId: me.id, content },
+    });
+
+    // 相手にLINEプッシュ通知
+    const partner = conn.member1Id === me.id ? conn.member2 : conn.member1;
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (partner.lineUserId) {
+      await this.lineMessaging.sendTalkNotification(
+        tenant?.lineChannelAccessToken ?? '',
+        partner.lineUserId,
+        me.name ?? 'メンバー',
+        content,
+      );
+    }
+
+    return message;
   }
 
   // キャンセル（キャンセル待ちの自動繰り上げ込み）
@@ -184,6 +487,97 @@ export class LiffService {
       }
     }
 
+    // 主催者へのキャンセル通知
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (tenant?.lineChannelAccessToken && tenant.organizerLineUserId) {
+      await this.lineMessaging.sendCancelNotifyToOrganizer(
+        tenant.lineChannelAccessToken,
+        tenant.organizerLineUserId,
+        reservation.member.name ?? '（名前未登録）',
+        reservation.event.title,
+      );
+    }
+
     return { message: 'キャンセルしました' };
+  }
+
+  async getNotifications(tenantId: string, lineUserId: string) {
+    const member = await this.prisma.member.findUnique({
+      where: { tenantId_lineUserId: { tenantId, lineUserId } },
+    });
+    if (!member) return [];
+
+    return this.prisma.notification.findMany({
+      where: { memberId: member.id },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+  }
+
+  async markNotificationRead(tenantId: string, notificationId: string) {
+    return this.prisma.notification.updateMany({
+      where: { id: notificationId, tenantId },
+      data: { read: true },
+    });
+  }
+
+  async markAllNotificationsRead(tenantId: string, lineUserId: string) {
+    const member = await this.prisma.member.findUnique({
+      where: { tenantId_lineUserId: { tenantId, lineUserId } },
+    });
+    if (!member) return;
+    return this.prisma.notification.updateMany({
+      where: { memberId: member.id, read: false },
+      data: { read: true },
+    });
+  }
+
+  // 管理者↔メンバー トーク（メンバー側）
+  async getAdminMessages(tenantId: string, lineUserId: string) {
+    const member = await this.prisma.member.findUnique({
+      where: { tenantId_lineUserId: { tenantId, lineUserId } },
+    });
+    if (!member) return [];
+    // 管理者からのメッセージを既読にする
+    await this.prisma.adminMemberMessage.updateMany({
+      where: { memberId: member.id, tenantId, fromAdmin: true, read: false },
+      data: { read: true },
+    });
+    return this.prisma.adminMemberMessage.findMany({
+      where: { memberId: member.id, tenantId },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async sendToAdmin(tenantId: string, lineUserId: string, content: string) {
+    let member = await this.prisma.member.findUnique({
+      where: { tenantId_lineUserId: { tenantId, lineUserId } },
+    });
+    if (!member) {
+      member = await this.prisma.member.create({
+        data: { tenantId, lineUserId },
+      });
+    }
+    return this.prisma.adminMemberMessage.create({
+      data: { tenantId, memberId: member.id, content, fromAdmin: false },
+    });
+  }
+
+  // サポートメッセージ（ユーザー↔スーパーアドミン）
+  async getSupportMessages(lineUserId: string) {
+    await this.prisma.supportMessage.updateMany({
+      where: { lineUserId, fromUser: false, read: false },
+      data: { read: true },
+    });
+    return this.prisma.supportMessage.findMany({
+      where: { lineUserId },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async sendSupportMessage(lineUserId: string, tenantId: string, content: string) {
+    return this.prisma.supportMessage.create({
+      data: { lineUserId, tenantId, content, fromUser: true },
+    });
   }
 }

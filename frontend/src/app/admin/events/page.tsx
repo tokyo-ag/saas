@@ -5,6 +5,8 @@ import { api, formatDate } from '@/lib/api';
 import { EventStatusBadge } from '@/components/ui/StatusBadge';
 import type { Event } from '@/lib/api';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 type Tab = 'upcoming' | 'past' | 'draft';
 
 export default function EventsPage() {
@@ -14,7 +16,7 @@ export default function EventsPage() {
 
   const load = () => {
     setLoading(true);
-    api.events.list().then(setEvents).finally(() => setLoading(false));
+    api.events.list().then(setEvents).catch(console.error).finally(() => setLoading(false));
   };
 
   useEffect(() => { load(); }, []);
@@ -28,15 +30,19 @@ export default function EventsPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('このイベントを削除しますか？')) return;
-    await api.events.delete(id);
-    load();
+    try {
+      await api.events.delete(id);
+      load();
+    } catch {
+      alert('削除に失敗しました');
+    }
   };
 
   return (
     <div className="p-6 max-w-5xl">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">イベント管理</h1>
-        <Link href="/admin/events/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors">
+        <Link href="/admin/events/new" className="bg-[#06C755] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#05a847] transition-colors">
           ＋ 新規作成
         </Link>
       </div>
@@ -48,7 +54,7 @@ export default function EventsPage() {
             key={key}
             onClick={() => setTab(key)}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              tab === key ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+              tab === key ? 'border-[#06C755] text-[#06C755]' : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
             {label}
@@ -67,6 +73,9 @@ export default function EventsPage() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
+                    {event.iconUrl && (
+                      <img src={`${API_URL}${event.iconUrl}`} className="w-7 h-7 rounded-full object-cover shrink-0" alt="" />
+                    )}
                     <EventStatusBadge status={event.status} />
                     <span className="font-medium text-gray-900">{event.title}</span>
                   </div>
@@ -81,7 +90,7 @@ export default function EventsPage() {
                   </p>
                 </div>
                 <div className="flex gap-2 ml-4 shrink-0">
-                  <Link href={`/admin/events/${event.id}`} className="text-sm text-blue-600 hover:underline">詳細</Link>
+                  <Link href={`/admin/events/${event.id}`} className="text-sm text-[#06C755] hover:underline">詳細</Link>
                   <Link href={`/admin/events/${event.id}/edit`} className="text-sm text-gray-600 hover:underline">編集</Link>
                   <button onClick={() => handleDelete(event.id)} className="text-sm text-red-500 hover:underline">削除</button>
                 </div>

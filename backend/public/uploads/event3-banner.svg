@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="220">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4A90E2"/>
+      <stop offset="100%" stop-color="#2563a8"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="220" fill="url(#g)"/>
+  <circle cx="700" cy="-20" r="150" fill="rgba(255,255,255,0.07)"/>
+  <circle cx="80" cy="240" r="120" fill="rgba(255,255,255,0.05)"/>
+  <text x="60" y="95" font-family="'Hiragino Sans','Meiryo',Arial,sans-serif" font-size="42" fill="white" font-weight="bold">4月キックオフ交流会</text>
+  <text x="60" y="143" font-family="'Hiragino Sans','Meiryo',Arial,sans-serif" font-size="20" fill="rgba(255,255,255,0.85)">新年度最初の交流会。ご参加ありがとうございました！</text>
+  <text x="60" y="185" font-family="Arial,sans-serif" font-size="16" fill="rgba(255,255,255,0.65)">2026.04.20  新宿コワーキングスペース</text>
+</svg>

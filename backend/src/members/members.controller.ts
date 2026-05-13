@@ -1,34 +1,56 @@
-import { Controller, Get, Param, Query, Res } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Query, Body, Res } from '@nestjs/common';
 import type { Response } from 'express';
-import { ConfigService } from '@nestjs/config';
 import { MembersService } from './members.service';
+import { TenantId } from '../auth/tenant-id.decorator';
 
 @Controller('admin/members')
 export class MembersController {
-  constructor(
-    private readonly membersService: MembersService,
-    private readonly config: ConfigService,
-  ) {}
-
-  private get tenantId() {
-    return this.config.get<string>('TENANT_ID')!;
-  }
+  constructor(private readonly membersService: MembersService) {}
 
   @Get()
-  findAll(@Query('name') name?: string, @Query('grade') grade?: string, @Query('gender') gender?: string) {
-    return this.membersService.findAll(this.tenantId, { name, grade, gender });
+  findAll(
+    @TenantId() tenantId: string,
+    @Query('name') name?: string,
+    @Query('grade') grade?: string,
+    @Query('gender') gender?: string,
+  ) {
+    return this.membersService.findAll(tenantId, { name, grade, gender });
   }
 
   @Get('export')
-  async exportCsv(@Res() res: Response) {
-    const csv = await this.membersService.exportCsv(this.tenantId);
+  async exportCsv(@TenantId() tenantId: string, @Res() res: Response) {
+    const csv = await this.membersService.exportCsv(tenantId);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="members.csv"');
     res.send('﻿' + csv);
   }
 
   @Get(':memberId')
-  findOne(@Param('memberId') memberId: string) {
-    return this.membersService.findOne(this.tenantId, memberId);
+  findOne(@TenantId() tenantId: string, @Param('memberId') memberId: string) {
+    return this.membersService.findOne(tenantId, memberId);
+  }
+
+  @Patch(':memberId/block')
+  block(@TenantId() tenantId: string, @Param('memberId') memberId: string) {
+    return this.membersService.block(tenantId, memberId);
+  }
+
+  @Patch(':memberId/unblock')
+  unblock(@TenantId() tenantId: string, @Param('memberId') memberId: string) {
+    return this.membersService.unblock(tenantId, memberId);
+  }
+
+  @Get(':memberId/messages')
+  getMessages(@TenantId() tenantId: string, @Param('memberId') memberId: string) {
+    return this.membersService.getMessages(tenantId, memberId);
+  }
+
+  @Post(':memberId/messages')
+  sendMessage(
+    @TenantId() tenantId: string,
+    @Param('memberId') memberId: string,
+    @Body('content') content: string,
+  ) {
+    return this.membersService.sendMessage(tenantId, memberId, content);
   }
 }
