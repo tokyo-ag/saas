@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
-import { LiffService, CreateReservationDto } from './liff.service';
+import { LiffService, CreateReservationDto, SubmitReviewDto } from './liff.service';
 
 // /api/liff/:tenantId/... という URL で受け付ける
 @Controller('liff/:tenantId')
@@ -31,6 +31,32 @@ export class LiffController {
     @Query('lineUserId') lineUserId: string,
   ) {
     return this.liffService.getMyReservation(tenantId, eventId, lineUserId);
+  }
+
+  @Get('events/:eventId/reviews')
+  getPublishedReviews(
+    @Param('tenantId') tenantId: string,
+    @Param('eventId') eventId: string,
+  ) {
+    return this.liffService.getPublishedReviews(tenantId, eventId);
+  }
+
+  @Get('events/:eventId/my-review')
+  getMyReview(
+    @Param('tenantId') tenantId: string,
+    @Param('eventId') eventId: string,
+    @Query('lineUserId') lineUserId: string,
+  ) {
+    return this.liffService.getMyReview(tenantId, eventId, lineUserId);
+  }
+
+  @Post('events/:eventId/reviews')
+  submitReview(
+    @Param('tenantId') tenantId: string,
+    @Param('eventId') eventId: string,
+    @Body() dto: SubmitReviewDto,
+  ) {
+    return this.liffService.submitReview(tenantId, eventId, dto);
   }
 
   @Post('reservations')
@@ -141,7 +167,7 @@ export class LiffController {
     return this.liffService.sendToAdmin(tenantId, lineUserId, content);
   }
 
-  // サポート（ユーザー↔スーパーアドミン）
+  // サポート（ユーザー↔COMIU）
   @Get('support')
   getSupportMessages(
     @Param('tenantId') tenantId: string,

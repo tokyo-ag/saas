@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { apiFetch, Event } from '@/lib/api';
+import { api, Event } from '@/lib/api';
 import EventForm from '@/components/admin/EventForm';
 
 export default function EditEventPage() {
@@ -11,7 +11,7 @@ export default function EditEventPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiFetch<Event>(`/admin/events/${eventId}`)
+    api.events.get(eventId)
       .then(setEvent)
       .catch(console.error)
       .finally(() => setLoading(false));

@@ -86,6 +86,16 @@ export default function QrPage() {
       )}
       {!loading && (
         <div className="px-4 py-6 space-y-5">
+          {/* 使い方説明 */}
+          <div className="bg-[#06C755]/8 rounded-2xl px-4 py-4 space-y-2">
+            <p className="text-sm font-semibold text-[#047a35]">友達追加の使い方</p>
+            <div className="space-y-1.5 text-xs text-gray-600">
+              <p>① 相手に自分のQRコードを見せる</p>
+              <p>② または相手のQRをスキャンする</p>
+              <p>③ つながるとトークができるようになります</p>
+            </div>
+          </div>
+
           <button
             onClick={handleScan}
             disabled={scanning || !profile}

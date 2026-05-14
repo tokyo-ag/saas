@@ -1,6 +1,7 @@
 import { Controller, Post, Get, Body, Query, Req, Res, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { IsString, IsNotEmpty, IsEmail, MinLength } from 'class-validator';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { AdminGuard } from './admin.guard';
 
@@ -24,11 +25,13 @@ class LineCompleteDto {
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('register')
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto.email, dto.password, dto.orgName);
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto.email, dto.password);

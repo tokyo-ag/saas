@@ -71,6 +71,58 @@ export class MembersService {
     });
   }
 
+  async getMessageThreads(tenantId: string) {
+    const members = await this.prisma.member.findMany({
+      where: {
+        tenantId,
+        adminMessages: { some: {} },
+      },
+      include: {
+        adminMessages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+        _count: {
+          select: {
+            adminMessages: {
+              where: { fromAdmin: false, read: false },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return members
+      .map((member) => {
+        const lastMessage = member.adminMessages[0];
+        return {
+          member: {
+            id: member.id,
+            name: member.name,
+            grade: member.grade,
+            gender: member.gender,
+            lineUserId: member.lineUserId,
+          },
+          lastMessage: lastMessage
+            ? {
+                id: lastMessage.id,
+                content: lastMessage.content,
+                fromAdmin: lastMessage.fromAdmin,
+                read: lastMessage.read,
+                createdAt: lastMessage.createdAt,
+              }
+            : null,
+          unreadCount: member._count.adminMessages,
+        };
+      })
+      .sort((a, b) => {
+        const aTime = a.lastMessage ? new Date(a.lastMessage.createdAt).getTime() : 0;
+        const bTime = b.lastMessage ? new Date(b.lastMessage.createdAt).getTime() : 0;
+        return bTime - aTime;
+      });
+  }
+
   async sendMessage(tenantId: string, memberId: string, content: string) {
     const member = await this.prisma.member.findFirst({ where: { id: memberId, tenantId } });
     if (!member) throw new NotFoundException('Member not found');

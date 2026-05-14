@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { api, apiFetch, formatDate, LiffEvent, LiffReservation } from '@/lib/api';
+import { api, API_URL, formatDate, LiffEvent, LiffReservation } from '@/lib/api';
 import { initLiff, getLiffUserId, liff } from '@/lib/liff';
+import { FriendInviteCard } from '@/components/liff/FriendInviteCard';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 const STATUS_LABEL: Record<string, string> = {
   reserved: '予約済み',
@@ -63,19 +63,27 @@ export default function LiffEventDetailPage() {
   const router = useRouter();
   const [event, setEvent] = useState<LiffEvent | null>(null);
   const [myReservation, setMyReservation] = useState<LiffReservation | null>(null);
+  const [lineUserId, setLineUserId] = useState('');
+  const [myReview, setMyReview] = useState<{ content: string; isPublished?: boolean } | null>(null);
+  const [reviewContent, setReviewContent] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     async function load() {
-      const evt = await apiFetch<LiffEvent>(`/liff/${tenantId}/events/${eventId}`);
+      const evt = await api.liff.event(tenantId, eventId);
       setEvent(evt);
       const liffOk = await initLiff();
       if (liffOk && liff.isLoggedIn()) {
         const uid = await getLiffUserId();
         if (uid) {
+          setLineUserId(uid);
           const res = await api.liff.myReservation(tenantId, eventId, uid);
           setMyReservation(res);
+          const review = await api.liff.myReview(tenantId, eventId, uid).catch(() => null);
+          setMyReview(review);
+          if (review?.content) setReviewContent(review.content);
         }
       }
     }
@@ -93,6 +101,22 @@ export default function LiffEventDetailPage() {
       alert('キャンセルに失敗しました');
     } finally {
       setCancelling(false);
+    }
+  }
+
+  async function handleSubmitReview(e: React.FormEvent) {
+    e.preventDefault();
+    const content = reviewContent.trim();
+    if (!lineUserId || content.length < 5 || submittingReview) return;
+    setSubmittingReview(true);
+    try {
+      const review = await api.liff.submitReview(tenantId, eventId, lineUserId, content);
+      setMyReview(review);
+      alert('感想を送信しました。掲載前に主催者が確認します。');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '感想の送信に失敗しました');
+    } finally {
+      setSubmittingReview(false);
     }
   }
 
@@ -126,6 +150,9 @@ export default function LiffEventDetailPage() {
   const isFull = event.capacity != null && event.reservedCount >= event.capacity;
   const isClosed = event.status === 'closed';
   const remaining = event.capacity != null ? event.capacity - event.reservedCount : null;
+  const isPastEvent = new Date(event.heldAt).getTime() < Date.now();
+  const canReview = !!myReservation && ['reserved', 'attended'].includes(myReservation.status) && isPastEvent;
+  const reviews = event.reviews ?? [];
 
   return (
     <div className="min-h-screen bg-white pb-32">
@@ -207,6 +234,72 @@ export default function LiffEventDetailPage() {
           </InfoRow>
         )}
       </div>
+
+      {myReservation && (
+        <div className="px-4 mt-5">
+          <FriendInviteCard
+            tenantId={tenantId}
+            eventId={eventId}
+            title={event.title}
+            heldAt={event.heldAt}
+            location={event.location}
+          />
+        </div>
+      )}
+
+      {(reviews.length > 0 || canReview) && (
+        <section className="px-4 mt-5 space-y-3">
+          <div>
+            <h2 className="text-sm font-bold text-gray-900">参加者の声</h2>
+            <p className="text-xs text-gray-400 mt-0.5">初めて参加する人の参考になる一言を掲載しています</p>
+          </div>
+
+          {reviews.length > 0 && (
+            <div className="space-y-2">
+              {reviews.map((review) => (
+                <article key={review.id} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{review.content}</p>
+                  <p className="mt-2 text-[11px] text-gray-400">
+                    {review.memberName ?? '参加者'}{review.memberGrade ? ` / ${review.memberGrade}` : ''}
+                  </p>
+                </article>
+              ))}
+            </div>
+          )}
+
+          {canReview && (
+            <form onSubmit={handleSubmitReview} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm space-y-3">
+              <div>
+                <p className="text-sm font-bold text-gray-900">感想を書く</p>
+                <p className="text-xs text-gray-400 mt-0.5">掲載する場合は主催者が確認します</p>
+              </div>
+              <textarea
+                value={reviewContent}
+                onChange={(e) => setReviewContent(e.target.value)}
+                maxLength={300}
+                rows={4}
+                placeholder="例）一人参加でしたが、20代が多くて話しやすかったです。初心者でも楽しめました。"
+                className="w-full resize-none rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+              />
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[11px] text-gray-400">{reviewContent.trim().length}/300</span>
+                <button
+                  type="submit"
+                  disabled={reviewContent.trim().length < 5 || submittingReview}
+                  className="rounded-xl bg-[#06C755] px-4 py-2 text-sm font-bold text-white disabled:opacity-40 active:bg-[#05a847]"
+                >
+                  {submittingReview ? '送信中...' : myReview ? '更新する' : '送信する'}
+                </button>
+              </div>
+              {myReview && (
+                <p className="text-[11px] text-gray-400">
+                  {myReview.isPublished ? 'この感想は公開中です。更新すると再確認待ちになります。' : '送信済みです。主催者の確認後に公開されます。'}
+                </p>
+              )}
+            </form>
+          )}
+        </section>
+      )}
 
       {/* bottom action bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-4" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>

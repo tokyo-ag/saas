@@ -43,3 +43,5 @@ export function EventStatusBadge({ status }: { status: EventStatus }) {
     </span>
   );
 }
+
+export { EventStatusBadge as EventBadge };

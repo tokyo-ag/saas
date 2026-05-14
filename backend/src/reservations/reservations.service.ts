@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LineMessagingService } from '../line-messaging/line-messaging.service';
-
-export type ReservationStatusType = 'reserved' | 'attended' | 'cancelled' | 'waitlisted' | 'waiting_payment';
 
 @Injectable()
 export class ReservationsService {
@@ -11,7 +10,7 @@ export class ReservationsService {
     private lineMessaging: LineMessagingService,
   ) {}
 
-  async updateStatus(tenantId: string, id: string, status: ReservationStatusType) {
+  async updateStatus(tenantId: string, id: string, status: ReservationStatus) {
     const reservation = await this.prisma.reservation.findFirst({
       where: { id, tenantId },
       include: { member: true, event: true },
@@ -24,7 +23,7 @@ export class ReservationsService {
       include: { member: true, event: true },
     });
 
-    if (status === 'cancelled') {
+    if (status === ReservationStatus.cancelled) {
       await this.promoteWaitlist(tenantId, reservation.eventId);
 
       const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
@@ -63,7 +62,7 @@ export class ReservationsService {
 
     await this.prisma.reservation.update({
       where: { id: nextWaitlisted.id },
-      data: { status: 'reserved', waitlistOrder: null },
+      data: { status: ReservationStatus.reserved, waitlistOrder: null },
     });
 
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });

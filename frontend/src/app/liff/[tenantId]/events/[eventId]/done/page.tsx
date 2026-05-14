@@ -2,8 +2,9 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
-import { apiFetch, formatDate, LiffEvent } from '@/lib/api';
+import { api, formatDate, LiffEvent } from '@/lib/api';
 import { initLiff, closeLiff } from '@/lib/liff';
+import { FriendInviteCard } from '@/components/liff/FriendInviteCard';
 
 function DonePageInner() {
   const { tenantId, eventId } = useParams<{ tenantId: string; eventId: string }>();
@@ -17,7 +18,7 @@ function DonePageInner() {
 
   useEffect(() => {
     initLiff().then((ok) => setInLiff(ok));
-    apiFetch<LiffEvent>(`/liff/${tenantId}/events/${eventId}`).then(setEvent).catch(console.error);
+    api.liff.event(tenantId, eventId).then(setEvent).catch(console.error);
   }, [tenantId, eventId]);
 
   const isWaitlist = status === 'waitlisted';
@@ -37,10 +38,19 @@ function DonePageInner() {
       {!isWaitlist && <p className="text-sm text-gray-500 mb-6">予約確認メッセージをLINEで送りました</p>}
 
       {event && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 w-full max-w-sm mt-2 mb-8 text-left space-y-2">
-          <p className="font-semibold text-gray-900 text-sm">{event.title}</p>
-          <p className="text-xs text-gray-500">📅 {formatDate(event.heldAt)}</p>
-          <p className="text-xs text-gray-500">📍 {event.location}</p>
+        <div className="w-full max-w-sm mt-2 mb-8 space-y-3">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-left space-y-2">
+            <p className="font-semibold text-gray-900 text-sm">{event.title}</p>
+            <p className="text-xs text-gray-500">📅 {formatDate(event.heldAt)}</p>
+            <p className="text-xs text-gray-500">📍 {event.location}</p>
+          </div>
+          <FriendInviteCard
+            tenantId={tenantId}
+            eventId={eventId}
+            title={event.title}
+            heldAt={event.heldAt}
+            location={event.location}
+          />
         </div>
       )}
 

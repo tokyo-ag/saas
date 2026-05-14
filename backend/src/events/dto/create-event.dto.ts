@@ -5,6 +5,7 @@ import {
   IsInt,
   IsBoolean,
   IsEnum,
+  IsArray,
   Min,
   MaxLength,
 } from 'class-validator';
@@ -27,6 +28,10 @@ export class CreateEventDto {
 
   @IsDateString()
   heldAt: string;
+
+  @IsOptional()
+  @IsDateString()
+  endAt?: string | null;
 
   @IsString()
   @MaxLength(200)
@@ -111,4 +116,14 @@ export class CreateEventDto {
   @IsOptional()
   @IsString()
   iconUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  category?: string | null;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
 }

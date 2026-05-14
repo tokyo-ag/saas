@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import Stripe from 'stripe';
 import { IsString, IsOptional } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -13,21 +14,29 @@ export class UpdateTenantDto {
   @IsOptional() @IsString() stripePublishableKey?: string;
   @IsOptional() @IsString() stripeSecretKey?: string;
   @IsOptional() @IsString() stripeWebhookSecret?: string;
+  @IsOptional() @IsString() liffEventView?: string;
 }
 
 @Injectable()
 export class TenantService {
   constructor(private prisma: PrismaService) {}
 
-  async findOne(tenantId: string) {
+  private async findRaw(tenantId: string) {
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
     if (!tenant) throw new NotFoundException('Tenant not found');
     return tenant;
   }
 
+  async findOne(tenantId: string) {
+    const tenant = await this.findRaw(tenantId);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { lineChannelSecret, lineChannelAccessToken, stripeSecretKey, stripeWebhookSecret, ...safe } = tenant;
+    return safe;
+  }
+
   async update(tenantId: string, dto: UpdateTenantDto) {
     await this.findOne(tenantId);
-    return this.prisma.tenant.update({
+    const updated = await this.prisma.tenant.update({
       where: { id: tenantId },
       data: {
         ...(dto.name !== undefined && { name: dto.name }),
@@ -40,8 +49,12 @@ export class TenantService {
         ...(dto.stripePublishableKey !== undefined && { stripePublishableKey: dto.stripePublishableKey || null }),
         ...(dto.stripeSecretKey !== undefined && { stripeSecretKey: dto.stripeSecretKey || null }),
         ...(dto.stripeWebhookSecret !== undefined && { stripeWebhookSecret: dto.stripeWebhookSecret || null }),
+        ...(dto.liffEventView !== undefined && { liffEventView: dto.liffEventView }),
       },
     });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { lineChannelSecret, lineChannelAccessToken, stripeSecretKey, stripeWebhookSecret, ...safe } = updated;
+    return safe;
   }
 
   async getMemberCount(tenantId: string) {
@@ -150,7 +163,7 @@ export class TenantService {
   }
 
   async syncLineProfile(tenantId: string) {
-    const tenant = await this.findOne(tenantId);
+    const tenant = await this.findRaw(tenantId);
     if (!tenant.lineChannelAccessToken) {
       throw new BadRequestException('LINE Channel Access Tokenが設定されていません');
     }
@@ -170,5 +183,63 @@ export class TenantService {
         linePictureUrl: data.pictureUrl ?? null,
       },
     });
+  }
+
+  private supportThreadId(tenantId: string) {
+    return `tenant:${tenantId}`;
+  }
+
+  async getSupportMessages(tenantId: string) {
+    await this.findOne(tenantId);
+    const lineUserId = this.supportThreadId(tenantId);
+    await this.prisma.supportMessage.updateMany({
+      where: { lineUserId, fromUser: false, read: false },
+      data: { read: true },
+    });
+    return this.prisma.supportMessage.findMany({
+      where: { lineUserId },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async sendSupportMessage(tenantId: string, content: string) {
+    await this.findOne(tenantId);
+    const trimmed = content?.trim();
+    if (!trimmed) throw new BadRequestException('メッセージを入力してください');
+    return this.prisma.supportMessage.create({
+      data: {
+        tenantId,
+        lineUserId: this.supportThreadId(tenantId),
+        content: trimmed,
+        fromUser: true,
+      },
+    });
+  }
+
+  async createBillingCheckout(tenantId: string, plan: 'standard' | 'pro') {
+    const secretKey = process.env.STRIPE_BILLING_SECRET_KEY;
+    if (!secretKey) throw new InternalServerErrorException('Stripe Billing not configured');
+
+    const priceId = plan === 'pro'
+      ? process.env.STRIPE_PRO_PRICE_ID
+      : process.env.STRIPE_STANDARD_PRICE_ID;
+    if (!priceId) throw new InternalServerErrorException(`Price ID for plan "${plan}" not configured`);
+
+    const tenant = await this.findOne(tenantId);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+    const stripe = new Stripe(secretKey, { apiVersion: '2026-04-22.dahlia' });
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      line_items: [{ price: priceId, quantity: 1 }],
+      customer: tenant.stripeCustomerId ?? undefined,
+      success_url: `${frontendUrl}/admin/settings/plan?success=true`,
+      cancel_url: `${frontendUrl}/admin/settings/plan`,
+      metadata: { tenantId, plan },
+      subscription_data: { metadata: { tenantId, plan } },
+    });
+
+    return { url: session.url };
   }
 }

@@ -4,9 +4,34 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, Tenant, TenantInput } from '@/lib/api';
 
-const BASE = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001') + '/api';
+const BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api`;
 
 type Step = 1 | 2 | 3 | 4;
+
+const tabs = [
+  { label: '団体情報', href: '/admin/settings' },
+  { label: 'LINE連携', href: '/admin/settings/line', active: true },
+  { label: 'Stripe決済', href: '/admin/settings/stripe' },
+  { label: 'プラン', href: '/admin/settings/plan' },
+];
+
+function SettingsTabs() {
+  return (
+    <nav className="-mx-4 mb-6 flex gap-1 overflow-x-auto border-b border-gray-200 px-4 md:mx-0 md:px-0">
+      {tabs.map((tab) =>
+        tab.active ? (
+          <span key={tab.href} className="whitespace-nowrap border-b-2 border-[#06C755] px-4 py-2 text-sm font-medium text-[#06C755]">
+            {tab.label}
+          </span>
+        ) : (
+          <Link key={tab.href} href={tab.href} className="whitespace-nowrap border-b-2 border-transparent px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700">
+            {tab.label}
+          </Link>
+        ),
+      )}
+    </nav>
+  );
+}
 
 export default function LineSettingsPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
@@ -23,22 +48,21 @@ export default function LineSettingsPage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    api.tenant.get().then((t) => {
-      setTenant(t);
+    api.tenant.get().then((tenantData) => {
+      setTenant(tenantData);
       setForm({
-        lineChannelId: t.lineChannelId ?? '',
-        lineChannelSecret: t.lineChannelSecret ?? '',
-        lineChannelAccessToken: t.lineChannelAccessToken ?? '',
-        liffId: t.liffId ?? '',
+        lineChannelId: tenantData.lineChannelId ?? '',
+        lineChannelSecret: tenantData.lineChannelSecret ?? '',
+        lineChannelAccessToken: tenantData.lineChannelAccessToken ?? '',
+        liffId: tenantData.liffId ?? '',
       });
-      setOrganizerLineUserId(t.organizerLineUserId ?? '');
-      if (t.lineChannelAccessToken) setStep(3);
-      if (t.liffId) setStep(4);
+      setOrganizerLineUserId(tenantData.organizerLineUserId ?? '');
+      if (tenantData.lineChannelAccessToken) setStep(3);
+      if (tenantData.liffId) setStep(4);
     });
   }, []);
 
-  const set = (key: keyof typeof form, value: string) =>
-    setForm((f) => ({ ...f, [key]: value }));
+  const set = (key: keyof typeof form, value: string) => setForm((prev) => ({ ...prev, [key]: value }));
 
   async function save(data: Partial<TenantInput>) {
     setSaving(true);
@@ -58,157 +82,161 @@ export default function LineSettingsPage() {
   }
 
   const webhookUrl = `${BASE}/webhook/${tenant?.id ?? ''}`;
-  const liffEndpoint = typeof window !== 'undefined'
-    ? `${window.location.origin}/liff/${tenant?.id ?? ''}`
-    : '';
+  const liffEndpoint = typeof window !== 'undefined' ? `${window.location.origin}/liff/${tenant?.id ?? ''}` : '';
 
-  if (!tenant) return <div className="p-6 text-gray-400">読み込み中...</div>;
+  if (!tenant) {
+    return <div className="px-4 py-12 text-center text-sm text-gray-400">読み込み中...</div>;
+  }
 
   return (
-    <div className="p-6 max-w-2xl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">設定</h1>
+    <div className="px-4 py-4 md:px-6 md:py-6">
+      <div className="mx-auto max-w-2xl">
+        <h1 className="mb-5 text-2xl font-bold text-gray-900">設定</h1>
+        <SettingsTabs />
 
-      <div className="flex gap-0 mb-8 border-b border-gray-200 overflow-x-auto">
-        <Link href="/admin/settings" className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent whitespace-nowrap">団体情報</Link>
-        <span className="px-4 py-2 text-sm font-medium border-b-2 border-[#06C755] text-[#06C755] whitespace-nowrap">LINE連携</span>
-        <Link href="/admin/settings/stripe" className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent whitespace-nowrap">Stripe決済</Link>
-        <Link href="/admin/settings/plan" className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent whitespace-nowrap">プラン</Link>
-      </div>
+        {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+        {saved && <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">保存しました</div>}
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">{error}</div>}
-      {saved && <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm mb-4">保存しました</div>}
+        <div className="space-y-4">
+          <StepCard step={1} currentStep={step} title="LINE公式アカウントを用意する">
+            <p className="mb-4 text-sm leading-relaxed text-gray-600">
+              まだLINE公式アカウントがない場合は作成してください。作成済みなら次の手順へ進めます。
+            </p>
+            <button onClick={() => setStep(2)} className="w-full rounded-lg bg-[#06C755] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] sm:w-auto">
+              作成済み・次へ
+            </button>
+          </StepCard>
 
-      <div className="space-y-4">
-        {/* STEP 1 */}
-        <StepCard step={1} currentStep={step} title="LINE公式アカウントを作る">
-          <p className="text-sm text-gray-600 mb-4">
-            まだLINE公式アカウントがない場合は、LINEのビジネスIDページから作成してください。
-          </p>
-          <button
-            onClick={() => setStep(2)}
-            className="bg-[#06C755] text-white px-5 py-2 rounded-lg text-sm hover:bg-[#05a847]"
-          >
-            作成済み・次へ
-          </button>
-        </StepCard>
-
-        {/* STEP 2 */}
-        <StepCard step={2} currentStep={step} title="Messaging APIチャネルの情報を入力">
-          <p className="text-sm text-gray-600 mb-4">
-            LINE Developersのチャネル設定から Channel ID・Channel Secret・Access Token をコピーして貼り付けてください。
-          </p>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Channel ID</label>
-              <input value={form.lineChannelId} onChange={(e) => set('lineChannelId', e.target.value)}
-                placeholder="1234567890"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+          <StepCard step={2} currentStep={step} title="Messaging APIの情報を入力する">
+            <p className="mb-4 text-sm leading-relaxed text-gray-600">
+              LINE Developers のチャネル設定から、Channel ID、Channel Secret、Access Token をコピーして貼り付けてください。
+            </p>
+            <div className="space-y-3">
+              <Field label="Channel ID" value={form.lineChannelId ?? ''} onChange={(value) => set('lineChannelId', value)} placeholder="1234567890" />
+              <Field label="Channel Secret" type="password" value={form.lineChannelSecret ?? ''} onChange={(value) => set('lineChannelSecret', value)} placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" />
+              <Field label="Channel Access Token" type="password" value={form.lineChannelAccessToken ?? ''} onChange={(value) => set('lineChannelAccessToken', value)} placeholder="長い文字列" />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Channel Secret</label>
-              <input value={form.lineChannelSecret} onChange={(e) => set('lineChannelSecret', e.target.value)}
-                type="password" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+            <button
+              disabled={saving || !form.lineChannelId || !form.lineChannelSecret || !form.lineChannelAccessToken}
+              onClick={async () => {
+                const ok = await save({
+                  lineChannelId: form.lineChannelId,
+                  lineChannelSecret: form.lineChannelSecret,
+                  lineChannelAccessToken: form.lineChannelAccessToken,
+                });
+                if (ok) setStep(3);
+              }}
+              className="mt-4 w-full rounded-lg bg-[#06C755] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] disabled:opacity-50 sm:w-auto"
+            >
+              {saving ? '保存中...' : '保存して次へ'}
+            </button>
+          </StepCard>
+
+          <StepCard step={3} currentStep={step} title="LIFFアプリを追加する">
+            <p className="mb-3 text-sm leading-relaxed text-gray-600">
+              LINE Developers でLIFFアプリを追加し、エンドポイントURLに以下を設定してください。
+            </p>
+            <CopyBox value={liffEndpoint} />
+            <div className="mt-4">
+              <Field label="LIFF ID" value={form.liffId ?? ''} onChange={(value) => set('liffId', value)} placeholder="1234567890-xxxxxxxx" />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Channel Access Token</label>
-              <input value={form.lineChannelAccessToken} onChange={(e) => set('lineChannelAccessToken', e.target.value)}
-                type="password" placeholder="長い文字列"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+            <button
+              disabled={saving || !form.liffId}
+              onClick={async () => {
+                const ok = await save({ liffId: form.liffId });
+                if (ok) setStep(4);
+              }}
+              className="mt-4 w-full rounded-lg bg-[#06C755] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] disabled:opacity-50 sm:w-auto"
+            >
+              {saving ? '保存中...' : '保存して次へ'}
+            </button>
+          </StepCard>
+
+          <StepCard step={4} currentStep={step} title="Webhook URLを設定する">
+            <p className="mb-3 text-sm leading-relaxed text-gray-600">
+              LINE Developers の Messaging API 設定で、Webhook URLに以下を設定して検証してください。
+            </p>
+            <CopyBox value={webhookUrl} />
+            <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+              設定完了です。LINE公式アカウントを友だち追加するとWebhookが届きます。
             </div>
-          </div>
-          <button
-            disabled={saving || !form.lineChannelId || !form.lineChannelSecret || !form.lineChannelAccessToken}
-            onClick={async () => {
-              const ok = await save({ lineChannelId: form.lineChannelId, lineChannelSecret: form.lineChannelSecret, lineChannelAccessToken: form.lineChannelAccessToken });
-              if (ok) setStep(3);
-            }}
-            className="mt-4 bg-[#06C755] text-white px-5 py-2 rounded-lg text-sm hover:bg-[#05a847] disabled:opacity-50"
-          >
-            {saving ? '保存中...' : '保存して次へ'}
-          </button>
-        </StepCard>
+          </StepCard>
 
-        {/* STEP 3 */}
-        <StepCard step={3} currentStep={step} title="LIFFアプリを追加する">
-          <p className="text-sm text-gray-600 mb-3">
-            LINE DevelopersでLIFFアプリを追加し、エンドポイントURLに以下を設定してください。
-          </p>
-          <div className="bg-gray-100 rounded-lg px-3 py-2 text-sm font-mono text-gray-800 mb-4 flex items-center justify-between">
-            <span className="truncate">{liffEndpoint}</span>
-            <button onClick={() => navigator.clipboard.writeText(liffEndpoint)}
-              className="ml-2 text-xs text-[#06C755] hover:underline shrink-0">コピー</button>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">LIFF ID</label>
-            <input value={form.liffId} onChange={(e) => set('liffId', e.target.value)}
-              placeholder="1234567890-xxxxxxxx"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-          </div>
-          <button
-            disabled={saving || !form.liffId}
-            onClick={async () => {
-              const ok = await save({ liffId: form.liffId });
-              if (ok) setStep(4);
-            }}
-            className="mt-4 bg-[#06C755] text-white px-5 py-2 rounded-lg text-sm hover:bg-[#05a847] disabled:opacity-50"
-          >
-            {saving ? '保存中...' : '保存して次へ'}
-          </button>
-        </StepCard>
-
-        {/* STEP 4 */}
-        <StepCard step={4} currentStep={step} title="WebhookURLを設定する">
-          <p className="text-sm text-gray-600 mb-3">
-            LINE DevelopersのMessaging APIチャネルで、以下のURLをWebhook URLに設定し「検証」をクリックしてください。
-          </p>
-          <div className="bg-gray-100 rounded-lg px-3 py-2 text-sm font-mono text-gray-800 mb-4 flex items-center justify-between">
-            <span className="truncate">{webhookUrl}</span>
-            <button onClick={() => navigator.clipboard.writeText(webhookUrl)}
-              className="ml-2 text-xs text-[#06C755] hover:underline shrink-0">コピー</button>
-          </div>
-          <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-800">
-            設定完了です！LINE公式アカウントを友だち追加するとWebhookが届きます。
-          </div>
-        </StepCard>
-
-        {/* 主催者LINE ID */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h3 className="font-semibold text-gray-900 text-sm mb-1">主催者のLINE ユーザーID</h3>
-          <p className="text-xs text-gray-500 mb-3">キャンセル通知など、管理者向けメッセージの送信先です。LINE Developersの「Messaging API」→「Webhook」でテスト送信すると確認できます。</p>
-          <input
-            value={organizerLineUserId}
-            onChange={(e) => setOrganizerLineUserId(e.target.value)}
-            placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755] mb-3"
-          />
-          <button
-            disabled={saving}
-            onClick={() => save({ organizerLineUserId: organizerLineUserId || undefined })}
-            className="bg-[#06C755] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#05a847] disabled:opacity-50"
-          >
-            {saving ? '保存中...' : '保存'}
-          </button>
+          <section className="rounded-xl border border-gray-200 bg-white p-4 md:p-5">
+            <h2 className="mb-1 text-sm font-semibold text-gray-900">主催者のLINEユーザーID</h2>
+            <p className="mb-3 text-xs leading-relaxed text-gray-500">
+              キャンセル通知など、管理者向けメッセージの送信先です。LINE Developers のWebhookログから確認できます。
+            </p>
+            <input
+              value={organizerLineUserId}
+              onChange={(e) => setOrganizerLineUserId(e.target.value)}
+              placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+              className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+            />
+            <button
+              disabled={saving}
+              onClick={() => save({ organizerLineUserId: organizerLineUserId || undefined })}
+              className="w-full rounded-lg bg-[#06C755] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] disabled:opacity-50 sm:w-auto"
+            >
+              {saving ? '保存中...' : '保存'}
+            </button>
+          </section>
         </div>
       </div>
     </div>
   );
 }
 
+function Field({ label, value, onChange, placeholder, type = 'text' }: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  type?: string;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-medium text-gray-600">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+      />
+    </div>
+  );
+}
+
+function CopyBox({ value }: { value: string }) {
+  return (
+    <div className="rounded-lg bg-gray-100 px-3 py-2">
+      <div className="break-all font-mono text-xs text-gray-800 sm:text-sm">{value}</div>
+      <button type="button" onClick={() => navigator.clipboard.writeText(value)} className="mt-2 text-xs font-medium text-[#06C755] hover:underline">
+        コピー
+      </button>
+    </div>
+  );
+}
+
 function StepCard({ step, currentStep, title, children }: {
-  step: Step; currentStep: Step; title: string; children: React.ReactNode;
+  step: Step;
+  currentStep: Step;
+  title: string;
+  children: React.ReactNode;
 }) {
   const done = currentStep > step;
   const active = currentStep === step;
+
   return (
-    <div className={`bg-white rounded-xl border p-5 transition-all ${active ? 'border-[#06C755]/50 shadow-sm' : 'border-gray-200 opacity-60'}`}>
-      <div className="flex items-center gap-3 mb-3">
-        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${done ? 'bg-green-500 text-white' : active ? 'bg-[#06C755] text-white' : 'bg-gray-200 text-gray-500'}`}>
-          {done ? '✓' : step}
+    <section className={`rounded-xl border bg-white p-4 transition-all md:p-5 ${active ? 'border-[#06C755]/50 shadow-sm' : 'border-gray-200 opacity-70'}`}>
+      <div className="mb-3 flex items-center gap-3">
+        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${done ? 'bg-green-500 text-white' : active ? 'bg-[#06C755] text-white' : 'bg-gray-200 text-gray-500'}`}>
+          {done ? '済' : step}
         </span>
-        <h3 className="font-semibold text-gray-900 text-sm">{title}</h3>
+        <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
       </div>
       {active && children}
-    </div>
+    </section>
   );
 }

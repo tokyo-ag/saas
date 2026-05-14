@@ -1,6 +1,8 @@
-import { Controller, Get, Post, Put, Delete, Patch, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Patch, Body, Param, UseGuards } from '@nestjs/common';
+import { SuperadminGuard } from '../auth/superadmin.guard';
 import { SuperadminService, CreateTenantDto, UpdateTenantDto, BanUserDto } from './superadmin.service';
 
+@UseGuards(SuperadminGuard)
 @Controller('superadmin')
 export class SuperadminController {
   constructor(private readonly service: SuperadminService) {}

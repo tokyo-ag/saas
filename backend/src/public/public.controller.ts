@@ -6,7 +6,11 @@ export class PublicController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Get('events')
-  async getEvents(@Query('anonymousId') anonymousId?: string) {
+  async getEvents(
+    @Query('anonymousId') anonymousId?: string,
+    @Query('category') category?: string,
+    @Query('tag') tag?: string,
+  ) {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -15,6 +19,8 @@ export class PublicController {
         status: 'open',
         heldAt: { gte: new Date() },
         tenant: { deletedAt: null },
+        ...(category ? { category } : {}),
+        ...(tag ? { tags: { has: tag } } : {}),
       },
       orderBy: { heldAt: 'asc' },
       include: {
@@ -53,6 +59,8 @@ export class PublicController {
       reservedCount: e.reservations.length,
       iconUrl: e.iconUrl,
       imageUrl: e.imageUrl,
+      category: e.category,
+      tags: e.tags,
       likeCount: e._count.likes,
       monthlyLikeCount: e.likes.length,
       userLiked: userLikedIds.has(e.id),

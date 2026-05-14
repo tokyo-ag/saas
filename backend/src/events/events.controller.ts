@@ -1,11 +1,13 @@
 import {
-  Controller, Get, Post, Put, Delete, Param, Body, Res, HttpCode, HttpStatus,
+  Controller, Get, Post, Put, Patch, Delete, Param, Body, Res, HttpCode, HttpStatus, UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { AdminGuard } from '../auth/admin.guard';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { TenantId } from '../auth/tenant-id.decorator';
 
+@UseGuards(AdminGuard)
 @Controller('admin/events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
@@ -41,9 +43,42 @@ export class EventsController {
     return this.eventsService.getReservations(tenantId, eventId);
   }
 
+  @Get(':eventId/reviews')
+  getReviews(@TenantId() tenantId: string, @Param('eventId') eventId: string) {
+    return this.eventsService.getReviews(tenantId, eventId);
+  }
+
+  @Patch(':eventId/reviews/:reviewId')
+  updateReview(
+    @TenantId() tenantId: string,
+    @Param('eventId') eventId: string,
+    @Param('reviewId') reviewId: string,
+    @Body() body: { isPublished: boolean },
+  ) {
+    return this.eventsService.updateReview(tenantId, eventId, reviewId, body.isPublished);
+  }
+
   @Post(':eventId/remind')
   sendRemind(@TenantId() tenantId: string, @Param('eventId') eventId: string) {
     return this.eventsService.sendRemind(tenantId, eventId);
+  }
+
+  @Post(':eventId/checkin')
+  checkin(
+    @TenantId() tenantId: string,
+    @Param('eventId') eventId: string,
+    @Body() body: { memberId: string },
+  ) {
+    return this.eventsService.checkin(tenantId, eventId, body.memberId);
+  }
+
+  @Post(':eventId/message')
+  sendMessage(
+    @TenantId() tenantId: string,
+    @Param('eventId') eventId: string,
+    @Body() body: { content: string; sendLine: boolean; sendApp: boolean },
+  ) {
+    return this.eventsService.sendMessage(tenantId, eventId, body.content, body.sendLine, body.sendApp);
   }
 
   @Get(':eventId/export')

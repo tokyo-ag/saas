@@ -1,5 +1,5 @@
-// バックエンドのベースURL（開発中はポート3001）
-const BASE = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001') + '/api';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const BASE = API_URL + '/api';
 
 // テナントID（Phase 1は固定値）
 export const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID ?? 'tenant-001';
@@ -7,7 +7,9 @@ export const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID ?? 'tenant-001';
 import { getToken, clearToken } from './auth';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const needsAuth = path.startsWith('/superadmin');
+  const isSuperadmin = path.startsWith('/superadmin');
+  const isAdmin = path.startsWith('/admin');
+  const needsAuth = isSuperadmin || isAdmin;
   const token = needsAuth ? getToken() : null;
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -17,7 +19,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   if (!res.ok) {
     if (res.status === 401 && needsAuth && typeof window !== 'undefined') {
       clearToken();
-      window.location.href = '/superadmin/login';
+      window.location.href = isSuperadmin ? '/superadmin/login' : '/login';
       return Promise.reject(new Error('Unauthorized'));
     }
     const err = await res.json().catch(() => ({ message: res.statusText }));
@@ -61,8 +63,25 @@ export const api = {
       request<void>(`/admin/events/${id}`, { method: 'DELETE' }),
     reservations: (id: string) =>
       request<Reservation[]>(`/admin/events/${id}/reservations`),
+    reviews: (id: string) =>
+      request<AdminEventReview[]>(`/admin/events/${id}/reviews`),
+    updateReview: (eventId: string, reviewId: string, isPublished: boolean) =>
+      request<EventReview>(`/admin/events/${eventId}/reviews/${reviewId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isPublished }),
+      }),
     remind: (id: string) =>
-      request(`/admin/events/${id}/remind`, { method: 'POST' }),
+      request<{ sentCount: number }>(`/admin/events/${id}/remind`, { method: 'POST' }),
+    checkin: (id: string, memberId: string) =>
+      request<{ memberName: string; alreadyCheckedIn: boolean }>(
+        `/admin/events/${id}/checkin`,
+        { method: 'POST', body: JSON.stringify({ memberId }) },
+      ),
+    sendMessage: (id: string, data: { content: string; sendLine: boolean; sendApp: boolean }) =>
+      request<{ lineSentCount: number; appSentCount: number; total: number }>(
+        `/admin/events/${id}/message`,
+        { method: 'POST', body: JSON.stringify(data) },
+      ),
     exportUrl: (id: string) => `${BASE}/admin/events/${id}/export`,
   },
   members: {
@@ -71,8 +90,15 @@ export const api = {
       return request<Member[]>(`/admin/members${q ? `?${q}` : ''}`);
     },
     get: (id: string) => request<MemberDetail>(`/admin/members/${id}`),
+    messageThreads: () => request<AdminMessageThread[]>('/admin/members/messages/threads'),
     block: (id: string) => request<Member>(`/admin/members/${id}/block`, { method: 'PATCH' }),
     unblock: (id: string) => request<Member>(`/admin/members/${id}/unblock`, { method: 'PATCH' }),
+    messages: (id: string) => request<AdminMessage[]>(`/admin/members/${id}/messages`),
+    sendMessage: (id: string, content: string) =>
+      request<AdminMessage>(`/admin/members/${id}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+      }),
     exportUrl: () => `${BASE}/admin/members/export`,
   },
   reservations: {
@@ -92,13 +118,24 @@ export const api = {
       request<LiffReservation | null>(
         `/liff/${tenantId}/events/${eventId}/my-reservation?lineUserId=${encodeURIComponent(lineUserId)}`,
       ),
+    reviews: (tenantId: string, eventId: string) =>
+      request<EventReview[]>(`/liff/${tenantId}/events/${eventId}/reviews`),
+    myReview: (tenantId: string, eventId: string, lineUserId: string) =>
+      request<EventReview | null>(
+        `/liff/${tenantId}/events/${eventId}/my-review?lineUserId=${encodeURIComponent(lineUserId)}`,
+      ),
+    submitReview: (tenantId: string, eventId: string, lineUserId: string, content: string) =>
+      request<EventReview>(`/liff/${tenantId}/events/${eventId}/reviews`, {
+        method: 'POST',
+        body: JSON.stringify({ lineUserId, content }),
+      }),
     reserve: (tenantId: string, data: ReserveInput) =>
       request<ReserveResult>(`/liff/${tenantId}/reservations`, {
         method: 'POST',
         body: JSON.stringify(data),
       }),
     cancel: (tenantId: string, reservationId: string) =>
-      fetch(`${BASE}/liff/${tenantId}/reservations/${reservationId}`, { method: 'DELETE' }),
+      request<void>(`/liff/${tenantId}/reservations/${reservationId}`, { method: 'DELETE' }),
     profile: (tenantId: string, lineUserId: string) =>
       request<LiffProfile>(`/liff/${tenantId}/profile?lineUserId=${encodeURIComponent(lineUserId)}`),
     memberProfile: (tenantId: string, memberId: string) =>
@@ -151,8 +188,14 @@ export const api = {
       request(`/liff/${tenantId}/notifications/read-all?lineUserId=${encodeURIComponent(lineUserId)}`, { method: 'PATCH' }),
   },
   public: {
-    events: (anonymousId?: string) =>
-      request<PublicEvent[]>(`/public/events${anonymousId ? `?anonymousId=${encodeURIComponent(anonymousId)}` : ''}`),
+    events: (anonymousId?: string, category?: string, tag?: string) => {
+      const params = new URLSearchParams();
+      if (anonymousId) params.set('anonymousId', anonymousId);
+      if (category) params.set('category', category);
+      if (tag) params.set('tag', tag);
+      const qs = params.toString();
+      return request<PublicEvent[]>(`/public/events${qs ? `?${qs}` : ''}`);
+    },
     tenants: () => request<PublicTenant[]>('/public/tenants'),
     toggleLike: (eventId: string, anonymousId: string) =>
       request<{ liked: boolean }>(`/public/events/${eventId}/like`, {
@@ -172,8 +215,19 @@ export const api = {
       totalRevenue: number;
     }>('/admin/tenant/stats'),
     syncLineProfile: () => request<Tenant>('/admin/tenant/sync-line-profile', { method: 'POST' }),
+    billingCheckout: (plan: 'standard' | 'pro') =>
+      request<{ url: string }>('/admin/tenant/billing/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ plan }),
+      }),
     growth: () => request<{ label: string; members: number; reservations: number }[]>('/admin/tenant/growth'),
     activity: () => request<{ type: string; text: string; at: string }[]>('/admin/tenant/activity'),
+    supportMessages: () => request<SupportMessage[]>('/admin/tenant/support'),
+    sendSupport: (content: string) =>
+      request<SupportMessage>('/admin/tenant/support', {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+      }),
   },
   superadmin: {
     list: () => request<TenantWithStats[]>('/superadmin/tenants'),
@@ -188,12 +242,12 @@ export const api = {
     ban: (id: string) =>
       request<Tenant>(`/superadmin/tenants/${id}/ban`, { method: 'PATCH' }),
     purge: (id: string) =>
-      fetch(`${BASE}/superadmin/tenants/${id}`, { method: 'DELETE' }),
+      request<void>(`/superadmin/tenants/${id}`, { method: 'DELETE' }),
     listBannedUsers: () => request<BannedUser[]>('/superadmin/banned-users'),
     banUser: (lineUserId: string, reason?: string) =>
       request<BannedUser>('/superadmin/banned-users', { method: 'POST', body: JSON.stringify({ lineUserId, reason }) }),
     unbanUser: (lineUserId: string) =>
-      fetch(`${BASE}/superadmin/banned-users/${encodeURIComponent(lineUserId)}`, { method: 'DELETE' }),
+      request<void>(`/superadmin/banned-users/${encodeURIComponent(lineUserId)}`, { method: 'DELETE' }),
     supportThreads: () => request<SupportThread[]>('/superadmin/support'),
     supportMessages: (lineUserId: string) => request<SupportMessage[]>(`/superadmin/support/${encodeURIComponent(lineUserId)}`),
     replySupport: (lineUserId: string, content: string) =>
@@ -213,6 +267,7 @@ export interface Event {
   title: string;
   description?: string;
   heldAt: string;
+  endAt?: string | null;
   location: string;
   locationUrl?: string;
   capacity?: number;
@@ -242,6 +297,7 @@ export interface EventInput {
   title: string;
   description?: string;
   heldAt: string;
+  endAt?: string | null;
   location: string;
   locationUrl?: string;
   capacity?: number | null;
@@ -286,6 +342,18 @@ export interface AdminMessage {
   fromAdmin: boolean;
   read: boolean;
   createdAt: string;
+}
+
+export interface AdminMessageThread {
+  member: {
+    id: string;
+    name?: string | null;
+    grade?: string | null;
+    gender?: string | null;
+    lineUserId: string;
+  };
+  lastMessage: AdminMessage | null;
+  unreadCount: number;
 }
 
 export interface SupportMessage {
@@ -335,6 +403,7 @@ export interface LiffEvent {
   title: string;
   description?: string;
   heldAt: string;
+  endAt?: string | null;
   location: string;
   capacity?: number;
   status: EventStatus;
@@ -344,6 +413,26 @@ export interface LiffEvent {
   imageUrl?: string;
   iconUrl?: string;
   friendAttendees?: { id: string; name: string | null }[];
+  reviews?: EventReview[];
+}
+
+export interface EventReview {
+  id: string;
+  content: string;
+  createdAt: string;
+  memberName?: string | null;
+  memberGrade?: string | null;
+  isPublished?: boolean;
+}
+
+export interface AdminEventReview extends EventReview {
+  isPublished: boolean;
+  member: {
+    id: string;
+    name?: string | null;
+    grade?: string | null;
+    gender?: string | null;
+  };
 }
 
 export interface ReserveInput {
@@ -370,6 +459,7 @@ export interface Tenant {
   stripeWebhookSecret?: string | null;
   plan: 'free' | 'standard' | 'pro';
   planStartedAt?: string | null;
+  liffEventView?: string;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;
@@ -391,6 +481,7 @@ export interface TenantInput {
   stripePublishableKey?: string;
   stripeSecretKey?: string;
   stripeWebhookSecret?: string;
+  liffEventView?: string;
 }
 
 export interface LiffTenant {
@@ -400,6 +491,7 @@ export interface LiffTenant {
   lineDisplayName?: string;
   linePictureUrl?: string;
   lineChannelId?: string;
+  liffEventView?: string;
 }
 
 export interface LiffReservation {
@@ -484,6 +576,8 @@ export interface PublicEvent {
   likeCount: number;
   monthlyLikeCount: number;
   userLiked: boolean;
+  category?: string | null;
+  tags: string[];
   tenant: {
     id: string;
     name: string;

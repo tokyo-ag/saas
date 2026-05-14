@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { api, formatDateShort, LiffEvent, LiffTenant, PublicEvent } from '@/lib/api';
+import { api, API_URL, formatDateShort, LiffEvent, LiffTenant, PublicEvent } from '@/lib/api';
+import { useCalendarMonth } from '@/lib/useCalendarMonth';
 import { initLiff, getLiffUserId } from '@/lib/liff';
 import LiffBottomNav from '@/components/liff/LiffBottomNav';
 import { EventCardSkeleton } from '@/components/liff/EventCardSkeleton';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const FAV_KEY = 'fav_tenants';
 
 function loadFavs(): Set<string> {
@@ -119,6 +119,98 @@ function FavEventRow({ event }: { event: PublicEvent }) {
   );
 }
 
+const WEEKDAYS_SHORT = ['日', '月', '火', '水', '木', '金', '土'];
+
+function LiffCalendarView({ events, tenantId }: { events: LiffEvent[]; tenantId: string }) {
+  const { year, month, prevMonth, nextMonth, cells, isToday } = useCalendarMonth();
+
+  const eventsByDate: Record<string, LiffEvent[]> = {};
+  for (const ev of events) {
+    const d = new Date(ev.heldAt);
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      const key = d.getDate().toString();
+      (eventsByDate[key] ??= []).push(ev);
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.07)' }}>
+      {/* 月ナビ */}
+      <div className="flex items-center justify-between px-5 py-3">
+        <button onClick={prevMonth} className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 active:bg-gray-200">
+          <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <span className="text-sm font-bold text-gray-900">{year}年 {month + 1}月</span>
+        <button onClick={nextMonth} className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 active:bg-gray-200">
+          <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+      {/* 曜日ヘッダー */}
+      <div className="grid grid-cols-7 border-t border-gray-100">
+        {WEEKDAYS_SHORT.map((w, i) => (
+          <div key={w} className={`py-1.5 text-center text-[10px] font-semibold ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-gray-400'}`}>
+            {w}
+          </div>
+        ))}
+      </div>
+
+      {/* 日付グリッド */}
+      <div className="grid grid-cols-7 border-t border-gray-100">
+        {cells.map((day, i) => {
+          const col = i % 7;
+          const dayEvents = day ? (eventsByDate[day.toString()] ?? []) : [];
+
+          return (
+            <div
+              key={i}
+              className={`border-b border-r border-gray-100 p-0.5 align-top min-h-[88px] ${!day ? 'bg-gray-50/50' : ''}`}
+            >
+              {day && (
+                <>
+                  <span className={`flex w-5 h-5 items-center justify-center rounded-full text-[10px] font-medium mx-auto mb-0.5 ${
+                    isToday(day)
+                      ? 'bg-[#06C755] text-white font-bold'
+                      : col === 0 ? 'text-red-400'
+                      : col === 6 ? 'text-blue-400'
+                      : 'text-gray-600'
+                  }`}>
+                    {day}
+                  </span>
+                  <div className="space-y-0.5">
+                    {dayEvents.map((ev) => {
+                      const startTime = new Date(ev.heldAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
+                      const endTime = ev.endAt ? new Date(ev.endAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' }) : null;
+                      const priceLabel = ev.price === 0 ? '無料' : `¥${ev.price.toLocaleString()}`;
+                      return (
+                        <Link
+                          key={ev.id}
+                          href={`/liff/${tenantId}/events/${ev.id}`}
+                          className="block rounded bg-[#06C755]/10 px-0.5 py-0.5 active:opacity-60"
+                        >
+                          <p className="text-[7px] font-semibold text-[#047a35] truncate leading-tight">{ev.title}</p>
+                          <p className="text-[7px] text-gray-500 leading-tight">開始 {startTime}</p>
+                          {endTime && <p className="text-[7px] text-gray-500 leading-tight">終了 {endTime}</p>}
+                          <p className="text-[7px] text-gray-500 leading-tight">{priceLabel}</p>
+                          <p className="text-[7px] text-gray-400 truncate leading-tight">{ev.location}</p>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function LiffTopPage() {
   const { tenantId } = useParams<{ tenantId: string }>();
   const [tenant, setTenant] = useState<LiffTenant | null>(null);
@@ -177,6 +269,8 @@ export default function LiffTopPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
               {Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)}
             </div>
+          ) : tenant?.liffEventView === 'calendar' ? (
+            <LiffCalendarView events={events} tenantId={tenantId} />
           ) : events.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 px-8 text-center">
               <div className="w-16 h-16 rounded-full bg-[#06C755]/8 flex items-center justify-center mb-4">

@@ -60,11 +60,11 @@ export default function SuperadminPage() {
       <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-4 sm:py-5">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-lg sm:text-xl font-bold text-gray-900">スーパー管理者</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900">COMIU 管理</h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-0.5">団体・ユーザーの管理</p>
           </div>
           <div className="flex items-center gap-3">
-          <a href="/superadmin/support" className="text-sm text-gray-500 hover:text-gray-700 shrink-0">🛟 サポート</a>
+          <a href="/superadmin/support" className="text-sm text-gray-500 hover:text-gray-700 shrink-0">COMIU サポート</a>
           {tab === 'tenants' ? (
             <button
               onClick={() => setShowCreate(true)}

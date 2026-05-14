@@ -42,7 +42,7 @@ export default function SuperadminLoginPage() {
           <div className="w-14 h-14 bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <span className="text-white text-xl font-bold">S</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">スーパー管理者</h1>
+          <h1 className="text-2xl font-bold text-gray-900">COMIU 管理</h1>
           <p className="text-sm text-gray-500 mt-1">管理者専用ページ</p>
         </div>
 
@@ -99,7 +99,7 @@ export default function SuperadminLoginPage() {
                   <span className="text-lg leading-none">💬</span>
                   LINEでログイン
                 </a>
-                <p className="text-xs text-gray-400 text-center">※ LINEログイン後は管理画面からスーパー管理者ページへ移動してください</p>
+                <p className="text-xs text-gray-400 text-center">※ LINEログイン後は管理画面からCOMIU管理ページへ移動してください</p>
               </div>
             )}
           </div>

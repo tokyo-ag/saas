@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { api, SupportThread, SupportMessage } from '@/lib/api';
+import { ChatBubble, ChatInput } from '@/components/ui/ChatBubble';
 
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
@@ -76,7 +77,7 @@ export default function SuperadminSupportPage() {
       <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-4">
         <div className="max-w-5xl mx-auto flex items-center gap-3">
           <Link href="/superadmin" className="text-gray-400 hover:text-gray-600 text-sm">← 戻る</Link>
-          <h1 className="text-lg font-bold text-gray-900">サポートトーク</h1>
+          <h1 className="text-lg font-bold text-gray-900">COMIU サポートチャット</h1>
           {threads.some((t) => t.unread > 0) && (
             <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-bold">
               {threads.reduce((s, t) => s + t.unread, 0)}件 未読
@@ -94,7 +95,7 @@ export default function SuperadminSupportPage() {
             ) : threads.length === 0 ? (
               <div className="p-6 text-center text-gray-400 text-sm">
                 <p className="text-2xl mb-2">🛟</p>
-                サポートメッセージはありません
+                COMIU サポートチャットのメッセージはありません
               </div>
             ) : (
               <div className="divide-y divide-gray-50">
@@ -140,39 +141,19 @@ export default function SuperadminSupportPage() {
               {/* メッセージ */}
               <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2 bg-[#F7F8FA]">
                 {messages.map((msg) => (
-                  <div key={msg.id} className={`flex ${msg.fromUser ? 'justify-start' : 'justify-end'} gap-2`}>
-                    {msg.fromUser && (
-                      <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-sm shrink-0 mt-1">🛟</div>
-                    )}
-                    <div className={`max-w-[70%] flex flex-col gap-0.5 ${msg.fromUser ? 'items-start' : 'items-end'}`}>
-                      <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                        msg.fromUser ? 'bg-white border border-gray-100 text-gray-900 rounded-bl-sm shadow-sm' : 'bg-[#06C755] text-white rounded-br-sm'
-                      }`}>
-                        {msg.content}
-                      </div>
-                      <span className="text-[11px] text-gray-400 px-1">{formatTime(msg.createdAt)}</span>
-                    </div>
-                  </div>
+                  <ChatBubble
+                    key={msg.id}
+                    content={msg.content}
+                    time={formatTime(msg.createdAt)}
+                    isMine={!msg.fromUser}
+                    avatar={<div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-sm">🛟</div>}
+                  />
                 ))}
                 <div ref={bottomRef} />
               </div>
 
               {/* 入力欄 */}
-              <form onSubmit={handleSend} className="border-t border-gray-200 px-4 py-3 flex gap-2">
-                <input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="返信を入力..."
-                  className="flex-1 border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-                />
-                <button
-                  type="submit"
-                  disabled={!input.trim() || sending}
-                  className="w-9 h-9 bg-[#06C755] rounded-full flex items-center justify-center disabled:opacity-40 hover:bg-[#05a847] shrink-0"
-                >
-                  <span className="text-white text-base leading-none">↑</span>
-                </button>
-              </form>
+              <ChatInput value={input} onChange={setInput} onSubmit={handleSend} sending={sending} placeholder="返信を入力..." />
             </div>
           ) : (
             <div className="flex-1 bg-white rounded-2xl border border-gray-200 flex flex-col items-center justify-center text-center p-8">

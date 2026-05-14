@@ -1,8 +1,10 @@
-import { Controller, Get, Post, Patch, Param, Query, Body, Res } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Query, Body, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
+import { AdminGuard } from '../auth/admin.guard';
 import { MembersService } from './members.service';
 import { TenantId } from '../auth/tenant-id.decorator';
 
+@UseGuards(AdminGuard)
 @Controller('admin/members')
 export class MembersController {
   constructor(private readonly membersService: MembersService) {}
@@ -23,6 +25,11 @@ export class MembersController {
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="members.csv"');
     res.send('﻿' + csv);
+  }
+
+  @Get('messages/threads')
+  getMessageThreads(@TenantId() tenantId: string) {
+    return this.membersService.getMessageThreads(tenantId);
   }
 
   @Get(':memberId')

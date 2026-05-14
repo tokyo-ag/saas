@@ -1,7 +1,9 @@
-import { Controller, Get, Put, Post, Body } from '@nestjs/common';
+import { Controller, Get, Put, Post, Body, BadRequestException, UseGuards } from '@nestjs/common';
+import { AdminGuard } from '../auth/admin.guard';
 import { TenantService, UpdateTenantDto } from './tenant.service';
 import { TenantId } from '../auth/tenant-id.decorator';
 
+@UseGuards(AdminGuard)
 @Controller('admin/tenant')
 export class TenantController {
   constructor(private readonly tenantService: TenantService) {}
@@ -34,5 +36,23 @@ export class TenantController {
   @Post('sync-line-profile')
   syncLineProfile(@TenantId() tenantId: string) {
     return this.tenantService.syncLineProfile(tenantId);
+  }
+
+  @Get('support')
+  getSupportMessages(@TenantId() tenantId: string) {
+    return this.tenantService.getSupportMessages(tenantId);
+  }
+
+  @Post('support')
+  sendSupportMessage(@TenantId() tenantId: string, @Body('content') content: string) {
+    return this.tenantService.sendSupportMessage(tenantId, content);
+  }
+
+  @Post('billing/checkout')
+  billingCheckout(@TenantId() tenantId: string, @Body('plan') plan: string) {
+    if (plan !== 'standard' && plan !== 'pro') {
+      throw new BadRequestException('plan must be standard or pro');
+    }
+    return this.tenantService.createBillingCheckout(tenantId, plan as 'standard' | 'pro');
   }
 }

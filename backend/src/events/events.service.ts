@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { EventStatus, ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LineMessagingService } from '../line-messaging/line-messaging.service';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -60,6 +61,7 @@ export class EventsService {
         title: e.title,
         description: e.description,
         heldAt: e.heldAt,
+        endAt: e.endAt,
         location: e.location,
         capacity: e.capacity,
         status: e.status,
@@ -71,6 +73,8 @@ export class EventsService {
         remindedAt: e.remindedAt,
         imageUrl: e.imageUrl,
         iconUrl: e.iconUrl,
+        category: e.category,
+        tags: e.tags,
         createdAt: e.createdAt,
         updatedAt: e.updatedAt,
         reservedCount: reserved,
@@ -114,12 +118,13 @@ export class EventsService {
         title: dto.title,
         description: dto.description,
         heldAt: new Date(dto.heldAt),
+        endAt: dto.endAt ? new Date(dto.endAt) : null,
         location: dto.location,
         locationUrl: dto.locationUrl ?? null,
         capacity: dto.capacity ?? null,
         capacityMale: dto.capacityMale ?? null,
         capacityFemale: dto.capacityFemale ?? null,
-        status: dto.status as any,
+        status: dto.status as EventStatus,
         price: dto.price,
         priceMale: dto.priceMale ?? null,
         priceFemale: dto.priceFemale ?? null,
@@ -132,6 +137,8 @@ export class EventsService {
         remindAt: dto.remindAt ? new Date(dto.remindAt) : null,
         imageUrl: dto.imageUrl ?? null,
         iconUrl: dto.iconUrl ?? null,
+        category: dto.category ?? null,
+        tags: dto.tags ?? [],
       },
     });
   }
@@ -150,9 +157,10 @@ export class EventsService {
         ...(dto.title !== undefined && { title: dto.title }),
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.heldAt !== undefined && { heldAt: new Date(dto.heldAt) }),
+        ...(dto.endAt !== undefined && { endAt: dto.endAt ? new Date(dto.endAt) : null }),
         ...(dto.location !== undefined && { location: dto.location }),
         ...(dto.capacity !== undefined && { capacity: dto.capacity ?? null }),
-        ...(dto.status !== undefined && { status: dto.status as any }),
+        ...(dto.status !== undefined && { status: dto.status as EventStatus }),
         ...(dto.price !== undefined && { price: dto.price }),
         ...(dto.paymentRequired !== undefined && { paymentRequired: dto.paymentRequired }),
         ...(dto.locationUrl !== undefined && { locationUrl: dto.locationUrl ?? null }),
@@ -170,6 +178,8 @@ export class EventsService {
         }),
         ...(dto.imageUrl !== undefined && { imageUrl: dto.imageUrl || null }),
         ...(dto.iconUrl !== undefined && { iconUrl: dto.iconUrl || null }),
+        ...(dto.category !== undefined && { category: dto.category ?? null }),
+        ...(dto.tags !== undefined && { tags: dto.tags ?? [] }),
       },
     });
   }
@@ -189,13 +199,91 @@ export class EventsService {
     });
   }
 
+  async getReviews(tenantId: string, eventId: string) {
+    await this.findOne(tenantId, eventId);
+    return this.prisma.eventReview.findMany({
+      where: { tenantId, eventId },
+      include: { member: { select: { id: true, name: true, grade: true, gender: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async updateReview(tenantId: string, eventId: string, reviewId: string, isPublished: boolean) {
+    const review = await this.prisma.eventReview.findFirst({
+      where: { id: reviewId, tenantId, eventId },
+    });
+    if (!review) throw new NotFoundException('Review not found');
+
+    return this.prisma.eventReview.update({
+      where: { id: reviewId },
+      data: { isPublished },
+    });
+  }
+
+  async checkin(tenantId: string, eventId: string, memberId: string) {
+    const reservation = await this.prisma.reservation.findFirst({
+      where: { tenantId, eventId, memberId },
+      include: { member: true },
+    });
+    if (!reservation) throw new NotFoundException('予約が見つかりません');
+    if (reservation.status === ReservationStatus.attended) {
+      return { alreadyCheckedIn: true, memberName: reservation.member.name ?? '不明' };
+    }
+    if (reservation.status !== ReservationStatus.reserved && reservation.status !== ReservationStatus.waiting_payment) {
+      throw new NotFoundException('有効な予約が見つかりません');
+    }
+    await this.prisma.reservation.update({
+      where: { id: reservation.id },
+      data: { status: ReservationStatus.attended },
+    });
+    return { alreadyCheckedIn: false, memberName: reservation.member.name ?? '不明' };
+  }
+
+  async sendMessage(
+    tenantId: string,
+    eventId: string,
+    content: string,
+    sendLine: boolean,
+    sendApp: boolean,
+  ) {
+    const event = await this.findOne(tenantId, eventId);
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+
+    const reservations = await this.prisma.reservation.findMany({
+      where: { eventId, tenantId, status: { in: ['reserved', 'attended', 'waiting_payment'] } },
+      include: { member: true },
+    });
+
+    let lineSentCount = 0;
+    let appSentCount = 0;
+
+    for (const r of reservations) {
+      if (sendLine && tenant?.lineChannelAccessToken) {
+        await this.lineMessaging.sendPushMessage(
+          tenant.lineChannelAccessToken,
+          r.member.lineUserId,
+          `【${event.title}】\n${content}`,
+        );
+        lineSentCount++;
+      }
+      if (sendApp) {
+        await this.prisma.notification.create({
+          data: { tenantId, memberId: r.memberId, title: event.title, body: content },
+        });
+        appSentCount++;
+      }
+    }
+
+    return { lineSentCount, appSentCount, total: reservations.length };
+  }
+
   async sendRemind(tenantId: string, eventId: string) {
     const event = await this.findOne(tenantId, eventId);
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
     if (!tenant?.lineChannelAccessToken) return { sentCount: 0 };
 
     const reservations = await this.prisma.reservation.findMany({
-      where: { eventId, status: { in: ['reserved', 'attended'] } },
+      where: { eventId, tenantId, status: { in: ['reserved', 'attended'] } },
       include: { member: true },
     });
 

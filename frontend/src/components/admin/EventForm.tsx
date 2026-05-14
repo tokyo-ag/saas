@@ -1,23 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { apiFetch, api, Event, Tenant } from '@/lib/api';
+import { api, API_URL, Event, Tenant } from '@/lib/api';
+import { Section, Field, RadioGroup, Check, UploadButton } from './EventFormPrimitives';
 
 type EventFormData = {
   title: string;
   description: string;
   heldAt: string;
+  endAt: string;
   location: string;
   locationUrl: string;
-  // 定員
   capacityMode: 'none' | 'total' | 'gender';
   capacity: string;
   capacityMale: string;
   capacityFemale: string;
   status: 'draft' | 'open' | 'closed';
-  // 料金
   priceMode: 'same' | 'gender';
   price: string;
   priceMale: string;
@@ -31,7 +31,11 @@ type EventFormData = {
   remindAt: string;
   imageUrl: string;
   iconUrl: string;
+  category: string;
+  tags: string[];
 };
+
+const inputClass = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]';
 
 function toLocalDatetimeValue(iso?: string | null): string {
   if (!iso) return '';
@@ -39,8 +43,6 @@ function toLocalDatetimeValue(iso?: string | null): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 async function uploadFile(file: File): Promise<string> {
   const fd = new FormData();
@@ -51,9 +53,9 @@ async function uploadFile(file: File): Promise<string> {
   return url as string;
 }
 
-function numOrNull(s: string) {
-  const n = Number(s);
-  return s === '' || isNaN(n) ? null : n;
+function numOrNull(value: string) {
+  const n = Number(value);
+  return value === '' || Number.isNaN(n) ? null : n;
 }
 
 export default function EventForm({ initial }: { initial?: Event }) {
@@ -65,21 +67,14 @@ export default function EventForm({ initial }: { initial?: Event }) {
   const [isFreePlan, setIsFreePlan] = useState(false);
   const [tenant, setTenant] = useState<Tenant | null>(null);
 
-  useEffect(() => {
-    api.tenant.get().then((t) => {
-      setTenant(t);
-      setIsFreePlan(t.plan === 'free');
-    }).catch(() => {});
-  }, []);
-
   const [form, setForm] = useState<EventFormData>({
     title: initial?.title ?? '',
     description: initial?.description ?? '',
     heldAt: toLocalDatetimeValue(initial?.heldAt),
+    endAt: toLocalDatetimeValue(initial?.endAt),
     location: initial?.location ?? '',
     locationUrl: initial?.locationUrl ?? '',
-    capacityMode: initial?.capacityMale != null || initial?.capacityFemale != null ? 'gender'
-      : initial?.capacity != null ? 'total' : 'none',
+    capacityMode: initial?.capacityMale != null || initial?.capacityFemale != null ? 'gender' : initial?.capacity != null ? 'total' : 'none',
     capacity: initial?.capacity?.toString() ?? '',
     capacityMale: initial?.capacityMale?.toString() ?? '',
     capacityFemale: initial?.capacityFemale?.toString() ?? '',
@@ -97,24 +92,87 @@ export default function EventForm({ initial }: { initial?: Event }) {
     remindAt: toLocalDatetimeValue(initial?.remindAt),
     imageUrl: initial?.imageUrl ?? '',
     iconUrl: initial?.iconUrl ?? '',
+    category: (initial as any)?.category ?? '',
+    tags: (initial as any)?.tags ?? [],
   });
 
-  // テナント読み込み後、新規作成時はアイコンをデフォルト設定
+  useEffect(() => {
+    api.tenant.get().then((tenantData) => {
+      setTenant(tenantData);
+      setIsFreePlan(tenantData.plan === 'free');
+    }).catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (!initial && tenant?.linePictureUrl && !form.iconUrl) {
-      setForm((f) => ({ ...f, iconUrl: tenant.linePictureUrl! }));
+      setForm((prev) => ({ ...prev, iconUrl: tenant.linePictureUrl! }));
     }
-  }, [tenant, initial]);
+  }, [tenant, initial, form.iconUrl]);
 
-  const set = (key: keyof EventFormData, value: any) =>
-    setForm((prev) => ({ ...prev, [key]: value }));
+  const set = (key: keyof EventFormData, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const TITLE_PLACEHOLDERS: Record<string, string> = {
+    badminton: '例：バドミントン初心者交流会 20代限定 豊島区開催',
+    futsal: '例：フットサル交流会 社会人歓迎 新宿開催',
+    basketball: '例：バスケットボール3on3 20代男女 渋谷開催',
+    '': '例：テニス交流会 20代限定 渋谷開催',
+  };
+
+  const AVAILABLE_TAGS = ['初心者歓迎', '20代限定', '30代限定', '男女歓迎', '社会人', '学生歓迎'];
+
+  const DESCRIPTION_TEMPLATES: Record<string, string> = {
+    badminton: `東京・豊島区でバドミントン交流会を開催します。
+初心者・未経験者も大歓迎！20代を中心に男女問わず参加できます。
+
+【こんな方におすすめ】
+・バドミントンを始めたい方
+・一緒に練習する仲間を探している方
+・新しい出会いを楽しみたい方
+
+ラケットの貸し出しあり。動きやすい服装でお越しください。`,
+    futsal: `東京・新宿でフットサル交流会を開催します。
+社会人・初心者大歓迎！男女混合で楽しくプレーしましょう。
+
+【こんな方におすすめ】
+・フットサルを始めたい方
+・運動不足を解消したい方
+・新しい仲間と繋がりたい方
+
+シューズのレンタルあり。動きやすい服装でお越しください。`,
+    basketball: `東京・渋谷でバスケットボール交流会を開催します。
+20代男女歓迎！初心者から経験者まで一緒に楽しみましょう。
+
+【こんな方におすすめ】
+・バスケを久しぶりにやりたい方
+・仲間と一緒に汗を流したい方
+・新しい出会いを楽しみたい方
+
+動きやすい服装と室内シューズをご持参ください。`,
+  };
+
+  function insertTemplate() {
+    const tmpl = DESCRIPTION_TEMPLATES[form.category];
+    if (tmpl) set('description', tmpl);
+  }
+
+  function toggleTag(tag: string) {
+    setForm((prev) => ({
+      ...prev,
+      tags: prev.tags.includes(tag) ? prev.tags.filter((t) => t !== tag) : [...prev.tags, tag],
+    }));
+  }
 
   function calcRemindAt(preset: string, heldAt: string): string {
     if (!heldAt) return '';
     const d = new Date(heldAt);
-    if (preset === 'prev18') { d.setDate(d.getDate() - 1); d.setHours(18, 0, 0, 0); }
-    else if (preset === 'day9') { d.setHours(9, 0, 0, 0); }
-    else return form.remindAt;
+    if (preset === 'prev18') {
+      d.setDate(d.getDate() - 1);
+      d.setHours(18, 0, 0, 0);
+    } else if (preset === 'day9') {
+      d.setHours(9, 0, 0, 0);
+    } else {
+      return form.remindAt;
+    }
     return toLocalDatetimeValue(d.toISOString());
   }
 
@@ -126,12 +184,10 @@ export default function EventForm({ initial }: { initial?: Event }) {
 
     let remindAt: string | null = null;
     if (form.remindEnabled || form.remindApp) {
-      remindAt = form.remindPreset !== 'custom'
-        ? new Date(calcRemindAt(form.remindPreset, form.heldAt)).toISOString()
-        : new Date(form.remindAt).toISOString();
+      const value = form.remindPreset !== 'custom' ? calcRemindAt(form.remindPreset, form.heldAt) : form.remindAt;
+      remindAt = value ? new Date(value).toISOString() : null;
     }
 
-    // 定員
     let capacity: number | null = null;
     let capacityMale: number | null = null;
     let capacityFemale: number | null = null;
@@ -139,29 +195,24 @@ export default function EventForm({ initial }: { initial?: Event }) {
     if (form.capacityMode === 'gender') {
       capacityMale = numOrNull(form.capacityMale);
       capacityFemale = numOrNull(form.capacityFemale);
-      const m = capacityMale ?? 0;
-      const f = capacityFemale ?? 0;
-      capacity = m + f > 0 ? m + f : null;
+      const total = (capacityMale ?? 0) + (capacityFemale ?? 0);
+      capacity = total > 0 ? total : null;
     }
-
-    // 料金
-    const price = Number(form.price);
-    const priceMale = form.priceMode === 'gender' ? numOrNull(form.priceMale) : null;
-    const priceFemale = form.priceMode === 'gender' ? numOrNull(form.priceFemale) : null;
 
     const body = {
       title: form.title,
       description: form.description || undefined,
       heldAt: new Date(form.heldAt).toISOString(),
+      endAt: form.endAt ? new Date(form.endAt).toISOString() : null,
       location: form.location,
       locationUrl: form.locationUrl || undefined,
       capacity,
       capacityMale,
       capacityFemale,
       status: form.status,
-      price,
-      priceMale,
-      priceFemale,
+      price: Number(form.price),
+      priceMale: form.priceMode === 'gender' ? numOrNull(form.priceMale) : null,
+      priceFemale: form.priceMode === 'gender' ? numOrNull(form.priceFemale) : null,
       paymentRequired: form.paymentTiming === 'prepay',
       paymentTiming: form.paymentTiming,
       notifyOnReserve: form.notifyOnReserve,
@@ -171,17 +222,19 @@ export default function EventForm({ initial }: { initial?: Event }) {
       remindAt,
       imageUrl: form.imageUrl || undefined,
       iconUrl: form.iconUrl || undefined,
+      category: form.category || null,
+      tags: form.tags,
     };
 
     try {
       if (initial) {
-        await apiFetch(`/admin/events/${initial.id}`, { method: 'PUT', body: JSON.stringify(body) });
+        await api.events.update(initial.id, body);
       } else {
-        await apiFetch('/admin/events', { method: 'POST', body: JSON.stringify(body) });
+        await api.events.create(body);
       }
       router.push('/admin/events');
     } catch (err: any) {
-      if (err.message?.includes('スタンダードプラン')) setUpgradeRequired(true);
+      if (err.message?.includes('スタンダード') || err.message?.includes('プラン')) setUpgradeRequired(true);
       else setError(err.message);
     } finally {
       setSubmitting(false);
@@ -193,7 +246,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
     if (!confirm('このイベントを削除しますか？')) return;
     setSubmitting(true);
     try {
-      await apiFetch(`/admin/events/${initial.id}`, { method: 'DELETE' });
+      await api.events.delete(initial.id);
       router.push('/admin/events');
     } catch (err: any) {
       setError(err.message);
@@ -202,243 +255,212 @@ export default function EventForm({ initial }: { initial?: Event }) {
   }
 
   const showStripe = form.paymentTiming !== 'onsite' && (
-    form.priceMode === 'same' ? Number(form.price) > 0
-      : (Number(form.priceMale) > 0 || Number(form.priceFemale) > 0)
+    form.priceMode === 'same' ? Number(form.price) > 0 : Number(form.priceMale) > 0 || Number(form.priceFemale) > 0
   );
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-7 max-w-2xl">
+    <form onSubmit={handleSubmit} className="max-w-2xl space-y-7 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-6">
       {upgradeRequired && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           フリープランの上限に達しました。
-          <Link href="/admin/settings" className="underline ml-1 font-medium">スタンダードプランへアップグレード →</Link>
+          <Link href="/admin/settings/plan" className="ml-1 font-medium underline">プランを確認する</Link>
         </div>
       )}
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
+      {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
-      {/* タイトル・説明 */}
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">タイトル <span className="text-red-500">*</span></label>
-          <input required maxLength={100} value={form.title} onChange={(e) => set('title', e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">説明</label>
-          <textarea rows={3} value={form.description} onChange={(e) => set('description', e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-        </div>
-      </div>
-
-      {/* 画像（バナー） */}
-      <div>
-        <p className="text-sm font-medium text-gray-700 mb-2">バナー画像（横長）</p>
-        {form.imageUrl && (
-          <img src={`${API_URL}${form.imageUrl}`} alt="" className="w-full h-32 object-cover rounded-lg mb-2 border border-gray-200" />
-        )}
-        <label className={`flex items-center justify-center gap-2 w-full border border-dashed border-gray-300 rounded-lg px-3 py-2 text-xs cursor-pointer hover:border-[#06C755] ${uploading ? 'opacity-50' : ''}`}>
-          <input type="file" accept="image/*" className="hidden" disabled={uploading}
-            onChange={async (e) => {
-              const file = e.target.files?.[0]; if (!file) return;
-              setUploading(true);
-              try { set('imageUrl', await uploadFile(file)); } catch { setError('バナー画像のアップロードに失敗しました'); } finally { setUploading(false); }
-            }} />
-          {uploading ? 'アップロード中...' : '画像を選択'}
-        </label>
-        {form.imageUrl && <button type="button" onClick={() => set('imageUrl', '')} className="text-xs text-red-500 hover:underline mt-1">削除</button>}
-      </div>
-
-      {/* 日時・ステータス */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">開催日時 <span className="text-red-500">*</span></label>
-          <input required type="datetime-local" value={form.heldAt} onChange={(e) => set('heldAt', e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">ステータス</label>
-          <select value={form.status} onChange={(e) => set('status', e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]">
-            <option value="draft">下書き</option>
-            <option value="open">受付中</option>
-            <option value="closed">受付終了</option>
+      <Section title="基本情報">
+        <Field label="カテゴリ">
+          <select value={form.category} onChange={(e) => set('category', e.target.value)} className={inputClass}>
+            <option value="">なし</option>
+            <option value="badminton">バドミントン</option>
+            <option value="futsal">フットサル</option>
+            <option value="basketball">バスケットボール</option>
           </select>
-        </div>
-      </div>
-
-      {/* 開催場所 */}
-      <div className="space-y-3">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">場所名 <span className="text-red-500">*</span></label>
-          <input required maxLength={200} value={form.location} onChange={(e) => set('location', e.target.value)}
-            placeholder="例: 渋谷区文化センター 大ホール"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">地図URL（Google Maps等）</label>
-          <input type="url" value={form.locationUrl} onChange={(e) => set('locationUrl', e.target.value)}
-            placeholder="https://maps.google.com/..."
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-          {form.locationUrl && (
-            <a href={form.locationUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-[#06C755] hover:underline mt-1 inline-block">
-              地図を確認 →
-            </a>
-          )}
-        </div>
-      </div>
-
-      {/* 定員 */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">定員</label>
-        <div className="flex gap-4 mb-3">
-          {(['none', 'total', 'gender'] as const).map((m) => (
-            <label key={m} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
-              <input type="radio" checked={form.capacityMode === m} onChange={() => set('capacityMode', m)} className="accent-[#06C755]" />
-              {m === 'none' ? '無制限' : m === 'total' ? '合計で設定' : '男女別'}
-            </label>
-          ))}
-        </div>
-        {form.capacityMode === 'total' && (
-          <input type="number" min={5} step={5} value={form.capacity} onChange={(e) => set('capacity', e.target.value)}
-            placeholder="例: 30" className="w-40 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-        )}
-        {form.capacityMode === 'gender' && (
-          <div className="flex items-center gap-3">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">男性</label>
-              <input type="number" min={0} step={5} value={form.capacityMale} onChange={(e) => set('capacityMale', e.target.value)}
-                placeholder="15" className="w-28 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-            </div>
-            <span className="text-gray-400 mt-4">/</span>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">女性</label>
-              <input type="number" min={0} step={5} value={form.capacityFemale} onChange={(e) => set('capacityFemale', e.target.value)}
-                placeholder="15" className="w-28 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-            </div>
-            {(form.capacityMale || form.capacityFemale) && (
-              <p className="text-xs text-gray-400 mt-4">合計 {(Number(form.capacityMale) || 0) + (Number(form.capacityFemale) || 0)}人</p>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* 料金 */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">参加料</label>
-        <div className="flex gap-4 mb-3">
-          {(['same', 'gender'] as const).map((m) => (
-            <label key={m} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
-              <input type="radio" checked={form.priceMode === m} onChange={() => set('priceMode', m)} className="accent-[#06C755]" />
-              {m === 'same' ? '一律' : '男女別'}
-            </label>
-          ))}
-        </div>
-        {form.priceMode === 'same' && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">¥</span>
-            <input type="number" min={0} step={100} value={form.price} onChange={(e) => set('price', e.target.value)}
-              className="w-36 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-          </div>
-        )}
-        {form.priceMode === 'gender' && (
-          <div className="flex items-center gap-3">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">男性 ¥</label>
-              <input type="number" min={0} step={100} value={form.priceMale} onChange={(e) => set('priceMale', e.target.value)}
-                className="w-32 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">女性 ¥</label>
-              <input type="number" min={0} step={100} value={form.priceFemale} onChange={(e) => set('priceFemale', e.target.value)}
-                className="w-32 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-            </div>
-          </div>
-        )}
-
-        {/* 支払いタイミング */}
-        <div className="mt-3">
-          <label className="block text-xs text-gray-500 mb-2">支払いタイミング</label>
-          <div className="flex flex-wrap gap-3">
-            {([
-              ['onsite', '当日払い'],
-              ['prepay', '事前払い（Stripe）'],
-              ['both', 'どちらでも可'],
-            ] as const).map(([v, label]) => (
-              <label key={v} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
-                <input type="radio" checked={form.paymentTiming === v} onChange={() => set('paymentTiming', v)} className="accent-[#06C755]" />
-                {label}
-              </label>
+        </Field>
+        <Field label="タイトル" required>
+          <input
+            required
+            maxLength={100}
+            value={form.title}
+            onChange={(e) => set('title', e.target.value)}
+            placeholder={TITLE_PLACEHOLDERS[form.category] ?? TITLE_PLACEHOLDERS['']}
+            className={inputClass}
+          />
+        </Field>
+        <Field label="タグ">
+          <div className="flex flex-wrap gap-2">
+            {AVAILABLE_TAGS.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggleTag(tag)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  form.tags.includes(tag)
+                    ? 'bg-[#06C755] text-white border-[#06C755]'
+                    : 'bg-white text-gray-600 border-gray-300 hover:border-[#06C755]'
+                }`}
+              >
+                {tag}
+              </button>
             ))}
           </div>
+        </Field>
+        <Field label="説明">
+          {DESCRIPTION_TEMPLATES[form.category] && (
+            <button
+              type="button"
+              onClick={insertTemplate}
+              className="mb-2 text-xs text-[#06C755] font-medium border border-[#06C755]/40 rounded-lg px-3 py-1.5 hover:bg-[#06C755]/5 transition-colors"
+            >
+              テンプレートを挿入
+            </button>
+          )}
+          <textarea rows={5} value={form.description} onChange={(e) => set('description', e.target.value)} className={inputClass} />
+        </Field>
+      </Section>
+
+      <Section title="画像">
+        <Field label="バナー画像">
+          {form.imageUrl && <img src={`${API_URL}${form.imageUrl}`} alt="" className="mb-2 h-32 w-full rounded-lg border border-gray-200 object-cover" />}
+          <UploadButton uploading={uploading} onUpload={async (file) => set('imageUrl', await uploadFile(file))} setUploading={setUploading} setError={setError} />
+          {form.imageUrl && <button type="button" onClick={() => set('imageUrl', '')} className="mt-2 text-xs text-red-500 hover:underline">削除</button>}
+        </Field>
+      </Section>
+
+      <Section title="日時と場所">
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="開始日時" required>
+            <input required type="datetime-local" value={form.heldAt} onChange={(e) => set('heldAt', e.target.value)} className={inputClass} />
+          </Field>
+          <Field label="終了日時">
+            <input type="datetime-local" value={form.endAt} onChange={(e) => set('endAt', e.target.value)} className={inputClass} />
+          </Field>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="ステータス">
+            <select value={form.status} onChange={(e) => set('status', e.target.value)} className={inputClass}>
+              <option value="draft">下書き</option>
+              <option value="open">受付中</option>
+              <option value="closed">受付終了</option>
+            </select>
+          </Field>
+        </div>
+        <Field label="場所名" required>
+          <input required maxLength={200} value={form.location} onChange={(e) => set('location', e.target.value)} placeholder="例: 渋谷区スポーツセンター" className={inputClass} />
+        </Field>
+        <Field label="地図URL">
+          <input type="url" value={form.locationUrl} onChange={(e) => set('locationUrl', e.target.value)} placeholder="https://maps.google.com/..." className={inputClass} />
+        </Field>
+      </Section>
+
+      <Section title="定員">
+        <RadioGroup
+          value={form.capacityMode}
+          onChange={(value) => set('capacityMode', value)}
+          options={[
+            ['none', '制限なし'],
+            ['total', '合計で設定'],
+            ['gender', '男女別'],
+          ]}
+        />
+        {form.capacityMode === 'total' && (
+          <input type="number" min={5} step={5} value={form.capacity} onChange={(e) => set('capacity', e.target.value)} placeholder="30" className={`${inputClass} max-w-40`} />
+        )}
+        {form.capacityMode === 'gender' && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="男性">
+              <input type="number" min={0} step={5} value={form.capacityMale} onChange={(e) => set('capacityMale', e.target.value)} className={inputClass} />
+            </Field>
+            <Field label="女性">
+              <input type="number" min={0} step={5} value={form.capacityFemale} onChange={(e) => set('capacityFemale', e.target.value)} className={inputClass} />
+            </Field>
+          </div>
+        )}
+      </Section>
+
+      <Section title="参加費">
+        <RadioGroup
+          value={form.priceMode}
+          onChange={(value) => set('priceMode', value)}
+          options={[
+            ['same', '一律'],
+            ['gender', '男女別'],
+          ]}
+        />
+        {form.priceMode === 'same' ? (
+          <div className="flex max-w-44 items-center gap-2">
+            <span className="text-sm text-gray-500">¥</span>
+            <input type="number" min={0} step={100} value={form.price} onChange={(e) => set('price', e.target.value)} className={inputClass} />
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="男性">
+              <input type="number" min={0} step={100} value={form.priceMale} onChange={(e) => set('priceMale', e.target.value)} className={inputClass} />
+            </Field>
+            <Field label="女性">
+              <input type="number" min={0} step={100} value={form.priceFemale} onChange={(e) => set('priceFemale', e.target.value)} className={inputClass} />
+            </Field>
+          </div>
+        )}
+        <div>
+          <p className="mb-2 text-xs text-gray-500">支払いタイミング</p>
+          <RadioGroup
+            value={form.paymentTiming}
+            onChange={(value) => set('paymentTiming', value)}
+            options={[
+              ['onsite', '当日払い'],
+              ['prepay', '事前決済'],
+              ['both', 'どちらでも可'],
+            ]}
+          />
           {showStripe && (
-            <p className="text-xs text-amber-600 mt-2 bg-amber-50 px-3 py-2 rounded-lg">
-              Stripeが設定済みの場合のみ事前払いが機能します。<Link href="/admin/settings/stripe" className="underline">Stripe設定 →</Link>
+            <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
+              事前決済にはStripe設定が必要です。
+              <Link href="/admin/settings/stripe" className="ml-1 underline">Stripe設定へ</Link>
             </p>
           )}
         </div>
-      </div>
+      </Section>
 
-      {/* 通知 */}
-      <div className="space-y-4">
-        <div>
-          <p className="text-sm font-medium text-gray-700 mb-2">予約完了時の通知</p>
-          <div className="space-y-1.5 ml-1">
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-              <input type="checkbox" checked={form.notifyOnReserve} onChange={(e) => set('notifyOnReserve', e.target.checked)} className="rounded" />
-              LINEで送る
-            </label>
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-              <input type="checkbox" checked={form.notifyOnReserveApp} onChange={(e) => set('notifyOnReserveApp', e.target.checked)} className="rounded" />
-              アプリ内メッセージで送る
-            </label>
-          </div>
-        </div>
-        <div>
-          <p className={`text-sm font-medium mb-2 ${isFreePlan ? 'text-gray-400' : 'text-gray-700'}`}>
+      <Section title="通知">
+        <Check label="予約完了時にLINEで送る" checked={form.notifyOnReserve} onChange={(checked) => set('notifyOnReserve', checked)} />
+        <Check label="予約完了時にアプリ内メッセージで送る" checked={form.notifyOnReserveApp} onChange={(checked) => set('notifyOnReserveApp', checked)} />
+        <div className="pt-2">
+          <p className={`mb-2 text-sm font-medium ${isFreePlan ? 'text-gray-400' : 'text-gray-700'}`}>
             リマインド通知
-            {isFreePlan && <span className="text-xs text-[#06C755] ml-2">（スタンダードプランで利用可）</span>}
+            {isFreePlan && <span className="ml-2 text-xs text-[#06C755]">スタンダード以上</span>}
           </p>
-          <div className="space-y-1.5 ml-1">
-            <label className={`flex items-center gap-2 text-sm cursor-pointer ${isFreePlan ? 'text-gray-400' : 'text-gray-700'}`}>
-              <input type="checkbox" checked={form.remindEnabled} onChange={(e) => set('remindEnabled', e.target.checked)} disabled={isFreePlan} className="rounded" />
-              LINEで送る
-            </label>
-            <label className={`flex items-center gap-2 text-sm cursor-pointer ${isFreePlan ? 'text-gray-400' : 'text-gray-700'}`}>
-              <input type="checkbox" checked={form.remindApp} onChange={(e) => set('remindApp', e.target.checked)} disabled={isFreePlan} className="rounded" />
-              アプリ内メッセージで送る
-            </label>
-          </div>
+          <Check label="LINEで送る" checked={form.remindEnabled} disabled={isFreePlan} onChange={(checked) => set('remindEnabled', checked)} />
+          <Check label="アプリ内メッセージで送る" checked={form.remindApp} disabled={isFreePlan} onChange={(checked) => set('remindApp', checked)} />
         </div>
-      </div>
+      </Section>
 
       {(form.remindEnabled || form.remindApp) && (
-        <div className="ml-5 space-y-2 border-l-2 border-[#06C755]/30 pl-4">
-          {(['prev18', 'day9', 'custom'] as const).map((preset) => (
-            <label key={preset} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-              <input type="radio" name="remindPreset" value={preset} checked={form.remindPreset === preset} onChange={() => set('remindPreset', preset)} />
-              {preset === 'prev18' && '前日 18:00'}
-              {preset === 'day9' && '当日 09:00'}
-              {preset === 'custom' && 'カスタム日時'}
-            </label>
-          ))}
+        <div className="space-y-2 border-l-2 border-[#06C755]/30 pl-4">
+          <RadioGroup
+            value={form.remindPreset}
+            onChange={(value) => set('remindPreset', value)}
+            options={[
+              ['prev18', '前日 18:00'],
+              ['day9', '当日 09:00'],
+              ['custom', 'カスタム日時'],
+            ]}
+          />
           {form.remindPreset === 'custom' && (
-            <input type="datetime-local" value={form.remindAt} onChange={(e) => set('remindAt', e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+            <input type="datetime-local" value={form.remindAt} onChange={(e) => set('remindAt', e.target.value)} className={`${inputClass} max-w-xs`} />
           )}
         </div>
       )}
 
-      <div className="flex items-center gap-4 pt-2">
-        <button type="submit" disabled={submitting}
-          className="bg-[#06C755] text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-[#05a847] disabled:opacity-50 transition-colors">
+      <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center">
+        <button type="submit" disabled={submitting} className="rounded-lg bg-[#06C755] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#05a847] disabled:opacity-50">
           {submitting ? '保存中...' : '保存'}
         </button>
-        <button type="button" onClick={() => router.back()} className="text-gray-600 text-sm hover:text-gray-900">
+        <button type="button" onClick={() => router.back()} className="rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50">
           キャンセル
         </button>
         {initial && (
-          <button type="button" onClick={handleDelete} disabled={submitting}
-            className="ml-auto text-red-600 text-sm hover:text-red-800 disabled:opacity-50">
+          <button type="button" onClick={handleDelete} disabled={submitting} className="rounded-lg px-6 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 sm:ml-auto">
             削除
           </button>
         )}
@@ -446,3 +468,4 @@ export default function EventForm({ initial }: { initial?: Event }) {
     </form>
   );
 }
+

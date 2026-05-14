@@ -12,8 +12,8 @@ export class AuthService {
     private config: ConfigService,
   ) {}
 
-  private issueToken(tenantId: string, accountId: string): string {
-    return this.jwtService.sign({ tenantId, accountId });
+  private issueToken(tenantId: string, accountId: string, isSuperadmin = false): string {
+    return this.jwtService.sign({ tenantId, accountId, ...(isSuperadmin && { isSuperadmin: true }) });
   }
 
   getLineAuthUrl(): string {
@@ -121,7 +121,9 @@ export class AuthService {
     if (!account?.passwordHash) throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
     const valid = await bcrypt.compare(password, account.passwordHash);
     if (!valid) throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
-    return { token: this.issueToken(account.tenantId, account.id), tenantId: account.tenantId };
+    const superadminEmail = this.config.get<string>('SUPERADMIN_EMAIL');
+    const isSuperadmin = !!superadminEmail && account.email === superadminEmail;
+    return { token: this.issueToken(account.tenantId, account.id, isSuperadmin), tenantId: account.tenantId };
   }
 
   async getMe(tenantId: string, accountId: string) {

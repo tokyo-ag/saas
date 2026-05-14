@@ -2,10 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { api, PublicEvent, PublicTenant } from '@/lib/api';
+import { api, API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import LiffBottomNav from '@/components/liff/LiffBottomNav';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const FAV_KEY = 'fav_tenants';
 const ANON_KEY = 'anon_id';
 
@@ -180,6 +179,9 @@ export default function TopPage() {
   const [query, setQuery] = useState('');
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [favTenants, setFavTenants] = useState<Set<string>>(new Set());
+  const [activeTag, setActiveTag] = useState<string | null>(null);
+
+  const TAGS = ['初心者歓迎', '20代限定', '30代限定', '男女歓迎', '社会人', '学生歓迎'];
 
   useEffect(() => {
     const anonId = getAnonId();
@@ -220,10 +222,12 @@ export default function TopPage() {
     });
   }, []);
 
+  const filteredEvents = activeTag ? events.filter((ev) => ev.tags?.includes(activeTag)) : events;
+
   // 今月の注目（月間いいね数上位）
-  const hotEvents = [...events].sort((a, b) => b.monthlyLikeCount - a.monthlyLikeCount).slice(0, 10);
+  const hotEvents = [...filteredEvents].sort((a, b) => b.monthlyLikeCount - a.monthlyLikeCount).slice(0, 10);
   // 日時順
-  const byDate = [...events].sort((a, b) => new Date(a.heldAt).getTime() - new Date(b.heldAt).getTime());
+  const byDate = [...filteredEvents].sort((a, b) => new Date(a.heldAt).getTime() - new Date(b.heldAt).getTime());
   // 検索
   const searchResults = query.trim()
     ? events.filter((ev) =>
@@ -283,12 +287,55 @@ export default function TopPage() {
       <div className="min-h-screen bg-[#F5F5F5] pb-28">
         {/* ヘッダー */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 pt-12 pb-3 sm:pt-4 flex items-center justify-between">
-          <h1 className="text-[20px] font-bold text-gray-900 tracking-tight">Discover</h1>
+          <div className="min-w-0">
+            <h1 className="text-[20px] font-bold text-gray-900 tracking-tight">COMIU</h1>
+            <p className="text-[11px] text-gray-500 mt-0.5 leading-tight">東京でNO.1のコミュニティサイトを目指して</p>
+          </div>
           <button onClick={() => setSearchOpen(true)} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 active:bg-gray-200">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
           </button>
+        </div>
+
+        {/* カテゴリボタン */}
+        <div className="pt-4 pb-1 px-4">
+          <div className="flex gap-2">
+            {[
+              { key: 'badminton', label: 'バドミントン', emoji: '🏸' },
+              { key: 'futsal', label: 'フットサル', emoji: '⚽' },
+              { key: 'basketball', label: 'バスケ', emoji: '🏀' },
+            ].map((cat) => (
+              <Link
+                key={cat.key}
+                href={`/sports/${cat.key}`}
+                className="flex items-center gap-1.5 bg-white rounded-full px-3 py-2 text-[12px] font-semibold text-gray-700 active:bg-gray-50 transition-colors"
+                style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
+              >
+                <span>{cat.emoji}</span>
+                <span>{cat.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* タグフィルター */}
+        <div className="pt-2 pb-1">
+          <div className="flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-hide">
+            {TAGS.map((tag) => (
+              <button
+                key={tag}
+                onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-colors ${
+                  activeTag === tag
+                    ? 'bg-gray-900 text-white border-gray-900'
+                    : 'bg-white text-gray-600 border-gray-200'
+                }`}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* セクション1: 今月の注目イベント */}

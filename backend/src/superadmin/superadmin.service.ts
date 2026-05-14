@@ -24,14 +24,11 @@ export class SuperadminService {
   constructor(private prisma: PrismaService) {}
 
   async listTenants() {
-    const tenants = await this.prisma.tenant.findMany({ orderBy: { createdAt: 'desc' } });
-    const counts = await Promise.all(
-      tenants.map((t) =>
-        this.prisma.member.count({ where: { tenantId: t.id } }).then((c) => ({ id: t.id, memberCount: c })),
-      ),
-    );
-    const countMap = Object.fromEntries(counts.map((c) => [c.id, c.memberCount]));
-    return tenants.map((t) => ({ ...t, memberCount: countMap[t.id] ?? 0 }));
+    const tenants = await this.prisma.tenant.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { _count: { select: { members: true } } },
+    });
+    return tenants.map(({ _count, ...t }) => ({ ...t, memberCount: _count.members }));
   }
 
   async deactivateTenant(id: string) {
@@ -145,8 +142,13 @@ export class SuperadminService {
   }
 
   async replySupportMessage(lineUserId: string, content: string) {
+    const latest = await this.prisma.supportMessage.findFirst({
+      where: { lineUserId },
+      orderBy: { createdAt: 'desc' },
+      select: { tenantId: true },
+    });
     return this.prisma.supportMessage.create({
-      data: { lineUserId, content, fromUser: false },
+      data: { lineUserId, tenantId: latest?.tenantId ?? null, content, fromUser: false },
     });
   }
 }

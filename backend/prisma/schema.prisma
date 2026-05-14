@@ -46,6 +46,7 @@ model Tenant {
   planStartedAt          DateTime? @map("plan_started_at")
   stripeCustomerId       String?   @map("stripe_customer_id") @db.VarChar(100)
   stripeSubscriptionId   String?   @map("stripe_subscription_id") @db.VarChar(100)
+  liffEventView          String    @default("card") @map("liff_event_view") @db.VarChar(20)
   createdAt              DateTime  @default(now()) @map("created_at")
   updatedAt              DateTime  @updatedAt @map("updated_at")
   deletedAt              DateTime? @map("deleted_at")
@@ -78,6 +79,7 @@ model Event {
   title           String      @db.VarChar(100)
   description     String?     @db.Text
   heldAt          DateTime    @map("held_at")
+  endAt           DateTime?   @map("end_at")
   location        String      @db.VarChar(200)
   locationUrl     String?     @map("location_url") @db.VarChar(500)
   capacity        Int?
@@ -95,6 +97,8 @@ model Event {
   remindApp          Boolean     @default(false) @map("remind_app")
   remindAt        DateTime?   @map("remind_at")
   remindedAt      DateTime?   @map("reminded_at")
+  category        String?     @db.VarChar(50)
+  tags            String[]    @default([])
   imageUrl        String?     @map("image_url") @db.Text
   iconUrl         String?     @map("icon_url") @db.Text
   createdAt       DateTime    @default(now()) @map("created_at")
@@ -103,6 +107,7 @@ model Event {
   tenant       Tenant        @relation(fields: [tenantId], references: [id])
   reservations Reservation[]
   likes        EventLike[]
+  reviews      EventReview[]
 
   @@map("events")
 }
@@ -140,6 +145,7 @@ model Member {
   sentMessages    Message[]
   notifications   Notification[]
   adminMessages   AdminMemberMessage[]
+  eventReviews     EventReview[]
 
   @@unique([tenantId, lineUserId])
   @@map("members")
@@ -220,6 +226,24 @@ model EventLike {
 
   @@unique([eventId, anonymousId])
   @@map("event_likes")
+}
+
+model EventReview {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  eventId     String   @map("event_id")
+  memberId    String   @map("member_id")
+  content     String   @db.Text
+  isPublished Boolean  @default(false) @map("is_published")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, memberId])
+  @@index([tenantId, eventId])
+  @@map("event_reviews")
 }
 
 model Reservation {

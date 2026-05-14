@@ -5,6 +5,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { AdminGuard } from './admin.guard';
+import { SuperadminGuard } from './superadmin.guard';
 
 @Global()
 @Module({
@@ -20,7 +21,7 @@ import { AdminGuard } from './admin.guard';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, AdminGuard],
-  exports: [AdminGuard, JwtModule],
+  providers: [AuthService, AdminGuard, SuperadminGuard],
+  exports: [AdminGuard, SuperadminGuard, JwtModule],
 })
 export class AuthModule {}

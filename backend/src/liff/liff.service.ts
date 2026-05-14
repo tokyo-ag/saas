@@ -6,6 +6,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { IsString } from 'class-validator';
+import { ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LineMessagingService } from '../line-messaging/line-messaging.service';
 import { StripeService } from '../stripe/stripe.service';
@@ -16,6 +17,11 @@ export class CreateReservationDto {
   name?: string;
   grade?: string;
   gender?: string;
+}
+
+export class SubmitReviewDto {
+  @IsString() lineUserId!: string;
+  @IsString() content!: string;
 }
 
 @Injectable()
@@ -39,6 +45,7 @@ export class LiffService {
       lineDisplayName: tenant.lineDisplayName,
       linePictureUrl: tenant.linePictureUrl,
       lineChannelId: tenant.lineChannelId,
+      liffEventView: tenant.liffEventView,
     };
   }
 
@@ -60,6 +67,7 @@ export class LiffService {
       title: e.title,
       description: e.description,
       heldAt: e.heldAt,
+      endAt: e.endAt,
       location: e.location,
       capacity: e.capacity,
       status: e.status,
@@ -122,7 +130,70 @@ export class LiffService {
       where: { eventId, status: { in: ['reserved', 'attended', 'waiting_payment'] } },
     });
 
-    return { ...event, reservedCount };
+    const reviews = await this.getPublishedReviews(tenantId, eventId);
+
+    return { ...event, reservedCount, reviews };
+  }
+
+  async getPublishedReviews(tenantId: string, eventId: string) {
+    await this.ensureEventExists(tenantId, eventId);
+    const reviews = await this.prisma.eventReview.findMany({
+      where: { tenantId, eventId, isPublished: true },
+      include: { member: { select: { name: true, grade: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 6,
+    });
+
+    return reviews.map((review) => ({
+      id: review.id,
+      content: review.content,
+      createdAt: review.createdAt,
+      memberName: review.member.name,
+      memberGrade: review.member.grade,
+    }));
+  }
+
+  async getMyReview(tenantId: string, eventId: string, lineUserId: string) {
+    const member = await this.prisma.member.findUnique({
+      where: { tenantId_lineUserId: { tenantId, lineUserId } },
+    });
+    if (!member) return null;
+
+    return this.prisma.eventReview.findUnique({
+      where: { eventId_memberId: { eventId, memberId: member.id } },
+    });
+  }
+
+  async submitReview(tenantId: string, eventId: string, dto: SubmitReviewDto) {
+    const content = dto.content.trim();
+    if (content.length < 5 || content.length > 300) {
+      throw new BadRequestException('感想は5文字以上300文字以内で入力してください');
+    }
+
+    await this.ensureEventExists(tenantId, eventId);
+
+    const member = await this.prisma.member.findUnique({
+      where: { tenantId_lineUserId: { tenantId, lineUserId: dto.lineUserId } },
+    });
+    if (!member) throw new NotFoundException('メンバーが見つかりません');
+
+    const reservation = await this.prisma.reservation.findFirst({
+      where: {
+        tenantId,
+        eventId,
+        memberId: member.id,
+        status: { in: ['reserved', 'attended'] },
+      },
+    });
+    if (!reservation) {
+      throw new ForbiddenException('予約済みまたは参加済みのイベントにのみ感想を投稿できます');
+    }
+
+    return this.prisma.eventReview.upsert({
+      where: { eventId_memberId: { eventId, memberId: member.id } },
+      create: { tenantId, eventId, memberId: member.id, content, isPublished: false },
+      update: { content, isPublished: false },
+    });
   }
 
   // 予約登録（重複チェック・キャンセル待ち・LINE通知込み）
@@ -191,7 +262,7 @@ export class LiffService {
     }
 
     const needsPayment = event.paymentRequired && event.price > 0 && !isFull;
-    const status: 'reserved' | 'waitlisted' | 'waiting_payment' = isFull
+    const status: ReservationStatus = isFull
       ? 'waitlisted'
       : needsPayment
         ? 'waiting_payment'
@@ -280,6 +351,14 @@ export class LiffService {
       orderBy: { reservedAt: 'desc' },
     });
     return reservation;
+  }
+
+  private async ensureEventExists(tenantId: string, eventId: string) {
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId, tenantId },
+      select: { id: true },
+    });
+    if (!event) throw new NotFoundException('Event not found');
   }
 
   // ---- 繋がり / チャット ----
@@ -454,7 +533,7 @@ export class LiffService {
 
     await this.prisma.reservation.update({
       where: { id: reservationId },
-      data: { status: 'cancelled' },
+      data: { status: ReservationStatus.cancelled },
     });
 
     // 定員がある場合のみ繰り上げ処理
@@ -473,7 +552,7 @@ export class LiffService {
         if (next) {
           await this.prisma.reservation.update({
             where: { id: next.id },
-            data: { status: 'reserved', waitlistOrder: null },
+            data: { status: ReservationStatus.reserved, waitlistOrder: null },
           });
 
           const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
@@ -563,7 +642,7 @@ export class LiffService {
     });
   }
 
-  // サポートメッセージ（ユーザー↔スーパーアドミン）
+  // サポートメッセージ（ユーザー↔COMIU）
   async getSupportMessages(lineUserId: string) {
     await this.prisma.supportMessage.updateMany({
       where: { lineUserId, fromUser: false, read: false },

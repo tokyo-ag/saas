@@ -1,4 +1,15 @@
+import type { Metadata } from 'next'
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: '料金プラン',
+  description:
+    'Atsumaroの料金プラン一覧。フリープランは永久無料、スタンダードは月額¥2,980から。バドミントンサークル・交流会・勉強会など東京20代向けコミュニティのイベント管理に。',
+  openGraph: {
+    title: '料金プラン | Atsumaro',
+    description: 'フリープランは永久無料。スタンダードは月額¥2,980から。イベント管理・LINE通知・予約管理が全部込み。',
+  },
+}
 
 const PLANS = [
   {
