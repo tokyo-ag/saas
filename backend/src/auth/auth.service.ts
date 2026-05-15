@@ -119,10 +119,10 @@ export class AuthService {
 
   async login(email: string, password: string) {
     const account = await this.prisma.organizerAccount.findUnique({ where: { email } });
-    this.logger.debug(`login: email=${email} found=${!!account} hasHash=${!!account?.passwordHash}`);
+    this.logger.warn(`LOGIN_DEBUG email=${email} found=${!!account} hasHash=${!!account?.passwordHash}`);
     if (!account?.passwordHash) throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
     const valid = await bcrypt.compare(password, account.passwordHash);
-    this.logger.debug(`login: bcrypt.compare result=${valid}`);
+    this.logger.warn(`LOGIN_DEBUG bcrypt result=${valid}`);
     if (!valid) throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
     const superadminEmail = this.config.get<string>('SUPERADMIN_EMAIL');
     const isSuperadmin = !!superadminEmail && account.email === superadminEmail;
