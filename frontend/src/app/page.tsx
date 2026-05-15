@@ -171,7 +171,43 @@ function SkeletonCard() {
   );
 }
 
+function DiscoveryLocked() {
+  return (
+    <div className="min-h-screen bg-[#F5F5F5] flex flex-col">
+      <div className="bg-white border-b border-gray-100 px-4 pt-12 pb-3 sm:pt-4">
+        <h1 className="text-[20px] font-bold text-gray-900 tracking-tight">COMIU</h1>
+        <p className="text-[11px] text-gray-500 mt-0.5">東京でNO.1のコミュニティサイトを目指して</p>
+      </div>
+      <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-4">
+        <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-gray-800">まもなくオープン</p>
+          <p className="text-sm text-gray-400 mt-1">現在サービス準備中です。<br />もうしばらくお待ちください。</p>
+        </div>
+        <div className="mt-4 rounded-2xl overflow-hidden w-full" style={{ background: 'linear-gradient(135deg, #06C755 0%, #047a35 100%)' }}>
+          <div className="px-5 py-5">
+            <p className="text-white font-bold text-[15px]">主催者の方はこちら</p>
+            <p className="text-white/80 text-[12px] mt-1">先行登録受付中</p>
+            <div className="flex items-center gap-3 mt-4">
+              <Link href="/register" className="bg-white text-[#06C755] font-bold text-sm px-5 py-2.5 rounded-full">
+                無料で始める →
+              </Link>
+              <Link href="/login" className="text-white/70 text-xs underline">ログイン</Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TopPage() {
+  if (process.env.NEXT_PUBLIC_DISCOVERY_LOCKED === 'true') return <DiscoveryLocked />;
   const [events, setEvents] = useState<PublicEvent[]>([]);
   const [tenants, setTenants] = useState<PublicTenant[]>([]);
   const [loading, setLoading] = useState(true);

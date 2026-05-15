@@ -39,6 +39,21 @@ function HeartIcon({ filled }: { filled: boolean }) {
 }
 
 export default function SportsCategoryPage() {
+  if (process.env.NEXT_PUBLIC_DISCOVERY_LOCKED === 'true') {
+    return (
+      <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-8 text-center gap-4">
+        <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <p className="text-lg font-bold text-gray-800">まもなくオープン</p>
+        <p className="text-sm text-gray-400">このページは準備中です</p>
+        <Link href="/" className="text-[#06C755] text-sm font-medium">← トップへ戻る</Link>
+      </div>
+    );
+  }
   const { category } = useParams<{ category: string }>();
   const meta = CATEGORY_META[category];
 
