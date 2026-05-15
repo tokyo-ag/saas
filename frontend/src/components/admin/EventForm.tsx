@@ -51,9 +51,9 @@ async function uploadFile(file: File): Promise<string> {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: file,
   });
-  if (!res.ok) throw new Error('アップロードに失敗しました');
-  const { url } = await res.json();
-  return url as string;
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? 'アップロードに失敗しました');
+  return data.url as string;
 }
 
 function numOrNull(value: string) {
