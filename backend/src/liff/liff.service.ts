@@ -5,7 +5,7 @@ import {
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LineMessagingService } from '../line-messaging/line-messaging.service';
@@ -14,9 +14,9 @@ import { StripeService } from '../stripe/stripe.service';
 export class CreateReservationDto {
   @IsString() eventId!: string;
   @IsString() lineUserId!: string;
-  name?: string;
-  grade?: string;
-  gender?: string;
+  @IsOptional() @IsString() name?: string;
+  @IsOptional() @IsString() grade?: string;
+  @IsOptional() @IsString() gender?: string;
 }
 
 export class SubmitReviewDto {

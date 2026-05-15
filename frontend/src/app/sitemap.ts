@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://atsumaro.jp'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://comiu.jp'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

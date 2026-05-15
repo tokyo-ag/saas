@@ -4,9 +4,9 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: '料金プラン',
   description:
-    'Atsumaroの料金プラン一覧。フリープランは永久無料、スタンダードは月額¥2,980から。バドミントンサークル・交流会・勉強会など東京20代向けコミュニティのイベント管理に。',
+    'COMIUの料金プラン一覧。フリープランは永久無料、スタンダードは月額¥2,980から。バドミントンサークル・交流会・勉強会など東京20代向けコミュニティのイベント管理に。',
   openGraph: {
-    title: '料金プラン | Atsumaro',
+    title: '料金プラン | COMIU',
     description: 'フリープランは永久無料。スタンダードは月額¥2,980から。イベント管理・LINE通知・予約管理が全部込み。',
   },
 }
@@ -92,7 +92,7 @@ export default function PricingPage() {
           <div className="w-8 h-8 bg-[#06C755] rounded-xl flex items-center justify-center">
             <span className="text-white text-sm font-bold">A</span>
           </div>
-          <span className="font-bold text-gray-900">Atsumaro</span>
+          <span className="font-bold text-gray-900">COMIU</span>
         </Link>
         <div className="flex items-center gap-4">
           <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900">ログイン</Link>

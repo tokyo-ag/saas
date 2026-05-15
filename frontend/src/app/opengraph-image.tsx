@@ -31,7 +31,7 @@ export default function Image() {
             marginBottom: 32,
           }}
         >
-          <span style={{ fontSize: 40, fontWeight: 900, color: '#06C755' }}>A</span>
+          <span style={{ fontSize: 40, fontWeight: 900, color: '#06C755' }}>C</span>
         </div>
 
         {/* サービス名 */}
@@ -44,7 +44,7 @@ export default function Image() {
             marginBottom: 16,
           }}
         >
-          Atsumaro
+          COMIU
         </div>
 
         {/* キャッチコピー */}

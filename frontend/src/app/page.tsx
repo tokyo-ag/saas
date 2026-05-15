@@ -460,7 +460,7 @@ export default function TopPage() {
         </div>
 
         <div className="pt-4 pb-4 text-center">
-          <span className="text-[10px] text-gray-300">© Atsumaro</span>
+          <span className="text-[10px] text-gray-300">© COMIU</span>
         </div>
       </div>
 

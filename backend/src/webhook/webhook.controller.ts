@@ -21,10 +21,11 @@ export class WebhookController {
     @Body() body: any,
   ) {
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
-    if (tenant?.lineChannelSecret && req.rawBody) {
-      const valid = validateSignature(req.rawBody.toString(), tenant.lineChannelSecret, signature ?? '');
-      if (!valid) throw new UnauthorizedException('Invalid LINE signature');
+    if (!tenant?.lineChannelSecret || !req.rawBody) {
+      throw new UnauthorizedException('LINE webhook not configured');
     }
+    const valid = validateSignature(req.rawBody.toString(), tenant.lineChannelSecret, signature ?? '');
+    if (!valid) throw new UnauthorizedException('Invalid LINE signature');
     return this.webhookService.handleWebhook(tenantId, body);
   }
 }

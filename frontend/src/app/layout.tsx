@@ -15,28 +15,28 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://atsumaro.jp'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://comiu.jp'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Atsumaro｜コミュニティ・サークルのイベント管理をLINEで',
-    template: '%s | Atsumaro',
+    default: 'COMIU｜コミュニティ・サークルのイベント管理をLINEで',
+    template: '%s | COMIU',
   },
   description:
     'バドミントンサークル・交流会・勉強会など、あらゆるコミュニティのイベント管理・参加者募集をLINEで完結。東京を中心に20代向けサークルも多数。フリープランは無料で始められます。',
   keywords: ['バドミントンサークル', '東京', '20代', 'コミュニティ', 'イベント管理', 'LINE', '交流会'],
   openGraph: {
-    title: 'Atsumaro｜コミュニティのイベント管理をLINEで',
+    title: 'COMIU｜コミュニティのイベント管理をLINEで',
     description:
       'バドミントンサークル・交流会など、コミュニティのイベント管理・参加者募集をLINEで完結。東京を中心に20代向けサークルも多数。',
     locale: 'ja_JP',
     type: 'website',
-    siteName: 'Atsumaro',
+    siteName: 'COMIU',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Atsumaro｜コミュニティのイベント管理をLINEで',
+    title: 'COMIU｜コミュニティのイベント管理をLINEで',
     description:
       'バドミントンサークル・交流会など、コミュニティのイベント管理・参加者募集をLINEで完結。',
   },

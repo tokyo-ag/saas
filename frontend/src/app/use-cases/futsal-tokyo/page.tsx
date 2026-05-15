@@ -4,7 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: 'フットサルサークル 東京 20代',
   description:
-    '東京の20代向けフットサルサークルを探すならAtsumaro。池袋・豊島区を拠点に板橋・北区・練馬区エリアで開催多数。初心者歓迎・社会人歓迎。LINEで簡単に参加申込・リマインド通知。無料で始められます。',
+    '東京の20代向けフットサルサークルを探すならCOMIU。池袋・豊島区を拠点に板橋・北区・練馬区エリアで開催多数。初心者歓迎・社会人歓迎。LINEで簡単に参加申込・リマインド通知。無料で始められます。',
   keywords: [
     'フットサルサークル',
     '東京',
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     '北区',
   ],
   openGraph: {
-    title: 'フットサルサークル 東京 20代 | Atsumaro',
+    title: 'フットサルサークル 東京 20代 | COMIU',
     description:
       '東京の20代向けフットサルサークル。初心者歓迎・社会人歓迎。LINEで簡単参加申込。',
     locale: 'ja_JP',
@@ -61,7 +61,7 @@ export default function FutsalTokyoPage() {
     '@graph': [
       {
         '@type': 'SoftwareApplication',
-        name: 'Atsumaro',
+        name: 'COMIU',
         applicationCategory: 'LifestyleApplication',
         operatingSystem: 'Web',
         description:
@@ -76,9 +76,9 @@ export default function FutsalTokyoPage() {
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://atsumaro.jp' },
-          { '@type': 'ListItem', position: 2, name: '活用事例', item: 'https://atsumaro.jp/use-cases' },
-          { '@type': 'ListItem', position: 3, name: 'フットサルサークル 東京 20代', item: 'https://atsumaro.jp/use-cases/futsal-tokyo' },
+          { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://comiu.jp' },
+          { '@type': 'ListItem', position: 2, name: '活用事例', item: 'https://comiu.jp/use-cases' },
+          { '@type': 'ListItem', position: 3, name: 'フットサルサークル 東京 20代', item: 'https://comiu.jp/use-cases/futsal-tokyo' },
         ],
       },
       {
@@ -106,7 +106,7 @@ export default function FutsalTokyoPage() {
               <div className="w-8 h-8 bg-[#06C755] rounded-xl flex items-center justify-center">
                 <span className="text-white text-sm font-bold">A</span>
               </div>
-              <span className="font-bold text-gray-900">Atsumaro</span>
+              <span className="font-bold text-gray-900">COMIU</span>
             </Link>
             <Link href="/register" className="bg-[#06C755] text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-[#05a847] transition-colors">
               無料で始める
@@ -184,7 +184,7 @@ export default function FutsalTokyoPage() {
               東京20代向けフットサルサークルを主催している方へ
             </h2>
             <p className="text-gray-500 text-sm text-center mb-10 max-w-2xl mx-auto leading-relaxed">
-              Atsumaroを使えば、参加者募集・予約管理・リマインド通知・出欠確認がすべてLINEで完結します。
+              COMIUを使えば、参加者募集・予約管理・リマインド通知・出欠確認がすべてLINEで完結します。
               フリープランは月2イベントまで無料で始められます。
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -242,7 +242,7 @@ export default function FutsalTokyoPage() {
             <Link href="/register" className="hover:text-gray-600">新規登録</Link>
             <Link href="/login" className="hover:text-gray-600">ログイン</Link>
           </div>
-          <p className="text-[11px] text-gray-300">© Atsumaro</p>
+          <p className="text-[11px] text-gray-300">© COMIU</p>
         </footer>
       </div>
     </>
