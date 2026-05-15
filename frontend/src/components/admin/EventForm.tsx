@@ -47,7 +47,12 @@ function toLocalDatetimeValue(iso?: string | null): string {
 async function uploadFile(file: File): Promise<string> {
   const fd = new FormData();
   fd.append('file', file);
-  const res = await fetch(`${API_URL}/api/admin/upload`, { method: 'POST', body: fd });
+  const token = (await import('@/lib/auth')).getToken();
+  const res = await fetch(`${API_URL}/api/admin/upload`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: fd,
+  });
   if (!res.ok) throw new Error('アップロードに失敗しました');
   const { url } = await res.json();
   return url as string;
