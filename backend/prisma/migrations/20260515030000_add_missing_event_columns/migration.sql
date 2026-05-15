@@ -1,0 +1,2 @@
+ALTER TABLE "events" ADD COLUMN IF NOT EXISTS "capacity_male" INTEGER;
+ALTER TABLE "events" ADD COLUMN IF NOT EXISTS "capacity_female" INTEGER;
