@@ -8,6 +8,11 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    if (!token) {
+      return NextResponse.json({ error: 'BLOB_READ_WRITE_TOKEN not set' }, { status: 500 });
+    }
+
     const { searchParams } = new URL(request.url);
     const filename = searchParams.get('filename') ?? `upload-${Date.now()}`;
     const contentType = request.headers.get('content-type') ?? 'application/octet-stream';
@@ -17,6 +22,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const blob = await put(`events/${filename}`, buffer, {
       access: 'public',
       contentType,
+      token,
     });
 
     return NextResponse.json({ url: blob.url });
