@@ -189,7 +189,13 @@ function DiscoveryLocked() {
           <p className="text-lg font-bold text-gray-800">まもなくオープン</p>
           <p className="text-sm text-gray-400 mt-1">現在サービス準備中です。<br />もうしばらくお待ちください。</p>
         </div>
-        <div className="mt-4 rounded-2xl overflow-hidden w-full" style={{ background: 'linear-gradient(135deg, #06C755 0%, #047a35 100%)' }}>
+        <button
+          onClick={() => window.history.back()}
+          className="bg-[#06C755] text-white font-bold text-sm px-8 py-3 rounded-full w-full"
+        >
+          ← 前のページに戻る
+        </button>
+        <div className="rounded-2xl overflow-hidden w-full" style={{ background: 'linear-gradient(135deg, #06C755 0%, #047a35 100%)' }}>
           <div className="px-5 py-5">
             <p className="text-white font-bold text-[15px]">主催者の方はこちら</p>
             <p className="text-white/80 text-[12px] mt-1">先行登録受付中</p>
