@@ -26,7 +26,14 @@ export default function SuperadminLoginPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message ?? 'ログインに失敗しました');
+      let isSuperadmin = false;
+      try {
+        const p = JSON.parse(atob(data.token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+        isSuperadmin = !!p?.isSuperadmin;
+      } catch { /* ignore */ }
+      if (!isSuperadmin) throw new Error('スーパー管理者権限がありません');
       setToken(data.token);
+      document.cookie = `sa_token=${data.token}; path=/; SameSite=Strict; max-age=86400`;
       router.push('/superadmin');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'ログインに失敗しました');
