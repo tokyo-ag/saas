@@ -118,7 +118,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
     '': '例：テニス交流会 20代限定 渋谷開催',
   };
 
-  const AVAILABLE_TAGS = ['初心者歓迎', '20代限定', '30代限定', '男女歓迎', '社会人', '学生歓迎'];
+  const AVAILABLE_TAGS = ['初心者歓迎', '20代限定', '30代限定', '男女歓迎', '社会人', '学生歓迎', '18～22歳大学生・短大専門・社会人'];
 
   const DESCRIPTION_TEMPLATES: Record<string, string> = {
     badminton: `東京・豊島区でバドミントン交流会を開催します。

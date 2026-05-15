@@ -223,7 +223,7 @@ export default function TopPage() {
   const [favTenants, setFavTenants] = useState<Set<string>>(new Set());
   const [activeTag, setActiveTag] = useState<string | null>(null);
 
-  const TAGS = ['初心者歓迎', '20代限定', '30代限定', '男女歓迎', '社会人', '学生歓迎'];
+  const TAGS = ['初心者歓迎', '20代限定', '30代限定', '男女歓迎', '社会人', '学生歓迎', '18～22歳大学生・短大専門・社会人'];
 
   useEffect(() => {
     const anonId = getAnonId();
