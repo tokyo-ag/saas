@@ -269,6 +269,29 @@ export default function EventForm({ initial }: { initial?: Event }) {
       )}
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
+      {/* 公開設定 */}
+      <div className={`flex items-center justify-between rounded-xl border px-4 py-3 ${
+        form.status === 'open' ? 'border-[#06C755]/40 bg-[#06C755]/5' : 'border-gray-200 bg-gray-50'
+      }`}>
+        <div>
+          <p className="text-sm font-semibold text-gray-800">公開設定</p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {form.status === 'open' ? '受付中 — ユーザーに公開されています' : form.status === 'draft' ? '下書き — まだ公開されていません' : '受付終了 — 受付を締め切っています'}
+          </p>
+        </div>
+        <select
+          value={form.status}
+          onChange={(e) => set('status', e.target.value)}
+          className={`rounded-lg border px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#06C755] ${
+            form.status === 'open' ? 'border-[#06C755] bg-white text-[#06C755]' : 'border-gray-300 bg-white text-gray-700'
+          }`}
+        >
+          <option value="draft">下書き</option>
+          <option value="open">受付中</option>
+          <option value="closed">受付終了</option>
+        </select>
+      </div>
+
       <Section title="基本情報">
         <Field label="カテゴリ">
           <select value={form.category} onChange={(e) => set('category', e.target.value)} className={inputClass}>
@@ -335,15 +358,6 @@ export default function EventForm({ initial }: { initial?: Event }) {
           </Field>
           <Field label="終了日時">
             <input type="datetime-local" value={form.endAt} onChange={(e) => set('endAt', e.target.value)} className={inputClass} />
-          </Field>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label="ステータス">
-            <select value={form.status} onChange={(e) => set('status', e.target.value)} className={inputClass}>
-              <option value="draft">下書き</option>
-              <option value="open">受付中</option>
-              <option value="closed">受付終了</option>
-            </select>
           </Field>
         </div>
         <Field label="場所名" required>
