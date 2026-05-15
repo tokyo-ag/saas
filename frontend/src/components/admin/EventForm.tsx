@@ -78,7 +78,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
     capacity: initial?.capacity?.toString() ?? '',
     capacityMale: initial?.capacityMale?.toString() ?? '',
     capacityFemale: initial?.capacityFemale?.toString() ?? '',
-    status: (initial?.status ?? 'draft') as any,
+    status: (initial?.status ?? 'open') as any,
     priceMode: initial?.priceMale != null || initial?.priceFemale != null ? 'gender' : 'same',
     price: initial?.price?.toString() ?? '0',
     priceMale: initial?.priceMale?.toString() ?? '0',
@@ -232,6 +232,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
       } else {
         await api.events.create(body);
       }
+      router.refresh();
       router.push('/admin/events');
     } catch (err: any) {
       if (err.message?.includes('スタンダード') || err.message?.includes('プラン')) setUpgradeRequired(true);
