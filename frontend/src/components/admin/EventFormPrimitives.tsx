@@ -61,8 +61,8 @@ export function UploadButton({ uploading, onUpload, setUploading, setError }: {
           setUploading(true);
           try {
             await onUpload(file);
-          } catch {
-            setError('画像のアップロードに失敗しました');
+          } catch (err: any) {
+            setError(err?.message ?? '画像のアップロードに失敗しました');
           } finally {
             setUploading(false);
           }
