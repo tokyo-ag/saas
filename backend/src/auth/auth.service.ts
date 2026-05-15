@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, BadRequestException, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
@@ -6,7 +6,6 @@ import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
@@ -122,12 +121,9 @@ export class AuthService {
     const accounts = await this.prisma.organizerAccount.findMany({
       where: { email: { not: null } },
     });
-    this.logger.warn(`LOGIN_DEBUG total accounts=${accounts.length} emails=${accounts.map(a => a.email).join(',')}`);
     const account = accounts.find(a => a.email?.toLowerCase() === trimmedEmail) ?? null;
-    this.logger.warn(`LOGIN_DEBUG search=${trimmedEmail} found=${!!account} hasHash=${!!account?.passwordHash}`);
     if (!account?.passwordHash) throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
     const valid = await bcrypt.compare(password, account.passwordHash);
-    this.logger.warn(`LOGIN_DEBUG bcrypt result=${valid} hashPrefix=${account.passwordHash.slice(0, 10)}`);
     if (!valid) throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
     const superadminEmail = this.config.get<string>('SUPERADMIN_EMAIL');
     const isSuperadmin = !!superadminEmail && account.email === superadminEmail;
