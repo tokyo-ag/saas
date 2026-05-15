@@ -205,8 +205,8 @@ export default function EventsPage() {
         tags: (ev as any).tags ?? [],
       });
       router.push(`/admin/events/${created.id}/edit`);
-    } catch {
-      alert('複製に失敗しました');
+    } catch (err: any) {
+      alert(err.message ?? '複製に失敗しました');
     }
   }
 
