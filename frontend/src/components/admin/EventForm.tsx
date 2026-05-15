@@ -45,13 +45,11 @@ function toLocalDatetimeValue(iso?: string | null): string {
 }
 
 async function uploadFile(file: File): Promise<string> {
-  const fd = new FormData();
-  fd.append('file', file);
   const token = (await import('@/lib/auth')).getToken();
-  const res = await fetch(`${API_URL}/api/admin/upload`, {
+  const res = await fetch(`/api/upload?filename=${encodeURIComponent(file.name)}`, {
     method: 'POST',
     headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body: fd,
+    body: file,
   });
   if (!res.ok) throw new Error('アップロードに失敗しました');
   const { url } = await res.json();
@@ -350,7 +348,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
 
       <Section title="画像">
         <Field label="バナー画像">
-          {form.imageUrl && <img src={`${API_URL}${form.imageUrl}`} alt="" className="mb-2 h-32 w-full rounded-lg border border-gray-200 object-cover" />}
+          {form.imageUrl && <img src={form.imageUrl.startsWith('http') ? form.imageUrl : `${API_URL}${form.imageUrl}`} alt="" className="mb-2 h-32 w-full rounded-lg border border-gray-200 object-cover" />}
           <UploadButton uploading={uploading} onUpload={async (file) => set('imageUrl', await uploadFile(file))} setUploading={setUploading} setError={setError} />
           {form.imageUrl && <button type="button" onClick={() => set('imageUrl', '')} className="mt-2 text-xs text-red-500 hover:underline">削除</button>}
         </Field>
