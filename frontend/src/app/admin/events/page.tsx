@@ -20,8 +20,16 @@ const tabs: { key: Tab; label: string }[] = [
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
-function CalendarView({ events }: { events: Event[] }) {
+function CalendarView({ events, onDuplicate }: { events: Event[]; onDuplicate: (id: string) => void }) {
   const { year, month, prevMonth, nextMonth, cells, isToday } = useCalendarMonth();
+  const [popoverId, setPopoverId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!popoverId) return;
+    const close = () => setPopoverId(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [popoverId]);
 
   const eventsByDate: Record<string, Event[]> = {};
   for (const ev of events) {
@@ -82,14 +90,30 @@ function CalendarView({ events }: { events: Event[] }) {
                   </span>
                   <div className="space-y-0.5">
                     {evs.slice(0, 3).map((ev) => (
-                      <Link
-                        key={ev.id}
-                        href={`/admin/events/${ev.id}`}
-                        className="block truncate rounded px-1 py-0.5 text-[10px] font-medium bg-[#06C755]/10 text-[#06C755] hover:bg-[#06C755]/20"
-                        title={ev.title}
-                      >
-                        {ev.title}
-                      </Link>
+                      <div key={ev.id} className="relative">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setPopoverId(popoverId === ev.id ? null : ev.id); }}
+                          className="block w-full truncate rounded px-1 py-0.5 text-[10px] font-medium bg-[#06C755]/10 text-[#06C755] hover:bg-[#06C755]/20 text-left"
+                          title={ev.title}
+                        >
+                          {ev.title}
+                        </button>
+                        {popoverId === ev.id && (
+                          <div
+                            className={`absolute z-50 mt-0.5 w-24 rounded-lg border border-gray-200 bg-white shadow-lg py-1 ${col >= 5 ? 'right-0' : 'left-0'}`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Link href={`/admin/events/${ev.id}`} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">詳細</Link>
+                            <Link href={`/admin/events/${ev.id}/edit`} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">編集</Link>
+                            <button
+                              onClick={() => { onDuplicate(ev.id); setPopoverId(null); }}
+                              className="block w-full px-3 py-1.5 text-xs text-left text-gray-700 hover:bg-gray-50"
+                            >
+                              複製
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     ))}
                     {evs.length > 3 && (
                       <span className="block text-[10px] text-gray-400 px-1">+{evs.length - 3}件</span>
@@ -303,7 +327,7 @@ export default function EventsPage() {
       {loading ? (
         <p className="text-gray-500">読み込み中...</p>
       ) : viewMode === 'calendar' ? (
-        <CalendarView events={filtered} />
+        <CalendarView events={filtered} onDuplicate={handleDuplicate} />
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-400">イベントがありません</div>
       ) : (
