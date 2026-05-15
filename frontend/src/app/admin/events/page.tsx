@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { api, formatDate, TENANT_ID, API_URL } from '@/lib/api';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
 import { EventStatusBadge } from '@/components/ui/StatusBadge';
@@ -105,6 +106,7 @@ function CalendarView({ events }: { events: Event[] }) {
 }
 
 export default function EventsPage() {
+  const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('upcoming');
@@ -150,6 +152,39 @@ export default function EventsPage() {
     if (tab === 'past') return new Date(event.heldAt) <= now || event.status === 'closed';
     return event.status === 'draft';
   });
+
+  async function handleDuplicate(id: string) {
+    try {
+      const ev = await api.events.get(id);
+      const created = await (api.events.create as any)({
+        title: `${ev.title}（コピー）`,
+        description: ev.description,
+        heldAt: ev.heldAt,
+        endAt: ev.endAt ?? null,
+        location: ev.location,
+        locationUrl: ev.locationUrl,
+        capacity: ev.capacity ?? null,
+        capacityMale: ev.capacityMale ?? null,
+        capacityFemale: ev.capacityFemale ?? null,
+        status: 'draft',
+        price: ev.price,
+        priceMale: ev.priceMale ?? null,
+        priceFemale: ev.priceFemale ?? null,
+        paymentRequired: ev.paymentRequired,
+        paymentTiming: ev.paymentTiming,
+        notifyOnReserve: ev.notifyOnReserve,
+        notifyOnReserveApp: ev.notifyOnReserveApp ?? false,
+        remindEnabled: false,
+        imageUrl: ev.imageUrl,
+        iconUrl: ev.iconUrl,
+        category: (ev as any).category ?? null,
+        tags: (ev as any).tags ?? [],
+      });
+      router.push(`/admin/events/${created.id}/edit`);
+    } catch {
+      alert('複製に失敗しました');
+    }
+  }
 
   async function handleDelete(id: string) {
     if (!confirm('このイベントを削除しますか？')) return;
@@ -294,9 +329,10 @@ export default function EventsPage() {
                     )}
                   </p>
                 </div>
-                <div className="grid grid-cols-3 gap-2 md:flex md:shrink-0">
+                <div className="grid grid-cols-2 gap-2 md:flex md:shrink-0">
                   <Link href={`/admin/events/${event.id}`} className="rounded-lg bg-[#06C755]/10 px-3 py-2 text-center text-xs font-bold text-[#06C755]">詳細</Link>
                   <Link href={`/admin/events/${event.id}/edit`} className="rounded-lg border border-gray-200 px-3 py-2 text-center text-xs font-bold text-gray-600">編集</Link>
+                  <button onClick={() => handleDuplicate(event.id)} className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold text-gray-600">複製</button>
                   <button onClick={() => handleDelete(event.id)} className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-500">削除</button>
                 </div>
               </div>

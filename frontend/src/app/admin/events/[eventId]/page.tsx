@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { api, formatDate, downloadWithAuth, API_URL, Event, Reservation, AdminEventReview } from '@/lib/api';
 import { EventBadge, ReservationBadge } from '@/components/ui/StatusBadge';
 
@@ -17,6 +18,7 @@ type EventReservation = Reservation & {
 };
 
 export default function EventDetailPage() {
+  const router = useRouter();
   const { eventId } = useParams<{ eventId: string }>();
   const [event, setEvent] = useState<Event | null>(null);
   const [reservations, setReservations] = useState<EventReservation[]>([]);
@@ -51,6 +53,39 @@ export default function EventDetailPage() {
       setReservations(updated as EventReservation[]);
     } catch {
       alert('ステータスの更新に失敗しました');
+    }
+  }
+
+  async function handleDuplicate() {
+    if (!event) return;
+    try {
+      const created = await (api.events.create as any)({
+        title: `${event.title}（コピー）`,
+        description: event.description,
+        heldAt: event.heldAt,
+        endAt: event.endAt ?? null,
+        location: event.location,
+        locationUrl: event.locationUrl,
+        capacity: event.capacity ?? null,
+        capacityMale: event.capacityMale ?? null,
+        capacityFemale: event.capacityFemale ?? null,
+        status: 'draft',
+        price: event.price,
+        priceMale: event.priceMale ?? null,
+        priceFemale: event.priceFemale ?? null,
+        paymentRequired: event.paymentRequired,
+        paymentTiming: event.paymentTiming,
+        notifyOnReserve: event.notifyOnReserve,
+        notifyOnReserveApp: event.notifyOnReserveApp ?? false,
+        remindEnabled: false,
+        imageUrl: event.imageUrl,
+        iconUrl: event.iconUrl,
+        category: (event as any).category ?? null,
+        tags: (event as any).tags ?? [],
+      });
+      router.push(`/admin/events/${created.id}/edit`);
+    } catch {
+      alert('複製に失敗しました');
     }
   }
 
@@ -185,6 +220,12 @@ export default function EventDetailPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
             </svg>
             メッセージ送信
+          </button>
+          <button
+            onClick={handleDuplicate}
+            className="min-h-11 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            複製
           </button>
           <Link
             href={`/admin/events/${eventId}/edit`}
