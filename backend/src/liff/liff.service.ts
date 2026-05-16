@@ -366,10 +366,10 @@ export class LiffService {
       const dateStr = new Date(event.heldAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
       const desc = event.description ? `\n\n${event.description.slice(0, 300)}${event.description.length > 300 ? '…' : ''}` : '';
 
-      // 通知（短文：いつ・何に予約したか）
+      // 通知（3行：イベント名・日時・TALK誘導）
       const notifBody = status === 'reserved'
-        ? `${dateStr}の「${event.title}」に予約しました。詳細はTALKをご確認ください。`
-        : `${dateStr}の「${event.title}」のキャンセル待ち${waitlistOrder}番目に登録しました。詳細はTALKをご確認ください。`;
+        ? `「${event.title}」に予約しました\n日時：${dateStr}\n詳細はTALKをご確認ください`
+        : `「${event.title}」キャンセル待ち${waitlistOrder}番目\n日時：${dateStr}\n詳細はTALKをご確認ください`;
       await this.prisma.notification.create({
         data: { tenantId, memberId: member.id, title: '予約完了', body: notifBody },
       });
