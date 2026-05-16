@@ -4,17 +4,18 @@ import liff from '@line/liff';
 
 let initialized = false;
 
-export async function initLiff(liffId?: string): Promise<boolean> {
-  if (initialized) return true;
+export async function initLiff(liffId?: string): Promise<{ ok: boolean; reason?: string }> {
+  if (initialized) return { ok: true };
   const id = liffId ?? process.env.NEXT_PUBLIC_LIFF_ID ?? '';
-  if (!id) return false;
+  if (!id) return { ok: false, reason: 'LIFF_ID未設定' };
   try {
     await liff.init({ liffId: id });
     initialized = true;
-    return true;
+    return { ok: true };
   } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
     console.error('[LIFF] init failed:', err);
-    return false;
+    return { ok: false, reason: `init失敗: ${msg}` };
   }
 }
 

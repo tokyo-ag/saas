@@ -18,6 +18,7 @@ function ReservePageInner() {
   const isWaitlist = searchParams.get('waitlist') === '1';
 
   const [authStatus, setAuthStatus] = useState<AuthStatus>('loading');
+  const [authError, setAuthError] = useState('');
   const [event, setEvent] = useState<LiffEvent | null>(null);
   const [tenant, setTenant] = useState<LiffTenant | null>(null);
   const [lineUserId, setLineUserId] = useState('');
@@ -33,12 +34,10 @@ function ReservePageInner() {
   useEffect(() => {
     async function init() {
       // ── Step 1: LIFF初期化 ──
-      const initOk = await initLiff();
+      const { ok: initOk, reason: initReason } = await initLiff();
 
       if (!initOk) {
-        // 初期化失敗。liff.*関数は呼べない。
-        // LINEアプリ内かどうかをUAで簡易判定してもリダイレクトはしない
-        // (liff.line.me へのリダイレクトはDISCOVER→ループの原因)
+        setAuthError(`Step1: ${initReason ?? '不明'}`);
         setAuthStatus('error');
         return;
       }
@@ -49,6 +48,7 @@ function ReservePageInner() {
           if (liff.isInClient()) {
             // LINEアプリ内で未認証 = LIFF設定エラー。
             // liff.login()を呼ぶとDISCOVERタブ→ループになるので呼ばない。
+            setAuthError('Step2: LINEアプリ内で未認証（LIFF設定確認要）');
             setAuthStatus('error');
             return;
           }
@@ -66,7 +66,8 @@ function ReservePageInner() {
           liff.login({ redirectUri: window.location.href });
           return; // リダイレクト待ち
         }
-      } catch {
+      } catch (e) {
+        setAuthError(`Step2-catch: ${e instanceof Error ? e.message : String(e)}`);
         setAuthStatus('error');
         return;
       }
@@ -78,11 +79,13 @@ function ReservePageInner() {
       let uid = '';
       try {
         uid = (await getLiffUserId()) ?? '';
-      } catch {
+      } catch (e) {
+        setAuthError(`Step3: ${e instanceof Error ? e.message : String(e)}`);
         setAuthStatus('error');
         return;
       }
       if (!uid) {
+        setAuthError('Step3: userIdが空');
         setAuthStatus('error');
         return;
       }
@@ -156,6 +159,9 @@ function ReservePageInner() {
     return (
       <div className="min-h-screen bg-[#F7F8FA] flex flex-col items-center justify-center px-6 text-center gap-5">
         <p className="text-sm text-gray-500">認証に失敗しました。もう一度お試しください。</p>
+        {authError && (
+          <p className="text-xs text-red-400 bg-red-50 px-3 py-2 rounded-lg font-mono break-all">{authError}</p>
+        )}
         <button
           onClick={() => window.location.reload()}
           className="bg-[#06C755] text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:bg-[#05a847]"
