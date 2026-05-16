@@ -133,30 +133,14 @@ function ReservePageInner() {
 
   if (!loading && !lineUserId) {
     const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-    const liffUrl = liffId
-      ? `https://liff.line.me/${liffId}/liff/${tenantId}/events/${eventId}/reserve${isWaitlist ? '?waitlist=1' : ''}`
-      : null;
+    if (liffId) {
+      window.location.replace(
+        `https://liff.line.me/${liffId}/liff/${tenantId}/events/${eventId}/reserve${isWaitlist ? '?waitlist=1' : ''}`
+      );
+    }
     return (
-      <div className="min-h-screen bg-[#F7F8FA] flex flex-col items-center justify-center px-6 text-center gap-5">
-        <div className="w-16 h-16 rounded-full bg-[#06C755]/10 flex items-center justify-center">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2C6.48 2 2 6.03 2 11c0 3.13 1.68 5.9 4.28 7.54L5.5 22l3.78-1.97C10.16 20.65 11.07 21 12 21c5.52 0 10-4.03 10-9S17.52 2 12 2z" fill="#06C755"/>
-          </svg>
-        </div>
-        <div>
-          <p className="text-base font-bold text-gray-900">LINEアプリから予約してください</p>
-          <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">
-            予約にはLINE認証が必要です。
-          </p>
-        </div>
-        {liffUrl && (
-          <a
-            href={liffUrl}
-            className="bg-[#06C755] text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:bg-[#05a847]"
-          >
-            LINEアプリで開く
-          </a>
-        )}
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[#06C755] text-sm">読み込み中...</div>
       </div>
     );
   }
