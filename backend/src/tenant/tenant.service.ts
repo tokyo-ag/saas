@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import Stripe from 'stripe';
 import { IsString, IsOptional } from 'class-validator';
@@ -67,6 +67,16 @@ export class TenantService {
 
   async update(tenantId: string, dto: UpdateTenantDto, accountId: string, reauthToken?: string) {
     const tenant = await this.findRaw(tenantId);
+
+    const changesLineSettings = [dto.lineChannelId, dto.lineChannelSecret, dto.lineChannelAccessToken, dto.liffId, dto.organizerLineUserId].some((v) => v !== undefined);
+    const changesStripeSettings = [dto.stripePublishableKey, dto.stripeSecretKey, dto.stripeWebhookSecret].some((v) => v !== undefined);
+    if (changesLineSettings && tenant.plan !== 'pro') {
+      throw new ForbiddenException('LINE API設定はPROプランでご利用いただけます。');
+    }
+    if (changesStripeSettings && tenant.plan !== 'pro') {
+      throw new ForbiddenException('Stripe決済設定はPROプランでご利用いただけます。');
+    }
+
     this.assertSensitiveSettingsReconfirmed(tenantId, accountId, dto, Boolean(tenant.lineChannelAccessToken), reauthToken);
     const updated = await this.prisma.tenant.update({
       where: { id: tenantId },

@@ -79,6 +79,24 @@ export default function StripeSettingsPage() {
     return <div className="px-4 py-12 text-center text-sm text-gray-400">読み込み中...</div>;
   }
 
+  if (tenant.plan !== 'pro') {
+    return (
+      <div className="px-4 py-4 md:px-6 md:py-6">
+        <div className="mx-auto max-w-2xl">
+          <h1 className="mb-5 text-2xl font-bold text-gray-900">設定</h1>
+          <SettingsTabs />
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center">
+            <p className="mb-1 text-base font-semibold text-amber-800">Stripe事前決済はPROプランの機能です</p>
+            <p className="mb-4 text-sm text-amber-700">Stripe連携によるイベント事前決済にはPROプランへのアップグレードが必要です。</p>
+            <Link href="/admin/settings/plan" className="inline-block rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-gray-700">
+              PROプランを見る
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const webhookUrl = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api/stripe-webhook/${tenant.id}`;
 
   return (

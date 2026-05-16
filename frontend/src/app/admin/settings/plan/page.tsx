@@ -22,11 +22,12 @@ const tabs = [
 
 const FEATURES: { label: string; free: string; standard: string; pro: string }[] = [
   { label: 'イベント作成', free: '月2件', standard: '無制限', pro: '無制限' },
-  { label: '参加者上限', free: '50人', standard: '300人', pro: '無制限' },
+  { label: '参加者・予約上限', free: '50人', standard: '無制限', pro: '無制限' },
   { label: 'リマインド通知', free: '-', standard: '利用可', pro: '利用可' },
-  { label: 'Stripe決済連携', free: '-', standard: '利用可', pro: '利用可' },
   { label: 'CSVエクスポート', free: '-', standard: '利用可', pro: '利用可' },
-  { label: '複数管理者', free: '-', standard: '-', pro: '3名まで' },
+  { label: '複数管理者', free: '-', standard: '2名まで', pro: '3名まで' },
+  { label: '公式LINE API設定', free: '-', standard: '-', pro: '利用可' },
+  { label: 'Stripe事前決済', free: '-', standard: '-', pro: '利用可' },
   { label: '優先サポート', free: '-', standard: '-', pro: '利用可' },
 ];
 
@@ -148,14 +149,14 @@ function PlanSettingsPageInner() {
 
         {currentPlan === 'free' && (
           <div className="space-y-3">
-            <PlanCta plan="standard" title="スタンダードにアップグレード" description="リマインド、Stripe決済、イベント作成数アップが使えます。" price="¥2,980 / 月" upgrading={upgrading} onUpgrade={handleUpgrade} />
-            <PlanCta dark plan="pro" title="プロにアップグレード" description="参加者無制限、複数管理者、優先サポートを使えます。" price="¥6,980 / 月" upgrading={upgrading} onUpgrade={handleUpgrade} />
+            <PlanCta plan="standard" title="スタンダードにアップグレード" description="イベント・参加者無制限、リマインド、複数管理者（2名）が使えます。" price="¥2,980 / 月" upgrading={upgrading} onUpgrade={handleUpgrade} />
+            <PlanCta dark plan="pro" title="プロにアップグレード" description="LINE API・Stripe決済連携、複数管理者（3名）、優先サポートが使えます。" price="¥6,980 / 月" upgrading={upgrading} onUpgrade={handleUpgrade} />
             <p className="text-center text-xs text-gray-400">決済はStripeで安全に処理されます。いつでもキャンセルできます。</p>
           </div>
         )}
 
         {currentPlan === 'standard' && (
-          <PlanCta dark plan="pro" title="プロにアップグレード" description="参加者無制限、複数管理者、優先サポートを追加できます。" price="¥6,980 / 月" upgrading={upgrading} onUpgrade={handleUpgrade} />
+          <PlanCta dark plan="pro" title="プロにアップグレード" description="LINE API・Stripe決済連携、複数管理者（3名）、優先サポートを追加できます。" price="¥6,980 / 月" upgrading={upgrading} onUpgrade={handleUpgrade} />
         )}
 
         {currentPlan === 'pro' && (
