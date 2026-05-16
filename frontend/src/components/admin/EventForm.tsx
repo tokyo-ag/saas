@@ -45,10 +45,32 @@ function toLocalDatetimeValue(iso?: string | null): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+async function compressImage(file: File, maxBytes = 4 * 1024 * 1024): Promise<Blob> {
+  if (file.size <= maxBytes) return file;
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let quality = 0.8;
+      const canvas = document.createElement('canvas');
+      let { width, height } = img;
+      if (width > 1920) { height = Math.round(height * 1920 / width); width = 1920; }
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+      canvas.toBlob((blob) => resolve(blob ?? file), 'image/jpeg', quality);
+    };
+    img.src = url;
+  });
+}
+
 async function uploadFile(file: File): Promise<string> {
-  const res = await fetch(`/api/upload?filename=${encodeURIComponent(file.name)}`, {
+  const compressed = await compressImage(file);
+  const ext = file.name.split('.').pop() ?? 'jpg';
+  const filename = `${Date.now()}.${ext}`;
+  const res = await fetch(`/api/upload?filename=${encodeURIComponent(filename)}`, {
     method: 'POST',
-    body: file,
+    body: compressed,
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? 'アップロードに失敗しました');
