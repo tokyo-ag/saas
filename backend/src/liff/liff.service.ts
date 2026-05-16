@@ -363,8 +363,10 @@ export class LiffService {
 
     // アプリ内通知
     if (event.notifyOnReserveApp && status !== 'waiting_payment') {
+      const dateStr = new Date(event.heldAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+      const desc = event.description ? `\n\n${event.description.slice(0, 300)}${event.description.length > 300 ? '…' : ''}` : '';
       const body = status === 'reserved'
-        ? `${event.title}の予約が完了しました。\n日時：${new Date(event.heldAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}\n場所：${event.location}`
+        ? `${event.title}の予約が完了しました。\n日時：${dateStr}\n場所：${event.location}${desc}`
         : `${event.title}はキャンセル待ち${waitlistOrder}番目に登録されました。`;
       await this.prisma.notification.create({
         data: { tenantId, memberId: member.id, title: '予約完了', body },

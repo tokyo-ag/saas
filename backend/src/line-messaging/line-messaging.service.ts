@@ -43,7 +43,7 @@ export class LineMessagingService {
       `日時：${dateStr}`,
       `場所：${location}`,
       ...(priceStr ? [`料金：${priceStr}`] : []),
-      ...(description ? [`\n${description.slice(0, 100)}${description.length > 100 ? '…' : ''}`] : []),
+      ...(description ? [`\n${description.slice(0, 300)}${description.length > 300 ? '…' : ''}`] : []),
     ];
     await this.sendPushMessage(accessToken, lineUserId, lines.join('\n'));
   }
