@@ -279,6 +279,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
     }
   }
 
+  const isLineNotConfigured = tenant !== null && !tenant.lineChannelAccessToken;
   const showStripe = form.paymentTiming !== 'onsite' && (
     form.priceMode === 'same' ? Number(form.price) > 0 : Number(form.priceMale) > 0 || Number(form.priceFemale) > 0
   );
@@ -462,14 +463,20 @@ export default function EventForm({ initial }: { initial?: Event }) {
       </Section>
 
       <Section title="通知">
-        <Check label="予約完了時にLINEで送る" checked={form.notifyOnReserve} onChange={(checked) => set('notifyOnReserve', checked)} />
+        {isLineNotConfigured && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-700">
+            LINE APIが未設定のため、LINE通知は送信されません。
+            <Link href="/admin/settings" className="ml-1 font-medium underline">LINE設定へ</Link>
+          </div>
+        )}
+        <Check label="予約完了時にLINEで送る" checked={form.notifyOnReserve} disabled={isLineNotConfigured} onChange={(checked) => set('notifyOnReserve', checked)} />
         <Check label="予約完了時にアプリ内メッセージで送る" checked={form.notifyOnReserveApp} onChange={(checked) => set('notifyOnReserveApp', checked)} />
         <div className="pt-2">
           <p className={`mb-2 text-sm font-medium ${isFreePlan ? 'text-gray-400' : 'text-gray-700'}`}>
             リマインド通知
             {isFreePlan && <span className="ml-2 text-xs text-[#06C755]">スタンダード以上</span>}
           </p>
-          <Check label="LINEで送る" checked={form.remindEnabled} disabled={isFreePlan} onChange={(checked) => set('remindEnabled', checked)} />
+          <Check label="LINEで送る" checked={form.remindEnabled} disabled={isFreePlan || isLineNotConfigured} onChange={(checked) => set('remindEnabled', checked)} />
           <Check label="アプリ内メッセージで送る" checked={form.remindApp} disabled={isFreePlan} onChange={(checked) => set('remindApp', checked)} />
         </div>
       </Section>

@@ -187,9 +187,16 @@ export default function LiffEventDetailPage() {
       <div className="px-4 pt-5 pb-2">
         <h2 className="text-[18px] font-bold text-gray-900 leading-snug mb-3">{event.title}</h2>
         <div className="flex flex-wrap gap-2">
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${event.price === 0 ? 'bg-green-50 text-[#06C755]' : 'bg-gray-100 text-gray-600'}`}>
-            {event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`}
-          </span>
+          {event.priceMale != null && event.priceFemale != null ? (
+            <>
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">男性 ¥{event.priceMale.toLocaleString()}</span>
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">女性 ¥{event.priceFemale.toLocaleString()}</span>
+            </>
+          ) : (
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${event.price === 0 ? 'bg-green-50 text-[#06C755]' : 'bg-gray-100 text-gray-600'}`}>
+              {event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`}
+            </span>
+          )}
           {remaining !== null && remaining <= 5 && remaining > 0 && (
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-600">残り{remaining}席</span>
           )}
@@ -224,9 +231,17 @@ export default function LiffEventDetailPage() {
           )}
         </InfoRow>
         <InfoRow icon={<TicketIcon />}>
-          <p className={`text-sm font-bold ${event.price === 0 ? 'text-[#06C755]' : 'text-gray-900'}`}>
-            {event.price === 0 ? '参加無料' : `¥${event.price.toLocaleString()}`}
-          </p>
+          {event.priceMale != null && event.priceFemale != null ? (
+            <div className="space-y-0.5">
+              <p className="text-sm font-bold text-gray-900">
+                男性 ¥{event.priceMale.toLocaleString()} / 女性 ¥{event.priceFemale.toLocaleString()}
+              </p>
+            </div>
+          ) : (
+            <p className={`text-sm font-bold ${event.price === 0 ? 'text-[#06C755]' : 'text-gray-900'}`}>
+              {event.price === 0 ? '参加無料' : `¥${event.price.toLocaleString()}`}
+            </p>
+          )}
           {event.paymentRequired && <p className="text-xs text-gray-400 mt-0.5">事前決済が必要です</p>}
         </InfoRow>
         {event.description && (

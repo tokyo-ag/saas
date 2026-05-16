@@ -408,6 +408,8 @@ export interface LiffEvent {
   capacity?: number;
   status: EventStatus;
   price: number;
+  priceMale?: number | null;
+  priceFemale?: number | null;
   paymentRequired: boolean;
   reservedCount: number;
   imageUrl?: string;
