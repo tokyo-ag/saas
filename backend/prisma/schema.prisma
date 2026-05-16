@@ -214,6 +214,18 @@ model SupportMessage {
   @@map("support_messages")
 }
 
+model PushSubscription {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  endpoint  String   @unique @db.Text
+  p256dh    String   @db.Text
+  auth      String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@map("push_subscriptions")
+}
+
 model BannedLineUser {
   id         String   @id @default(uuid())
   lineUserId String   @unique @map("line_user_id") @db.VarChar(100)

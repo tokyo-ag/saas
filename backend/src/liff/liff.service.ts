@@ -10,6 +10,7 @@ import { ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LineMessagingService } from '../line-messaging/line-messaging.service';
 import { StripeService } from '../stripe/stripe.service';
+import { PushService } from '../push/push.service';
 
 export class CreateReservationDto {
   @IsString() eventId!: string;
@@ -30,6 +31,7 @@ export class LiffService {
     private prisma: PrismaService,
     private lineMessaging: LineMessagingService,
     private stripeService: StripeService,
+    private pushService: PushService,
   ) {}
 
   // テナント公開情報（認証不要）
@@ -726,8 +728,11 @@ export class LiffService {
   }
 
   async sendSupportMessage(lineUserId: string, tenantId: string, content: string) {
-    return this.prisma.supportMessage.create({
+    const message = await this.prisma.supportMessage.create({
       data: { lineUserId, tenantId, content, fromUser: true },
     });
+    const preview = content.length > 50 ? content.slice(0, 50) + '…' : content;
+    this.pushService.sendToTenant(tenantId, '新しいメッセージ', preview).catch(() => null);
+    return message;
   }
 }
