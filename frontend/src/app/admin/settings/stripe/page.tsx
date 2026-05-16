@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, Tenant, TenantInput } from '@/lib/api';
+import { SaveToast } from '@/components/ui/SaveToast';
 
 const tabs = [
   { label: '団体情報', href: '/admin/settings' },
@@ -87,7 +88,7 @@ export default function StripeSettingsPage() {
         <SettingsTabs />
 
         {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
-        {saved && <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">保存しました</div>}
+        <SaveToast show={saved} />
 
         <div className="space-y-5">
           <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">

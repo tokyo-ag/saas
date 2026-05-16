@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, Tenant, TenantInput } from '@/lib/api';
+import { SaveToast } from '@/components/ui/SaveToast';
 
 const tabs = [
   { label: '団体情報', href: '/admin/settings', active: true },
@@ -91,7 +92,7 @@ export default function SettingsPage() {
         <SettingsTabs />
 
         {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
-        {saved && <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">保存しました</div>}
+        <SaveToast show={saved} />
 
         <section className="mb-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
