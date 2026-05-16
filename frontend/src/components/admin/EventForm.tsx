@@ -45,10 +45,8 @@ function toLocalDatetimeValue(iso?: string | null): string {
 }
 
 async function uploadFile(file: File): Promise<string> {
-  const token = (await import('@/lib/auth')).getToken();
   const res = await fetch(`/api/upload?filename=${encodeURIComponent(file.name)}`, {
     method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: file,
   });
   const data = await res.json();
