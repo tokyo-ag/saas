@@ -31,13 +31,14 @@ function ReservePageInner() {
 
   useEffect(() => {
     async function init() {
-      const ok = await initLiff();
-      if (!ok) {
+      await initLiff();
+      try {
+        if (!liff.isLoggedIn()) {
+          liff.login({ redirectUri: window.location.href });
+          return;
+        }
+      } catch {
         setLoading(false);
-        return;
-      }
-      if (!liff.isLoggedIn()) {
-        liff.login({ redirectUri: window.location.href });
         return;
       }
 
