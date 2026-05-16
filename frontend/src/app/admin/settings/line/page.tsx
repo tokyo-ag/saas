@@ -155,11 +155,6 @@ export default function LineSettingsPage() {
             </section>
           )}
 
-          {tenant.lineConfigured && editUnlocked && (
-            <section className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-              本人確認が完了しました。この画面を閉じるまでLINE設定を編集できます。Secret と Access Token は空欄のまま保存すると既存値を維持します。
-            </section>
-          )}
           <StepCard step={1} currentStep={step} title="LINE公式アカウントを用意する">
             <p className="mb-4 text-sm leading-relaxed text-gray-600">
               まだLINE公式アカウントがない場合は作成してください。作成済みなら次の手順へ進めます。
@@ -169,7 +164,7 @@ export default function LineSettingsPage() {
             </button>
           </StepCard>
 
-          <StepCard step={2} currentStep={step} title="Messaging APIの情報を入力する">
+          <StepCard step={2} currentStep={step} title="Messaging APIの情報を入力する" forceExpanded={editUnlocked}>
             <p className="mb-4 text-sm leading-relaxed text-gray-600">
               LINE Developers のチャネル設定から、Channel ID、Channel Secret、Access Token をコピーして貼り付けてください。
             </p>
@@ -205,7 +200,7 @@ export default function LineSettingsPage() {
             </button>
           </StepCard>
 
-          <StepCard step={3} currentStep={step} title="LIFFアプリを追加する">
+          <StepCard step={3} currentStep={step} title="LIFFアプリを追加する" forceExpanded={editUnlocked}>
             <p className="mb-3 text-sm leading-relaxed text-gray-600">
               LINE Developers でLIFFアプリを追加し、エンドポイントURLに以下を設定してください。
             </p>
@@ -340,14 +335,15 @@ function CopyBox({ value }: { value: string }) {
   );
 }
 
-function StepCard({ step, currentStep, title, children }: {
+function StepCard({ step, currentStep, title, children, forceExpanded = false }: {
   step: Step;
   currentStep: Step;
   title: string;
   children: React.ReactNode;
+  forceExpanded?: boolean;
 }) {
   const done = currentStep > step;
-  const active = currentStep === step;
+  const active = currentStep === step || forceExpanded;
 
   return (
     <section className={`rounded-xl border bg-white p-4 transition-all md:p-5 ${active ? 'border-[#06C755]/50 shadow-sm' : 'border-gray-200 opacity-70'}`}>
