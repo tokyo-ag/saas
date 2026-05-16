@@ -742,9 +742,12 @@ export class LiffService {
         data: { tenantId, lineUserId },
       });
     }
-    return this.prisma.adminMemberMessage.create({
+    const message = await this.prisma.adminMemberMessage.create({
       data: { tenantId, memberId: member.id, content, fromAdmin: false },
     });
+    const preview = content.length > 50 ? content.slice(0, 50) + '…' : content;
+    this.pushService.sendToTenant(tenantId, '新しいメッセージ', preview).catch(() => null);
+    return message;
   }
 
   // サポートメッセージ（ユーザー↔COMIU）
