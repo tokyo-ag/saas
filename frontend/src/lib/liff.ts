@@ -12,7 +12,8 @@ export async function initLiff(liffId?: string): Promise<boolean> {
     await liff.init({ liffId: id });
     initialized = true;
     return true;
-  } catch {
+  } catch (err) {
+    console.error('[LIFF] init failed:', err);
     return false;
   }
 }

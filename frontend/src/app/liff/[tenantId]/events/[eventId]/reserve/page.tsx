@@ -103,6 +103,10 @@ function ReservePageInner() {
   const hasProfile = profile && profile.name && profile.grade && profile.gender;
 
   if (!loading && !lineUserId) {
+    const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+    const liffUrl = liffId
+      ? `https://liff.line.me/${liffId}/liff/${tenantId}/events/${eventId}/reserve${isWaitlist ? '?waitlist=1' : ''}`
+      : null;
     return (
       <div className="min-h-screen bg-[#F7F8FA] flex flex-col items-center justify-center px-6 text-center gap-5">
         <div className="w-16 h-16 rounded-full bg-[#06C755]/10 flex items-center justify-center">
@@ -111,11 +115,19 @@ function ReservePageInner() {
           </svg>
         </div>
         <div>
-          <p className="text-base font-bold text-gray-900">LINEから開いてください</p>
+          <p className="text-base font-bold text-gray-900">LINEアプリから予約してください</p>
           <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">
-            予約はLINEアプリ内からのみ行えます。
+            予約にはLINE認証が必要です。
           </p>
         </div>
+        {liffUrl && (
+          <a
+            href={liffUrl}
+            className="bg-[#06C755] text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:bg-[#05a847]"
+          >
+            LINEアプリで開く
+          </a>
+        )}
       </div>
     );
   }
