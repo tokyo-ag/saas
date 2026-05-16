@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { api, API_URL, formatDateShort, LiffEvent, LiffTenant, PublicEvent } from '@/lib/api';
+import { imgUrl } from '@/lib/imgUrl';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
 import { initLiff, getLiffUserId } from '@/lib/liff';
 import LiffBottomNav from '@/components/liff/LiffBottomNav';
@@ -42,7 +43,7 @@ function AvatarRow({ count, friends }: { count: number; friends?: { id: string; 
 }
 
 function EventCard({ event, tenantId }: { event: LiffEvent; tenantId: string }) {
-  const img = event.imageUrl ? `${API_URL}${event.imageUrl}` : null;
+  const img = imgUrl(event.imageUrl, API_URL);
   const remaining = event.capacity != null ? event.capacity - event.reservedCount : null;
 
   return (
@@ -90,7 +91,7 @@ function EventCard({ event, tenantId }: { event: LiffEvent; tenantId: string }) 
 }
 
 function FavEventRow({ event }: { event: PublicEvent }) {
-  const img = event.imageUrl ? `${API_URL}${event.imageUrl}` : null;
+  const img = imgUrl(event.imageUrl, API_URL);
   const org = event.tenant.lineDisplayName ?? event.tenant.name;
   return (
     <Link

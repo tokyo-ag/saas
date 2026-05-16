@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { api, API_URL, PublicEvent } from '@/lib/api';
+import { imgUrl } from '@/lib/imgUrl';
 
 const ANON_KEY = 'anon_id';
 
@@ -167,7 +168,7 @@ export default function SportsCategoryPage() {
         ) : (
           <div className="space-y-3">
             {filtered.map((ev) => {
-              const img = ev.imageUrl ? `${API_URL}${ev.imageUrl}` : null;
+              const img = imgUrl(ev.imageUrl, API_URL);
               const org = ev.tenant.lineDisplayName ?? ev.tenant.name;
               const liked = likedIds.has(ev.id);
               const remaining = ev.capacity != null ? ev.capacity - ev.reservedCount : null;

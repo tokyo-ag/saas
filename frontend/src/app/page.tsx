@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { api, API_URL, PublicEvent, PublicTenant } from '@/lib/api';
+import { imgUrl } from '@/lib/imgUrl';
 import LiffBottomNav from '@/components/liff/LiffBottomNav';
 
 const FAV_KEY = 'fav_tenants';
@@ -54,7 +55,7 @@ function EventCard({ event, liked, onToggleLike, favTenants, onToggleFav }: {
   favTenants: Set<string>;
   onToggleFav: (tenantId: string) => void;
 }) {
-  const img = event.imageUrl ? `${API_URL}${event.imageUrl}` : null;
+  const img = imgUrl(event.imageUrl, API_URL);
   const org = event.tenant.lineDisplayName ?? event.tenant.name;
   const remaining = event.capacity != null ? event.capacity - event.reservedCount : null;
 

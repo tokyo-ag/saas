@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, formatDate, downloadWithAuth, API_URL, Event, Reservation, AdminEventReview } from '@/lib/api';
+import { imgUrl } from '@/lib/imgUrl';
 import { EventBadge, ReservationBadge } from '@/components/ui/StatusBadge';
 
 
@@ -174,7 +175,7 @@ export default function EventDetailPage() {
     <div className="px-4 py-4 md:px-6 md:py-6">
       {event.imageUrl && (
         <img
-          src={`${API_URL}${event.imageUrl}`}
+          src={imgUrl(event.imageUrl, API_URL)!}
           alt={event.title}
           className="mb-5 h-40 w-full rounded-xl border border-gray-200 object-cover md:h-48"
         />

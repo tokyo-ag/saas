@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, API_URL, Event, Tenant } from '@/lib/api';
+import { imgUrl } from '@/lib/imgUrl';
 import { Section, Field, RadioGroup, Check, UploadButton } from './EventFormPrimitives';
 
 type EventFormData = {
@@ -346,7 +347,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
 
       <Section title="画像">
         <Field label="バナー画像">
-          {form.imageUrl && <img src={form.imageUrl.startsWith('http') ? form.imageUrl : `${API_URL}${form.imageUrl}`} alt="" className="mb-2 h-32 w-full rounded-lg border border-gray-200 object-cover" />}
+          {form.imageUrl && <img src={imgUrl(form.imageUrl, API_URL)!} alt="" className="mb-2 h-32 w-full rounded-lg border border-gray-200 object-cover" />}
           <UploadButton uploading={uploading} onUpload={async (file) => set('imageUrl', await uploadFile(file))} setUploading={setUploading} setError={setError} />
           {form.imageUrl && <button type="button" onClick={() => set('imageUrl', '')} className="mt-2 text-xs text-red-500 hover:underline">削除</button>}
         </Field>
