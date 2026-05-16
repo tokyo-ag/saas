@@ -305,7 +305,11 @@ export class LiffService {
       throw new BadRequestException('満席のため予約できません');
     }
 
-    const needsPayment = event.paymentRequired && event.price > 0 && !isFull;
+    const effectivePrice = (event.priceMale != null && event.priceFemale != null)
+      ? (member.gender === '男性' ? event.priceMale : member.gender === '女性' ? event.priceFemale : Math.max(event.priceMale, event.priceFemale))
+      : event.price;
+
+    const needsPayment = event.paymentRequired && effectivePrice > 0 && !isFull;
     const status: ReservationStatus = isFull
       ? 'waitlisted'
       : needsPayment
@@ -333,7 +337,7 @@ export class LiffService {
         const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
         const session = await this.stripeService.createCheckoutSession(tenant.stripeSecretKey, {
           eventTitle: event.title,
-          price: event.price,
+          price: effectivePrice,
           reservationId: reservation.id,
           tenantId,
           successUrl: `${frontendUrl}/liff/${tenantId}/events/${event.id}/done?status=reserved`,
