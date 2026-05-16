@@ -279,7 +279,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
     }
   }
 
-  const isLineNotConfigured = tenant !== null && !tenant.lineChannelAccessToken;
+  const isLineNotConfigured = tenant !== null && !tenant.lineConfigured;
 
   if (!initial && isLineNotConfigured) {
     return (
@@ -536,4 +536,3 @@ export default function EventForm({ initial }: { initial?: Event }) {
     </form>
   );
 }
-

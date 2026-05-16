@@ -21,6 +21,16 @@ export class UpdateTenantDto {
 export class TenantService {
   constructor(private prisma: PrismaService) {}
 
+  private toSafeTenant<T extends { lineChannelSecret: unknown; lineChannelAccessToken: unknown; stripeSecretKey: unknown; stripeWebhookSecret: unknown }>(tenant: T) {
+    // Keep secret values server-side while still letting the UI know whether setup is complete.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { lineChannelSecret, lineChannelAccessToken, stripeSecretKey, stripeWebhookSecret, ...safe } = tenant;
+    return {
+      ...safe,
+      lineConfigured: Boolean(lineChannelAccessToken),
+    };
+  }
+
   private async findRaw(tenantId: string) {
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
     if (!tenant) throw new NotFoundException('Tenant not found');
@@ -29,9 +39,7 @@ export class TenantService {
 
   async findOne(tenantId: string) {
     const tenant = await this.findRaw(tenantId);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { lineChannelSecret, lineChannelAccessToken, stripeSecretKey, stripeWebhookSecret, ...safe } = tenant;
-    return safe;
+    return this.toSafeTenant(tenant);
   }
 
   async update(tenantId: string, dto: UpdateTenantDto) {
@@ -41,10 +49,10 @@ export class TenantService {
       data: {
         ...(dto.name !== undefined && { name: dto.name }),
         ...(dto.description !== undefined && { description: dto.description }),
-        ...(dto.lineChannelId !== undefined && { lineChannelId: dto.lineChannelId }),
-        ...(dto.lineChannelSecret !== undefined && { lineChannelSecret: dto.lineChannelSecret }),
-        ...(dto.lineChannelAccessToken !== undefined && { lineChannelAccessToken: dto.lineChannelAccessToken }),
-        ...(dto.liffId !== undefined && { liffId: dto.liffId }),
+        ...(dto.lineChannelId !== undefined && { lineChannelId: dto.lineChannelId.trim() || null }),
+        ...(dto.lineChannelSecret !== undefined && { lineChannelSecret: dto.lineChannelSecret.trim() || null }),
+        ...(dto.lineChannelAccessToken !== undefined && { lineChannelAccessToken: dto.lineChannelAccessToken.trim() || null }),
+        ...(dto.liffId !== undefined && { liffId: dto.liffId.trim() || null }),
         ...(dto.organizerLineUserId !== undefined && { organizerLineUserId: dto.organizerLineUserId || null }),
         ...(dto.stripePublishableKey !== undefined && { stripePublishableKey: dto.stripePublishableKey || null }),
         ...(dto.stripeSecretKey !== undefined && { stripeSecretKey: dto.stripeSecretKey || null }),
@@ -52,9 +60,7 @@ export class TenantService {
         ...(dto.liffEventView !== undefined && { liffEventView: dto.liffEventView }),
       },
     });
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { lineChannelSecret, lineChannelAccessToken, stripeSecretKey, stripeWebhookSecret, ...safe } = updated;
-    return safe;
+    return this.toSafeTenant(updated);
   }
 
   async getMemberCount(tenantId: string) {
@@ -176,13 +182,14 @@ export class TenantService {
     }
     const data = await res.json() as { displayName: string; pictureUrl?: string };
 
-    return this.prisma.tenant.update({
+    const updated = await this.prisma.tenant.update({
       where: { id: tenantId },
       data: {
         lineDisplayName: data.displayName,
         linePictureUrl: data.pictureUrl ?? null,
       },
     });
+    return this.toSafeTenant(updated);
   }
 
   private supportThreadId(tenantId: string) {

@@ -113,13 +113,13 @@ export default function SettingsPage() {
             </div>
             <button
               onClick={handleSyncLine}
-              disabled={syncing || !tenant.lineChannelAccessToken}
+              disabled={syncing || !tenant.lineConfigured}
               className="w-full shrink-0 rounded-lg border border-[#06C755] px-4 py-2 text-sm font-medium text-[#06C755] transition-colors hover:bg-[#06C755]/5 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
             >
               {syncing ? '同期中...' : 'LINEから同期'}
             </button>
           </div>
-          {!tenant.lineChannelAccessToken && (
+          {!tenant.lineConfigured && (
             <p className="mt-3 text-xs text-gray-500">
               先に <Link href="/admin/settings/line" className="font-medium text-[#06C755] underline">LINE連携</Link> を設定してください。
             </p>

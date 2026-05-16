@@ -455,6 +455,7 @@ export interface Tenant {
   lineChannelId?: string;
   lineChannelSecret?: string;
   lineChannelAccessToken?: string;
+  lineConfigured?: boolean;
   liffId?: string;
   organizerLineUserId?: string;
   lineDisplayName?: string;

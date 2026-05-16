@@ -55,11 +55,11 @@ export default function LineSettingsPage() {
       setForm({
         lineChannelId: tenantData.lineChannelId ?? '',
         lineChannelSecret: tenantData.lineChannelSecret ?? '',
-        lineChannelAccessToken: tenantData.lineChannelAccessToken ?? '',
+        lineChannelAccessToken: '',
         liffId: tenantData.liffId ?? '',
       });
       setOrganizerLineUserId(tenantData.organizerLineUserId ?? '');
-      if (tenantData.lineChannelAccessToken) setStep(3);
+      if (tenantData.lineConfigured) setStep(3);
       if (tenantData.liffId) setStep(4);
     });
   }, []);
@@ -127,8 +127,13 @@ export default function LineSettingsPage() {
                   lineChannelAccessToken: form.lineChannelAccessToken,
                 });
                 if (ok) {
-                  await api.tenant.syncLineProfile().catch(() => null);
-                  window.location.reload();
+                  try {
+                    const updated = await api.tenant.syncLineProfile();
+                    setTenant(updated);
+                    setStep(3);
+                  } catch (err: any) {
+                    setError(err.message);
+                  }
                 }
               }}
               className="mt-4 w-full rounded-lg bg-[#06C755] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] disabled:opacity-50 sm:w-auto"
@@ -157,7 +162,7 @@ export default function LineSettingsPage() {
             </button>
           </StepCard>
 
-          {tenant.lineChannelAccessToken && (
+          {tenant.lineConfigured && (
             <section className="rounded-xl border border-gray-200 bg-white p-4 md:p-5 flex items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2.5 mb-0.5">
