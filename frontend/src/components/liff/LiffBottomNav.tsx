@@ -50,6 +50,7 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
   const params = useParams();
   const [tid, setTid] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
+  const [talkUnread, setTalkUnread] = useState(0);
 
   useEffect(() => {
     const fromUrl = propId ?? (params?.tenantId as string | undefined);
@@ -67,8 +68,12 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
       const ok = await initLiff();
       const uid = ok ? ((await getLiffUserId()) ?? '') : `demo-${tid}`;
       if (!uid) return;
-      const data = await api.notifications.list(tid, uid).catch(() => []);
-      setUnreadCount(data.filter((n) => !n.read).length);
+      const [notifs, msgs] = await Promise.all([
+        api.notifications.list(tid, uid).catch(() => []),
+        api.liff.adminMessages(tid, uid).catch(() => []),
+      ]);
+      setUnreadCount(notifs.filter((n) => !n.read).length);
+      setTalkUnread(msgs.filter((m) => m.fromAdmin && !m.read).length);
     }
     fetchUnread();
   }, [tid, pathname]);
@@ -95,7 +100,7 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
       label: 'Talk',
       Icon: ChatIcon,
       active: !!base && pathname.startsWith(`${base}/talks`),
-      badge: 0,
+      badge: talkUnread,
     },
     {
       href: base ? `${base}/notifications` : null,
