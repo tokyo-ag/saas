@@ -177,7 +177,7 @@ export default function EventDetailPage() {
         <img
           src={imgUrl(event.imageUrl, API_URL)!}
           alt={event.title}
-          className="mb-5 h-40 w-full rounded-xl border border-gray-200 object-cover md:h-48"
+          className="mb-5 w-full rounded-xl border border-gray-200 object-cover aspect-[4/5]"
         />
       )}
 

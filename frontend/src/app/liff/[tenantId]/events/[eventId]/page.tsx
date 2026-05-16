@@ -168,7 +168,7 @@ export default function LiffEventDetailPage() {
       {/* hero image */}
       {event.imageUrl ? (
         <div className="relative">
-          <img src={imgUrl(event.imageUrl, API_URL)!} alt={event.title} className="w-full aspect-video object-cover" />
+          <img src={imgUrl(event.imageUrl, API_URL)!} alt={event.title} className="w-full aspect-[4/5] object-cover" />
           {(isFull || isClosed) && (
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
               <span className="bg-white/90 text-gray-800 text-sm font-bold px-4 py-1.5 rounded-full">
