@@ -128,7 +128,7 @@ export default function LineSettingsPage() {
                 });
                 if (ok) {
                   await api.tenant.syncLineProfile().catch(() => null);
-                  setStep(3);
+                  window.location.reload();
                 }
               }}
               className="mt-4 w-full rounded-lg bg-[#06C755] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] disabled:opacity-50 sm:w-auto"
@@ -178,9 +178,9 @@ export default function LineSettingsPage() {
                   try {
                     const updated = await api.tenant.syncLineProfile();
                     setTenant(updated);
+                    window.location.reload();
                   } catch {
                     setError('LINEアイコンの取得に失敗しました');
-                  } finally {
                     setSyncing(false);
                   }
                 }}
