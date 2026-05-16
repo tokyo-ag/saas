@@ -37,14 +37,14 @@ export class PushService {
     await this.prisma.pushSubscription.deleteMany({ where: { endpoint } });
   }
 
-  private async sendToSubscriptions(subs: { endpoint: string; p256dh: string; auth: string }[], title: string, body: string): Promise<void> {
+  private async sendToSubscriptions(subs: { endpoint: string; p256dh: string; auth: string }[], title: string, body: string, url?: string): Promise<void> {
     if (!this.configured) return;
     await Promise.all(
       subs.map(async (sub) => {
         try {
           await webpush.sendNotification(
             { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-            JSON.stringify({ title, body }),
+            JSON.stringify({ title, body, url }),
           );
         } catch (err: any) {
           if (err.statusCode === 410 || err.statusCode === 404) {
@@ -57,13 +57,13 @@ export class PushService {
     );
   }
 
-  async sendToTenant(tenantId: string, title: string, body: string): Promise<void> {
+  async sendToTenant(tenantId: string, title: string, body: string, url = '/admin/talk'): Promise<void> {
     const subs = await this.prisma.pushSubscription.findMany({ where: { tenantId, memberId: null } });
-    await this.sendToSubscriptions(subs, title, body);
+    await this.sendToSubscriptions(subs, title, body, url);
   }
 
-  async sendToMember(memberId: string, title: string, body: string): Promise<void> {
+  async sendToMember(memberId: string, title: string, body: string, url?: string): Promise<void> {
     const subs = await this.prisma.pushSubscription.findMany({ where: { memberId } });
-    await this.sendToSubscriptions(subs, title, body);
+    await this.sendToSubscriptions(subs, title, body, url);
   }
 }

@@ -67,7 +67,7 @@ export class MembersService {
       data: { read: true },
     });
     return this.prisma.adminMemberMessage.findMany({
-      where: { memberId, tenantId },
+      where: { memberId, tenantId, isSystem: false },
       orderBy: { createdAt: 'asc' },
     });
   }
@@ -80,6 +80,7 @@ export class MembersService {
       },
       include: {
         adminMessages: {
+          where: { isSystem: false },
           orderBy: { createdAt: 'desc' },
           take: 1,
         },
@@ -131,7 +132,7 @@ export class MembersService {
       data: { tenantId, memberId, content, fromAdmin: true },
     });
     const preview = content.length > 50 ? content.slice(0, 50) + '…' : content;
-    this.pushService.sendToMember(memberId, '主催者からメッセージ', preview).catch(() => null);
+    this.pushService.sendToMember(memberId, '主催者からメッセージ', preview, `/liff/${tenantId}/admin-talk`).catch(() => null);
     return message;
   }
 
