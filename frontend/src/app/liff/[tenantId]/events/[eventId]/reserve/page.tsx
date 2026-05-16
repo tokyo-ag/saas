@@ -2,11 +2,14 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { api, LiffEvent, LiffProfile, LiffTenant, ReserveResult } from '@/lib/api';
+import { api, LiffEvent, LiffProfile, LiffTenant } from '@/lib/api';
 import { initLiff, getLiffUserId, checkFriendship, liff } from '@/lib/liff';
 
 const GRADES = ['高校1年', '高校2年', '高校3年', '大学1年', '大学2年', '大学3年', '大学4年', '大学院生', '社会人', 'その他'];
 const GENDERS = ['男性', '女性', 'その他・回答しない'];
+
+// auth状態を3値で管理
+type AuthStatus = 'loading' | 'error' | 'ok';
 
 function ReservePageInner() {
   const { tenantId, eventId } = useParams<{ tenantId: string; eventId: string }>();
@@ -14,65 +17,78 @@ function ReservePageInner() {
   const router = useRouter();
   const isWaitlist = searchParams.get('waitlist') === '1';
 
+  const [authStatus, setAuthStatus] = useState<AuthStatus>('loading');
   const [event, setEvent] = useState<LiffEvent | null>(null);
   const [tenant, setTenant] = useState<LiffTenant | null>(null);
   const [lineUserId, setLineUserId] = useState('');
   const [profile, setProfile] = useState<LiffProfile | null>(null);
   const [isFriend, setIsFriend] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  // フォーム状態（プロフィール未登録時のみ使用）
   const [name, setName] = useState('');
   const [grade, setGrade] = useState('');
   const [gender, setGender] = useState('');
-
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     async function init() {
+      // ── Step 1: LIFF初期化 ──
       const initOk = await initLiff();
 
-      // initLiff()失敗時はliff関数を呼べないのでフォールバックを表示する
       if (!initOk) {
-        setLoading(false);
+        // 初期化失敗。liff.*関数は呼べない。
+        // LINEアプリ内かどうかをUAで簡易判定してもリダイレクトはしない
+        // (liff.line.me へのリダイレクトはDISCOVER→ループの原因)
+        setAuthStatus('error');
         return;
       }
 
+      // ── Step 2: ログイン確認 ──
       try {
         if (!liff.isLoggedIn()) {
-          // LINEアプリ内（LIFF browser）では liff.login() を呼ばない。
-          // 呼ぶとLIFFエンドポイントURL（ルート）へのリダイレクトが発生し、
-          // DISCOVERタブが表示されてしまう。LINEアプリ内では
-          // liff.init()が認証を自動処理するため、ここに来るのは設定エラー。
           if (liff.isInClient()) {
-            setLoading(false);
+            // LINEアプリ内で未認証 = LIFF設定エラー。
+            // liff.login()を呼ぶとDISCOVERタブ→ループになるので呼ばない。
+            setAuthStatus('error');
             return;
           }
 
-          // 外部ブラウザ: ループ防止フラグをlocalStorageで管理
-          // （iOSのLINEブラウザはwebview間でsessionStorageをリセットする場合がある）
+          // 外部ブラウザ: LINEログインへリダイレクト（1回のみ）
           const tried = localStorage.getItem('liff-login-tried');
           if (tried) {
+            // 1回試みたが戻ってきても未認証 → エラー表示
             localStorage.removeItem('liff-login-tried');
-            setLoading(false);
+            setAuthStatus('error');
             return;
           }
           localStorage.setItem('liff-login-tried', '1');
           localStorage.setItem('liff-pending-redirect', window.location.href);
           liff.login({ redirectUri: window.location.href });
-          return;
+          return; // リダイレクト待ち
         }
       } catch {
-        setLoading(false);
+        setAuthStatus('error');
         return;
       }
+
+      // 認証成功 → ループ防止フラグをクリア
       localStorage.removeItem('liff-login-tried');
 
-      const uid = (await getLiffUserId()) ?? '';
-      if (!uid) { setLoading(false); return; }
+      // ── Step 3: userId取得 ──
+      let uid = '';
+      try {
+        uid = (await getLiffUserId()) ?? '';
+      } catch {
+        setAuthStatus('error');
+        return;
+      }
+      if (!uid) {
+        setAuthStatus('error');
+        return;
+      }
       setLineUserId(uid);
 
+      // ── Step 4: データ取得 ──
       const [ev, prof, tenantInfo] = await Promise.allSettled([
         api.liff.event(tenantId, eventId),
         api.liff.profile(tenantId, uid).catch(() => null),
@@ -91,13 +107,13 @@ function ReservePageInner() {
         setIsFriend(true);
       }
 
-      setLoading(false);
+      setAuthStatus('ok');
     }
     init();
   }, [tenantId, eventId]);
 
   async function submit(overrides?: { name: string; grade: string; gender: string }) {
-    if (!lineUserId) { setError('LINEログインが必要です。ページを再読み込みしてください。'); return; }
+    if (!lineUserId) return;
     setError('');
     setSubmitting(true);
     try {
@@ -121,7 +137,8 @@ function ReservePageInner() {
 
   const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#06C755] focus:border-transparent';
 
-  if (loading) {
+  // ── ローディング ──
+  if (authStatus === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-[#06C755] text-sm">読み込み中...</div>
@@ -129,22 +146,22 @@ function ReservePageInner() {
     );
   }
 
-  const hasProfile = profile && profile.name && profile.grade && profile.gender;
-
-  if (!loading && !lineUserId) {
-    const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-    if (liffId) {
-      window.location.replace(
-        `https://liff.line.me/${liffId}/liff/${tenantId}/events/${eventId}/reserve${isWaitlist ? '?waitlist=1' : ''}`
-      );
-    }
+  // ── 認証エラー（リダイレクトは一切しない・ループ防止） ──
+  if (authStatus === 'error') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#06C755] text-sm">読み込み中...</div>
+      <div className="min-h-screen bg-[#F7F8FA] flex flex-col items-center justify-center px-6 text-center gap-5">
+        <p className="text-sm text-gray-500">認証に失敗しました。もう一度お試しください。</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-[#06C755] text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:bg-[#05a847]"
+        >
+          再試行する
+        </button>
       </div>
     );
   }
 
+  // ── 友だち追加が必要 ──
   if (!isFriend) {
     const addFriendUrl = tenant?.lineChannelId
       ? `https://line.me/R/ti/p/@${tenant.lineChannelId}`
@@ -179,6 +196,9 @@ function ReservePageInner() {
     );
   }
 
+  // ── 予約フォーム ──
+  const hasProfile = profile && profile.name && profile.grade && profile.gender;
+
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
       <div className="bg-[#06C755] text-white px-4 py-4 flex items-center gap-3">
@@ -199,7 +219,6 @@ function ReservePageInner() {
         )}
 
         {hasProfile ? (
-          /* ── 登録済みユーザー：確認画面 ── */
           <>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
               <p className="text-xs font-medium text-gray-500 mb-1">参加者情報</p>
@@ -233,7 +252,6 @@ function ReservePageInner() {
             </button>
           </>
         ) : (
-          /* ── 初回ユーザー：入力フォーム ── */
           <form
             onSubmit={(e) => { e.preventDefault(); submit({ name, grade, gender }); }}
             className="space-y-4"
