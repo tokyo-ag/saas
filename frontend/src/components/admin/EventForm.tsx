@@ -89,6 +89,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
   const [upgradeRequired, setUpgradeRequired] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [isFreePlan, setIsFreePlan] = useState(false);
+  const [isPro, setIsPro] = useState(false);
   const [tenant, setTenant] = useState<Tenant | null>(null);
 
   const [form, setForm] = useState<EventFormData>({
@@ -109,7 +110,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
     priceFemale: initial?.priceFemale?.toString() ?? '0',
     paymentTiming: (initial?.paymentTiming as any) ?? 'onsite',
     notifyOnReserve: initial?.notifyOnReserve ?? true,
-    notifyOnReserveApp: (initial as any)?.notifyOnReserveApp ?? false,
+    notifyOnReserveApp: (initial as any)?.notifyOnReserveApp ?? true,
     remindEnabled: initial?.remindEnabled ?? false,
     remindApp: (initial as any)?.remindApp ?? false,
     remindPreset: 'prev18',
@@ -124,6 +125,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
     api.tenant.get().then((tenantData) => {
       setTenant(tenantData);
       setIsFreePlan(tenantData.plan === 'free');
+      setIsPro(tenantData.plan === 'pro');
     }).catch(() => {});
   }, []);
 
@@ -465,16 +467,21 @@ export default function EventForm({ initial }: { initial?: Event }) {
           </div>
         )}
         <div>
-          <p className="mb-2 text-xs text-gray-500">支払いタイミング</p>
-          <RadioGroup
-            value={form.paymentTiming}
-            onChange={(value) => set('paymentTiming', value)}
-            options={[
-              ['onsite', '当日払い'],
-              ['prepay', '事前決済'],
-              ['both', 'どちらでも可'],
-            ]}
-          />
+          <p className="mb-2 text-xs text-gray-500">
+            支払いタイミング
+            {!isPro && <span className="ml-2 text-[10px] rounded bg-gray-800 px-1.5 py-0.5 text-white">事前決済・両方はPROのみ</span>}
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {([['onsite', '当日払い'], ['prepay', '事前決済'], ['both', 'どちらでも可']] as const).map(([val, label]) => {
+              const restricted = (val === 'prepay' || val === 'both') && !isPro;
+              return (
+                <label key={val} className={`flex items-center gap-1.5 text-sm ${restricted ? 'cursor-not-allowed text-gray-400' : 'cursor-pointer text-gray-700'}`}>
+                  <input type="radio" checked={form.paymentTiming === val} disabled={restricted} onChange={() => set('paymentTiming', val)} className="accent-[#06C755]" />
+                  {label}
+                </label>
+              );
+            })}
+          </div>
           {showStripe && (
             <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
               事前決済にはStripe設定が必要です。
@@ -485,20 +492,25 @@ export default function EventForm({ initial }: { initial?: Event }) {
       </Section>
 
       <Section title="通知">
-        {isLineNotConfigured && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-700">
-            LINE APIが未設定のため、LINE通知は送信されません。
-            <Link href="/admin/settings" className="ml-1 font-medium underline">LINE設定へ</Link>
-          </div>
-        )}
-        <Check label="予約完了時にLINEで送る" checked={form.notifyOnReserve} disabled={isLineNotConfigured} onChange={(checked) => set('notifyOnReserve', checked)} />
-        <Check label="予約完了時にアプリ内メッセージで送る" checked={form.notifyOnReserveApp} onChange={(checked) => set('notifyOnReserveApp', checked)} />
+        <Check label="予約完了時にTalkに詳細を通知" checked={form.notifyOnReserveApp} onChange={(checked) => set('notifyOnReserveApp', checked)} />
+        <div className="flex items-center gap-2">
+          <Check
+            label="予約完了時にLINEで送る"
+            checked={form.notifyOnReserve}
+            disabled={!isPro || isLineNotConfigured}
+            onChange={(checked) => set('notifyOnReserve', checked)}
+          />
+          {!isPro && <span className="text-[10px] rounded bg-gray-800 px-1.5 py-0.5 text-white">PROのみ</span>}
+        </div>
         <div className="pt-2">
           <p className={`mb-2 text-sm font-medium ${isFreePlan ? 'text-gray-400' : 'text-gray-700'}`}>
             リマインド通知
             {isFreePlan && <span className="ml-2 text-xs text-[#06C755]">スタンダード以上</span>}
           </p>
-          <Check label="LINEで送る" checked={form.remindEnabled} disabled={isFreePlan || isLineNotConfigured} onChange={(checked) => set('remindEnabled', checked)} />
+          <div className="flex items-center gap-2">
+            <Check label="LINEで送る" checked={form.remindEnabled} disabled={!isPro || isLineNotConfigured} onChange={(checked) => set('remindEnabled', checked)} />
+            {!isPro && <span className="text-[10px] rounded bg-gray-800 px-1.5 py-0.5 text-white">PROのみ</span>}
+          </div>
           <Check label="アプリ内メッセージで送る" checked={form.remindApp} disabled={isFreePlan} onChange={(checked) => set('remindApp', checked)} />
         </div>
       </Section>
