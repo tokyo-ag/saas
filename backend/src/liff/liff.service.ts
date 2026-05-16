@@ -34,6 +34,10 @@ export class LiffService {
     private pushService: PushService,
   ) {}
 
+  getVapidPublicKey(): string | null {
+    return this.pushService.getVapidPublicKey();
+  }
+
   // テナント公開情報（認証不要）
   async getTenantInfo(tenantId: string) {
     const tenant = await this.prisma.tenant.findFirst({
@@ -405,8 +409,16 @@ export class LiffService {
             ``,
             `キャンセル待ち ${waitlistOrder} 番目に登録されました。`,
           ].join('\n');
+      // 参加者向け（Talkに表示される予約詳細）
       await this.prisma.adminMemberMessage.create({
         data: { tenantId, memberId: member.id, content: talkContent, fromAdmin: true },
+      });
+      // 管理者向けバッジ用（システム通知・LIFF側には非表示）
+      const adminNotifContent = status === 'reserved'
+        ? `✅ ${member.lineDisplayName ?? member.name ?? '参加者'}が「${event.title}」を予約しました`
+        : `⏳ ${member.lineDisplayName ?? member.name ?? '参加者'}が「${event.title}」キャンセル待ち${waitlistOrder}番目に登録しました`;
+      await this.prisma.adminMemberMessage.create({
+        data: { tenantId, memberId: member.id, content: adminNotifContent, fromAdmin: false, isSystem: true },
       });
     }
 
@@ -702,9 +714,17 @@ export class LiffService {
       data: { read: true },
     });
     return this.prisma.adminMemberMessage.findMany({
-      where: { memberId: member.id, tenantId },
+      where: { memberId: member.id, tenantId, isSystem: false },
       orderBy: { createdAt: 'asc' },
     });
+  }
+
+  async subscribePush(tenantId: string, dto: { lineUserId: string; endpoint: string; p256dh: string; auth: string }): Promise<void> {
+    const member = await this.prisma.member.findUnique({
+      where: { tenantId_lineUserId: { tenantId, lineUserId: dto.lineUserId } },
+    });
+    if (!member) return;
+    await this.pushService.subscribe(tenantId, dto.endpoint, dto.p256dh, dto.auth, member.id);
   }
 
   async sendToAdmin(tenantId: string, lineUserId: string, content: string) {

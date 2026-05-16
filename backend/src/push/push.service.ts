@@ -25,11 +25,11 @@ export class PushService {
     return this.config.get<string>('VAPID_PUBLIC_KEY') ?? null;
   }
 
-  async subscribe(tenantId: string, endpoint: string, p256dh: string, auth: string): Promise<void> {
+  async subscribe(tenantId: string, endpoint: string, p256dh: string, auth: string, memberId?: string | null): Promise<void> {
     await this.prisma.pushSubscription.upsert({
       where: { endpoint },
-      create: { tenantId, endpoint, p256dh, auth },
-      update: { tenantId, p256dh, auth },
+      create: { tenantId, endpoint, p256dh, auth, memberId: memberId ?? null },
+      update: { tenantId, p256dh, auth, memberId: memberId ?? null },
     });
   }
 
@@ -37,9 +37,8 @@ export class PushService {
     await this.prisma.pushSubscription.deleteMany({ where: { endpoint } });
   }
 
-  async sendToTenant(tenantId: string, title: string, body: string): Promise<void> {
+  private async sendToSubscriptions(subs: { endpoint: string; p256dh: string; auth: string }[], title: string, body: string): Promise<void> {
     if (!this.configured) return;
-    const subs = await this.prisma.pushSubscription.findMany({ where: { tenantId } });
     await Promise.all(
       subs.map(async (sub) => {
         try {
@@ -56,5 +55,15 @@ export class PushService {
         }
       }),
     );
+  }
+
+  async sendToTenant(tenantId: string, title: string, body: string): Promise<void> {
+    const subs = await this.prisma.pushSubscription.findMany({ where: { tenantId, memberId: null } });
+    await this.sendToSubscriptions(subs, title, body);
+  }
+
+  async sendToMember(memberId: string, title: string, body: string): Promise<void> {
+    const subs = await this.prisma.pushSubscription.findMany({ where: { memberId } });
+    await this.sendToSubscriptions(subs, title, body);
   }
 }

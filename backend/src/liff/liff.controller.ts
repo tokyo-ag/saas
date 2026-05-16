@@ -167,6 +167,20 @@ export class LiffController {
     return this.liffService.sendToAdmin(tenantId, lineUserId, content);
   }
 
+  // 参加者プッシュ通知
+  @Get('push/vapid-key')
+  getLiffVapidKey(@Param('tenantId') _tenantId: string) {
+    return { publicKey: this.liffService.getVapidPublicKey() };
+  }
+
+  @Post('push/subscribe')
+  subscribeLiffPush(
+    @Param('tenantId') tenantId: string,
+    @Body() body: { lineUserId: string; endpoint: string; p256dh: string; auth: string },
+  ) {
+    return this.liffService.subscribePush(tenantId, body);
+  }
+
   // サポート（ユーザー↔COMIU）
   @Get('support')
   getSupportMessages(

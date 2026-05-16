@@ -193,6 +193,7 @@ model AdminMemberMessage {
   content   String   @db.Text
   fromAdmin Boolean  @default(false) @map("from_admin")
   read      Boolean  @default(false)
+  isSystem  Boolean  @default(false) @map("is_system")
   createdAt DateTime @default(now()) @map("created_at")
 
   member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
@@ -220,9 +221,11 @@ model PushSubscription {
   endpoint  String   @unique @db.Text
   p256dh    String   @db.Text
   auth      String   @db.Text
+  memberId  String?  @map("member_id")
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([tenantId])
+  @@index([memberId])
   @@map("push_subscriptions")
 }
 
