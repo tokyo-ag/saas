@@ -32,12 +32,19 @@ function ReservePageInner() {
   useEffect(() => {
     async function init() {
       const ok = await initLiff();
-      const uid = ok ? (await getLiffUserId()) ?? '' : `demo-${Date.now()}`;
+      if (!ok || !liff.isLoggedIn()) {
+        // LINE以外のブラウザからのアクセスは予約不可
+        setLoading(false);
+        return;
+      }
+
+      const uid = (await getLiffUserId()) ?? '';
+      if (!uid) { setLoading(false); return; }
       setLineUserId(uid);
 
       const [ev, prof, tenantInfo] = await Promise.allSettled([
         api.liff.event(tenantId, eventId),
-        uid ? api.liff.profile(tenantId, uid).catch(() => null) : Promise.resolve(null),
+        api.liff.profile(tenantId, uid).catch(() => null),
         api.liff.tenant(tenantId),
       ]);
       if (ev.status === 'fulfilled') setEvent(ev.value);
@@ -45,7 +52,7 @@ function ReservePageInner() {
       if (tenantInfo.status === 'fulfilled') setTenant(tenantInfo.value);
 
       const hasProfile = prof.status === 'fulfilled' && prof.value?.name && prof.value?.grade && prof.value?.gender;
-      if (!hasProfile && ok) {
+      if (!hasProfile) {
         const friend = await checkFriendship();
         setIsFriend(friend);
       } else {
@@ -84,6 +91,24 @@ function ReservePageInner() {
   }
 
   const hasProfile = profile && profile.name && profile.grade && profile.gender;
+
+  if (!loading && !lineUserId) {
+    return (
+      <div className="min-h-screen bg-[#F7F8FA] flex flex-col items-center justify-center px-6 text-center gap-5">
+        <div className="w-16 h-16 rounded-full bg-[#06C755]/10 flex items-center justify-center">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2C6.48 2 2 6.03 2 11c0 3.13 1.68 5.9 4.28 7.54L5.5 22l3.78-1.97C10.16 20.65 11.07 21 12 21c5.52 0 10-4.03 10-9S17.52 2 12 2z" fill="#06C755"/>
+          </svg>
+        </div>
+        <div>
+          <p className="text-base font-bold text-gray-900">LINEから開いてください</p>
+          <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">
+            予約はLINEアプリ内からのみ行えます。
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isFriend) {
     const addFriendUrl = tenant?.lineChannelId
