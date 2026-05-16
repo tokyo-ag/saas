@@ -280,6 +280,28 @@ export default function EventForm({ initial }: { initial?: Event }) {
   }
 
   const isLineNotConfigured = tenant !== null && !tenant.lineChannelAccessToken;
+
+  if (!initial && isLineNotConfigured) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center gap-5 rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div>
+          <p className="text-base font-bold text-gray-900">LINE API設定が必要です</p>
+          <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">
+            イベントを作成するには、先にLINE公式アカウントの設定を完了してください。
+          </p>
+        </div>
+        <Link href="/admin/settings" className="bg-[#06C755] text-white font-bold px-6 py-3 rounded-xl text-sm">
+          LINE設定へ
+        </Link>
+      </div>
+    );
+  }
+
   const showStripe = form.paymentTiming !== 'onsite' && (
     form.priceMode === 'same' ? Number(form.price) > 0 : Number(form.priceMale) > 0 || Number(form.priceFemale) > 0
   );

@@ -2,8 +2,8 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { api, LiffEvent, LiffProfile, ReserveResult } from '@/lib/api';
-import { initLiff, getLiffUserId, loginIfNeeded } from '@/lib/liff';
+import { api, LiffEvent, LiffProfile, LiffTenant, ReserveResult } from '@/lib/api';
+import { initLiff, getLiffUserId, loginIfNeeded, checkFriendship } from '@/lib/liff';
 
 const GRADES = ['高校1年', '高校2年', '高校3年', '大学1年', '大学2年', '大学3年', '大学4年', '大学院生', '社会人', 'その他'];
 const GENDERS = ['男性', '女性', 'その他・回答しない'];
@@ -15,8 +15,10 @@ function ReservePageInner() {
   const isWaitlist = searchParams.get('waitlist') === '1';
 
   const [event, setEvent] = useState<LiffEvent | null>(null);
+  const [tenant, setTenant] = useState<LiffTenant | null>(null);
   const [lineUserId, setLineUserId] = useState('');
   const [profile, setProfile] = useState<LiffProfile | null>(null);
+  const [isFriend, setIsFriend] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
 
   // フォーム状態（プロフィール未登録時のみ使用）
@@ -33,12 +35,23 @@ function ReservePageInner() {
       const uid = ok ? (await getLiffUserId()) ?? '' : `demo-${Date.now()}`;
       setLineUserId(uid);
 
-      const [ev, prof] = await Promise.allSettled([
+      const [ev, prof, tenantInfo] = await Promise.allSettled([
         api.liff.event(tenantId, eventId),
         uid ? api.liff.profile(tenantId, uid).catch(() => null) : Promise.resolve(null),
+        api.liff.tenant(tenantId),
       ]);
       if (ev.status === 'fulfilled') setEvent(ev.value);
       if (prof.status === 'fulfilled') setProfile(prof.value);
+      if (tenantInfo.status === 'fulfilled') setTenant(tenantInfo.value);
+
+      const hasProfile = prof.status === 'fulfilled' && prof.value?.name && prof.value?.grade && prof.value?.gender;
+      if (!hasProfile && ok) {
+        const friend = await checkFriendship();
+        setIsFriend(friend);
+      } else {
+        setIsFriend(true);
+      }
+
       setLoading(false);
     }
     init();
@@ -71,6 +84,40 @@ function ReservePageInner() {
   }
 
   const hasProfile = profile && profile.name && profile.grade && profile.gender;
+
+  if (!isFriend) {
+    const addFriendUrl = tenant?.lineChannelId
+      ? `https://line.me/R/ti/p/@${tenant.lineChannelId}`
+      : null;
+    return (
+      <div className="min-h-screen bg-[#F7F8FA] flex flex-col items-center justify-center px-6 text-center gap-6">
+        <div className="w-20 h-20 rounded-full bg-[#06C755]/10 flex items-center justify-center">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2C6.48 2 2 6.03 2 11c0 3.13 1.68 5.9 4.28 7.54L5.5 22l3.78-1.97C10.16 20.65 11.07 21 12 21c5.52 0 10-4.03 10-9S17.52 2 12 2z" fill="#06C755"/>
+          </svg>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-gray-900">公式LINEの友だち追加が必要です</p>
+          <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+            予約にはLINE公式アカウントの友だち追加が必要です。追加後にもう一度お試しください。
+          </p>
+        </div>
+        {addFriendUrl && (
+          <a
+            href={addFriendUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-[#06C755] text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:bg-[#05a847]"
+          >
+            友だち追加する
+          </a>
+        )}
+        <button onClick={() => router.back()} className="text-sm text-gray-400">
+          戻る
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
