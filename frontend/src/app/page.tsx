@@ -226,6 +226,15 @@ export default function TopPage() {
 
   const TAGS = ['初心者歓迎', '20代限定', '30代限定', '男女歓迎', '社会人', '学生歓迎', '18～22歳大学生・短大専門・社会人'];
 
+  // LINE認証後のリダイレクト（liff.init()不要）
+  useEffect(() => {
+    const pending = localStorage.getItem('liff-pending-redirect');
+    if (pending) {
+      localStorage.removeItem('liff-pending-redirect');
+      window.location.replace(pending);
+    }
+  }, []);
+
   useEffect(() => {
     const anonId = getAnonId();
     setFavTenants(loadFavs());
