@@ -56,9 +56,9 @@ export default function LineSettingsPage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    Promise.all([api.tenant.get(), api.auth.getMe()]).then(([tenantData, me]) => {
+    Promise.all([api.tenant.get(), api.auth.getMe().catch(() => null)]).then(([tenantData, me]) => {
       setTenant(tenantData);
-      setHasPassword(me.hasPassword);
+      setHasPassword(me?.hasPassword ?? null);
       setForm({
         lineChannelId: tenantData.lineChannelId ?? '',
         lineChannelSecret: tenantData.lineChannelSecret ?? '',
