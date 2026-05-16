@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { api, formatDate, LiffEvent } from '@/lib/api';
-import { initLiff, closeLiff } from '@/lib/liff';
+import { initLiff } from '@/lib/liff';
 import { FriendInviteCard } from '@/components/liff/FriendInviteCard';
 
 function DonePageInner() {
@@ -14,17 +14,16 @@ function DonePageInner() {
   const order = searchParams.get('order');
 
   const [event, setEvent] = useState<LiffEvent | null>(null);
-  const [inLiff, setInLiff] = useState(false);
 
   useEffect(() => {
-    initLiff().then((ok) => setInLiff(ok));
+    initLiff();
     api.liff.event(tenantId, eventId).then(setEvent).catch(console.error);
   }, [tenantId, eventId]);
 
   const isWaitlist = status === 'waitlisted';
 
   function handleClose() {
-    if (inLiff) { closeLiff(); } else { router.push(`/liff/${tenantId}`); }
+    router.push(`/liff/${tenantId}`);
   }
 
   return (
@@ -58,7 +57,7 @@ function DonePageInner() {
         onClick={handleClose}
         className="w-full max-w-sm bg-[#06C755] text-white py-4 rounded-2xl font-bold text-base active:bg-[#05a847] transition-colors shadow-sm"
       >
-        {inLiff ? 'LINEに戻る' : 'イベント一覧に戻る'}
+        イベント一覧に戻る
       </button>
     </div>
   );
