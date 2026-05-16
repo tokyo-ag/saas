@@ -119,6 +119,17 @@ export class LineMessagingService {
     );
   }
 
+  async getLineProfile(accessToken: string, lineUserId: string): Promise<{ displayName: string; pictureUrl?: string } | null> {
+    if (!accessToken || !lineUserId) return null;
+    try {
+      const client = this.getClient(accessToken);
+      const profile = await client.getProfile(lineUserId);
+      return { displayName: profile.displayName, pictureUrl: profile.pictureUrl };
+    } catch {
+      return null;
+    }
+  }
+
   private formatDate(date: Date): string {
     return new Date(date).toLocaleString('ja-JP', {
       year: 'numeric',

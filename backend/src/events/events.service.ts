@@ -194,7 +194,19 @@ export class EventsService {
     await this.findOne(tenantId, eventId);
     return this.prisma.reservation.findMany({
       where: { eventId, tenantId },
-      include: { member: true },
+      include: {
+        member: {
+          select: {
+            id: true,
+            name: true,
+            grade: true,
+            gender: true,
+            lineUserId: true,
+            lineDisplayName: true,
+            linePictureUrl: true,
+          },
+        },
+      },
       orderBy: [{ status: 'asc' }, { reservedAt: 'asc' }],
     });
   }

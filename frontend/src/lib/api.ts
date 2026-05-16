@@ -395,6 +395,8 @@ export interface Reservation {
     name?: string;
     grade?: string;
     gender?: string;
+    lineDisplayName?: string | null;
+    linePictureUrl?: string | null;
   };
 }
 

@@ -256,13 +256,25 @@ export default function EventDetailPage() {
               {reservations.map((reservation) => (
                 <div key={reservation.id} className="p-4">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <Link href={`/admin/members/${reservation.member.id}`} className="break-words text-sm font-bold text-[#06C755]">
-                        {reservation.member.name ?? '未入力'}
-                      </Link>
-                      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
-                        <span>{reservation.member.grade ?? '-'}</span>
-                        <span>{reservation.member.gender ?? '-'}</span>
+                    <div className="flex items-start gap-2.5 min-w-0">
+                      {reservation.member.linePictureUrl ? (
+                        <img src={reservation.member.linePictureUrl} alt="" className="w-9 h-9 rounded-full shrink-0 object-cover" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full shrink-0 bg-gray-200 flex items-center justify-center">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <Link href={`/admin/members/${reservation.member.id}`} className="break-words text-sm font-bold text-[#06C755]">
+                          {reservation.member.name ?? '未入力'}
+                        </Link>
+                        {reservation.member.lineDisplayName && (
+                          <p className="text-[11px] text-gray-400 truncate">{reservation.member.lineDisplayName}</p>
+                        )}
+                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
+                          <span>{reservation.member.grade ?? '-'}</span>
+                          <span>{reservation.member.gender ?? '-'}</span>
+                        </div>
                       </div>
                     </div>
                     <div className="shrink-0 text-right">
@@ -302,10 +314,24 @@ export default function EventDetailPage() {
                 <tbody className="divide-y divide-gray-100">
                   {reservations.map((reservation) => (
                     <tr key={reservation.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 font-medium text-gray-900">
-                        <Link href={`/admin/members/${reservation.member.id}`} className="text-[#06C755] hover:underline">
-                          {reservation.member.name ?? '未入力'}
-                        </Link>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          {reservation.member.linePictureUrl ? (
+                            <img src={reservation.member.linePictureUrl} alt="" className="w-8 h-8 rounded-full shrink-0 object-cover" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full shrink-0 bg-gray-200 flex items-center justify-center">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <Link href={`/admin/members/${reservation.member.id}`} className="font-medium text-[#06C755] hover:underline">
+                              {reservation.member.name ?? '未入力'}
+                            </Link>
+                            {reservation.member.lineDisplayName && (
+                              <p className="text-[11px] text-gray-400 truncate">{reservation.member.lineDisplayName}</p>
+                            )}
+                          </div>
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-gray-600">{reservation.member.grade ?? '-'}</td>
                       <td className="px-6 py-4 text-gray-600">{reservation.member.gender ?? '-'}</td>

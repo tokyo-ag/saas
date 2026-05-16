@@ -220,21 +220,40 @@ export class LiffService {
     let member = await this.prisma.member.findUnique({
       where: { tenantId_lineUserId: { tenantId, lineUserId: dto.lineUserId } },
     });
+
+    const lineProfile = await this.lineMessaging.getLineProfile(
+      tenant?.lineChannelAccessToken ?? '',
+      dto.lineUserId,
+    );
+
     if (!member) {
       if (!dto.name || !dto.grade || !dto.gender) {
         throw new BadRequestException('初回予約時はお名前・学年・性別を入力してください');
       }
       member = await this.prisma.member.create({
-        data: { tenantId, lineUserId: dto.lineUserId, name: dto.name, grade: dto.grade, gender: dto.gender },
+        data: {
+          tenantId,
+          lineUserId: dto.lineUserId,
+          name: dto.name,
+          grade: dto.grade,
+          gender: dto.gender,
+          ...(lineProfile && {
+            lineDisplayName: lineProfile.displayName,
+            linePictureUrl: lineProfile.pictureUrl ?? null,
+          }),
+        },
       });
-    } else if (dto.name || dto.grade || dto.gender) {
-      // 送られてきた場合のみ更新（プロフィール変更時）
+    } else {
       member = await this.prisma.member.update({
         where: { id: member.id },
         data: {
           ...(dto.name && { name: dto.name }),
           ...(dto.grade && { grade: dto.grade }),
           ...(dto.gender && { gender: dto.gender }),
+          ...(lineProfile && {
+            lineDisplayName: lineProfile.displayName,
+            linePictureUrl: lineProfile.pictureUrl ?? null,
+          }),
         },
       });
     }
