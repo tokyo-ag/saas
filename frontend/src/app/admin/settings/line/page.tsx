@@ -103,7 +103,6 @@ export default function LineSettingsPage() {
       setReauthToken(result.reauthToken);
       setEditUnlocked(true);
       setReauthPassword('');
-      setStep(2);
     } catch (err: any) {
       setError(err.message);
     } finally {
