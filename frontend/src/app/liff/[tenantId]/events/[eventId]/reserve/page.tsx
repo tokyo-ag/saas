@@ -34,6 +34,7 @@ function ReservePageInner() {
       await initLiff();
       try {
         if (!liff.isLoggedIn()) {
+          localStorage.setItem('liff-pending-redirect', window.location.href);
           liff.login({ redirectUri: window.location.href });
           return;
         }

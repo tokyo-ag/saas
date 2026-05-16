@@ -11,6 +11,12 @@ export async function initLiff(liffId?: string): Promise<boolean> {
   try {
     await liff.init({ liffId: id });
     initialized = true;
+    // ログイン後のリダイレクト先を処理
+    const pending = localStorage.getItem('liff-pending-redirect');
+    if (pending && liff.isLoggedIn()) {
+      localStorage.removeItem('liff-pending-redirect');
+      window.location.replace(pending);
+    }
     return true;
   } catch (err) {
     console.error('[LIFF] init failed:', err);
