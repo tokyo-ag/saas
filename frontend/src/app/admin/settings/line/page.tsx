@@ -254,7 +254,7 @@ export default function LineSettingsPage() {
                 disabled={syncing}
                 className="shrink-0 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
               >
-                {syncing ? '取得中...' : 'アイコンを同期'}
+                {syncing ? '取得中...' : 'アイコン・名前を同期'}
               </button>
             </section>
           )}
