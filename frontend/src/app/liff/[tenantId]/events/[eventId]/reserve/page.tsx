@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { api, LiffEvent, LiffProfile, LiffTenant, ReserveResult } from '@/lib/api';
-import { initLiff, getLiffUserId, loginIfNeeded, checkFriendship, liff } from '@/lib/liff';
+import { initLiff, getLiffUserId, checkFriendship, liff } from '@/lib/liff';
 
 const GRADES = ['高校1年', '高校2年', '高校3年', '大学1年', '大学2年', '大学3年', '大学4年', '大学院生', '社会人', 'その他'];
 const GENDERS = ['男性', '女性', 'その他・回答しない'];
@@ -31,17 +31,34 @@ function ReservePageInner() {
 
   useEffect(() => {
     async function init() {
-      await initLiff();
+      const initOk = await initLiff();
+
+      // initLiff()失敗時はliff関数を呼べないのでフォールバックを表示する
+      if (!initOk) {
+        setLoading(false);
+        return;
+      }
+
       try {
         if (!liff.isLoggedIn()) {
-          const tried = sessionStorage.getItem('liff-login-tried');
-          if (tried) {
-            // 既に一度試みたが失敗 → ループを防ぐためフォールバック表示
-            sessionStorage.removeItem('liff-login-tried');
+          // LINEアプリ内（LIFF browser）では liff.login() を呼ばない。
+          // 呼ぶとLIFFエンドポイントURL（ルート）へのリダイレクトが発生し、
+          // DISCOVERタブが表示されてしまう。LINEアプリ内では
+          // liff.init()が認証を自動処理するため、ここに来るのは設定エラー。
+          if (liff.isInClient()) {
             setLoading(false);
             return;
           }
-          sessionStorage.setItem('liff-login-tried', '1');
+
+          // 外部ブラウザ: ループ防止フラグをlocalStorageで管理
+          // （iOSのLINEブラウザはwebview間でsessionStorageをリセットする場合がある）
+          const tried = localStorage.getItem('liff-login-tried');
+          if (tried) {
+            localStorage.removeItem('liff-login-tried');
+            setLoading(false);
+            return;
+          }
+          localStorage.setItem('liff-login-tried', '1');
           localStorage.setItem('liff-pending-redirect', window.location.href);
           liff.login({ redirectUri: window.location.href });
           return;
@@ -50,7 +67,7 @@ function ReservePageInner() {
         setLoading(false);
         return;
       }
-      sessionStorage.removeItem('liff-login-tried');
+      localStorage.removeItem('liff-login-tried');
 
       const uid = (await getLiffUserId()) ?? '';
       if (!uid) { setLoading(false); return; }
@@ -80,7 +97,7 @@ function ReservePageInner() {
   }, [tenantId, eventId]);
 
   async function submit(overrides?: { name: string; grade: string; gender: string }) {
-    if (!lineUserId) { await loginIfNeeded(); return; }
+    if (!lineUserId) { setError('LINEログインが必要です。ページを再読み込みしてください。'); return; }
     setError('');
     setSubmitting(true);
     try {

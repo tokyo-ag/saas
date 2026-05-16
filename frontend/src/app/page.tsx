@@ -173,6 +173,14 @@ function SkeletonCard() {
 }
 
 function DiscoveryLocked() {
+  useEffect(() => {
+    const pending = localStorage.getItem('liff-pending-redirect');
+    if (pending) {
+      localStorage.removeItem('liff-pending-redirect');
+      window.location.replace(pending);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#F5F5F5] flex flex-col">
       <div className="bg-white border-b border-gray-100 px-4 pt-12 pb-3 sm:pt-4">
