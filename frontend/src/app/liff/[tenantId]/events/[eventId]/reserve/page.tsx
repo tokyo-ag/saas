@@ -119,17 +119,22 @@ function ReservePageInner() {
     try {
       const body: Record<string, string> = { eventId, lineUserId, ...(overrides ?? {}) };
       const result = await api.liff.reserve(tenantId, body as any);
-      if (result.stripeCheckoutUrl) { window.location.href = result.stripeCheckoutUrl; return; }
-      router.push(`/liff/${tenantId}/events/${eventId}/done?status=${result.status}&order=${result.waitlistOrder ?? ''}`);
+      if (result.stripeCheckoutUrl) {
+        window.location.href = result.stripeCheckoutUrl;
+        return;
+      }
+      // router.push()はLIFF(iOS WKWebView)で動作しない場合があるためhrefを使う
+      window.location.href = `/liff/${tenantId}/events/${eventId}/done?status=${result.status}&order=${result.waitlistOrder ?? ''}`;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '予約に失敗しました';
       const isDuplicate = msg.includes('予約済み') || msg.includes('同じ日');
       if (isDuplicate) {
         alert('既に予約済みです');
-        router.push(`/liff/${tenantId}/events/${eventId}`);
+        window.location.href = `/liff/${tenantId}/events/${eventId}`;
         return;
       }
       setError(msg);
+      alert(`予約エラー: ${msg}`);
     } finally {
       setSubmitting(false);
     }
