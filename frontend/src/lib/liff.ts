@@ -3,19 +3,29 @@
 import liff from '@line/liff';
 
 let initialized = false;
+let lastError: string | null = null;
 
-export async function initLiff(liffId?: string): Promise<{ ok: boolean; reason?: string }> {
-  if (initialized) return { ok: true };
+export function getInitError(): string | null {
+  return lastError;
+}
+
+export async function initLiff(liffId?: string): Promise<boolean> {
+  if (initialized) return true;
   const id = liffId ?? process.env.NEXT_PUBLIC_LIFF_ID ?? '';
-  if (!id) return { ok: false, reason: 'LIFF_ID未設定' };
+  if (!id) {
+    lastError = 'LIFF_ID未設定';
+    return false;
+  }
   try {
     await liff.init({ liffId: id });
     initialized = true;
-    return { ok: true };
+    lastError = null;
+    return true;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    lastError = `init失敗: ${msg}`;
     console.error('[LIFF] init failed:', err);
-    return { ok: false, reason: `init失敗: ${msg}` };
+    return false;
   }
 }
 

@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { api, LiffEvent, LiffProfile, LiffTenant } from '@/lib/api';
-import { initLiff, getLiffUserId, checkFriendship, liff } from '@/lib/liff';
+import { initLiff, getLiffUserId, checkFriendship, liff, getInitError } from '@/lib/liff';
 
 const GRADES = ['高校1年', '高校2年', '高校3年', '大学1年', '大学2年', '大学3年', '大学4年', '大学院生', '社会人', 'その他'];
 const GENDERS = ['男性', '女性', 'その他・回答しない'];
@@ -34,10 +34,10 @@ function ReservePageInner() {
   useEffect(() => {
     async function init() {
       // ── Step 1: LIFF初期化 ──
-      const { ok: initOk, reason: initReason } = await initLiff();
+      const initOk = await initLiff();
 
       if (!initOk) {
-        setAuthError(`Step1: ${initReason ?? '不明'}`);
+        setAuthError(`Step1: ${getInitError() ?? '不明'}`);
         setAuthStatus('error');
         return;
       }
@@ -74,6 +74,7 @@ function ReservePageInner() {
 
       // 認証成功 → ループ防止フラグをクリア
       localStorage.removeItem('liff-login-tried');
+      localStorage.removeItem('liff-pending-redirect');
 
       // ── Step 3: userId取得 ──
       let uid = '';

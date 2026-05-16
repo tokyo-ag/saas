@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { api, API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
+import { initLiff } from '@/lib/liff';
 import LiffBottomNav from '@/components/liff/LiffBottomNav';
 
 const FAV_KEY = 'fav_tenants';
@@ -174,11 +175,21 @@ function SkeletonCard() {
 
 function DiscoveryLocked() {
   useEffect(() => {
-    const pending = localStorage.getItem('liff-pending-redirect');
-    if (pending) {
-      localStorage.removeItem('liff-pending-redirect');
-      window.location.replace(pending);
+    async function run() {
+      const pending = localStorage.getItem('liff-pending-redirect');
+      const search = window.location.search;
+      // LIFF認証コードがURLにある場合はliff.init()で処理（しないとトークンが保存されない）
+      // liff.init()が自動リダイレクトした場合、以降のコードは実行されない
+      if (search.includes('code=') || search.includes('liff.state=') || pending) {
+        await initLiff();
+      }
+      // liff.init()が自動リダイレクトしなかった場合のフォールバック
+      if (pending) {
+        localStorage.removeItem('liff-pending-redirect');
+        window.location.replace(pending);
+      }
     }
+    run();
   }, []);
 
   return (
@@ -234,13 +245,23 @@ export default function TopPage() {
 
   const TAGS = ['初心者歓迎', '20代限定', '30代限定', '男女歓迎', '社会人', '学生歓迎', '18～22歳大学生・短大専門・社会人'];
 
-  // LINE認証後のリダイレクト（liff.init()不要）
+  // LINE認証後のリダイレクト
   useEffect(() => {
-    const pending = localStorage.getItem('liff-pending-redirect');
-    if (pending) {
-      localStorage.removeItem('liff-pending-redirect');
-      window.location.replace(pending);
+    async function run() {
+      const pending = localStorage.getItem('liff-pending-redirect');
+      const search = window.location.search;
+      // LIFF認証コードがURLにある場合はliff.init()で処理（しないとトークンが保存されない）
+      // liff.init()が自動リダイレクトした場合、以降のコードは実行されない
+      if (search.includes('code=') || search.includes('liff.state=') || pending) {
+        await initLiff();
+      }
+      // liff.init()が自動リダイレクトしなかった場合のフォールバック
+      if (pending) {
+        localStorage.removeItem('liff-pending-redirect');
+        window.location.replace(pending);
+      }
     }
+    run();
   }, []);
 
   useEffect(() => {
