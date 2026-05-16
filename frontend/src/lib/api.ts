@@ -176,6 +176,8 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ lineUserId, content }),
       }),
+    markAdminMessagesRead: (tenantId: string, lineUserId: string) =>
+      request<void>(`/liff/${tenantId}/admin-messages/read?lineUserId=${encodeURIComponent(lineUserId)}`, { method: 'PATCH' }),
     supportMessages: (tenantId: string, lineUserId: string) =>
       request<SupportMessage[]>(`/liff/${tenantId}/support?lineUserId=${encodeURIComponent(lineUserId)}`),
     sendSupport: (tenantId: string, lineUserId: string, content: string) =>

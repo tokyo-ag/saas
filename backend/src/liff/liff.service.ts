@@ -708,14 +708,20 @@ export class LiffService {
       where: { tenantId_lineUserId: { tenantId, lineUserId } },
     });
     if (!member) return [];
-    // 管理者からのメッセージを既読にする
-    await this.prisma.adminMemberMessage.updateMany({
-      where: { memberId: member.id, tenantId, fromAdmin: true, read: false },
-      data: { read: true },
-    });
     return this.prisma.adminMemberMessage.findMany({
       where: { memberId: member.id, tenantId, isSystem: false },
       orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async markAdminMessagesRead(tenantId: string, lineUserId: string) {
+    const member = await this.prisma.member.findUnique({
+      where: { tenantId_lineUserId: { tenantId, lineUserId } },
+    });
+    if (!member) return;
+    await this.prisma.adminMemberMessage.updateMany({
+      where: { memberId: member.id, tenantId, fromAdmin: true, read: false },
+      data: { read: true },
     });
   }
 

@@ -167,6 +167,14 @@ export class LiffController {
     return this.liffService.sendToAdmin(tenantId, lineUserId, content);
   }
 
+  @Patch('admin-messages/read')
+  markAdminMessagesRead(
+    @Param('tenantId') tenantId: string,
+    @Query('lineUserId') lineUserId: string,
+  ) {
+    return this.liffService.markAdminMessagesRead(tenantId, lineUserId);
+  }
+
   // 参加者プッシュ通知
   @Get('push/vapid-key')
   getLiffVapidKey(@Param('tenantId') _tenantId: string) {

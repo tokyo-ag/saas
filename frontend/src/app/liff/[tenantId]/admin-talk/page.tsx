@@ -49,6 +49,7 @@ export default function AdminTalkPage() {
       .then((data) => {
         setMessages(data);
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+        api.liff.markAdminMessagesRead(tenantId, uid).catch(() => {});
       })
       .catch(() => {});
   }
