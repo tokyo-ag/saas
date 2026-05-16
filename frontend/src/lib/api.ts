@@ -90,7 +90,8 @@ export const api = {
   },
   members: {
     list: (params?: { name?: string; grade?: string; gender?: string }) => {
-      const q = new URLSearchParams(params as Record<string, string>).toString();
+      const filtered = Object.fromEntries(Object.entries(params ?? {}).filter(([, v]) => v !== undefined && v !== ''));
+      const q = new URLSearchParams(filtered).toString();
       return request<Member[]>(`/admin/members${q ? `?${q}` : ''}`);
     },
     get: (id: string) => request<MemberDetail>(`/admin/members/${id}`),
@@ -597,6 +598,8 @@ export interface PublicEvent {
   heldAt: string;
   location: string;
   price: number;
+  priceMale?: number | null;
+  priceFemale?: number | null;
   capacity?: number;
   reservedCount: number;
   iconUrl?: string;

@@ -74,6 +74,8 @@ export class LiffService {
       capacity: e.capacity,
       status: e.status,
       price: e.price,
+      priceMale: e.priceMale,
+      priceFemale: e.priceFemale,
       paymentRequired: e.paymentRequired,
       reservedCount: e.reservations.length,
       imageUrl: e.imageUrl,

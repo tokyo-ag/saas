@@ -79,10 +79,13 @@ function EventCard({ event, tenantId }: { event: LiffEvent; tenantId: string }) 
         <AvatarRow count={event.reservedCount} friends={event.friendAttendees} />
         <div className="flex items-center gap-1 flex-wrap">
           <span className="text-[9px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{event.location}</span>
-          {event.price === 0
-            ? <span className="text-[9px] text-[#06C755] bg-green-50 px-1.5 py-0.5 rounded-full font-medium">無料</span>
-            : <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">¥{event.price.toLocaleString()}</span>
-          }
+          {event.priceMale != null && event.priceFemale != null ? (
+            <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">¥{Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜</span>
+          ) : event.price === 0 ? (
+            <span className="text-[9px] text-[#06C755] bg-green-50 px-1.5 py-0.5 rounded-full font-medium">無料</span>
+          ) : (
+            <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">¥{event.price.toLocaleString()}</span>
+          )}
         </div>
       </div>
     </Link>
@@ -111,10 +114,13 @@ function FavEventRow({ event }: { event: PublicEvent }) {
         <p className="text-[10px] text-gray-400 mt-0.5">{formatDateShort(event.heldAt)}</p>
         <p className="text-[10px] text-gray-400 truncate">{event.location}</p>
       </div>
-      {event.price === 0
-        ? <span className="text-[9px] text-[#06C755] bg-green-50 px-1.5 py-0.5 rounded-full font-medium shrink-0">無料</span>
-        : <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full shrink-0">¥{event.price.toLocaleString()}</span>
-      }
+      {event.priceMale != null && event.priceFemale != null ? (
+        <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full shrink-0">¥{Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜</span>
+      ) : event.price === 0 ? (
+        <span className="text-[9px] text-[#06C755] bg-green-50 px-1.5 py-0.5 rounded-full font-medium shrink-0">無料</span>
+      ) : (
+        <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full shrink-0">¥{event.price.toLocaleString()}</span>
+      )}
     </Link>
   );
 }
@@ -185,7 +191,9 @@ function LiffCalendarView({ events, tenantId }: { events: LiffEvent[]; tenantId:
                     {dayEvents.map((ev) => {
                       const startTime = new Date(ev.heldAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
                       const endTime = ev.endAt ? new Date(ev.endAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' }) : null;
-                      const priceLabel = ev.price === 0 ? '無料' : `¥${ev.price.toLocaleString()}`;
+                      const priceLabel = ev.priceMale != null && ev.priceFemale != null
+                        ? `¥${Math.min(ev.priceMale, ev.priceFemale).toLocaleString()}〜`
+                        : ev.price === 0 ? '無料' : `¥${ev.price.toLocaleString()}`;
                       return (
                         <Link
                           key={ev.id}
