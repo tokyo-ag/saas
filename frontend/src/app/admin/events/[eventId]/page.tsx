@@ -266,11 +266,11 @@ export default function EventDetailPage() {
                       )}
                       <div className="min-w-0">
                         <Link href={`/admin/members/${reservation.member.id}`} className="break-words text-sm font-bold text-[#06C755]">
-                          {reservation.member.name ?? '未入力'}
+                          {reservation.member.lineDisplayName ?? reservation.member.name ?? '未入力'}
+                          {reservation.member.lineDisplayName && reservation.member.name && (
+                            <span className="font-normal text-gray-500"> / {reservation.member.name}</span>
+                          )}
                         </Link>
-                        {reservation.member.lineDisplayName && (
-                          <p className="text-[11px] text-gray-400 truncate">{reservation.member.lineDisplayName}</p>
-                        )}
                         <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
                           <span>{reservation.member.grade ?? '-'}</span>
                           <span>{reservation.member.gender ?? '-'}</span>
@@ -325,11 +325,11 @@ export default function EventDetailPage() {
                           )}
                           <div className="min-w-0">
                             <Link href={`/admin/members/${reservation.member.id}`} className="font-medium text-[#06C755] hover:underline">
-                              {reservation.member.name ?? '未入力'}
+                              {reservation.member.lineDisplayName ?? reservation.member.name ?? '未入力'}
+                              {reservation.member.lineDisplayName && reservation.member.name && (
+                                <span className="font-normal text-gray-500"> / {reservation.member.name}</span>
+                              )}
                             </Link>
-                            {reservation.member.lineDisplayName && (
-                              <p className="text-[11px] text-gray-400 truncate">{reservation.member.lineDisplayName}</p>
-                            )}
                           </div>
                         </div>
                       </td>
