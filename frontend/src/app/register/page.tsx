@@ -28,10 +28,10 @@ export default function RegisterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orgName, email, password }),
       });
-      const data = await res.json();
+      const data = await res.json() as { token?: string; message?: string };
       if (!res.ok) throw new Error(data.message ?? '登録に失敗しました');
-      setToken(data.token);
-      router.replace('/admin');
+      if (data.token) setToken(data.token);
+      router.replace('/admin?registered=1');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '登録に失敗しました');
     } finally {

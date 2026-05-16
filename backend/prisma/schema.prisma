@@ -67,6 +67,11 @@ model OrganizerAccount {
   lineUserId   String?  @unique @map("line_user_id") @db.VarChar(100)
   createdAt    DateTime @default(now()) @map("created_at")
 
+  emailVerifiedAt        DateTime? @map("email_verified_at")
+  emailVerificationToken String?   @unique @map("email_verification_token") @db.VarChar(200)
+  passwordResetToken     String?   @unique @map("password_reset_token") @db.VarChar(200)
+  passwordResetExpiresAt DateTime? @map("password_reset_expires_at")
+
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])

@@ -59,7 +59,10 @@ export default function LoginPage() {
                 placeholder="admin@example.com" className={inputClass} autoFocus />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">パスワード</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-medium text-gray-700">パスワード</label>
+                <Link href="/forgot-password" className="text-xs text-[#06C755] hover:underline">パスワードを忘れた方</Link>
+              </div>
               <input required type="password" value={password} onChange={(e) => setPassword(e.target.value)}
                 placeholder="パスワード" className={inputClass} />
             </div>

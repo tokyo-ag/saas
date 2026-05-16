@@ -21,6 +21,15 @@ class LineCompleteDto {
   @IsNotEmpty() @IsString() orgName: string;
 }
 
+class ForgotPasswordDto {
+  @IsEmail() email: string;
+}
+
+class ResetPasswordDto {
+  @IsString() @IsNotEmpty() token: string;
+  @IsString() @MinLength(8) password: string;
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -35,6 +44,28 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto.email, dto.password);
+  }
+
+  @Get('verify-email')
+  verifyEmail(@Query('token') token: string) {
+    return this.authService.verifyEmail(token);
+  }
+
+  @Throttle({ default: { ttl: 60000, limit: 3 } })
+  @Post('forgot-password')
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto.email);
+  }
+
+  @Post('reset-password')
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.token, dto.password);
+  }
+
+  @Post('resend-verification')
+  @UseGuards(AdminGuard)
+  resendVerification(@Req() req: Request & { user: { tenantId: string; accountId: string } }) {
+    return this.authService.resendVerificationEmail(req.user.tenantId, req.user.accountId);
   }
 
   @Get('line')

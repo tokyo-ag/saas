@@ -2,7 +2,9 @@ import { Injectable, ConflictException, BadRequestException, UnauthorizedExcepti
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
 import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -10,10 +12,15 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private config: ConfigService,
+    private email: EmailService,
   ) {}
 
   private issueToken(tenantId: string, accountId: string, isSuperadmin = false): string {
     return this.jwtService.sign({ tenantId, accountId, ...(isSuperadmin && { isSuperadmin: true }) });
+  }
+
+  private generateToken(): string {
+    return crypto.randomBytes(32).toString('hex');
   }
 
   getLineAuthUrl(): string {
@@ -103,16 +110,24 @@ export class AuthService {
   async register(email: string, password: string, orgName: string) {
     const existing = await this.prisma.organizerAccount.findUnique({ where: { email } });
     if (existing) throw new ConflictException('このメールアドレスは既に登録されています');
+
     const passwordHash = await bcrypt.hash(password, 10);
+    const verificationToken = this.generateToken();
+
     const tenant = await this.prisma.tenant.create({
       data: {
         id: `tenant-${Date.now()}`,
         name: orgName,
-        organizerAccounts: { create: { email, passwordHash } },
+        organizerAccounts: {
+          create: { email, passwordHash, emailVerificationToken: verificationToken },
+        },
       },
       include: { organizerAccounts: true },
     });
     const account = tenant.organizerAccounts[0];
+
+    await this.email.sendVerificationEmail(email, verificationToken).catch(() => null);
+
     return { token: this.issueToken(tenant.id, account.id), tenantId: tenant.id };
   }
 
@@ -127,11 +142,93 @@ export class AuthService {
     if (!valid) throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
     const superadminEmail = this.config.get<string>('SUPERADMIN_EMAIL');
     const isSuperadmin = !!superadminEmail && account.email === superadminEmail;
-    return { token: this.issueToken(account.tenantId, account.id, isSuperadmin), tenantId: account.tenantId };
+    return {
+      token: this.issueToken(account.tenantId, account.id, isSuperadmin),
+      tenantId: account.tenantId,
+      emailVerified: !!account.emailVerifiedAt,
+    };
+  }
+
+  async verifyEmail(token: string): Promise<{ message: string }> {
+    const account = await this.prisma.organizerAccount.findUnique({
+      where: { emailVerificationToken: token },
+    });
+    if (!account) throw new BadRequestException('無効または期限切れのリンクです');
+    if (account.emailVerifiedAt) return { message: '既に確認済みです' };
+
+    await this.prisma.organizerAccount.update({
+      where: { id: account.id },
+      data: { emailVerifiedAt: new Date(), emailVerificationToken: null },
+    });
+    return { message: 'メールアドレスを確認しました' };
+  }
+
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const trimmedEmail = email.trim().toLowerCase();
+    const accounts = await this.prisma.organizerAccount.findMany({
+      where: { email: { not: null } },
+    });
+    const account = accounts.find(a => a.email?.toLowerCase() === trimmedEmail) ?? null;
+
+    // セキュリティのため、アカウントが存在しない場合も同じレスポンスを返す
+    if (!account?.passwordHash) {
+      return { message: 'パスワードリセットメールを送信しました（メールアドレスが登録されている場合）' };
+    }
+
+    const resetToken = this.generateToken();
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1時間
+
+    await this.prisma.organizerAccount.update({
+      where: { id: account.id },
+      data: { passwordResetToken: resetToken, passwordResetExpiresAt: expiresAt },
+    });
+
+    await this.email.sendPasswordResetEmail(account.email!, resetToken).catch(() => null);
+
+    return { message: 'パスワードリセットメールを送信しました（メールアドレスが登録されている場合）' };
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    const account = await this.prisma.organizerAccount.findUnique({
+      where: { passwordResetToken: token },
+    });
+    if (!account || !account.passwordResetExpiresAt) {
+      throw new BadRequestException('無効または期限切れのリンクです');
+    }
+    if (account.passwordResetExpiresAt < new Date()) {
+      throw new BadRequestException('リンクの有効期限が切れています。もう一度やり直してください。');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.prisma.organizerAccount.update({
+      where: { id: account.id },
+      data: { passwordHash, passwordResetToken: null, passwordResetExpiresAt: null },
+    });
+    return { message: 'パスワードをリセットしました' };
+  }
+
+  async resendVerificationEmail(tenantId: string, accountId: string): Promise<{ message: string }> {
+    const account = await this.prisma.organizerAccount.findUnique({ where: { id: accountId } });
+    if (!account?.email) throw new BadRequestException('メールアドレスが設定されていません');
+    if (account.emailVerifiedAt) return { message: '既に確認済みです' };
+
+    const token = this.generateToken();
+    await this.prisma.organizerAccount.update({
+      where: { id: accountId },
+      data: { emailVerificationToken: token },
+    });
+    await this.email.sendVerificationEmail(account.email, token);
+    return { message: '確認メールを再送しました' };
   }
 
   async getMe(tenantId: string, accountId: string) {
     const account = await this.prisma.organizerAccount.findUnique({ where: { id: accountId } });
-    return { tenantId, accountId, lineUserId: account?.lineUserId };
+    return {
+      tenantId,
+      accountId,
+      lineUserId: account?.lineUserId,
+      email: account?.email,
+      emailVerified: !!account?.emailVerifiedAt,
+    };
   }
 }
