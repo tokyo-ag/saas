@@ -34,6 +34,14 @@ function ReservePageInner() {
       await initLiff();
       try {
         if (!liff.isLoggedIn()) {
+          const tried = sessionStorage.getItem('liff-login-tried');
+          if (tried) {
+            // 既に一度試みたが失敗 → ループを防ぐためフォールバック表示
+            sessionStorage.removeItem('liff-login-tried');
+            setLoading(false);
+            return;
+          }
+          sessionStorage.setItem('liff-login-tried', '1');
           localStorage.setItem('liff-pending-redirect', window.location.href);
           liff.login({ redirectUri: window.location.href });
           return;
@@ -42,6 +50,7 @@ function ReservePageInner() {
         setLoading(false);
         return;
       }
+      sessionStorage.removeItem('liff-login-tried');
 
       const uid = (await getLiffUserId()) ?? '';
       if (!uid) { setLoading(false); return; }
