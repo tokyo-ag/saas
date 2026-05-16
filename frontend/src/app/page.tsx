@@ -231,7 +231,6 @@ export default function TopPage() {
     const pending = localStorage.getItem('liff-pending-redirect');
     if (pending) {
       localStorage.removeItem('liff-pending-redirect');
-      sessionStorage.removeItem('liff-login-tried');
       window.location.replace(pending);
     }
   }, []);
