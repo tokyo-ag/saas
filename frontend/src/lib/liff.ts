@@ -35,7 +35,7 @@ export async function checkFriendship(): Promise<boolean> {
     const result = await liff.getFriendship();
     return result.friendFlag;
   } catch {
-    return false;
+    return true;
   }
 }
 

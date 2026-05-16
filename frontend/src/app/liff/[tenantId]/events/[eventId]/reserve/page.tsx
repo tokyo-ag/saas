@@ -56,7 +56,8 @@ function ReservePageInner() {
       if (tenantInfo.status === 'fulfilled') setTenant(tenantInfo.value);
 
       const hasProfile = prof.status === 'fulfilled' && prof.value?.name && prof.value?.grade && prof.value?.gender;
-      if (!hasProfile) {
+      const tenantLineId = tenantInfo.status === 'fulfilled' ? tenantInfo.value?.lineChannelId : null;
+      if (!hasProfile && tenantLineId) {
         const friend = await checkFriendship();
         setIsFriend(friend);
       } else {
