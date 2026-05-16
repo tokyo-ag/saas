@@ -32,9 +32,12 @@ function ReservePageInner() {
   useEffect(() => {
     async function init() {
       const ok = await initLiff();
-      if (!ok || !liff.isLoggedIn()) {
-        // LINE以外のブラウザからのアクセスは予約不可
+      if (!ok) {
         setLoading(false);
+        return;
+      }
+      if (!liff.isLoggedIn()) {
+        liff.login({ redirectUri: window.location.href });
         return;
       }
 
