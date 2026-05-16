@@ -407,6 +407,7 @@ export interface LiffEvent {
   heldAt: string;
   endAt?: string | null;
   location: string;
+  locationUrl?: string | null;
   capacity?: number;
   status: EventStatus;
   price: number;

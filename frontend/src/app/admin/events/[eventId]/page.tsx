@@ -61,7 +61,7 @@ export default function EventDetailPage() {
     if (!event) return;
     try {
       const created = await (api.events.create as any)({
-        title: `${event.title}（コピー）`,
+        title: event.title,
         description: event.description,
         heldAt: event.heldAt,
         endAt: event.endAt ?? null,

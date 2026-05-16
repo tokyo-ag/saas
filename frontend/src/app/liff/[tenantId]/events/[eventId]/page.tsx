@@ -237,7 +237,13 @@ export default function LiffEventDetailPage() {
           <p className="text-sm font-medium text-gray-900">{formatDate(event.heldAt)}</p>
         </InfoRow>
         <InfoRow icon={<PinIcon />}>
-          <p className="text-sm font-medium text-gray-900">{event.location}</p>
+          {event.locationUrl ? (
+            <a href={event.locationUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-[#06C755] underline">
+              {event.location}
+            </a>
+          ) : (
+            <p className="text-sm font-medium text-gray-900">{event.location}</p>
+          )}
         </InfoRow>
         <InfoRow icon={<UsersIcon />}>
           <p className="text-sm font-medium text-gray-900">
