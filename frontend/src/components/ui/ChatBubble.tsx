@@ -14,7 +14,7 @@ export function ChatBubble({ content, time, isMine, avatar }: ChatBubbleProps) {
     <div className={`flex ${isMine ? 'justify-end' : 'justify-start'} gap-2`}>
       {!isMine && avatar && <div className="shrink-0 mt-1">{avatar}</div>}
       <div className={`max-w-[72%] flex flex-col gap-0.5 ${isMine ? 'items-end' : 'items-start'}`}>
-        <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
+        <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
           isMine
             ? 'bg-[#06C755] text-white rounded-br-sm'
             : 'bg-white border border-gray-100 text-gray-900 rounded-bl-sm shadow-sm'
