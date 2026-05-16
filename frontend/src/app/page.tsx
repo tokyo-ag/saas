@@ -62,7 +62,7 @@ function EventCard({ event, liked, onToggleLike, favTenants, onToggleFav }: {
   return (
     <div className="flex-shrink-0 w-44 rounded-xl overflow-hidden bg-white" style={{ boxShadow: '0 1px 5px rgba(0,0,0,0.09)' }}>
       <Link href={`/liff/${event.tenantId}/events/${event.id}`} className="block">
-        <div className="relative" style={{ aspectRatio: '4/3' }}>
+        <div className="relative" style={{ aspectRatio: '4/5' }}>
           {img ? (
             <img src={img} alt="" className="absolute inset-0 w-full h-full object-cover" />
           ) : (

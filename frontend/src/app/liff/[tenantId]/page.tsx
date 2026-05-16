@@ -52,8 +52,7 @@ function EventCard({ event, tenantId }: { event: LiffEvent; tenantId: string }) 
       className="block rounded-xl overflow-hidden bg-white active:opacity-70"
       style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
     >
-      {/* square image with title overlay */}
-      <div className="relative" style={{ aspectRatio: '1/1' }}>
+      <div className="relative" style={{ aspectRatio: '4/5' }}>
         {img ? (
           <img src={img} alt="" className="absolute inset-0 w-full h-full object-cover" />
         ) : (
@@ -99,7 +98,7 @@ function FavEventRow({ event }: { event: PublicEvent }) {
       className="flex items-center gap-3 bg-white rounded-xl px-3 py-3 active:opacity-70"
       style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)' }}
     >
-      <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0">
+      <div className="w-14 rounded-lg overflow-hidden shrink-0 aspect-[4/5]">
         {img ? (
           <img src={img} alt="" className="w-full h-full object-cover" />
         ) : (

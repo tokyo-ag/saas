@@ -130,7 +130,7 @@ export default function LiffEventDetailPage() {
           </button>
           <div className="h-4 w-40 bg-gray-200 rounded-full animate-pulse" />
         </div>
-        <div className="aspect-video w-full bg-gray-200 animate-pulse" />
+        <div className="aspect-[4/5] w-full bg-gray-200 animate-pulse" />
         <div className="px-4 py-5 space-y-4">
           <div className="h-5 bg-gray-200 rounded-full animate-pulse w-3/4" />
           <div className="h-3 bg-gray-200 rounded-full animate-pulse w-1/3" />
@@ -178,7 +178,7 @@ export default function LiffEventDetailPage() {
           )}
         </div>
       ) : (
-        <div className="aspect-video w-full bg-gradient-to-br from-[#06C755]/20 to-[#06C755]/5 flex items-center justify-center">
+        <div className="aspect-[4/5] w-full bg-gradient-to-br from-[#06C755]/20 to-[#06C755]/5 flex items-center justify-center">
           <span className="text-5xl">🎉</span>
         </div>
       )}
