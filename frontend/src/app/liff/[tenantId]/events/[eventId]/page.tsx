@@ -23,6 +23,25 @@ function InfoRow({ icon, children }: { icon: React.ReactNode; children: React.Re
   );
 }
 
+const URL_SPLIT = /(https?:\/\/[^\s　、。！？」』】〕]+)/g;
+
+function Linkified({ text }: { text: string }) {
+  const parts = text.split(URL_SPLIT);
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.startsWith('http://') || part.startsWith('https://') ? (
+          <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-[#06C755] underline break-all">
+            {part}
+          </a>
+        ) : (
+          part
+        )
+      )}
+    </>
+  );
+}
+
 function CalendarIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -246,7 +265,9 @@ export default function LiffEventDetailPage() {
         </InfoRow>
         {event.description && (
           <InfoRow icon={<TextIcon />}>
-            <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{event.description}</p>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+              <Linkified text={event.description} />
+            </p>
           </InfoRow>
         )}
       </div>
