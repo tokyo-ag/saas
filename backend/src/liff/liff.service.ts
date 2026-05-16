@@ -261,12 +261,33 @@ export class LiffService {
     // テナントブロックチェック
     if (member.blockedAt) throw new ForbiddenException('この団体から利用制限されています');
 
-    // 同じイベントへの予約は2回まで（キャンセル済みを除く）
+    // 同じイベントへの重複予約チェック
     const existingCount = await this.prisma.reservation.count({
       where: { memberId: member.id, eventId: dto.eventId, status: { not: 'cancelled' } },
     });
-    if (existingCount >= 2) {
-      throw new ConflictException('このイベントへの予約上限（2回）に達しています');
+    if (existingCount >= 1) {
+      throw new ConflictException('このイベントはすでに予約済みです');
+    }
+
+    // 同じ日の別イベントへの予約チェック（JST基準）
+    const jstOffset = 9 * 60 * 60 * 1000;
+    const eventDateJST = new Date(event.heldAt.getTime() + jstOffset);
+    const dayStart = new Date(
+      Date.UTC(eventDateJST.getUTCFullYear(), eventDateJST.getUTCMonth(), eventDateJST.getUTCDate()) - jstOffset,
+    );
+    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+
+    const sameDayReservation = await this.prisma.reservation.findFirst({
+      where: {
+        memberId: member.id,
+        tenantId,
+        eventId: { not: dto.eventId },
+        status: { in: ['reserved', 'attended', 'waiting_payment', 'waitlisted'] },
+        event: { heldAt: { gte: dayStart, lt: dayEnd } },
+      },
+    });
+    if (sameDayReservation) {
+      throw new ConflictException('同じ日に別のイベントへの予約があるため、予約できません');
     }
 
     // 定員チェック
