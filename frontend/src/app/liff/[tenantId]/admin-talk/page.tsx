@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { api, AdminMessage, LiffTenant } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded } from '@/lib/liff';
 import { ChatBubble, ChatInput } from '@/components/ui/ChatBubble';
-import { useLiffPushNotification } from '@/hooks/useLiffPushNotification';
 
 function formatTime(dateStr: string) {
   return new Date(dateStr).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
@@ -20,8 +19,6 @@ export default function AdminTalkPage() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-
-  useLiffPushNotification(tenantId, lineUserId);
 
   useEffect(() => {
     async function init() {

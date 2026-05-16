@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { api, LiffConnection, LiffTenant } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded } from '@/lib/liff';
 import LiffBottomNav from '@/components/liff/LiffBottomNav';
+import { useLiffPushNotification } from '@/hooks/useLiffPushNotification';
 
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -23,6 +24,9 @@ export default function TalksPage() {
   const [tenant, setTenant] = useState<LiffTenant | null>(null);
   const [connections, setConnections] = useState<LiffConnection[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lineUserId, setLineUserId] = useState('');
+
+  useLiffPushNotification(tenantId, lineUserId);
 
   useEffect(() => {
     async function init() {
@@ -34,6 +38,7 @@ export default function TalksPage() {
       } else {
         uid = `demo-${tenantId}`;
       }
+      setLineUserId(uid);
 
       const [tenantResult, connectionsResult] = await Promise.allSettled([
         api.liff.tenant(tenantId),
