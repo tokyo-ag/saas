@@ -16,6 +16,11 @@ class LoginDto {
   @IsString() @IsNotEmpty() password: string;
 }
 
+class ReconfirmDto {
+  @IsEmail() email: string;
+  @IsString() @IsNotEmpty() password: string;
+}
+
 class LineCompleteDto {
   @IsString() lineToken: string;
   @IsNotEmpty() @IsString() orgName: string;
@@ -27,6 +32,11 @@ class ForgotPasswordDto {
 
 class ResetPasswordDto {
   @IsString() @IsNotEmpty() token: string;
+  @IsString() @MinLength(8) password: string;
+}
+
+class SetEmailPasswordDto {
+  @IsEmail() email: string;
   @IsString() @MinLength(8) password: string;
 }
 
@@ -46,6 +56,16 @@ export class AuthController {
     return this.authService.login(dto.email, dto.password);
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @Post('reconfirm')
+  @UseGuards(AdminGuard)
+  reconfirm(
+    @Req() req: Request & { user: { tenantId: string; accountId: string } },
+    @Body() dto: ReconfirmDto,
+  ) {
+    return this.authService.reconfirmPassword(req.user.tenantId, req.user.accountId, dto.email, dto.password);
+  }
+
   @Get('verify-email')
   verifyEmail(@Query('token') token: string) {
     return this.authService.verifyEmail(token);
@@ -60,6 +80,15 @@ export class AuthController {
   @Post('reset-password')
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto.token, dto.password);
+  }
+
+  @Post('set-email-password')
+  @UseGuards(AdminGuard)
+  setEmailPassword(
+    @Req() req: Request & { user: { tenantId: string; accountId: string } },
+    @Body() dto: SetEmailPasswordDto,
+  ) {
+    return this.authService.setEmailPassword(req.user.tenantId, req.user.accountId, dto.email, dto.password);
   }
 
   @Post('resend-verification')

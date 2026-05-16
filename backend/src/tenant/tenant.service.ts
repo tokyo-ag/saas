@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import Stripe from 'stripe';
 import { IsString, IsOptional } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
@@ -19,7 +20,7 @@ export class UpdateTenantDto {
 
 @Injectable()
 export class TenantService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private jwtService: JwtService) {}
 
   private toSafeTenant<T extends { lineChannelSecret: unknown; lineChannelAccessToken: unknown; stripeSecretKey: unknown; stripeWebhookSecret: unknown }>(tenant: T) {
     // Keep secret values server-side while still letting the UI know whether setup is complete.
@@ -42,8 +43,31 @@ export class TenantService {
     return this.toSafeTenant(tenant);
   }
 
-  async update(tenantId: string, dto: UpdateTenantDto) {
-    await this.findOne(tenantId);
+  private assertSensitiveSettingsReconfirmed(tenantId: string, accountId: string, dto: UpdateTenantDto, reauthRequired: boolean, reauthToken?: string) {
+    const changesSensitiveLineSettings = [
+      dto.lineChannelId,
+      dto.lineChannelSecret,
+      dto.lineChannelAccessToken,
+      dto.liffId,
+      dto.organizerLineUserId,
+    ].some((value) => value !== undefined);
+
+    if (!changesSensitiveLineSettings || !reauthRequired) return;
+    if (!reauthToken) throw new UnauthorizedException('LINE設定を編集するには再認証が必要です');
+
+    try {
+      const payload = this.jwtService.verify<{ tenantId: string; accountId: string; purpose?: string }>(reauthToken);
+      if (payload.tenantId !== tenantId || payload.accountId !== accountId || payload.purpose !== 'sensitive-settings') {
+        throw new Error('invalid reauth token');
+      }
+    } catch {
+      throw new UnauthorizedException('再認証の有効期限が切れました。もう一度確認してください');
+    }
+  }
+
+  async update(tenantId: string, dto: UpdateTenantDto, accountId: string, reauthToken?: string) {
+    const tenant = await this.findRaw(tenantId);
+    this.assertSensitiveSettingsReconfirmed(tenantId, accountId, dto, Boolean(tenant.lineChannelAccessToken), reauthToken);
     const updated = await this.prisma.tenant.update({
       where: { id: tenantId },
       data: {

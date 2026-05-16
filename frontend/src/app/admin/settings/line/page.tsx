@@ -36,6 +36,7 @@ function SettingsTabs() {
 
 export default function LineSettingsPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
   const [step, setStep] = useState<Step>(1);
   const [form, setForm] = useState<Pick<TenantInput, 'lineChannelId' | 'lineChannelSecret' | 'lineChannelAccessToken' | 'liffId'>>({
     lineChannelId: '',
@@ -46,12 +47,18 @@ export default function LineSettingsPage() {
   const [organizerLineUserId, setOrganizerLineUserId] = useState('');
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [editUnlocked, setEditUnlocked] = useState(false);
+  const [reauthToken, setReauthToken] = useState('');
+  const [reauthEmail, setReauthEmail] = useState('');
+  const [reauthPassword, setReauthPassword] = useState('');
+  const [reauthing, setReauthing] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    api.tenant.get().then((tenantData) => {
+    Promise.all([api.tenant.get(), api.auth.getMe()]).then(([tenantData, me]) => {
       setTenant(tenantData);
+      setHasPassword(me.hasPassword);
       setForm({
         lineChannelId: tenantData.lineChannelId ?? '',
         lineChannelSecret: tenantData.lineChannelSecret ?? '',
@@ -70,7 +77,7 @@ export default function LineSettingsPage() {
     setSaving(true);
     setError('');
     try {
-      const updated = await api.tenant.update(data);
+      const updated = await api.tenant.update(data, editUnlocked ? reauthToken : undefined);
       setTenant(updated);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -85,6 +92,24 @@ export default function LineSettingsPage() {
 
   const webhookUrl = `${BASE}/webhook/${tenant?.id ?? ''}`;
   const liffEndpoint = typeof window !== 'undefined' ? `${window.location.origin}/liff/${tenant?.id ?? ''}` : '';
+  const lineCredentialsLocked = !!tenant?.lineConfigured && !editUnlocked;
+
+  async function unlockLineSettings(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setReauthing(true);
+    try {
+      const result = await api.auth.reconfirm(reauthEmail, reauthPassword);
+      setReauthToken(result.reauthToken);
+      setEditUnlocked(true);
+      setReauthPassword('');
+      setStep(2);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setReauthing(false);
+    }
+  }
 
   if (!tenant) {
     return <div className="px-4 py-12 text-center text-sm text-gray-400">読み込み中...</div>;
@@ -100,6 +125,42 @@ export default function LineSettingsPage() {
         <SaveToast show={saved} />
 
         <div className="space-y-4">
+          {tenant.lineConfigured && !editUnlocked && (
+            <section className="rounded-xl border border-amber-200 bg-amber-50 p-4 md:p-5">
+              <h2 className="mb-1 text-sm font-semibold text-gray-900">LINE設定は保護されています</h2>
+              {hasPassword === false ? (
+                <p className="text-xs leading-relaxed text-gray-600">
+                  LINE設定を編集するには、メールアドレスとパスワードの登録が必要です。
+                  <Link href="/admin/settings/account" className="ml-1 font-medium text-[#06C755] hover:underline">
+                    アカウント設定で登録する
+                  </Link>
+                </p>
+              ) : (
+                <>
+                  <p className="mb-4 text-xs leading-relaxed text-gray-600">
+                    公式LINEの設定を変更するには、管理者のメールアドレスとパスワードを再入力してください。
+                  </p>
+                  <form onSubmit={unlockLineSettings} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                    <Field label="メールアドレス" type="email" value={reauthEmail} onChange={setReauthEmail} placeholder="admin@example.com" />
+                    <Field label="パスワード" type="password" value={reauthPassword} onChange={setReauthPassword} placeholder="パスワード" />
+                    <button
+                      type="submit"
+                      disabled={reauthing || !reauthEmail || !reauthPassword}
+                      className="h-10 rounded-lg bg-gray-900 px-4 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+                    >
+                      {reauthing ? '確認中...' : '編集する'}
+                    </button>
+                  </form>
+                </>
+              )}
+            </section>
+          )}
+
+          {tenant.lineConfigured && editUnlocked && (
+            <section className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+              本人確認が完了しました。この画面を閉じるまでLINE設定を編集できます。Secret と Access Token は空欄のまま保存すると既存値を維持します。
+            </section>
+          )}
           <StepCard step={1} currentStep={step} title="LINE公式アカウントを用意する">
             <p className="mb-4 text-sm leading-relaxed text-gray-600">
               まだLINE公式アカウントがない場合は作成してください。作成済みなら次の手順へ進めます。
@@ -114,22 +175,25 @@ export default function LineSettingsPage() {
               LINE Developers のチャネル設定から、Channel ID、Channel Secret、Access Token をコピーして貼り付けてください。
             </p>
             <div className="space-y-3">
-              <Field label="Channel ID" value={form.lineChannelId ?? ''} onChange={(value) => set('lineChannelId', value)} placeholder="1234567890" />
-              <Field label="Channel Secret" type="password" value={form.lineChannelSecret ?? ''} onChange={(value) => set('lineChannelSecret', value)} placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" />
-              <Field label="Channel Access Token" type="password" value={form.lineChannelAccessToken ?? ''} onChange={(value) => set('lineChannelAccessToken', value)} placeholder="長い文字列" />
+              <Field label="Channel ID" value={form.lineChannelId ?? ''} onChange={(value) => set('lineChannelId', value)} placeholder="1234567890" disabled={lineCredentialsLocked} />
+              <Field label="Channel Secret" type="password" value={form.lineChannelSecret ?? ''} onChange={(value) => set('lineChannelSecret', value)} placeholder={tenant.lineConfigured ? '変更する場合のみ入力' : 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'} disabled={lineCredentialsLocked} />
+              <Field label="Channel Access Token" type="password" value={form.lineChannelAccessToken ?? ''} onChange={(value) => set('lineChannelAccessToken', value)} placeholder={tenant.lineConfigured ? '変更する場合のみ入力' : '長い文字列'} disabled={lineCredentialsLocked} />
             </div>
             <button
-              disabled={saving || !form.lineChannelId || !form.lineChannelSecret || !form.lineChannelAccessToken}
+              disabled={saving || lineCredentialsLocked || !form.lineChannelId || (!tenant.lineConfigured && (!form.lineChannelSecret || !form.lineChannelAccessToken))}
               onClick={async () => {
-                const ok = await save({
+                const payload: Partial<TenantInput> = {
                   lineChannelId: form.lineChannelId,
-                  lineChannelSecret: form.lineChannelSecret,
-                  lineChannelAccessToken: form.lineChannelAccessToken,
-                });
+                };
+                if (form.lineChannelSecret) payload.lineChannelSecret = form.lineChannelSecret;
+                if (form.lineChannelAccessToken) payload.lineChannelAccessToken = form.lineChannelAccessToken;
+                const ok = await save(payload);
                 if (ok) {
                   try {
                     const updated = await api.tenant.syncLineProfile();
                     setTenant(updated);
+                    setEditUnlocked(false);
+                    setReauthToken('');
                     setStep(3);
                   } catch (err: any) {
                     setError(err.message);
@@ -148,13 +212,17 @@ export default function LineSettingsPage() {
             </p>
             <CopyBox value={liffEndpoint} />
             <div className="mt-4">
-              <Field label="LIFF ID" value={form.liffId ?? ''} onChange={(value) => set('liffId', value)} placeholder="1234567890-xxxxxxxx" />
+              <Field label="LIFF ID" value={form.liffId ?? ''} onChange={(value) => set('liffId', value)} placeholder="1234567890-xxxxxxxx" disabled={lineCredentialsLocked} />
             </div>
             <button
-              disabled={saving || !form.liffId}
+              disabled={saving || lineCredentialsLocked || !form.liffId}
               onClick={async () => {
                 const ok = await save({ liffId: form.liffId });
-                if (ok) setStep(4);
+                if (ok) {
+                  setEditUnlocked(false);
+                  setReauthToken('');
+                  setStep(4);
+                }
               }}
               className="mt-4 w-full rounded-lg bg-[#06C755] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] disabled:opacity-50 sm:w-auto"
             >
@@ -216,11 +284,18 @@ export default function LineSettingsPage() {
               value={organizerLineUserId}
               onChange={(e) => setOrganizerLineUserId(e.target.value)}
               placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+              disabled={lineCredentialsLocked}
               className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
             />
             <button
-              disabled={saving}
-              onClick={() => save({ organizerLineUserId: organizerLineUserId || undefined })}
+              disabled={saving || lineCredentialsLocked}
+              onClick={async () => {
+                const ok = await save({ organizerLineUserId: organizerLineUserId || undefined });
+                if (ok) {
+                  setEditUnlocked(false);
+                  setReauthToken('');
+                }
+              }}
               className="w-full rounded-lg bg-[#06C755] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] disabled:opacity-50 sm:w-auto"
             >
               {saving ? '保存中...' : '保存'}
@@ -232,12 +307,13 @@ export default function LineSettingsPage() {
   );
 }
 
-function Field({ label, value, onChange, placeholder, type = 'text' }: {
+function Field({ label, value, onChange, placeholder, type = 'text', disabled = false }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   type?: string;
+  disabled?: boolean;
 }) {
   return (
     <div>
@@ -247,7 +323,8 @@ function Field({ label, value, onChange, placeholder, type = 'text' }: {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+        disabled={disabled}
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755] disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
       />
     </div>
   );

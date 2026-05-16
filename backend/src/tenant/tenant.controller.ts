@@ -1,4 +1,5 @@
-import { Controller, Get, Put, Post, Body, BadRequestException, UseGuards } from '@nestjs/common';
+import { Controller, Get, Put, Post, Body, BadRequestException, UseGuards, Headers, Req } from '@nestjs/common';
+import type { Request } from 'express';
 import { AdminGuard } from '../auth/admin.guard';
 import { TenantService, UpdateTenantDto } from './tenant.service';
 import { TenantId } from '../auth/tenant-id.decorator';
@@ -14,8 +15,13 @@ export class TenantController {
   }
 
   @Put()
-  update(@TenantId() tenantId: string, @Body() dto: UpdateTenantDto) {
-    return this.tenantService.update(tenantId, dto);
+  update(
+    @TenantId() tenantId: string,
+    @Body() dto: UpdateTenantDto,
+    @Headers('x-reauth-token') reauthToken: string | undefined,
+    @Req() req: Request & { user: { accountId: string } },
+  ) {
+    return this.tenantService.update(tenantId, dto, req.user.accountId, reauthToken);
   }
 
   @Get('stats')

@@ -149,6 +149,23 @@ export class AuthService {
     };
   }
 
+  async reconfirmPassword(tenantId: string, accountId: string, email: string, password: string): Promise<{ reauthToken: string }> {
+    const trimmedEmail = email.trim().toLowerCase();
+    const account = await this.prisma.organizerAccount.findUnique({ where: { id: accountId } });
+    if (!account || account.tenantId !== tenantId || !account.email || account.email.toLowerCase() !== trimmedEmail || !account.passwordHash) {
+      throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
+    }
+
+    const valid = await bcrypt.compare(password, account.passwordHash);
+    if (!valid) throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
+    return {
+      reauthToken: this.jwtService.sign(
+        { tenantId, accountId, purpose: 'sensitive-settings' },
+        { expiresIn: '10m' },
+      ),
+    };
+  }
+
   async verifyEmail(token: string): Promise<{ message: string }> {
     const account = await this.prisma.organizerAccount.findUnique({
       where: { emailVerificationToken: token },
@@ -207,6 +224,27 @@ export class AuthService {
     return { message: 'パスワードをリセットしました' };
   }
 
+  async setEmailPassword(tenantId: string, accountId: string, email: string, password: string): Promise<{ message: string }> {
+    const trimmedEmail = email.trim().toLowerCase();
+    const account = await this.prisma.organizerAccount.findUnique({ where: { id: accountId } });
+    if (!account || account.tenantId !== tenantId) throw new UnauthorizedException();
+    if (account.passwordHash) throw new BadRequestException('既にパスワードが設定されています');
+
+    const existing = await this.prisma.organizerAccount.findMany({ where: { email: { not: null } } });
+    if (existing.some(a => a.email?.toLowerCase() === trimmedEmail)) {
+      throw new ConflictException('このメールアドレスは既に使用されています');
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const verificationToken = this.generateToken();
+    await this.prisma.organizerAccount.update({
+      where: { id: accountId },
+      data: { email: trimmedEmail, passwordHash, emailVerificationToken: verificationToken },
+    });
+    await this.email.sendVerificationEmail(trimmedEmail, verificationToken).catch(() => null);
+    return { message: 'メールアドレスとパスワードを設定しました' };
+  }
+
   async resendVerificationEmail(tenantId: string, accountId: string): Promise<{ message: string }> {
     const account = await this.prisma.organizerAccount.findUnique({ where: { id: accountId } });
     if (!account?.email) throw new BadRequestException('メールアドレスが設定されていません');
@@ -229,6 +267,7 @@ export class AuthService {
       lineUserId: account?.lineUserId,
       email: account?.email,
       emailVerified: !!account?.emailVerifiedAt,
+      hasPassword: !!account?.passwordHash,
     };
   }
 }

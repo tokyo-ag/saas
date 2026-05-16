@@ -9,12 +9,16 @@ import { getToken, clearToken } from './auth';
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const isSuperadmin = path.startsWith('/superadmin');
   const isAdmin = path.startsWith('/admin');
-  const needsAuth = isSuperadmin || isAdmin;
+  const needsAuth = isSuperadmin || isAdmin || path === '/auth/reconfirm';
   const token = needsAuth ? getToken() : null;
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE}${path}`, { headers, ...options });
+  const { headers: optionHeaders, ...restOptions } = options ?? {};
+  const res = await fetch(`${BASE}${path}`, {
+    ...restOptions,
+    headers: { ...headers, ...(optionHeaders as Record<string, string> | undefined) },
+  });
 
   if (!res.ok) {
     if (res.status === 401 && needsAuth && typeof window !== 'undefined') {
@@ -205,8 +209,12 @@ export const api = {
   },
   tenant: {
     get: () => request<Tenant>('/admin/tenant'),
-    update: (data: Partial<TenantInput>) =>
-      request<Tenant>('/admin/tenant', { method: 'PUT', body: JSON.stringify(data) }),
+    update: (data: Partial<TenantInput>, reauthToken?: string) =>
+      request<Tenant>('/admin/tenant', {
+        method: 'PUT',
+        headers: reauthToken ? { 'X-Reauth-Token': reauthToken } : undefined,
+        body: JSON.stringify(data),
+      }),
     stats: () => request<{
       memberCount: number;
       thisMonthEventCount: number;
@@ -227,6 +235,20 @@ export const api = {
       request<SupportMessage>('/admin/tenant/support', {
         method: 'POST',
         body: JSON.stringify({ content }),
+      }),
+  },
+  auth: {
+    reconfirm: (email: string, password: string) =>
+      request<{ reauthToken: string }>('/auth/reconfirm', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      }),
+    getMe: () =>
+      request<{ tenantId: string; accountId: string; email: string | null; emailVerified: boolean; hasPassword: boolean; lineUserId: string | null }>('/auth/me'),
+    setEmailPassword: (email: string, password: string) =>
+      request<{ message: string }>('/auth/set-email-password', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
       }),
   },
   superadmin: {
