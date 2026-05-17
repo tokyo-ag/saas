@@ -128,7 +128,7 @@ export class AuthService {
 
     await this.email.sendVerificationEmail(email, verificationToken).catch(() => null);
 
-    return { token: this.issueToken(tenant.id, account.id), tenantId: tenant.id };
+    return { message: '確認メールを送信しました。メールのリンクをクリックしてアカウントを有効化してください。' };
   }
 
   async login(email: string, password: string) {

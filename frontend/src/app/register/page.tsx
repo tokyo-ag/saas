@@ -2,14 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { setToken } from '@/lib/auth';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
+  const [done, setDone] = useState(false);
   const [orgName, setOrgName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,10 +26,9 @@ export default function RegisterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orgName, email, password }),
       });
-      const data = await res.json() as { token?: string; message?: string };
+      const data = await res.json() as { message?: string };
       if (!res.ok) throw new Error(data.message ?? '登録に失敗しました');
-      if (data.token) setToken(data.token);
-      router.replace('/admin?registered=1');
+      setDone(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '登録に失敗しました');
     } finally {
@@ -40,6 +37,22 @@ export default function RegisterPage() {
   }
 
   const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755] focus:border-transparent';
+
+  if (done) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-sm text-center">
+          <div className="w-16 h-16 bg-[#06C755]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-[#06C755]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+          </div>
+          <h1 className="text-xl font-bold text-gray-900 mb-2">確認メールを送信しました</h1>
+          <p className="text-sm text-gray-500 mb-2"><span className="font-medium text-gray-700">{email}</span> に確認メールを送りました。</p>
+          <p className="text-sm text-gray-500 mb-8">メール内のリンクをクリックしてアカウントを有効化してください。</p>
+          <Link href="/login" className="text-[#06C755] text-sm hover:underline font-medium">ログインページへ</Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
