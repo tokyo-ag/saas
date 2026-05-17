@@ -10,8 +10,6 @@ import { ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LineMessagingService } from '../line-messaging/line-messaging.service';
 import { StripeService } from '../stripe/stripe.service';
-import { PushService } from '../push/push.service';
-
 export class CreateReservationDto {
   @IsString() eventId!: string;
   @IsString() lineUserId!: string;
@@ -31,12 +29,7 @@ export class LiffService {
     private prisma: PrismaService,
     private lineMessaging: LineMessagingService,
     private stripeService: StripeService,
-    private pushService: PushService,
   ) {}
-
-  getVapidPublicKey(): string | null {
-    return this.pushService.getVapidPublicKey();
-  }
 
   // テナント公開情報（認証不要）
   async getTenantInfo(tenantId: string) {
@@ -725,14 +718,6 @@ export class LiffService {
     });
   }
 
-  async subscribePush(tenantId: string, dto: { lineUserId: string; endpoint: string; p256dh: string; auth: string }): Promise<void> {
-    const member = await this.prisma.member.findUnique({
-      where: { tenantId_lineUserId: { tenantId, lineUserId: dto.lineUserId } },
-    });
-    if (!member) return;
-    await this.pushService.subscribe(tenantId, dto.endpoint, dto.p256dh, dto.auth, member.id);
-  }
-
   async sendToAdmin(tenantId: string, lineUserId: string, content: string) {
     let member = await this.prisma.member.findUnique({
       where: { tenantId_lineUserId: { tenantId, lineUserId } },
@@ -745,8 +730,6 @@ export class LiffService {
     const message = await this.prisma.adminMemberMessage.create({
       data: { tenantId, memberId: member.id, content, fromAdmin: false },
     });
-    const preview = content.length > 50 ? content.slice(0, 50) + '…' : content;
-    this.pushService.sendToTenant(tenantId, '新しいメッセージ', preview).catch(() => null);
     return message;
   }
 
@@ -763,11 +746,8 @@ export class LiffService {
   }
 
   async sendSupportMessage(lineUserId: string, tenantId: string, content: string) {
-    const message = await this.prisma.supportMessage.create({
+    return this.prisma.supportMessage.create({
       data: { lineUserId, tenantId, content, fromUser: true },
     });
-    const preview = content.length > 50 ? content.slice(0, 50) + '…' : content;
-    this.pushService.sendToTenant(tenantId, '新しいメッセージ', preview).catch(() => null);
-    return message;
   }
 }

@@ -1,10 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { PushService } from '../push/push.service';
 
 @Injectable()
 export class MembersService {
-  constructor(private prisma: PrismaService, private pushService: PushService) {}
+  constructor(private prisma: PrismaService) {}
 
   async findAll(tenantId: string, query: { name?: string; grade?: string; gender?: string }) {
     const members = await this.prisma.member.findMany({
@@ -131,8 +130,6 @@ export class MembersService {
     const message = await this.prisma.adminMemberMessage.create({
       data: { tenantId, memberId, content, fromAdmin: true },
     });
-    const preview = content.length > 50 ? content.slice(0, 50) + '…' : content;
-    this.pushService.sendToMember(memberId, '主催者からメッセージ', preview, `/liff/${tenantId}/admin-talk`).catch(() => null);
     return message;
   }
 
