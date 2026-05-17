@@ -137,6 +137,7 @@ export default function SuperadminPage() {
                         )}
                       </div>
                       {t.description && <p className="text-xs sm:text-sm text-gray-500 truncate">{t.description}</p>}
+                      {t.organizerEmail && <p className="text-xs text-gray-400 truncate mt-0.5">{t.organizerEmail}</p>}
                       <p className="text-xs text-gray-400 mt-1">
                         参加者 {t.memberCount}人 · {new Date(t.createdAt).toLocaleDateString('ja-JP')}登録
                         {isBanned && ` · BAN: ${new Date(t.bannedAt!).toLocaleDateString('ja-JP')}`}

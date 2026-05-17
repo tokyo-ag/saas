@@ -499,6 +499,7 @@ export interface Tenant {
 
 export interface TenantWithStats extends Tenant {
   memberCount: number;
+  organizerEmail?: string | null;
 }
 
 export interface TenantInput {

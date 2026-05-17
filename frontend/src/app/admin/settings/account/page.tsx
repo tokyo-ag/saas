@@ -85,13 +85,21 @@ export default function AccountSettingsPage() {
         <section className="rounded-xl border border-gray-200 bg-white p-4 md:p-5">
           <h2 className="mb-1 text-sm font-semibold text-gray-900">メールアドレス・パスワード</h2>
           {hasPassword ? (
-            <p className="text-sm text-gray-500">
-              メールアドレスとパスワードは設定済みです。パスワードを変更する場合は
-              <Link href="/forgot-password" className="ml-1 font-medium text-[#06C755] hover:underline">
-                パスワードリセット
-              </Link>
-              をご利用ください。
-            </p>
+            <div className="space-y-2">
+              {email && (
+                <p className="text-sm text-gray-700">
+                  <span className="text-xs text-gray-400 mr-1">メールアドレス:</span>
+                  {email}
+                </p>
+              )}
+              <p className="text-sm text-gray-500">
+                パスワードは設定済みです。変更する場合は
+                <Link href="/forgot-password" className="ml-1 font-medium text-[#06C755] hover:underline">
+                  パスワードリセット
+                </Link>
+                をご利用ください。
+              </p>
+            </div>
           ) : (
             <>
               <p className="mb-4 text-xs leading-relaxed text-gray-500">

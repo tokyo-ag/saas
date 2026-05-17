@@ -29,9 +29,16 @@ export class SuperadminService {
   async listTenants() {
     const tenants = await this.prisma.tenant.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { members: true } } },
+      include: {
+        _count: { select: { members: true } },
+        organizerAccounts: { select: { email: true }, take: 1 },
+      },
     });
-    return tenants.map(({ _count, ...t }) => ({ ...t, memberCount: _count.members }));
+    return tenants.map(({ _count, organizerAccounts, ...t }) => ({
+      ...t,
+      memberCount: _count.members,
+      organizerEmail: organizerAccounts[0]?.email ?? null,
+    }));
   }
 
   async deactivateTenant(id: string) {
