@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
@@ -8,6 +8,8 @@ import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
@@ -126,7 +128,9 @@ export class AuthService {
     });
     const account = tenant.organizerAccounts[0];
 
-    await this.email.sendVerificationEmail(email, verificationToken).catch(() => null);
+    await this.email.sendVerificationEmail(email, verificationToken).catch((err) => {
+      this.logger.error(`Failed to send verification email to ${email}: ${err?.message ?? err}`);
+    });
 
     return { message: '確認メールを送信しました。メールのリンクをクリックしてアカウントを有効化してください。' };
   }
