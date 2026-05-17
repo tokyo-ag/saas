@@ -97,6 +97,12 @@ export class AuthController {
     return this.authService.resendVerificationEmail(req.user.tenantId, req.user.accountId);
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 3 } })
+  @Post('resend-verification-by-email')
+  resendVerificationByEmail(@Body() dto: ForgotPasswordDto) {
+    return this.authService.resendVerificationEmailByEmail(dto.email);
+  }
+
   @Get('line')
   lineStart(@Res() res: Response) {
     const url = this.authService.getLineAuthUrl();

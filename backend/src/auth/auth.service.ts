@@ -144,12 +144,13 @@ export class AuthService {
     if (!account?.passwordHash) throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
     const valid = await bcrypt.compare(password, account.passwordHash);
     if (!valid) throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
+    if (!account.emailVerifiedAt) throw new UnauthorizedException('EMAIL_NOT_VERIFIED');
     const superadminEmail = this.config.get<string>('SUPERADMIN_EMAIL');
     const isSuperadmin = !!superadminEmail && account.email === superadminEmail;
     return {
       token: this.issueToken(account.tenantId, account.id, isSuperadmin),
       tenantId: account.tenantId,
-      emailVerified: !!account.emailVerifiedAt,
+      emailVerified: true,
     };
   }
 
@@ -261,6 +262,24 @@ export class AuthService {
     });
     await this.email.sendVerificationEmail(account.email, token);
     return { message: '確認メールを再送しました' };
+  }
+
+  async resendVerificationEmailByEmail(email: string): Promise<{ message: string }> {
+    const trimmedEmail = email.trim().toLowerCase();
+    const accounts = await this.prisma.organizerAccount.findMany({ where: { email: { not: null } } });
+    const account = accounts.find(a => a.email?.toLowerCase() === trimmedEmail) ?? null;
+    const msg = { message: '確認メールを送信しました（登録済みの場合）' };
+    if (!account?.email || account.emailVerifiedAt) return msg;
+
+    const token = this.generateToken();
+    await this.prisma.organizerAccount.update({
+      where: { id: account.id },
+      data: { emailVerificationToken: token },
+    });
+    await this.email.sendVerificationEmail(account.email, token).catch((err) => {
+      this.logger.error(`Failed to resend verification email to ${account.email}: ${err?.message ?? err}`);
+    });
+    return msg;
   }
 
   async getMe(tenantId: string, accountId: string) {

@@ -13,10 +13,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setEmailNotVerified(false);
     setSubmitting(true);
     try {
       const res = await fetch(`${BASE}/api/auth/login`, {
@@ -25,13 +29,33 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message ?? 'ログインに失敗しました');
+      if (!res.ok) {
+        if (data.message === 'EMAIL_NOT_VERIFIED') {
+          setEmailNotVerified(true);
+          return;
+        }
+        throw new Error(data.message ?? 'ログインに失敗しました');
+      }
       setToken(data.token);
       router.replace('/admin');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'ログインに失敗しました');
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleResend() {
+    setResending(true);
+    try {
+      await fetch(`${BASE}/api/auth/resend-verification-by-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      setResent(true);
+    } finally {
+      setResending(false);
     }
   }
 
@@ -52,6 +76,25 @@ export default function LoginPage() {
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl">{error}</div>
           )}
+
+          {emailNotVerified && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3 rounded-xl space-y-2">
+              <p className="font-semibold">メールアドレスが未確認です</p>
+              <p className="text-xs">登録時に送信した確認メールのリンクをクリックしてください。</p>
+              {!resent ? (
+                <button
+                  onClick={handleResend}
+                  disabled={resending}
+                  className="text-xs text-amber-700 underline disabled:opacity-50"
+                >
+                  {resending ? '送信中...' : '確認メールを再送する'}
+                </button>
+              ) : (
+                <p className="text-xs text-amber-700">確認メールを再送しました</p>
+              )}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">メールアドレス</label>
@@ -71,7 +114,6 @@ export default function LoginPage() {
               {submitting ? 'ログイン中...' : 'ログイン'}
             </button>
           </form>
-
         </div>
 
         <p className="text-center text-sm text-gray-500 mt-5">
