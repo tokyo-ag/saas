@@ -1,11 +1,14 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { IsString, IsOptional, IsEnum } from 'class-validator';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import { IsString, IsOptional, IsEnum, IsEmail, MinLength } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
+import * as bcrypt from 'bcrypt';
 
 export class CreateTenantDto {
   @IsString() name: string;
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsEnum(['free', 'standard', 'pro']) plan?: 'free' | 'standard' | 'pro';
+  @IsEmail() email: string;
+  @IsString() @MinLength(8) password: string;
 }
 
 export class UpdateTenantDto {
@@ -60,9 +63,20 @@ export class SuperadminService {
   }
 
   async createTenant(dto: CreateTenantDto) {
+    const existing = await this.prisma.organizerAccount.findUnique({ where: { email: dto.email } });
+    if (existing) throw new ConflictException('このメールアドレスは既に使用されています');
+    const passwordHash = await bcrypt.hash(dto.password, 10);
     const id = `tenant-${Date.now()}`;
     return this.prisma.tenant.create({
-      data: { id, name: dto.name, description: dto.description, plan: dto.plan ?? 'free' },
+      data: {
+        id,
+        name: dto.name,
+        description: dto.description,
+        plan: dto.plan ?? 'free',
+        organizerAccounts: {
+          create: { email: dto.email, passwordHash, emailVerifiedAt: new Date() },
+        },
+      },
     });
   }
 

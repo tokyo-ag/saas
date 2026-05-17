@@ -72,18 +72,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100" /></div>
-            <div className="relative flex justify-center"><span className="bg-white px-3 text-xs text-gray-400">または</span></div>
-          </div>
-
-          <a
-            href={`${BASE}/api/auth/line`}
-            className="flex items-center justify-center gap-2.5 w-full border border-[#06C755] text-[#06C755] py-3 rounded-xl font-semibold text-sm hover:bg-green-50 transition-colors"
-          >
-            <span className="text-base leading-none">💬</span>
-            LINEでログイン
-          </a>
         </div>
 
         <p className="text-center text-sm text-gray-500 mt-5">

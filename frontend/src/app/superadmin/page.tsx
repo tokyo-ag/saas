@@ -239,6 +239,8 @@ function TenantModal({
   const [name, setName] = useState(initial?.name ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [plan, setPlan] = useState<'free' | 'standard' | 'pro'>((initial?.plan ?? 'free') as 'free' | 'standard' | 'pro');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -250,7 +252,7 @@ function TenantModal({
       if (initial) {
         await api.superadmin.update(initial.id, { name, description, plan });
       } else {
-        await api.superadmin.create({ name, description, plan });
+        await api.superadmin.create({ name, description, plan, email, password });
       }
       onSaved();
     } catch (err: any) {
@@ -285,6 +287,26 @@ function TenantModal({
               placeholder="団体の説明（LIFF画面に表示）"
             />
           </div>
+          {!initial && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">メールアドレス <span className="text-red-500">*</span></label>
+                <input
+                  required type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                  placeholder="admin@example.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">パスワード <span className="text-red-500">*</span></label>
+                <input
+                  required type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                  placeholder="8文字以上"
+                />
+              </div>
+            </>
+          )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">プラン</label>
             <div className="flex gap-3">
