@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { IsString, IsOptional, IsEnum, IsEmail, MinLength } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 export class CreateTenantDto {
   @IsString() name: string;
