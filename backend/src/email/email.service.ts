@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class EmailService {
@@ -8,26 +9,24 @@ export class EmailService {
   constructor(private config: ConfigService) {}
 
   private async send(to: string, subject: string, html: string): Promise<void> {
-    const apiKey = this.config.get<string>('RESEND_API_KEY');
-    const from = this.config.get<string>('MAIL_FROM') ?? 'noreply@example.com';
+    const gmailUser = this.config.get<string>('GMAIL_USER');
+    const gmailPass = this.config.get<string>('GMAIL_PASS');
+    const from = this.config.get<string>('MAIL_FROM') ?? gmailUser ?? 'noreply@example.com';
 
-    if (!apiKey) {
+    if (!gmailUser || !gmailPass) {
       this.logger.warn(`[DEV] Email to ${to} | ${subject}`);
       return;
     }
 
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ from, to, subject, html }),
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: gmailUser, pass: gmailPass },
     });
 
-    if (!res.ok) {
-      const err = await res.text();
-      this.logger.error(`Email send failed: ${err}`);
+    try {
+      await transporter.sendMail({ from, to, subject, html });
+    } catch (err: any) {
+      this.logger.error(`Email send failed: ${err?.message ?? err}`);
       throw new Error(`メール送信に失敗しました`);
     }
   }
