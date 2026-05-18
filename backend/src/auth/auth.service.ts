@@ -110,26 +110,27 @@ export class AuthService {
   }
 
   async register(email: string, password: string, orgName: string) {
-    const existing = await this.prisma.organizerAccount.findUnique({ where: { email } });
-    if (existing) throw new ConflictException('このメールアドレスは既に登録されています');
+    const normalizedEmail = email.trim().toLowerCase();
+    const accounts = await this.prisma.organizerAccount.findMany({ where: { email: { not: null } } });
+    if (accounts.some(a => a.email?.toLowerCase() === normalizedEmail)) {
+      throw new ConflictException('このメールアドレスは既に登録されています');
+    }
 
     const passwordHash = await bcrypt.hash(password, 10);
     const verificationToken = this.generateToken();
 
-    const tenant = await this.prisma.tenant.create({
+    await this.prisma.tenant.create({
       data: {
         id: `tenant-${Date.now()}`,
         name: orgName,
         organizerAccounts: {
-          create: { email, passwordHash, emailVerificationToken: verificationToken },
+          create: { email: normalizedEmail, passwordHash, emailVerificationToken: verificationToken },
         },
       },
-      include: { organizerAccounts: true },
     });
-    const account = tenant.organizerAccounts[0];
 
-    await this.email.sendVerificationEmail(email, verificationToken).catch((err) => {
-      this.logger.error(`Failed to send verification email to ${email}: ${err?.message ?? err}`);
+    await this.email.sendVerificationEmail(normalizedEmail, verificationToken).catch((err) => {
+      this.logger.error(`Failed to send verification email to ${normalizedEmail}: ${err?.message ?? err}`);
     });
 
     return { message: '確認メールを送信しました。メールのリンクをクリックしてアカウントを有効化してください。' };
