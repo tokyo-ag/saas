@@ -117,19 +117,16 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const verificationToken = this.generateToken();
+    const token = this.generateToken();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    await this.prisma.tenant.create({
-      data: {
-        id: `tenant-${Date.now()}`,
-        name: orgName,
-        organizerAccounts: {
-          create: { email: normalizedEmail, passwordHash, emailVerificationToken: verificationToken },
-        },
-      },
+    await this.prisma.pendingRegistration.upsert({
+      where: { token },
+      create: { token, email: normalizedEmail, passwordHash, orgName, expiresAt },
+      update: { passwordHash, orgName, expiresAt },
     });
 
-    await this.email.sendVerificationEmail(normalizedEmail, verificationToken).catch((err) => {
+    await this.email.sendVerificationEmail(normalizedEmail, token).catch((err) => {
       this.logger.error(`Failed to send verification email to ${normalizedEmail}: ${err?.message ?? err}`);
     });
 
@@ -173,6 +170,32 @@ export class AuthService {
   }
 
   async verifyEmail(token: string): Promise<{ message: string }> {
+    // 仮登録からの確認（新規登録フロー）
+    const pending = await this.prisma.pendingRegistration.findUnique({ where: { token } });
+    if (pending) {
+      if (pending.expiresAt < new Date()) {
+        await this.prisma.pendingRegistration.delete({ where: { token } });
+        throw new BadRequestException('リンクの有効期限が切れています。もう一度登録してください。');
+      }
+      const accounts = await this.prisma.organizerAccount.findMany({ where: { email: { not: null } } });
+      if (accounts.some(a => a.email?.toLowerCase() === pending.email)) {
+        await this.prisma.pendingRegistration.delete({ where: { token } });
+        throw new ConflictException('このメールアドレスは既に登録されています');
+      }
+      await this.prisma.tenant.create({
+        data: {
+          id: `tenant-${Date.now()}`,
+          name: pending.orgName,
+          organizerAccounts: {
+            create: { email: pending.email, passwordHash: pending.passwordHash, emailVerifiedAt: new Date() },
+          },
+        },
+      });
+      await this.prisma.pendingRegistration.delete({ where: { token } });
+      return { message: 'メールアドレスを確認しました。ログインしてください。' };
+    }
+
+    // setEmailPassword フロー（LINE登録ユーザーのメール追加）
     const account = await this.prisma.organizerAccount.findUnique({
       where: { emailVerificationToken: token },
     });
@@ -267,9 +290,28 @@ export class AuthService {
 
   async resendVerificationEmailByEmail(email: string): Promise<{ message: string }> {
     const trimmedEmail = email.trim().toLowerCase();
+    const msg = { message: '確認メールを送信しました（登録済みの場合）' };
+
+    // 仮登録フロー（新規登録ユーザー）
+    const pending = await this.prisma.pendingRegistration.findFirst({
+      where: { email: trimmedEmail },
+    });
+    if (pending) {
+      const token = this.generateToken();
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await this.prisma.pendingRegistration.update({
+        where: { token: pending.token },
+        data: { token, expiresAt },
+      });
+      await this.email.sendVerificationEmail(trimmedEmail, token).catch((err) => {
+        this.logger.error(`Failed to resend verification email to ${trimmedEmail}: ${err?.message ?? err}`);
+      });
+      return msg;
+    }
+
+    // setEmailPassword フロー（LINE登録ユーザーのメール追加）
     const accounts = await this.prisma.organizerAccount.findMany({ where: { email: { not: null } } });
     const account = accounts.find(a => a.email?.toLowerCase() === trimmedEmail) ?? null;
-    const msg = { message: '確認メールを送信しました（登録済みの場合）' };
     if (!account?.email || account.emailVerifiedAt) return msg;
 
     const token = this.generateToken();

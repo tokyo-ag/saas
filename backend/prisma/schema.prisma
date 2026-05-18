@@ -229,6 +229,17 @@ model PushSubscription {
   @@map("push_subscriptions")
 }
 
+model PendingRegistration {
+  token        String   @id @db.VarChar(200)
+  email        String   @db.VarChar(200)
+  passwordHash String   @db.Text
+  orgName      String   @db.VarChar(100)
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("pending_registrations")
+}
+
 model BannedLineUser {
   id         String   @id @default(uuid())
   lineUserId String   @unique @map("line_user_id") @db.VarChar(100)
