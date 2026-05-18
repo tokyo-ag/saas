@@ -232,8 +232,8 @@ model PushSubscription {
 model PendingRegistration {
   token        String   @id @db.VarChar(200)
   email        String   @db.VarChar(200)
-  passwordHash String   @db.Text
-  orgName      String   @db.VarChar(100)
+  passwordHash String   @map("password_hash") @db.Text
+  orgName      String   @map("org_name") @db.VarChar(100)
   expiresAt    DateTime @map("expires_at")
   createdAt    DateTime @default(now()) @map("created_at")
 
