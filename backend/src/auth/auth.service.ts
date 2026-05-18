@@ -111,6 +111,7 @@ export class AuthService {
 
   async register(email: string, password: string, orgName: string) {
     const normalizedEmail = email.trim().toLowerCase();
+
     const accounts = await this.prisma.organizerAccount.findMany({ where: { email: { not: null } } });
     if (accounts.some(a => a.email?.toLowerCase() === normalizedEmail)) {
       throw new ConflictException('このメールアドレスは既に登録されています');
@@ -120,10 +121,9 @@ export class AuthService {
     const token = this.generateToken();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    await this.prisma.pendingRegistration.upsert({
-      where: { token },
-      create: { token, email: normalizedEmail, passwordHash, orgName, expiresAt },
-      update: { passwordHash, orgName, expiresAt },
+    await this.prisma.pendingRegistration.deleteMany({ where: { email: normalizedEmail } });
+    await this.prisma.pendingRegistration.create({
+      data: { token, email: normalizedEmail, passwordHash, orgName, expiresAt },
     });
 
     await this.email.sendVerificationEmail(normalizedEmail, token).catch((err) => {
@@ -299,9 +299,9 @@ export class AuthService {
     if (pending) {
       const token = this.generateToken();
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-      await this.prisma.pendingRegistration.update({
-        where: { token: pending.token },
-        data: { token, expiresAt },
+      await this.prisma.pendingRegistration.delete({ where: { token: pending.token } });
+      await this.prisma.pendingRegistration.create({
+        data: { token, email: trimmedEmail, passwordHash: pending.passwordHash, orgName: pending.orgName, expiresAt },
       });
       await this.email.sendVerificationEmail(trimmedEmail, token).catch((err) => {
         this.logger.error(`Failed to resend verification email to ${trimmedEmail}: ${err?.message ?? err}`);
