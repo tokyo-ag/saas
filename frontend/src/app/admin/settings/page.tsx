@@ -38,7 +38,6 @@ export default function SettingsPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [form, setForm] = useState<Pick<TenantInput, 'name' | 'description'>>({ name: '', description: '' });
   const [saving, setSaving] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
@@ -74,20 +73,6 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleSyncLine() {
-    setSyncing(true);
-    setError('');
-    try {
-      const updated = await api.tenant.syncLineProfile();
-      setTenant(updated);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setSyncing(false);
-    }
-  }
 
   if (!tenant) {
     return <div className="px-4 py-12 text-center text-sm text-gray-400">読み込み中...</div>;
@@ -102,37 +87,6 @@ export default function SettingsPage() {
         {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
         <SaveToast show={saved} />
 
-        <section className="mb-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-center gap-4">
-              {tenant.linePictureUrl ? (
-                <img src={tenant.linePictureUrl} className="h-14 w-14 shrink-0 rounded-full border border-gray-200 object-cover" alt="" />
-              ) : (
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-bold text-gray-400">
-                  LINE
-                </div>
-              )}
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-gray-900">{tenant.lineDisplayName ?? '未取得'}</p>
-                <p className="mt-0.5 text-xs leading-relaxed text-gray-500">
-                  LINE公式アカウントの団体名とアイコンをイベント表示に利用します。
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleSyncLine}
-              disabled={syncing || !tenant.lineConfigured}
-              className="w-full shrink-0 rounded-lg border border-[#06C755] px-4 py-2 text-sm font-medium text-[#06C755] transition-colors hover:bg-[#06C755]/5 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
-            >
-              {syncing ? '同期中...' : 'LINEから同期'}
-            </button>
-          </div>
-          {!tenant.lineConfigured && (
-            <p className="mt-3 text-xs text-gray-500">
-              先に <Link href="/admin/settings/line" className="font-medium text-[#06C755] underline">LINE連携</Link> を設定してください。
-            </p>
-          )}
-        </section>
 
         <section className="mb-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
           <p className="mb-2 text-sm font-medium text-gray-700">参加者招待リンク</p>
