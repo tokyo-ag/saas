@@ -360,20 +360,12 @@ export class LiffService {
       }
     }
 
-    // 通知（ベル）＋TALKに予約詳細を送信
+    // TALKに予約詳細を送信
     if (event.notifyOnReserveApp && status !== 'waiting_payment') {
       const dateStr = new Date(event.heldAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
       const descText = event.description
         ? event.description.slice(0, 300) + (event.description.length > 300 ? '…' : '')
         : '';
-
-      // 通知（3行：イベント名・日時・TALK誘導）
-      const notifBody = status === 'reserved'
-        ? `「${event.title}」に予約しました\n日時：${dateStr}\n詳細はTALKをご確認ください`
-        : `「${event.title}」キャンセル待ち${waitlistOrder}番目\n日時：${dateStr}\n詳細はTALKをご確認ください`;
-      await this.prisma.notification.create({
-        data: { tenantId, memberId: member.id, title: '予約完了', body: notifBody },
-      });
 
       // TALK（詳細・適切な改行）
       const talkContent = status === 'reserved'
