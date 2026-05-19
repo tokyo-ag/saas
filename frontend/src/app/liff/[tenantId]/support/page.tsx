@@ -69,7 +69,7 @@ export default function SupportPage() {
   );
 
   return (
-    <div className="flex flex-col h-screen bg-[#F7F8FA]">
+    <div className="flex flex-col h-screen bg-[var(--cp-5)]">
       <div className="bg-white border-b border-gray-100 px-4 flex items-center gap-3 shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 16px)', paddingBottom: '12px' }}>
         <button onClick={() => router.back()} className="text-gray-500 text-xl leading-none p-1">‹</button>
         <div className="w-8 h-8 rounded-full bg-[var(--cp-10)] flex items-center justify-center shrink-0">

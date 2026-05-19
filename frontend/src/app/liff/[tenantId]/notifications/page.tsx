@@ -39,7 +39,7 @@ export default function NotificationsPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-[#F5F5F5] pb-24">
+      <div className="min-h-screen bg-[var(--cp-5)] pb-24">
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
           <div className="flex items-center justify-between px-4 pt-12 pb-3 sm:pt-4">
             <h1 className="text-[18px] font-bold text-gray-900">通知</h1>

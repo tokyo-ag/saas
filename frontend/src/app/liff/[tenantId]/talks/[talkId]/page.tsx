@@ -64,7 +64,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#F7F8FA]">
+    <div className="flex flex-col h-screen bg-[var(--cp-5)]">
       <div className="bg-[var(--cp)] text-white px-4 py-4 flex items-center gap-3 shrink-0">
         <button onClick={() => router.push(`/liff/${tenantId}/talks`)} className="text-white text-xl leading-none p-1">‹</button>
         <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm shrink-0">👤</div>

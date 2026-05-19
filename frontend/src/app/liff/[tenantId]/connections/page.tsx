@@ -45,7 +45,7 @@ export default function ConnectionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA] pb-20">
+    <div className="min-h-screen bg-[var(--cp-5)] pb-20">
       <div className="bg-[var(--cp)] text-white px-4 py-5">
         <h1 className="text-lg font-bold">繋がり</h1>
         <p className="text-white/70 text-xs mt-0.5">交流会で出会った人とチャット</p>

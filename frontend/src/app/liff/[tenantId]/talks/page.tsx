@@ -52,7 +52,7 @@ export default function TalksPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-[#F5F5F5] pb-24">
+      <div className="min-h-screen bg-[var(--cp-5)] pb-24">
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
           <div className="flex items-center justify-between px-4 pt-12 pb-3">
             <h1 className="text-[20px] font-bold text-gray-900 tracking-tight">Talk</h1>
