@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, Query } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Query, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('public')
@@ -82,6 +82,66 @@ export class PublicController {
     }
     await this.prisma.eventLike.create({ data: { eventId: id, anonymousId: body.anonymousId } });
     return { liked: true };
+  }
+
+  @Get('sitemap-events')
+  async getSitemapEvents() {
+    const events = await this.prisma.event.findMany({
+      where: {
+        status: 'open',
+        heldAt: { gte: new Date() },
+        tenant: { deletedAt: null, code: { not: null } },
+      },
+      select: {
+        id: true,
+        updatedAt: true,
+        tenant: { select: { code: true } },
+      },
+      orderBy: { heldAt: 'asc' },
+    });
+    return events
+      .filter((e) => e.tenant.code)
+      .map((e) => ({ id: e.id, tenantCode: e.tenant.code!, updatedAt: e.updatedAt }));
+  }
+
+  @Get('events/:eventId')
+  async getEventDetail(@Param('eventId') eventId: string) {
+    const event = await this.prisma.event.findFirst({
+      where: {
+        id: eventId,
+        status: 'open',
+        tenant: { deletedAt: null },
+      },
+      include: {
+        tenant: { select: { code: true, name: true, lineDisplayName: true, linePictureUrl: true } },
+        reservations: {
+          where: { status: { in: ['reserved', 'attended', 'waiting_payment'] } },
+          select: { id: true },
+        },
+      },
+    });
+    if (!event) throw new NotFoundException('Event not found');
+    return {
+      id: event.id,
+      title: event.title,
+      description: event.description,
+      heldAt: event.heldAt,
+      endAt: event.endAt,
+      location: event.location,
+      locationUrl: event.locationUrl,
+      price: event.price,
+      priceMale: event.priceMale,
+      priceFemale: event.priceFemale,
+      capacity: event.capacity,
+      reservedCount: event.reservations.length,
+      imageUrl: event.imageUrl,
+      iconUrl: event.iconUrl,
+      category: event.category,
+      tags: event.tags,
+      tenantCode: event.tenant.code,
+      tenantName: event.tenant.lineDisplayName ?? event.tenant.name,
+      tenantIconUrl: event.tenant.linePictureUrl,
+    };
   }
 
   @Get('tenants')
