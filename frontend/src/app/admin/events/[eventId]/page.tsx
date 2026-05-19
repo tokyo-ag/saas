@@ -60,7 +60,7 @@ export default function EventDetailPage() {
   async function handleDuplicate() {
     if (!event) return;
     try {
-      const created = await (api.events.create as any)({
+      const created = await api.events.create({
         title: event.title,
         description: event.description,
         heldAt: event.heldAt,
@@ -77,14 +77,14 @@ export default function EventDetailPage() {
         paymentRequired: event.paymentRequired,
         paymentTiming: event.paymentTiming,
         notifyOnReserve: event.notifyOnReserve,
-        notifyOnReserveApp: event.notifyOnReserveApp ?? false,
-        remindEnabled: event.remindEnabled,
-        remindApp: (event as any).remindApp ?? false,
-        remindAt: event.remindAt ?? null,
+        notifyOnReserveApp: true,
+        remindEnabled: false,
+        remindApp: false,
+        remindAt: null,
         imageUrl: event.imageUrl,
         iconUrl: event.iconUrl,
-        category: (event as any).category ?? null,
-        tags: (event as any).tags ?? [],
+        category: event.category ?? null,
+        tags: event.tags ?? [],
       });
       router.push(`/admin/events/${created.id}/edit`);
     } catch (err: any) {

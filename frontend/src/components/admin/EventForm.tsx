@@ -131,10 +131,10 @@ export default function EventForm({ initial }: { initial?: Event }) {
   }, []);
 
   useEffect(() => {
-    if (!initial && tenant?.linePictureUrl && !form.iconUrl) {
-      setForm((prev) => ({ ...prev, iconUrl: tenant.linePictureUrl! }));
+    if (!initial && tenant?.linePictureUrl) {
+      setForm((prev) => (prev.iconUrl ? prev : { ...prev, iconUrl: tenant.linePictureUrl! }));
     }
-  }, [tenant, initial, form.iconUrl]);
+  }, [tenant, initial]);
 
   const set = (key: keyof EventFormData, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 

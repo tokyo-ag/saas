@@ -138,7 +138,7 @@ export default function EventsPage() {
   const [savedViewMode, setSavedViewMode] = useState<ViewMode>('card');
   const [saving, setSaving] = useState(false);
   const [tenantId, setTenantId] = useState<string>('');
-  const [tenantCode, setTenantCode] = useState<string>('');
+
   const [copied, setCopied] = useState<string | null>(null);
 
   function copyLink(text: string, key: string) {
@@ -160,7 +160,6 @@ export default function EventsPage() {
       setViewMode(v);
       setSavedViewMode(v);
       setTenantId(t.id);
-      setTenantCode(t.code ?? '');
     }).catch(() => {});
   }, []);
 
@@ -327,14 +326,6 @@ export default function EventsPage() {
                   <Link href={`/admin/events/${event.id}/edit`} className="rounded-lg border border-gray-200 px-3 py-2 text-center text-xs font-bold text-gray-600">編集</Link>
                   <button onClick={() => handleDuplicate(event.id)} className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold text-gray-600">複製</button>
                   <button onClick={() => handleDelete(event.id)} className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-500">削除</button>
-                  {tenantCode && (
-                    <button
-                      onClick={() => copyLink(`${typeof window !== 'undefined' ? window.location.origin : ''}/e/${tenantCode}/${event.id}`, event.id)}
-                      className="col-span-2 md:col-span-1 rounded-lg border border-[#06C755]/40 bg-[#06C755]/5 px-3 py-2 text-xs font-bold text-[#06C755] hover:bg-[#06C755]/10"
-                    >
-                      {copied === event.id ? '招待リンクをコピー済み ✓' : '招待リンクをコピー'}
-                    </button>
-                  )}
                 </div>
               </div>
             </article>
