@@ -477,51 +477,73 @@ export default function EventForm({ initial }: { initial?: Event }) {
       </Section>
 
       <Section title="通知">
-        <Check label="予約完了時にTalkに詳細を通知" checked={form.notifyOnReserveApp} onChange={(checked) => set('notifyOnReserveApp', checked)} />
-        {isLineConfigured && (
-          <>
+        {/* 予約完了時の通知 */}
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-gray-700">予約完了時</p>
+          <div className="flex flex-wrap gap-3">
+            <Check label="Talk" checked={form.notifyOnReserveApp} onChange={(checked) => set('notifyOnReserveApp', checked)} />
             <Check
-              label="予約完了時にLINEで送る"
+              label="LINE"
               checked={form.notifyOnReserve}
-              disabled={!isPro}
+              disabled={!isLineConfigured || !isPro}
               onChange={(checked) => set('notifyOnReserve', checked)}
             />
-            {!isPro && <p className="text-xs text-gray-400">LINEメッセージはPRO契約のみ設定可能です。</p>}
-          </>
-        )}
-        <div className="pt-2">
-          <p className={`mb-2 text-sm font-medium ${isFreePlan ? 'text-gray-400' : 'text-gray-700'}`}>
-            リマインド通知
+            <Check
+              label="両方"
+              checked={form.notifyOnReserveApp && form.notifyOnReserve}
+              disabled={!isLineConfigured || !isPro}
+              onChange={(checked) => { set('notifyOnReserveApp', checked); set('notifyOnReserve', checked); }}
+            />
+          </div>
+          {!isLineConfigured && (
+            <p className="text-xs text-gray-400"><Link href="/admin/settings/line" className="text-[#06C755] underline">LINE連携</Link>を設定するとLINE通知が使えます。</p>
+          )}
+        </div>
+
+        {/* リマインド通知 */}
+        <div className="space-y-2 pt-3">
+          <p className={`text-sm font-medium ${isFreePlan ? 'text-gray-400' : 'text-gray-700'}`}>
+            事前リマインド
             {isFreePlan && <span className="ml-2 text-xs text-[#06C755]">スタンダード以上</span>}
           </p>
-          {isLineConfigured && (
-            <Check label="LINEで送る" checked={form.remindEnabled} disabled={!isPro} onChange={(checked) => set('remindEnabled', checked)} />
+          <div className="flex flex-wrap gap-3">
+            <Check
+              label="Talk"
+              checked={form.remindApp}
+              disabled={isFreePlan}
+              onChange={(checked) => set('remindApp', checked)}
+            />
+            <Check
+              label="LINE"
+              checked={form.remindEnabled}
+              disabled={isFreePlan || !isLineConfigured || !isPro}
+              onChange={(checked) => set('remindEnabled', checked)}
+            />
+            <Check
+              label="両方"
+              checked={form.remindApp && form.remindEnabled}
+              disabled={isFreePlan || !isLineConfigured || !isPro}
+              onChange={(checked) => { set('remindApp', checked); set('remindEnabled', checked); }}
+            />
+          </div>
+          {(form.remindEnabled || form.remindApp) && (
+            <div className="space-y-2 border-l-2 border-[#06C755]/30 pl-4 pt-1">
+              <RadioGroup
+                value={form.remindPreset}
+                onChange={(value) => set('remindPreset', value)}
+                options={[
+                  ['prev18', '前日 18:00'],
+                  ['day9', '当日 09:00'],
+                  ['custom', 'カスタム日時'],
+                ]}
+              />
+              {form.remindPreset === 'custom' && (
+                <input type="datetime-local" step={600} value={form.remindAt} onChange={(e) => set('remindAt', e.target.value)} className={`${inputClass} max-w-xs`} />
+              )}
+            </div>
           )}
-          <Check label="アプリ内メッセージで送る" checked={form.remindApp} disabled={isFreePlan} onChange={(checked) => set('remindApp', checked)} />
         </div>
-        {!isLineConfigured && (
-          <p className="text-xs text-gray-400">
-            <Link href="/admin/settings/line" className="text-[#06C755] underline">LINE連携</Link> を設定するとLINEでの通知が使えます。
-          </p>
-        )}
       </Section>
-
-      {(form.remindEnabled || form.remindApp) && (
-        <div className="space-y-2 border-l-2 border-[#06C755]/30 pl-4">
-          <RadioGroup
-            value={form.remindPreset}
-            onChange={(value) => set('remindPreset', value)}
-            options={[
-              ['prev18', '前日 18:00'],
-              ['day9', '当日 09:00'],
-              ['custom', 'カスタム日時'],
-            ]}
-          />
-          {form.remindPreset === 'custom' && (
-            <input type="datetime-local" step={600} value={form.remindAt} onChange={(e) => set('remindAt', e.target.value)} className={`${inputClass} max-w-xs`} />
-          )}
-        </div>
-      )}
 
       <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center">
         <button type="submit" disabled={submitting} className="rounded-lg bg-[#06C755] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#05a847] disabled:opacity-50">
