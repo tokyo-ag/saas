@@ -138,6 +138,16 @@ export default function EventForm({ initial }: { initial?: Event }) {
 
   const set = (key: keyof EventFormData, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
+  function handleHeldAtChange(newHeldAt: string) {
+    if (form.endAt && newHeldAt) {
+      const newDate = newHeldAt.slice(0, 10);
+      const endTime = form.endAt.slice(10);
+      setForm((prev) => ({ ...prev, heldAt: newHeldAt, endAt: newDate + endTime }));
+    } else {
+      set('heldAt', newHeldAt);
+    }
+  }
+
   const TITLE_PLACEHOLDERS: Record<string, string> = {
     badminton: '例：バドミントン初心者交流会 20代限定 豊島区開催',
     futsal: '例：フットサル交流会 社会人歓迎 新宿開催',
@@ -381,7 +391,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
       <Section title="日時と場所">
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="開始日時" required>
-            <input required type="datetime-local" step={600} value={form.heldAt} onChange={(e) => set('heldAt', e.target.value)} className={inputClass} />
+            <input required type="datetime-local" step={600} value={form.heldAt} onChange={(e) => handleHeldAtChange(e.target.value)} className={inputClass} />
           </Field>
           <Field label="終了日時">
             <input type="datetime-local" step={600} value={form.endAt} onChange={(e) => set('endAt', e.target.value)} className={inputClass} />
