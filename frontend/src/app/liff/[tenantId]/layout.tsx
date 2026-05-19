@@ -18,9 +18,10 @@ export default async function LiffLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: { tenantId: string };
+  params: Promise<{ tenantId: string }>;
 }) {
-  const theme = await fetchTheme(params.tenantId);
+  const { tenantId } = await params;
+  const theme = await fetchTheme(tenantId);
   const vars = getThemeCssVars(theme);
 
   return (
