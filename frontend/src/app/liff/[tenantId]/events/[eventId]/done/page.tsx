@@ -6,38 +6,6 @@ import { api, formatDate, LiffEvent } from '@/lib/api';
 import { initLiff } from '@/lib/liff';
 import { FriendInviteCard } from '@/components/liff/FriendInviteCard';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.vercel.app';
-
-function ShareEventCard({ tenantCode, eventId, title }: { tenantCode: string; eventId: string; title: string }) {
-  const [copied, setCopied] = useState(false);
-  const url = `${SITE_URL}/e/${tenantCode}/${eventId}`;
-
-  async function handleCopy() {
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  return (
-    <section className="w-full max-w-sm bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-      <p className="text-sm font-bold text-gray-900 mb-1">公開ページをシェア</p>
-      <p className="text-xs text-gray-500 mb-3">LINEに登録していない友達にもURLで共有できます</p>
-      <div className="flex items-center gap-2">
-        <span className="flex-1 truncate rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-xs font-mono text-gray-600">
-          {url}
-        </span>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="shrink-0 rounded-lg bg-[#06C755] px-4 py-2 text-xs font-bold text-white hover:bg-[#05a847] active:bg-[#05a847]"
-        >
-          {copied ? 'コピー済み ✓' : 'コピー'}
-        </button>
-      </div>
-    </section>
-  );
-}
-
 function DonePageInner() {
   const { tenantId, eventId } = useParams<{ tenantId: string; eventId: string }>();
   const searchParams = useSearchParams();
@@ -46,18 +14,10 @@ function DonePageInner() {
   const order = searchParams.get('order');
 
   const [event, setEvent] = useState<LiffEvent | null>(null);
-  const [tenantCode, setTenantCode] = useState<string | null>(null);
 
   useEffect(() => {
     initLiff();
-    api.liff.event(tenantId, eventId).then((ev) => {
-      setEvent(ev);
-    }).catch(console.error);
-    // fetch tenant code from public endpoint
-    fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'https://comiu.up.railway.app'}/api/public/events/${eventId}`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => d?.tenantCode && setTenantCode(d.tenantCode))
-      .catch(() => {});
+    api.liff.event(tenantId, eventId).then(setEvent).catch(console.error);
   }, [tenantId, eventId]);
 
   const isWaitlist = status === 'waitlisted';
@@ -90,9 +50,6 @@ function DonePageInner() {
             heldAt={event.heldAt}
             location={event.location}
           />
-          {tenantCode && (
-            <ShareEventCard tenantCode={tenantCode} eventId={eventId} title={event.title} />
-          )}
         </div>
       )}
 
