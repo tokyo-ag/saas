@@ -80,7 +80,7 @@ export default function AdminMessagesPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">主催者トーク</h1>
+        <h1 className="text-2xl font-bold text-gray-900">メッセージ</h1>
         <p className="text-sm text-gray-500 mt-1">
           参加者からの連絡と、COMIU サポートチャットをまとめて確認できます。
         </p>
@@ -93,7 +93,7 @@ export default function AdminMessagesPage() {
           <div className="p-10 text-center">
             <div className="w-14 h-14 mx-auto rounded-full bg-gray-100 flex items-center justify-center text-gray-400 font-bold mb-3">M</div>
             <p className="text-sm font-semibold text-gray-700">まだメッセージはありません</p>
-            <p className="text-xs text-gray-400 mt-1">LIFFの主催者トークやCOMIUへの相談がここに表示されます。</p>
+            <p className="text-xs text-gray-400 mt-1">LIFFのメッセージやCOMIUへの相談がここに表示されます。</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-100">

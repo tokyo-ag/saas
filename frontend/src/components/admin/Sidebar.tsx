@@ -9,7 +9,7 @@ import { clearToken } from '@/lib/auth';
 const links = [
   { href: '/admin', label: 'ダッシュボード', icon: 'D' },
   { href: '/admin/events', label: 'イベント管理', icon: 'E' },
-  { href: '/admin/messages', label: '主催者トーク', icon: 'M' },
+  { href: '/admin/messages', label: 'メッセージ', icon: 'M' },
   { href: '/admin/members', label: '参加者名簿', icon: 'U' },
   { href: '/admin/settings', label: '設定', icon: 'S' },
 ];
