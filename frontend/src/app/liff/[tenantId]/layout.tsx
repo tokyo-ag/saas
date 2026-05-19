@@ -24,9 +24,11 @@ export default async function LiffLayout({
   const theme = await fetchTheme(tenantId);
   const vars = getThemeCssVars(theme);
 
+  const cssText = Object.entries(vars).map(([k, v]) => `${k}:${v}`).join(';');
   return (
-    <div style={vars as React.CSSProperties}>
+    <>
+      <style>{`:root{${cssText}}`}</style>
       {children}
-    </div>
+    </>
   );
 }
