@@ -45,6 +45,7 @@ export class LiffService {
       linePictureUrl: tenant.linePictureUrl,
       lineChannelId: tenant.lineChannelId,
       liffEventView: tenant.liffEventView,
+      themeColor: tenant.themeColor,
     };
   }
 

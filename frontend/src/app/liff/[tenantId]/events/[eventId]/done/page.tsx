@@ -28,7 +28,7 @@ function DonePageInner() {
 
   return (
     <div className="min-h-screen bg-[#F7F8FA] flex flex-col items-center justify-center px-6 text-center">
-      <div className={`w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-6 ${isWaitlist ? 'bg-yellow-100' : 'bg-[#06C755]/10'}`}>
+      <div className={`w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-6 ${isWaitlist ? 'bg-yellow-100' : 'bg-[var(--cp-10)]'}`}>
         {isWaitlist ? '⏳' : '✓'}
       </div>
       <h1 className="text-xl font-bold text-gray-900 mb-2">
@@ -55,7 +55,7 @@ function DonePageInner() {
 
       <button
         onClick={handleClose}
-        className="w-full max-w-sm bg-[#06C755] text-white py-4 rounded-2xl font-bold text-base active:bg-[#05a847] transition-colors shadow-sm"
+        className="w-full max-w-sm bg-[var(--cp)] text-white py-4 rounded-2xl font-bold text-base active:bg-[var(--cp-h)] transition-colors shadow-sm"
       >
         イベント一覧に戻る
       </button>
@@ -67,7 +67,7 @@ export default function DonePage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#06C755] text-sm">読み込み中...</div>
+        <div className="text-[var(--cp)] text-sm">読み込み中...</div>
       </div>
     }>
       <DonePageInner />

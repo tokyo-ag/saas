@@ -57,7 +57,7 @@ export default function ProfilePage() {
   }
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center text-[#06C755] text-sm">読み込み中...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-[var(--cp)] text-sm">読み込み中...</div>;
   }
 
   return (
@@ -73,7 +73,7 @@ export default function ProfilePage() {
         {profile ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-[#06C755]/10 flex items-center justify-center text-2xl shrink-0">👤</div>
+              <div className="w-12 h-12 rounded-full bg-[var(--cp-10)] flex items-center justify-center text-2xl shrink-0">👤</div>
               <div>
                 <p className="font-bold text-gray-900">{profile.name ?? '（名前未登録）'}</p>
                 <p className="text-xs text-gray-500">{[profile.grade, profile.gender].filter(Boolean).join(' · ')}</p>
@@ -103,7 +103,7 @@ export default function ProfilePage() {
         <button
           onClick={handleScan}
           disabled={scanning || !profile}
-          className="w-full bg-[#06C755] text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[#05a847] transition-colors shadow-sm flex items-center justify-center gap-2"
+          className="w-full bg-[var(--cp)] text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[var(--cp-h)] transition-colors shadow-sm flex items-center justify-center gap-2"
         >
           <span className="text-xl">📷</span>
           {scanning ? 'カメラ起動中...' : '相手のQRをスキャン'}

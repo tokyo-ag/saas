@@ -498,6 +498,7 @@ export interface Tenant {
   plan: 'free' | 'standard' | 'pro';
   planStartedAt?: string | null;
   liffEventView?: string;
+  themeColor?: string;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;
@@ -521,6 +522,7 @@ export interface TenantInput {
   stripeSecretKey?: string;
   stripeWebhookSecret?: string;
   liffEventView?: string;
+  themeColor?: string;
 }
 
 export interface LiffTenant {
@@ -531,6 +533,7 @@ export interface LiffTenant {
   linePictureUrl?: string;
   lineChannelId?: string;
   liffEventView?: string;
+  themeColor?: string;
 }
 
 export interface LiffReservation {

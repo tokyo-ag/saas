@@ -31,7 +31,7 @@ function Linkified({ text }: { text: string }) {
     <>
       {parts.map((part, i) =>
         part.startsWith('http://') || part.startsWith('https://') ? (
-          <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-[#06C755] underline break-all">
+          <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-[var(--cp)] underline break-all">
             {part}
           </a>
         ) : (
@@ -162,7 +162,7 @@ export default function LiffEventDetailPage() {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-3">
         <p className="text-gray-400 text-sm">イベントが見つかりません</p>
-        <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-[#06C755] text-sm font-medium">ホームに戻る</button>
+        <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-[var(--cp)] text-sm font-medium">ホームに戻る</button>
       </div>
     );
   }
@@ -197,7 +197,7 @@ export default function LiffEventDetailPage() {
           )}
         </div>
       ) : (
-        <div className="aspect-[4/5] w-full bg-gradient-to-br from-[#06C755]/20 to-[#06C755]/5 flex items-center justify-center">
+        <div className="aspect-[4/5] w-full bg-gradient-to-br from-[var(--cp-20)] to-[var(--cp)]/5 flex items-center justify-center">
           <span className="text-5xl">🎉</span>
         </div>
       )}
@@ -212,7 +212,7 @@ export default function LiffEventDetailPage() {
               <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">女性 ¥{event.priceFemale.toLocaleString()}</span>
             </>
           ) : (
-            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${event.price === 0 ? 'bg-green-50 text-[#06C755]' : 'bg-gray-100 text-gray-600'}`}>
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${event.price === 0 ? 'bg-green-50 text-[var(--cp)]' : 'bg-gray-100 text-gray-600'}`}>
               {event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`}
             </span>
           )}
@@ -223,7 +223,7 @@ export default function LiffEventDetailPage() {
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-50 text-red-500">満席</span>
           )}
           {myReservation && (
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#06C755]/10 text-[#06C755]">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[var(--cp-10)] text-[var(--cp)]">
               {STATUS_LABEL[myReservation.status] ?? myReservation.status}
               {myReservation.status === 'waitlisted' && myReservation.waitlistOrder && `（${myReservation.waitlistOrder}番目）`}
             </span>
@@ -238,7 +238,7 @@ export default function LiffEventDetailPage() {
         </InfoRow>
         <InfoRow icon={<PinIcon />}>
           {event.locationUrl ? (
-            <a href={event.locationUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-[#06C755] underline">
+            <a href={event.locationUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-[var(--cp)] underline">
               {event.location}
             </a>
           ) : (
@@ -263,7 +263,7 @@ export default function LiffEventDetailPage() {
               </p>
             </div>
           ) : (
-            <p className={`text-sm font-bold ${event.price === 0 ? 'text-[#06C755]' : 'text-gray-900'}`}>
+            <p className={`text-sm font-bold ${event.price === 0 ? 'text-[var(--cp)]' : 'text-gray-900'}`}>
               {event.price === 0 ? '参加無料' : `¥${event.price.toLocaleString()}`}
             </p>
           )}
@@ -322,14 +322,14 @@ export default function LiffEventDetailPage() {
                 maxLength={300}
                 rows={4}
                 placeholder="例）一人参加でしたが、20代が多くて話しやすかったです。初心者でも楽しめました。"
-                className="w-full resize-none rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                className="w-full resize-none rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--cp)]"
               />
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[11px] text-gray-400">{reviewContent.trim().length}/300</span>
                 <button
                   type="submit"
                   disabled={reviewContent.trim().length < 5 || submittingReview}
-                  className="rounded-xl bg-[#06C755] px-4 py-2 text-sm font-bold text-white disabled:opacity-40 active:bg-[#05a847]"
+                  className="rounded-xl bg-[var(--cp)] px-4 py-2 text-sm font-bold text-white disabled:opacity-40 active:bg-[var(--cp-h)]"
                 >
                   {submittingReview ? '送信中...' : myReview ? '更新する' : '送信する'}
                 </button>
@@ -348,7 +348,7 @@ export default function LiffEventDetailPage() {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-4" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
         {myReservation ? (
           <div className="space-y-2.5">
-            <p className="text-center text-sm font-semibold text-[#06C755]">
+            <p className="text-center text-sm font-semibold text-[var(--cp)]">
               {STATUS_LABEL[myReservation.status] ?? myReservation.status}
               {myReservation.status === 'waitlisted' && myReservation.waitlistOrder && (
                 <span className="text-gray-400 font-normal ml-1">（{myReservation.waitlistOrder}番目）</span>
@@ -376,7 +376,7 @@ export default function LiffEventDetailPage() {
         ) : (
           <button
             onClick={() => router.push(`/liff/${tenantId}/events/${eventId}/reserve`)}
-            className="w-full bg-[#06C755] text-white py-3.5 rounded-2xl font-bold active:bg-[#05a847]"
+            className="w-full bg-[var(--cp)] text-white py-3.5 rounded-2xl font-bold active:bg-[var(--cp-h)]"
           >
             予約する
           </button>

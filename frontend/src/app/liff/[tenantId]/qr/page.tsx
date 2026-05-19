@@ -82,13 +82,13 @@ export default function QrPage() {
       </div>
 
       {loading && (
-        <div className="flex items-center justify-center py-24 text-[#06C755] text-sm">読み込み中...</div>
+        <div className="flex items-center justify-center py-24 text-[var(--cp)] text-sm">読み込み中...</div>
       )}
       {!loading && (
         <div className="px-4 py-6 space-y-5">
           {/* 使い方説明 */}
-          <div className="bg-[#06C755]/8 rounded-2xl px-4 py-4 space-y-2">
-            <p className="text-sm font-semibold text-[#047a35]">友達追加の使い方</p>
+          <div className="bg-[var(--cp-8)] rounded-2xl px-4 py-4 space-y-2">
+            <p className="text-sm font-semibold text-[var(--cp-h)]">友達追加の使い方</p>
             <div className="space-y-1.5 text-xs text-gray-600">
               <p>① 相手に自分のQRコードを見せる</p>
               <p>② または相手のQRをスキャンする</p>
@@ -99,7 +99,7 @@ export default function QrPage() {
           <button
             onClick={handleScan}
             disabled={scanning || !profile}
-            className="w-full bg-[#06C755] text-white py-5 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[#05a847] shadow-sm flex items-center justify-center gap-3"
+            className="w-full bg-[var(--cp)] text-white py-5 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[var(--cp-h)] shadow-sm flex items-center justify-center gap-3"
           >
             <span className="text-2xl">📷</span>
             {scanning ? 'カメラ起動中...' : '相手のQRをスキャン'}
@@ -128,7 +128,7 @@ export default function QrPage() {
                   onClick={handleToggleShowEvents}
                   disabled={toggling}
                   className={`relative w-12 h-7 rounded-full transition-colors shrink-0 ${
-                    profile.showEventsToConnections ? 'bg-[#06C755]' : 'bg-gray-300'
+                    profile.showEventsToConnections ? 'bg-[var(--cp)]' : 'bg-gray-300'
                   } disabled:opacity-60`}
                 >
                   <span className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-sm transition-transform ${

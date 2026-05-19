@@ -84,6 +84,15 @@ export class PublicController {
     return { liked: true };
   }
 
+  @Get('tenant-theme/:tenantId')
+  async getTenantTheme(@Param('tenantId') tenantId: string) {
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { OR: [{ id: tenantId }, { code: tenantId }], deletedAt: null },
+      select: { themeColor: true },
+    });
+    return { themeColor: tenant?.themeColor ?? 'green' };
+  }
+
   @Get('sitemap-events')
   async getSitemapEvents() {
     const events = await this.prisma.event.findMany({

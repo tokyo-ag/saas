@@ -74,7 +74,7 @@ export default function AdminTalkPage() {
   const organizerAvatar = organizerPicture ? (
     <img src={organizerPicture} className="w-8 h-8 rounded-full object-cover" alt="" />
   ) : (
-    <div className="w-8 h-8 rounded-full bg-[#06C755]/10 flex items-center justify-center text-xs font-bold text-[#06C755]">
+    <div className="w-8 h-8 rounded-full bg-[var(--cp-10)] flex items-center justify-center text-xs font-bold text-[var(--cp)]">
       {organizerName.slice(0, 1)}
     </div>
   );
@@ -86,7 +86,7 @@ export default function AdminTalkPage() {
         {organizerPicture ? (
           <img src={organizerPicture} className="w-9 h-9 rounded-full object-cover shrink-0" alt="" />
         ) : (
-          <div className="w-9 h-9 rounded-full bg-[#06C755]/10 flex items-center justify-center shrink-0 text-sm font-bold text-[#06C755]">
+          <div className="w-9 h-9 rounded-full bg-[var(--cp-10)] flex items-center justify-center shrink-0 text-sm font-bold text-[var(--cp)]">
             {organizerName.slice(0, 1)}
           </div>
         )}
@@ -102,7 +102,7 @@ export default function AdminTalkPage() {
             {organizerPicture ? (
               <img src={organizerPicture} className="w-16 h-16 rounded-full object-cover mb-4" alt="" />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-[#06C755]/10 flex items-center justify-center mb-4 text-lg font-bold text-[#06C755]">
+              <div className="w-16 h-16 rounded-full bg-[var(--cp-10)] flex items-center justify-center mb-4 text-lg font-bold text-[var(--cp)]">
                 {organizerName.slice(0, 1)}
               </div>
             )}

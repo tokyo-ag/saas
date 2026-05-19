@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, Tenant, TenantInput } from '@/lib/api';
+import { THEMES } from '@/lib/theme';
 import { SaveToast } from '@/components/ui/SaveToast';
 
 const tabs = [
@@ -44,6 +45,21 @@ export default function SettingsPage() {
   const [viewMode, setViewMode] = useState<'card' | 'calendar'>('card');
   const [savedViewMode, setSavedViewMode] = useState<'card' | 'calendar'>('card');
   const [savingView, setSavingView] = useState(false);
+  const [themeColor, setThemeColor] = useState('green');
+  const [savedTheme, setSavedTheme] = useState('green');
+  const [savingTheme, setSavingTheme] = useState(false);
+
+  async function handleSaveTheme() {
+    setSavingTheme(true);
+    try {
+      await api.tenant.update({ themeColor });
+      setSavedTheme(themeColor);
+    } catch {
+      setError('テーマの保存に失敗しました');
+    } finally {
+      setSavingTheme(false);
+    }
+  }
 
   async function handleSaveViewMode() {
     setSavingView(true);
@@ -71,6 +87,9 @@ export default function SettingsPage() {
       const v = tenantData.liffEventView === 'calendar' ? 'calendar' : 'card';
       setViewMode(v);
       setSavedViewMode(v);
+      const tc = tenantData.themeColor ?? 'green';
+      setThemeColor(tc);
+      setSavedTheme(tc);
     });
   }, []);
 
@@ -107,6 +126,37 @@ export default function SettingsPage() {
 
 
         <section className="mb-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
+          <p className="mb-1 text-sm font-medium text-gray-700">テーマカラー</p>
+          <p className="mb-3 text-xs text-gray-500">ユーザー画面のアクセントカラーを選択します。</p>
+          <div className="flex flex-wrap gap-3 mb-3">
+            {THEMES.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setThemeColor(t.id)}
+                title={t.label}
+                className={`flex flex-col items-center gap-1.5 rounded-xl p-2 border-2 transition-colors ${
+                  themeColor === t.id ? 'border-gray-800' : 'border-transparent hover:border-gray-200'
+                }`}
+              >
+                <span
+                  className="block w-8 h-8 rounded-full shadow-sm"
+                  style={{ backgroundColor: t.swatch }}
+                />
+                <span className="text-xs text-gray-600">{t.label}</span>
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={handleSaveTheme}
+            disabled={savingTheme || themeColor === savedTheme}
+            className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:text-gray-300 disabled:cursor-default"
+          >
+            {savingTheme ? '保存中...' : themeColor === savedTheme ? '保存済み ✓' : '保存'}
+          </button>
+        </section>
+
+        <section className="mb-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
           <p className="mb-1 text-sm font-medium text-gray-700">ユーザー画面レイアウト</p>
           <p className="mb-3 text-xs text-gray-500">参加者がイベントを見るときの表示形式を選択します。</p>
           <div className="flex items-center gap-2">
@@ -136,7 +186,7 @@ export default function SettingsPage() {
         </section>
 
         <section className="mb-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
-          <p className="mb-2 text-sm font-medium text-gray-700">参加者招待リンク</p>
+          <p className="mb-2 text-sm font-medium text-gray-700">ユーザー画面の確認用URL</p>
           <p className="mb-3 text-xs text-gray-500">参加者がイベント一覧を見たり予約するページのURLです。</p>
           {tenant.id && (
             <div className="flex items-center gap-2">

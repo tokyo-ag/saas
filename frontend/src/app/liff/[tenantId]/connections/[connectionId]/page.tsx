@@ -87,13 +87,13 @@ export default function ChatPage() {
           return (
             <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'} gap-2`}>
               {!isMine && (
-                <div className="w-8 h-8 rounded-full bg-[#06C755]/10 flex items-center justify-center text-sm shrink-0 mt-1">👤</div>
+                <div className="w-8 h-8 rounded-full bg-[var(--cp-10)] flex items-center justify-center text-sm shrink-0 mt-1">👤</div>
               )}
               <div className={`max-w-[72%] ${isMine ? 'items-end' : 'items-start'} flex flex-col gap-0.5`}>
                 <div
                   className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
                     isMine
-                      ? 'bg-[#06C755] text-white rounded-br-sm'
+                      ? 'bg-[var(--cp)] text-white rounded-br-sm'
                       : 'bg-white border border-gray-100 text-gray-900 rounded-bl-sm shadow-sm'
                   }`}
                 >
@@ -112,12 +112,12 @@ export default function ChatPage() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="メッセージを入力..."
-          className="flex-1 border border-gray-200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755] bg-gray-50"
+          className="flex-1 border border-gray-200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--cp)] bg-gray-50"
         />
         <button
           type="submit"
           disabled={!input.trim() || sending}
-          className="w-10 h-10 bg-[#06C755] rounded-full flex items-center justify-center disabled:opacity-40 active:bg-[#05a847] shrink-0"
+          className="w-10 h-10 bg-[var(--cp)] rounded-full flex items-center justify-center disabled:opacity-40 active:bg-[var(--cp-h)] shrink-0"
         >
           <span className="text-white text-lg leading-none">↑</span>
         </button>
