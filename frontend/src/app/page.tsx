@@ -241,10 +241,22 @@ export default function TopPage() {
     });
   }, []);
 
-  // 今月の注目（月間いいね数上位）
-  const hotEvents = [...events].sort((a, b) => b.monthlyLikeCount - a.monthlyLikeCount).slice(0, 10);
-  // 日時順
-  const byDate = [...events].sort((a, b) => new Date(a.heldAt).getTime() - new Date(b.heldAt).getTime());
+  function limitPerTenant(list: PublicEvent[], max = 2) {
+    const counts: Record<string, number> = {};
+    return list.filter((ev) => {
+      counts[ev.tenantId] = (counts[ev.tenantId] ?? 0) + 1;
+      return counts[ev.tenantId] <= max;
+    });
+  }
+
+  // 今月の注目（月間いいね数上位、1団体最大2件）
+  const hotEvents = limitPerTenant(
+    [...events].sort((a, b) => b.monthlyLikeCount - a.monthlyLikeCount)
+  ).slice(0, 10);
+  // 日時順（1団体最大2件）
+  const byDate = limitPerTenant(
+    [...events].sort((a, b) => new Date(a.heldAt).getTime() - new Date(b.heldAt).getTime())
+  );
   // 検索
   const searchResults = query.trim()
     ? events.filter((ev) =>
