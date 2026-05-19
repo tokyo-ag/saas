@@ -150,8 +150,12 @@ export default function SuperadminPage() {
                     {!t.deletedAt && (
                       <button
                         onClick={async () => {
-                          const { token } = await api.superadmin.impersonate(t.id);
-                          window.open(`/admin/impersonate?token=${encodeURIComponent(token)}`, '_blank');
+                          try {
+                            const { token } = await api.superadmin.impersonate(t.id);
+                            window.open(`/admin/impersonate?token=${encodeURIComponent(token)}`, '_blank');
+                          } catch (e: any) {
+                            alert(e.message ?? '管理画面を開けませんでした');
+                          }
                         }}
                         className="text-sm text-[#06C755] hover:underline"
                       >管理画面 →</button>
