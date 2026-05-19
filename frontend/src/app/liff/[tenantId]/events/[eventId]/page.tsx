@@ -143,11 +143,11 @@ export default function LiffEventDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
-        <div className="sticky top-0 z-10 bg-[var(--cp)] px-4 pt-12 pb-3 flex items-center gap-3">
-          <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-white p-1 -ml-1">
+        <div className="sticky top-0 z-10 bg-[var(--cp-15)] px-4 pt-12 pb-3 flex items-center gap-3">
+          <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-gray-600 p-1 -ml-1">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
           </button>
-          <div className="h-4 w-40 bg-white/30 rounded-full animate-pulse" />
+          <div className="h-4 w-40 bg-[var(--cp-20)] rounded-full animate-pulse" />
         </div>
         <div className="aspect-[4/5] w-full bg-gray-200 animate-pulse" />
         <div className="px-4 py-5 space-y-4">
@@ -177,11 +177,11 @@ export default function LiffEventDetailPage() {
   return (
     <div className="min-h-screen bg-white pb-32">
       {/* header */}
-      <div className="sticky top-0 z-10 bg-[var(--cp)] px-4 pt-12 pb-3 flex items-center gap-3">
-        <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-white p-1 -ml-1 shrink-0">
+      <div className="sticky top-0 z-10 bg-[var(--cp-15)] px-4 pt-12 pb-3 flex items-center gap-3">
+        <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-gray-600 p-1 -ml-1 shrink-0">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
         </button>
-        <h1 className="text-[16px] font-bold text-white flex-1 truncate">{event.title}</h1>
+        <h1 className="text-[16px] font-bold text-gray-900 flex-1 truncate">{event.title}</h1>
       </div>
 
       {/* hero image */}

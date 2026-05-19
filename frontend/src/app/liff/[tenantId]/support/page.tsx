@@ -70,14 +70,14 @@ export default function SupportPage() {
 
   return (
     <div className="flex flex-col h-screen bg-[var(--cp-20)]">
-      <div className="bg-[var(--cp)] px-4 flex items-center gap-3 shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 16px)', paddingBottom: '12px' }}>
-        <button onClick={() => router.back()} className="text-white text-xl leading-none p-1">‹</button>
-        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+      <div className="bg-[var(--cp-15)] px-4 flex items-center gap-3 shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 16px)', paddingBottom: '12px' }}>
+        <button onClick={() => router.back()} className="text-gray-600 text-xl leading-none p-1">‹</button>
+        <div className="w-8 h-8 rounded-full bg-[var(--cp-20)] flex items-center justify-center shrink-0">
           <span className="text-base">🛟</span>
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-white leading-tight">COMIU サポートチャット</p>
-          <p className="text-[10px] text-white/60">運営チームにメッセージ</p>
+          <p className="text-[10px] text-gray-500">運営チームにメッセージ</p>
         </div>
       </div>
 

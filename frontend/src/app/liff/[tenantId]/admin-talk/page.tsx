@@ -81,18 +81,18 @@ export default function AdminTalkPage() {
 
   return (
     <div className="flex flex-col h-screen bg-[var(--cp-20)]">
-      <div className="bg-[var(--cp)] px-4 flex items-center gap-3 shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 16px)', paddingBottom: '12px' }}>
-        <button onClick={() => router.back()} className="text-white text-xl leading-none p-1">‹</button>
+      <div className="bg-[var(--cp-15)] px-4 flex items-center gap-3 shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 16px)', paddingBottom: '12px' }}>
+        <button onClick={() => router.back()} className="text-gray-600 text-xl leading-none p-1">‹</button>
         {organizerPicture ? (
           <img src={organizerPicture} className="w-9 h-9 rounded-full object-cover shrink-0" alt="" />
         ) : (
-          <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0 text-sm font-bold text-white">
+          <div className="w-9 h-9 rounded-full bg-[var(--cp-20)] flex items-center justify-center shrink-0 text-sm font-bold text-[var(--cp)]">
             {organizerName.slice(0, 1)}
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-white leading-tight truncate">{organizerName}</p>
-          <p className="text-[10px] text-white/60">団体の主催者へ直接メッセージ</p>
+          <p className="text-sm font-bold text-gray-900 leading-tight truncate">{organizerName}</p>
+          <p className="text-[10px] text-gray-500">団体の主催者へ直接メッセージ</p>
         </div>
       </div>
 

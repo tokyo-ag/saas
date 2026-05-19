@@ -68,14 +68,14 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-screen bg-white">
-      <div className="bg-[var(--cp)] px-4 pt-12 pb-3 flex items-center gap-3 shrink-0">
-        <button onClick={() => router.push(`/liff/${tenantId}/talks`)} className="text-white p-1 -ml-1">
+      <div className="bg-[var(--cp-15)] px-4 pt-12 pb-3 flex items-center gap-3 shrink-0">
+        <button onClick={() => router.push(`/liff/${tenantId}/talks`)} className="text-gray-600 p-1 -ml-1">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
         <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm shrink-0">👤</div>
-        <h1 className="text-[16px] font-bold text-white">{room?.partnerName ?? '...'}</h1>
+        <h1 className="text-[16px] font-bold text-gray-900">{room?.partnerName ?? '...'}</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">

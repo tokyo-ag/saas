@@ -72,13 +72,13 @@ export default function QrPage() {
 
   return (
     <div className="min-h-screen bg-[var(--cp-20)]">
-      <div className="sticky top-0 z-10 bg-[var(--cp)] px-4 pt-12 pb-3 flex items-center gap-3">
-        <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-white p-1 -ml-1">
+      <div className="sticky top-0 z-10 bg-[var(--cp-15)] px-4 pt-12 pb-3 flex items-center gap-3">
+        <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-gray-600 p-1 -ml-1">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
-        <h1 className="text-[17px] font-bold text-white">QRコード</h1>
+        <h1 className="text-[17px] font-bold text-gray-900">QRコード</h1>
       </div>
 
       {loading && (
