@@ -257,7 +257,7 @@ export default function LiffTopPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-[var(--cp-5)] animate-page-in pb-24">
+      <div className="min-h-screen bg-[var(--cp-15)] animate-page-in pb-24">
         {/* header */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
           <div className="flex items-center gap-2.5 px-4 pt-12 pb-3 sm:pt-4 max-w-4xl mx-auto">

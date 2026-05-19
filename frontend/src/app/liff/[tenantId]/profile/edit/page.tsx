@@ -63,7 +63,7 @@ export default function ProfileEditPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--cp-5)]">
+    <div className="min-h-screen bg-[var(--cp-15)]">
       <div className="bg-[var(--cp)] text-white px-4 py-4 flex items-center gap-3">
         <button onClick={() => router.back()} className="text-white text-xl leading-none">‹</button>
         <h1 className="text-base font-bold">プロフィール編集</h1>
