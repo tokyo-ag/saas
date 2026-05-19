@@ -144,7 +144,7 @@ export default function SettingsPage() {
               rows={4}
               value={form.description}
               onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-              placeholder="LIFF画面や公開ページに表示する説明文"
+              placeholder="ユーザー画面や公開ページに表示する説明文"
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
             />
           </div>
