@@ -233,7 +233,20 @@ export default function EventsPage() {
       <div className="mb-5 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-gray-900">イベント管理</h1>
-          <p className="text-sm text-gray-500 mt-0.5">イベントの作成、編集、予約状況を確認できます。</p>
+          {tenantId && (
+            <div className="mt-1 flex items-center gap-1.5">
+              <span className="text-xs text-gray-400">参加者ページ:</span>
+              <span className="text-xs text-gray-500 font-mono truncate max-w-[220px]">
+                {typeof window !== 'undefined' ? `${window.location.origin}/liff/${tenantId}` : ''}
+              </span>
+              <button
+                onClick={() => copyLink(`${typeof window !== 'undefined' ? window.location.origin : ''}/liff/${tenantId}`, 'header')}
+                className="text-xs text-[#06C755] font-medium hover:underline shrink-0"
+              >
+                {copied === 'header' ? 'コピー済み ✓' : 'コピー'}
+              </button>
+            </div>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <div className="flex items-center gap-1.5">
