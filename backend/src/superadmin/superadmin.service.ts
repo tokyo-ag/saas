@@ -70,8 +70,11 @@ export class SuperadminService {
   }
 
   async createTenant(dto: CreateTenantDto) {
-    const existing = await this.prisma.organizerAccount.findUnique({ where: { email: dto.email } });
-    if (existing) throw new ConflictException('このメールアドレスは既に使用されています');
+    const normalizedEmail = dto.email.trim().toLowerCase();
+    const accounts = await this.prisma.organizerAccount.findMany({ where: { email: { not: null } } });
+    if (accounts.some(a => a.email?.toLowerCase() === normalizedEmail)) {
+      throw new ConflictException('このメールアドレスは既に使用されています');
+    }
     const passwordHash = await bcrypt.hash(dto.password, 10);
     const id = `tenant-${Date.now()}`;
     return this.prisma.tenant.create({
@@ -81,7 +84,7 @@ export class SuperadminService {
         description: dto.description,
         plan: dto.plan ?? 'free',
         organizerAccounts: {
-          create: { email: dto.email, passwordHash, emailVerifiedAt: new Date() },
+          create: { email: normalizedEmail, passwordHash, emailVerifiedAt: new Date() },
         },
       },
     });

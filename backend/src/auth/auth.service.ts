@@ -284,7 +284,9 @@ export class AuthService {
       where: { id: accountId },
       data: { emailVerificationToken: token },
     });
-    await this.email.sendVerificationEmail(account.email, token);
+    await this.email.sendVerificationEmail(account.email, token).catch((err) => {
+      this.logger.error(`Failed to resend verification email to ${account.email}: ${err?.message ?? err}`);
+    });
     return { message: '確認メールを再送しました' };
   }
 
