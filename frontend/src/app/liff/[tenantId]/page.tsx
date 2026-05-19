@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { api, API_URL, formatDateShort, LiffEvent, LiffTenant, PublicEvent } from '@/lib/api';
+import { api, API_URL, formatDateShort, LiffEvent, LiffTenant, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
 import { initLiff, getLiffUserId } from '@/lib/liff';
@@ -85,35 +85,28 @@ function EventCard({ event, tenantId }: { event: LiffEvent; tenantId: string }) 
   );
 }
 
-function FavEventRow({ event }: { event: PublicEvent }) {
-  const img = imgUrl(event.imageUrl, API_URL);
-  const org = event.tenant.lineDisplayName ?? event.tenant.name;
+function TenantCard({ tenant }: { tenant: PublicTenant }) {
+  const name = tenant.lineDisplayName ?? tenant.name;
   return (
     <Link
-      href={`/liff/${event.tenantId}/events/${event.id}`}
+      href={`/liff/${tenant.id}`}
       className="flex items-center gap-3 bg-white/85 rounded-xl px-3 py-3 active:opacity-70"
       style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)' }}
     >
-      <div className="w-14 rounded-lg overflow-hidden shrink-0 aspect-[4/5]">
-        {img ? (
-          <img src={img} alt="" className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[#06C755] to-[#05a847]" />
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[12px] font-semibold text-gray-800 line-clamp-1">{event.title}</p>
-        <p className="text-[10px] text-[#06C755] font-medium mt-0.5">{org}</p>
-        <p className="text-[10px] text-gray-400 mt-0.5">{formatDateShort(event.heldAt)}</p>
-        <p className="text-[10px] text-gray-400 truncate">{event.location}</p>
-      </div>
-      {event.priceMale != null && event.priceFemale != null ? (
-        <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full shrink-0">¥{Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜</span>
-      ) : event.price === 0 ? (
-        <span className="text-[9px] text-[#06C755] bg-green-50 px-1.5 py-0.5 rounded-full font-medium shrink-0">無料</span>
+      {tenant.linePictureUrl ? (
+        <img src={tenant.linePictureUrl} alt="" className="w-10 h-10 rounded-full shrink-0 object-cover" />
       ) : (
-        <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full shrink-0">¥{event.price.toLocaleString()}</span>
+        <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-[#06C755] to-[#05a847] flex items-center justify-center">
+          <span className="text-white font-bold text-sm">{name[0]}</span>
+        </div>
       )}
+      <div className="flex-1 min-w-0">
+        <p className="text-[13px] font-semibold text-gray-800 truncate">{name}</p>
+        <p className="text-[10px] text-gray-400 mt-0.5">メンバー {tenant.memberCount}人</p>
+      </div>
+      <svg className="w-4 h-4 text-gray-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      </svg>
     </Link>
   );
 }
@@ -217,7 +210,7 @@ export default function LiffTopPage() {
   const [tenant, setTenant] = useState<LiffTenant | null>(null);
   const [events, setEvents] = useState<LiffEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [otherEvents, setOtherEvents] = useState<PublicEvent[]>([]);
+  const [otherTenants, setOtherTenants] = useState<PublicTenant[]>([]);
 
   useEffect(() => {
     async function init() {
@@ -228,13 +221,9 @@ export default function LiffTopPage() {
       setEvents(eventsNoFriend);
       setLoading(false);
 
-      // 他の団体のイベントを取得
-      const allPublic = await api.public.events().catch(() => []);
-      const others = allPublic
-        .filter((e) => e.tenantId !== tenantId)
-        .sort((a, b) => new Date(a.heldAt).getTime() - new Date(b.heldAt).getTime())
-        .slice(0, 10);
-      setOtherEvents(others);
+      // 他の団体を取得
+      const allTenants = await api.public.tenants().catch(() => []);
+      setOtherTenants(allTenants.filter((t) => t.id !== tenantId));
 
       const ok = await initLiff();
       const uid = ok ? ((await getLiffUserId()) ?? '') : `demo-${tenantId}`;
@@ -285,14 +274,14 @@ export default function LiffTopPage() {
               {events.map((ev) => <EventCard key={ev.id} event={ev} tenantId={tenantId} />)}
             </div>
           )}
-          {/* 他の団体のイベント */}
-          {otherEvents.length > 0 && (
+          {/* 団体紹介 */}
+          {otherTenants.length > 0 && (
             <div className="mt-6">
               <p className="text-[13px] font-bold text-gray-700 px-1 mb-3">
-                🔍 他の団体のイベント
+                🏘️ 団体紹介
               </p>
               <div className="space-y-2">
-                {otherEvents.map((ev) => <FavEventRow key={ev.id} event={ev} />)}
+                {otherTenants.map((t) => <TenantCard key={t.id} tenant={t} />)}
               </div>
             </div>
           )}
