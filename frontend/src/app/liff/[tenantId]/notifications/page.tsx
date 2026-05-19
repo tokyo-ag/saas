@@ -77,7 +77,7 @@ export default function NotificationsPage() {
                   key={n.id}
                   onClick={() => !n.read && handleMarkRead(n.id)}
                   className={`w-full text-left rounded-xl p-4 border transition-colors ${
-                    n.read ? 'bg-white border-gray-100' : 'bg-white border-[[#06C755]/30]'
+                    n.read ? 'bg-white border-gray-100' : 'bg-white border-[#06C755]/30'
                   }`}
                   style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
                 >

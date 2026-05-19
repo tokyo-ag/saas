@@ -147,7 +147,7 @@ export default function LiffEventDetailPage() {
           <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-gray-600 p-1 -ml-1">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
           </button>
-          <div className="h-4 w-40 bg-[[#06C755]/20] rounded-full animate-pulse" />
+          <div className="h-4 w-40 bg-[#06C755]/20 rounded-full animate-pulse" />
         </div>
         <div className="aspect-[4/5] w-full bg-gray-200 animate-pulse" />
         <div className="px-4 py-5 space-y-4">
@@ -197,7 +197,7 @@ export default function LiffEventDetailPage() {
           )}
         </div>
       ) : (
-        <div className="aspect-[4/5] w-full bg-gradient-to-br from-[[#06C755]/20] to-[#06C755]/5 flex items-center justify-center">
+        <div className="aspect-[4/5] w-full bg-gradient-to-br from-[#06C755]/20 to-[#06C755]/5 flex items-center justify-center">
           <span className="text-5xl">🎉</span>
         </div>
       )}
@@ -223,7 +223,7 @@ export default function LiffEventDetailPage() {
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-50 text-red-500">満席</span>
           )}
           {myReservation && (
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[[#06C755]/10] text-[#06C755]">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#06C755]/10 text-[#06C755]">
               {STATUS_LABEL[myReservation.status] ?? myReservation.status}
               {myReservation.status === 'waitlisted' && myReservation.waitlistOrder && `（${myReservation.waitlistOrder}番目）`}
             </span>

@@ -3,6 +3,7 @@ import { EventStatus, ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LineMessagingService } from '../line-messaging/line-messaging.service';
 import { CreateEventDto } from './dto/create-event.dto';
+import { PLAN_LIMITS } from '../config/plan-limits';
 
 @Injectable()
 export class EventsService {
@@ -105,8 +106,8 @@ export class EventsService {
       const count = await this.prisma.event.count({
         where: { tenantId, createdAt: { gte: monthStart } },
       });
-      if (count >= 2) {
-        throw new ForbiddenException('今月のイベント作成上限（2件）に達しました。スタンダードプランにアップグレードしてください。');
+      if (count >= PLAN_LIMITS.free.eventsPerMonth) {
+        throw new ForbiddenException(`今月のイベント作成上限（${PLAN_LIMITS.free.eventsPerMonth}件）に達しました。スタンダードプランにアップグレードしてください。`);
       }
       if (dto.remindEnabled) {
         throw new ForbiddenException('リマインド機能はスタンダードプランでご利用いただけます。');

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Allow: /e/
+Disallow: /liff/
+Disallow: /admin/
+Disallow: /login
+
+Sitemap: https://comiu.vercel.app/sitemap.xml

@@ -37,7 +37,8 @@ export class StripeWebhookController {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as { metadata?: Record<string, string> | null; payment_intent?: string | null; id: string };
       const reservationId = session.metadata?.reservationId;
-      if (reservationId) {
+      const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (reservationId && uuidRe.test(reservationId)) {
         await this.prisma.reservation.update({
           where: { id: reservationId },
           data: {

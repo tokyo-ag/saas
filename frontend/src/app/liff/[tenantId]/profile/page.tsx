@@ -73,7 +73,7 @@ export default function ProfilePage() {
         {profile ? (
           <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-[[#06C755]/10] flex items-center justify-center text-2xl shrink-0">👤</div>
+              <div className="w-12 h-12 rounded-full bg-[#06C755]/10 flex items-center justify-center text-2xl shrink-0">👤</div>
               <div>
                 <p className="font-bold text-gray-900">{profile.name ?? '（名前未登録）'}</p>
                 <p className="text-xs text-gray-500">{[profile.grade, profile.gender].filter(Boolean).join(' · ')}</p>

@@ -57,7 +57,7 @@ export default function ConnectPage() {
   if (done) {
     return (
       <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-[[#06C755]/10] flex items-center justify-center text-4xl mb-5">
+        <div className="w-20 h-20 rounded-full bg-[#06C755]/10 flex items-center justify-center text-4xl mb-5">
           {alreadyConnected ? '👋' : '🎉'}
         </div>
         <h1 className="text-xl font-bold text-gray-900 mb-2">
@@ -88,7 +88,7 @@ export default function ConnectPage() {
       </div>
 
       <div className="px-4 py-8 flex flex-col items-center text-center">
-        <div className="w-20 h-20 rounded-full bg-[[#06C755]/10] flex items-center justify-center text-4xl mb-5">👤</div>
+        <div className="w-20 h-20 rounded-full bg-[#06C755]/10 flex items-center justify-center text-4xl mb-5">👤</div>
 
         {target ? (
           <>

@@ -198,7 +198,7 @@ function LiffCalendarView({ events, tenantId }: { events: LiffEvent[]; tenantId:
                         <Link
                           key={ev.id}
                           href={`/liff/${tenantId}/events/${ev.id}`}
-                          className="block rounded bg-[[#06C755]/10] px-0.5 py-0.5 active:opacity-60"
+                          className="block rounded bg-[#06C755]/10 px-0.5 py-0.5 active:opacity-60"
                         >
                           <p className="text-[7px] font-semibold text-[#05a847] truncate leading-tight">{ev.title}</p>
                           <p className="text-[7px] text-gray-500 leading-tight">開始 {startTime}</p>
@@ -264,7 +264,7 @@ export default function LiffTopPage() {
             {tenant?.linePictureUrl ? (
               <img src={tenant.linePictureUrl} className="w-7 h-7 rounded-full object-cover shrink-0" alt="" />
             ) : (
-              <div className="w-7 h-7 rounded-full bg-[[#06C755]/20] flex items-center justify-center shrink-0 text-sm">🎉</div>
+              <div className="w-7 h-7 rounded-full bg-[#06C755]/20 flex items-center justify-center shrink-0 text-sm">🎉</div>
             )}
             <h1 className="text-[18px] font-bold text-gray-900 tracking-tight truncate">
               {tenant?.lineDisplayName ?? tenant?.name ?? 'Home'}
@@ -281,7 +281,7 @@ export default function LiffTopPage() {
             <LiffCalendarView events={events} tenantId={tenantId} />
           ) : events.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 px-8 text-center">
-              <div className="w-16 h-16 rounded-full bg-[[#06C755]/8] flex items-center justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-[#06C755]/8 flex items-center justify-center mb-4">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity="0.5">
                   <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>

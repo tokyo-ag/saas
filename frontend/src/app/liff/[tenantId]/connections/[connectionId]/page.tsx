@@ -87,7 +87,7 @@ export default function ChatPage() {
           return (
             <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'} gap-2`}>
               {!isMine && (
-                <div className="w-8 h-8 rounded-full bg-[[#06C755]/10] flex items-center justify-center text-sm shrink-0 mt-1">👤</div>
+                <div className="w-8 h-8 rounded-full bg-[#06C755]/10 flex items-center justify-center text-sm shrink-0 mt-1">👤</div>
               )}
               <div className={`max-w-[72%] ${isMine ? 'items-end' : 'items-start'} flex flex-col gap-0.5`}>
                 <div

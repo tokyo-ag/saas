@@ -60,7 +60,7 @@ export function FriendInviteCard({ tenantId, eventId, title, heldAt, location }:
   return (
     <section className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-full bg-[[#06C755]/10] text-[#06C755] flex items-center justify-center shrink-0">
+        <div className="w-10 h-10 rounded-full bg-[#06C755]/10 text-[#06C755] flex items-center justify-center shrink-0">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M18 8a3 3 0 1 0-2.83-4" />
             <path d="M6 8a3 3 0 1 1 2.83-4" />

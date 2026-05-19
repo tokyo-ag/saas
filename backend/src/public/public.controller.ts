@@ -118,7 +118,6 @@ export class PublicController {
     const event = await this.prisma.event.findFirst({
       where: {
         id: eventId,
-        status: 'open',
         tenant: { deletedAt: null },
       },
       include: {
@@ -127,9 +126,18 @@ export class PublicController {
           where: { status: { in: ['reserved', 'attended', 'waiting_payment'] } },
           select: { id: true },
         },
+        reviews: {
+          where: { isPublished: true },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+          include: {
+            member: { select: { lineDisplayName: true, linePictureUrl: true, name: true } },
+          },
+        },
       },
     });
     if (!event) throw new NotFoundException('Event not found');
+    const isEnded = event.status !== 'open' || event.heldAt < new Date();
     return {
       id: event.id,
       title: event.title,
@@ -150,6 +158,14 @@ export class PublicController {
       tenantCode: event.tenant.code,
       tenantName: event.tenant.lineDisplayName ?? event.tenant.name,
       tenantIconUrl: event.tenant.linePictureUrl,
+      isEnded,
+      reviews: event.reviews.map((r) => ({
+        id: r.id,
+        content: r.content,
+        createdAt: r.createdAt,
+        authorName: r.member.lineDisplayName ?? r.member.name ?? '参加者',
+        authorIconUrl: r.member.linePictureUrl,
+      })),
     };
   }
 

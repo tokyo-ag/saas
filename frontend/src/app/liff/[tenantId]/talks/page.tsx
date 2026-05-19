@@ -73,12 +73,12 @@ export default function TalksPage() {
           <div className="space-y-2 mb-4">
             <button
               onClick={() => router.push(`/liff/${tenantId}/admin-talk`)}
-              className="w-full bg-[[#06C755]/20] rounded-2xl border border-[[#06C755]/20] p-4 flex items-center gap-3 active:bg-[[#06C755]/10] text-left"
+              className="w-full bg-[#06C755]/20 rounded-2xl border border-[#06C755]/20 p-4 flex items-center gap-3 active:bg-[#06C755]/10 text-left"
             >
               {organizerPicture ? (
                 <img src={organizerPicture} className="w-12 h-12 rounded-full object-cover shrink-0" alt="" />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-[[#06C755]/20] flex items-center justify-center text-sm font-bold text-[#06C755] shrink-0">
+                <div className="w-12 h-12 rounded-full bg-[#06C755]/20 flex items-center justify-center text-sm font-bold text-[#06C755] shrink-0">
                   {organizerName.slice(0, 1)}
                 </div>
               )}
@@ -128,7 +128,7 @@ export default function TalksPage() {
                   onClick={() => router.push(`/liff/${tenantId}/talks/${connection.id}`)}
                   className="w-full bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3 active:bg-gray-50 text-left"
                 >
-                  <div className="w-12 h-12 rounded-full bg-[[#06C755]/10] flex items-center justify-center text-sm font-bold text-[#06C755] shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-[#06C755]/10 flex items-center justify-center text-sm font-bold text-[#06C755] shrink-0">
                     {(connection.partner.name ?? '未').slice(0, 1)}
                   </div>
                   <div className="flex-1 min-w-0">

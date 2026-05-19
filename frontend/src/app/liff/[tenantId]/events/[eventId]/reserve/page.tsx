@@ -180,7 +180,7 @@ function ReservePageInner() {
       : null;
     return (
       <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center gap-6">
-        <div className="w-20 h-20 rounded-full bg-[[#06C755]/10] flex items-center justify-center">
+        <div className="w-20 h-20 rounded-full bg-[#06C755]/10 flex items-center justify-center">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
             <path d="M12 2C6.48 2 2 6.03 2 11c0 3.13 1.68 5.9 4.28 7.54L5.5 22l3.78-1.97C10.16 20.65 11.07 21 12 21c5.52 0 10-4.03 10-9S17.52 2 12 2z" fill="currentColor"/>
           </svg>

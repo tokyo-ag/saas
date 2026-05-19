@@ -76,7 +76,7 @@ export default function ConnectionsPage() {
                 onClick={() => router.push(`/liff/${tenantId}/connections/${c.id}`)}
                 className="w-full bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3 active:bg-gray-50 text-left"
               >
-                <div className="w-12 h-12 rounded-full bg-[[#06C755]/10] flex items-center justify-center text-xl shrink-0">👤</div>
+                <div className="w-12 h-12 rounded-full bg-[#06C755]/10 flex items-center justify-center text-xl shrink-0">👤</div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 text-sm">{c.partner.name ?? '（名前未登録）'}</p>
                   <p className="text-xs text-gray-400 truncate mt-0.5">

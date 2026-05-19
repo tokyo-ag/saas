@@ -5,6 +5,14 @@ import Link from 'next/link';
 const API_URL = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'https://comiu.up.railway.app';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.vercel.app';
 
+type Review = {
+  id: string;
+  content: string;
+  createdAt: string;
+  authorName: string;
+  authorIconUrl?: string | null;
+};
+
 type EventDetail = {
   id: string;
   title: string;
@@ -25,6 +33,8 @@ type EventDetail = {
   tenantCode: string;
   tenantName: string;
   tenantIconUrl?: string | null;
+  isEnded?: boolean;
+  reviews?: Review[];
 };
 
 async function fetchEvent(eventId: string): Promise<EventDetail | null> {
@@ -48,6 +58,64 @@ function imgSrc(url?: string | null) {
   return url.startsWith('/') ? `${API_URL}${url}` : url;
 }
 
+function buildJsonLd(event: EventDetail) {
+  const priceSpec =
+    event.priceMale != null && event.priceFemale != null
+      ? [
+          { '@type': 'UnitPriceSpecification', price: event.priceMale, priceCurrency: 'JPY', name: '男性' },
+          { '@type': 'UnitPriceSpecification', price: event.priceFemale, priceCurrency: 'JPY', name: '女性' },
+        ]
+      : { '@type': 'UnitPriceSpecification', price: event.price, priceCurrency: 'JPY' };
+
+  const ld: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: event.title,
+    description: event.description,
+    startDate: event.heldAt,
+    ...(event.endAt ? { endDate: event.endAt } : {}),
+    location: {
+      '@type': 'Place',
+      name: event.location,
+      ...(event.locationUrl ? { url: event.locationUrl } : {}),
+    },
+    organizer: {
+      '@type': 'Organization',
+      name: event.tenantName,
+    },
+    url: `${SITE_URL}/e/${event.tenantCode}/${event.id}`,
+    eventStatus: event.isEnded
+      ? 'https://schema.org/EventCancelled'
+      : 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    offers: {
+      '@type': 'Offer',
+      price: event.price,
+      priceCurrency: 'JPY',
+      priceSpecification: priceSpec,
+      availability: event.isEnded
+        ? 'https://schema.org/SoldOut'
+        : event.capacity != null && event.reservedCount >= event.capacity
+          ? 'https://schema.org/SoldOut'
+          : 'https://schema.org/InStock',
+      url: `${SITE_URL}/liff/${event.tenantCode}/events/${event.id}`,
+    },
+  };
+
+  if (imgSrc(event.imageUrl)) ld.image = imgSrc(event.imageUrl);
+
+  if (event.reviews && event.reviews.length > 0) {
+    ld.review = event.reviews.slice(0, 5).map((r) => ({
+      '@type': 'Review',
+      author: { '@type': 'Person', name: r.authorName },
+      reviewBody: r.content,
+      datePublished: r.createdAt,
+    }));
+  }
+
+  return ld;
+}
+
 export async function generateMetadata({ params }: { params: { tenantCode: string; eventId: string } }): Promise<Metadata> {
   const event = await fetchEvent(params.eventId);
   if (!event) return { title: 'イベントが見つかりません' };
@@ -61,6 +129,9 @@ export async function generateMetadata({ params }: { params: { tenantCode: strin
   return {
     title: `${event.title} | ${event.tenantName}`,
     description,
+    alternates: {
+      canonical: `${SITE_URL}/e/${event.tenantCode}/${event.id}`,
+    },
     openGraph: {
       title: event.title,
       description,
@@ -85,18 +156,34 @@ export default async function PublicEventPage({ params }: { params: { tenantCode
   const liffUrl = `${SITE_URL}/liff/${event.tenantCode}/events/${event.id}`;
   const isFull = event.capacity != null && event.reservedCount >= event.capacity;
   const spotsLeft = event.capacity != null ? event.capacity - event.reservedCount : null;
+  const isEnded = event.isEnded ?? false;
+  const reviews = event.reviews ?? [];
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildJsonLd(event)) }}
+      />
+
       {/* ヘッダー */}
       <header className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
         <Link href="/" className="text-[#06C755] font-bold text-lg tracking-tight">COMIU</Link>
-        <Link href={liffUrl} className="rounded-full bg-[#06C755] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#05a847]">
-          LINEで予約
-        </Link>
+        {!isEnded && (
+          <Link href={liffUrl} className="rounded-full bg-[#06C755] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#05a847]">
+            LINEで予約
+          </Link>
+        )}
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-6 space-y-5">
+        {/* 終了バナー */}
+        {isEnded && (
+          <div className="rounded-2xl bg-gray-100 border border-gray-200 px-4 py-3 text-center text-sm text-gray-500">
+            このイベントは終了しました
+          </div>
+        )}
+
         {/* バナー画像 */}
         {event.imageUrl && (
           <div className="overflow-hidden rounded-2xl aspect-[4/3] bg-gray-100">
@@ -181,7 +268,9 @@ export default async function PublicEventPage({ params }: { params: { tenantCode
                 </svg>
               </span>
               <p className="text-sm text-gray-800">
-                {isFull ? (
+                {isEnded ? (
+                  <span className="text-gray-500">{event.reservedCount}人が参加しました</span>
+                ) : isFull ? (
                   <span className="text-red-500 font-medium">満員</span>
                 ) : (
                   <span>{event.reservedCount} / {event.capacity}人{spotsLeft != null && spotsLeft <= 5 && <span className="ml-2 text-amber-500 font-medium">残り{spotsLeft}名</span>}</span>
@@ -199,21 +288,55 @@ export default async function PublicEventPage({ params }: { params: { tenantCode
           </div>
         )}
 
+        {/* 参加者の声 */}
+        {reviews.length > 0 && (
+          <div className="rounded-2xl bg-white border border-gray-200 px-4 py-4 shadow-sm space-y-4">
+            <h2 className="text-sm font-semibold text-gray-800">参加者の声</h2>
+            {reviews.map((r) => (
+              <div key={r.id} className="flex gap-3">
+                {r.authorIconUrl ? (
+                  <img src={r.authorIconUrl} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0 mt-0.5 text-xs text-gray-400">
+                    {r.authorName.slice(0, 1)}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-gray-700 mb-0.5">{r.authorName}</p>
+                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{r.content}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* CTA */}
-        <div className="rounded-2xl bg-white border border-gray-200 px-4 py-5 shadow-sm text-center space-y-3">
-          <p className="text-sm text-gray-500">参加にはLINEアカウントが必要です</p>
-          <Link
-            href={liffUrl}
-            className={`block w-full rounded-xl py-3.5 text-sm font-bold text-white transition-colors ${
-              isFull ? 'bg-gray-400 pointer-events-none' : 'bg-[#06C755] hover:bg-[#05a847]'
-            }`}
-          >
-            {isFull ? '満員のため受付終了' : 'LINEで予約する'}
-          </Link>
-          <p className="text-xs text-gray-400">
-            このイベントは <a href={SITE_URL} className="text-[#06C755] underline">COMIU</a> で管理されています
-          </p>
-        </div>
+        {!isEnded ? (
+          <div className="rounded-2xl bg-white border border-gray-200 px-4 py-5 shadow-sm text-center space-y-3">
+            <p className="text-sm text-gray-500">参加にはLINEアカウントが必要です</p>
+            <Link
+              href={liffUrl}
+              className={`block w-full rounded-xl py-3.5 text-sm font-bold text-white transition-colors ${
+                isFull ? 'bg-gray-400 pointer-events-none' : 'bg-[#06C755] hover:bg-[#05a847]'
+              }`}
+            >
+              {isFull ? '満員のため受付終了' : 'LINEで予約する'}
+            </Link>
+            <p className="text-xs text-gray-400">
+              このイベントは <a href={SITE_URL} className="text-[#06C755] underline">COMIU</a> で管理されています
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-2xl bg-white border border-gray-200 px-4 py-5 shadow-sm text-center space-y-3">
+            <p className="text-sm text-gray-500">他のイベントも探してみましょう</p>
+            <a
+              href={SITE_URL}
+              className="block w-full rounded-xl py-3.5 text-sm font-bold text-[#06C755] border border-[#06C755] transition-colors hover:bg-[#06C755]/5"
+            >
+              COMIUでイベントを探す
+            </a>
+          </div>
+        )}
       </main>
     </div>
   );
