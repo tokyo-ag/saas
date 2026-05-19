@@ -71,7 +71,7 @@ export default function ProfilePage() {
 
       <div className="px-4 py-6 space-y-5">
         {profile ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+          <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full bg-[var(--cp-10)] flex items-center justify-center text-2xl shrink-0">👤</div>
               <div>
@@ -87,7 +87,7 @@ export default function ProfilePage() {
         )}
 
         {profile && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center gap-4">
+          <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center gap-4">
             <p className="text-sm font-medium text-gray-700">自分のQRコード</p>
             <div className="p-3 bg-white border border-gray-200 rounded-xl">
               <QRCode value={profile.id} size={180} />

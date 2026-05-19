@@ -75,7 +75,7 @@ export default function ProfileEditPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-4">
+          <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-4 space-y-4">
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1.5">お名前 <span className="text-red-400">*</span></label>
               <input required minLength={1} maxLength={50}

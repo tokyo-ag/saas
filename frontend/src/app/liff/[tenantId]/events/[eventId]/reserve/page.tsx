@@ -220,7 +220,7 @@ function ReservePageInner() {
 
       <div className="px-4 py-5 space-y-4">
         {event && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+          <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-4">
             <p className="font-semibold text-gray-900 text-sm">{event.title}</p>
             <p className="text-xs text-[var(--cp)] mt-1">{event.location}</p>
           </div>
@@ -232,7 +232,7 @@ function ReservePageInner() {
 
         {hasProfile ? (
           <>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+            <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
               <p className="text-xs font-medium text-gray-500 mb-1">参加者情報</p>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">お名前</span>
@@ -269,7 +269,7 @@ function ReservePageInner() {
             className="space-y-4"
           >
             <p className="text-xs text-gray-500 px-1">初回のみ情報を入力してください。次回以降は省略できます。</p>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-4">
+            <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-4 space-y-4">
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">お名前 <span className="text-red-400">*</span></label>
                 <input required minLength={1} maxLength={50}

@@ -55,7 +55,7 @@ export default function NotificationsPage() {
           {loading ? (
             <div className="p-4 space-y-3">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="bg-white rounded-xl p-4 animate-pulse">
+                <div key={i} className="bg-white/85 rounded-xl p-4 animate-pulse">
                   <div className="h-3 bg-gray-200 rounded w-1/3 mb-2" />
                   <div className="h-3 bg-gray-100 rounded w-3/4" />
                 </div>

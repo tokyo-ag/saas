@@ -126,7 +126,7 @@ export default function TalksPage() {
                 <button
                   key={connection.id}
                   onClick={() => router.push(`/liff/${tenantId}/talks/${connection.id}`)}
-                  className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3 active:bg-gray-50 text-left"
+                  className="w-full bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3 active:bg-gray-50 text-left"
                 >
                   <div className="w-12 h-12 rounded-full bg-[var(--cp-10)] flex items-center justify-center text-sm font-bold text-[var(--cp)] shrink-0">
                     {(connection.partner.name ?? '未').slice(0, 1)}

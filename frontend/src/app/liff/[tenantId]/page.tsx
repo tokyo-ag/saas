@@ -49,7 +49,7 @@ function EventCard({ event, tenantId }: { event: LiffEvent; tenantId: string }) 
   return (
     <Link
       href={`/liff/${tenantId}/events/${event.id}`}
-      className="block rounded-xl overflow-hidden bg-white active:opacity-70"
+      className="block rounded-xl overflow-hidden bg-white/85 active:opacity-70"
       style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
     >
       <div className="relative" style={{ aspectRatio: '4/5' }}>
@@ -98,7 +98,7 @@ function FavEventRow({ event }: { event: PublicEvent }) {
   return (
     <Link
       href={`/liff/${event.tenantId}/events/${event.id}`}
-      className="flex items-center gap-3 bg-white rounded-xl px-3 py-3 active:opacity-70"
+      className="flex items-center gap-3 bg-white/85 rounded-xl px-3 py-3 active:opacity-70"
       style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)' }}
     >
       <div className="w-14 rounded-lg overflow-hidden shrink-0 aspect-[4/5]">
@@ -140,7 +140,7 @@ function LiffCalendarView({ events, tenantId }: { events: LiffEvent[]; tenantId:
   }
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.07)' }}>
+    <div className="bg-white/85 rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.07)' }}>
       {/* 月ナビ */}
       <div className="flex items-center justify-between px-5 py-3">
         <button onClick={prevMonth} className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 active:bg-gray-200">

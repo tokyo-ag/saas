@@ -38,7 +38,7 @@ function DonePageInner() {
 
       {event && (
         <div className="w-full max-w-sm mt-2 mb-8 space-y-3">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-left space-y-2">
+          <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-5 text-left space-y-2">
             <p className="font-semibold text-gray-900 text-sm">{event.title}</p>
             <p className="text-xs text-gray-500">📅 {formatDate(event.heldAt)}</p>
             <p className="text-xs text-gray-500">📍 {event.location}</p>

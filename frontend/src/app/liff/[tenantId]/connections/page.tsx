@@ -74,7 +74,7 @@ export default function ConnectionsPage() {
               <button
                 key={c.id}
                 onClick={() => router.push(`/liff/${tenantId}/connections/${c.id}`)}
-                className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3 active:bg-gray-50 text-left"
+                className="w-full bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3 active:bg-gray-50 text-left"
               >
                 <div className="w-12 h-12 rounded-full bg-[var(--cp-10)] flex items-center justify-center text-xl shrink-0">👤</div>
                 <div className="flex-1 min-w-0">

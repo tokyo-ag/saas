@@ -111,7 +111,7 @@ export default function QrPage() {
 
           {profile ? (
             <>
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center gap-4">
+              <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center gap-4">
                 <p className="text-sm font-medium text-gray-700">自分のQRコード</p>
                 <div className="p-3 bg-white border border-gray-200 rounded-xl">
                   <QRCode value={profile.id} size={200} />
@@ -119,7 +119,7 @@ export default function QrPage() {
                 <p className="text-xs text-gray-400 text-center">相手にスキャンしてもらおう</p>
               </div>
 
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center justify-between gap-3">
+              <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-800">参加予定イベントを友達に表示</p>
                   <p className="text-xs text-gray-400 mt-0.5">オンにすると友達のイベント一覧にあなたの参加情報が表示されます</p>
