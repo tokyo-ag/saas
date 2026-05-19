@@ -173,67 +173,7 @@ function SkeletonCard() {
   );
 }
 
-function DiscoveryLocked() {
-  useEffect(() => {
-    async function run() {
-      const pending = localStorage.getItem('liff-pending-redirect');
-      const search = window.location.search;
-      // LIFF認証コードがURLにある場合はliff.init()で処理（しないとトークンが保存されない）
-      // liff.init()が自動リダイレクトした場合、以降のコードは実行されない
-      if (search.includes('code=') || search.includes('liff.state=') || pending) {
-        await initLiff();
-      }
-      // liff.init()が自動リダイレクトしなかった場合のフォールバック
-      if (pending) {
-        localStorage.removeItem('liff-pending-redirect');
-        window.location.replace(pending);
-      }
-    }
-    run();
-  }, []);
-
-  return (
-    <div className="min-h-screen bg-[#F5F5F5] flex flex-col">
-      <div className="bg-white border-b border-gray-100 px-4 pt-12 pb-3 sm:pt-4">
-        <h1 className="text-[20px] font-bold text-gray-900 tracking-tight">COMIU</h1>
-        <p className="text-[11px] text-gray-500 mt-0.5">東京でNO.1のコミュニティサイトを目指して</p>
-      </div>
-      <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-4">
-        <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-        </div>
-        <div>
-          <p className="text-lg font-bold text-gray-800">まもなくオープン</p>
-          <p className="text-sm text-gray-400 mt-1">現在サービス準備中です。<br />もうしばらくお待ちください。</p>
-        </div>
-        <button
-          onClick={() => window.history.back()}
-          className="bg-[#06C755] text-white font-bold text-sm px-8 py-3 rounded-full w-full"
-        >
-          ← 前のページに戻る
-        </button>
-        <div className="rounded-2xl overflow-hidden w-full" style={{ background: 'linear-gradient(135deg, #06C755 0%, #047a35 100%)' }}>
-          <div className="px-5 py-5">
-            <p className="text-white font-bold text-[15px]">主催者の方はこちら</p>
-            <p className="text-white/80 text-[12px] mt-1">先行登録受付中</p>
-            <div className="flex items-center gap-3 mt-4">
-              <Link href="/register" className="bg-white text-[#06C755] font-bold text-sm px-5 py-2.5 rounded-full">
-                無料で始める →
-              </Link>
-              <Link href="/login" className="text-white/70 text-xs underline">ログイン</Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function TopPage() {
-  if (process.env.NEXT_PUBLIC_DISCOVERY_LOCKED === 'true') return <DiscoveryLocked />;
   const [events, setEvents] = useState<PublicEvent[]>([]);
   const [tenants, setTenants] = useState<PublicTenant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -241,9 +181,7 @@ export default function TopPage() {
   const [query, setQuery] = useState('');
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [favTenants, setFavTenants] = useState<Set<string>>(new Set());
-  const [activeTag, setActiveTag] = useState<string | null>(null);
 
-  const TAGS = ['初心者歓迎', '20代限定', '30代限定', '男女歓迎', '社会人', '学生歓迎', '18～22歳大学生・短大専門・社会人'];
 
   // LINE認証後のリダイレクト
   useEffect(() => {
@@ -303,12 +241,10 @@ export default function TopPage() {
     });
   }, []);
 
-  const filteredEvents = activeTag ? events.filter((ev) => ev.tags?.includes(activeTag)) : events;
-
   // 今月の注目（月間いいね数上位）
-  const hotEvents = [...filteredEvents].sort((a, b) => b.monthlyLikeCount - a.monthlyLikeCount).slice(0, 10);
+  const hotEvents = [...events].sort((a, b) => b.monthlyLikeCount - a.monthlyLikeCount).slice(0, 10);
   // 日時順
-  const byDate = [...filteredEvents].sort((a, b) => new Date(a.heldAt).getTime() - new Date(b.heldAt).getTime());
+  const byDate = [...events].sort((a, b) => new Date(a.heldAt).getTime() - new Date(b.heldAt).getTime());
   // 検索
   const searchResults = query.trim()
     ? events.filter((ev) =>
@@ -396,25 +332,6 @@ export default function TopPage() {
                 <span>{cat.emoji}</span>
                 <span>{cat.label}</span>
               </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* タグフィルター */}
-        <div className="pt-2 pb-1">
-          <div className="flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-hide">
-            {TAGS.map((tag) => (
-              <button
-                key={tag}
-                onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-colors ${
-                  activeTag === tag
-                    ? 'bg-gray-900 text-white border-gray-900'
-                    : 'bg-white text-gray-600 border-gray-200'
-                }`}
-              >
-                {tag}
-              </button>
             ))}
           </div>
         </div>

@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { api, formatDate, downloadWithAuth, API_URL, Event, Reservation, AdminEventReview } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { EventBadge, ReservationBadge } from '@/components/ui/StatusBadge';
@@ -19,18 +18,11 @@ type EventReservation = Reservation & {
 };
 
 export default function EventDetailPage() {
-  const router = useRouter();
   const { eventId } = useParams<{ eventId: string }>();
   const [event, setEvent] = useState<Event | null>(null);
   const [reservations, setReservations] = useState<EventReservation[]>([]);
   const [reviews, setReviews] = useState<AdminEventReview[]>([]);
   const [loading, setLoading] = useState(true);
-  const [reminding, setReminding] = useState(false);
-  const [showMessage, setShowMessage] = useState(false);
-  const [msgContent, setMsgContent] = useState('');
-  const [msgSendLine, setMsgSendLine] = useState(true);
-  const [msgSendApp, setMsgSendApp] = useState(true);
-  const [sending, setSending] = useState(false);
 
   async function load() {
     const [eventData, reservationList, reviewList] = await Promise.all([
@@ -57,70 +49,6 @@ export default function EventDetailPage() {
     }
   }
 
-  async function handleDuplicate() {
-    if (!event) return;
-    try {
-      const created = await api.events.create({
-        title: event.title,
-        description: event.description,
-        heldAt: event.heldAt,
-        endAt: event.endAt ?? null,
-        location: event.location,
-        locationUrl: event.locationUrl,
-        capacity: event.capacity ?? null,
-        capacityMale: event.capacityMale ?? null,
-        capacityFemale: event.capacityFemale ?? null,
-        status: 'open',
-        price: event.price,
-        priceMale: event.priceMale ?? null,
-        priceFemale: event.priceFemale ?? null,
-        paymentRequired: event.paymentRequired,
-        paymentTiming: event.paymentTiming,
-        notifyOnReserve: event.notifyOnReserve,
-        notifyOnReserveApp: true,
-        remindEnabled: false,
-        remindApp: false,
-        remindAt: null,
-        imageUrl: event.imageUrl,
-        iconUrl: event.iconUrl,
-        category: event.category ?? null,
-        tags: event.tags ?? [],
-      });
-      router.push(`/admin/events/${created.id}/edit`);
-    } catch (err: any) {
-      alert(err.message ?? '複製に失敗しました');
-    }
-  }
-
-  async function sendRemind() {
-    if (!confirm('リマインドメッセージを送信しますか？')) return;
-    setReminding(true);
-    try {
-      const result = await api.events.remind(eventId) as { sentCount: number };
-      alert(`${result.sentCount}人に送信しました`);
-    } catch {
-      alert('送信に失敗しました');
-    } finally {
-      setReminding(false);
-    }
-  }
-
-  async function handleSendMessage() {
-    if (!msgContent.trim()) return;
-    if (!msgSendLine && !msgSendApp) { alert('送信先を選択してください'); return; }
-    setSending(true);
-    try {
-      const result = await api.events.sendMessage(eventId, { content: msgContent, sendLine: msgSendLine, sendApp: msgSendApp });
-      alert(`送信完了：${result.total}人に送りました`);
-      setShowMessage(false);
-      setMsgContent('');
-    } catch {
-      alert('送信に失敗しました');
-    } finally {
-      setSending(false);
-    }
-  }
-
   async function toggleReview(reviewId: string, isPublished: boolean) {
     try {
       await api.events.updateReview(eventId, reviewId, isPublished);
@@ -135,45 +63,6 @@ export default function EventDetailPage() {
 
   return (
     <>
-    {showMessage && (
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-4 pb-4 sm:pb-0" onClick={() => setShowMessage(false)}>
-        <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-          <div className="mb-4">
-            <h3 className="text-base font-bold text-gray-900">参加者へのメッセージ</h3>
-            <p className="mt-0.5 text-xs text-gray-400">予約確定済みの {reservations.filter(r => ['reserved','attended','waiting_payment'].includes(r.status)).length} 人に送信されます</p>
-          </div>
-          <textarea
-            className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755] resize-none"
-            rows={4}
-            placeholder="例：本日の集合場所が変更になりました。○○公園の正面入口にお集まりください。"
-            value={msgContent}
-            onChange={(e) => setMsgContent(e.target.value)}
-          />
-          <div className="mt-3 flex gap-4">
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
-              <input type="checkbox" checked={msgSendLine} onChange={(e) => setMsgSendLine(e.target.checked)} className="rounded accent-[#06C755]" />
-              LINEで送る
-            </label>
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
-              <input type="checkbox" checked={msgSendApp} onChange={(e) => setMsgSendApp(e.target.checked)} className="rounded accent-[#06C755]" />
-              アプリ内通知
-            </label>
-          </div>
-          <div className="mt-4 flex gap-2">
-            <button onClick={() => setShowMessage(false)} className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-600">
-              キャンセル
-            </button>
-            <button
-              onClick={handleSendMessage}
-              disabled={sending || !msgContent.trim()}
-              className="flex-1 rounded-xl bg-[#06C755] py-2.5 text-sm font-bold text-white hover:bg-[#05a847] disabled:opacity-50"
-            >
-              {sending ? '送信中...' : '送信する'}
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
     <div className="px-4 py-4 md:px-6 md:py-6">
       {event.imageUrl && (
         <img
@@ -201,46 +90,14 @@ export default function EventDetailPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-          <button
-            onClick={() => downloadWithAuth(`${API_URL}/api/admin/events/${eventId}/export`, `event-${eventId}.csv`).catch(() => alert('ダウンロードに失敗しました'))}
-            className="min-h-11 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-          >
-            CSV
-          </button>
-          <button
-            onClick={sendRemind}
-            disabled={reminding}
-            className="min-h-11 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
-          >
-            {reminding ? '送信中...' : 'リマインド'}
-          </button>
-          <button
-            onClick={() => setShowMessage(true)}
-            className="min-h-11 col-span-2 sm:col-span-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 flex items-center justify-center gap-1.5"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-            </svg>
-            メッセージ送信
-          </button>
-          <button
-            onClick={handleDuplicate}
-            className="min-h-11 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-          >
-            複製
-          </button>
+        <div>
           <Link
             href={`/admin/events/${eventId}/edit`}
-            className="flex min-h-11 col-span-2 sm:col-span-1 items-center justify-center rounded-lg bg-[#06C755] px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-[#05a847]"
+            className="flex min-h-11 w-full items-center justify-center rounded-lg bg-[#06C755] px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-[#05a847] sm:w-auto sm:px-6"
           >
             編集
           </Link>
         </div>
-
-        {event.remindedAt && (
-          <p className="text-xs text-gray-400">最終リマインド送信: {formatDate(event.remindedAt)}</p>
-        )}
       </div>
 
       <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -401,6 +258,19 @@ export default function EventDetailPage() {
             ))}
           </div>
         )}
+      </section>
+      <section className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
+        <h2 className="text-sm font-semibold text-gray-800">データエクスポート</h2>
+        <p className="mt-1 text-xs leading-relaxed text-gray-400">参加者一覧・予約状況をCSVファイルでダウンロードできます。名簿管理や出欠確認にご活用ください。</p>
+        <button
+          onClick={() => downloadWithAuth(`${API_URL}/api/admin/events/${eventId}/export`, `event-${eventId}.csv`).catch(() => alert('ダウンロードに失敗しました'))}
+          className="mt-3 flex min-h-10 items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+        >
+          <svg className="h-4 w-4 shrink-0 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          CSVダウンロード
+        </button>
       </section>
     </div>
     </>

@@ -2,6 +2,27 @@
 
 import type { ReactNode, FormEvent } from 'react';
 
+const URL_RE = /(https?:\/\/[^\s　-鿿！-｠]+)/g;
+
+function renderWithLinks(content: string, isMine: boolean) {
+  const parts = content.split(URL_RE);
+  return parts.map((part, i) =>
+    URL_RE.test(part) ? (
+      <a
+        key={i}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`underline break-all ${isMine ? 'text-white/90' : 'text-[#06C755]'}`}
+      >
+        {part}
+      </a>
+    ) : (
+      <span key={i}>{part}</span>
+    )
+  );
+}
+
 interface ChatBubbleProps {
   content: string;
   time: string;
@@ -19,7 +40,7 @@ export function ChatBubble({ content, time, isMine, avatar }: ChatBubbleProps) {
             ? 'bg-[#06C755] text-white rounded-br-sm'
             : 'bg-white border border-gray-100 text-gray-900 rounded-bl-sm shadow-sm'
         }`}>
-          {content}
+          {renderWithLinks(content, isMine)}
         </div>
         <span className="text-xs text-gray-400 px-1">{time}</span>
       </div>
