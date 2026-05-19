@@ -30,7 +30,7 @@ export class ReservationsService {
       if (tenant?.lineChannelAccessToken) {
         await this.lineMessaging.sendCancelNotifyToOrganizer(
           tenant.lineChannelAccessToken,
-          '',
+          tenant.organizerLineUserId ?? '',
           reservation.member.name ?? '参加者',
           reservation.event.title,
         );
