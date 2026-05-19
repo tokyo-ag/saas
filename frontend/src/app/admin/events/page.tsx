@@ -150,11 +150,16 @@ export default function EventsPage() {
 
 
   const now = new Date();
-  const filtered = events.filter((event) => {
-    if (tab === 'upcoming') return new Date(event.heldAt) > now && event.status !== 'draft';
-    if (tab === 'past') return new Date(event.heldAt) <= now || event.status === 'closed';
-    return event.status === 'draft';
-  });
+  const filtered = events
+    .filter((event) => {
+      if (tab === 'upcoming') return new Date(event.heldAt) > now && event.status !== 'draft';
+      if (tab === 'past') return new Date(event.heldAt) <= now || event.status === 'closed';
+      return event.status === 'draft';
+    })
+    .sort((a, b) => {
+      const diff = new Date(a.heldAt).getTime() - new Date(b.heldAt).getTime();
+      return tab === 'past' ? -diff : diff;
+    });
 
   async function handleDuplicate(id: string) {
     try {
