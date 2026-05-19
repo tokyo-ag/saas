@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, formatDate, API_URL } from '@/lib/api';
 import type { Event, Tenant } from '@/lib/api';
-import { EventStatusBadge } from '@/components/ui/StatusBadge';
 import {
   Area,
   AreaChart,
@@ -232,46 +231,6 @@ export default function DashboardPage() {
         )}
       </section>
 
-      <section>
-        <h2 className="mb-3 text-base font-semibold text-gray-800">直近のイベント</h2>
-        {loading ? (
-          <div className="space-y-3">{[1, 2].map((item) => <div key={item} className="h-16 animate-pulse rounded-xl bg-gray-100" />)}</div>
-        ) : upcoming.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center">
-            <p className="mb-4 text-sm text-gray-500">まだ開催予定のイベントがありません。</p>
-            <Link href="/admin/events/new" className="text-sm font-medium text-[#06C755] hover:underline">イベントを作成する</Link>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {upcoming.map((event) => (
-              <article key={event.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                <div className="flex items-start gap-3">
-                  {event.iconUrl && (
-                    <img
-                      src={event.iconUrl.startsWith('/') ? `${API_URL}${event.iconUrl}` : event.iconUrl}
-                      className="h-10 w-10 shrink-0 rounded-full object-cover"
-                      alt=""
-                    />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-1 flex flex-wrap items-center gap-2">
-                      <EventStatusBadge status={event.status} />
-                      <span className="break-words text-sm font-semibold text-gray-900">{event.title}</span>
-                    </div>
-                    <p className="text-xs leading-relaxed text-gray-500">{formatDate(event.heldAt)} ・ {event.location}</p>
-                    <p className="mt-2 text-xs text-gray-600">
-                      {event.reservedCount ?? 0}{event.capacity ? ` / ${event.capacity}` : ''}人
-                    </p>
-                  </div>
-                  <Link href={`/admin/events/${event.id}`} className="shrink-0 text-sm font-medium text-[#06C755] hover:underline">
-                    詳細
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
 
       {isFree && (
         <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
