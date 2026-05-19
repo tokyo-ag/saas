@@ -10,13 +10,6 @@ import { initLiff, getLiffUserId } from '@/lib/liff';
 import LiffBottomNav from '@/components/liff/LiffBottomNav';
 import { EventCardSkeleton } from '@/components/liff/EventCardSkeleton';
 
-const FAV_KEY = 'fav_tenants';
-
-function loadFavs(): Set<string> {
-  if (typeof window === 'undefined') return new Set();
-  try { return new Set(JSON.parse(localStorage.getItem(FAV_KEY) ?? '[]')); } catch { return new Set(); }
-}
-
 function AvatarRow({ count, friends }: { count: number; friends?: { id: string; name: string | null }[] }) {
   const friendCount = friends?.length ?? 0;
   const total = count;
@@ -224,7 +217,7 @@ export default function LiffTopPage() {
   const [tenant, setTenant] = useState<LiffTenant | null>(null);
   const [events, setEvents] = useState<LiffEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [favEvents, setFavEvents] = useState<PublicEvent[]>([]);
+  const [otherEvents, setOtherEvents] = useState<PublicEvent[]>([]);
 
   useEffect(() => {
     async function init() {
@@ -235,15 +228,13 @@ export default function LiffTopPage() {
       setEvents(eventsNoFriend);
       setLoading(false);
 
-      // お気に入り団体のイベントを取得
-      const favs = loadFavs();
-      if (favs.size > 0) {
-        const allPublic = await api.public.events().catch(() => []);
-        const filtered = allPublic
-          .filter((e) => favs.has(e.tenantId) && e.tenantId !== tenantId)
-          .sort((a, b) => new Date(a.heldAt).getTime() - new Date(b.heldAt).getTime());
-        setFavEvents(filtered);
-      }
+      // 他の団体のイベントを取得
+      const allPublic = await api.public.events().catch(() => []);
+      const others = allPublic
+        .filter((e) => e.tenantId !== tenantId)
+        .sort((a, b) => new Date(a.heldAt).getTime() - new Date(b.heldAt).getTime())
+        .slice(0, 10);
+      setOtherEvents(others);
 
       const ok = await initLiff();
       const uid = ok ? ((await getLiffUserId()) ?? '') : `demo-${tenantId}`;
@@ -294,14 +285,14 @@ export default function LiffTopPage() {
               {events.map((ev) => <EventCard key={ev.id} event={ev} tenantId={tenantId} />)}
             </div>
           )}
-          {/* お気に入り団体のイベント */}
-          {favEvents.length > 0 && (
+          {/* 他の団体のイベント */}
+          {otherEvents.length > 0 && (
             <div className="mt-6">
               <p className="text-[13px] font-bold text-gray-700 px-1 mb-3">
-                ⭐ お気に入り団体のイベント
+                🔍 他の団体のイベント
               </p>
               <div className="space-y-2">
-                {favEvents.map((ev) => <FavEventRow key={ev.id} event={ev} />)}
+                {otherEvents.map((ev) => <FavEventRow key={ev.id} event={ev} />)}
               </div>
             </div>
           )}
