@@ -91,6 +91,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
   const [isFreePlan, setIsFreePlan] = useState(false);
   const [isPro, setIsPro] = useState(false);
   const [tenant, setTenant] = useState<Tenant | null>(null);
+  const isLineConfigured = !!tenant?.lineConfigured;
 
   const [form, setForm] = useState<EventFormData>({
     title: initial?.title ?? '',
@@ -279,8 +280,6 @@ export default function EventForm({ initial }: { initial?: Event }) {
       setError(err.message);
       setSubmitting(false);
     }
-  }
-
   }
 
   const showStripe = form.paymentTiming !== 'onsite' && (
@@ -472,26 +471,35 @@ export default function EventForm({ initial }: { initial?: Event }) {
 
       <Section title="通知">
         <Check label="予約完了時にTalkに詳細を通知" checked={form.notifyOnReserveApp} onChange={(checked) => set('notifyOnReserveApp', checked)} />
-        <div className="flex items-center gap-2">
-          <Check
-            label="予約完了時にLINEで送る"
-            checked={form.notifyOnReserve}
-            disabled={!isPro || isLineNotConfigured}
-            onChange={(checked) => set('notifyOnReserve', checked)}
-          />
-          {!isPro && <span className="text-[10px] rounded bg-gray-800 px-1.5 py-0.5 text-white">PROのみ</span>}
-        </div>
+        {isLineConfigured && (
+          <div className="flex items-center gap-2">
+            <Check
+              label="予約完了時にLINEで送る"
+              checked={form.notifyOnReserve}
+              disabled={!isPro}
+              onChange={(checked) => set('notifyOnReserve', checked)}
+            />
+            {!isPro && <span className="text-[10px] rounded bg-gray-800 px-1.5 py-0.5 text-white">PROのみ</span>}
+          </div>
+        )}
         <div className="pt-2">
           <p className={`mb-2 text-sm font-medium ${isFreePlan ? 'text-gray-400' : 'text-gray-700'}`}>
             リマインド通知
             {isFreePlan && <span className="ml-2 text-xs text-[#06C755]">スタンダード以上</span>}
           </p>
-          <div className="flex items-center gap-2">
-            <Check label="LINEで送る" checked={form.remindEnabled} disabled={!isPro || isLineNotConfigured} onChange={(checked) => set('remindEnabled', checked)} />
-            {!isPro && <span className="text-[10px] rounded bg-gray-800 px-1.5 py-0.5 text-white">PROのみ</span>}
-          </div>
+          {isLineConfigured && (
+            <div className="flex items-center gap-2">
+              <Check label="LINEで送る" checked={form.remindEnabled} disabled={!isPro} onChange={(checked) => set('remindEnabled', checked)} />
+              {!isPro && <span className="text-[10px] rounded bg-gray-800 px-1.5 py-0.5 text-white">PROのみ</span>}
+            </div>
+          )}
           <Check label="アプリ内メッセージで送る" checked={form.remindApp} disabled={isFreePlan} onChange={(checked) => set('remindApp', checked)} />
         </div>
+        {!isLineConfigured && (
+          <p className="text-xs text-gray-400">
+            <Link href="/admin/settings/line" className="text-[#06C755] underline">LINE連携</Link> を設定するとLINEでの通知が使えます。
+          </p>
+        )}
       </Section>
 
       {(form.remindEnabled || form.remindApp) && (
