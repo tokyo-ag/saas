@@ -140,6 +140,15 @@ export default function EventsPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
   const [showPreview, setShowPreview] = useState(false);
   const [tenantId, setTenantId] = useState<string>('');
+  const [tenantCode, setTenantCode] = useState<string>('');
+  const [copied, setCopied] = useState<string | null>(null);
+
+  function copyLink(text: string, key: string) {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(key);
+      setTimeout(() => setCopied(null), 2000);
+    });
+  }
 
   function load() {
     setLoading(true);
@@ -153,6 +162,7 @@ export default function EventsPage() {
       setViewMode(v);
       setSavedViewMode(v);
       setTenantId(t.id);
+      setTenantCode(t.code ?? '');
     }).catch(() => {});
   }, []);
 
@@ -247,6 +257,23 @@ export default function EventsPage() {
               />
             </div>
           </div>
+          {/* 招待リンク */}
+          {tenantId && (
+            <div className="mt-4 w-[375px] rounded-xl bg-white/10 px-4 py-3 text-sm text-white">
+              <p className="mb-1.5 text-xs text-white/60">参加者への招待リンク</p>
+              <div className="flex items-center gap-2">
+                <span className="flex-1 truncate rounded-lg bg-white/10 px-3 py-1.5 text-xs font-mono">
+                  {typeof window !== 'undefined' ? `${window.location.origin}/liff/${tenantId}` : ''}
+                </span>
+                <button
+                  onClick={() => copyLink(`${window.location.origin}/liff/${tenantId}`, 'preview')}
+                  className="shrink-0 rounded-lg bg-[#06C755] px-3 py-1.5 text-xs font-bold hover:bg-[#05a847]"
+                >
+                  {copied === 'preview' ? 'コピー済み ✓' : 'コピー'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     )}
@@ -361,6 +388,14 @@ export default function EventsPage() {
                   <Link href={`/admin/events/${event.id}/edit`} className="rounded-lg border border-gray-200 px-3 py-2 text-center text-xs font-bold text-gray-600">編集</Link>
                   <button onClick={() => handleDuplicate(event.id)} className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold text-gray-600">複製</button>
                   <button onClick={() => handleDelete(event.id)} className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-500">削除</button>
+                  {tenantCode && (
+                    <button
+                      onClick={() => copyLink(`${typeof window !== 'undefined' ? window.location.origin : ''}/e/${tenantCode}/${event.id}`, event.id)}
+                      className="col-span-2 md:col-span-1 rounded-lg border border-[#06C755]/40 bg-[#06C755]/5 px-3 py-2 text-xs font-bold text-[#06C755] hover:bg-[#06C755]/10"
+                    >
+                      {copied === event.id ? '招待リンクをコピー済み ✓' : '招待リンクをコピー'}
+                    </button>
+                  )}
                 </div>
               </div>
             </article>
