@@ -381,10 +381,10 @@ export default function EventForm({ initial }: { initial?: Event }) {
       <Section title="日時と場所">
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="開始日時" required>
-            <input required type="datetime-local" value={form.heldAt} onChange={(e) => set('heldAt', e.target.value)} className={inputClass} />
+            <input required type="datetime-local" step={600} value={form.heldAt} onChange={(e) => set('heldAt', e.target.value)} className={inputClass} />
           </Field>
           <Field label="終了日時">
-            <input type="datetime-local" value={form.endAt} onChange={(e) => set('endAt', e.target.value)} className={inputClass} />
+            <input type="datetime-local" step={600} value={form.endAt} onChange={(e) => set('endAt', e.target.value)} className={inputClass} />
           </Field>
         </div>
         <Field label="場所名" required>
@@ -447,18 +447,15 @@ export default function EventForm({ initial }: { initial?: Event }) {
         <div>
           <p className="mb-2 text-xs text-gray-500">支払いタイミング</p>
           <div className="flex flex-wrap gap-3">
-            {([['onsite', '当日払い'], ['prepay', '事前決済'], ['both', 'どちらでも可']] as const).map(([val, label]) => {
-              const restricted = (val === 'prepay' || val === 'both') && !isPro;
-              return (
-                <label key={val} className={`flex items-center gap-1.5 text-sm ${restricted ? 'cursor-not-allowed text-gray-400' : 'cursor-pointer text-gray-700'}`}>
-                  <input type="radio" checked={form.paymentTiming === val} disabled={restricted} onChange={() => set('paymentTiming', val)} className="accent-[#06C755]" />
-                  {label}
-                </label>
-              );
-            })}
+            {([['onsite', '当日払い'], ['prepay', '事前決済'], ['both', 'どちらでも可']] as const).map(([val, label]) => (
+              <label key={val} className="flex items-center gap-1.5 text-sm cursor-pointer text-gray-700">
+                <input type="radio" checked={form.paymentTiming === val} onChange={() => set('paymentTiming', val)} className="accent-[#06C755]" />
+                {label}
+              </label>
+            ))}
           </div>
-          {!isPro && (
-            <p className="mt-2 text-xs text-gray-400">事前決済はPRO契約のみ設定可能です。</p>
+          {(form.paymentTiming === 'prepay' || form.paymentTiming === 'both') && !showStripe && (
+            <p className="mt-2 text-xs text-gray-400">事前決済を使用するにはStripe連携が必要です。参加者がオンラインで事前支払いを行います。</p>
           )}
           {showStripe && (
             <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
@@ -511,7 +508,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
             ]}
           />
           {form.remindPreset === 'custom' && (
-            <input type="datetime-local" value={form.remindAt} onChange={(e) => set('remindAt', e.target.value)} className={`${inputClass} max-w-xs`} />
+            <input type="datetime-local" step={600} value={form.remindAt} onChange={(e) => set('remindAt', e.target.value)} className={`${inputClass} max-w-xs`} />
           )}
         </div>
       )}
