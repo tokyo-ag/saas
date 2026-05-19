@@ -41,6 +41,14 @@ export default function SettingsPage() {
   const [syncing, setSyncing] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  function copyInviteLink(url: string) {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   useEffect(() => {
     api.tenant.get().then((tenantData) => {
@@ -123,6 +131,25 @@ export default function SettingsPage() {
             <p className="mt-3 text-xs text-gray-500">
               先に <Link href="/admin/settings/line" className="font-medium text-[#06C755] underline">LINE連携</Link> を設定してください。
             </p>
+          )}
+        </section>
+
+        <section className="mb-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
+          <p className="mb-2 text-sm font-medium text-gray-700">参加者招待リンク</p>
+          <p className="mb-3 text-xs text-gray-500">参加者がイベント一覧を見たり予約するページのURLです。</p>
+          {tenant.id && (
+            <div className="flex items-center gap-2">
+              <span className="flex-1 truncate rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-xs font-mono text-gray-600">
+                {typeof window !== 'undefined' ? `${window.location.origin}/liff/${tenant.id}` : `https://comiu.vercel.app/liff/${tenant.id}`}
+              </span>
+              <button
+                type="button"
+                onClick={() => copyInviteLink(typeof window !== 'undefined' ? `${window.location.origin}/liff/${tenant.id}` : '')}
+                className="shrink-0 rounded-lg bg-[#06C755] px-4 py-2 text-xs font-bold text-white hover:bg-[#05a847]"
+              >
+                {copied ? 'コピー済み ✓' : 'コピー'}
+              </button>
+            </div>
           )}
         </section>
 
