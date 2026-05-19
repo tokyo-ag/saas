@@ -1,18 +1,16 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { setToken } from '@/lib/auth';
 
 export default function ImpersonatePage() {
   const router = useRouter();
-  const params = useSearchParams();
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
     const token = params.get('token');
-    if (token) {
-      setToken(token);
-    }
+    if (token) setToken(token);
     router.replace('/admin');
   }, []);
 
