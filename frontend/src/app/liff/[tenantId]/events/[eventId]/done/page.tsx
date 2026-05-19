@@ -34,7 +34,7 @@ function DonePageInner() {
       <h1 className="text-xl font-bold text-gray-900 mb-2">
         {isWaitlist ? `キャンセル待ち\n${order}番目に登録しました` : 'ご予約ありがとうございます！'}
       </h1>
-      {!isWaitlist && <p className="text-sm text-gray-500 mb-6">予約確認メッセージをLINEで送りました</p>}
+      {!isWaitlist && <p className="text-sm text-gray-500 mb-6">予約内容はホーム画面の通知から確認できます</p>}
 
       {event && (
         <div className="w-full max-w-sm mt-2 mb-8 space-y-3">

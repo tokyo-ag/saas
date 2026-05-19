@@ -99,7 +99,7 @@ model Event {
   paymentRequired Boolean     @default(false) @map("payment_required")
   paymentTiming   String      @default("onsite") @map("payment_timing")
   notifyOnReserve    Boolean     @default(true) @map("notify_on_reserve")
-  notifyOnReserveApp Boolean     @default(false) @map("notify_on_reserve_app")
+  notifyOnReserveApp Boolean     @default(true) @map("notify_on_reserve_app")
   remindEnabled      Boolean     @default(false) @map("remind_enabled")
   remindApp          Boolean     @default(false) @map("remind_app")
   remindAt        DateTime?   @map("remind_at")
