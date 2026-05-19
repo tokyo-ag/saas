@@ -144,13 +144,13 @@ function ReservePageInner() {
     }
   }
 
-  const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--cp)] focus:border-transparent';
+  const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#06C755] focus:border-transparent';
 
   // ── ローディング ──
   if (authStatus === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[var(--cp)] text-sm">読み込み中...</div>
+        <div className="text-[#06C755] text-sm">読み込み中...</div>
       </div>
     );
   }
@@ -158,14 +158,14 @@ function ReservePageInner() {
   // ── 認証エラー（リダイレクトは一切しない・ループ防止） ──
   if (authStatus === 'error') {
     return (
-      <div className="min-h-screen bg-[var(--cp-20)] flex flex-col items-center justify-center px-6 text-center gap-5">
+      <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center gap-5">
         <p className="text-sm text-gray-500">認証に失敗しました。もう一度お試しください。</p>
         {authError && (
           <p className="text-xs text-red-400 bg-red-50 px-3 py-2 rounded-lg font-mono break-all">{authError}</p>
         )}
         <button
           onClick={() => window.location.reload()}
-          className="bg-[var(--cp)] text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:bg-[var(--cp-h)]"
+          className="bg-[#06C755] text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:bg-[#05a847]"
         >
           再試行する
         </button>
@@ -179,8 +179,8 @@ function ReservePageInner() {
       ? `https://line.me/R/ti/p/@${tenant.lineChannelId}`
       : null;
     return (
-      <div className="min-h-screen bg-[var(--cp-20)] flex flex-col items-center justify-center px-6 text-center gap-6">
-        <div className="w-20 h-20 rounded-full bg-[var(--cp-10)] flex items-center justify-center">
+      <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center gap-6">
+        <div className="w-20 h-20 rounded-full bg-[[#06C755]/10] flex items-center justify-center">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
             <path d="M12 2C6.48 2 2 6.03 2 11c0 3.13 1.68 5.9 4.28 7.54L5.5 22l3.78-1.97C10.16 20.65 11.07 21 12 21c5.52 0 10-4.03 10-9S17.52 2 12 2z" fill="currentColor"/>
           </svg>
@@ -196,7 +196,7 @@ function ReservePageInner() {
             href={addFriendUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-[var(--cp)] text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:bg-[var(--cp-h)]"
+            className="bg-[#06C755] text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:bg-[#05a847]"
           >
             友だち追加する
           </a>
@@ -212,8 +212,8 @@ function ReservePageInner() {
   const hasProfile = profile && profile.name && profile.grade && profile.gender;
 
   return (
-    <div className="min-h-screen bg-[var(--cp-20)]">
-      <div className="bg-[var(--cp)] text-white px-4 py-4 flex items-center gap-3">
+    <div className="min-h-screen bg-[#F5F5F5]">
+      <div className="bg-[#06C755] text-white px-4 py-4 flex items-center gap-3">
         <button onClick={() => router.push(`/liff/${tenantId}/events/${eventId}`)} className="text-white text-xl leading-none">‹</button>
         <h1 className="text-base font-bold">{isWaitlist ? 'キャンセル待ち登録' : '予約確認'}</h1>
       </div>
@@ -222,7 +222,7 @@ function ReservePageInner() {
         {event && (
           <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-4">
             <p className="font-semibold text-gray-900 text-sm">{event.title}</p>
-            <p className="text-xs text-[var(--cp)] mt-1">{event.location}</p>
+            <p className="text-xs text-[#06C755] mt-1">{event.location}</p>
           </div>
         )}
 
@@ -249,7 +249,7 @@ function ReservePageInner() {
               <button
                 type="button"
                 onClick={() => router.push(`/liff/${tenantId}/profile/edit`)}
-                className="text-xs text-[var(--cp)] hover:underline pt-1"
+                className="text-xs text-[#06C755] hover:underline pt-1"
               >
                 情報を変更する →
               </button>
@@ -258,7 +258,7 @@ function ReservePageInner() {
             <button
               onClick={() => submit()}
               disabled={submitting}
-              className="w-full bg-[var(--cp)] text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[var(--cp-h)] transition-colors shadow-sm"
+              className="w-full bg-[#06C755] text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[#05a847] transition-colors shadow-sm"
             >
               {submitting ? '送信中...' : isWaitlist ? 'キャンセル待ちに登録する' : '予約を確定する'}
             </button>
@@ -290,7 +290,7 @@ function ReservePageInner() {
                 <div className="flex gap-4">
                   {GENDERS.map((g) => (
                     <label key={g} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
-                      <input type="radio" name="gender" value={g} required checked={gender === g} onChange={() => setGender(g)} className="accent-[var(--cp)]" />
+                      <input type="radio" name="gender" value={g} required checked={gender === g} onChange={() => setGender(g)} className="accent-[#06C755]" />
                       {g}
                     </label>
                   ))}
@@ -300,7 +300,7 @@ function ReservePageInner() {
 
             <button
               type="submit" disabled={submitting}
-              className="w-full bg-[var(--cp)] text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[var(--cp-h)] transition-colors shadow-sm"
+              className="w-full bg-[#06C755] text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[#05a847] transition-colors shadow-sm"
             >
               {submitting ? '送信中...' : isWaitlist ? 'キャンセル待ちに登録する' : '予約を確定する'}
             </button>
@@ -315,7 +315,7 @@ export default function ReservePage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[var(--cp)] text-sm">読み込み中...</div>
+        <div className="text-[#06C755] text-sm">読み込み中...</div>
       </div>
     }>
       <ReservePageInner />

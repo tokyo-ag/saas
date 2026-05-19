@@ -52,12 +52,12 @@ export default function ConnectPage() {
     }
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-[var(--cp)] text-sm">読み込み中...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-[#06C755] text-sm">読み込み中...</div>;
 
   if (done) {
     return (
-      <div className="min-h-screen bg-[var(--cp-20)] flex flex-col items-center justify-center px-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-[var(--cp-10)] flex items-center justify-center text-4xl mb-5">
+      <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center">
+        <div className="w-20 h-20 rounded-full bg-[[#06C755]/10] flex items-center justify-center text-4xl mb-5">
           {alreadyConnected ? '👋' : '🎉'}
         </div>
         <h1 className="text-xl font-bold text-gray-900 mb-2">
@@ -66,7 +66,7 @@ export default function ConnectPage() {
         <p className="text-sm text-gray-500 mb-8">メッセージを送ってみよう</p>
         <button
           onClick={() => router.push(`/liff/${tenantId}/talks/${connectionId}`)}
-          className="w-full max-w-sm bg-[var(--cp)] text-white py-4 rounded-2xl font-bold text-base active:bg-[var(--cp-h)] shadow-sm"
+          className="w-full max-w-sm bg-[#06C755] text-white py-4 rounded-2xl font-bold text-base active:bg-[#05a847] shadow-sm"
         >
           チャットを開く
         </button>
@@ -81,14 +81,14 @@ export default function ConnectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--cp-20)]">
-      <div className="bg-[var(--cp)] text-white px-4 py-4 flex items-center gap-3">
+    <div className="min-h-screen bg-[#F5F5F5]">
+      <div className="bg-[#06C755] text-white px-4 py-4 flex items-center gap-3">
         <button onClick={() => router.push(`/liff/${tenantId}/qr`)} className="text-white text-xl leading-none p-1">‹</button>
         <h1 className="text-base font-bold">繋がりの確認</h1>
       </div>
 
       <div className="px-4 py-8 flex flex-col items-center text-center">
-        <div className="w-20 h-20 rounded-full bg-[var(--cp-10)] flex items-center justify-center text-4xl mb-5">👤</div>
+        <div className="w-20 h-20 rounded-full bg-[[#06C755]/10] flex items-center justify-center text-4xl mb-5">👤</div>
 
         {target ? (
           <>
@@ -111,7 +111,7 @@ export default function ConnectPage() {
             <button
               onClick={handleConnect}
               disabled={connecting || !lineUserId}
-              className="w-full bg-[var(--cp)] text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[var(--cp-h)] shadow-sm"
+              className="w-full bg-[#06C755] text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[#05a847] shadow-sm"
             >
               {connecting ? '繋がり中...' : `${target.name ?? 'この人'}と繋がる`}
             </button>

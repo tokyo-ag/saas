@@ -52,8 +52,8 @@ export default function TalksPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-[var(--cp-20)] pb-24">
-        <div className="sticky top-0 z-10 bg-[var(--cp-15)]">
+      <div className="min-h-screen bg-[#F5F5F5] pb-24">
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
           <div className="flex items-center justify-between px-4 pt-12 pb-3">
             <h1 className="text-[20px] font-bold text-gray-900 tracking-tight">Talk</h1>
             <Link
@@ -73,12 +73,12 @@ export default function TalksPage() {
           <div className="space-y-2 mb-4">
             <button
               onClick={() => router.push(`/liff/${tenantId}/admin-talk`)}
-              className="w-full bg-[var(--cp-20)] rounded-2xl border border-[var(--cp-20)] p-4 flex items-center gap-3 active:bg-[var(--cp-10)] text-left"
+              className="w-full bg-[[#06C755]/20] rounded-2xl border border-[[#06C755]/20] p-4 flex items-center gap-3 active:bg-[[#06C755]/10] text-left"
             >
               {organizerPicture ? (
                 <img src={organizerPicture} className="w-12 h-12 rounded-full object-cover shrink-0" alt="" />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-[var(--cp-20)] flex items-center justify-center text-sm font-bold text-[var(--cp)] shrink-0">
+                <div className="w-12 h-12 rounded-full bg-[[#06C755]/20] flex items-center justify-center text-sm font-bold text-[#06C755] shrink-0">
                   {organizerName.slice(0, 1)}
                 </div>
               )}
@@ -115,7 +115,7 @@ export default function TalksPage() {
               </p>
               <button
                 onClick={() => router.push(`/liff/${tenantId}/qr`)}
-                className="bg-[var(--cp)] text-white text-sm font-semibold px-6 py-2.5 rounded-full active:bg-[var(--cp-h)]"
+                className="bg-[#06C755] text-white text-sm font-semibold px-6 py-2.5 rounded-full active:bg-[#05a847]"
               >
                 QRコードを開く
               </button>
@@ -128,7 +128,7 @@ export default function TalksPage() {
                   onClick={() => router.push(`/liff/${tenantId}/talks/${connection.id}`)}
                   className="w-full bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3 active:bg-gray-50 text-left"
                 >
-                  <div className="w-12 h-12 rounded-full bg-[var(--cp-10)] flex items-center justify-center text-sm font-bold text-[var(--cp)] shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-[[#06C755]/10] flex items-center justify-center text-sm font-bold text-[#06C755] shrink-0">
                     {(connection.partner.name ?? '未').slice(0, 1)}
                   </div>
                   <div className="flex-1 min-w-0">

@@ -74,19 +74,19 @@ export default function AdminTalkPage() {
   const organizerAvatar = organizerPicture ? (
     <img src={organizerPicture} className="w-8 h-8 rounded-full object-cover" alt="" />
   ) : (
-    <div className="w-8 h-8 rounded-full bg-[var(--cp-10)] flex items-center justify-center text-xs font-bold text-[var(--cp)]">
+    <div className="w-8 h-8 rounded-full bg-[[#06C755]/10] flex items-center justify-center text-xs font-bold text-[#06C755]">
       {organizerName.slice(0, 1)}
     </div>
   );
 
   return (
-    <div className="flex flex-col h-screen bg-[var(--cp-20)]">
-      <div className="bg-[var(--cp-15)] px-4 flex items-center gap-3 shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 16px)', paddingBottom: '12px' }}>
+    <div className="flex flex-col h-screen bg-[#F5F5F5]">
+      <div className="bg-white border-b border-gray-100 px-4 flex items-center gap-3 shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 16px)', paddingBottom: '12px' }}>
         <button onClick={() => router.back()} className="text-gray-600 text-xl leading-none p-1">‹</button>
         {organizerPicture ? (
           <img src={organizerPicture} className="w-9 h-9 rounded-full object-cover shrink-0" alt="" />
         ) : (
-          <div className="w-9 h-9 rounded-full bg-[var(--cp-20)] flex items-center justify-center shrink-0 text-sm font-bold text-[var(--cp)]">
+          <div className="w-9 h-9 rounded-full bg-[[#06C755]/20] flex items-center justify-center shrink-0 text-sm font-bold text-[#06C755]">
             {organizerName.slice(0, 1)}
           </div>
         )}
@@ -102,7 +102,7 @@ export default function AdminTalkPage() {
             {organizerPicture ? (
               <img src={organizerPicture} className="w-16 h-16 rounded-full object-cover mb-4" alt="" />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-[var(--cp-10)] flex items-center justify-center mb-4 text-lg font-bold text-[var(--cp)]">
+              <div className="w-16 h-16 rounded-full bg-[[#06C755]/10] flex items-center justify-center mb-4 text-lg font-bold text-[#06C755]">
                 {organizerName.slice(0, 1)}
               </div>
             )}

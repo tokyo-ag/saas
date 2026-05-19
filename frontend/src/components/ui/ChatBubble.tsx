@@ -16,7 +16,7 @@ export function ChatBubble({ content, time, isMine, avatar }: ChatBubbleProps) {
       <div className={`max-w-[72%] flex flex-col gap-0.5 ${isMine ? 'items-end' : 'items-start'}`}>
         <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
           isMine
-            ? 'bg-[var(--cp)] text-white rounded-br-sm'
+            ? 'bg-[#06C755] text-white rounded-br-sm'
             : 'bg-white border border-gray-100 text-gray-900 rounded-bl-sm shadow-sm'
         }`}>
           {content}
@@ -43,12 +43,12 @@ export function ChatInput({ value, onChange, onSubmit, sending, placeholder = 'ã
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="flex-1 border border-gray-200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--cp)] bg-gray-50"
+        className="flex-1 border border-gray-200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755] bg-gray-50"
       />
       <button
         type="submit"
         disabled={!value.trim() || sending}
-        className="w-10 h-10 bg-[var(--cp)] rounded-full flex items-center justify-center disabled:opacity-40 active:bg-[var(--cp-h)] shrink-0 text-white text-lg leading-none"
+        className="w-10 h-10 bg-[#06C755] rounded-full flex items-center justify-center disabled:opacity-40 active:bg-[#05a847] shrink-0 text-white text-lg leading-none"
       >
         â†‘
       </button>

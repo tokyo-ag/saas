@@ -39,8 +39,8 @@ export default function NotificationsPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-[var(--cp-20)] pb-24">
-        <div className="sticky top-0 z-10 bg-[var(--cp-15)]">
+      <div className="min-h-screen bg-[#F5F5F5] pb-24">
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
           <div className="flex items-center justify-between px-4 pt-12 pb-3 sm:pt-4">
             <h1 className="text-[18px] font-bold text-white">通知</h1>
             {unreadCount > 0 && (
@@ -77,12 +77,12 @@ export default function NotificationsPage() {
                   key={n.id}
                   onClick={() => !n.read && handleMarkRead(n.id)}
                   className={`w-full text-left rounded-xl p-4 border transition-colors ${
-                    n.read ? 'bg-white border-gray-100' : 'bg-white border-[var(--cp-30)]'
+                    n.read ? 'bg-white border-gray-100' : 'bg-white border-[[#06C755]/30]'
                   }`}
                   style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
                 >
                   <div className="flex items-start gap-3">
-                    {!n.read && <span className="mt-1.5 w-2 h-2 rounded-full bg-[var(--cp)] shrink-0" />}
+                    {!n.read && <span className="mt-1.5 w-2 h-2 rounded-full bg-[#06C755] shrink-0" />}
                     {n.read && <span className="mt-1.5 w-2 h-2 shrink-0" />}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-0.5">

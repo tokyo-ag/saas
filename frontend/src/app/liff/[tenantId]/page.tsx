@@ -36,7 +36,7 @@ function AvatarRow({ count, friends }: { count: number; friends?: { id: string; 
         )}
       </div>
       {friendCount > 0 && (
-        <span className="text-[10px] text-[var(--cp)] font-medium">友達{friendCount}人</span>
+        <span className="text-[10px] text-[#06C755] font-medium">友達{friendCount}人</span>
       )}
     </div>
   );
@@ -56,7 +56,7 @@ function EventCard({ event, tenantId }: { event: LiffEvent; tenantId: string }) 
         {img ? (
           <img src={img} alt="" className="absolute inset-0 w-full h-full object-cover" />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-[var(--cp)] to-[var(--cp-h)]" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#06C755] to-[#05a847]" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-2.5">
@@ -82,7 +82,7 @@ function EventCard({ event, tenantId }: { event: LiffEvent; tenantId: string }) 
           {event.priceMale != null && event.priceFemale != null ? (
             <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">¥{Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜</span>
           ) : event.price === 0 ? (
-            <span className="text-[9px] text-[var(--cp)] bg-green-50 px-1.5 py-0.5 rounded-full font-medium">無料</span>
+            <span className="text-[9px] text-[#06C755] bg-green-50 px-1.5 py-0.5 rounded-full font-medium">無料</span>
           ) : (
             <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">¥{event.price.toLocaleString()}</span>
           )}
@@ -105,19 +105,19 @@ function FavEventRow({ event }: { event: PublicEvent }) {
         {img ? (
           <img src={img} alt="" className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[var(--cp)] to-[var(--cp-h)]" />
+          <div className="w-full h-full bg-gradient-to-br from-[#06C755] to-[#05a847]" />
         )}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[12px] font-semibold text-gray-800 line-clamp-1">{event.title}</p>
-        <p className="text-[10px] text-[var(--cp)] font-medium mt-0.5">{org}</p>
+        <p className="text-[10px] text-[#06C755] font-medium mt-0.5">{org}</p>
         <p className="text-[10px] text-gray-400 mt-0.5">{formatDateShort(event.heldAt)}</p>
         <p className="text-[10px] text-gray-400 truncate">{event.location}</p>
       </div>
       {event.priceMale != null && event.priceFemale != null ? (
         <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full shrink-0">¥{Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜</span>
       ) : event.price === 0 ? (
-        <span className="text-[9px] text-[var(--cp)] bg-green-50 px-1.5 py-0.5 rounded-full font-medium shrink-0">無料</span>
+        <span className="text-[9px] text-[#06C755] bg-green-50 px-1.5 py-0.5 rounded-full font-medium shrink-0">無料</span>
       ) : (
         <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full shrink-0">¥{event.price.toLocaleString()}</span>
       )}
@@ -180,7 +180,7 @@ function LiffCalendarView({ events, tenantId }: { events: LiffEvent[]; tenantId:
                 <>
                   <span className={`flex w-5 h-5 items-center justify-center rounded-full text-[10px] font-medium mx-auto mb-0.5 ${
                     isToday(day)
-                      ? 'bg-[var(--cp)] text-white font-bold'
+                      ? 'bg-[#06C755] text-white font-bold'
                       : col === 0 ? 'text-red-400'
                       : col === 6 ? 'text-blue-400'
                       : 'text-gray-600'
@@ -198,9 +198,9 @@ function LiffCalendarView({ events, tenantId }: { events: LiffEvent[]; tenantId:
                         <Link
                           key={ev.id}
                           href={`/liff/${tenantId}/events/${ev.id}`}
-                          className="block rounded bg-[var(--cp-10)] px-0.5 py-0.5 active:opacity-60"
+                          className="block rounded bg-[[#06C755]/10] px-0.5 py-0.5 active:opacity-60"
                         >
-                          <p className="text-[7px] font-semibold text-[var(--cp-h)] truncate leading-tight">{ev.title}</p>
+                          <p className="text-[7px] font-semibold text-[#05a847] truncate leading-tight">{ev.title}</p>
                           <p className="text-[7px] text-gray-500 leading-tight">開始 {startTime}</p>
                           {endTime && <p className="text-[7px] text-gray-500 leading-tight">終了 {endTime}</p>}
                           <p className="text-[7px] text-gray-500 leading-tight">{priceLabel}</p>
@@ -257,14 +257,14 @@ export default function LiffTopPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-[var(--cp-20)] animate-page-in pb-24">
+      <div className="min-h-screen bg-[#F5F5F5] animate-page-in pb-24">
         {/* header */}
-        <div className="sticky top-0 z-10 bg-[var(--cp-15)]">
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
           <div className="flex items-center gap-2.5 px-4 pt-12 pb-3 sm:pt-4 max-w-4xl mx-auto">
             {tenant?.linePictureUrl ? (
               <img src={tenant.linePictureUrl} className="w-7 h-7 rounded-full object-cover shrink-0" alt="" />
             ) : (
-              <div className="w-7 h-7 rounded-full bg-[var(--cp-20)] flex items-center justify-center shrink-0 text-sm">🎉</div>
+              <div className="w-7 h-7 rounded-full bg-[[#06C755]/20] flex items-center justify-center shrink-0 text-sm">🎉</div>
             )}
             <h1 className="text-[18px] font-bold text-gray-900 tracking-tight truncate">
               {tenant?.lineDisplayName ?? tenant?.name ?? 'Home'}
@@ -281,7 +281,7 @@ export default function LiffTopPage() {
             <LiffCalendarView events={events} tenantId={tenantId} />
           ) : events.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 px-8 text-center">
-              <div className="w-16 h-16 rounded-full bg-[var(--cp-8)] flex items-center justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-[[#06C755]/8] flex items-center justify-center mb-4">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity="0.5">
                   <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>

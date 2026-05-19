@@ -52,19 +52,19 @@ export default function ProfileEditPage() {
     }
   }
 
-  const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--cp)] focus:border-transparent';
+  const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#06C755] focus:border-transparent';
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[var(--cp)] text-sm">読み込み中...</div>
+        <div className="text-[#06C755] text-sm">読み込み中...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--cp-20)]">
-      <div className="bg-[var(--cp)] text-white px-4 py-4 flex items-center gap-3">
+    <div className="min-h-screen bg-[#F5F5F5]">
+      <div className="bg-[#06C755] text-white px-4 py-4 flex items-center gap-3">
         <button onClick={() => router.back()} className="text-white text-xl leading-none">‹</button>
         <h1 className="text-base font-bold">プロフィール編集</h1>
       </div>
@@ -98,7 +98,7 @@ export default function ProfileEditPage() {
               <div className="flex gap-4">
                 {GENDERS.map((g) => (
                   <label key={g} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
-                    <input type="radio" name="gender" value={g} required checked={gender === g} onChange={() => setGender(g)} className="accent-[var(--cp)]" />
+                    <input type="radio" name="gender" value={g} required checked={gender === g} onChange={() => setGender(g)} className="accent-[#06C755]" />
                     {g}
                   </label>
                 ))}
@@ -108,7 +108,7 @@ export default function ProfileEditPage() {
 
           <button
             type="submit" disabled={submitting}
-            className="w-full bg-[var(--cp)] text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[var(--cp-h)] transition-colors shadow-sm"
+            className="w-full bg-[#06C755] text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[#05a847] transition-colors shadow-sm"
           >
             {submitting ? '保存中...' : '保存する'}
           </button>
