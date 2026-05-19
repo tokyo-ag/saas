@@ -477,6 +477,7 @@ export interface ReserveInput {
 
 export interface Tenant {
   id: string;
+  code?: string;
   name: string;
   description?: string;
   lineChannelId?: string;

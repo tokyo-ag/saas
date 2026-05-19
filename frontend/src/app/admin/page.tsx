@@ -126,6 +126,9 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">ダッシュボード</h1>
           <p className="mt-1 text-sm text-gray-500">イベント、予約、参加者の状況を確認できます。</p>
+          {tenant?.code && (
+            <p className="mt-1 text-xs text-gray-400">団体ID: <span className="font-mono font-semibold text-gray-600 select-all">{tenant.code}</span></p>
+          )}
         </div>
         <Link
           href="/admin/events/new"

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { api, formatDate, TENANT_ID, API_URL } from '@/lib/api';
+import { api, formatDate, API_URL } from '@/lib/api';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
 import { EventStatusBadge } from '@/components/ui/StatusBadge';
 import type { Event } from '@/lib/api';
@@ -139,7 +139,7 @@ export default function EventsPage() {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
   const [showPreview, setShowPreview] = useState(false);
-  const [lineConfigured, setLineConfigured] = useState(false);
+  const [tenantId, setTenantId] = useState<string>('');
 
   function load() {
     setLoading(true);
@@ -152,7 +152,7 @@ export default function EventsPage() {
       const v = t.liffEventView === 'calendar' ? 'calendar' : 'card';
       setViewMode(v);
       setSavedViewMode(v);
-      setLineConfigured(!!t.lineConfigured);
+      setTenantId(t.id);
     }).catch(() => {});
   }, []);
 
@@ -241,7 +241,7 @@ export default function EventsPage() {
             <div className="w-full h-full rounded-[34px] overflow-hidden bg-white">
               <iframe
                 key={showPreview ? 'open' : 'closed'}
-                src={`/liff/${TENANT_ID}`}
+                src={tenantId ? `/liff/${tenantId}` : ''}
                 className="w-full h-full border-0"
               />
             </div>
@@ -261,46 +261,44 @@ export default function EventsPage() {
             新規作成
           </Link>
         </div>
-        {/* 2行目: LINE表示設定 + プレビュー */}
+        {/* 2行目: 表示設定 + プレビュー */}
         <div className="flex items-center gap-2 flex-wrap">
-          {lineConfigured && (
-            <div className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-2 py-1.5">
-              <span className="text-xs text-gray-400 mr-0.5">LINE表示</span>
-              <div className="flex rounded-lg overflow-hidden border border-gray-200">
-                <button
-                  onClick={() => setViewMode('card')}
-                  title="カード表示"
-                  className={`p-1.5 transition-colors ${viewMode === 'card' ? 'bg-[#06C755] text-white' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => setViewMode('calendar')}
-                  title="カレンダー表示"
-                  className={`p-1.5 transition-colors ${viewMode === 'calendar' ? 'bg-[#06C755] text-white' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </button>
-              </div>
+          <div className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-2 py-1.5">
+            <span className="text-xs text-gray-400 mr-0.5">ユーザー画面</span>
+            <div className="flex rounded-lg overflow-hidden border border-gray-200">
               <button
-                onClick={handleSaveViewMode}
-                disabled={saving || (!isDirty && saveStatus === 'idle')}
-                className={`text-xs font-medium px-2.5 py-1 rounded-lg transition-colors ${
-                  saveStatus === 'saved'
-                    ? 'bg-gray-100 text-gray-400'
-                    : isDirty
-                    ? 'bg-[#06C755] text-white hover:bg-[#05a847]'
-                    : 'bg-gray-100 text-gray-400'
-                } disabled:cursor-default`}
+                onClick={() => setViewMode('card')}
+                title="カード表示"
+                className={`p-1.5 transition-colors ${viewMode === 'card' ? 'bg-[#06C755] text-white' : 'text-gray-400 hover:text-gray-600'}`}
               >
-                {saving ? '保存中...' : saveStatus === 'saved' ? '保存済み ✓' : '反映'}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setViewMode('calendar')}
+                title="カレンダー表示"
+                className={`p-1.5 transition-colors ${viewMode === 'calendar' ? 'bg-[#06C755] text-white' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
               </button>
             </div>
-          )}
+            <button
+              onClick={handleSaveViewMode}
+              disabled={saving || (!isDirty && saveStatus === 'idle')}
+              className={`text-xs font-medium px-2.5 py-1 rounded-lg transition-colors ${
+                saveStatus === 'saved'
+                  ? 'bg-gray-100 text-gray-400'
+                  : isDirty
+                  ? 'bg-[#06C755] text-white hover:bg-[#05a847]'
+                  : 'bg-gray-100 text-gray-400'
+              } disabled:cursor-default`}
+            >
+              {saving ? '保存中...' : saveStatus === 'saved' ? '保存済み ✓' : '反映'}
+            </button>
+          </div>
           <button
             onClick={() => setShowPreview(true)}
             className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 flex items-center gap-1.5"

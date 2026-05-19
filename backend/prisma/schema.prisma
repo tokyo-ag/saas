@@ -47,6 +47,7 @@ model Tenant {
   stripeCustomerId       String?   @map("stripe_customer_id") @db.VarChar(100)
   stripeSubscriptionId   String?   @map("stripe_subscription_id") @db.VarChar(100)
   liffEventView          String    @default("card") @map("liff_event_view") @db.VarChar(20)
+  code                   String?   @unique @db.VarChar(8)
   createdAt              DateTime  @default(now()) @map("created_at")
   updatedAt              DateTime  @updatedAt @map("updated_at")
   deletedAt              DateTime? @map("deleted_at")

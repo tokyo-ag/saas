@@ -70,6 +70,15 @@ export class SuperadminService {
     });
   }
 
+  private async generateUniqueCode(): Promise<string> {
+    for (let i = 0; i < 20; i++) {
+      const code = Math.floor(10000000 + Math.random() * 90000000).toString();
+      const existing = await this.prisma.tenant.findUnique({ where: { code } });
+      if (!existing) return code;
+    }
+    throw new Error('コード生成に失敗しました');
+  }
+
   async createTenant(dto: CreateTenantDto) {
     const normalizedEmail = dto.email.trim().toLowerCase();
     const accounts = await this.prisma.organizerAccount.findMany({ where: { email: { not: null } } });
@@ -78,9 +87,11 @@ export class SuperadminService {
     }
     const passwordHash = await bcrypt.hash(dto.password, 10);
     const id = `tenant-${Date.now()}`;
+    const code = await this.generateUniqueCode();
     return this.prisma.tenant.create({
       data: {
         id,
+        code,
         name: dto.name,
         description: dto.description,
         plan: dto.plan ?? 'free',
