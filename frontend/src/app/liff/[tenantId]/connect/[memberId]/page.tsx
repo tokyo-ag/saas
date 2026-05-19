@@ -56,7 +56,7 @@ export default function ConnectPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-[var(--cp-15)] flex flex-col items-center justify-center px-6 text-center">
+      <div className="min-h-screen bg-[var(--cp-20)] flex flex-col items-center justify-center px-6 text-center">
         <div className="w-20 h-20 rounded-full bg-[var(--cp-10)] flex items-center justify-center text-4xl mb-5">
           {alreadyConnected ? '👋' : '🎉'}
         </div>
@@ -81,7 +81,7 @@ export default function ConnectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--cp-15)]">
+    <div className="min-h-screen bg-[var(--cp-20)]">
       <div className="bg-[var(--cp)] text-white px-4 py-4 flex items-center gap-3">
         <button onClick={() => router.push(`/liff/${tenantId}/qr`)} className="text-white text-xl leading-none p-1">‹</button>
         <h1 className="text-base font-bold">繋がりの確認</h1>

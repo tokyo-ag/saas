@@ -52,7 +52,7 @@ export default function TalksPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-[var(--cp-15)] pb-24">
+      <div className="min-h-screen bg-[var(--cp-20)] pb-24">
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
           <div className="flex items-center justify-between px-4 pt-12 pb-3">
             <h1 className="text-[20px] font-bold text-gray-900 tracking-tight">Talk</h1>
@@ -73,12 +73,12 @@ export default function TalksPage() {
           <div className="space-y-2 mb-4">
             <button
               onClick={() => router.push(`/liff/${tenantId}/admin-talk`)}
-              className="w-full bg-[var(--cp-15)] rounded-2xl border border-[var(--cp-20)] p-4 flex items-center gap-3 active:bg-[var(--cp-10)] text-left"
+              className="w-full bg-[var(--cp-20)] rounded-2xl border border-[var(--cp-20)] p-4 flex items-center gap-3 active:bg-[var(--cp-10)] text-left"
             >
               {organizerPicture ? (
                 <img src={organizerPicture} className="w-12 h-12 rounded-full object-cover shrink-0" alt="" />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-[var(--cp-15)] flex items-center justify-center text-sm font-bold text-[var(--cp)] shrink-0">
+                <div className="w-12 h-12 rounded-full bg-[var(--cp-20)] flex items-center justify-center text-sm font-bold text-[var(--cp)] shrink-0">
                   {organizerName.slice(0, 1)}
                 </div>
               )}

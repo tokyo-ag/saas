@@ -71,7 +71,7 @@ export default function QrPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--cp-15)]">
+    <div className="min-h-screen bg-[var(--cp-20)]">
       <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 pt-12 pb-3 flex items-center gap-3">
         <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-gray-500 p-1 -ml-1">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

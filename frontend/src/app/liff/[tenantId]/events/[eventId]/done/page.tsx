@@ -27,7 +27,7 @@ function DonePageInner() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--cp-15)] flex flex-col items-center justify-center px-6 text-center">
+    <div className="min-h-screen bg-[var(--cp-20)] flex flex-col items-center justify-center px-6 text-center">
       <div className={`w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-6 ${isWaitlist ? 'bg-yellow-100' : 'bg-[var(--cp-10)]'}`}>
         {isWaitlist ? '⏳' : '✓'}
       </div>
