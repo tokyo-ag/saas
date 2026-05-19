@@ -128,6 +128,7 @@ export default function MembersPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 text-xs text-gray-600">
                   <tr>
+                    <th className="px-6 py-3 text-left">ID</th>
                     <th className="px-6 py-3 text-left">名前</th>
                     <th className="px-6 py-3 text-left">学年</th>
                     <th className="px-6 py-3 text-left">性別</th>
@@ -139,6 +140,7 @@ export default function MembersPage() {
                 <tbody className="divide-y divide-gray-100">
                   {members.map((member) => (
                     <tr key={member.id} className={`hover:bg-gray-50 ${member.blockedAt ? 'opacity-60' : ''}`}>
+                      <td className="px-6 py-4 text-xs font-mono text-gray-400">{member.id.slice(0, 8)}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <Link href={`/admin/members/${member.id}`} className="font-medium text-[#06C755] hover:underline">
