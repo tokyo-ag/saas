@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, formatDate, API_URL } from '@/lib/api';
@@ -135,10 +135,11 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('upcoming');
   const [viewMode, setViewMode] = useState<ViewMode>('card');
+  const [savedViewMode, setSavedViewMode] = useState<ViewMode>('card');
+  const [saving, setSaving] = useState(false);
   const [tenantId, setTenantId] = useState<string>('');
   const [tenantCode, setTenantCode] = useState<string>('');
   const [copied, setCopied] = useState<string | null>(null);
-  const isFirstRender = useRef(true);
 
   function copyLink(text: string, key: string) {
     navigator.clipboard.writeText(text).then(() => {
@@ -157,15 +158,23 @@ export default function EventsPage() {
     api.tenant.get().then((t) => {
       const v = t.liffEventView === 'calendar' ? 'calendar' : 'card';
       setViewMode(v);
+      setSavedViewMode(v);
       setTenantId(t.id);
       setTenantCode(t.code ?? '');
     }).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (isFirstRender.current) { isFirstRender.current = false; return; }
-    api.tenant.update({ liffEventView: viewMode }).catch(() => {});
-  }, [viewMode]);
+  async function handleSaveViewMode() {
+    setSaving(true);
+    try {
+      await api.tenant.update({ liffEventView: viewMode });
+      setSavedViewMode(viewMode);
+    } catch {
+      alert('保存に失敗しました');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const now = new Date();
   const filtered = events.filter((event) => {
@@ -227,19 +236,28 @@ export default function EventsPage() {
           <p className="text-sm text-gray-500 mt-0.5">イベントの作成、編集、予約状況を確認できます。</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <div className="flex overflow-hidden rounded-lg border border-gray-200 bg-white text-sm font-medium">
+          <div className="flex items-center gap-1.5">
+            <div className="flex overflow-hidden rounded-lg border border-gray-200 bg-white text-sm font-medium">
+              <button
+                onClick={() => setViewMode('card')}
+                className={`px-3 py-2 transition-colors ${viewMode === 'card' ? 'bg-[#06C755] text-white' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                イベントカード
+              </button>
+              <div className="w-px bg-gray-200" />
+              <button
+                onClick={() => setViewMode('calendar')}
+                className={`px-3 py-2 transition-colors ${viewMode === 'calendar' ? 'bg-[#06C755] text-white' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                カレンダー
+              </button>
+            </div>
             <button
-              onClick={() => setViewMode('card')}
-              className={`px-3 py-2 transition-colors ${viewMode === 'card' ? 'bg-[#06C755] text-white' : 'text-gray-500 hover:text-gray-700'}`}
+              onClick={handleSaveViewMode}
+              disabled={saving || viewMode === savedViewMode}
+              className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:text-gray-300 disabled:cursor-default"
             >
-              イベントカード
-            </button>
-            <div className="w-px bg-gray-200" />
-            <button
-              onClick={() => setViewMode('calendar')}
-              className={`px-3 py-2 transition-colors ${viewMode === 'calendar' ? 'bg-[#06C755] text-white' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              カレンダー
+              {saving ? '保存中...' : viewMode === savedViewMode ? '保存済み ✓' : '保存'}
             </button>
           </div>
           <Link href="/admin/events/new" className="rounded-lg bg-[#06C755] px-4 py-2 text-sm font-bold text-white hover:bg-[#05a847]">
