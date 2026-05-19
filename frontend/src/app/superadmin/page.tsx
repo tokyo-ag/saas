@@ -152,7 +152,7 @@ export default function SuperadminPage() {
                         onClick={async () => {
                           try {
                             const { token } = await api.superadmin.impersonate(t.id);
-                            window.open(`/admin/impersonate?token=${encodeURIComponent(token)}`, '_blank');
+                            window.open(`/impersonate?token=${encodeURIComponent(token)}`, '_blank');
                           } catch (e: any) {
                             alert(e.message ?? '管理画面を開けませんでした');
                           }
