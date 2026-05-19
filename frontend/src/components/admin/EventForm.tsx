@@ -496,7 +496,10 @@ export default function EventForm({ initial }: { initial?: Event }) {
             />
           </div>
           {!isLineConfigured && (
-            <p className="text-xs text-gray-400"><Link href="/admin/settings/line" className="text-[#06C755] underline">LINE連携</Link>を設定するとLINE通知が使えます。</p>
+            <p className="mt-1 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
+              LINE通知を使うにはLINE API設定が必要です。
+              <Link href="/admin/settings/line" className="ml-1 underline">LINE設定へ</Link>
+            </p>
           )}
         </div>
 
@@ -526,6 +529,12 @@ export default function EventForm({ initial }: { initial?: Event }) {
               onChange={(checked) => { set('remindApp', checked); set('remindEnabled', checked); }}
             />
           </div>
+          {!isLineConfigured && !isFreePlan && (
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
+              LINE通知を使うにはLINE API設定が必要です。
+              <Link href="/admin/settings/line" className="ml-1 underline">LINE設定へ</Link>
+            </p>
+          )}
           {(form.remindEnabled || form.remindApp) && (
             <div className="space-y-2 border-l-2 border-[#06C755]/30 pl-4 pt-1">
               <RadioGroup
