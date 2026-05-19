@@ -182,7 +182,7 @@ export default function EventsPage() {
   async function handleDuplicate(id: string) {
     try {
       const ev = await api.events.get(id);
-      const created = await (api.events.create as any)({
+      const created = await api.events.create({
         title: `${ev.title}（コピー）`,
         description: ev.description,
         heldAt: ev.heldAt,
@@ -203,8 +203,8 @@ export default function EventsPage() {
         remindEnabled: false,
         imageUrl: ev.imageUrl,
         iconUrl: ev.iconUrl,
-        category: (ev as any).category ?? null,
-        tags: (ev as any).tags ?? [],
+        category: ev.category ?? null,
+        tags: ev.tags ?? [],
       });
       router.push(`/admin/events/${created.id}/edit`);
     } catch (err: any) {

@@ -11,6 +11,6 @@ import { StripeModule } from '../stripe/stripe.module';
 })
 export class LiffModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(TenantCodeMiddleware).forRoutes('liff/:tenantId');
+    consumer.apply(TenantCodeMiddleware).forRoutes(LiffController);
   }
 }

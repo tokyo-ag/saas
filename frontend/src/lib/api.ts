@@ -318,6 +318,8 @@ export interface Event {
   waitlistedCount?: number;
   imageUrl?: string;
   iconUrl?: string;
+  category?: string | null;
+  tags?: string[];
 }
 
 export interface EventInput {
@@ -343,6 +345,8 @@ export interface EventInput {
   remindAt?: string | null;
   imageUrl?: string;
   iconUrl?: string;
+  category?: string | null;
+  tags?: string[];
 }
 
 export interface Member {
