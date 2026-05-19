@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { IsString, IsOptional, IsEnum, IsEmail, MinLength } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
@@ -24,7 +25,7 @@ export class BanUserDto {
 
 @Injectable()
 export class SuperadminService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private jwt: JwtService) {}
 
   async listTenants() {
     const tenants = await this.prisma.tenant.findMany({
@@ -123,6 +124,13 @@ export class SuperadminService {
       create: { lineUserId: dto.lineUserId, reason: dto.reason },
       update: { reason: dto.reason, bannedAt: new Date() },
     });
+  }
+
+  async impersonate(tenantId: string): Promise<{ token: string }> {
+    const account = await this.prisma.organizerAccount.findFirst({ where: { tenantId } });
+    if (!account) throw new NotFoundException('この団体にアカウントがありません');
+    const token = this.jwt.sign({ tenantId, accountId: account.id });
+    return { token };
   }
 
   async unbanUser(lineUserId: string) {

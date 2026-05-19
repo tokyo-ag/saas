@@ -148,7 +148,13 @@ export default function SuperadminPage() {
 
                   <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100 flex-wrap">
                     {!t.deletedAt && (
-                      <a href="/admin" className="text-sm text-[#06C755] hover:underline">管理画面 →</a>
+                      <button
+                        onClick={async () => {
+                          const { token } = await api.superadmin.impersonate(t.id);
+                          window.open(`/admin/impersonate?token=${encodeURIComponent(token)}`, '_blank');
+                        }}
+                        className="text-sm text-[#06C755] hover:underline"
+                      >管理画面 →</button>
                     )}
                     {!isBanned && <button onClick={() => setEditTarget(t)} className="text-sm text-gray-600 hover:underline">編集</button>}
                     {isBanned ? (
@@ -277,7 +283,7 @@ function TenantModal({
               required maxLength={100}
               value={name} onChange={(e) => setName(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              placeholder="例: インカレサークルBELL"
+              placeholder="例: 〇〇サークル"
             />
           </div>
           <div>
@@ -285,7 +291,7 @@ function TenantModal({
             <textarea
               rows={3} value={description} onChange={(e) => setDescription(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              placeholder="団体の説明（LIFF画面に表示）"
+              placeholder="団体の説明"
             />
           </div>
           {!initial && (

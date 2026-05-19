@@ -268,6 +268,8 @@ export const api = {
       request<Tenant>(`/superadmin/tenants/${id}/ban`, { method: 'PATCH' }),
     purge: (id: string) =>
       request<void>(`/superadmin/tenants/${id}`, { method: 'DELETE' }),
+    impersonate: (id: string) =>
+      request<{ token: string }>(`/superadmin/tenants/${id}/impersonate`),
     listBannedUsers: () => request<BannedUser[]>('/superadmin/banned-users'),
     banUser: (lineUserId: string, reason?: string) =>
       request<BannedUser>('/superadmin/banned-users', { method: 'POST', body: JSON.stringify({ lineUserId, reason }) }),

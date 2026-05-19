@@ -28,6 +28,9 @@ export class SuperadminController {
   @Delete('tenants/:id')
   purge(@Param('id') id: string) { return this.service.deleteTenant(id); }
 
+  @Get('tenants/:id/impersonate')
+  impersonate(@Param('id') id: string) { return this.service.impersonate(id); }
+
   @Get('banned-users')
   listBanned() { return this.service.listBannedUsers(); }
 
