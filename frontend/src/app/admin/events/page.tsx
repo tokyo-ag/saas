@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, formatDate, API_URL } from '@/lib/api';
@@ -135,13 +135,10 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('upcoming');
   const [viewMode, setViewMode] = useState<ViewMode>('card');
-  const [savedViewMode, setSavedViewMode] = useState<ViewMode>('card');
-  const [saving, setSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
-  const [showPreview, setShowPreview] = useState(false);
   const [tenantId, setTenantId] = useState<string>('');
   const [tenantCode, setTenantCode] = useState<string>('');
   const [copied, setCopied] = useState<string | null>(null);
+  const isFirstRender = useRef(true);
 
   function copyLink(text: string, key: string) {
     navigator.clipboard.writeText(text).then(() => {
@@ -160,27 +157,15 @@ export default function EventsPage() {
     api.tenant.get().then((t) => {
       const v = t.liffEventView === 'calendar' ? 'calendar' : 'card';
       setViewMode(v);
-      setSavedViewMode(v);
       setTenantId(t.id);
       setTenantCode(t.code ?? '');
     }).catch(() => {});
   }, []);
 
-  async function handleSaveViewMode() {
-    setSaving(true);
-    try {
-      await api.tenant.update({ liffEventView: viewMode });
-      setSavedViewMode(viewMode);
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch {
-      alert('保存に失敗しました');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  const isDirty = viewMode !== savedViewMode;
+  useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    api.tenant.update({ liffEventView: viewMode }).catch(() => {});
+  }, [viewMode]);
 
   const now = new Date();
   const filtered = events.filter((event) => {
@@ -235,108 +220,31 @@ export default function EventsPage() {
 
   return (
     <>
-    {showPreview && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowPreview(false)}>
-        <div className="relative flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
-          <div className="mb-3 flex items-center gap-3">
-            <span className="text-white text-sm font-medium">ユーザー画面プレビュー</span>
-            <button onClick={() => setShowPreview(false)} className="text-white/70 hover:text-white text-xs border border-white/30 rounded-full px-3 py-1">
-              閉じる
+    <div className="px-4 py-4 md:px-6 md:py-6 max-w-5xl">
+      <div className="mb-5 flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">イベント管理</h1>
+          <p className="text-sm text-gray-500 mt-0.5">イベントの作成、編集、予約状況を確認できます。</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <div className="flex overflow-hidden rounded-lg border border-gray-200 bg-white text-sm font-medium">
+            <button
+              onClick={() => setViewMode('card')}
+              className={`px-3 py-2 transition-colors ${viewMode === 'card' ? 'bg-[#06C755] text-white' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              イベントカード
+            </button>
+            <div className="w-px bg-gray-200" />
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`px-3 py-2 transition-colors ${viewMode === 'calendar' ? 'bg-[#06C755] text-white' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              カレンダー
             </button>
           </div>
-          {/* スマホフレーム */}
-          <div className="relative w-[375px] h-[720px] rounded-[44px] bg-gray-900 shadow-2xl border-[10px] border-gray-900"
-            style={{ boxShadow: '0 0 0 2px #555, 0 30px 80px rgba(0,0,0,0.8)' }}>
-            {/* ノッチ */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-gray-900 rounded-b-2xl z-10" />
-            <div className="w-full h-full rounded-[34px] overflow-hidden bg-white">
-              <iframe
-                key={showPreview ? 'open' : 'closed'}
-                src={tenantId ? `/liff/${tenantId}` : ''}
-                className="w-full h-full border-0"
-              />
-            </div>
-          </div>
-          {/* 招待リンク */}
-          {tenantId && (
-            <div className="mt-4 w-[375px] rounded-xl bg-white/10 px-4 py-3 text-sm text-white">
-              <p className="mb-1.5 text-xs text-white/60">参加者への招待リンク</p>
-              <div className="flex items-center gap-2">
-                <span className="flex-1 truncate rounded-lg bg-white/10 px-3 py-1.5 text-xs font-mono">
-                  {typeof window !== 'undefined' ? `${window.location.origin}/liff/${tenantId}` : ''}
-                </span>
-                <button
-                  onClick={() => copyLink(`${window.location.origin}/liff/${tenantId}`, 'preview')}
-                  className="shrink-0 rounded-lg bg-[#06C755] px-3 py-1.5 text-xs font-bold hover:bg-[#05a847]"
-                >
-                  {copied === 'preview' ? 'コピー済み ✓' : 'コピー'}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    )}
-    <div className="px-4 py-4 md:px-6 md:py-6 max-w-5xl">
-      <div className="mb-5">
-        {/* 1行目: タイトル + 新規作成 */}
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900">イベント管理</h1>
-            <p className="text-sm text-gray-500 mt-0.5">イベントの作成、編集、予約状況を確認できます。</p>
-          </div>
-          <Link href="/admin/events/new" className="shrink-0 rounded-lg bg-[#06C755] px-4 py-2 text-sm font-bold text-white hover:bg-[#05a847]">
+          <Link href="/admin/events/new" className="rounded-lg bg-[#06C755] px-4 py-2 text-sm font-bold text-white hover:bg-[#05a847]">
             新規作成
           </Link>
-        </div>
-        {/* 2行目: 表示設定 + プレビュー */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-2 py-1.5">
-            <span className="text-xs text-gray-400 mr-0.5">ユーザー画面</span>
-            <div className="flex rounded-lg overflow-hidden border border-gray-200">
-              <button
-                onClick={() => setViewMode('card')}
-                title="カード表示"
-                className={`p-1.5 transition-colors ${viewMode === 'card' ? 'bg-[#06C755] text-white' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                </svg>
-              </button>
-              <button
-                onClick={() => setViewMode('calendar')}
-                title="カレンダー表示"
-                className={`p-1.5 transition-colors ${viewMode === 'calendar' ? 'bg-[#06C755] text-white' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </button>
-            </div>
-            <button
-              onClick={handleSaveViewMode}
-              disabled={saving || (!isDirty && saveStatus === 'idle')}
-              className={`text-xs font-medium px-2.5 py-1 rounded-lg transition-colors ${
-                saveStatus === 'saved'
-                  ? 'bg-gray-100 text-gray-400'
-                  : isDirty
-                  ? 'bg-[#06C755] text-white hover:bg-[#05a847]'
-                  : 'bg-gray-100 text-gray-400'
-              } disabled:cursor-default`}
-            >
-              {saving ? '保存中...' : saveStatus === 'saved' ? '保存済み ✓' : '反映'}
-            </button>
-          </div>
-          <button
-            onClick={() => setShowPreview(true)}
-            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 flex items-center gap-1.5"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            プレビュー
-          </button>
         </div>
       </div>
 
