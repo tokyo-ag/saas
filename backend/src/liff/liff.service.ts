@@ -438,7 +438,9 @@ export class LiffService {
   }
 
   private async findMember(tenantId: string, lineUserId: string) {
-    return this.findMember(tenantId, lineUserId);
+    return this.prisma.member.findUnique({
+      where: { tenantId_lineUserId: { tenantId, lineUserId } },
+    });
   }
 
   // ---- 繋がり / チャット ----
