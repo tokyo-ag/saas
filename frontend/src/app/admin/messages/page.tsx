@@ -67,7 +67,7 @@ export default function AdminMessagesPage() {
       lastContent: thread.lastMessage?.content ?? '',
       lastAt: thread.lastMessage?.createdAt,
       unreadCount: thread.unreadCount,
-      prefix: thread.lastMessage?.fromAdmin ? '主催者: ' : '参加者: ',
+      prefix: '',
     }));
 
     return [comiuRow, ...memberRows].sort((a, b) => {
