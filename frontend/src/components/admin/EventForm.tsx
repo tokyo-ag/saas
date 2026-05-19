@@ -445,10 +445,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
           </div>
         )}
         <div>
-          <p className="mb-2 text-xs text-gray-500">
-            支払いタイミング
-            {!isPro && <span className="ml-2 text-[10px] rounded bg-gray-800 px-1.5 py-0.5 text-white">事前決済・両方はPROのみ</span>}
-          </p>
+          <p className="mb-2 text-xs text-gray-500">支払いタイミング</p>
           <div className="flex flex-wrap gap-3">
             {([['onsite', '当日払い'], ['prepay', '事前決済'], ['both', 'どちらでも可']] as const).map(([val, label]) => {
               const restricted = (val === 'prepay' || val === 'both') && !isPro;
@@ -460,6 +457,9 @@ export default function EventForm({ initial }: { initial?: Event }) {
               );
             })}
           </div>
+          {!isPro && (
+            <p className="mt-2 text-xs text-gray-400">事前決済はPRO契約のみ設定可能です。</p>
+          )}
           {showStripe && (
             <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
               事前決済にはStripe設定が必要です。
@@ -472,15 +472,15 @@ export default function EventForm({ initial }: { initial?: Event }) {
       <Section title="通知">
         <Check label="予約完了時にTalkに詳細を通知" checked={form.notifyOnReserveApp} onChange={(checked) => set('notifyOnReserveApp', checked)} />
         {isLineConfigured && (
-          <div className="flex items-center gap-2">
+          <>
             <Check
               label="予約完了時にLINEで送る"
               checked={form.notifyOnReserve}
               disabled={!isPro}
               onChange={(checked) => set('notifyOnReserve', checked)}
             />
-            {!isPro && <span className="text-[10px] rounded bg-gray-800 px-1.5 py-0.5 text-white">PROのみ</span>}
-          </div>
+            {!isPro && <p className="text-xs text-gray-400">LINEメッセージはPRO契約のみ設定可能です。</p>}
+          </>
         )}
         <div className="pt-2">
           <p className={`mb-2 text-sm font-medium ${isFreePlan ? 'text-gray-400' : 'text-gray-700'}`}>
@@ -488,10 +488,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
             {isFreePlan && <span className="ml-2 text-xs text-[#06C755]">スタンダード以上</span>}
           </p>
           {isLineConfigured && (
-            <div className="flex items-center gap-2">
-              <Check label="LINEで送る" checked={form.remindEnabled} disabled={!isPro} onChange={(checked) => set('remindEnabled', checked)} />
-              {!isPro && <span className="text-[10px] rounded bg-gray-800 px-1.5 py-0.5 text-white">PROのみ</span>}
-            </div>
+            <Check label="LINEで送る" checked={form.remindEnabled} disabled={!isPro} onChange={(checked) => set('remindEnabled', checked)} />
           )}
           <Check label="アプリ内メッセージで送る" checked={form.remindApp} disabled={isFreePlan} onChange={(checked) => set('remindApp', checked)} />
         </div>
