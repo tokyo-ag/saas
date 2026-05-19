@@ -259,14 +259,14 @@ export default function LiffTopPage() {
     <>
       <div className="min-h-screen bg-[var(--cp-20)] animate-page-in pb-24">
         {/* header */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
+        <div className="sticky top-0 z-10 bg-[var(--cp)]">
           <div className="flex items-center gap-2.5 px-4 pt-12 pb-3 sm:pt-4 max-w-4xl mx-auto">
             {tenant?.linePictureUrl ? (
               <img src={tenant.linePictureUrl} className="w-7 h-7 rounded-full object-cover shrink-0" alt="" />
             ) : (
-              <div className="w-7 h-7 rounded-full bg-[var(--cp-20)] flex items-center justify-center shrink-0 text-sm">🎉</div>
+              <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0 text-sm">🎉</div>
             )}
-            <h1 className="text-[18px] font-bold text-gray-900 tracking-tight truncate">
+            <h1 className="text-[18px] font-bold text-white tracking-tight truncate">
               {tenant?.lineDisplayName ?? tenant?.name ?? 'Home'}
             </h1>
           </div>

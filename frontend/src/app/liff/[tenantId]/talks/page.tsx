@@ -53,12 +53,12 @@ export default function TalksPage() {
   return (
     <>
       <div className="min-h-screen bg-[var(--cp-20)] pb-24">
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
+        <div className="sticky top-0 z-10 bg-[var(--cp)]">
           <div className="flex items-center justify-between px-4 pt-12 pb-3">
-            <h1 className="text-[20px] font-bold text-gray-900 tracking-tight">Talk</h1>
+            <h1 className="text-[20px] font-bold text-white tracking-tight">Talk</h1>
             <Link
               href={`/liff/${tenantId}/qr`}
-              className="flex items-center gap-1.5 bg-[var(--cp)] text-white text-xs font-bold px-3 py-1.5 rounded-full active:bg-[var(--cp-h)]"
+              className="flex items-center gap-1.5 bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-full active:bg-white/30"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>

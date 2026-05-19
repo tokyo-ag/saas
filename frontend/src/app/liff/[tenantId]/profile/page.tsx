@@ -63,9 +63,9 @@ export default function ProfilePage() {
   return (
     <>
     <div className="min-h-screen bg-[var(--cp-20)] pb-24">
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
+      <div className="sticky top-0 z-10 bg-[var(--cp)]">
         <div className="px-4 pt-12 pb-3">
-          <h1 className="text-[20px] font-bold text-gray-900 tracking-tight">Profile</h1>
+          <h1 className="text-[20px] font-bold text-white tracking-tight">Profile</h1>
         </div>
       </div>
 
