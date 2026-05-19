@@ -183,7 +183,7 @@ export default function EventsPage() {
     try {
       const ev = await api.events.get(id);
       const created = await api.events.create({
-        title: `${ev.title}（コピー）`,
+        title: ev.title,
         description: ev.description,
         heldAt: ev.heldAt,
         endAt: ev.endAt ?? null,
@@ -192,7 +192,7 @@ export default function EventsPage() {
         capacity: ev.capacity ?? null,
         capacityMale: ev.capacityMale ?? null,
         capacityFemale: ev.capacityFemale ?? null,
-        status: 'draft',
+        status: 'open',
         price: ev.price,
         priceMale: ev.priceMale ?? null,
         priceFemale: ev.priceFemale ?? null,
