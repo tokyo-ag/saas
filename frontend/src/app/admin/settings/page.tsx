@@ -34,6 +34,19 @@ function SettingsTabs() {
   );
 }
 
+async function uploadToCloudinary(file: File): Promise<string> {
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+  if (!cloudName || !uploadPreset) throw new Error('Cloudinary の設定が見つかりません');
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', uploadPreset);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: formData });
+  if (!res.ok) throw new Error('画像のアップロードに失敗しました');
+  const data = await res.json() as { secure_url: string };
+  return data.secure_url;
+}
+
 export default function SettingsPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [form, setForm] = useState<Pick<TenantInput, 'name' | 'description' | 'iconUrl'>>({ name: '', description: '', iconUrl: '' });
@@ -44,6 +57,23 @@ export default function SettingsPage() {
   const [viewMode, setViewMode] = useState<'card' | 'calendar'>('card');
   const [savedViewMode, setSavedViewMode] = useState<'card' | 'calendar'>('card');
   const [savingView, setSavingView] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleIconFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError('');
+    try {
+      const url = await uploadToCloudinary(file);
+      setForm((prev) => ({ ...prev, iconUrl: url }));
+    } catch (err: any) {
+      setError(err.message ?? '画像のアップロードに失敗しました');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  }
   async function handleSaveViewMode() {
     setSavingView(true);
     try {
@@ -156,22 +186,37 @@ export default function SettingsPage() {
         <form onSubmit={handleSubmit} className="space-y-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-6">
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">団体アイコン</label>
-            <p className="mb-2 text-xs text-gray-500">Imgur・Google Drive など公開URLを貼り付けてください。</p>
-            <div className="flex items-center gap-3">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-gray-50">
+            <p className="mb-2 text-xs text-gray-500">画像をクリックして変更できます（JPG・PNG・GIF）</p>
+            <div className="flex items-center gap-4">
+              <label className={`relative flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-gray-300 bg-gray-50 transition-colors hover:border-[#06C755] hover:bg-green-50 ${uploading ? 'opacity-60 pointer-events-none' : ''}`}>
                 {form.iconUrl ? (
                   <img src={form.iconUrl} alt="アイコン" className="h-full w-full object-cover" />
                 ) : (
-                  <span className="text-2xl font-bold text-gray-300">{form.name?.[0] ?? '?'}</span>
+                  <span className="text-3xl font-bold text-gray-300">{form.name?.[0] ?? '?'}</span>
+                )}
+                {uploading ? (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#06C755] border-t-transparent" />
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 transition-colors hover:bg-black/20">
+                    <span className="text-xs font-medium text-white opacity-0 group-hover:opacity-100">変更</span>
+                  </div>
+                )}
+                <input type="file" accept="image/*" className="hidden" onChange={handleIconFileChange} disabled={uploading} />
+              </label>
+              <div className="text-sm text-gray-500">
+                {uploading ? 'アップロード中...' : (
+                  <>
+                    <p>クリックして画像を選択</p>
+                    {form.iconUrl && (
+                      <button type="button" onClick={() => setForm((prev) => ({ ...prev, iconUrl: '' }))} className="mt-1 text-xs text-red-400 hover:text-red-600">
+                        削除
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
-              <input
-                type="url"
-                value={form.iconUrl ?? ''}
-                onChange={(e) => setForm((prev) => ({ ...prev, iconUrl: e.target.value }))}
-                placeholder="https://example.com/icon.png"
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              />
             </div>
           </div>
 
