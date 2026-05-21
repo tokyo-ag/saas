@@ -85,10 +85,6 @@ function RankingCard({ tenant, rank }: { tenant: PublicTenant; rank: number }) {
         </div>
       )}
       <p className="text-[12px] font-semibold text-gray-800 text-center leading-snug line-clamp-2">{displayName}</p>
-      <div className="flex items-center gap-2 text-[10px] text-gray-400">
-        <span>👁 {tenant.accessCount}</span>
-        <span>👤 {tenant.memberCount}</span>
-      </div>
     </Link>
   );
 }

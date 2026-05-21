@@ -102,7 +102,6 @@ function TenantCard({ tenant }: { tenant: PublicTenant }) {
       )}
       <div className="flex-1 min-w-0">
         <p className="text-[13px] font-semibold text-gray-800 truncate">{name}</p>
-        <p className="text-[10px] text-gray-400 mt-0.5">メンバー {tenant.memberCount}人</p>
       </div>
       <svg className="w-4 h-4 text-gray-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
