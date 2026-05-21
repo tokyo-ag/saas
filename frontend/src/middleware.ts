@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Admin auth guard — cookie written by setToken/setImpersonationToken in auth.ts
-  if (pathname.startsWith('/admin')) {
+  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
     const token = request.cookies.get('admin_token')?.value;
     if (!token) {
       return NextResponse.redirect(new URL('/login', request.url));
