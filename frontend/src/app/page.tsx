@@ -25,44 +25,38 @@ function fmtDate(dateStr: string) {
 
 function EventCard({ event, showViews, compact }: { event: PublicEvent; showViews?: boolean; compact?: boolean }) {
   const img = imgUrl(event.imageUrl, API_URL);
-  const org = event.tenant.lineDisplayName ?? event.tenant.name;
   const remaining = event.capacity != null ? event.capacity - event.reservedCount : null;
   const priceLabel = event.priceMale != null && event.priceFemale != null
     ? `¥${Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜`
     : event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
-  const priceGreen = event.price === 0 && event.priceMale == null;
 
   return (
     <Link
       href={`/liff/${event.tenantId}/events/${event.id}`}
-      className={`flex-shrink-0 ${compact ? 'w-[81px] md:w-32' : 'w-[93px] md:w-44'} rounded-xl overflow-hidden bg-white block`}
-      style={{ boxShadow: '0 1px 5px rgba(0,0,0,0.09)' }}
+      className={`flex-shrink-0 ${compact ? 'w-[81px] md:w-32' : 'w-[93px] md:w-44'} rounded-lg overflow-hidden block relative`}
     >
-      <div className="relative" style={{ aspectRatio: '1/1' }}>
+      <div className="relative" style={{ aspectRatio: '4/5' }}>
         {img ? (
           <img src={img} alt="" className="absolute inset-0 w-full h-full object-cover" />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-[#06C755] to-[#047a35]" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
         {remaining !== null && remaining <= 0 && (
           <div className="absolute top-1 right-1 bg-red-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-full">満席</div>
         )}
-        <div className="absolute bottom-1 left-1.5 right-1.5">
-          <p className={`text-white font-bold ${compact ? 'text-[9px]' : 'text-[11px]'} leading-snug line-clamp-2`} style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+        {showViews && event.viewCount > 0 && (
+          <div className="absolute top-1 left-1 bg-black/40 text-white text-[7px] px-1 py-0.5 rounded-full">閲覧 {event.viewCount}</div>
+        )}
+        <div className="absolute bottom-0 left-0 right-0 px-1.5 pb-1.5">
+          <p className="text-white font-bold text-[9px] leading-snug line-clamp-2 mb-0.5" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>
             {event.title}
           </p>
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-white/75 text-[8px] truncate">{fmtDate(event.heldAt)}</span>
+            <span className="text-white/90 text-[8px] font-semibold shrink-0">{priceLabel}</span>
+          </div>
         </div>
-      </div>
-      <div className={`${compact ? 'px-1.5 pt-1 pb-1.5' : 'px-2.5 pt-2 pb-2.5'} space-y-0.5`}>
-        <p className={`${compact ? 'text-[8px]' : 'text-[10px]'} text-gray-400`}>{fmtDate(event.heldAt)}</p>
-        <div className="flex items-center justify-between gap-1">
-          <span className={`${compact ? 'text-[8px]' : 'text-[10px]'} text-gray-400 truncate`}>{org}</span>
-          <span className={`${compact ? 'text-[7px]' : 'text-[9px]'} shrink-0 ${priceGreen ? 'text-[#06C755] font-semibold' : 'text-gray-500'}`}>{priceLabel}</span>
-        </div>
-        {showViews && (
-          <p className={`${compact ? 'text-[8px]' : 'text-[10px]'} text-gray-400`}>閲覧数: {event.viewCount.toLocaleString()}</p>
-        )}
       </div>
     </Link>
   );
