@@ -89,7 +89,7 @@ export class MembersService {
         _count: {
           select: {
             adminMessages: {
-              where: { fromAdmin: false, read: false },
+              where: { fromAdmin: false, read: false, isSystem: false },
             },
           },
         },
