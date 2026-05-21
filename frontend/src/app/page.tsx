@@ -33,7 +33,7 @@ function EventCard({ event, showViews, compact }: { event: PublicEvent; showView
   return (
     <Link
       href={`/liff/${event.tenantId}/events/${event.id}`}
-      className={`flex-shrink-0 ${compact ? 'w-[81px] md:w-32' : 'w-[105px] md:w-44'} rounded-lg overflow-hidden block relative`}
+      className={`flex-shrink-0 ${compact ? 'w-[81px] md:w-32' : 'w-[105px] md:w-44'} overflow-hidden block relative`}
     >
       <div className="relative" style={{ aspectRatio: '4/5' }}>
         {img ? (
@@ -88,7 +88,7 @@ function RankingCard({ tenant, rank }: { tenant: PublicTenant; rank: number }) {
 
 function HScroll({ children, gap = 'gap-3' }: { children: React.ReactNode; gap?: string }) {
   return (
-    <div className={`flex ${gap} overflow-x-auto pl-4 pr-0 pb-3 scrollbar-hide`}>
+    <div className={`flex ${gap} overflow-x-auto pl-4 pr-0 pb-2 scrollbar-hide`}>
       {children}
     </div>
   );
@@ -248,7 +248,7 @@ export default function TopPage() {
           ) : hotEvents.length === 0 ? (
             <p className="text-xs text-gray-400 px-4">今月のイベントはまだありません</p>
           ) : (
-            <HScroll>
+            <HScroll gap="gap-1">
               {hotEvents.map((ev) => <EventCard key={ev.id} event={ev} showViews />)}
             </HScroll>
           )}
@@ -262,7 +262,7 @@ export default function TopPage() {
           ) : byDate.length === 0 ? (
             <p className="text-xs text-gray-400 px-4">開催予定のイベントはありません</p>
           ) : (
-            <HScroll gap="gap-2">
+            <HScroll gap="gap-1">
               {byDate.map((ev) => <EventCard key={ev.id} event={ev} compact />)}
             </HScroll>
           )}
