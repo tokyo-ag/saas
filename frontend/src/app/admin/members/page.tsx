@@ -88,8 +88,15 @@ export default function MembersPage() {
             <div className="md:hidden divide-y divide-gray-100">
               {members.map((member) => (
                 <article key={member.id} className={`p-4 ${member.blockedAt ? 'opacity-60' : ''}`}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
+                  <div className="flex items-start gap-3">
+                    {member.linePictureUrl ? (
+                      <img src={member.linePictureUrl} alt="" className="w-9 h-9 rounded-full object-cover shrink-0 mt-0.5" />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-400 shrink-0 mt-0.5">
+                        {(member.lineDisplayName ?? member.name ?? '?')[0]}
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <Link href={`/admin/members/${member.id}`} className="text-sm font-bold text-[#06C755] break-words">
                           {member.name ?? '未入力'}
@@ -98,7 +105,10 @@ export default function MembersPage() {
                           <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-bold text-red-500">ブロック中</span>
                         )}
                       </div>
-                      <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-500">
+                      {member.lineDisplayName && (
+                        <p className="text-xs text-gray-400">LINE: {member.lineDisplayName}</p>
+                      )}
+                      <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-500">
                         <span>学年: {member.grade ?? '-'}</span>
                         <span>性別: {member.gender ?? '-'}</span>
                         <span>登録: {formatDateOnly(member.createdAt)}</span>
@@ -129,7 +139,7 @@ export default function MembersPage() {
                 <thead className="bg-gray-50 text-xs text-gray-600">
                   <tr>
                     <th className="px-6 py-3 text-left">ID</th>
-                    <th className="px-6 py-3 text-left">名前</th>
+                    <th className="px-6 py-3 text-left">名前 / LINE名</th>
                     <th className="px-6 py-3 text-left">学年</th>
                     <th className="px-6 py-3 text-left">性別</th>
                     <th className="px-6 py-3 text-left">登録日</th>
@@ -142,13 +152,27 @@ export default function MembersPage() {
                     <tr key={member.id} className={`hover:bg-gray-50 ${member.blockedAt ? 'opacity-60' : ''}`}>
                       <td className="px-6 py-4 text-xs font-mono text-gray-400">{member.id.slice(0, 8)}</td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <Link href={`/admin/members/${member.id}`} className="font-medium text-[#06C755] hover:underline">
-                            {member.name ?? '未入力'}
-                          </Link>
-                          {member.blockedAt && (
-                            <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-500">ブロック中</span>
+                        <div className="flex items-center gap-2.5">
+                          {member.linePictureUrl ? (
+                            <img src={member.linePictureUrl} alt="" className="w-7 h-7 rounded-full object-cover shrink-0" />
+                          ) : (
+                            <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-400 shrink-0">
+                              {(member.lineDisplayName ?? member.name ?? '?')[0]}
+                            </div>
                           )}
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <Link href={`/admin/members/${member.id}`} className="font-medium text-[#06C755] hover:underline">
+                                {member.name ?? '未入力'}
+                              </Link>
+                              {member.blockedAt && (
+                                <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-500">ブロック中</span>
+                              )}
+                            </div>
+                            {member.lineDisplayName && (
+                              <p className="text-[11px] text-gray-400 leading-tight">LINE: {member.lineDisplayName}</p>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-gray-600">{member.grade ?? '-'}</td>

@@ -23,6 +23,8 @@ export class MembersService {
       id: m.id,
       tenantId: m.tenantId,
       lineUserId: m.lineUserId,
+      lineDisplayName: m.lineDisplayName,
+      linePictureUrl: m.linePictureUrl,
       name: m.name,
       grade: m.grade,
       gender: m.gender,

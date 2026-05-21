@@ -355,6 +355,8 @@ export interface Member {
   grade?: string;
   gender?: string;
   lineUserId: string;
+  lineDisplayName?: string | null;
+  linePictureUrl?: string | null;
   blockedAt?: string | null;
   createdAt: string;
   eventCount: number;
