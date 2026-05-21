@@ -25,13 +25,28 @@ export default function Sidebar() {
   const slug = tenant?.code ?? tenant?.id ?? '';
   const base = slug ? `/admin/${slug}` : '/admin';
 
-  // Once tenant loads, replace UUID in URL with code for a readable URL
+  // Validate URL slug matches the logged-in tenant; redirect if mismatched or UUID
   useEffect(() => {
-    if (!tenant?.code || !tenant.id) return;
-    if (pathname.includes(tenant.id)) {
+    if (!tenant) return;
+    const correctSlug = tenant.code ?? tenant.id;
+    if (!correctSlug) return;
+
+    if (!pathname.startsWith('/admin/')) return;
+    const afterAdmin = pathname.slice('/admin/'.length);
+    const firstSegment = afterAdmin.split('/')[0];
+
+    const ADMIN_SUBROUTES = new Set(['events', 'members', 'messages', 'settings', 'support', 'superadmin', 'login', 'dashboard']);
+    if (!firstSegment || ADMIN_SUBROUTES.has(firstSegment)) return;
+
+    if (firstSegment !== tenant.code && firstSegment !== tenant.id) {
+      // Wrong tenant's URL — redirect to same page under the correct tenant
+      const rest = afterAdmin.slice(firstSegment.length);
+      router.replace(`/admin/${correctSlug}${rest}`);
+    } else if (tenant.code && firstSegment === tenant.id) {
+      // UUID in URL — replace with human-readable code
       router.replace(pathname.replace(tenant.id, tenant.code));
     }
-  }, [tenant?.id, tenant?.code, pathname]);
+  }, [tenant, pathname]);
 
   const links = [
     { href: base, label: 'ダッシュボード', icon: 'D' },

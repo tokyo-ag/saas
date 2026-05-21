@@ -21,6 +21,22 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Admin auth guard — cookie written by setToken/setImpersonationToken in auth.ts
+  if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
+    const token = request.cookies.get('admin_token')?.value;
+    if (!token) {
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      if (!payload?.tenantId) {
+        return NextResponse.redirect(new URL('/admin/login', request.url));
+      }
+    } catch {
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+  }
+
   // Superadmin auth guard
   if (pathname.startsWith('/superadmin') && !pathname.startsWith('/superadmin/login')) {
     const token = request.cookies.get('sa_token')?.value;
@@ -41,5 +57,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path+', '/superadmin/:path*'],
+  matcher: ['/admin', '/admin/:path+', '/superadmin/:path*'],
 };
