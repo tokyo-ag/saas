@@ -272,6 +272,7 @@ export default function SettingsPage() {
                     setForm((prev) => ({
                       ...prev,
                       iconUrl: updated.linePictureUrl ?? updated.iconUrl ?? prev.iconUrl,
+                      name: updated.lineDisplayName ?? prev.name,
                     }));
                   } catch {
                     setError('LINEアイコンの取得に失敗しました');
