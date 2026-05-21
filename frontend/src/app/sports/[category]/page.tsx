@@ -44,9 +44,6 @@ export default function SportsCategoryPage() {
 
   const [events, setEvents] = useState<PublicEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTag, setActiveTag] = useState<string | null>(null);
-
-  const TAGS = ['初心者歓迎', '20代限定', '30代限定', '男女歓迎', '社会人', '学生歓迎', '18～22歳大学生・短大専門・社会人'];
 
   useEffect(() => {
     api.public.events(category)
@@ -54,8 +51,6 @@ export default function SportsCategoryPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [category]);
-
-  const filtered = activeTag ? events.filter((ev) => ev.tags?.includes(activeTag)) : events;
 
   if (!meta) {
     return (
@@ -85,25 +80,6 @@ export default function SportsCategoryPage() {
         </div>
       </div>
 
-      {/* タグフィルター */}
-      <div className="px-4 pt-3 pb-1">
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {TAGS.map((tag) => (
-            <button
-              key={tag}
-              onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-colors ${
-                activeTag === tag
-                  ? 'bg-gray-900 text-white border-gray-900'
-                  : 'bg-white text-gray-600 border-gray-200'
-              }`}
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <div className="px-4 pt-2">
         {loading ? (
           <div className="space-y-3">
@@ -111,22 +87,18 @@ export default function SportsCategoryPage() {
               <div key={i} className="bg-white rounded-2xl h-28 animate-pulse" />
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : events.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <p className="text-4xl mb-3">{meta.emoji}</p>
-            <p className="text-gray-700 font-semibold text-sm">
-              {activeTag ? `「${activeTag}」のイベントはありません` : `${meta.label}のイベントは現在ありません`}
-            </p>
-            <p className="text-gray-400 text-xs mt-1 leading-relaxed">
-              {activeTag ? '別のタグで試してみてください' : '主催者が増えるとここにイベントが表示されます'}
-            </p>
+            <p className="text-gray-700 font-semibold text-sm">{meta.label}のイベントは現在ありません</p>
+            <p className="text-gray-400 text-xs mt-1 leading-relaxed">主催者が増えるとここにイベントが表示されます</p>
             <Link href="/" className="mt-6 bg-[#06C755] text-white font-bold text-sm px-6 py-2.5 rounded-full">
               トップへ戻る
             </Link>
           </div>
         ) : (
           <div className="space-y-3">
-            {filtered.map((ev) => {
+            {events.map((ev) => {
               const img = imgUrl(ev.imageUrl, API_URL);
               const org = ev.tenant.lineDisplayName ?? ev.tenant.name;
               const remaining = ev.capacity != null ? ev.capacity - ev.reservedCount : null;
