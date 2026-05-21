@@ -148,12 +148,14 @@ export default function SportsCategoryPage() {
                     <p className="text-[11px] text-gray-400 truncate">{ev.location}</p>
                     <div className="flex items-center justify-between mt-1.5">
                       <span className="text-[10px] text-gray-400 truncate max-w-[120px]">{org}</span>
-                      {ev.price === 0
+                      {ev.priceMale != null && ev.priceFemale != null
+                        ? <span className="text-[11px] text-gray-600 font-medium">¥{Math.min(ev.priceMale, ev.priceFemale).toLocaleString()}〜</span>
+                        : ev.price === 0
                         ? <span className="text-[11px] text-[#06C755] font-semibold">無料</span>
                         : <span className="text-[11px] text-gray-600 font-medium">¥{ev.price.toLocaleString()}</span>}
                     </div>
                     {ev.viewCount > 0 && (
-                      <p className="text-[10px] text-gray-400 mt-1">👁 {ev.viewCount.toLocaleString()}回閲覧</p>
+                      <p className="text-[10px] text-gray-400 mt-1">閲覧数: {ev.viewCount.toLocaleString()}</p>
                     )}
                   </div>
                 </Link>

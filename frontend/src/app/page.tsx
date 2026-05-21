@@ -53,12 +53,14 @@ function EventCard({ event, showViews }: { event: PublicEvent; showViews?: boole
         <p className="text-[10px] text-gray-400">{fmtDate(event.heldAt)}</p>
         <div className="flex items-center justify-between">
           <span className="text-[10px] text-gray-400 truncate max-w-[80px]">{org}</span>
-          {event.price === 0
+          {event.priceMale != null && event.priceFemale != null
+            ? <span className="text-[9px] text-gray-500">¥{Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜</span>
+            : event.price === 0
             ? <span className="text-[9px] text-[#06C755] font-semibold">無料</span>
             : <span className="text-[9px] text-gray-500">¥{event.price.toLocaleString()}</span>}
         </div>
         {showViews && (
-          <p className="text-[10px] text-gray-400">👁 {event.viewCount.toLocaleString()}回閲覧</p>
+          <p className="text-[10px] text-gray-400">閲覧数: {event.viewCount.toLocaleString()}</p>
         )}
       </div>
     </Link>
