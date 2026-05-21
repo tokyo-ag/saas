@@ -33,7 +33,7 @@ function EventCard({ event, showViews, compact }: { event: PublicEvent; showView
   return (
     <Link
       href={`/liff/${event.tenantId}/events/${event.id}`}
-      className={`flex-shrink-0 ${compact ? 'w-[81px] md:w-32' : 'w-[93px] md:w-44'} rounded-lg overflow-hidden block relative`}
+      className={`flex-shrink-0 ${compact ? 'w-[81px] md:w-32' : 'w-[105px] md:w-44'} rounded-lg overflow-hidden block relative`}
     >
       <div className="relative" style={{ aspectRatio: '4/5' }}>
         {img ? (
