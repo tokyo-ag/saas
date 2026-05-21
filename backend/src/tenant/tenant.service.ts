@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException, UnauthorizedException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import Stripe from 'stripe';
 import { IsString, IsOptional } from 'class-validator';
@@ -18,6 +18,7 @@ export class UpdateTenantDto {
   @IsOptional() @IsString() liffEventView?: string;
   @IsOptional() @IsString() themeColor?: string;
   @IsOptional() @IsString() iconUrl?: string;
+  @IsOptional() @IsString() code?: string;
 }
 
 @Injectable()
@@ -70,6 +71,18 @@ export class TenantService {
   async update(tenantId: string, dto: UpdateTenantDto, accountId: string, reauthToken?: string) {
     const tenant = await this.findRaw(tenantId);
 
+    if (dto.code !== undefined) {
+      const slug = dto.code.trim().toLowerCase();
+      if (slug && !/^[a-z0-9][a-z0-9-]{1,30}[a-z0-9]$/.test(slug) && !/^[a-z0-9]{2,32}$/.test(slug)) {
+        throw new BadRequestException('コードは英小文字・数字・ハイフンのみ使用できます（2〜32文字）');
+      }
+      if (slug) {
+        const conflict = await this.prisma.tenant.findFirst({ where: { code: slug, NOT: { id: tenantId } } });
+        if (conflict) throw new ConflictException('そのコードは既に使用されています');
+      }
+      dto = { ...dto, code: slug || undefined };
+    }
+
     const changesLineSettings = [dto.lineChannelId, dto.lineChannelSecret, dto.lineChannelAccessToken, dto.liffId, dto.organizerLineUserId].some((v) => v !== undefined);
     const changesStripeSettings = [dto.stripePublishableKey, dto.stripeSecretKey, dto.stripeWebhookSecret].some((v) => v !== undefined);
     if (changesLineSettings && tenant.plan !== 'pro') {
@@ -96,6 +109,7 @@ export class TenantService {
         ...(dto.liffEventView !== undefined && { liffEventView: dto.liffEventView }),
         ...(dto.themeColor !== undefined && { themeColor: dto.themeColor }),
         ...(dto.iconUrl !== undefined && { iconUrl: dto.iconUrl || null }),
+        ...(dto.code !== undefined && { code: dto.code || null }),
       },
     });
     return this.toSafeTenant(updated);

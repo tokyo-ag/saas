@@ -1,0 +1,1 @@
+ALTER TABLE "tenants" ALTER COLUMN "code" TYPE VARCHAR(32);

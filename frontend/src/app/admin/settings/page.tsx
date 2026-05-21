@@ -75,6 +75,9 @@ export default function SettingsPage() {
   const [savingView, setSavingView] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [codeInput, setCodeInput] = useState('');
+  const [savingCode, setSavingCode] = useState(false);
+  const [codeSaved, setCodeSaved] = useState(false);
 
   // crop modal state
   const [cropSrc, setCropSrc] = useState<string | null>(null);
@@ -128,6 +131,24 @@ export default function SettingsPage() {
     }
   }
 
+  async function handleSaveCode() {
+    const slug = codeInput.trim().toLowerCase();
+    if (!slug) return;
+    setSavingCode(true);
+    setError('');
+    try {
+      const updated = await api.tenant.update({ code: slug });
+      setTenant(updated);
+      setCodeInput(updated.code ?? slug);
+      setCodeSaved(true);
+      setTimeout(() => setCodeSaved(false), 3000);
+    } catch (err: any) {
+      setError(err.message ?? 'URLコードの保存に失敗しました');
+    } finally {
+      setSavingCode(false);
+    }
+  }
+
   function copyInviteLink(url: string) {
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
@@ -139,6 +160,7 @@ export default function SettingsPage() {
     api.tenant.get().then((tenantData) => {
       setTenant(tenantData);
       setForm({ name: tenantData.name, description: tenantData.description ?? '', iconUrl: tenantData.iconUrl ?? '' });
+      setCodeInput(tenantData.code ?? '');
       const v = tenantData.liffEventView === 'calendar' ? 'calendar' : 'card';
       setViewMode(v);
       setSavedViewMode(v);
@@ -208,19 +230,41 @@ export default function SettingsPage() {
           <p className="mb-2 text-sm font-medium text-gray-700">ユーザー画面の確認用URL</p>
           <p className="mb-3 text-xs text-gray-500">参加者がイベント一覧を見たり予約するページのURLです。</p>
           {tenant.id && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-4">
               <span className="flex-1 truncate rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-xs font-mono text-gray-600">
-                {typeof window !== 'undefined' ? `${window.location.origin}/liff/${tenant.id}` : `https://comiu.vercel.app/liff/${tenant.id}`}
+                {typeof window !== 'undefined' ? `${window.location.origin}/liff/${tenant.code ?? tenant.id}` : `https://comiu.vercel.app/liff/${tenant.code ?? tenant.id}`}
               </span>
               <button
                 type="button"
-                onClick={() => copyInviteLink(typeof window !== 'undefined' ? `${window.location.origin}/liff/${tenant.id}` : '')}
+                onClick={() => copyInviteLink(typeof window !== 'undefined' ? `${window.location.origin}/liff/${tenant.code ?? tenant.id}` : '')}
                 className="shrink-0 rounded-lg bg-[#06C755] px-4 py-2 text-xs font-bold text-white hover:bg-[#05a847]"
               >
                 {copied ? 'コピー済み ✓' : 'コピー'}
               </button>
             </div>
           )}
+          <div className="border-t border-gray-100 pt-4">
+            <p className="mb-1 text-sm font-medium text-gray-700">URLコード変更</p>
+            <p className="mb-2 text-xs text-gray-400">英小文字・数字・ハイフンのみ（2〜32文字）。変更すると古いURLは無効になります。</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={codeInput}
+                onChange={(e) => setCodeInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                placeholder="例: bell, gakuori"
+                maxLength={32}
+                className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none focus:border-[#06C755] focus:ring-1 focus:ring-[#06C755]"
+              />
+              <button
+                type="button"
+                onClick={handleSaveCode}
+                disabled={savingCode || !codeInput.trim() || codeInput.trim() === (tenant.code ?? '')}
+                className="shrink-0 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:text-gray-300 disabled:cursor-default"
+              >
+                {savingCode ? '保存中...' : codeSaved ? '保存済み ✓' : '保存'}
+              </button>
+            </div>
+          </div>
         </section>
 
         <form onSubmit={handleSubmit} className="space-y-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-6">

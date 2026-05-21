@@ -532,6 +532,7 @@ export interface TenantInput {
   liffEventView?: string;
   themeColor?: string;
   iconUrl?: string;
+  code?: string;
 }
 
 export interface LiffTenant {

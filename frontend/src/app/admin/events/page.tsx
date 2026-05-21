@@ -147,7 +147,7 @@ export default function EventsPage() {
     load();
     api.tenant.get().then((t) => {
       setViewMode(t.liffEventView === 'calendar' ? 'calendar' : 'card');
-      setTenantId(t.id);
+      setTenantId(t.code ?? t.id);
     }).catch(() => {});
   }, []);
 
