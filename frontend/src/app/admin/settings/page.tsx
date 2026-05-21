@@ -234,8 +234,8 @@ export default function SettingsPage() {
                 disabled={uploading}
                 className="relative flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-gray-300 bg-gray-50 transition-colors hover:border-[#06C755] hover:bg-green-50 disabled:opacity-60"
               >
-                {form.iconUrl ? (
-                  <img src={form.iconUrl} alt="アイコン" className="h-full w-full object-cover" />
+                {(form.iconUrl || tenant.linePictureUrl) ? (
+                  <img src={form.iconUrl || tenant.linePictureUrl!} alt="アイコン" className="h-full w-full object-cover" />
                 ) : (
                   <span className="text-3xl font-bold text-gray-300">{form.name?.[0] ?? '?'}</span>
                 )}
@@ -269,7 +269,10 @@ export default function SettingsPage() {
                   try {
                     const updated = await api.tenant.syncLineProfile();
                     setTenant(updated);
-                    setForm((prev) => ({ ...prev, iconUrl: updated.iconUrl ?? prev.iconUrl }));
+                    setForm((prev) => ({
+                      ...prev,
+                      iconUrl: updated.linePictureUrl ?? updated.iconUrl ?? prev.iconUrl,
+                    }));
                   } catch {
                     setError('LINEアイコンの取得に失敗しました');
                   } finally {
