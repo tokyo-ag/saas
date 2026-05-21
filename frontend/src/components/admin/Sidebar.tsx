@@ -6,14 +6,6 @@ import { useEffect, useState } from 'react';
 import { api, Tenant } from '@/lib/api';
 import { clearToken } from '@/lib/auth';
 
-const links = [
-  { href: '/admin', label: 'ダッシュボード', icon: 'D' },
-  { href: '/admin/events', label: 'イベント管理', icon: 'E' },
-  { href: '/admin/messages', label: 'メッセージ', icon: 'M' },
-  { href: '/admin/members', label: '参加者名簿', icon: 'U' },
-  { href: '/admin/settings', label: '設定', icon: 'S' },
-];
-
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -29,6 +21,14 @@ export default function Sidebar() {
   }, [pathname]);
 
   const displayName = tenant?.lineDisplayName ?? tenant?.name ?? 'イベント管理';
+  const tid = tenant?.id ?? '';
+  const links = [
+    { href: `/admin/${tid}`, label: 'ダッシュボード', icon: 'D' },
+    { href: `/admin/${tid}/events`, label: 'イベント管理', icon: 'E' },
+    { href: `/admin/${tid}/messages`, label: 'メッセージ', icon: 'M' },
+    { href: `/admin/${tid}/members`, label: '参加者名簿', icon: 'U' },
+    { href: `/admin/${tid}/settings`, label: '設定', icon: 'S' },
+  ];
 
   const navContent = (
     <>
@@ -46,8 +46,9 @@ export default function Sidebar() {
       </div>
       <nav className="flex-1 p-3 space-y-0.5">
         {links.map((link) => {
-          const isActive =
-            link.href === '/admin' ? pathname === '/admin' : pathname.startsWith(link.href);
+          const isActive = link.label === 'ダッシュボード'
+            ? pathname === '/admin' || (tid && pathname === `/admin/${tid}`)
+            : pathname.startsWith(link.href.replace(`/admin/${tid}`, '/admin'));
           return (
             <Link
               key={link.href}
