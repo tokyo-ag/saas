@@ -1,19 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { api, API_URL, PublicEvent } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
-
-const ANON_KEY = 'anon_id';
-
-function getAnonId(): string {
-  if (typeof window === 'undefined') return '';
-  let id = localStorage.getItem(ANON_KEY);
-  if (!id) { id = crypto.randomUUID(); localStorage.setItem(ANON_KEY, id); }
-  return id;
-}
 
 const CATEGORY_META: Record<string, { label: string; emoji: string; desc: string }> = {
   badminton: { label: 'バドミントン', emoji: '🏸', desc: 'バドミントンサークル・交流イベント一覧' },
@@ -26,17 +17,6 @@ function fmtDate(dateStr: string) {
     month: 'numeric', day: 'numeric', weekday: 'short',
     hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo',
   });
-}
-
-function HeartIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24"
-      fill={filled ? '#ef4444' : 'none'}
-      stroke={filled ? '#ef4444' : 'currentColor'}
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-    </svg>
-  );
 }
 
 export default function SportsCategoryPage() {
@@ -64,39 +44,18 @@ export default function SportsCategoryPage() {
 
   const [events, setEvents] = useState<PublicEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [activeTag, setActiveTag] = useState<string | null>(null);
 
   const TAGS = ['初心者歓迎', '20代限定', '30代限定', '男女歓迎', '社会人', '学生歓迎', '18～22歳大学生・短大専門・社会人'];
 
   useEffect(() => {
-    const anonId = getAnonId();
-    api.public.events(anonId, category)
-      .then((evs) => {
-        setEvents(evs);
-        setLikedIds(new Set(evs.filter((e) => e.userLiked).map((e) => e.id)));
-      })
+    api.public.events(category)
+      .then(setEvents)
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [category]);
 
   const filtered = activeTag ? events.filter((ev) => ev.tags?.includes(activeTag)) : events;
-
-  const toggleLike = useCallback(async (eventId: string) => {
-    const anonId = getAnonId();
-    setLikedIds((prev) => {
-      const next = new Set(prev);
-      next.has(eventId) ? next.delete(eventId) : next.add(eventId);
-      return next;
-    });
-    await api.public.toggleLike(eventId, anonId).catch(() => {
-      setLikedIds((prev) => {
-        const next = new Set(prev);
-        next.has(eventId) ? next.delete(eventId) : next.add(eventId);
-        return next;
-      });
-    });
-  }, []);
 
   if (!meta) {
     return (
@@ -170,45 +129,34 @@ export default function SportsCategoryPage() {
             {filtered.map((ev) => {
               const img = imgUrl(ev.imageUrl, API_URL);
               const org = ev.tenant.lineDisplayName ?? ev.tenant.name;
-              const liked = likedIds.has(ev.id);
               const remaining = ev.capacity != null ? ev.capacity - ev.reservedCount : null;
 
               return (
-                <div key={ev.id} className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
-                  <Link href={`/liff/${ev.tenantId}/events/${ev.id}`} className="flex gap-3 p-3">
-                    <div className="relative w-20 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-[#06C755] to-[#047a35] aspect-[4/5]">
-                      {img && <img src={img} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-                      {remaining !== null && remaining <= 0 && (
-                        <div className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full">満席</div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0 py-0.5">
-                      <p className="text-[13px] font-bold text-gray-900 line-clamp-2 leading-snug">{ev.title}</p>
-                      <p className="text-[11px] text-gray-400 mt-1">{fmtDate(ev.heldAt)}</p>
-                      <p className="text-[11px] text-gray-400 truncate">{ev.location}</p>
-                      <div className="flex items-center justify-between mt-1.5">
-                        <span className="text-[10px] text-gray-400 truncate max-w-[120px]">{org}</span>
-                        {ev.price === 0
-                          ? <span className="text-[11px] text-[#06C755] font-semibold">無料</span>
-                          : <span className="text-[11px] text-gray-600 font-medium">¥{ev.price.toLocaleString()}</span>}
-                      </div>
-                    </div>
-                  </Link>
-                  <div className="px-3 pb-2.5 flex items-center justify-between border-t border-gray-50 pt-2">
-                    <button
-                      onClick={() => toggleLike(ev.id)}
-                      className="flex items-center gap-1.5 text-gray-400 active:scale-90 transition-transform"
-                    >
-                      <HeartIcon filled={liked} />
-                      <span className={`text-[12px] font-medium ${liked ? 'text-red-400' : 'text-gray-400'}`}>
-                        {ev.likeCount + (liked && !ev.userLiked ? 1 : !liked && ev.userLiked ? -1 : 0)}
-                      </span>
-                    </button>
-                    {remaining !== null && remaining > 0 && (
-                      <span className="text-[10px] text-gray-400">残り{remaining}席</span>
+                <Link key={ev.id} href={`/liff/${ev.tenantId}/events/${ev.id}`}
+                  className="bg-white rounded-2xl overflow-hidden flex gap-3 p-3 block"
+                  style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
+                >
+                  <div className="relative w-20 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-[#06C755] to-[#047a35] aspect-[4/5]">
+                    {img && <img src={img} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                    {remaining !== null && remaining <= 0 && (
+                      <div className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full">満席</div>
                     )}
                   </div>
-                </div>
+                  <div className="flex-1 min-w-0 py-0.5">
+                    <p className="text-[13px] font-bold text-gray-900 line-clamp-2 leading-snug">{ev.title}</p>
+                    <p className="text-[11px] text-gray-400 mt-1">{fmtDate(ev.heldAt)}</p>
+                    <p className="text-[11px] text-gray-400 truncate">{ev.location}</p>
+                    <div className="flex items-center justify-between mt-1.5">
+                      <span className="text-[10px] text-gray-400 truncate max-w-[120px]">{org}</span>
+                      {ev.price === 0
+                        ? <span className="text-[11px] text-[#06C755] font-semibold">無料</span>
+                        : <span className="text-[11px] text-gray-600 font-medium">¥{ev.price.toLocaleString()}</span>}
+                    </div>
+                    {ev.viewCount > 0 && (
+                      <p className="text-[10px] text-gray-400 mt-1">👁 {ev.viewCount.toLocaleString()}回閲覧</p>
+                    )}
+                  </div>
+                </Link>
               );
             })}
           </div>

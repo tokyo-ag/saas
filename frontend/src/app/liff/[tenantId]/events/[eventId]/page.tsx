@@ -93,6 +93,7 @@ export default function LiffEventDetailPage() {
 
   useEffect(() => {
     async function load() {
+      api.public.recordView(eventId).catch(() => {});
       const cacheKey = `liff_event_${tenantId}_${eventId}`;
       let evt: LiffEvent;
       try {

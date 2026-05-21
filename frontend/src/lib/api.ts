@@ -202,20 +202,16 @@ export const api = {
       request(`/liff/${tenantId}/notifications/read-all?lineUserId=${encodeURIComponent(lineUserId)}`, { method: 'PATCH' }),
   },
   public: {
-    events: (anonymousId?: string, category?: string, tag?: string) => {
+    events: (category?: string, tag?: string) => {
       const params = new URLSearchParams();
-      if (anonymousId) params.set('anonymousId', anonymousId);
       if (category) params.set('category', category);
       if (tag) params.set('tag', tag);
       const qs = params.toString();
       return request<PublicEvent[]>(`/public/events${qs ? `?${qs}` : ''}`);
     },
     tenants: () => request<PublicTenant[]>('/public/tenants'),
-    toggleLike: (eventId: string, anonymousId: string) =>
-      request<{ liked: boolean }>(`/public/events/${eventId}/like`, {
-        method: 'POST',
-        body: JSON.stringify({ anonymousId }),
-      }),
+    recordView: (eventId: string) =>
+      request<{ ok: boolean }>(`/public/events/${eventId}/view`, { method: 'POST' }),
   },
   tenant: {
     get: () => request<Tenant>('/admin/tenant'),
@@ -608,7 +604,6 @@ export function formatDateOnly(dateStr: string): string {
 }
 
 export interface PublicTenant {
-  totalLikes: number;
   id: string;
   name: string;
   description?: string;
@@ -616,6 +611,7 @@ export interface PublicTenant {
   linePictureUrl?: string;
   memberCount: number;
   eventCount: number;
+  accessCount: number;
 }
 
 export interface PublicEvent {
@@ -631,9 +627,8 @@ export interface PublicEvent {
   reservedCount: number;
   iconUrl?: string;
   imageUrl?: string;
-  likeCount: number;
-  monthlyLikeCount: number;
-  userLiked: boolean;
+  viewCount: number;
+  tenantAccessCount: number;
   category?: string | null;
   tags: string[];
   tenant: {
@@ -641,6 +636,7 @@ export interface PublicEvent {
     name: string;
     lineDisplayName?: string;
     linePictureUrl?: string;
+    iconUrl?: string;
   };
 }
 

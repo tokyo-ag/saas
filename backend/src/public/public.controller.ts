@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, Query, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('public')
@@ -7,13 +7,9 @@ export class PublicController {
 
   @Get('events')
   async getEvents(
-    @Query('anonymousId') anonymousId?: string,
     @Query('category') category?: string,
     @Query('tag') tag?: string,
   ) {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
     const events = await this.prisma.event.findMany({
       where: {
         status: 'open',
@@ -25,28 +21,21 @@ export class PublicController {
       orderBy: { heldAt: 'asc' },
       include: {
         tenant: {
-          select: { id: true, name: true, lineDisplayName: true, linePictureUrl: true, iconUrl: true },
+          select: {
+            id: true,
+            name: true,
+            lineDisplayName: true,
+            linePictureUrl: true,
+            iconUrl: true,
+            _count: { select: { liffAccesses: { where: { accessedAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } } } } },
+          },
         },
         reservations: {
           where: { status: { in: ['reserved', 'attended', 'waiting_payment'] } },
           select: { id: true },
         },
-        _count: { select: { likes: true } },
-        likes: {
-          where: { createdAt: { gte: monthStart } },
-          select: { id: true },
-        },
       },
     });
-
-    const userLikedIds = anonymousId
-      ? new Set(
-          (await this.prisma.eventLike.findMany({
-            where: { anonymousId, eventId: { in: events.map((e) => e.id) } },
-            select: { eventId: true },
-          })).map((l) => l.eventId),
-        )
-      : new Set<string>();
 
     return events.map((e) => ({
       id: e.id,
@@ -61,27 +50,25 @@ export class PublicController {
       imageUrl: e.imageUrl,
       category: e.category,
       tags: e.tags,
-      likeCount: e._count.likes,
-      monthlyLikeCount: e.likes.length,
-      userLiked: userLikedIds.has(e.id),
-      tenant: e.tenant,
+      viewCount: e.viewCount,
+      tenantAccessCount: e.tenant._count.liffAccesses,
+      tenant: {
+        id: e.tenant.id,
+        name: e.tenant.name,
+        lineDisplayName: e.tenant.lineDisplayName,
+        linePictureUrl: e.tenant.linePictureUrl,
+        iconUrl: e.tenant.iconUrl,
+      },
     }));
   }
 
-  @Post('events/:id/like')
-  async toggleLike(
-    @Param('id') id: string,
-    @Body() body: { anonymousId: string },
-  ) {
-    const existing = await this.prisma.eventLike.findUnique({
-      where: { eventId_anonymousId: { eventId: id, anonymousId: body.anonymousId } },
+  @Post('events/:id/view')
+  async recordView(@Param('id') id: string) {
+    await this.prisma.event.updateMany({
+      where: { id },
+      data: { viewCount: { increment: 1 } },
     });
-    if (existing) {
-      await this.prisma.eventLike.delete({ where: { id: existing.id } });
-      return { liked: false };
-    }
-    await this.prisma.eventLike.create({ data: { eventId: id, anonymousId: body.anonymousId } });
-    return { liked: true };
+    return { ok: true };
   }
 
   @Get('tenant-theme/:tenantId')

@@ -1,45 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { initLiff } from '@/lib/liff';
 import LiffBottomNav from '@/components/liff/LiffBottomNav';
-
-const FAV_KEY = 'fav_tenants';
-const ANON_KEY = 'anon_id';
-
-function getAnonId(): string {
-  if (typeof window === 'undefined') return '';
-  let id = localStorage.getItem(ANON_KEY);
-  if (!id) { id = crypto.randomUUID(); localStorage.setItem(ANON_KEY, id); }
-  return id;
-}
-function loadFavs(): Set<string> {
-  try { return new Set(JSON.parse(localStorage.getItem(FAV_KEY) ?? '[]')); } catch { return new Set(); }
-}
-function saveFavs(favs: Set<string>) {
-  localStorage.setItem(FAV_KEY, JSON.stringify([...favs]));
-}
-
-function fmtDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('ja-JP', {
-    month: 'numeric', day: 'numeric', weekday: 'short',
-    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo',
-  });
-}
-
-function HeartIcon({ filled, size = 14 }: { filled: boolean; size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24"
-      fill={filled ? '#ef4444' : 'none'}
-      stroke={filled ? '#ef4444' : 'currentColor'}
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-    </svg>
-  );
-}
 
 function SectionHeader({ title, emoji }: { title: string; emoji: string }) {
   return (
@@ -49,94 +15,68 @@ function SectionHeader({ title, emoji }: { title: string; emoji: string }) {
   );
 }
 
-function EventCard({ event, liked, onToggleLike, favTenants, onToggleFav }: {
-  event: PublicEvent;
-  liked: boolean;
-  onToggleLike: (id: string) => void;
-  favTenants: Set<string>;
-  onToggleFav: (tenantId: string) => void;
-}) {
+function fmtDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('ja-JP', {
+    month: 'numeric', day: 'numeric', weekday: 'short',
+    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo',
+  });
+}
+
+function EventCard({ event, showViews }: { event: PublicEvent; showViews?: boolean }) {
   const img = imgUrl(event.imageUrl, API_URL);
   const org = event.tenant.lineDisplayName ?? event.tenant.name;
   const remaining = event.capacity != null ? event.capacity - event.reservedCount : null;
 
   return (
-    <div className="flex-shrink-0 w-44 rounded-xl overflow-hidden bg-white" style={{ boxShadow: '0 1px 5px rgba(0,0,0,0.09)' }}>
-      <Link href={`/liff/${event.tenantId}/events/${event.id}`} className="block">
-        <div className="relative" style={{ aspectRatio: '4/5' }}>
-          {img ? (
-            <img src={img} alt="" className="absolute inset-0 w-full h-full object-cover" />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-[#06C755] to-[#047a35]" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-          {remaining !== null && remaining <= 0 && (
-            <div className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">満席</div>
-          )}
-          <div className="absolute bottom-1.5 left-2 right-2">
-            <p className="text-white font-bold text-[11px] leading-snug line-clamp-2" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
-              {event.title}
-            </p>
-          </div>
+    <Link
+      href={`/liff/${event.tenantId}/events/${event.id}`}
+      className="flex-shrink-0 w-44 rounded-xl overflow-hidden bg-white block"
+      style={{ boxShadow: '0 1px 5px rgba(0,0,0,0.09)' }}
+    >
+      <div className="relative" style={{ aspectRatio: '4/5' }}>
+        {img ? (
+          <img src={img} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-[#06C755] to-[#047a35]" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        {remaining !== null && remaining <= 0 && (
+          <div className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">満席</div>
+        )}
+        <div className="absolute bottom-1.5 left-2 right-2">
+          <p className="text-white font-bold text-[11px] leading-snug line-clamp-2" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+            {event.title}
+          </p>
         </div>
-        <div className="px-2.5 pt-2 pb-1.5 space-y-0.5">
-          <p className="text-[10px] text-gray-400">{fmtDate(event.heldAt)}</p>
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-gray-400 truncate max-w-[80px]">{org}</span>
-            {event.price === 0
-              ? <span className="text-[9px] text-[#06C755] font-semibold">無料</span>
-              : <span className="text-[9px] text-gray-500">¥{event.price.toLocaleString()}</span>}
-          </div>
-        </div>
-      </Link>
-      {/* アクションバー */}
-      <div className="px-2.5 pb-2 flex items-center justify-between">
-        <button
-          onClick={() => onToggleLike(event.id)}
-          className="flex items-center gap-1 text-gray-400 active:scale-90 transition-transform"
-        >
-          <HeartIcon filled={liked} size={13} />
-          <span className={`text-[11px] font-medium ${liked ? 'text-red-400' : 'text-gray-400'}`}>
-            {event.likeCount + (liked && !event.userLiked ? 1 : !liked && event.userLiked ? -1 : 0)}
-          </span>
-        </button>
-        <button
-          onClick={() => onToggleFav(event.tenantId)}
-          className="text-[9px] flex items-center gap-0.5 text-gray-300 active:scale-90 transition-transform"
-          title="団体をお気に入り"
-        >
-          <svg width="10" height="10" viewBox="0 0 24 24" fill={favTenants.has(event.tenantId) ? '#f59e0b' : 'none'} stroke={favTenants.has(event.tenantId) ? '#f59e0b' : '#D1D5DB'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-          </svg>
-        </button>
       </div>
-    </div>
+      <div className="px-2.5 pt-2 pb-2.5 space-y-0.5">
+        <p className="text-[10px] text-gray-400">{fmtDate(event.heldAt)}</p>
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] text-gray-400 truncate max-w-[80px]">{org}</span>
+          {event.price === 0
+            ? <span className="text-[9px] text-[#06C755] font-semibold">無料</span>
+            : <span className="text-[9px] text-gray-500">¥{event.price.toLocaleString()}</span>}
+        </div>
+        {showViews && event.viewCount > 0 && (
+          <p className="text-[10px] text-gray-400">👁 {event.viewCount.toLocaleString()}回閲覧</p>
+        )}
+      </div>
+    </Link>
   );
 }
 
 const MEDALS = ['🥇', '🥈', '🥉'];
 
-function RankingCard({ tenant, rank, favTenants, onToggleFav }: {
-  tenant: PublicTenant;
-  rank: number;
-  favTenants: Set<string>;
-  onToggleFav: (id: string) => void;
-}) {
-  const isFav = favTenants.has(tenant.id);
+function RankingCard({ tenant, rank }: { tenant: PublicTenant; rank: number }) {
   const displayName = tenant.lineDisplayName ?? tenant.name;
 
   return (
-    <div className="flex-shrink-0 w-36 bg-white rounded-2xl p-3 flex flex-col items-center gap-2 relative"
-      style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+    <Link
+      href={`/liff/${tenant.id}`}
+      className="flex-shrink-0 w-36 bg-white rounded-2xl p-3 flex flex-col items-center gap-2 relative block"
+      style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
+    >
       <span className="absolute top-2 left-3 text-base leading-none">{MEDALS[rank] ?? `${rank + 1}位`}</span>
-      <button
-        onClick={() => onToggleFav(tenant.id)}
-        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center active:scale-90 transition-transform"
-      >
-        <svg width="13" height="13" viewBox="0 0 24 24" fill={isFav ? '#f59e0b' : 'none'} stroke={isFav ? '#f59e0b' : '#D1D5DB'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-        </svg>
-      </button>
       {tenant.linePictureUrl ? (
         <img src={tenant.linePictureUrl} alt="" className="w-14 h-14 rounded-full object-cover mt-3 border-2 border-gray-100" />
       ) : (
@@ -146,10 +86,10 @@ function RankingCard({ tenant, rank, favTenants, onToggleFav }: {
       )}
       <p className="text-[12px] font-semibold text-gray-800 text-center leading-snug line-clamp-2">{displayName}</p>
       <div className="flex items-center gap-2 text-[10px] text-gray-400">
-        <span>❤️ {tenant.totalLikes}</span>
+        <span>👁 {tenant.accessCount}</span>
         <span>👤 {tenant.memberCount}</span>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -179,21 +119,15 @@ export default function TopPage() {
   const [loading, setLoading] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
-  const [favTenants, setFavTenants] = useState<Set<string>>(new Set());
-
 
   // LINE認証後のリダイレクト
   useEffect(() => {
     async function run() {
       const pending = localStorage.getItem('liff-pending-redirect');
       const search = window.location.search;
-      // LIFF認証コードがURLにある場合はliff.init()で処理（しないとトークンが保存されない）
-      // liff.init()が自動リダイレクトした場合、以降のコードは実行されない
       if (search.includes('code=') || search.includes('liff.state=') || pending) {
         await initLiff();
       }
-      // liff.init()が自動リダイレクトしなかった場合のフォールバック
       if (pending) {
         localStorage.removeItem('liff-pending-redirect');
         window.location.replace(pending);
@@ -203,42 +137,13 @@ export default function TopPage() {
   }, []);
 
   useEffect(() => {
-    const anonId = getAnonId();
-    setFavTenants(loadFavs());
-    Promise.all([api.public.events(anonId), api.public.tenants()])
+    Promise.all([api.public.events(), api.public.tenants()])
       .then(([evs, tns]) => {
         setEvents(evs);
-        setLikedIds(new Set(evs.filter((e) => e.userLiked).map((e) => e.id)));
         setTenants(tns);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
-
-  const toggleLike = useCallback(async (eventId: string) => {
-    const anonId = getAnonId();
-    setLikedIds((prev) => {
-      const next = new Set(prev);
-      next.has(eventId) ? next.delete(eventId) : next.add(eventId);
-      return next;
-    });
-    await api.public.toggleLike(eventId, anonId).catch(() => {
-      // 失敗時はロールバック
-      setLikedIds((prev) => {
-        const next = new Set(prev);
-        next.has(eventId) ? next.delete(eventId) : next.add(eventId);
-        return next;
-      });
-    });
-  }, []);
-
-  const toggleFav = useCallback((tenantId: string) => {
-    setFavTenants((prev) => {
-      const next = new Set(prev);
-      next.has(tenantId) ? next.delete(tenantId) : next.add(tenantId);
-      saveFavs(next);
-      return next;
-    });
   }, []);
 
   function limitPerTenant(list: PublicEvent[], max = 2) {
@@ -249,14 +154,16 @@ export default function TopPage() {
     });
   }
 
-  // 今月の注目（月間いいね数上位、1団体最大2件）
+  // 注目イベント: テナントのアクセス数上位 (1団体最大2件)
   const hotEvents = limitPerTenant(
-    [...events].sort((a, b) => b.monthlyLikeCount - a.monthlyLikeCount)
+    [...events].sort((a, b) => b.tenantAccessCount - a.tenantAccessCount)
   ).slice(0, 10);
-  // 日時順（1団体最大2件）
+
+  // 日時順 (1団体最大2件)
   const byDate = limitPerTenant(
     [...events].sort((a, b) => new Date(a.heldAt).getTime() - new Date(b.heldAt).getTime())
   );
+
   // 検索
   const searchResults = query.trim()
     ? events.filter((ev) =>
@@ -264,14 +171,6 @@ export default function TopPage() {
           .join(' ').toLowerCase().includes(query.toLowerCase())
       )
     : events;
-
-  const cardProps = (ev: PublicEvent) => ({
-    event: ev,
-    liked: likedIds.has(ev.id),
-    onToggleLike: toggleLike,
-    favTenants,
-    onToggleFav: toggleFav,
-  });
 
   return (
     <>
@@ -306,7 +205,7 @@ export default function TopPage() {
               </div>
             ) : (
               <div className="flex gap-3 flex-wrap">
-                {(query ? searchResults : events).map((ev) => <EventCard key={ev.id} {...cardProps(ev)} />)}
+                {(query ? searchResults : events).map((ev) => <EventCard key={ev.id} event={ev} />)}
               </div>
             )}
           </div>
@@ -357,16 +256,7 @@ export default function TopPage() {
             <p className="text-xs text-gray-400 px-4">今月のイベントはまだありません</p>
           ) : (
             <HScroll>
-              {hotEvents.map((ev) => (
-                <div key={ev.id} className="relative">
-                  {ev.monthlyLikeCount > 0 && (
-                    <div className="absolute -top-1.5 left-2 z-10 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                      ❤️ {ev.monthlyLikeCount}
-                    </div>
-                  )}
-                  <EventCard {...cardProps(ev)} />
-                </div>
-              ))}
+              {hotEvents.map((ev) => <EventCard key={ev.id} event={ev} showViews />)}
             </HScroll>
           )}
         </div>
@@ -380,12 +270,12 @@ export default function TopPage() {
             <p className="text-xs text-gray-400 px-4">開催予定のイベントはありません</p>
           ) : (
             <HScroll>
-              {byDate.map((ev) => <EventCard key={ev.id} {...cardProps(ev)} />)}
+              {byDate.map((ev) => <EventCard key={ev.id} event={ev} />)}
             </HScroll>
           )}
         </div>
 
-        {/* セクション3: 人気の団体ランキング */}
+        {/* セクション3: 人気の団体 */}
         <div className="pt-4 pb-2">
           <SectionHeader emoji="🏆" title="人気の団体" />
           {loading ? (
@@ -399,7 +289,7 @@ export default function TopPage() {
           ) : (
             <HScroll>
               {tenants.slice(0, 8).map((t, i) => (
-                <RankingCard key={t.id} tenant={t} rank={i} favTenants={favTenants} onToggleFav={toggleFav} />
+                <RankingCard key={t.id} tenant={t} rank={i} />
               ))}
             </HScroll>
           )}
