@@ -21,8 +21,9 @@ export default function Sidebar() {
   }, [pathname]);
 
   const displayName = tenant?.lineDisplayName ?? tenant?.name ?? 'イベント管理';
-  // Use short code if set (e.g. "gakuori"), otherwise fall back to UUID
+  // Use short code if set (e.g. "gakuori"), otherwise UUID; empty string while loading
   const slug = tenant?.code ?? tenant?.id ?? '';
+  const base = slug ? `/admin/${slug}` : '/admin';
 
   // Once tenant loads, replace UUID in URL with code for a readable URL
   useEffect(() => {
@@ -30,14 +31,14 @@ export default function Sidebar() {
     if (pathname.includes(tenant.id)) {
       router.replace(pathname.replace(tenant.id, tenant.code));
     }
-  }, [tenant?.id, tenant?.code]);
+  }, [tenant?.id, tenant?.code, pathname]);
 
   const links = [
-    { href: `/admin/${slug}`, label: 'ダッシュボード', icon: 'D' },
-    { href: `/admin/${slug}/events`, label: 'イベント管理', icon: 'E' },
-    { href: `/admin/${slug}/messages`, label: 'メッセージ', icon: 'M' },
-    { href: `/admin/${slug}/members`, label: '参加者名簿', icon: 'U' },
-    { href: `/admin/${slug}/settings`, label: '設定', icon: 'S' },
+    { href: base, label: 'ダッシュボード', icon: 'D' },
+    { href: `${base}/events`, label: 'イベント管理', icon: 'E' },
+    { href: `${base}/messages`, label: 'メッセージ', icon: 'M' },
+    { href: `${base}/members`, label: '参加者名簿', icon: 'U' },
+    { href: `${base}/settings`, label: '設定', icon: 'S' },
   ];
 
   const navContent = (
@@ -56,9 +57,11 @@ export default function Sidebar() {
       </div>
       <nav className="flex-1 p-3 space-y-0.5">
         {links.map((link) => {
-          const isActive = link.label === 'ダッシュボード'
-            ? pathname === link.href
-            : pathname.startsWith(link.href);
+          const isActive = !slug
+            ? false
+            : link.label === 'ダッシュボード'
+              ? pathname === link.href
+              : pathname.startsWith(link.href);
           return (
             <Link
               key={link.href}

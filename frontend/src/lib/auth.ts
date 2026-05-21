@@ -16,6 +16,7 @@ export function setImpersonationToken(token: string) {
 
 export function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
 }
 
 export function decodeJwt<T = Record<string, unknown>>(token: string): T | null {
