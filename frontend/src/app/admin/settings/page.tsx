@@ -74,6 +74,7 @@ export default function SettingsPage() {
   const [savedViewMode, setSavedViewMode] = useState<'card' | 'calendar'>('card');
   const [savingView, setSavingView] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   // crop modal state
   const [cropSrc, setCropSrc] = useState<string | null>(null);
@@ -258,6 +259,28 @@ export default function SettingsPage() {
                 )}
               </div>
             </div>
+            {tenant.lineConfigured && (
+              <button
+                type="button"
+                disabled={syncing}
+                onClick={async () => {
+                  setSyncing(true);
+                  setError('');
+                  try {
+                    const updated = await api.tenant.syncLineProfile();
+                    setTenant(updated);
+                    setForm((prev) => ({ ...prev, iconUrl: updated.iconUrl ?? prev.iconUrl }));
+                  } catch {
+                    setError('LINEアイコンの取得に失敗しました');
+                  } finally {
+                    setSyncing(false);
+                  }
+                }}
+                className="mt-3 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                {syncing ? '取得中...' : 'LINEアイコン・名前を同期'}
+              </button>
+            )}
           </div>
 
           <div>

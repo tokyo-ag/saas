@@ -46,7 +46,6 @@ export default function LineSettingsPage() {
   });
   const [organizerLineUserId, setOrganizerLineUserId] = useState('');
   const [saving, setSaving] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [editUnlocked, setEditUnlocked] = useState(false);
   const [reauthToken, setReauthToken] = useState('');
   const [reauthEmail, setReauthEmail] = useState('');
@@ -241,41 +240,6 @@ export default function LineSettingsPage() {
               {saving ? '保存中...' : '保存して次へ'}
             </button>
           </StepCard>
-
-          {tenant.lineConfigured && (
-            <section className="rounded-xl border border-gray-200 bg-white p-4 md:p-5 flex items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2.5 mb-0.5">
-                  {(tenant.linePictureUrl ?? tenant.iconUrl) ? (
-                    <img src={(tenant.linePictureUrl ?? tenant.iconUrl)!} className="w-8 h-8 rounded-lg object-cover shrink-0" alt="" />
-                  ) : (
-                    <div className="w-8 h-8 rounded-lg bg-[#06C755] flex items-center justify-center text-white text-xs font-bold shrink-0">
-                      {(tenant.lineDisplayName ?? tenant.name).slice(0, 1)}
-                    </div>
-                  )}
-                  <span className="text-sm font-semibold text-gray-900">{tenant.lineDisplayName ?? tenant.name}</span>
-                </div>
-                <p className="text-xs text-gray-400 mt-1">サイドバーに表示されるアイコンと名前</p>
-              </div>
-              <button
-                onClick={async () => {
-                  setSyncing(true);
-                  try {
-                    const updated = await api.tenant.syncLineProfile();
-                    setTenant(updated);
-                    window.location.reload();
-                  } catch {
-                    setError('LINEアイコンの取得に失敗しました');
-                    setSyncing(false);
-                  }
-                }}
-                disabled={syncing}
-                className="shrink-0 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-              >
-                {syncing ? '取得中...' : 'アイコン・名前を同期'}
-              </button>
-            </section>
-          )}
 
           <StepCard step={4} currentStep={step} title="Webhook URLを設定する">
             <p className="mb-3 text-sm leading-relaxed text-gray-600">
