@@ -25,7 +25,7 @@ export class PublicController {
       orderBy: { heldAt: 'asc' },
       include: {
         tenant: {
-          select: { id: true, name: true, lineDisplayName: true, linePictureUrl: true },
+          select: { id: true, name: true, lineDisplayName: true, linePictureUrl: true, iconUrl: true },
         },
         reservations: {
           where: { status: { in: ['reserved', 'attended', 'waiting_payment'] } },
@@ -121,7 +121,7 @@ export class PublicController {
         tenant: { deletedAt: null },
       },
       include: {
-        tenant: { select: { code: true, name: true, lineDisplayName: true, linePictureUrl: true } },
+        tenant: { select: { code: true, name: true, lineDisplayName: true, linePictureUrl: true, iconUrl: true } },
         reservations: {
           where: { status: { in: ['reserved', 'attended', 'waiting_payment'] } },
           select: { id: true },
@@ -157,7 +157,7 @@ export class PublicController {
       tags: event.tags,
       tenantCode: event.tenant.code,
       tenantName: event.tenant.lineDisplayName ?? event.tenant.name,
-      tenantIconUrl: event.tenant.linePictureUrl,
+      tenantIconUrl: event.tenant.linePictureUrl ?? event.tenant.iconUrl,
       isEnded,
       reviews: event.reviews.map((r) => ({
         id: r.id,
@@ -192,7 +192,7 @@ export class PublicController {
         name: t.name,
         description: t.description,
         lineDisplayName: t.lineDisplayName,
-        linePictureUrl: t.linePictureUrl,
+        linePictureUrl: t.linePictureUrl ?? t.iconUrl,
         memberCount: t._count.members,
         eventCount: t._count.events,
         totalLikes: t.events.reduce((sum, e) => sum + e._count.likes, 0),
