@@ -25,15 +25,15 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
     const token = request.cookies.get('admin_token')?.value;
     if (!token) {
-      return NextResponse.redirect(new URL('/admin/login', request.url));
+      return NextResponse.redirect(new URL('/login', request.url));
     }
     try {
       const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
       if (!payload?.tenantId) {
-        return NextResponse.redirect(new URL('/admin/login', request.url));
+        return NextResponse.redirect(new URL('/login', request.url));
       }
     } catch {
-      return NextResponse.redirect(new URL('/admin/login', request.url));
+      return NextResponse.redirect(new URL('/login', request.url));
     }
   }
 

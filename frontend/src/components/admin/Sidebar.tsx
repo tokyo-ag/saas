@@ -41,7 +41,7 @@ export default function Sidebar() {
     if (firstSegment !== tenant.code && firstSegment !== tenant.id) {
       // Wrong tenant's URL — clear token and force re-authentication
       clearToken();
-      router.replace('/admin/login');
+      router.replace('/login');
     } else if (tenant.code && firstSegment === tenant.id) {
       // UUID in URL — replace with human-readable code
       router.replace(pathname.replace(tenant.id, tenant.code));
