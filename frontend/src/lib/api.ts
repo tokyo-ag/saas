@@ -2,7 +2,7 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001
 const BASE = API_URL + '/api';
 
 // テナントID（Phase 1は固定値）
-export const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID ?? 'tenant-001';
+export const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID ?? '';
 
 import { getToken, clearToken } from './auth';
 
