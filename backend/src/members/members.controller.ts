@@ -19,6 +19,11 @@ export class MembersController {
     return this.membersService.findAll(tenantId, { name, grade, gender });
   }
 
+  @Post('sync-line-profiles')
+  syncLineProfiles(@TenantId() tenantId: string) {
+    return this.membersService.syncLineProfiles(tenantId);
+  }
+
   @Get('export')
   async exportCsv(@TenantId() tenantId: string, @Res() res: Response) {
     const csv = await this.membersService.exportCsv(tenantId);

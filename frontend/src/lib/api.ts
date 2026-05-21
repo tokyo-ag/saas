@@ -95,6 +95,7 @@ export const api = {
       return request<Member[]>(`/admin/members${q ? `?${q}` : ''}`);
     },
     get: (id: string) => request<MemberDetail>(`/admin/members/${id}`),
+    syncLineProfiles: () => request<{ updated: number }>('/admin/members/sync-line-profiles', { method: 'POST' }),
     messageThreads: () => request<AdminMessageThread[]>('/admin/members/messages/threads'),
     block: (id: string) => request<Member>(`/admin/members/${id}/block`, { method: 'PATCH' }),
     unblock: (id: string) => request<Member>(`/admin/members/${id}/unblock`, { method: 'PATCH' }),
