@@ -533,6 +533,7 @@ export interface LiffTenant {
   description?: string;
   lineDisplayName?: string;
   linePictureUrl?: string;
+  iconUrl?: string;
   lineChannelId?: string;
   liffEventView?: string;
   themeColor?: string;

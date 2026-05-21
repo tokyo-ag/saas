@@ -48,7 +48,7 @@ export default function TalksPage() {
   }, [tenantId]);
 
   const organizerName = tenant?.lineDisplayName ?? tenant?.name ?? '主催者';
-  const organizerPicture = tenant?.linePictureUrl;
+  const organizerPicture = tenant?.linePictureUrl ?? tenant?.iconUrl;
 
   return (
     <>
