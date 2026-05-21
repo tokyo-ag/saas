@@ -7,11 +7,12 @@ import { imgUrl } from '@/lib/imgUrl';
 import { initLiff } from '@/lib/liff';
 import LiffBottomNav from '@/components/liff/LiffBottomNav';
 
-function SectionHeader({ title, emoji }: { title: string; emoji: string }) {
+function SectionHeader({ title }: { title: string }) {
   return (
-    <p className="text-[13px] font-bold text-gray-800 px-4 mb-3">
-      <span className="mr-1.5">{emoji}</span>{title}
-    </p>
+    <div className="flex items-center gap-2 px-4 mb-3">
+      <span className="w-1 h-4 rounded-full bg-[#06C755] shrink-0" />
+      <p className="text-[13px] font-bold text-gray-800">{title}</p>
+    </div>
   );
 }
 
@@ -247,7 +248,7 @@ export default function TopPage() {
 
         {/* セクション1: 今月の注目イベント */}
         <div className="pt-5 pb-2">
-          <SectionHeader emoji="🔥" title="今月の注目イベント" />
+          <SectionHeader title="人気のイベント" />
           {loading ? (
             <HScroll>{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}</HScroll>
           ) : hotEvents.length === 0 ? (
@@ -261,7 +262,7 @@ export default function TopPage() {
 
         {/* セクション2: 日時順のイベント */}
         <div className="pt-4 pb-2">
-          <SectionHeader emoji="📅" title="開催日時順" />
+          <SectionHeader title="開催日時順" />
           {loading ? (
             <HScroll>{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}</HScroll>
           ) : byDate.length === 0 ? (
@@ -275,7 +276,7 @@ export default function TopPage() {
 
         {/* セクション3: COMIU注目の団体！ */}
         <div className="pt-4 pb-2">
-          <SectionHeader emoji="🏆" title="COMIU注目の団体！" />
+          <SectionHeader title="COMIU注目の団体！" />
           {loading ? (
             <HScroll>
               {Array.from({ length: 4 }).map((_, i) => (

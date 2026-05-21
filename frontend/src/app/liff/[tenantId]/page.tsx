@@ -178,21 +178,14 @@ function LiffCalendarView({ events, tenantId }: { events: LiffEvent[]; tenantId:
                   <div className="space-y-1">
                     {dayEvents.map((ev) => {
                       const startTime = new Date(ev.heldAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
-                      const endTime = ev.endAt ? new Date(ev.endAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' }) : null;
-                      const priceLabel = ev.priceMale != null && ev.priceFemale != null
-                        ? `¥${Math.min(ev.priceMale, ev.priceFemale).toLocaleString()}〜`
-                        : ev.price === 0 ? '無料' : `¥${ev.price.toLocaleString()}`;
                       return (
                         <Link
                           key={ev.id}
                           href={`/liff/${tenantId}/events/${ev.id}`}
-                          className="block rounded-md bg-[#06C755] px-1 py-1 active:opacity-70"
+                          className="block rounded-md bg-[#06C755] px-1 py-0.5 active:opacity-70"
                         >
                           <p className="text-[8px] font-bold text-white truncate leading-tight">{ev.title}</p>
-                          {ev.location && <p className="text-[7px] text-white/80 truncate leading-tight">{ev.location}</p>}
-                          <p className="text-[7px] text-white/80 leading-tight">開始 {startTime}</p>
-                          {endTime && <p className="text-[7px] text-white/80 leading-tight">終了 {endTime}</p>}
-                          <p className="text-[7px] text-white/90 font-semibold leading-tight">{priceLabel}</p>
+                          <p className="text-[8px] text-white/80 leading-none mt-0.5">{startTime}</p>
                         </Link>
                       );
                     })}
