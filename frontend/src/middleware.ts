@@ -1,28 +1,11 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// These are actual sub-routes, not tenant IDs
-const ADMIN_SUBROUTES = new Set([
-  'events', 'members', 'messages', 'settings', 'support', 'superadmin', 'login', 'dashboard',
-]);
-
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // /admin/[tenantId] or /admin/[tenantId]/... → rewrite to /admin/...
-  if (pathname.startsWith('/admin/')) {
-    const afterAdmin = pathname.slice('/admin/'.length); // e.g. "abc-uuid/events" or "events"
-    const firstSegment = afterAdmin.split('/')[0];
-    if (firstSegment && !ADMIN_SUBROUTES.has(firstSegment)) {
-      const rest = afterAdmin.slice(firstSegment.length); // e.g. "/events" or ""
-      const url = request.nextUrl.clone();
-      url.pathname = `/admin${rest}`;
-      return NextResponse.rewrite(url);
-    }
-  }
-
   // Admin auth guard — cookie written by setToken/setImpersonationToken in auth.ts
-  if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
+  if (pathname.startsWith('/admin')) {
     const token = request.cookies.get('admin_token')?.value;
     if (!token) {
       return NextResponse.redirect(new URL('/login', request.url));

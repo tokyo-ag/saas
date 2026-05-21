@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { setToken, decodeJwt } from '@/lib/auth';
+import { setToken } from '@/lib/auth';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -37,8 +37,7 @@ export default function LoginPage() {
         throw new Error(data.message ?? 'ログインに失敗しました');
       }
       setToken(data.token);
-      const decoded = decodeJwt<{ tenantId: string }>(data.token);
-      router.replace(`/admin/${decoded?.tenantId ?? ''}`);
+      router.replace('/admin');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'ログインに失敗しました');
     } finally {

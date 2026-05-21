@@ -21,39 +21,13 @@ export default function Sidebar() {
   }, [pathname]);
 
   const displayName = tenant?.lineDisplayName ?? tenant?.name ?? 'イベント管理';
-  // Use short code if set (e.g. "gakuori"), otherwise UUID; empty string while loading
-  const slug = tenant?.code ?? tenant?.id ?? '';
-  const base = slug ? `/admin/${slug}` : '/admin';
-
-  // Validate URL slug matches the logged-in tenant; redirect if mismatched or UUID
-  useEffect(() => {
-    if (!tenant) return;
-    const correctSlug = tenant.code ?? tenant.id;
-    if (!correctSlug) return;
-
-    if (!pathname.startsWith('/admin/')) return;
-    const afterAdmin = pathname.slice('/admin/'.length);
-    const firstSegment = afterAdmin.split('/')[0];
-
-    const ADMIN_SUBROUTES = new Set(['events', 'members', 'messages', 'settings', 'support', 'superadmin', 'login', 'dashboard']);
-    if (!firstSegment || ADMIN_SUBROUTES.has(firstSegment)) return;
-
-    if (firstSegment !== tenant.code && firstSegment !== tenant.id) {
-      // Wrong tenant's URL — clear token and force re-authentication
-      clearToken();
-      router.replace('/login');
-    } else if (tenant.code && firstSegment === tenant.id) {
-      // UUID in URL — replace with human-readable code
-      router.replace(pathname.replace(tenant.id, tenant.code));
-    }
-  }, [tenant, pathname]);
 
   const links = [
-    { href: base, label: 'ダッシュボード', icon: 'D' },
-    { href: `${base}/events`, label: 'イベント管理', icon: 'E' },
-    { href: `${base}/messages`, label: 'メッセージ', icon: 'M' },
-    { href: `${base}/members`, label: '参加者名簿', icon: 'U' },
-    { href: `${base}/settings`, label: '設定', icon: 'S' },
+    { href: '/admin', label: 'ダッシュボード', icon: 'D' },
+    { href: '/admin/events', label: 'イベント管理', icon: 'E' },
+    { href: '/admin/messages', label: 'メッセージ', icon: 'M' },
+    { href: '/admin/members', label: '参加者名簿', icon: 'U' },
+    { href: '/admin/settings', label: '設定', icon: 'S' },
   ];
 
   const navContent = (
@@ -72,11 +46,9 @@ export default function Sidebar() {
       </div>
       <nav className="flex-1 p-3 space-y-0.5">
         {links.map((link) => {
-          const isActive = !slug
-            ? false
-            : link.label === 'ダッシュボード'
-              ? pathname === link.href
-              : pathname.startsWith(link.href);
+          const isActive = link.label === 'ダッシュボード'
+            ? pathname === '/admin'
+            : pathname.startsWith(link.href);
           return (
             <Link
               key={link.href}

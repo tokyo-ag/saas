@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { setImpersonationToken, decodeJwt } from '@/lib/auth';
+import { setImpersonationToken } from '@/lib/auth';
 
 export default function ImpersonatePage() {
   const router = useRouter();
@@ -12,10 +12,9 @@ export default function ImpersonatePage() {
     const token = params.get('token');
     if (token) {
       setImpersonationToken(token);
-      const decoded = decodeJwt<{ tenantId: string }>(token);
-      router.replace(`/admin/${decoded?.tenantId ?? ''}`);
-    } else {
       router.replace('/admin');
+    } else {
+      router.replace('/login');
     }
   }, []);
 
