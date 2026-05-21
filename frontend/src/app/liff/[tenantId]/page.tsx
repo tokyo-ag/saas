@@ -308,10 +308,11 @@ export default function LiffTopPage() {
           {/* COMIU注目の団体！ */}
           {otherTenants.length > 0 && (
             <div className="mt-6">
-              <p className="text-[13px] font-bold text-gray-700 px-1 mb-3">
-                🏆 COMIU注目の団体！
-              </p>
-              <div className="space-y-2">
+              <div className="flex items-center gap-2 px-1 mb-3">
+                <span className="w-1 h-4 rounded-full bg-[#06C755] shrink-0" />
+                <p className="text-[13px] font-bold text-gray-800">COMIU注目の団体！</p>
+              </div>
+              <div className="flex flex-col gap-2">
                 {otherTenants.map((t) => <TenantCard key={t.id} tenant={t} />)}
               </div>
             </div>
