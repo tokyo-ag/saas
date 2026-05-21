@@ -23,15 +23,19 @@ function fmtDate(dateStr: string) {
   });
 }
 
-function EventCard({ event, showViews }: { event: PublicEvent; showViews?: boolean }) {
+function EventCard({ event, showViews, compact }: { event: PublicEvent; showViews?: boolean; compact?: boolean }) {
   const img = imgUrl(event.imageUrl, API_URL);
   const org = event.tenant.lineDisplayName ?? event.tenant.name;
   const remaining = event.capacity != null ? event.capacity - event.reservedCount : null;
+  const priceLabel = event.priceMale != null && event.priceFemale != null
+    ? `¥${Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜`
+    : event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
+  const priceGreen = event.price === 0 && event.priceMale == null;
 
   return (
     <Link
       href={`/liff/${event.tenantId}/events/${event.id}`}
-      className="flex-shrink-0 w-44 rounded-xl overflow-hidden bg-white block"
+      className={`flex-shrink-0 ${compact ? 'w-[82px]' : 'w-44'} rounded-xl overflow-hidden bg-white block`}
       style={{ boxShadow: '0 1px 5px rgba(0,0,0,0.09)' }}
     >
       <div className="relative" style={{ aspectRatio: '4/5' }}>
@@ -42,26 +46,22 @@ function EventCard({ event, showViews }: { event: PublicEvent; showViews?: boole
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         {remaining !== null && remaining <= 0 && (
-          <div className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">満席</div>
+          <div className="absolute top-1 right-1 bg-red-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-full">満席</div>
         )}
-        <div className="absolute bottom-1.5 left-2 right-2">
-          <p className="text-white font-bold text-[11px] leading-snug line-clamp-2" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+        <div className="absolute bottom-1 left-1.5 right-1.5">
+          <p className={`text-white font-bold ${compact ? 'text-[9px]' : 'text-[11px]'} leading-snug line-clamp-2`} style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
             {event.title}
           </p>
         </div>
       </div>
-      <div className="px-2.5 pt-2 pb-2.5 space-y-0.5">
-        <p className="text-[10px] text-gray-400">{fmtDate(event.heldAt)}</p>
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] text-gray-400 truncate max-w-[80px]">{org}</span>
-          {event.priceMale != null && event.priceFemale != null
-            ? <span className="text-[9px] text-gray-500">¥{Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜</span>
-            : event.price === 0
-            ? <span className="text-[9px] text-[#06C755] font-semibold">無料</span>
-            : <span className="text-[9px] text-gray-500">¥{event.price.toLocaleString()}</span>}
+      <div className={`${compact ? 'px-1.5 pt-1 pb-1.5' : 'px-2.5 pt-2 pb-2.5'} space-y-0.5`}>
+        <p className={`${compact ? 'text-[8px]' : 'text-[10px]'} text-gray-400`}>{fmtDate(event.heldAt)}</p>
+        <div className="flex items-center justify-between gap-1">
+          <span className={`${compact ? 'text-[8px]' : 'text-[10px]'} text-gray-400 truncate`}>{org}</span>
+          <span className={`${compact ? 'text-[7px]' : 'text-[9px]'} shrink-0 ${priceGreen ? 'text-[#06C755] font-semibold' : 'text-gray-500'}`}>{priceLabel}</span>
         </div>
         {showViews && (
-          <p className="text-[10px] text-gray-400">閲覧数: {event.viewCount.toLocaleString()}</p>
+          <p className={`${compact ? 'text-[8px]' : 'text-[10px]'} text-gray-400`}>閲覧数: {event.viewCount.toLocaleString()}</p>
         )}
       </div>
     </Link>
@@ -92,9 +92,9 @@ function RankingCard({ tenant, rank }: { tenant: PublicTenant; rank: number }) {
   );
 }
 
-function HScroll({ children }: { children: React.ReactNode }) {
+function HScroll({ children, gap = 'gap-3' }: { children: React.ReactNode; gap?: string }) {
   return (
-    <div className="flex gap-3 overflow-x-auto px-4 pb-3 scrollbar-hide">
+    <div className={`flex ${gap} overflow-x-auto px-4 pb-3 scrollbar-hide`}>
       {children}
     </div>
   );
@@ -268,8 +268,8 @@ export default function TopPage() {
           ) : byDate.length === 0 ? (
             <p className="text-xs text-gray-400 px-4">開催予定のイベントはありません</p>
           ) : (
-            <HScroll>
-              {byDate.map((ev) => <EventCard key={ev.id} event={ev} />)}
+            <HScroll gap="gap-2">
+              {byDate.map((ev) => <EventCard key={ev.id} event={ev} compact />)}
             </HScroll>
           )}
         </div>
