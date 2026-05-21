@@ -2,9 +2,9 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { api, formatDate, LiffEvent } from '@/lib/api';
 import { initLiff } from '@/lib/liff';
+import { FriendInviteCard } from '@/components/liff/FriendInviteCard';
 
 function DonePageInner() {
   const { tenantId, eventId } = useParams<{ tenantId: string; eventId: string }>();
@@ -34,7 +34,7 @@ function DonePageInner() {
       <h1 className="text-xl font-bold text-gray-900 mb-2">
         {isWaitlist ? `キャンセル待ち\n${order}番目に登録しました` : 'ご予約ありがとうございます！'}
       </h1>
-      {!isWaitlist && <p className="text-sm text-gray-500 mb-6">予約内容はホーム画面の通知から確認できます</p>}
+      {!isWaitlist && <p className="text-sm text-gray-500 mb-6">Talkに主催者が詳細を送りました。</p>}
 
       {event && (
         <div className="w-full max-w-sm mt-2 mb-8 space-y-3">
@@ -43,20 +43,13 @@ function DonePageInner() {
             <p className="text-xs text-gray-500">📅 {formatDate(event.heldAt)}</p>
             <p className="text-xs text-gray-500">📍 {event.location}</p>
           </div>
-          <Link
-            href={`/liff/${tenantId}/admin-talk`}
-            className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-4 text-left flex items-center gap-3 active:opacity-70 block"
-          >
-            <div className="w-10 h-10 rounded-full bg-[#06C755]/10 flex items-center justify-center shrink-0">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06C755" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900">Talkに主催者が詳細を送りました</p>
-              <p className="text-xs text-[#06C755] mt-0.5">Talkを開く →</p>
-            </div>
-          </Link>
+          <FriendInviteCard
+            tenantId={tenantId}
+            eventId={eventId}
+            title={event.title}
+            heldAt={event.heldAt}
+            location={event.location}
+          />
         </div>
       )}
 
