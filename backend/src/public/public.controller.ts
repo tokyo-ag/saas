@@ -171,16 +171,16 @@ export class PublicController {
 
   @Get('tenants')
   async getTenants() {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     const tenants = await this.prisma.tenant.findMany({
       where: { deletedAt: null },
       include: {
-        _count: { select: { members: true, events: true } },
-        events: {
+        _count: {
           select: {
-            _count: { select: { likes: true } },
+            members: true,
+            events: true,
+            liffAccesses: { where: { accessedAt: { gte: since } } },
           },
         },
       },
@@ -195,9 +195,9 @@ export class PublicController {
         linePictureUrl: t.linePictureUrl ?? t.iconUrl,
         memberCount: t._count.members,
         eventCount: t._count.events,
-        totalLikes: t.events.reduce((sum, e) => sum + e._count.likes, 0),
+        accessCount: t._count.liffAccesses,
       }))
-      .sort((a, b) => b.totalLikes - a.totalLikes);
+      .sort((a, b) => b.accessCount - a.accessCount);
 
     return ranked.slice(0, 10);
   }

@@ -58,8 +58,20 @@ model Tenant {
   events             Event[]
   members            Member[]
   organizerAccounts  OrganizerAccount[]
+  liffAccesses       TenantLiffAccess[]
 
   @@map("tenants")
+}
+
+model TenantLiffAccess {
+  id         String   @id @default(uuid())
+  tenantId   String   @map("tenant_id")
+  accessedAt DateTime @default(now()) @map("accessed_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, accessedAt])
+  @@map("tenant_liff_accesses")
 }
 
 model OrganizerAccount {

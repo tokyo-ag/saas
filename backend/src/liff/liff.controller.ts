@@ -11,6 +11,11 @@ export class LiffController {
     return this.liffService.getTenantInfo(tenantId);
   }
 
+  @Post('access')
+  recordAccess(@Param('tenantId') tenantId: string) {
+    return this.liffService.recordAccess(tenantId);
+  }
+
   @Get('events')
   getEvents(
     @Param('tenantId') tenantId: string,

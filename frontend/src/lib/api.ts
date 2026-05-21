@@ -115,6 +115,7 @@ export const api = {
       }),
   },
   liff: {
+    recordAccess: (tenantId: string) => request<{ ok: boolean }>(`/liff/${tenantId}/access`, { method: 'POST' }),
     tenant: (tenantId: string) => request<LiffTenant>(`/liff/${tenantId}`),
     events: (tenantId: string, lineUserId?: string) =>
       request<LiffEvent[]>(`/liff/${tenantId}/events${lineUserId ? `?lineUserId=${encodeURIComponent(lineUserId)}` : ''}`),

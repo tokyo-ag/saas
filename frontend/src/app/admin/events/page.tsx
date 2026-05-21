@@ -135,6 +135,8 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('upcoming');
   const [viewMode, setViewMode] = useState<ViewMode>('card');
+  const [tenantId, setTenantId] = useState<string>('');
+  const [copied, setCopied] = useState(false);
 
   function load() {
     setLoading(true);
@@ -145,8 +147,21 @@ export default function EventsPage() {
     load();
     api.tenant.get().then((t) => {
       setViewMode(t.liffEventView === 'calendar' ? 'calendar' : 'card');
+      setTenantId(t.id);
     }).catch(() => {});
   }, []);
+
+  const scheduleUrl = tenantId && typeof window !== 'undefined'
+    ? `${window.location.origin}/liff/${tenantId}`
+    : '';
+
+  function copyScheduleUrl() {
+    if (!scheduleUrl) return;
+    navigator.clipboard.writeText(scheduleUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
 
   const now = new Date();
@@ -208,6 +223,7 @@ export default function EventsPage() {
   return (
     <>
     <div className="px-4 py-4 md:px-6 md:py-6 max-w-5xl">
+
       <div className="mb-5 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-gray-900">イベント管理</h1>
@@ -272,6 +288,31 @@ export default function EventsPage() {
         </div>
       )}
     </div>
+
+    {scheduleUrl && (
+      <div className="px-4 pb-6 md:px-6 max-w-5xl">
+        <div className="rounded-xl border border-[#06C755]/30 bg-[#06C755]/5 p-4 md:p-5">
+          <p className="mb-1 text-sm font-bold text-[#06C755]">☆ COMIUの運営ポイント</p>
+          <p className="mb-3 text-xs font-medium text-gray-700">イベントスケジュールのURL</p>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="flex-1 truncate rounded-lg bg-white border border-gray-200 px-3 py-2 text-xs font-mono text-gray-600">
+              {scheduleUrl}
+            </span>
+            <button
+              type="button"
+              onClick={copyScheduleUrl}
+              className="shrink-0 rounded-lg bg-[#06C755] px-4 py-2 text-xs font-bold text-white hover:bg-[#05a847]"
+            >
+              {copied ? 'コピー済み ✓' : 'コピー'}
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 leading-relaxed">
+            このURLリンクを共有または公式LINEのチャットに貼ると、団体の活動スケジュールを直接共有できます！<br />
+            また外部リンクからのアクセスが多い団体を30日間毎でカウントを行い、人気の団体としてCOMIUからPRさせて頂いてます！
+          </p>
+        </div>
+      </div>
+    )}
     </>
   );
 }

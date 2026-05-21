@@ -34,6 +34,11 @@ export class LiffService {
     private stripeService: StripeService,
   ) {}
 
+  async recordAccess(tenantId: string) {
+    await this.prisma.tenantLiffAccess.create({ data: { tenantId } });
+    return { ok: true };
+  }
+
   // テナント公開情報（認証不要）
   async getTenantInfo(tenantId: string) {
     const tenant = await this.prisma.tenant.findFirst({

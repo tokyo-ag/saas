@@ -218,6 +218,7 @@ export default function LiffTopPage() {
       const tenantCacheKey = `liff_tenant_${tenantId}`;
       const eventsCacheKey = `liff_events_${tenantId}`;
 
+      api.liff.recordAccess(tenantId).catch(() => {});
       const t = await api.liff.tenant(tenantId).catch(() => null);
       if (t) {
         setTenant(t);
