@@ -1,5 +1,4 @@
-import { Controller, Get, Post, Patch, Param, Query, Body, Res, UseGuards } from '@nestjs/common';
-import type { Response } from 'express';
+import { Controller, Get, Post, Patch, Param, Query, Body, UseGuards } from '@nestjs/common';
 import { AdminGuard } from '../auth/admin.guard';
 import { MembersService } from './members.service';
 import { TenantId } from '../auth/tenant-id.decorator';
@@ -24,15 +23,7 @@ export class MembersController {
     return this.membersService.syncLineProfiles(tenantId);
   }
 
-  @Get('export')
-  async exportCsv(@TenantId() tenantId: string, @Res() res: Response) {
-    const csv = await this.membersService.exportCsv(tenantId);
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="members.csv"');
-    res.send('﻿' + csv);
-  }
-
-  @Get('messages/threads')
+@Get('messages/threads')
   getMessageThreads(@TenantId() tenantId: string) {
     return this.membersService.getMessageThreads(tenantId);
   }

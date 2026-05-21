@@ -138,17 +138,7 @@ export class MembersService {
     return message;
   }
 
-  async exportCsv(tenantId: string): Promise<string> {
-    const members = await this.findAll(tenantId, {});
-    const header = '名前,学年,性別,登録日,参加イベント数';
-    const rows = members.map((m) => {
-      const date = new Date(m.createdAt).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
-      return `${m.name ?? ''},${m.grade ?? ''},${m.gender ?? ''},${date},${m.eventCount}`;
-    });
-    return [header, ...rows].join('\n');
-  }
-
-  async syncLineProfiles(tenantId: string): Promise<{ updated: number }> {
+async syncLineProfiles(tenantId: string): Promise<{ updated: number }> {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
       select: { lineChannelAccessToken: true },
