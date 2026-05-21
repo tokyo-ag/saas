@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { setToken } from '@/lib/auth';
+import { setImpersonationToken } from '@/lib/auth';
 
 export default function ImpersonatePage() {
   const router = useRouter();
@@ -10,7 +10,7 @@ export default function ImpersonatePage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get('token');
-    if (token) setToken(token);
+    if (token) setImpersonationToken(token);
     router.replace('/admin');
   }, []);
 

@@ -2,11 +2,16 @@ export const TOKEN_KEY = 'organizer_token';
 
 export function getToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem(TOKEN_KEY);
+  // sessionStorage takes priority so impersonated tabs don't share state with others
+  return sessionStorage.getItem(TOKEN_KEY) ?? localStorage.getItem(TOKEN_KEY);
 }
 
 export function setToken(token: string) {
   localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function setImpersonationToken(token: string) {
+  sessionStorage.setItem(TOKEN_KEY, token);
 }
 
 export function clearToken() {

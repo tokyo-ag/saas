@@ -34,8 +34,8 @@ export default function Sidebar() {
     <>
       <div className="px-4 py-4 border-b border-white/10">
         <div className="flex items-center gap-2.5">
-          {tenant?.linePictureUrl ? (
-            <img src={tenant.linePictureUrl} className="w-8 h-8 rounded-lg object-cover shrink-0" alt="" />
+          {(tenant?.linePictureUrl ?? tenant?.iconUrl) ? (
+            <img src={(tenant?.linePictureUrl ?? tenant?.iconUrl)!} className="w-8 h-8 rounded-lg object-cover shrink-0" alt="" />
           ) : (
             <div className="w-8 h-8 rounded-lg bg-[#06C755] flex items-center justify-center text-white text-xs font-bold shrink-0">
               {displayName.slice(0, 1)}
@@ -80,8 +80,8 @@ export default function Sidebar() {
     <>
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-[#1B1F2E] flex items-center justify-between px-4 h-14">
         <div className="flex items-center gap-2.5">
-          {tenant?.linePictureUrl ? (
-            <img src={tenant.linePictureUrl} className="w-7 h-7 rounded-lg object-cover shrink-0" alt="" />
+          {(tenant?.linePictureUrl ?? tenant?.iconUrl) ? (
+            <img src={(tenant?.linePictureUrl ?? tenant?.iconUrl)!} className="w-7 h-7 rounded-lg object-cover shrink-0" alt="" />
           ) : (
             <div className="w-7 h-7 rounded-lg bg-[#06C755] flex items-center justify-center text-white text-xs font-bold shrink-0">
               {displayName.slice(0, 1)}
