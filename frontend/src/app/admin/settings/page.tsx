@@ -281,6 +281,27 @@ export default function SettingsPage() {
                 {syncing ? '取得中...' : 'LINEアイコン・名前を同期'}
               </button>
             )}
+            {tenant.lineConfigured && (
+              <button
+                type="button"
+                disabled={syncing}
+                onClick={async () => {
+                  setSyncing(true);
+                  setError('');
+                  try {
+                    const result = await api.members.syncLineProfiles();
+                    alert(`${result.updated}人の参加者プロフィールを更新しました`);
+                  } catch {
+                    setError('参加者プロフィールの同期に失敗しました');
+                  } finally {
+                    setSyncing(false);
+                  }
+                }}
+                className="mt-2 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                {syncing ? '同期中...' : '参加者のLINEプロフィールを一括更新'}
+              </button>
+            )}
           </div>
 
           <div>

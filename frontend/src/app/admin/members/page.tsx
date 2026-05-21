@@ -11,7 +11,6 @@ const genders = ['男性', '女性', 'その他・回答しない'];
 export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
   const [name, setName] = useState('');
   const [grade, setGrade] = useState('');
   const [gender, setGender] = useState('');
@@ -25,19 +24,6 @@ export default function MembersPage() {
     load().catch(console.error).finally(() => setLoading(false));
   }, []);
 
-  async function handleSyncLine() {
-    setSyncing(true);
-    try {
-      const result = await api.members.syncLineProfiles();
-      await load();
-      alert(`${result.updated}人のLINEプロフィールを更新しました`);
-    } catch {
-      alert('同期に失敗しました。LINE連携が設定されているか確認してください。');
-    } finally {
-      setSyncing(false);
-    }
-  }
-
   async function handleSearch() {
     setLoading(true);
     await load().catch(console.error).finally(() => setLoading(false));
@@ -50,21 +36,12 @@ export default function MembersPage() {
           <h1 className="text-xl md:text-2xl font-bold text-gray-900">参加者名簿</h1>
           <p className="text-sm text-gray-500 mt-1">参加者情報、トーク、参加回数を確認できます。</p>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={handleSyncLine}
-            disabled={syncing}
-            className="min-h-11 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-          >
-            {syncing ? '同期中...' : 'LINEプロフィール同期'}
-          </button>
-          <button
-            onClick={() => downloadWithAuth(`${API_URL}/api/admin/members/export`, 'members.csv').catch(() => alert('ダウンロードに失敗しました'))}
-            className="min-h-11 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            名簿CSV
-          </button>
-        </div>
+        <button
+          onClick={() => downloadWithAuth(`${API_URL}/api/admin/members/export`, 'members.csv').catch(() => alert('ダウンロードに失敗しました'))}
+          className="min-h-11 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          名簿CSV
+        </button>
       </div>
 
       <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
