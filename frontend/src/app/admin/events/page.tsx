@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, formatDate, API_URL } from '@/lib/api';
-import { getToken, decodeJwt } from '@/lib/auth';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
 import { EventStatusBadge } from '@/components/ui/StatusBadge';
 import type { Event } from '@/lib/api';
@@ -190,8 +189,7 @@ export default function EventsPage() {
         category: ev.category ?? null,
         tags: ev.tags ?? [],
       });
-      const tid = decodeJwt<{ tenantId: string }>(getToken() ?? '')?.tenantId ?? '';
-      router.push(`/admin/${tid}/events/${created.id}/edit`);
+      router.push(`/admin/events/${created.id}/edit`);
     } catch (err: any) {
       alert(err.message ?? '複製に失敗しました');
     }
