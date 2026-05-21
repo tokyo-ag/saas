@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
+import Cropper from 'react-easy-crop';
+import type { Area } from 'react-easy-crop';
 import { api, Tenant, TenantInput } from '@/lib/api';
 import { SaveToast } from '@/components/ui/SaveToast';
 
@@ -34,13 +36,27 @@ function SettingsTabs() {
   );
 }
 
-async function uploadIconFile(file: File): Promise<string> {
-  const ext = file.name.split('.').pop() ?? 'jpg';
-  const filename = `icon-${Date.now()}.${ext}`;
+async function getCroppedBlob(imageSrc: string, pixelCrop: Area): Promise<Blob> {
+  const image = new Image();
+  image.src = imageSrc;
+  await new Promise<void>((resolve) => { image.onload = () => resolve(); });
+  const canvas = document.createElement('canvas');
+  const size = Math.min(pixelCrop.width, pixelCrop.height, 512);
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, size, size);
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('crop failed')), 'image/jpeg', 0.9);
+  });
+}
+
+async function uploadIconBlob(blob: Blob): Promise<string> {
+  const filename = `icon-${Date.now()}.jpg`;
   const res = await fetch(`/api/upload?filename=${encodeURIComponent(filename)}`, {
     method: 'POST',
-    body: file,
-    headers: { 'content-type': file.type },
+    body: blob,
+    headers: { 'content-type': 'image/jpeg' },
   });
   const data = await res.json() as { url?: string; error?: string };
   if (!res.ok) throw new Error(data.error ?? '画像のアップロードに失敗しました');
@@ -59,21 +75,46 @@ export default function SettingsPage() {
   const [savingView, setSavingView] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  async function handleIconFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  // crop modal state
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const onCropComplete = useCallback((_: Area, pixels: Area) => {
+    setCroppedAreaPixels(pixels);
+  }, []);
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropSrc(reader.result as string);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  }
+
+  async function handleCropConfirm() {
+    if (!cropSrc || !croppedAreaPixels) return;
     setUploading(true);
     setError('');
     try {
-      const url = await uploadIconFile(file);
+      const blob = await getCroppedBlob(cropSrc, croppedAreaPixels);
+      const url = await uploadIconBlob(blob);
       setForm((prev) => ({ ...prev, iconUrl: url }));
+      setCropSrc(null);
     } catch (err: any) {
       setError(err.message ?? '画像のアップロードに失敗しました');
     } finally {
       setUploading(false);
-      e.target.value = '';
     }
   }
+
   async function handleSaveViewMode() {
     setSavingView(true);
     try {
@@ -120,7 +161,6 @@ export default function SettingsPage() {
     }
   }
 
-
   if (!tenant) {
     return <div className="px-4 py-12 text-center text-sm text-gray-400">読み込み中...</div>;
   }
@@ -133,7 +173,6 @@ export default function SettingsPage() {
 
         {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
         <SaveToast show={saved} />
-
 
         <section className="mb-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
           <p className="mb-1 text-sm font-medium text-gray-700">ユーザー画面レイアウト</p>
@@ -186,25 +225,26 @@ export default function SettingsPage() {
         <form onSubmit={handleSubmit} className="space-y-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-6">
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">団体アイコン</label>
-            <p className="mb-2 text-xs text-gray-500">画像をクリックして変更できます（JPG・PNG・GIF）</p>
+            <p className="mb-2 text-xs text-gray-500">画像をクリックして選択・トリミングできます</p>
             <div className="flex items-center gap-4">
-              <label className={`relative flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-gray-300 bg-gray-50 transition-colors hover:border-[#06C755] hover:bg-green-50 ${uploading ? 'opacity-60 pointer-events-none' : ''}`}>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="relative flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-gray-300 bg-gray-50 transition-colors hover:border-[#06C755] hover:bg-green-50 disabled:opacity-60"
+              >
                 {form.iconUrl ? (
                   <img src={form.iconUrl} alt="アイコン" className="h-full w-full object-cover" />
                 ) : (
                   <span className="text-3xl font-bold text-gray-300">{form.name?.[0] ?? '?'}</span>
                 )}
-                {uploading ? (
+                {uploading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-white/70">
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#06C755] border-t-transparent" />
                   </div>
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 transition-colors hover:bg-black/20">
-                    <span className="text-xs font-medium text-white opacity-0 group-hover:opacity-100">変更</span>
-                  </div>
                 )}
-                <input type="file" accept="image/*" className="hidden" onChange={handleIconFileChange} disabled={uploading} />
-              </label>
+              </button>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
               <div className="text-sm text-gray-500">
                 {uploading ? 'アップロード中...' : (
                   <>
@@ -258,6 +298,56 @@ export default function SettingsPage() {
           </button>
         </form>
       </div>
+
+      {/* crop modal */}
+      {cropSrc && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-black/80">
+          <div className="relative flex-1">
+            <Cropper
+              image={cropSrc}
+              crop={crop}
+              zoom={zoom}
+              aspect={1}
+              cropShape="round"
+              showGrid={false}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropComplete}
+            />
+          </div>
+          <div className="bg-white px-6 py-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-gray-500 w-12 shrink-0">ズーム</span>
+              <input
+                type="range"
+                min={1}
+                max={3}
+                step={0.01}
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+                className="flex-1 accent-[#06C755]"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setCropSrc(null)}
+                className="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-600"
+              >
+                キャンセル
+              </button>
+              <button
+                type="button"
+                onClick={handleCropConfirm}
+                disabled={uploading}
+                className="flex-1 rounded-lg bg-[#06C755] py-2.5 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {uploading ? 'アップロード中...' : '確定'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
