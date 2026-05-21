@@ -125,71 +125,67 @@ function LiffCalendarView({ events, tenantId }: { events: LiffEvent[]; tenantId:
   }
 
   return (
-    <div className="bg-white/85 rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.07)' }}>
+    <div className="rounded-2xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.10)' }}>
       {/* 月ナビ */}
-      <div className="flex items-center justify-between px-5 py-3">
-        <button onClick={prevMonth} className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 active:bg-gray-200">
-          <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="flex items-center justify-between px-4 py-3" style={{ background: 'linear-gradient(135deg, #06C755 0%, #047a35 100%)' }}>
+        <button onClick={prevMonth} className="w-7 h-7 flex items-center justify-center rounded-full bg-white/20 active:bg-white/30">
+          <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <span className="text-sm font-bold text-gray-900">{year}年 {month + 1}月</span>
-        <button onClick={nextMonth} className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 active:bg-gray-200">
-          <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <span className="text-sm font-bold text-white tracking-wide">{year}年 {month + 1}月</span>
+        <button onClick={nextMonth} className="w-7 h-7 flex items-center justify-center rounded-full bg-white/20 active:bg-white/30">
+          <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
           </svg>
         </button>
       </div>
 
       {/* 曜日ヘッダー */}
-      <div className="grid grid-cols-7 border-t border-gray-100">
+      <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-100">
         {WEEKDAYS_SHORT.map((w, i) => (
-          <div key={w} className={`py-1.5 text-center text-[10px] font-semibold ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-gray-400'}`}>
+          <div key={w} className={`py-2 text-center text-[11px] font-bold ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-gray-500'}`}>
             {w}
           </div>
         ))}
       </div>
 
       {/* 日付グリッド */}
-      <div className="grid grid-cols-7 border-t border-gray-100">
+      <div className="grid grid-cols-7 bg-white">
         {cells.map((day, i) => {
           const col = i % 7;
           const dayEvents = day ? (eventsByDate[day.toString()] ?? []) : [];
+          const todayCell = day ? isToday(day) : false;
 
           return (
             <div
               key={i}
-              className={`border-b border-r border-gray-100 p-0.5 align-top min-h-[88px] ${!day ? 'bg-gray-50/50' : ''}`}
+              className={`border-b border-r border-gray-100 p-1 align-top min-h-[80px] ${
+                !day ? 'bg-gray-50/60' : todayCell ? 'bg-[#06C755]/5' : ''
+              }`}
             >
               {day && (
                 <>
-                  <span className={`flex w-5 h-5 items-center justify-center rounded-full text-[10px] font-medium mx-auto mb-0.5 ${
-                    isToday(day)
-                      ? 'bg-[#06C755] text-white font-bold'
+                  <span className={`flex w-6 h-6 items-center justify-center rounded-full text-[11px] font-semibold mx-auto mb-1 ${
+                    todayCell
+                      ? 'bg-[#06C755] text-white shadow-sm'
                       : col === 0 ? 'text-red-400'
                       : col === 6 ? 'text-blue-400'
                       : 'text-gray-600'
                   }`}>
                     {day}
                   </span>
-                  <div className="space-y-0.5">
+                  <div className="space-y-1">
                     {dayEvents.map((ev) => {
                       const startTime = new Date(ev.heldAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
-                      const endTime = ev.endAt ? new Date(ev.endAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' }) : null;
-                      const priceLabel = ev.priceMale != null && ev.priceFemale != null
-                        ? `¥${Math.min(ev.priceMale, ev.priceFemale).toLocaleString()}〜`
-                        : ev.price === 0 ? '無料' : `¥${ev.price.toLocaleString()}`;
                       return (
                         <Link
                           key={ev.id}
                           href={`/liff/${tenantId}/events/${ev.id}`}
-                          className="block rounded bg-[#06C755]/10 px-0.5 py-0.5 active:opacity-60"
+                          className="block rounded-md bg-[#06C755] px-1 py-0.5 active:opacity-70"
                         >
-                          <p className="text-[7px] font-semibold text-[#05a847] truncate leading-tight">{ev.title}</p>
-                          <p className="text-[7px] text-gray-500 leading-tight">開始 {startTime}</p>
-                          {endTime && <p className="text-[7px] text-gray-500 leading-tight">終了 {endTime}</p>}
-                          <p className="text-[7px] text-gray-500 leading-tight">{priceLabel}</p>
-                          <p className="text-[7px] text-gray-400 truncate leading-tight">{ev.location}</p>
+                          <p className="text-[8px] font-bold text-white truncate leading-tight">{ev.title}</p>
+                          <p className="text-[8px] text-white/80 leading-tight">{startTime}</p>
                         </Link>
                       );
                     })}
