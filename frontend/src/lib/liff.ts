@@ -41,6 +41,12 @@ export async function getLiffUserId(): Promise<string | null> {
   return profile.userId;
 }
 
+export async function getLiffProfile(): Promise<{ userId: string; displayName: string; pictureUrl?: string } | null> {
+  if (!liff.isLoggedIn()) return null;
+  const profile = await liff.getProfile();
+  return { userId: profile.userId, displayName: profile.displayName, pictureUrl: profile.pictureUrl };
+}
+
 export async function checkFriendship(): Promise<boolean> {
   try {
     const result = await liff.getFriendship();

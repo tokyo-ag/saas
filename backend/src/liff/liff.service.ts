@@ -17,6 +17,8 @@ export class CreateReservationDto {
   @IsOptional() @IsString() name?: string;
   @IsOptional() @IsString() grade?: string;
   @IsOptional() @IsString() gender?: string;
+  @IsOptional() @IsString() lineDisplayName?: string;
+  @IsOptional() @IsString() linePictureUrl?: string;
 }
 
 export class SubmitReviewDto {
@@ -222,6 +224,10 @@ export class LiffService {
       dto.lineUserId,
     );
 
+    // DTO values (from LIFF SDK) take priority over Messaging API profile
+    const resolvedDisplayName = dto.lineDisplayName ?? lineProfile?.displayName ?? null;
+    const resolvedPictureUrl = dto.linePictureUrl ?? lineProfile?.pictureUrl ?? null;
+
     if (!member) {
       if (!dto.name || !dto.grade || !dto.gender) {
         throw new BadRequestException('初回予約時はお名前・学年・性別を入力してください');
@@ -233,10 +239,8 @@ export class LiffService {
           name: dto.name,
           grade: dto.grade,
           gender: dto.gender,
-          ...(lineProfile && {
-            lineDisplayName: lineProfile.displayName,
-            linePictureUrl: lineProfile.pictureUrl ?? null,
-          }),
+          ...(resolvedDisplayName && { lineDisplayName: resolvedDisplayName }),
+          ...(resolvedPictureUrl && { linePictureUrl: resolvedPictureUrl }),
         },
       });
     } else {
@@ -246,10 +250,8 @@ export class LiffService {
           ...(dto.name && { name: dto.name }),
           ...(dto.grade && { grade: dto.grade }),
           ...(dto.gender && { gender: dto.gender }),
-          ...(lineProfile && {
-            lineDisplayName: lineProfile.displayName,
-            linePictureUrl: lineProfile.pictureUrl ?? null,
-          }),
+          ...(resolvedDisplayName && { lineDisplayName: resolvedDisplayName }),
+          ...(resolvedPictureUrl && { linePictureUrl: resolvedPictureUrl }),
         },
       });
     }

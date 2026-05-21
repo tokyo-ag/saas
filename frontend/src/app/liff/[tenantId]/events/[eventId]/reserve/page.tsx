@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { api, LiffEvent, LiffProfile, LiffTenant } from '@/lib/api';
-import { initLiff, getLiffUserId, checkFriendship, liff, getInitError } from '@/lib/liff';
+import { initLiff, getLiffProfile, checkFriendship, liff, getInitError } from '@/lib/liff';
 
 const GRADES = ['高校1年', '高校2年', '高校3年', '大学1年', '大学2年', '大学3年', '大学4年', '大学院生', '社会人', 'その他'];
 const GENDERS = ['男性', '女性', 'その他・回答しない'];
@@ -22,6 +22,7 @@ function ReservePageInner() {
   const [event, setEvent] = useState<LiffEvent | null>(null);
   const [tenant, setTenant] = useState<LiffTenant | null>(null);
   const [lineUserId, setLineUserId] = useState('');
+  const [liffProfile, setLiffProfile] = useState<{ displayName: string; pictureUrl?: string } | null>(null);
   const [profile, setProfile] = useState<LiffProfile | null>(null);
   const [isFriend, setIsFriend] = useState<boolean | null>(null);
 
@@ -76,10 +77,12 @@ function ReservePageInner() {
       localStorage.removeItem('liff-login-tried');
       localStorage.removeItem('liff-pending-redirect');
 
-      // ── Step 3: userId取得 ──
+      // ── Step 3: userId + LINEプロフィール取得 ──
       let uid = '';
       try {
-        uid = (await getLiffUserId()) ?? '';
+        const lp = await getLiffProfile();
+        uid = lp?.userId ?? '';
+        if (lp) setLiffProfile({ displayName: lp.displayName, pictureUrl: lp.pictureUrl });
       } catch (e) {
         setAuthError(`Step3: ${e instanceof Error ? e.message : String(e)}`);
         setAuthStatus('error');
@@ -121,7 +124,13 @@ function ReservePageInner() {
     setError('');
     setSubmitting(true);
     try {
-      const body: Record<string, string> = { eventId, lineUserId, ...(overrides ?? {}) };
+      const body: Record<string, string> = {
+        eventId,
+        lineUserId,
+        ...(liffProfile?.displayName && { lineDisplayName: liffProfile.displayName }),
+        ...(liffProfile?.pictureUrl && { linePictureUrl: liffProfile.pictureUrl }),
+        ...(overrides ?? {}),
+      };
       const result = await api.liff.reserve(tenantId, body as any);
       if (result.stripeCheckoutUrl) {
         window.location.href = result.stripeCheckoutUrl;
