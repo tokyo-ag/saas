@@ -86,6 +86,15 @@ export class LiffController {
     return this.liffService.updateProfile(tenantId, lineUserId, body);
   }
 
+  @Patch('profile/line')
+  syncLineProfile(
+    @Param('tenantId') tenantId: string,
+    @Query('lineUserId') lineUserId: string,
+    @Body() body: { lineDisplayName?: string; linePictureUrl?: string },
+  ) {
+    return this.liffService.syncLineProfile(tenantId, lineUserId, body);
+  }
+
   @Patch('profile/settings')
   updateSettings(
     @Param('tenantId') tenantId: string,

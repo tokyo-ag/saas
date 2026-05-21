@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { api, API_URL, formatDateShort, LiffEvent, LiffTenant, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
-import { initLiff, getLiffUserId } from '@/lib/liff';
+import { initLiff, getLiffProfile } from '@/lib/liff';
 import LiffBottomNav from '@/components/liff/LiffBottomNav';
 import { EventCardSkeleton } from '@/components/liff/EventCardSkeleton';
 
@@ -245,10 +245,17 @@ export default function LiffTopPage() {
       setOtherTenants(allTenants.filter((t) => t.id !== tenantId));
 
       const ok = await initLiff();
-      const uid = ok ? ((await getLiffUserId()) ?? '') : `demo-${tenantId}`;
+      const lineProfile = ok ? await getLiffProfile().catch(() => null) : null;
+      const uid = lineProfile?.userId ?? `demo-${tenantId}`;
       if (uid) {
         const eventsWithFriends = await api.liff.events(tenantId, uid).catch(() => null);
         if (eventsWithFriends) setEvents(eventsWithFriends);
+      }
+      if (lineProfile?.userId) {
+        api.liff.syncLineProfile(tenantId, lineProfile.userId, {
+          lineDisplayName: lineProfile.displayName,
+          linePictureUrl: lineProfile.pictureUrl,
+        }).catch(() => {});
       }
     }
     init();

@@ -462,6 +462,18 @@ export class LiffService {
     return { id: updated.id, name: updated.name, grade: updated.grade, gender: updated.gender, showEventsToConnections: updated.showEventsToConnections };
   }
 
+  async syncLineProfile(tenantId: string, lineUserId: string, data: { lineDisplayName?: string; linePictureUrl?: string }) {
+    const member = await this.prisma.member.findFirst({ where: { tenantId, lineUserId } });
+    if (!member) return;
+    await this.prisma.member.update({
+      where: { id: member.id },
+      data: {
+        ...(data.lineDisplayName && { lineDisplayName: data.lineDisplayName }),
+        ...(data.linePictureUrl && { linePictureUrl: data.linePictureUrl }),
+      },
+    });
+  }
+
   async updateSettings(tenantId: string, lineUserId: string, showEventsToConnections: boolean) {
     const member = await this.prisma.member.update({
       where: { tenantId_lineUserId: { tenantId, lineUserId } },

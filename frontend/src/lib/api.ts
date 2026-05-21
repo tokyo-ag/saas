@@ -164,6 +164,11 @@ export const api = {
         `/liff/${tenantId}/profile?lineUserId=${encodeURIComponent(lineUserId)}`,
         { method: 'PATCH', body: JSON.stringify(data) },
       ),
+    syncLineProfile: (tenantId: string, lineUserId: string, data: { lineDisplayName?: string; linePictureUrl?: string }) =>
+      request<void>(
+        `/liff/${tenantId}/profile/line?lineUserId=${encodeURIComponent(lineUserId)}`,
+        { method: 'PATCH', body: JSON.stringify(data) },
+      ),
     updateSettings: (tenantId: string, lineUserId: string, settings: { showEventsToConnections: boolean }) =>
       request<{ showEventsToConnections: boolean }>(
         `/liff/${tenantId}/profile/settings?lineUserId=${encodeURIComponent(lineUserId)}`,
