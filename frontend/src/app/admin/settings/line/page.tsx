@@ -246,8 +246,8 @@ export default function LineSettingsPage() {
             <section className="rounded-xl border border-gray-200 bg-white p-4 md:p-5 flex items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2.5 mb-0.5">
-                  {tenant.linePictureUrl ? (
-                    <img src={tenant.linePictureUrl} className="w-8 h-8 rounded-lg object-cover shrink-0" alt="" />
+                  {(tenant.linePictureUrl ?? tenant.iconUrl) ? (
+                    <img src={(tenant.linePictureUrl ?? tenant.iconUrl)!} className="w-8 h-8 rounded-lg object-cover shrink-0" alt="" />
                   ) : (
                     <div className="w-8 h-8 rounded-lg bg-[#06C755] flex items-center justify-center text-white text-xs font-bold shrink-0">
                       {(tenant.lineDisplayName ?? tenant.name).slice(0, 1)}

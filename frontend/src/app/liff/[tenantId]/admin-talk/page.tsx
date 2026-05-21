@@ -69,7 +69,7 @@ export default function AdminTalkPage() {
   }
 
   const organizerName = tenant?.lineDisplayName ?? tenant?.name ?? '主催者';
-  const organizerPicture = tenant?.linePictureUrl;
+  const organizerPicture = tenant?.linePictureUrl ?? tenant?.iconUrl;
 
   const organizerAvatar = organizerPicture ? (
     <img src={organizerPicture} className="w-8 h-8 rounded-full object-cover" alt="" />

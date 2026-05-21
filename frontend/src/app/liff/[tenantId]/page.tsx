@@ -260,8 +260,8 @@ export default function LiffTopPage() {
         {/* header */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
           <div className="flex items-center gap-2.5 px-4 pt-12 pb-3 sm:pt-4 max-w-4xl mx-auto">
-            {tenant?.linePictureUrl ? (
-              <img src={tenant.linePictureUrl} className="w-7 h-7 rounded-full object-cover shrink-0" alt="" />
+            {(tenant?.linePictureUrl ?? tenant?.iconUrl) ? (
+              <img src={(tenant?.linePictureUrl ?? tenant?.iconUrl)!} className="w-7 h-7 rounded-full object-cover shrink-0" alt="" />
             ) : (
               <div className="w-7 h-7 rounded-full bg-[#06C755]/20 flex items-center justify-center shrink-0 text-sm">🎉</div>
             )}
