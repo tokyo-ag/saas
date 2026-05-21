@@ -73,7 +73,10 @@ function EventCard({ event, tenantId }: { event: LiffEvent; tenantId: string }) 
         <div className="flex items-center gap-1 flex-wrap">
           <span className="text-[9px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{event.location}</span>
           {event.priceMale != null && event.priceFemale != null ? (
-            <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">¥{Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜</span>
+            <>
+              <span className="text-[9px] text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded-full">男¥{event.priceMale.toLocaleString()}</span>
+              <span className="text-[9px] text-pink-500 bg-pink-50 px-1.5 py-0.5 rounded-full">女¥{event.priceFemale.toLocaleString()}</span>
+            </>
           ) : event.price === 0 ? (
             <span className="text-[9px] text-[#06C755] bg-green-50 px-1.5 py-0.5 rounded-full font-medium">無料</span>
           ) : (

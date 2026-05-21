@@ -33,7 +33,7 @@ function EventCard({ event, showViews, compact }: { event: PublicEvent; showView
   return (
     <Link
       href={`/liff/${event.tenantId}/events/${event.id}`}
-      className={`flex-shrink-0 ${compact ? 'w-[81px] md:w-32' : 'w-[105px] md:w-44'} overflow-hidden block relative`}
+      className={`flex-shrink-0 ${compact ? 'w-[81px] md:w-32' : 'w-[105px] md:w-44'} overflow-hidden rounded-xl block relative`}
     >
       <div className="relative" style={{ aspectRatio: '4/5' }}>
         {img ? (
@@ -70,7 +70,7 @@ function RankingCard({ tenant, rank }: { tenant: PublicTenant; rank: number }) {
   return (
     <Link
       href={`/liff/${tenant.id}`}
-      className="flex-shrink-0 w-36 bg-white rounded-2xl p-3 flex flex-col items-center gap-2 relative block"
+      className="flex-shrink-0 w-36 bg-white rounded-xl p-3 flex flex-col items-center gap-2 relative block"
       style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
     >
       <span className="absolute top-2 left-3 text-base leading-none">{MEDALS[rank] ?? `${rank + 1}位`}</span>
@@ -280,7 +280,7 @@ export default function TopPage() {
           ) : tenants.length === 0 ? (
             <p className="text-xs text-gray-400 px-4">団体がありません</p>
           ) : (
-            <HScroll>
+            <HScroll gap="gap-2">
               {tenants.slice(0, 8).map((t, i) => (
                 <RankingCard key={t.id} tenant={t} rank={i} />
               ))}

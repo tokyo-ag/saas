@@ -58,13 +58,23 @@ interface ChatInputProps {
 }
 
 export function ChatInput({ value, onChange, onSubmit, sending, placeholder = 'メッセージを入力...', className }: ChatInputProps) {
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      onSubmit(e as unknown as FormEvent);
+    }
+  }
   return (
-    <form onSubmit={onSubmit} className={`bg-white border-t border-gray-200 px-4 py-3 flex gap-2 ${className ?? ''}`}>
-      <input
+    <form onSubmit={onSubmit} className={`bg-white border-t border-gray-200 px-4 py-3 flex items-end gap-2 ${className ?? ''}`}>
+      <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className="flex-1 border border-gray-200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755] bg-gray-50"
+        rows={1}
+        maxLength={2000}
+        className="flex-1 border border-gray-200 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755] bg-gray-50 resize-none overflow-hidden"
+        style={{ maxHeight: '120px', overflowY: value.split('\n').length > 3 ? 'auto' : 'hidden' }}
       />
       <button
         type="submit"
