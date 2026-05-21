@@ -57,7 +57,7 @@ function EventCard({ event, showViews }: { event: PublicEvent; showViews?: boole
             ? <span className="text-[9px] text-[#06C755] font-semibold">無料</span>
             : <span className="text-[9px] text-gray-500">¥{event.price.toLocaleString()}</span>}
         </div>
-        {showViews && event.viewCount > 0 && (
+        {showViews && (
           <p className="text-[10px] text-gray-400">👁 {event.viewCount.toLocaleString()}回閲覧</p>
         )}
       </div>
