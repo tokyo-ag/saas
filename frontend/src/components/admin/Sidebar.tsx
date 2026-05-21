@@ -39,9 +39,9 @@ export default function Sidebar() {
     if (!firstSegment || ADMIN_SUBROUTES.has(firstSegment)) return;
 
     if (firstSegment !== tenant.code && firstSegment !== tenant.id) {
-      // Wrong tenant's URL — redirect to same page under the correct tenant
-      const rest = afterAdmin.slice(firstSegment.length);
-      router.replace(`/admin/${correctSlug}${rest}`);
+      // Wrong tenant's URL — clear token and force re-authentication
+      clearToken();
+      router.replace('/admin/login');
     } else if (tenant.code && firstSegment === tenant.id) {
       // UUID in URL — replace with human-readable code
       router.replace(pathname.replace(tenant.id, tenant.code));
