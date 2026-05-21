@@ -16,6 +16,7 @@ export class UpdateTenantDto {
   @IsOptional() @IsString() name?: string;
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsEnum(['free', 'standard', 'pro']) plan?: 'free' | 'standard' | 'pro';
+  @IsOptional() @IsString() code?: string;
 }
 
 export class BanUserDto {
@@ -111,6 +112,7 @@ export class SuperadminService {
         ...(dto.name !== undefined && { name: dto.name }),
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.plan !== undefined && { plan: dto.plan }),
+        ...(dto.code !== undefined && { code: dto.code.trim().toLowerCase() || null }),
       },
     });
   }

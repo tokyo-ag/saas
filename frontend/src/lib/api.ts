@@ -258,7 +258,7 @@ export const api = {
     list: () => request<TenantWithStats[]>('/superadmin/tenants'),
     create: (data: { name: string; description?: string; plan?: 'free' | 'standard' | 'pro'; email: string; password: string }) =>
       request<Tenant>('/superadmin/tenants', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: string, data: { name?: string; description?: string; plan?: 'free' | 'standard' | 'pro' }) =>
+    update: (id: string, data: { name?: string; description?: string; plan?: 'free' | 'standard' | 'pro'; code?: string }) =>
       request<Tenant>(`/superadmin/tenants/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     deactivate: (id: string) =>
       request<Tenant>(`/superadmin/tenants/${id}/deactivate`, { method: 'PATCH' }),

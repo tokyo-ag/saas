@@ -249,6 +249,7 @@ function TenantModal({
 }) {
   const [name, setName] = useState(initial?.name ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
+  const [code, setCode] = useState(initial?.code ?? '');
   const [plan, setPlan] = useState<'free' | 'standard' | 'pro'>((initial?.plan ?? 'free') as 'free' | 'standard' | 'pro');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -261,7 +262,7 @@ function TenantModal({
     setError('');
     try {
       if (initial) {
-        await api.superadmin.update(initial.id, { name, description, plan });
+        await api.superadmin.update(initial.id, { name, description, plan, code });
       } else {
         await api.superadmin.create({ name, description, plan, email, password });
       }
@@ -298,6 +299,19 @@ function TenantModal({
               placeholder="団体の説明"
             />
           </div>
+          {initial && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">管理画面コード</label>
+              <p className="text-xs text-gray-400 mb-1">URLに使う英数字8文字以内の識別子（例: gakuori）</p>
+              <input
+                maxLength={8}
+                value={code} onChange={(e) => setCode(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                placeholder="gakuori"
+              />
+              {code && <p className="text-xs text-gray-400 mt-1">管理URL: /admin/{code}/</p>}
+            </div>
+          )}
           {!initial && (
             <>
               <div>
