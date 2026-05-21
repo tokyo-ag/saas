@@ -44,6 +44,8 @@ export class PublicController {
       heldAt: e.heldAt,
       location: e.location,
       price: e.price,
+      priceMale: e.priceMale,
+      priceFemale: e.priceFemale,
       capacity: e.capacity,
       reservedCount: e.reservations.length,
       iconUrl: e.iconUrl,
