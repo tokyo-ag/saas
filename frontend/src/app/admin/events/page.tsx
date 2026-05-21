@@ -308,7 +308,7 @@ export default function EventsPage() {
           </div>
           <p className="text-xs text-gray-500 leading-relaxed">
             このURLリンクを共有または公式LINEのチャットに貼ると、団体の活動スケジュールを直接共有できます！<br />
-            また外部リンクからのアクセスが多い団体を30日間毎でカウントを行い、COMIU注目のサークル！としてCOMIUからPRさせて頂いてます！
+            また外部リンクからのアクセスが多い団体を30日間毎でカウントを行い、COMIU注目の団体！としてCOMIUからPRさせて頂いてます！
           </p>
         </div>
       </div>

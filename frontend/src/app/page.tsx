@@ -275,9 +275,9 @@ export default function TopPage() {
           )}
         </div>
 
-        {/* セクション3: COMIU注目のサークル！ */}
+        {/* セクション3: COMIU注目の団体！ */}
         <div className="pt-4 pb-2">
-          <SectionHeader emoji="🏆" title="COMIU注目のサークル！" />
+          <SectionHeader emoji="🏆" title="COMIU注目の団体！" />
           {loading ? (
             <HScroll>
               {Array.from({ length: 4 }).map((_, i) => (
