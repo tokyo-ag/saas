@@ -35,7 +35,7 @@ function EventCard({ event, showViews, compact }: { event: PublicEvent; showView
   return (
     <Link
       href={`/liff/${event.tenantId}/events/${event.id}`}
-      className={`flex-shrink-0 ${compact ? 'w-[82px] md:w-36' : 'w-44 md:w-52'} rounded-xl overflow-hidden bg-white block`}
+      className={`flex-shrink-0 ${compact ? 'w-[82px] md:w-36' : 'w-[110px] md:w-52'} rounded-xl overflow-hidden bg-white block`}
       style={{ boxShadow: '0 1px 5px rgba(0,0,0,0.09)' }}
     >
       <div className="relative" style={{ aspectRatio: '4/5' }}>
@@ -94,7 +94,7 @@ function RankingCard({ tenant, rank }: { tenant: PublicTenant; rank: number }) {
 
 function HScroll({ children, gap = 'gap-3' }: { children: React.ReactNode; gap?: string }) {
   return (
-    <div className={`flex ${gap} overflow-x-auto px-4 pb-3 scrollbar-hide`}>
+    <div className={`flex ${gap} overflow-x-auto pl-4 pr-0 pb-3 scrollbar-hide`}>
       {children}
     </div>
   );
