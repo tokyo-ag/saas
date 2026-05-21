@@ -307,11 +307,11 @@ export default function LiffTopPage() {
               {events.map((ev) => <EventCard key={ev.id} event={ev} tenantId={tenantId} />)}
             </div>
           )}
-          {/* 人気の団体 */}
+          {/* COMIU注目のサークル！ */}
           {otherTenants.length > 0 && (
             <div className="mt-6">
               <p className="text-[13px] font-bold text-gray-700 px-1 mb-3">
-                🏆 人気の団体
+                🏆 COMIU注目のサークル！
               </p>
               <div className="space-y-2">
                 {otherTenants.map((t) => <TenantCard key={t.id} tenant={t} />)}
