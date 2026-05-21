@@ -36,7 +36,7 @@ function SettingsTabs() {
 
 export default function SettingsPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [form, setForm] = useState<Pick<TenantInput, 'name' | 'description'>>({ name: '', description: '' });
+  const [form, setForm] = useState<Pick<TenantInput, 'name' | 'description' | 'iconUrl'>>({ name: '', description: '', iconUrl: '' });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
@@ -66,7 +66,7 @@ export default function SettingsPage() {
   useEffect(() => {
     api.tenant.get().then((tenantData) => {
       setTenant(tenantData);
-      setForm({ name: tenantData.name, description: tenantData.description ?? '' });
+      setForm({ name: tenantData.name, description: tenantData.description ?? '', iconUrl: tenantData.iconUrl ?? '' });
       const v = tenantData.liffEventView === 'calendar' ? 'calendar' : 'card';
       setViewMode(v);
       setSavedViewMode(v);
@@ -79,7 +79,7 @@ export default function SettingsPage() {
     setError('');
     setSaved(false);
     try {
-      const updated = await api.tenant.update({ name: form.name, description: form.description });
+      const updated = await api.tenant.update({ name: form.name, description: form.description, iconUrl: form.iconUrl });
       setTenant(updated);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -154,6 +154,27 @@ export default function SettingsPage() {
         </section>
 
         <form onSubmit={handleSubmit} className="space-y-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-6">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">団体アイコン</label>
+            <p className="mb-2 text-xs text-gray-500">Imgur・Google Drive など公開URLを貼り付けてください。</p>
+            <div className="flex items-center gap-3">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-gray-50">
+                {form.iconUrl ? (
+                  <img src={form.iconUrl} alt="アイコン" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-2xl font-bold text-gray-300">{form.name?.[0] ?? '?'}</span>
+                )}
+              </div>
+              <input
+                type="url"
+                value={form.iconUrl ?? ''}
+                onChange={(e) => setForm((prev) => ({ ...prev, iconUrl: e.target.value }))}
+                placeholder="https://example.com/icon.png"
+                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+              />
+            </div>
+          </div>
+
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">団体名 <span className="text-red-500">*</span></label>
             <input

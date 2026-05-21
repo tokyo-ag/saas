@@ -17,6 +17,7 @@ export class UpdateTenantDto {
   @IsOptional() @IsString() stripeWebhookSecret?: string;
   @IsOptional() @IsString() liffEventView?: string;
   @IsOptional() @IsString() themeColor?: string;
+  @IsOptional() @IsString() iconUrl?: string;
 }
 
 @Injectable()
@@ -94,6 +95,7 @@ export class TenantService {
         ...(dto.stripeWebhookSecret !== undefined && { stripeWebhookSecret: dto.stripeWebhookSecret || null }),
         ...(dto.liffEventView !== undefined && { liffEventView: dto.liffEventView }),
         ...(dto.themeColor !== undefined && { themeColor: dto.themeColor }),
+        ...(dto.iconUrl !== undefined && { iconUrl: dto.iconUrl || null }),
       },
     });
     return this.toSafeTenant(updated);

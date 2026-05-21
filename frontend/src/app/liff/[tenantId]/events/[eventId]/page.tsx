@@ -89,11 +89,25 @@ export default function LiffEventDetailPage() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
     async function load() {
-      const evt = await api.liff.event(tenantId, eventId);
-      setEvent(evt);
+      const cacheKey = `liff_event_${tenantId}_${eventId}`;
+      let evt: LiffEvent;
+      try {
+        evt = await api.liff.event(tenantId, eventId);
+        setEvent(evt);
+        localStorage.setItem(cacheKey, JSON.stringify(evt));
+      } catch {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          evt = JSON.parse(cached) as LiffEvent;
+          setEvent(evt);
+          setIsOffline(true);
+        }
+        return;
+      }
       const liffOk = await initLiff();
       if (liffOk && liff.isLoggedIn()) {
         const uid = await getLiffUserId();
@@ -183,6 +197,11 @@ export default function LiffEventDetailPage() {
         </button>
         <h1 className="text-[16px] font-bold text-gray-900 flex-1 truncate">{event.title}</h1>
       </div>
+      {isOffline && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs text-amber-700 text-center">
+          現在サーバーに接続できません。以前に読み込んだ情報を表示しています。
+        </div>
+      )}
 
       {/* hero image */}
       {event.imageUrl ? (

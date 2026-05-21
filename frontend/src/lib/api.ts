@@ -499,6 +499,7 @@ export interface Tenant {
   planStartedAt?: string | null;
   liffEventView?: string;
   themeColor?: string;
+  iconUrl?: string | null;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;
@@ -523,6 +524,7 @@ export interface TenantInput {
   stripeWebhookSecret?: string;
   liffEventView?: string;
   themeColor?: string;
+  iconUrl?: string;
 }
 
 export interface LiffTenant {

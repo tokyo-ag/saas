@@ -211,14 +211,33 @@ export default function LiffTopPage() {
   const [events, setEvents] = useState<LiffEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [otherTenants, setOtherTenants] = useState<PublicTenant[]>([]);
+  const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
     async function init() {
-      const t = await api.liff.tenant(tenantId).catch(() => null);
-      setTenant(t);
+      const tenantCacheKey = `liff_tenant_${tenantId}`;
+      const eventsCacheKey = `liff_events_${tenantId}`;
 
-      const eventsNoFriend = await api.liff.events(tenantId).catch(() => []);
-      setEvents(eventsNoFriend);
+      const t = await api.liff.tenant(tenantId).catch(() => null);
+      if (t) {
+        setTenant(t);
+        localStorage.setItem(tenantCacheKey, JSON.stringify(t));
+      } else {
+        const cached = localStorage.getItem(tenantCacheKey);
+        if (cached) setTenant(JSON.parse(cached) as LiffTenant);
+      }
+
+      try {
+        const eventsNoFriend = await api.liff.events(tenantId);
+        setEvents(eventsNoFriend);
+        localStorage.setItem(eventsCacheKey, JSON.stringify(eventsNoFriend));
+      } catch {
+        const cached = localStorage.getItem(eventsCacheKey);
+        if (cached) {
+          setEvents(JSON.parse(cached) as LiffEvent[]);
+          setIsOffline(true);
+        }
+      }
       setLoading(false);
 
       // 他の団体を取得
@@ -251,6 +270,12 @@ export default function LiffTopPage() {
             </h1>
           </div>
         </div>
+
+        {isOffline && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs text-amber-700 text-center">
+            現在サーバーに接続できません。以前に読み込んだ情報を表示しています。
+          </div>
+        )}
 
         <div className="p-2 max-w-4xl mx-auto">
           {loading ? (
