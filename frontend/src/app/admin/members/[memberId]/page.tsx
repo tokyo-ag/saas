@@ -92,9 +92,21 @@ export default function MemberDetailPage() {
 
       <section className={`mb-5 rounded-xl border bg-white p-4 shadow-sm md:p-6 ${isBlocked ? 'border-red-200' : 'border-gray-200'}`}>
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="break-words text-2xl font-bold text-gray-900">{member.name ?? '未入力'}</h1>
-            <p className="mt-1 text-xs text-gray-400">LINE ID: {maskedLineId}</p>
+          <div className="flex items-center gap-3">
+            {member.linePictureUrl ? (
+              <img src={member.linePictureUrl} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-400 shrink-0">
+                {(member.lineDisplayName ?? member.name ?? '?')[0]}
+              </div>
+            )}
+            <div>
+              <h1 className="break-words text-2xl font-bold text-gray-900">{member.name ?? '未入力'}</h1>
+              {member.lineDisplayName && (
+                <p className="text-xs text-gray-400">LINE: {member.lineDisplayName}</p>
+              )}
+              <p className="text-xs text-gray-400">LINE ID: {maskedLineId}</p>
+            </div>
           </div>
           {isBlocked && (
             <span className="w-fit rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-600">

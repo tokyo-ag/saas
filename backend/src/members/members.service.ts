@@ -106,6 +106,8 @@ export class MembersService {
             grade: member.grade,
             gender: member.gender,
             lineUserId: member.lineUserId,
+            lineDisplayName: member.lineDisplayName,
+            linePictureUrl: member.linePictureUrl,
           },
           lastMessage: lastMessage
             ? {

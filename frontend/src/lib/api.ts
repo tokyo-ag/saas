@@ -384,6 +384,8 @@ export interface AdminMessageThread {
     grade?: string | null;
     gender?: string | null;
     lineUserId: string;
+    lineDisplayName?: string | null;
+    linePictureUrl?: string | null;
   };
   lastMessage: AdminMessage | null;
   unreadCount: number;

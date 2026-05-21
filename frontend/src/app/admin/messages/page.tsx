@@ -10,6 +10,7 @@ type ThreadRow = {
   title: string;
   subtitle: string;
   avatar: string;
+  avatarImg?: string | null;
   lastContent: string;
   lastAt?: string;
   unreadCount: number;
@@ -61,9 +62,10 @@ export default function AdminMessagesPage() {
     const memberRows: ThreadRow[] = memberThreads.map((thread) => ({
       kind: 'member',
       href: `/admin/members/${thread.member.id}/messages`,
-      title: thread.member.name ?? '未入力',
+      title: thread.member.name ?? thread.member.lineDisplayName ?? '未入力',
       subtitle: `${thread.member.grade ?? '-'} / ${thread.member.gender ?? '-'}`,
-      avatar: (thread.member.name ?? '未').slice(0, 1),
+      avatar: (thread.member.name ?? thread.member.lineDisplayName ?? '未').slice(0, 1),
+      avatarImg: thread.member.linePictureUrl,
       lastContent: thread.lastMessage?.content ?? '',
       lastAt: thread.lastMessage?.createdAt,
       unreadCount: thread.unreadCount,
@@ -105,13 +107,17 @@ export default function AdminMessagesPage() {
                   row.kind === 'comiu' ? 'bg-[#06C755]/5 hover:bg-[#06C755]/10' : 'hover:bg-gray-50'
                 }`}
               >
-                <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold shrink-0 ${
-                  row.kind === 'comiu'
-                    ? 'bg-[#06C755] text-white text-sm'
-                    : 'bg-[#06C755]/10 text-[#06C755]'
-                }`}>
-                  {row.avatar}
-                </div>
+                {row.avatarImg ? (
+                  <img src={row.avatarImg} alt="" className="w-11 h-11 rounded-full object-cover shrink-0" />
+                ) : (
+                  <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold shrink-0 ${
+                    row.kind === 'comiu'
+                      ? 'bg-[#06C755] text-white text-sm'
+                      : 'bg-[#06C755]/10 text-[#06C755]'
+                  }`}>
+                    {row.avatar}
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-bold text-gray-900 truncate">{row.title}</p>
