@@ -34,17 +34,17 @@ function SettingsTabs() {
   );
 }
 
-async function uploadToCloudinary(file: File): Promise<string> {
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-  if (!cloudName || !uploadPreset) throw new Error('Cloudinary の設定が見つかりません');
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', uploadPreset);
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: formData });
-  if (!res.ok) throw new Error('画像のアップロードに失敗しました');
-  const data = await res.json() as { secure_url: string };
-  return data.secure_url;
+async function uploadIconFile(file: File): Promise<string> {
+  const ext = file.name.split('.').pop() ?? 'jpg';
+  const filename = `icon-${Date.now()}.${ext}`;
+  const res = await fetch(`/api/upload?filename=${encodeURIComponent(filename)}`, {
+    method: 'POST',
+    body: file,
+    headers: { 'content-type': file.type },
+  });
+  const data = await res.json() as { url?: string; error?: string };
+  if (!res.ok) throw new Error(data.error ?? '画像のアップロードに失敗しました');
+  return data.url!;
 }
 
 export default function SettingsPage() {
@@ -65,7 +65,7 @@ export default function SettingsPage() {
     setUploading(true);
     setError('');
     try {
-      const url = await uploadToCloudinary(file);
+      const url = await uploadIconFile(file);
       setForm((prev) => ({ ...prev, iconUrl: url }));
     } catch (err: any) {
       setError(err.message ?? '画像のアップロードに失敗しました');
