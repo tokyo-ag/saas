@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { api, API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { initLiff } from '@/lib/liff';
@@ -106,7 +107,9 @@ function SkeletonCard() {
   );
 }
 
-export default function TopPage() {
+function TopPageInner() {
+  const searchParams = useSearchParams();
+  const showHomePrompt = searchParams.get('prompt') === 'home';
   const [events, setEvents] = useState<PublicEvent[]>([]);
   const [tenants, setTenants] = useState<PublicTenant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -230,6 +233,14 @@ export default function TopPage() {
           </button>
         </div>
 
+        {/* 団体未選択バナー */}
+        {showHomePrompt && (
+          <div className="mx-4 mt-3 bg-[#06C755]/10 border border-[#06C755]/20 rounded-xl px-4 py-3 text-center">
+            <p className="text-[13px] font-semibold text-[#047a35]">参加したい団体を選んでください</p>
+            <p className="text-[11px] text-gray-500 mt-0.5">下のイベントや団体をタップして団体のホームへ</p>
+          </div>
+        )}
+
         {/* カテゴリボタン */}
         <div className="pt-4 pb-1 px-4">
           <div className="flex gap-2">
@@ -328,5 +339,13 @@ export default function TopPage() {
 
       <LiffBottomNav />
     </>
+  );
+}
+
+export default function TopPage() {
+  return (
+    <Suspense fallback={null}>
+      <TopPageInner />
+    </Suspense>
   );
 }

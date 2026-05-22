@@ -85,11 +85,11 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
       href: '/',
       label: 'Discover',
       Icon: CompassIcon,
-      active: pathname === '/',
+      active: pathname === '/' && !new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('prompt'),
       badge: 0,
     },
     {
-      href: base || null,
+      href: base || '/?prompt=home',
       label: 'Home',
       Icon: HomeIcon,
       active: !!base && pathname === base,
