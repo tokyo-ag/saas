@@ -160,7 +160,13 @@ export default function SettingsPage() {
     api.tenant.get().then((tenantData) => {
       setTenant(tenantData);
       setForm({ name: tenantData.name, description: tenantData.description ?? '', iconUrl: tenantData.iconUrl ?? '' });
-      setCodeInput(tenantData.code ?? '');
+      if (tenantData.code) {
+        setCodeInput(tenantData.code);
+      } else {
+        // 未設定の場合は団体名から英数字を抽出して候補を生成
+        const suggested = tenantData.name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 32);
+        setCodeInput(suggested);
+      }
       const v = tenantData.liffEventView === 'calendar' ? 'calendar' : 'card';
       setViewMode(v);
       setSavedViewMode(v);
