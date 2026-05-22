@@ -1,142 +1,24 @@
-'use client';
-
-import { useState } from 'react';
 import Link from 'next/link';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-
 export default function RegisterPage() {
-  const [step, setStep] = useState<1 | 2>(1);
-  const [done, setDone] = useState(false);
-  const [orgName, setOrgName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordConfirm, setPasswordConfirm] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (password !== passwordConfirm) { setError('パスワードが一致しません'); return; }
-    setError('');
-    setSubmitting(true);
-    try {
-      const res = await fetch(`${BASE}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orgName, email, password }),
-      });
-      const data = await res.json() as { message?: string };
-      if (!res.ok) throw new Error(data.message ?? '登録に失敗しました');
-      setDone(true);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '登録に失敗しました');
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755] focus:border-transparent';
-
-  if (done) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-sm text-center">
-          <div className="w-16 h-16 bg-[#06C755]/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-8 h-8 text-[#06C755]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-          </div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">確認メールを送信しました</h1>
-          <p className="text-sm text-gray-500 mb-2"><span className="font-medium text-gray-700">{email}</span> に確認メールを送りました。</p>
-          <p className="text-sm text-gray-500 mb-8">メール内のリンクをクリックしてアカウントを有効化してください。</p>
-          <Link href="/login" className="text-[#06C755] text-sm hover:underline font-medium">ログインページへ</Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm">
-        {/* ロゴ */}
-        <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-[#06C755] rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-white text-2xl">🎉</span>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">主催者アカウント登録</h1>
-          <p className="text-sm text-gray-500 mt-1">無料で始められます</p>
-        </div>
-
-        {/* ステップ表示 */}
-        <div className="flex items-center justify-center gap-2 mb-6">
-          {[1, 2].map((s) => (
-            <div key={s} className="flex items-center gap-2">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${step >= s ? 'bg-[#06C755] text-white' : 'bg-gray-200 text-gray-400'}`}>
-                {s}
-              </div>
-              {s < 2 && <div className={`w-8 h-0.5 ${step >= 2 ? 'bg-[#06C755]' : 'bg-gray-200'}`} />}
-            </div>
-          ))}
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl mb-4">{error}</div>
-          )}
-
-          {step === 1 ? (
-            /* ── Step 1: 団体名 ── */
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">団体・サークル名 <span className="text-red-500">*</span></label>
-                <input
-                  required autoFocus value={orgName} onChange={(e) => setOrgName(e.target.value)}
-                  placeholder="例: 大学生交流サークル Connect"
-                  className={inputClass}
-                />
-                <p className="text-xs text-gray-400 mt-1">後から変更できます</p>
-              </div>
-              <button
-                onClick={() => { if (!orgName.trim()) { setError('団体名を入力してください'); return; } setError(''); setStep(2); }}
-                className="w-full bg-[#06C755] text-white py-3.5 rounded-xl font-semibold text-sm hover:bg-[#05a847] transition-colors"
-              >
-                次へ →
-              </button>
-            </div>
-          ) : (
-            /* ── Step 2: メール/パスワード ── */
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <button type="button" onClick={() => setStep(1)} className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 mb-1">
-                ‹ 戻る
-              </button>
-              <p className="text-sm font-semibold text-gray-700">「{orgName}」のアカウント情報</p>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">メールアドレス <span className="text-red-500">*</span></label>
-                <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@example.com" className={inputClass} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">パスワード <span className="text-red-500">*</span></label>
-                <input required type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)}
-                  placeholder="8文字以上" className={inputClass} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">パスワード（確認）<span className="text-red-500">*</span></label>
-                <input required type="password" value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)}
-                  placeholder="もう一度入力" className={inputClass} />
-              </div>
-              <button type="submit" disabled={submitting}
-                className="w-full bg-[#06C755] text-white py-3.5 rounded-xl font-semibold text-sm hover:bg-[#05a847] disabled:opacity-50 transition-colors">
-                {submitting ? '登録中...' : '無料で始める'}
-              </button>
-            </form>
-          )}
-        </div>
-
-        <p className="text-center text-sm text-gray-500 mt-5">
-          既にアカウントをお持ちの方は{' '}
-          <Link href="/login" className="text-[#06C755] hover:underline font-medium">ログイン</Link>
+    <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-8 text-center gap-5">
+      <div className="w-16 h-16 rounded-full bg-[#06C755]/10 flex items-center justify-center">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#06C755" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <div>
+        <p className="text-lg font-bold text-gray-800">現在は招待制です</p>
+        <p className="text-sm text-gray-400 mt-1 leading-relaxed">
+          COMIUへの参加は招待制となっています。<br />
+          ご興味のある方はお問い合わせください。
         </p>
       </div>
+      <Link href="/" className="bg-[#06C755] text-white font-bold text-sm px-8 py-3 rounded-full">
+        ホームへ戻る
+      </Link>
     </div>
   );
 }

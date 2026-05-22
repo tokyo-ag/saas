@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, OnApplicationBootstrap } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { IsString, IsOptional, IsEnum, IsEmail, MinLength } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
@@ -25,8 +25,18 @@ export class BanUserDto {
 }
 
 @Injectable()
-export class SuperadminService {
+export class SuperadminService implements OnApplicationBootstrap {
   constructor(private prisma: PrismaService, private jwt: JwtService) {}
+
+  async onApplicationBootstrap() {
+    const tenants = await this.prisma.tenant.findMany({ select: { id: true, code: true } });
+    for (const t of tenants) {
+      if (!t.code || !/^\d{8}$/.test(t.code)) {
+        const code = await this.generateUniqueCode();
+        await this.prisma.tenant.update({ where: { id: t.id }, data: { code } });
+      }
+    }
+  }
 
   async listTenants() {
     const tenants = await this.prisma.tenant.findMany({

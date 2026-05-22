@@ -17,6 +17,15 @@ export class AuthService {
     private email: EmailService,
   ) {}
 
+  private async generateUniqueCode(): Promise<string> {
+    for (let i = 0; i < 20; i++) {
+      const code = Math.floor(10000000 + Math.random() * 90000000).toString();
+      const existing = await this.prisma.tenant.findUnique({ where: { code } });
+      if (!existing) return code;
+    }
+    throw new Error('コード生成に失敗しました');
+  }
+
   private issueToken(tenantId: string, accountId: string, isSuperadmin = false): string {
     return this.jwtService.sign({ tenantId, accountId, ...(isSuperadmin && { isSuperadmin: true }) });
   }
@@ -97,10 +106,12 @@ export class AuthService {
     });
     if (existing) throw new ConflictException('このLINEアカウントは既に登録されています');
 
+    const code = await this.generateUniqueCode();
     const tenant = await this.prisma.tenant.create({
       data: {
         id: `tenant-${Date.now()}`,
         name: orgName,
+        code,
         organizerAccounts: { create: { lineUserId: payload.lineUserId } },
       },
       include: { organizerAccounts: true },
@@ -182,10 +193,12 @@ export class AuthService {
         await this.prisma.pendingRegistration.delete({ where: { token } });
         throw new ConflictException('このメールアドレスは既に登録されています');
       }
+      const code = await this.generateUniqueCode();
       await this.prisma.tenant.create({
         data: {
           id: `tenant-${Date.now()}`,
           name: pending.orgName,
+          code,
           organizerAccounts: {
             create: { email: pending.email, passwordHash: pending.passwordHash, emailVerifiedAt: new Date() },
           },
