@@ -132,6 +132,9 @@ function ReservePageInner() {
         ...(overrides ?? {}),
       };
       const result = await api.liff.reserve(tenantId, body as any);
+      // 予約成功時はリダイレクトループ防止のためlocalStorageを必ずクリア
+      localStorage.removeItem('liff-pending-redirect');
+      localStorage.removeItem('liff-login-tried');
       if (result.stripeCheckoutUrl) {
         window.location.href = result.stripeCheckoutUrl;
         return;

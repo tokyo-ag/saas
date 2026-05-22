@@ -16,7 +16,7 @@ function DonePageInner() {
   const [event, setEvent] = useState<LiffEvent | null>(null);
 
   useEffect(() => {
-    initLiff();
+    initLiff().catch(() => {});
     api.liff.event(tenantId, eventId).then(setEvent).catch(console.error);
   }, [tenantId, eventId]);
 
