@@ -116,8 +116,19 @@ export default function TopPage() {
   // LINE認証後のリダイレクト
   useEffect(() => {
     async function run() {
-      const pending = localStorage.getItem('liff-pending-redirect');
+      const raw = localStorage.getItem('liff-pending-redirect');
       const search = window.location.search;
+      let pending: string | null = null;
+      if (raw) {
+        try {
+          const { url, expires } = JSON.parse(raw);
+          if (Date.now() < expires) pending = url;
+          else localStorage.removeItem('liff-pending-redirect');
+        } catch {
+          // 旧フォーマット（文字列のまま）は破棄
+          localStorage.removeItem('liff-pending-redirect');
+        }
+      }
       if (search.includes('code=') || search.includes('liff.state=') || pending) {
         await initLiff();
       }

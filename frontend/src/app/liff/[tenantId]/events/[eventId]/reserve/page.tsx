@@ -63,7 +63,7 @@ function ReservePageInner() {
             return;
           }
           localStorage.setItem('liff-login-tried', '1');
-          localStorage.setItem('liff-pending-redirect', window.location.href);
+          localStorage.setItem('liff-pending-redirect', JSON.stringify({ url: window.location.href, expires: Date.now() + 10 * 60 * 1000 }));
           liff.login({ redirectUri: window.location.href });
           return; // リダイレクト待ち
         }
