@@ -180,7 +180,7 @@ export default async function PublicEventPage({ params }: { params: Promise<{ te
 
   if (!event || !event.tenantCode || event.tenantCode !== tenantCode) notFound();
 
-  const liffUrl = `${SITE_URL}/liff/${event.tenantCode}/events/${event.id}`;
+  const liffUrl = `/liff/${event.tenantCode}/events/${event.id}`;
   const isFull = event.capacity != null && event.reservedCount >= event.capacity;
   const spotsLeft = event.capacity != null ? event.capacity - event.reservedCount : null;
   const isEnded = event.isEnded ?? false;
