@@ -250,22 +250,28 @@ export default function HomeClient({ initialEvents, initialTenants, showHomeProm
 
         <h1 className="sr-only">東京の20代向けサークル・交流イベント | COMIU</h1>
 
-        <div className="pt-4 pb-1 px-4">
-          <div className="flex gap-2">
+        <div className="pt-4 pb-1">
+          <div className="flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-none" style={{ scrollSnapType: 'x mandatory' }}>
             {[
-              { key: 'badminton', label: 'バドミントン', emoji: '🏸' },
-              { key: 'futsal', label: 'フットサル', emoji: '⚽' },
-              { key: 'basketball', label: 'バスケ', emoji: '🏀' },
-              { key: 'volleyball', label: 'バレー', emoji: '🏐' },
+              { key: 'badminton',  label: 'バドミントン', emoji: '🏸', from: '#d1fae5', to: '#6ee7b7' },
+              { key: 'futsal',     label: 'フットサル',   emoji: '⚽', from: '#dbeafe', to: '#93c5fd' },
+              { key: 'basketball', label: 'バスケット',   emoji: '🏀', from: '#ffedd5', to: '#fdba74' },
+              { key: 'volleyball', label: 'バレーボール', emoji: '🏐', from: '#fce7f3', to: '#f9a8d4' },
             ].map((cat) => (
               <Link
                 key={cat.key}
                 href={`/sports/${cat.key}`}
-                className="flex items-center gap-1.5 bg-white rounded-full px-3 py-2 text-[12px] font-semibold text-gray-700 active:bg-gray-50 transition-colors"
-                style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
+                className="flex-none flex flex-col items-center justify-center gap-1.5 rounded-2xl active:opacity-75 transition-opacity"
+                style={{
+                  width: 88,
+                  height: 88,
+                  background: `linear-gradient(135deg, ${cat.from}, ${cat.to})`,
+                  scrollSnapAlign: 'start',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                }}
               >
-                <span>{cat.emoji}</span>
-                <span>{cat.label}</span>
+                <span style={{ fontSize: 30 }}>{cat.emoji}</span>
+                <span className="text-[11px] font-bold text-gray-700 leading-tight text-center">{cat.label}</span>
               </Link>
             ))}
           </div>
