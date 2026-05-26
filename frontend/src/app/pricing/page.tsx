@@ -14,6 +14,8 @@ export const metadata: Metadata = {
     title: '料金プラン | COMIU',
     description: 'フリープランは永久無料。スタンダードは月額¥2,980から。イベント管理・LINE通知・予約管理が全部込み。',
     url: `${SITE_URL}/pricing`,
+    locale: 'ja_JP',
+    type: 'website',
     images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
   twitter: {

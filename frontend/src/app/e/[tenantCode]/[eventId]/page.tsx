@@ -161,6 +161,7 @@ export async function generateMetadata({ params }: { params: Promise<{ tenantCod
       title: event.title,
       description,
       url: `${SITE_URL}/e/${event.tenantCode}/${event.id}`,
+      locale: 'ja_JP',
       type: 'website',
       ...(ogImage ? { images: [{ url: ogImage, width: 1200, height: 630 }] } : {}),
     },
@@ -237,7 +238,7 @@ export default async function PublicEventPage({ params }: { params: Promise<{ te
             {imgSrc(event.tenantIconUrl) && (
               <Image
                 src={imgSrc(event.tenantIconUrl)!}
-                alt=""
+                alt={event.tenantName}
                 width={24}
                 height={24}
                 unoptimized

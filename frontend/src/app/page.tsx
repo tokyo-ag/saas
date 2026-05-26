@@ -10,7 +10,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: '東京の20代向けサークル・交流イベント',
   description:
-    '東京の20代向けサークル・交流イベントをCOMIUで検索。バドミントン、フットサル、バスケ、バレーボールなどのイベントをLINEでかんたんに参加予約できます。',
+    '東京の20代向けサークル・交流イベントをCOMIUで検索。バドミントン、フットサル、バスケ、バレーボールなどのイベントをLINEでかんたんに参加予約。初心者歓迎・社会人向けのコミュニティイベントが多数掲載。',
   alternates: {
     canonical: SITE_URL,
   },
@@ -19,6 +19,7 @@ export const metadata: Metadata = {
     description:
       'バドミントン、フットサル、バスケ、バレーボールなど、東京の20代向けイベントをLINEでかんたん予約。',
     url: SITE_URL,
+    locale: 'ja_JP',
     type: 'website',
     images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },

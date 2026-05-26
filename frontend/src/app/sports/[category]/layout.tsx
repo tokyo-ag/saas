@@ -25,6 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
       title,
       description: meta.desc,
       url: `${SITE_URL}/sports/${category}`,
+      locale: 'ja_JP',
       type: 'website',
       images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630 }],
     },

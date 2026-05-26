@@ -15,6 +15,7 @@ export const metadata: Metadata = {
     description:
       'バドミントン・バスケ・フットサル・バレーボールなど、東京の20代向けサークルのイベント管理事例を紹介。',
     url: `${SITE_URL}/use-cases`,
+    locale: 'ja_JP',
     type: 'website',
     images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },

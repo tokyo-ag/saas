@@ -59,6 +59,7 @@ export async function generateMetadata({
     openGraph: {
       title: `${name} | COMIU`,
       description,
+      locale: 'ja_JP',
       type: 'website',
       url: `${SITE_URL}/clubs/${club.code ?? tenantCode}`,
       ...(image ? { images: [{ url: image, width: 1200, height: 630 }] } : {}),
