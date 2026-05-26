@@ -210,11 +210,11 @@ export default function SettingsPage() {
           {tenant.id && (
             <div className="flex items-center gap-2 mb-4">
               <span className="flex-1 truncate rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-xs font-mono text-gray-600">
-                {typeof window !== 'undefined' ? `${window.location.origin}/liff/${tenant.code ?? tenant.id}` : `https://comiu.jp/liff/${tenant.code ?? tenant.id}`}
+                {`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.jp'}/liff/${tenant.code ?? tenant.id}`}
               </span>
               <button
                 type="button"
-                onClick={() => copyInviteLink(typeof window !== 'undefined' ? `${window.location.origin}/liff/${tenant.code ?? tenant.id}` : '')}
+                onClick={() => copyInviteLink(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.jp'}/liff/${tenant.code ?? tenant.id}`)}
                 className="shrink-0 rounded-lg bg-[#06C755] px-4 py-2 text-xs font-bold text-white hover:bg-[#05a847]"
               >
                 {copied ? 'コピー済み ✓' : 'コピー'}

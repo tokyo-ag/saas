@@ -13,8 +13,8 @@ type FriendInviteCardProps = {
 };
 
 function buildEventUrl(tenantId: string, eventId: string) {
-  if (typeof window === 'undefined') return `/liff/${tenantId}/events/${eventId}`;
-  return `${window.location.origin}/liff/${tenantId}/events/${eventId}`;
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.jp';
+  return `${base}/liff/${tenantId}/events/${eventId}`;
 }
 
 export function FriendInviteCard({ tenantId, eventId, title, heldAt, location }: FriendInviteCardProps) {
