@@ -210,7 +210,7 @@ export default function SettingsPage() {
           {tenant.id && (
             <div className="flex items-center gap-2 mb-4">
               <span className="flex-1 truncate rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-xs font-mono text-gray-600">
-                {typeof window !== 'undefined' ? `${window.location.origin}/liff/${tenant.code ?? tenant.id}` : `https://comiu.vercel.app/liff/${tenant.code ?? tenant.id}`}
+                {typeof window !== 'undefined' ? `${window.location.origin}/liff/${tenant.code ?? tenant.id}` : `https://comiu.jp/liff/${tenant.code ?? tenant.id}`}
               </span>
               <button
                 type="button"
