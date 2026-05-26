@@ -1,30 +1,8 @@
-'use client';
+import type { Metadata } from 'next';
+import SuperadminAuthGuard from '@/components/admin/SuperadminAuthGuard';
 
-import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { getToken, decodeJwt } from '@/lib/auth';
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default function SuperadminLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    if (pathname === '/superadmin/login') {
-      setReady(true);
-      return;
-    }
-    const token = getToken();
-    if (!token) { router.replace('/superadmin/login'); return; }
-    const payload = decodeJwt<{ isSuperadmin?: boolean }>(token);
-    if (!payload?.isSuperadmin) {
-      router.replace('/superadmin/login');
-    } else {
-      setReady(true);
-    }
-  }, [pathname, router]);
-
-  if (!ready) return null;
-
-  return <>{children}</>;
+  return <SuperadminAuthGuard>{children}</SuperadminAuthGuard>;
 }

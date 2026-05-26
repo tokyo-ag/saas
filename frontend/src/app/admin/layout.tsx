@@ -1,6 +1,9 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import Sidebar from '@/components/admin/Sidebar';
 import EmailVerificationBanner from '@/components/admin/EmailVerificationBanner';
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (

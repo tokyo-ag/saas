@@ -20,6 +20,26 @@ export default function Sidebar() {
     setOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    if (!tenant) return;
+    const correctSlug = tenant.code ?? tenant.id;
+    if (!correctSlug) return;
+
+    if (!pathname.startsWith('/admin/')) return;
+    const afterAdmin = pathname.slice('/admin/'.length);
+    const firstSegment = afterAdmin.split('/')[0];
+
+    const ADMIN_SUBROUTES = new Set(['events', 'members', 'messages', 'settings', 'support', 'superadmin', 'login', 'dashboard']);
+    if (!firstSegment || ADMIN_SUBROUTES.has(firstSegment)) return;
+
+    if (firstSegment !== tenant.code && firstSegment !== tenant.id) {
+      const rest = afterAdmin.slice(firstSegment.length);
+      router.replace(`/admin/${correctSlug}${rest}`);
+    } else if (tenant.code && firstSegment === tenant.id) {
+      router.replace(pathname.replace(tenant.id, tenant.code));
+    }
+  }, [tenant, pathname]);
+
   const displayName = tenant?.lineDisplayName ?? tenant?.name ?? 'イベント管理';
 
   const links = [
