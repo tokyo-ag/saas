@@ -90,7 +90,8 @@ export default function LineSettingsPage() {
   }
 
   const webhookUrl = `${BASE}/webhook/${tenant?.id ?? ''}`;
-  const liffEndpoint = typeof window !== 'undefined' ? `${window.location.origin}/liff/${tenant?.id ?? ''}` : '';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? (typeof window !== 'undefined' ? window.location.origin : '');
+  const liffEndpoint = siteUrl && tenant?.id ? `${siteUrl}/liff/${tenant.id}` : '';
   const lineCredentialsLocked = !!tenant?.lineConfigured && !editUnlocked;
 
   async function unlockLineSettings(e: React.FormEvent) {

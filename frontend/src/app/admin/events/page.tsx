@@ -151,9 +151,8 @@ export default function EventsPage() {
     }).catch(() => {});
   }, []);
 
-  const scheduleUrl = tenantId && typeof window !== 'undefined'
-    ? `${window.location.origin}/liff/${tenantId}`
-    : '';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? (typeof window !== 'undefined' ? window.location.origin : '');
+  const scheduleUrl = tenantId && siteUrl ? `${siteUrl}/liff/${tenantId}` : '';
 
   function copyScheduleUrl() {
     if (!scheduleUrl) return;
