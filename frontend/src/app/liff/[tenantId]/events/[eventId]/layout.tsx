@@ -7,7 +7,7 @@ export async function generateMetadata({ params }: { params: Promise<{ eventId: 
     const { eventId } = await params;
     const event = await fetch(`${API_URL}/api/public/events/${eventId}`, { next: { revalidate: 60 } })
       .then(r => r.ok ? r.json() : null);
-    if (!event) return {};
+    if (!event) return { robots: { index: false, follow: false } };
 
     const date = new Date(event.heldAt).toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' });
     const price =
@@ -19,6 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ eventId: 
     const description = [date, event.location, price].filter(Boolean).join(' · ');
 
     return {
+      robots: { index: false, follow: false },
       title: event.title,
       description,
       openGraph: {
@@ -35,7 +36,7 @@ export async function generateMetadata({ params }: { params: Promise<{ eventId: 
       },
     };
   } catch {
-    return {};
+    return { robots: { index: false, follow: false } };
   }
 }
 

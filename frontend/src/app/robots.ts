@@ -6,8 +6,18 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: '*',
-      allow: ['/', '/e/'],
-      disallow: ['/admin/', '/liff/', '/superadmin/'],
+      allow: ['/', '/e/', '/use-cases/', '/pricing', '/sports/'],
+      disallow: [
+        '/admin/',
+        '/liff/',
+        '/superadmin/',
+        '/login',
+        '/register',
+        '/auth/',
+        '/forgot-password',
+        '/reset-password',
+        '/impersonate',
+      ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
   }
