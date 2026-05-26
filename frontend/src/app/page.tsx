@@ -38,7 +38,7 @@ function EventCard({ event, showViews, compact }: { event: PublicEvent; showView
     >
       <div className="relative" style={{ aspectRatio: '4/5' }}>
         {img ? (
-          <img src={img} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <img src={img} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-[#06C755] to-[#047a35]" />
         )}
@@ -76,7 +76,7 @@ function RankingCard({ tenant, rank }: { tenant: PublicTenant; rank: number }) {
     >
       <span className="absolute top-2 left-3 text-base leading-none">{MEDALS[rank] ?? `${rank + 1}位`}</span>
       {tenant.linePictureUrl ? (
-        <img src={tenant.linePictureUrl} alt="" className="w-14 h-14 rounded-full object-cover mt-3 border-2 border-gray-100" />
+        <img src={tenant.linePictureUrl} alt={displayName} className="w-14 h-14 rounded-full object-cover mt-3 border-2 border-gray-100" />
       ) : (
         <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#06C755] to-[#047a35] mt-3 flex items-center justify-center">
           <span className="text-white font-bold text-lg">{displayName[0]}</span>

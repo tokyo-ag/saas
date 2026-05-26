@@ -47,7 +47,7 @@ function EventCard({ event, tenantId }: { event: LiffEvent; tenantId: string }) 
     >
       <div className="relative" style={{ aspectRatio: '4/5' }}>
         {img ? (
-          <img src={img} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <img src={img} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-[#06C755] to-[#05a847]" />
         )}
@@ -97,7 +97,7 @@ function TenantCard({ tenant }: { tenant: PublicTenant }) {
       style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)' }}
     >
       {tenant.linePictureUrl ? (
-        <img src={tenant.linePictureUrl} alt="" className="w-10 h-10 rounded-full shrink-0 object-cover" />
+        <img src={tenant.linePictureUrl} alt={name} className="w-10 h-10 rounded-full shrink-0 object-cover" />
       ) : (
         <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-[#06C755] to-[#05a847] flex items-center justify-center">
           <span className="text-white font-bold text-sm">{name[0]}</span>

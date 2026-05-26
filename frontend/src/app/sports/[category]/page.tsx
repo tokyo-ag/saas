@@ -109,7 +109,7 @@ export default function SportsCategoryPage() {
                   style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
                 >
                   <div className="relative w-20 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-[#06C755] to-[#047a35] aspect-[4/5]">
-                    {img && <img src={img} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                    {img && <img src={img} alt={ev.title} className="absolute inset-0 w-full h-full object-cover" />}
                     {remaining !== null && remaining <= 0 && (
                       <div className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full">満席</div>
                     )}
