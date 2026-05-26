@@ -374,13 +374,21 @@ export default function LiffEventDetailPage() {
                 <span className="text-gray-400 font-normal ml-1">（{myReservation.waitlistOrder}番目）</span>
               )}
             </p>
-            <button
-              onClick={handleCancel}
-              disabled={cancelling}
-              className="w-full border border-red-200 text-red-400 py-3.5 rounded-2xl text-sm font-medium active:bg-red-50 disabled:opacity-50"
-            >
-              {cancelling ? 'キャンセル中...' : '予約をキャンセルする'}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => router.push(`/liff/${tenantId}`)}
+                className="flex-1 border border-gray-200 text-gray-600 py-3.5 rounded-2xl text-sm font-medium active:bg-gray-50"
+              >
+                ホームへ戻る
+              </button>
+              <button
+                onClick={handleCancel}
+                disabled={cancelling}
+                className="flex-1 border border-red-200 text-red-400 py-3.5 rounded-2xl text-sm font-medium active:bg-red-50 disabled:opacity-50"
+              >
+                {cancelling ? 'キャンセル中...' : '予約をキャンセル'}
+              </button>
+            </div>
           </div>
         ) : isClosed ? (
           <button disabled className="w-full bg-gray-100 text-gray-400 py-3.5 rounded-2xl text-sm font-medium">受付終了</button>
