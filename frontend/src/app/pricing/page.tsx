@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: '料金プラン | COMIU',
     description: 'フリープランは永久無料。スタンダードは月額¥2,980から。イベント管理・LINE通知・予約管理が全部込み。',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
   },
 }
 

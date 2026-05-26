@@ -24,6 +24,7 @@ export const metadata: Metadata = {
       '東京20代向けバレーボールサークル。池袋・豊島区拠点。初心者歓迎・社会人歓迎。LINEで簡単参加申込。',
     locale: 'ja_JP',
     type: 'website',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
   },
 }
 
