@@ -151,8 +151,8 @@ export default function EventsPage() {
     }).catch(() => {});
   }, []);
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? (typeof window !== 'undefined' ? window.location.origin : '');
-  const scheduleUrl = tenantId && siteUrl ? `${siteUrl}/liff/${tenantId}` : '';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.jp';
+  const scheduleUrl = tenantId ? `${siteUrl}/liff/${tenantId}` : '';
 
   function copyScheduleUrl() {
     if (!scheduleUrl) return;
