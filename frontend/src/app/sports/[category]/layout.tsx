@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.jp';
+
 const CATEGORY_META: Record<string, { label: string; desc: string }> = {
   badminton:   { label: 'バドミントン',     desc: '東京の20代向けバドミントンサークル・交流イベント一覧。初心者歓迎の練習会から本格的な試合形式まで。' },
   futsal:      { label: 'フットサル',       desc: '東京の20代向けフットサルサークル・交流イベント一覧。男女混合チームでワイワイ楽しめる試合多数。' },
@@ -19,11 +21,13 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
       title,
       description: meta.desc,
       type: 'website',
+      images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630 }],
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title,
       description: meta.desc,
+      images: [`${SITE_URL}/opengraph-image`],
     },
   };
 }

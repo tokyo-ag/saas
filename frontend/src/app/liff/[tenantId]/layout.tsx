@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ tenantId:
       openGraph: {
         title: name,
         description,
-        images: (tenant.linePictureUrl ?? tenant.iconUrl) ? [{ url: tenant.linePictureUrl ?? tenant.iconUrl }] : [],
+        images: (tenant.linePictureUrl ?? tenant.iconUrl) ? [{ url: tenant.linePictureUrl ?? tenant.iconUrl, width: 400, height: 400 }] : [],
         type: 'website',
       },
       twitter: {
