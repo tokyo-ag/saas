@@ -112,6 +112,7 @@ export default function PricingPage() {
       {
         '@type': 'SoftwareApplication',
         name: 'COMIU',
+        url: `${SITE_URL}/pricing`,
         applicationCategory: 'BusinessApplication',
         operatingSystem: 'Web',
         description: 'コミュニティのイベント管理・参加者募集をLINEで完結するSaaS',

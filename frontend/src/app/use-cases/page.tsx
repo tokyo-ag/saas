@@ -6,7 +6,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.jp';
 export const metadata: Metadata = {
   title: '活用事例',
   description:
-    'COMIUの活用事例。バドミントン・バスケットボール・フットサル・バレーボールなど、東京の20代向けコミュニティのイベント管理事例を紹介します。',
+    'COMIUの活用事例一覧。バドミントン・バスケットボール・フットサル・バレーボールなど東京の20代向けスポーツサークルが、COMIUでどのようにイベント管理・参加者募集を行っているかを種目別に紹介します。',
   alternates: {
     canonical: `${SITE_URL}/use-cases`,
   },
