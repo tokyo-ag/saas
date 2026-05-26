@@ -6,6 +6,7 @@ import { api, API_URL, formatDate, LiffEvent, LiffReservation } from '@/lib/api'
 import { imgUrl } from '@/lib/imgUrl';
 import { initLiff, getLiffUserId, liff } from '@/lib/liff';
 import { FriendInviteCard } from '@/components/liff/FriendInviteCard';
+import LiffBottomNav from '@/components/liff/LiffBottomNav';
 
 
 const STATUS_LABEL: Record<string, string> = {
@@ -190,7 +191,7 @@ export default function LiffEventDetailPage() {
   const reviews = event.reviews ?? [];
 
   return (
-    <div className="min-h-screen bg-white pb-32">
+    <div className="min-h-screen bg-white pb-48">
       {/* header */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 pt-12 pb-3 flex items-center gap-3">
         <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-gray-600 p-1 -ml-1 shrink-0">
@@ -364,52 +365,46 @@ export default function LiffEventDetailPage() {
         </section>
       )}
 
-      {/* bottom action bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-4" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
+      {/* bottom action bar — sits above LiffBottomNav */}
+      <div className="fixed left-0 right-0 bg-white border-t border-gray-100 px-4 py-3" style={{ bottom: 'calc(56px + env(safe-area-inset-bottom))' }}>
         {myReservation ? (
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             <p className="text-center text-sm font-semibold text-[#06C755]">
               {STATUS_LABEL[myReservation.status] ?? myReservation.status}
               {myReservation.status === 'waitlisted' && myReservation.waitlistOrder && (
                 <span className="text-gray-400 font-normal ml-1">（{myReservation.waitlistOrder}番目）</span>
               )}
             </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => router.push(`/liff/${tenantId}`)}
-                className="flex-1 border border-gray-200 text-gray-600 py-3.5 rounded-2xl text-sm font-medium active:bg-gray-50"
-              >
-                ホームへ戻る
-              </button>
-              <button
-                onClick={handleCancel}
-                disabled={cancelling}
-                className="flex-1 border border-red-200 text-red-400 py-3.5 rounded-2xl text-sm font-medium active:bg-red-50 disabled:opacity-50"
-              >
-                {cancelling ? 'キャンセル中...' : '予約をキャンセル'}
-              </button>
-            </div>
+            <button
+              onClick={handleCancel}
+              disabled={cancelling}
+              className="w-full border border-red-200 text-red-400 py-3 rounded-2xl text-sm font-medium active:bg-red-50 disabled:opacity-50"
+            >
+              {cancelling ? 'キャンセル中...' : '予約をキャンセルする'}
+            </button>
           </div>
         ) : isClosed ? (
-          <button disabled className="w-full bg-gray-100 text-gray-400 py-3.5 rounded-2xl text-sm font-medium">受付終了</button>
+          <button disabled className="w-full bg-gray-100 text-gray-400 py-3 rounded-2xl text-sm font-medium">受付終了</button>
         ) : isFull && event.paymentRequired ? (
-          <button disabled className="w-full bg-gray-100 text-gray-400 py-3.5 rounded-2xl text-sm font-medium">満席</button>
+          <button disabled className="w-full bg-gray-100 text-gray-400 py-3 rounded-2xl text-sm font-medium">満席</button>
         ) : isFull ? (
           <button
             onClick={() => router.push(`/liff/${tenantId}/events/${eventId}/reserve?waitlist=1`)}
-            className="w-full bg-amber-400 text-white py-3.5 rounded-2xl font-bold active:bg-amber-500"
+            className="w-full bg-amber-400 text-white py-3 rounded-2xl font-bold active:bg-amber-500"
           >
             キャンセル待ちに登録する
           </button>
         ) : (
           <button
             onClick={() => router.push(`/liff/${tenantId}/events/${eventId}/reserve`)}
-            className="w-full bg-[#06C755] text-white py-3.5 rounded-2xl font-bold active:bg-[#05a847]"
+            className="w-full bg-[#06C755] text-white py-3 rounded-2xl font-bold active:bg-[#05a847]"
           >
             予約する
           </button>
         )}
       </div>
+
+      <LiffBottomNav tenantId={tenantId} />
     </div>
   );
 }
