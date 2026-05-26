@@ -31,20 +31,21 @@ export const metadata: Metadata = {
   },
   description:
     'バドミントンサークル・交流会・勉強会など、あらゆるコミュニティのイベント管理・参加者募集をLINEで完結。東京を中心に20代向けサークルも多数。フリープランは無料で始められます。',
-  keywords: ['バドミントンサークル', '東京', '20代', 'コミュニティ', 'イベント管理', 'LINE', '交流会'],
-  openGraph: {
+openGraph: {
     title: 'COMIU｜コミュニティのイベント管理をLINEで',
     description:
       'バドミントンサークル・交流会など、コミュニティのイベント管理・参加者募集をLINEで完結。東京を中心に20代向けサークルも多数。',
     locale: 'ja_JP',
     type: 'website',
     siteName: 'COMIU',
+    images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'COMIU｜コミュニティのイベント管理をLINEで',
     description:
       'バドミントンサークル・交流会など、コミュニティのイベント管理・参加者募集をLINEで完結。',
+    images: [`${SITE_URL}/opengraph-image`],
   },
   robots: {
     index: true,

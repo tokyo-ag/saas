@@ -606,6 +606,7 @@ export function formatDateOnly(dateStr: string): string {
 
 export interface PublicTenant {
   id: string;
+  code?: string | null;
   name: string;
   description?: string;
   lineDisplayName?: string;
@@ -618,6 +619,7 @@ export interface PublicTenant {
 export interface PublicEvent {
   id: string;
   tenantId: string;
+  tenantCode?: string | null;
   title: string;
   heldAt: string;
   location: string;
@@ -634,6 +636,7 @@ export interface PublicEvent {
   tags: string[];
   tenant: {
     id: string;
+    code?: string | null;
     name: string;
     lineDisplayName?: string;
     linePictureUrl?: string;

@@ -1,16 +1,35 @@
 import type { Metadata } from 'next'
 import Link from 'next/link';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.jp';
+
 export const metadata: Metadata = {
   title: '料金プラン',
   description:
     'COMIUの料金プラン一覧。フリープランは永久無料、スタンダードは月額¥2,980から。バドミントンサークル・交流会・勉強会など東京20代向けコミュニティのイベント管理に。',
+  alternates: {
+    canonical: `${SITE_URL}/pricing`,
+  },
   openGraph: {
     title: '料金プラン | COMIU',
     description: 'フリープランは永久無料。スタンダードは月額¥2,980から。イベント管理・LINE通知・予約管理が全部込み。',
-    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    url: `${SITE_URL}/pricing`,
+    images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '料金プラン | COMIU',
+    description: 'フリープランは永久無料。スタンダードは月額¥2,980から。イベント管理・LINE通知・予約管理が全部込み。',
+    images: [`${SITE_URL}/opengraph-image`],
   },
 }
+
+const FAQ_ITEMS = [
+  { q: 'フリープランでもLINE連携は使えますか？', a: 'はい、フリープランでもLINEウェブフックとLIFF（参加者向けアプリ画面）はご利用いただけます。リマインド通知はスタンダード以上のプランでご利用可能です。' },
+  { q: 'プランはいつでも変更できますか？', a: 'はい、いつでも変更可能です。アップグレードは即時反映されます。ダウングレードは次回請求サイクルから適用されます。' },
+  { q: '支払い方法は何が使えますか？', a: 'クレジットカード（Visa / Mastercard / JCB）がご利用いただけます。Stripeを通じた安全な決済です。' },
+  { q: 'フリープランの上限に達したらどうなりますか？', a: '当月のイベント作成（2件）またはメンバー数（50人）が上限に達した場合、新規のイベント作成・メンバー追加ができなくなります。既存のイベントは引き続き管理できます。' },
+];
 
 const PLANS = [
   {
@@ -85,7 +104,38 @@ const PLANS = [
 ];
 
 export default function PricingPage() {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'SoftwareApplication',
+        name: 'COMIU',
+        applicationCategory: 'BusinessApplication',
+        operatingSystem: 'Web',
+        description: 'コミュニティのイベント管理・参加者募集をLINEで完結するSaaS',
+        offers: [
+          { '@type': 'Offer', name: 'フリー', price: '0', priceCurrency: 'JPY' },
+          { '@type': 'Offer', name: 'スタンダード', price: '2980', priceCurrency: 'JPY' },
+          { '@type': 'Offer', name: 'プロ', price: '6980', priceCurrency: 'JPY' },
+        ],
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: FAQ_ITEMS.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
+      },
+    ],
+  };
+
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     <div className="min-h-screen bg-gray-50">
       {/* ヘッダー */}
       <div className="bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between max-w-5xl mx-auto">
@@ -160,12 +210,7 @@ export default function PricingPage() {
         <div className="max-w-2xl mx-auto">
           <h2 className="text-xl font-bold text-gray-900 mb-6 text-center">よくある質問</h2>
           <div className="space-y-4">
-            {[
-              { q: 'フリープランでもLINE連携は使えますか？', a: 'はい、フリープランでもLINEウェブフックとLIFF（参加者向けアプリ画面）はご利用いただけます。リマインド通知はスタンダード以上のプランでご利用可能です。' },
-              { q: 'プランはいつでも変更できますか？', a: 'はい、いつでも変更可能です。アップグレードは即時反映されます。ダウングレードは次回請求サイクルから適用されます。' },
-              { q: '支払い方法は何が使えますか？', a: 'クレジットカード（Visa / Mastercard / JCB）がご利用いただけます。Stripeを通じた安全な決済です。' },
-              { q: 'フリープランの上限に達したらどうなりますか？', a: '当月のイベント作成（2件）またはメンバー数（50人）が上限に達した場合、新規のイベント作成・メンバー追加ができなくなります。既存のイベントは引き続き管理できます。' },
-            ].map((item) => (
+            {FAQ_ITEMS.map((item) => (
               <div key={item.q} className="bg-white rounded-xl p-5 border border-gray-200">
                 <p className="font-semibold text-gray-900 text-sm mb-2">{item.q}</p>
                 <p className="text-gray-500 text-sm leading-relaxed">{item.a}</p>
@@ -186,5 +231,6 @@ export default function PricingPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

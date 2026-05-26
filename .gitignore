@@ -1,3 +1,7 @@
+# backup / export files (may contain credentials or personal data)
+backup*.json
+backup*/
+
 # dependencies
 node_modules/
 

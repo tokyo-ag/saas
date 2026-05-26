@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 
 const API_URL = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'https://comiu.up.railway.app';
@@ -30,7 +31,7 @@ type EventDetail = {
   iconUrl?: string;
   category?: string | null;
   tags?: string[];
-  tenantCode: string;
+  tenantCode?: string | null;
   tenantName: string;
   tenantIconUrl?: string | null;
   isEnded?: boolean;
@@ -67,45 +68,60 @@ function buildJsonLd(event: EventDetail) {
         ]
       : { '@type': 'UnitPriceSpecification', price: event.price, priceCurrency: 'JPY' };
 
+  const eventUrl = `${SITE_URL}/e/${event.tenantCode}/${event.id}`;
   const ld: Record<string, unknown> = {
     '@context': 'https://schema.org',
-    '@type': 'Event',
-    name: event.title,
-    description: event.description,
-    startDate: event.heldAt,
-    ...(event.endAt ? { endDate: event.endAt } : {}),
-    location: {
-      '@type': 'Place',
-      name: event.location,
-      ...(event.locationUrl ? { url: event.locationUrl } : {}),
-    },
-    organizer: {
-      '@type': 'Organization',
-      name: event.tenantName,
-    },
-    url: `${SITE_URL}/e/${event.tenantCode}/${event.id}`,
-    eventStatus: event.isEnded
-      ? 'https://schema.org/EventCancelled'
-      : 'https://schema.org/EventScheduled',
-    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    offers: {
-      '@type': 'Offer',
-      price: event.price,
-      priceCurrency: 'JPY',
-      priceSpecification: priceSpec,
-      availability: event.isEnded
-        ? 'https://schema.org/SoldOut'
-        : event.capacity != null && event.reservedCount >= event.capacity
-          ? 'https://schema.org/SoldOut'
-          : 'https://schema.org/InStock',
-      url: `${SITE_URL}/liff/${event.tenantCode}/events/${event.id}`,
-    },
+    '@graph': [
+      {
+        '@type': 'Event',
+        name: event.title,
+        description: event.description,
+        startDate: event.heldAt,
+        ...(event.endAt ? { endDate: event.endAt } : {}),
+        location: {
+          '@type': 'Place',
+          name: event.location,
+          ...(event.locationUrl ? { url: event.locationUrl } : {}),
+        },
+        organizer: {
+          '@type': 'Organization',
+          name: event.tenantName,
+          ...(event.tenantCode ? { url: `${SITE_URL}/clubs/${event.tenantCode}` } : {}),
+        },
+        url: eventUrl,
+        eventStatus: 'https://schema.org/EventScheduled',
+        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        offers: {
+          '@type': 'Offer',
+          price: event.price,
+          priceCurrency: 'JPY',
+          priceSpecification: priceSpec,
+          availability: event.isEnded
+            ? 'https://schema.org/SoldOut'
+            : event.capacity != null && event.reservedCount >= event.capacity
+              ? 'https://schema.org/SoldOut'
+              : 'https://schema.org/InStock',
+          url: eventUrl,
+        },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'ホーム', item: SITE_URL },
+          ...(event.tenantCode
+            ? [{ '@type': 'ListItem', position: 2, name: event.tenantName, item: `${SITE_URL}/clubs/${event.tenantCode}` }]
+            : []),
+          { '@type': 'ListItem', position: event.tenantCode ? 3 : 2, name: event.title, item: eventUrl },
+        ],
+      },
+    ],
   };
 
-  if (imgSrc(event.imageUrl)) ld.image = imgSrc(event.imageUrl);
+  const eventNode = (ld['@graph'] as Record<string, unknown>[])[0];
+  if (imgSrc(event.imageUrl)) eventNode.image = imgSrc(event.imageUrl);
 
   if (event.reviews && event.reviews.length > 0) {
-    ld.review = event.reviews.slice(0, 5).map((r) => ({
+    eventNode.review = event.reviews.slice(0, 5).map((r) => ({
       '@type': 'Review',
       author: { '@type': 'Person', name: r.authorName },
       reviewBody: r.content,
@@ -116,19 +132,28 @@ function buildJsonLd(event: EventDetail) {
   return ld;
 }
 
-export async function generateMetadata({ params }: { params: { tenantCode: string; eventId: string } }): Promise<Metadata> {
-  const event = await fetchEvent(params.eventId);
-  if (!event) return { title: 'イベントが見つかりません' };
+export async function generateMetadata({ params }: { params: Promise<{ tenantCode: string; eventId: string }> }): Promise<Metadata> {
+  const { tenantCode, eventId } = await params;
+  const event = await fetchEvent(eventId);
+  if (!event || !event.tenantCode || event.tenantCode !== tenantCode) {
+    return { title: 'イベントが見つかりません', robots: { index: false, follow: false } };
+  }
 
   const description = event.description
-    ? event.description.slice(0, 120).replace(/\n/g, ' ')
+    ? event.description.slice(0, 150).replace(/\n/g, ' ')
     : `${event.location}で開催。${event.price === 0 ? '参加費無料' : `参加費¥${event.price.toLocaleString()}`}`;
 
   const ogImage = imgSrc(event.imageUrl) ?? imgSrc(event.iconUrl);
+  const hasPastSearchValue = Boolean(
+    event.imageUrl ||
+      (event.description && event.description.trim().length >= 80) ||
+      (event.reviews && event.reviews.length > 0)
+  );
 
   return {
     title: `${event.title} | ${event.tenantName}`,
     description,
+    ...(event.isEnded && !hasPastSearchValue ? { robots: { index: false, follow: true } } : {}),
     alternates: {
       canonical: `${SITE_URL}/e/${event.tenantCode}/${event.id}`,
     },
@@ -148,10 +173,11 @@ export async function generateMetadata({ params }: { params: { tenantCode: strin
   };
 }
 
-export default async function PublicEventPage({ params }: { params: { tenantCode: string; eventId: string } }) {
-  const event = await fetchEvent(params.eventId);
+export default async function PublicEventPage({ params }: { params: Promise<{ tenantCode: string; eventId: string }> }) {
+  const { tenantCode, eventId } = await params;
+  const event = await fetchEvent(eventId);
 
-  if (!event || event.tenantCode !== params.tenantCode) notFound();
+  if (!event || !event.tenantCode || event.tenantCode !== tenantCode) notFound();
 
   const liffUrl = `${SITE_URL}/liff/${event.tenantCode}/events/${event.id}`;
   const isFull = event.capacity != null && event.reservedCount >= event.capacity;
@@ -163,7 +189,7 @@ export default async function PublicEventPage({ params }: { params: { tenantCode
     <div className="min-h-screen bg-gray-50">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildJsonLd(event)) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildJsonLd(event)).replace(/</g, '\\u003c') }}
       />
 
       {/* ヘッダー */}
@@ -186,8 +212,16 @@ export default async function PublicEventPage({ params }: { params: { tenantCode
 
         {/* バナー画像 */}
         {event.imageUrl && (
-          <div className="overflow-hidden rounded-2xl aspect-[4/3] bg-gray-100">
-            <img src={imgSrc(event.imageUrl)!} alt={event.title} className="w-full h-full object-cover" />
+          <div className="relative overflow-hidden rounded-2xl aspect-[4/3] bg-gray-100">
+            <Image
+              src={imgSrc(event.imageUrl)!}
+              alt={event.title}
+              fill
+              unoptimized
+              sizes="(min-width: 768px) 672px, calc(100vw - 32px)"
+              className="object-cover"
+              priority
+            />
           </div>
         )}
 
@@ -201,7 +235,14 @@ export default async function PublicEventPage({ params }: { params: { tenantCode
           <h1 className="text-xl font-bold text-gray-900 leading-snug">{event.title}</h1>
           <div className="mt-2 flex items-center gap-2">
             {imgSrc(event.tenantIconUrl) && (
-              <img src={imgSrc(event.tenantIconUrl)!} alt="" className="w-6 h-6 rounded-full object-cover" />
+              <Image
+                src={imgSrc(event.tenantIconUrl)!}
+                alt=""
+                width={24}
+                height={24}
+                unoptimized
+                className="w-6 h-6 rounded-full object-cover"
+              />
             )}
             <span className="text-sm text-gray-500">{event.tenantName}</span>
           </div>
@@ -295,7 +336,14 @@ export default async function PublicEventPage({ params }: { params: { tenantCode
             {reviews.map((r) => (
               <div key={r.id} className="flex gap-3">
                 {r.authorIconUrl ? (
-                  <img src={r.authorIconUrl} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5" />
+                  <Image
+                    src={r.authorIconUrl}
+                    alt=""
+                    width={32}
+                    height={32}
+                    unoptimized
+                    className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5"
+                  />
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0 mt-0.5 text-xs text-gray-400">
                     {r.authorName.slice(0, 1)}

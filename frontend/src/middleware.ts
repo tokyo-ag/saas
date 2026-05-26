@@ -12,7 +12,8 @@ export function middleware(request: NextRequest) {
     }
     try {
       const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-      if (!payload?.tenantId) {
+      const now = Math.floor(Date.now() / 1000);
+      if (!payload?.tenantId || (payload.exp && payload.exp < now)) {
         return NextResponse.redirect(new URL('/login', request.url));
       }
     } catch {
@@ -28,7 +29,8 @@ export function middleware(request: NextRequest) {
     }
     try {
       const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-      if (!payload?.isSuperadmin) {
+      const now = Math.floor(Date.now() / 1000);
+      if (!payload?.isSuperadmin || (payload.exp && payload.exp < now)) {
         return NextResponse.redirect(new URL('/superadmin/login', request.url));
       }
     } catch {

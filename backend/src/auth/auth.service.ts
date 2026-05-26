@@ -123,9 +123,12 @@ export class AuthService {
   async register(email: string, password: string, orgName: string) {
     const normalizedEmail = email.trim().toLowerCase();
 
-    const accounts = await this.prisma.organizerAccount.findMany({ where: { email: { not: null } } });
-    if (accounts.some(a => a.email?.toLowerCase() === normalizedEmail)) {
-      throw new ConflictException('このメールアドレスは既に登録されています');
+    const existing = await this.prisma.organizerAccount.findFirst({
+      where: { email: { equals: normalizedEmail, mode: 'insensitive' } },
+      select: { id: true },
+    });
+    if (existing) {
+      return { message: '確認メールを送信しました。メールのリンクをクリックしてアカウントを有効化してください。' };
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -146,10 +149,9 @@ export class AuthService {
 
   async login(email: string, password: string) {
     const trimmedEmail = email.trim().toLowerCase();
-    const accounts = await this.prisma.organizerAccount.findMany({
-      where: { email: { not: null } },
+    const account = await this.prisma.organizerAccount.findFirst({
+      where: { email: { equals: trimmedEmail, mode: 'insensitive' } },
     });
-    const account = accounts.find(a => a.email?.toLowerCase() === trimmedEmail) ?? null;
     if (!account?.passwordHash) throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
     const valid = await bcrypt.compare(password, account.passwordHash);
     if (!valid) throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');

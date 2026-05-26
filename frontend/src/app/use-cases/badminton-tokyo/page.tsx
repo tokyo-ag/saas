@@ -1,30 +1,30 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.jp';
+
 export const metadata: Metadata = {
   title: 'バドミントンサークル 東京 20代',
   description:
     '東京の20代向けバドミントンサークルを探すならCOMIU。池袋・豊島区を拠点に板橋・北区・文京区エリアで開催多数。初心者歓迎・社会人歓迎。LINEで簡単に参加申込・リマインド通知。無料で始められます。',
-  keywords: [
-    'バドミントンサークル',
-    '東京',
-    '20代',
-    '初心者歓迎',
-    '社会人',
-    'LINE',
-    '交流',
-    '池袋',
-    '豊島区',
-    '板橋',
-    '北区',
-  ],
+  alternates: {
+    canonical: `${SITE_URL}/use-cases/badminton-tokyo`,
+  },
   openGraph: {
     title: 'バドミントンサークル 東京 20代 | COMIU',
     description:
       '東京の20代向けバドミントンサークル。初心者歓迎・社会人歓迎。LINEで簡単参加申込。',
     locale: 'ja_JP',
     type: 'website',
-    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    url: `${SITE_URL}/use-cases/badminton-tokyo`,
+    images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'バドミントンサークル 東京 20代 | COMIU',
+    description:
+      '東京の20代向けバドミントンサークル。初心者歓迎・社会人歓迎。LINEで簡単参加申込。',
+    images: [`${SITE_URL}/opengraph-image`],
   },
 }
 
@@ -73,6 +73,14 @@ export default function BadmintonTokyoPage() {
           priceCurrency: 'JPY',
           description: 'フリープランは永久無料',
         },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'ホーム', item: `${SITE_URL}` },
+          { '@type': 'ListItem', position: 2, name: '活用事例', item: `${SITE_URL}/use-cases` },
+          { '@type': 'ListItem', position: 3, name: 'バドミントンサークル 東京 20代', item: `${SITE_URL}/use-cases/badminton-tokyo` },
+        ],
       },
       {
         '@type': 'FAQPage',
@@ -127,7 +135,7 @@ export default function BadmintonTokyoPage() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
-                href="/"
+                href="/sports/badminton"
                 className="w-full sm:w-auto bg-white text-[#06C755] font-bold px-8 py-4 rounded-2xl hover:bg-gray-50 transition-colors text-center"
               >
                 イベントを探す
@@ -291,7 +299,7 @@ export default function BadmintonTokyoPage() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
-                href="/"
+                href="/sports/badminton"
                 className="w-full sm:w-auto bg-white text-[#06C755] font-bold px-8 py-4 rounded-2xl hover:bg-gray-50 transition-colors"
               >
                 イベントを探す
@@ -309,6 +317,7 @@ export default function BadmintonTokyoPage() {
         {/* フッター */}
         <footer className="px-4 py-8 border-t border-gray-100 text-center">
           <div className="flex items-center justify-center gap-4 mb-4 text-sm text-gray-400">
+            <Link href="/sports/badminton" className="hover:text-gray-600">バドミントンイベント一覧</Link>
             <Link href="/pricing" className="hover:text-gray-600">料金プラン</Link>
             <Link href="/register" className="hover:text-gray-600">新規登録</Link>
             <Link href="/login" className="hover:text-gray-600">ログイン</Link>

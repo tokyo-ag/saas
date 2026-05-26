@@ -14,7 +14,7 @@ export class PublicController {
       where: {
         status: 'open',
         heldAt: { gte: new Date() },
-        tenant: { deletedAt: null },
+        tenant: { deletedAt: null, code: { not: null } },
         ...(category ? { category } : {}),
         ...(tag ? { tags: { has: tag } } : {}),
       },
@@ -23,6 +23,7 @@ export class PublicController {
         tenant: {
           select: {
             id: true,
+            code: true,
             name: true,
             lineDisplayName: true,
             linePictureUrl: true,
@@ -40,6 +41,7 @@ export class PublicController {
     return events.map((e) => ({
       id: e.id,
       tenantId: e.tenantId,
+      tenantCode: e.tenant.code,
       title: e.title,
       heldAt: e.heldAt,
       location: e.location,
@@ -56,6 +58,7 @@ export class PublicController {
       tenantAccessCount: e.tenant._count.liffAccesses,
       tenant: {
         id: e.tenant.id,
+        code: e.tenant.code,
         name: e.tenant.name,
         lineDisplayName: e.tenant.lineDisplayName,
         linePictureUrl: e.tenant.linePictureUrl,
@@ -100,6 +103,23 @@ export class PublicController {
     return events
       .filter((e) => e.tenant.code)
       .map((e) => ({ id: e.id, tenantCode: e.tenant.code!, updatedAt: e.updatedAt }));
+  }
+
+  @Get('sitemap-tenants')
+  async getSitemapTenants() {
+    const tenants = await this.prisma.tenant.findMany({
+      where: {
+        deletedAt: null,
+        code: { not: null },
+        events: { some: { status: 'open', heldAt: { gte: new Date() } } },
+      },
+      select: { code: true, updatedAt: true },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return tenants
+      .filter((t) => t.code)
+      .map((t) => ({ tenantCode: t.code!, updatedAt: t.updatedAt }));
   }
 
   @Get('events/:eventId')
@@ -163,7 +183,7 @@ export class PublicController {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     const tenants = await this.prisma.tenant.findMany({
-      where: { deletedAt: null },
+      where: { deletedAt: null, code: { not: null } },
       include: {
         _count: {
           select: {
@@ -178,6 +198,7 @@ export class PublicController {
     const ranked = tenants
       .map((t) => ({
         id: t.id,
+        code: t.code,
         name: t.name,
         description: t.description,
         lineDisplayName: t.lineDisplayName,
@@ -189,5 +210,78 @@ export class PublicController {
       .sort((a, b) => b.accessCount - a.accessCount);
 
     return ranked.slice(0, 10);
+  }
+
+  @Get('tenants/:tenantCode')
+  async getTenantByCode(@Param('tenantCode') tenantCode: string) {
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { code: tenantCode, deletedAt: null },
+      include: {
+        _count: {
+          select: {
+            members: true,
+            events: true,
+            liffAccesses: { where: { accessedAt: { gte: since } } },
+          },
+        },
+        events: {
+          where: { status: 'open', heldAt: { gte: new Date() } },
+          orderBy: { heldAt: 'asc' },
+          include: {
+            reservations: {
+              where: { status: { in: ['reserved', 'attended', 'waiting_payment'] } },
+              select: { id: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!tenant) throw new NotFoundException('Tenant not found');
+
+    const tenantName = tenant.lineDisplayName ?? tenant.name;
+    const publicTenant = {
+      id: tenant.id,
+      code: tenant.code,
+      name: tenant.name,
+      description: tenant.description,
+      lineDisplayName: tenant.lineDisplayName,
+      linePictureUrl: tenant.linePictureUrl ?? tenant.iconUrl,
+      memberCount: tenant._count.members,
+      eventCount: tenant._count.events,
+      accessCount: tenant._count.liffAccesses,
+    };
+
+    return {
+      ...publicTenant,
+      events: tenant.events.map((e) => ({
+        id: e.id,
+        tenantId: e.tenantId,
+        tenantCode: tenant.code,
+        title: e.title,
+        heldAt: e.heldAt,
+        location: e.location,
+        price: e.price,
+        priceMale: e.priceMale,
+        priceFemale: e.priceFemale,
+        capacity: e.capacity,
+        reservedCount: e.reservations.length,
+        iconUrl: e.iconUrl,
+        imageUrl: e.imageUrl,
+        category: e.category,
+        tags: e.tags,
+        viewCount: e.viewCount,
+        tenantAccessCount: tenant._count.liffAccesses,
+        tenant: {
+          id: tenant.id,
+          code: tenant.code,
+          name: tenant.name,
+          lineDisplayName: tenantName,
+          linePictureUrl: tenant.linePictureUrl ?? tenant.iconUrl,
+          iconUrl: tenant.iconUrl,
+        },
+      })),
+    };
   }
 }

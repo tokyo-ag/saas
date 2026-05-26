@@ -69,7 +69,7 @@ export default function Image() {
             marginTop: 40,
           }}
         >
-          {['バドミントン', 'テニス', 'フットサル', 'ランニング', '交流会'].map((label) => (
+          {['バドミントン', 'バスケ', 'フットサル', 'バレーボール', '交流会'].map((label) => (
             <div
               key={label}
               style={{
