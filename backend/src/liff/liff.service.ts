@@ -34,7 +34,17 @@ export class LiffService {
     private stripeService: StripeService,
   ) {}
 
+  private async resolveTenantId(codeOrId: string): Promise<string> {
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { OR: [{ id: codeOrId }, { code: codeOrId }], deletedAt: null },
+      select: { id: true },
+    });
+    if (!tenant) throw new NotFoundException('テナントが見つかりません');
+    return tenant.id;
+  }
+
   async recordAccess(tenantId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     await this.prisma.tenantLiffAccess.create({ data: { tenantId } });
     return { ok: true };
   }
@@ -42,7 +52,7 @@ export class LiffService {
   // テナント公開情報（認証不要）
   async getTenantInfo(tenantId: string) {
     const tenant = await this.prisma.tenant.findFirst({
-      where: { id: tenantId, deletedAt: null },
+      where: { OR: [{ id: tenantId }, { code: tenantId }], deletedAt: null },
     });
     if (!tenant) throw new NotFoundException('テナントが見つかりません');
     return {
@@ -60,6 +70,7 @@ export class LiffService {
 
   // イベント一覧（status=open のものだけ）
   async getEvents(tenantId: string, lineUserId?: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const events = await this.prisma.event.findMany({
       where: { tenantId, status: 'open' },
       include: {
@@ -130,6 +141,7 @@ export class LiffService {
 
   // イベント詳細1件
   async getEvent(tenantId: string, eventId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const event = await this.prisma.event.findFirst({
       where: { id: eventId, tenantId },
     });
@@ -145,6 +157,7 @@ export class LiffService {
   }
 
   async getPublishedReviews(tenantId: string, eventId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     await this.ensureEventExists(tenantId, eventId);
     const reviews = await this.prisma.eventReview.findMany({
       where: { tenantId, eventId, isPublished: true },
@@ -163,6 +176,7 @@ export class LiffService {
   }
 
   async getMyReview(tenantId: string, eventId: string, lineUserId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const member = await this.findMember(tenantId, lineUserId);
     if (!member) return null;
 
@@ -172,6 +186,7 @@ export class LiffService {
   }
 
   async submitReview(tenantId: string, eventId: string, dto: SubmitReviewDto) {
+    tenantId = await this.resolveTenantId(tenantId);
     const content = dto.content.trim();
     if (content.length < 5 || content.length > 300) {
       throw new BadRequestException('感想は5文字以上300文字以内で入力してください');
@@ -203,6 +218,7 @@ export class LiffService {
 
   // 予約登録（重複チェック・キャンセル待ち・LINE通知込み）
   async createReservation(tenantId: string, dto: CreateReservationDto) {
+    tenantId = await this.resolveTenantId(tenantId);
     const event = await this.prisma.event.findFirst({
       where: { id: dto.eventId, tenantId, status: 'open' },
     });
@@ -414,6 +430,7 @@ export class LiffService {
 
   // 自分の予約を確認（lineUserId で検索）
   async getMyReservation(tenantId: string, eventId: string, lineUserId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const member = await this.findMember(tenantId, lineUserId);
     if (!member) return null;
 
@@ -446,6 +463,7 @@ export class LiffService {
   // ---- 繋がり / チャット ----
 
   async getProfile(tenantId: string, lineUserId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const member = await this.findMember(tenantId, lineUserId);
     if (!member) throw new NotFoundException('プロフィールが見つかりません。先にイベントに予約してください。');
     return {
@@ -458,6 +476,7 @@ export class LiffService {
   }
 
   async updateProfile(tenantId: string, lineUserId: string, data: { name: string; grade: string; gender: string }) {
+    tenantId = await this.resolveTenantId(tenantId);
     const member = await this.findMember(tenantId, lineUserId);
     if (!member) throw new NotFoundException('プロフィールが見つかりません');
     const updated = await this.prisma.member.update({
@@ -468,6 +487,7 @@ export class LiffService {
   }
 
   async syncLineProfile(tenantId: string, lineUserId: string, data: { lineDisplayName?: string; linePictureUrl?: string }) {
+    tenantId = await this.resolveTenantId(tenantId);
     const member = await this.prisma.member.findFirst({ where: { tenantId, lineUserId } });
     if (!member) return;
     await this.prisma.member.update({
@@ -480,6 +500,7 @@ export class LiffService {
   }
 
   async updateSettings(tenantId: string, lineUserId: string, showEventsToConnections: boolean) {
+    tenantId = await this.resolveTenantId(tenantId);
     const member = await this.prisma.member.update({
       where: { tenantId_lineUserId: { tenantId, lineUserId } },
       data: { showEventsToConnections },
@@ -488,12 +509,14 @@ export class LiffService {
   }
 
   async getMemberProfile(tenantId: string, memberId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const member = await this.prisma.member.findFirst({ where: { id: memberId, tenantId } });
     if (!member) throw new NotFoundException('メンバーが見つかりません');
     return { id: member.id, name: member.name, grade: member.grade, gender: member.gender };
   }
 
   async createConnection(tenantId: string, myLineUserId: string, targetMemberId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const me = await this.findMember(tenantId, myLineUserId);
     if (!me) throw new NotFoundException('自分のプロフィールが見つかりません');
     if (me.id === targetMemberId) throw new BadRequestException('自分自身と繋がることはできません');
@@ -514,6 +537,7 @@ export class LiffService {
   }
 
   async getConnections(tenantId: string, lineUserId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const me = await this.findMember(tenantId, lineUserId);
     if (!me) return [];
 
@@ -540,6 +564,7 @@ export class LiffService {
   }
 
   async getMessages(tenantId: string, connectionId: string, lineUserId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const me = await this.findMember(tenantId, lineUserId);
     if (!me) throw new NotFoundException('メンバーが見つかりません');
 
@@ -574,6 +599,7 @@ export class LiffService {
   }
 
   async sendMessage(tenantId: string, connectionId: string, lineUserId: string, content: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const me = await this.findMember(tenantId, lineUserId);
     if (!me) throw new NotFoundException('メンバーが見つかりません');
 
@@ -607,6 +633,7 @@ export class LiffService {
 
   // キャンセル（キャンセル待ちの自動繰り上げ込み）
   async cancelReservation(tenantId: string, reservationId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const reservation = await this.prisma.reservation.findFirst({
       where: { id: reservationId, tenantId },
       include: { event: true, member: true },
@@ -663,6 +690,7 @@ export class LiffService {
   }
 
   async getNotifications(tenantId: string, lineUserId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const member = await this.findMember(tenantId, lineUserId);
     if (!member) return [];
 
@@ -674,6 +702,7 @@ export class LiffService {
   }
 
   async markNotificationRead(tenantId: string, notificationId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     return this.prisma.notification.updateMany({
       where: { id: notificationId, tenantId },
       data: { read: true },
@@ -681,6 +710,7 @@ export class LiffService {
   }
 
   async markAllNotificationsRead(tenantId: string, lineUserId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const member = await this.findMember(tenantId, lineUserId);
     if (!member) return;
     return this.prisma.notification.updateMany({
@@ -691,6 +721,7 @@ export class LiffService {
 
   // 管理者↔メンバー トーク（メンバー側）
   async getAdminMessages(tenantId: string, lineUserId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const member = await this.findMember(tenantId, lineUserId);
     if (!member) return [];
     return this.prisma.adminMemberMessage.findMany({
@@ -700,6 +731,7 @@ export class LiffService {
   }
 
   async markAdminMessagesRead(tenantId: string, lineUserId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const member = await this.findMember(tenantId, lineUserId);
     if (!member) return;
     await this.prisma.adminMemberMessage.updateMany({
@@ -709,6 +741,7 @@ export class LiffService {
   }
 
   async sendToAdmin(tenantId: string, lineUserId: string, content: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     let member = await this.findMember(tenantId, lineUserId);
     if (!member) {
       member = await this.prisma.member.create({
@@ -734,6 +767,7 @@ export class LiffService {
   }
 
   async sendSupportMessage(lineUserId: string, tenantId: string, content: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     return this.prisma.supportMessage.create({
       data: { lineUserId, tenantId, content, fromUser: true },
     });
