@@ -122,11 +122,21 @@ function HScroll({ children, gap = 'gap-3' }: { children: React.ReactNode; gap?:
   );
 }
 
+type VisitedEntry = {
+  tenantId: string;
+  tenantCode: string;
+  name: string;
+  iconUrl: string | null;
+  visitedAt: number;
+};
+
 export default function HomeClient({ initialEvents, initialTenants, showHomePrompt }: HomeClientProps) {
   const [events, setEvents] = useState<PublicEvent[]>(initialEvents);
   const [tenants, setTenants] = useState<PublicTenant[]>(initialTenants);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [visited, setVisited] = useState<VisitedEntry[]>([]);
 
   // LINE認証後のリダイレクト
   useEffect(() => {
@@ -152,6 +162,13 @@ export default function HomeClient({ initialEvents, initialTenants, showHomeProm
       }
     }
     run();
+  }, []);
+
+  useEffect(() => {
+    const raw = localStorage.getItem('comiu_visited');
+    if (raw) {
+      try { setVisited(JSON.parse(raw)); } catch { /* ignore */ }
+    }
   }, []);
 
   useEffect(() => {
@@ -188,6 +205,49 @@ export default function HomeClient({ initialEvents, initialTenants, showHomeProm
 
   return (
     <>
+      {historyOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setHistoryOpen(false)} />
+          <div className="relative bg-white rounded-t-2xl px-4 pt-4 pb-8 space-y-4" style={{ paddingBottom: 'max(32px, env(safe-area-inset-bottom))' }}>
+            <div className="flex items-center justify-between">
+              <p className="text-[15px] font-bold text-gray-900">最近見た団体</p>
+              <button onClick={() => setHistoryOpen(false)} className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            <div className="space-y-2">
+              {visited.map((v) => (
+                <Link
+                  key={v.tenantId}
+                  href={`/liff/${v.tenantCode}`}
+                  onClick={() => setHistoryOpen(false)}
+                  className="flex items-center gap-3 py-2.5 px-3 rounded-xl active:bg-gray-50 transition-colors"
+                >
+                  {v.iconUrl ? (
+                    <img src={v.iconUrl} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-[#06C755]/15 flex items-center justify-center shrink-0 text-base">
+                      {v.name[0]}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] font-semibold text-gray-800 truncate">{v.name}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">
+                      {new Date(v.visitedAt).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })} に訪問
+                    </p>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {searchOpen && (
         <div className="fixed inset-0 bg-white z-50 flex flex-col">
           <div className="flex items-center gap-3 px-4 pt-12 pb-3 border-b border-gray-100">
@@ -234,11 +294,21 @@ export default function HomeClient({ initialEvents, initialTenants, showHomeProm
             </p>
             <p className="text-[11px] text-gray-500 mt-0.5 leading-tight">LINEで探して、そのまま参加予約</p>
           </div>
-          <button onClick={() => setSearchOpen(true)} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 active:bg-gray-200">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {visited.length > 0 && (
+              <button onClick={() => setHistoryOpen(true)} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 active:bg-gray-200 relative">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-[#06C755] rounded-full" />
+              </button>
+            )}
+            <button onClick={() => setSearchOpen(true)} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 active:bg-gray-200">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         {showHomePrompt && (
@@ -251,27 +321,21 @@ export default function HomeClient({ initialEvents, initialTenants, showHomeProm
         <h1 className="sr-only">東京の20代向けサークル・交流イベント | COMIU</h1>
 
         <div className="pt-4 pb-1">
-          <div className="flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-none" style={{ scrollSnapType: 'x mandatory' }}>
+          <div className="flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none">
             {[
-              { key: 'badminton',  label: 'バドミントン', emoji: '🏸', from: '#d1fae5', to: '#6ee7b7' },
-              { key: 'futsal',     label: 'フットサル',   emoji: '⚽', from: '#dbeafe', to: '#93c5fd' },
-              { key: 'basketball', label: 'バスケット',   emoji: '🏀', from: '#ffedd5', to: '#fdba74' },
-              { key: 'volleyball', label: 'バレーボール', emoji: '🏐', from: '#fce7f3', to: '#f9a8d4' },
+              { key: 'badminton',  label: 'バドミントン', emoji: '🏸' },
+              { key: 'futsal',     label: 'フットサル',   emoji: '⚽' },
+              { key: 'basketball', label: 'バスケット',   emoji: '🏀' },
+              { key: 'volleyball', label: 'バレーボール', emoji: '🏐' },
             ].map((cat) => (
               <Link
                 key={cat.key}
                 href={`/sports/${cat.key}`}
-                className="flex-none flex flex-col items-center justify-center gap-1.5 rounded-2xl active:opacity-75 transition-opacity"
-                style={{
-                  width: 88,
-                  height: 88,
-                  background: `linear-gradient(135deg, ${cat.from}, ${cat.to})`,
-                  scrollSnapAlign: 'start',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                }}
+                className="flex-none flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-3.5 py-2 active:bg-gray-50 transition-colors"
+                style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
               >
-                <span style={{ fontSize: 30 }}>{cat.emoji}</span>
-                <span className="text-[11px] font-bold text-gray-700 leading-tight text-center">{cat.label}</span>
+                <span className="text-base leading-none">{cat.emoji}</span>
+                <span className="text-[12px] font-semibold text-gray-700 whitespace-nowrap">{cat.label}</span>
               </Link>
             ))}
           </div>

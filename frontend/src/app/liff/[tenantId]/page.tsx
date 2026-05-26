@@ -221,6 +221,17 @@ export default function LiffTopPage() {
       if (t) {
         setTenant(t);
         localStorage.setItem(tenantCacheKey, JSON.stringify(t));
+        // 閲覧履歴を保存（最大5件）
+        const entry = {
+          tenantId: t.id,
+          tenantCode: tenantId,
+          name: t.lineDisplayName ?? t.name,
+          iconUrl: t.linePictureUrl ?? t.iconUrl ?? null,
+          visitedAt: Date.now(),
+        };
+        const prev = JSON.parse(localStorage.getItem('comiu_visited') ?? '[]') as typeof entry[];
+        const updated = [entry, ...prev.filter((v) => v.tenantId !== t.id)].slice(0, 5);
+        localStorage.setItem('comiu_visited', JSON.stringify(updated));
       } else {
         const cached = localStorage.getItem(tenantCacheKey);
         if (cached) setTenant(JSON.parse(cached) as LiffTenant);
