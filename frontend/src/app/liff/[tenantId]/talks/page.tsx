@@ -93,7 +93,7 @@ export default function TalksPage() {
               onClick={() => router.push(`/liff/${tenantId}/support`)}
               className="w-full bg-gray-50 rounded-2xl border border-gray-100 p-4 flex items-center gap-3 active:bg-gray-100 text-left"
             >
-              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-500 shrink-0">?</div>
+              <img src="/icon.png" className="w-12 h-12 rounded-full object-cover shrink-0" alt="COMIU" />
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-gray-900 text-sm">COMIU サポートチャット</p>
                 <p className="text-xs text-gray-400 truncate mt-0.5">アプリの使い方や不具合などをCOMIUに相談</p>
