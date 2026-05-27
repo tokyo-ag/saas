@@ -83,21 +83,21 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
   const items = [
     {
       href: '/',
-      label: 'Discover',
+      label: '探す',
       Icon: CompassIcon,
       active: pathname === '/' && !new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('prompt'),
       badge: 0,
     },
     {
       href: base || '/?prompt=home',
-      label: 'Home',
+      label: '参加',
       Icon: HomeIcon,
       active: !!base && pathname === base,
       badge: 0,
     },
     {
       href: base ? `${base}/talks` : null,
-      label: 'Talk',
+      label: '連絡',
       Icon: ChatIcon,
       active: !!base && pathname.startsWith(`${base}/talks`),
       badge: talkUnread,
