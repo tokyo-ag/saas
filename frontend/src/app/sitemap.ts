@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.jp';
+import { SITE_URL } from '@/lib/config';
 const API_URL = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'https://comiu.up.railway.app';
 
 async function fetchSitemapEvents(): Promise<{ id: string; tenantCode: string; updatedAt: string }[]> {
@@ -43,6 +43,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/use-cases/futsal-tokyo`, changeFrequency: 'weekly', priority: 0.9, lastModified: STATIC_LAST_MODIFIED },
     { url: `${SITE_URL}/use-cases/volleyball-tokyo`, changeFrequency: 'weekly', priority: 0.9, lastModified: STATIC_LAST_MODIFIED },
     { url: `${SITE_URL}/pricing`, changeFrequency: 'monthly', priority: 0.8, lastModified: STATIC_LAST_MODIFIED },
+    { url: `${SITE_URL}/terms`, changeFrequency: 'yearly', priority: 0.3, lastModified: STATIC_LAST_MODIFIED },
+    { url: `${SITE_URL}/privacy`, changeFrequency: 'yearly', priority: 0.3, lastModified: STATIC_LAST_MODIFIED },
   ];
 
   const eventPages: MetadataRoute.Sitemap = events.map((e) => ({

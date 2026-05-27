@@ -3,7 +3,7 @@ import HomeClient from '@/components/public/HomeClient';
 import type { PublicEvent, PublicTenant } from '@/lib/api';
 
 const API_URL = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'https://comiu.up.railway.app';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.jp';
+import { SITE_URL } from '@/lib/config';
 
 export const revalidate = 60;
 

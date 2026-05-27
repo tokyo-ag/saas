@@ -6,7 +6,7 @@ import type { PublicEvent } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 
 const API_URL = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'https://comiu.up.railway.app';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.jp';
+import { SITE_URL } from '@/lib/config';
 
 export const revalidate = 60;
 
@@ -83,11 +83,31 @@ export function generateStaticParams() {
   return Object.keys(CATEGORY_META).map((category) => ({ category }));
 }
 
-export function generateMetadata(_: { params: Promise<{ category: string }> }): Metadata {
+export async function generateMetadata({ params }: { params: Promise<{ category: string }> }): Promise<Metadata> {
   if (process.env.NEXT_PUBLIC_DISCOVERY_LOCKED === 'true') {
     return { robots: { index: false, follow: false } };
   }
-  return {};
+  const { category } = await params;
+  const meta = CATEGORY_META[category];
+  if (!meta) return {};
+  const title = `${meta.label}サークル・交流会 東京`;
+  return {
+    title,
+    description: meta.intro,
+    alternates: { canonical: `${SITE_URL}/sports/${category}` },
+    openGraph: {
+      title: `${title} | COMIU`,
+      description: meta.intro,
+      url: `${SITE_URL}/sports/${category}`,
+      locale: 'ja_JP',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${title} | COMIU`,
+      description: meta.intro,
+    },
+  };
 }
 
 async function fetchEvents(category: string): Promise<PublicEvent[]> {

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 const API_URL = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'https://comiu.up.railway.app';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.jp';
+import { SITE_URL } from '@/lib/config';
 
 type Review = {
   id: string;

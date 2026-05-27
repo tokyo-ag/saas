@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://comiu.jp'
+import { SITE_URL } from '@/lib/config';
 
 export const viewport: Viewport = {
   width: 'device-width',
