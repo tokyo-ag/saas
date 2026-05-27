@@ -135,7 +135,6 @@ export default function HomeClient({ initialEvents, initialTenants, showHomeProm
   const [tenants, setTenants] = useState<PublicTenant[]>(initialTenants);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [historyOpen, setHistoryOpen] = useState(false);
   const [visited, setVisited] = useState<VisitedEntry[]>([]);
 
   // LINE認証後のリダイレクト
@@ -205,49 +204,6 @@ export default function HomeClient({ initialEvents, initialTenants, showHomeProm
 
   return (
     <>
-      {historyOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setHistoryOpen(false)} />
-          <div className="relative bg-white rounded-t-2xl px-4 pt-4 pb-8 space-y-4" style={{ paddingBottom: 'max(32px, env(safe-area-inset-bottom))' }}>
-            <div className="flex items-center justify-between">
-              <p className="text-[15px] font-bold text-gray-900">最近見た団体</p>
-              <button onClick={() => setHistoryOpen(false)} className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2.5" strokeLinecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </div>
-            <div className="space-y-2">
-              {visited.map((v) => (
-                <Link
-                  key={v.tenantId}
-                  href={`/liff/${v.tenantCode}`}
-                  onClick={() => setHistoryOpen(false)}
-                  className="flex items-center gap-3 py-2.5 px-3 rounded-xl active:bg-gray-50 transition-colors"
-                >
-                  {v.iconUrl ? (
-                    <img src={v.iconUrl} alt="" className="w-10 h-10 rounded-full object-cover shrink-0" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-[#06C755]/15 flex items-center justify-center shrink-0 text-base">
-                      {v.name[0]}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-semibold text-gray-800 truncate">{v.name}</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5">
-                      {new Date(v.visitedAt).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })} に訪問
-                    </p>
-                  </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="9 18 15 12 9 6"/>
-                  </svg>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       {searchOpen && (
         <div className="fixed inset-0 bg-white z-50 flex flex-col">
           <div className="flex items-center gap-3 px-4 pt-12 pb-3 border-b border-gray-100">
@@ -294,21 +250,11 @@ export default function HomeClient({ initialEvents, initialTenants, showHomeProm
             </p>
             <p className="text-[11px] text-gray-500 mt-0.5 leading-tight">LINEで探して、そのまま参加予約</p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {visited.length > 0 && (
-              <button onClick={() => setHistoryOpen(true)} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 active:bg-gray-200 relative">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                </svg>
-                <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-[#06C755] rounded-full" />
-              </button>
-            )}
-            <button onClick={() => setSearchOpen(true)} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 active:bg-gray-200">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-            </button>
-          </div>
+          <button onClick={() => setSearchOpen(true)} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 active:bg-gray-200 shrink-0">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
         </div>
 
         {showHomePrompt && (
@@ -340,6 +286,31 @@ export default function HomeClient({ initialEvents, initialTenants, showHomeProm
             ))}
           </div>
         </div>
+
+        {visited.length > 0 && (
+          <div className="pt-5 pb-2">
+            <SectionHeader title="最近見た団体" />
+            <div className="flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-none">
+              {visited.map((v) => (
+                <Link
+                  key={v.tenantId}
+                  href={`/liff/${v.tenantCode}`}
+                  className="flex-none flex flex-col items-center gap-1.5 active:opacity-70 transition-opacity"
+                  style={{ width: 64 }}
+                >
+                  {v.iconUrl ? (
+                    <img src={v.iconUrl} alt={v.name} className="w-12 h-12 rounded-full object-cover border border-gray-100" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-[#06C755]/15 flex items-center justify-center text-lg font-bold text-[#06C755]">
+                      {v.name[0]}
+                    </div>
+                  )}
+                  <p className="text-[10px] text-gray-600 font-medium text-center leading-tight line-clamp-2">{v.name}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="pt-5 pb-2">
           <SectionHeader title="人気のイベント" />
