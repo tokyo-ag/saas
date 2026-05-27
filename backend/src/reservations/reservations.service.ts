@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LineMessagingService } from '../line-messaging/line-messaging.service';
@@ -26,7 +26,9 @@ export class ReservationsService {
     if (status === ReservationStatus.cancelled) {
       await this.promoteWaitlist(tenantId, reservation.eventId);
 
-      const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+      });
       if (tenant?.lineChannelAccessToken) {
         await this.lineMessaging.sendCancelNotifyToOrganizer(
           tenant.lineChannelAccessToken,
@@ -41,13 +43,18 @@ export class ReservationsService {
   }
 
   async promoteWaitlist(tenantId: string, eventId: string) {
-    const event = await this.prisma.event.findUnique({ where: { id: eventId } });
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId },
+    });
     if (!event) return;
 
     if (event.capacity === null) return;
 
     const activeCount = await this.prisma.reservation.count({
-      where: { eventId, status: { in: ['reserved', 'attended', 'waiting_payment'] } },
+      where: {
+        eventId,
+        status: { in: ['reserved', 'attended', 'waiting_payment'] },
+      },
     });
 
     if (activeCount >= event.capacity) return;
@@ -65,7 +72,9 @@ export class ReservationsService {
       data: { status: ReservationStatus.reserved, waitlistOrder: null },
     });
 
-    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
     if (tenant?.lineChannelAccessToken && nextWaitlisted.member.lineUserId) {
       await this.lineMessaging.sendWaitlistPromoted(
         tenant.lineChannelAccessToken,

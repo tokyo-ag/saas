@@ -1,4 +1,13 @@
-import { Controller, Post, Get, Body, Query, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { IsString, IsNotEmpty, IsEmail, MinLength } from 'class-validator';
 import { Throttle } from '@nestjs/throttler';
@@ -63,7 +72,12 @@ export class AuthController {
     @Req() req: Request & { user: { tenantId: string; accountId: string } },
     @Body() dto: ReconfirmDto,
   ) {
-    return this.authService.reconfirmPassword(req.user.tenantId, req.user.accountId, dto.email, dto.password);
+    return this.authService.reconfirmPassword(
+      req.user.tenantId,
+      req.user.accountId,
+      dto.email,
+      dto.password,
+    );
   }
 
   @Get('verify-email')
@@ -88,13 +102,23 @@ export class AuthController {
     @Req() req: Request & { user: { tenantId: string; accountId: string } },
     @Body() dto: SetEmailPasswordDto,
   ) {
-    return this.authService.setEmailPassword(req.user.tenantId, req.user.accountId, dto.email, dto.password);
+    return this.authService.setEmailPassword(
+      req.user.tenantId,
+      req.user.accountId,
+      dto.email,
+      dto.password,
+    );
   }
 
   @Post('resend-verification')
   @UseGuards(AdminGuard)
-  resendVerification(@Req() req: Request & { user: { tenantId: string; accountId: string } }) {
-    return this.authService.resendVerificationEmail(req.user.tenantId, req.user.accountId);
+  resendVerification(
+    @Req() req: Request & { user: { tenantId: string; accountId: string } },
+  ) {
+    return this.authService.resendVerificationEmail(
+      req.user.tenantId,
+      req.user.accountId,
+    );
   }
 
   @Throttle({ default: { ttl: 60000, limit: 3 } })
@@ -115,18 +139,26 @@ export class AuthController {
     @Query('state') state: string,
     @Res() res: Response,
   ) {
-    const { redirectUrl } = await this.authService.handleLineCallback(code, state);
+    const { redirectUrl } = await this.authService.handleLineCallback(
+      code,
+      state,
+    );
     res.redirect(redirectUrl);
   }
 
   @Post('line/complete')
   completeLineRegistration(@Body() dto: LineCompleteDto) {
-    return this.authService.completeLineRegistration(dto.lineToken, dto.orgName);
+    return this.authService.completeLineRegistration(
+      dto.lineToken,
+      dto.orgName,
+    );
   }
 
   @Get('me')
   @UseGuards(AdminGuard)
-  getMe(@Req() req: Request & { user: { tenantId: string; accountId: string } }) {
+  getMe(
+    @Req() req: Request & { user: { tenantId: string; accountId: string } },
+  ) {
     return this.authService.getMe(req.user.tenantId, req.user.accountId);
   }
 }

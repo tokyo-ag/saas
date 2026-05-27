@@ -3,8 +3,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 
-const API_URL = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'https://comiu.up.railway.app';
-import { SITE_URL } from '@/lib/config';
+import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
 
 type Review = {
   id: string;
@@ -56,7 +55,7 @@ function formatDate(iso: string) {
 
 function imgSrc(url?: string | null) {
   if (!url) return null;
-  return url.startsWith('/') ? `${API_URL}${url}` : url;
+  return url.startsWith('/') ? `${IMAGE_BASE_URL}${url}` : url;
 }
 
 function buildJsonLd(event: EventDetail) {
@@ -69,6 +68,11 @@ function buildJsonLd(event: EventDetail) {
       : { '@type': 'UnitPriceSpecification', price: event.price, priceCurrency: 'JPY' };
 
   const eventUrl = `${SITE_URL}/e/${event.tenantCode}/${event.id}`;
+  const image = imgSrc(event.imageUrl) ?? imgSrc(event.iconUrl) ?? undefined;
+  const inventoryLevel =
+    event.capacity != null
+      ? Math.max(event.capacity - event.reservedCount, 0)
+      : undefined;
   const ld: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -78,6 +82,7 @@ function buildJsonLd(event: EventDetail) {
         description: event.description,
         startDate: event.heldAt,
         ...(event.endAt ? { endDate: event.endAt } : {}),
+        ...(image ? { image: [image] } : {}),
         location: {
           '@type': 'Place',
           name: event.location,
@@ -89,7 +94,9 @@ function buildJsonLd(event: EventDetail) {
           ...(event.tenantCode ? { url: `${SITE_URL}/clubs/${event.tenantCode}` } : {}),
         },
         url: eventUrl,
-        eventStatus: 'https://schema.org/EventScheduled',
+        eventStatus: event.isEnded
+          ? 'https://schema.org/EventCompleted'
+          : 'https://schema.org/EventScheduled',
         eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
         offers: {
           '@type': 'Offer',
@@ -101,6 +108,14 @@ function buildJsonLd(event: EventDetail) {
             : event.capacity != null && event.reservedCount >= event.capacity
               ? 'https://schema.org/SoldOut'
               : 'https://schema.org/InStock',
+          ...(inventoryLevel !== undefined
+            ? {
+                inventoryLevel: {
+                  '@type': 'QuantitativeValue',
+                  value: inventoryLevel,
+                },
+              }
+            : {}),
           url: eventUrl,
         },
       },
@@ -118,7 +133,6 @@ function buildJsonLd(event: EventDetail) {
   };
 
   const eventNode = (ld['@graph'] as Record<string, unknown>[])[0];
-  if (imgSrc(event.imageUrl)) eventNode.image = imgSrc(event.imageUrl);
 
   if (event.reviews && event.reviews.length > 0) {
     eventNode.review = event.reviews.slice(0, 5).map((r) => ({
@@ -218,7 +232,6 @@ export default async function PublicEventPage({ params }: { params: Promise<{ te
               src={imgSrc(event.imageUrl)!}
               alt={event.title}
               fill
-              unoptimized
               sizes="(min-width: 768px) 672px, calc(100vw - 32px)"
               className="object-cover"
               priority
@@ -241,7 +254,6 @@ export default async function PublicEventPage({ params }: { params: Promise<{ te
                 alt={event.tenantName}
                 width={24}
                 height={24}
-                unoptimized
                 className="w-6 h-6 rounded-full object-cover"
               />
             )}
@@ -342,7 +354,6 @@ export default async function PublicEventPage({ params }: { params: Promise<{ te
                     alt=""
                     width={32}
                     height={32}
-                    unoptimized
                     className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5"
                   />
                 ) : (

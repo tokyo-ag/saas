@@ -2,8 +2,7 @@ import type { Metadata } from 'next';
 import HomeClient from '@/components/public/HomeClient';
 import type { PublicEvent, PublicTenant } from '@/lib/api';
 
-const API_URL = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'https://comiu.up.railway.app';
-import { SITE_URL } from '@/lib/config';
+import { SITE_URL, API_URL } from '@/lib/config';
 
 export const revalidate = 60;
 
@@ -60,17 +59,12 @@ export default async function TopPage({
         '@type': 'WebSite',
         name: 'COMIU',
         url: SITE_URL,
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: `${SITE_URL}/sports/{search_term_string}`,
-          'query-input': 'required name=search_term_string',
-        },
       },
       {
         '@type': 'Organization',
         name: 'COMIU',
         url: SITE_URL,
-        logo: `${SITE_URL}/opengraph-image`,
+        logo: `${SITE_URL}/icon.png`,
         description: 'コミュニティのイベント管理をLINEで完結するSaaS',
       },
     ],
@@ -80,7 +74,7 @@ export default async function TopPage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
       <HomeClient
         initialEvents={events}

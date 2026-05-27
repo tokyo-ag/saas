@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { api, API_URL, PublicEvent, PublicTenant } from '@/lib/api';
+import { API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { initLiff } from '@/lib/liff';
 import LiffBottomNav from '@/components/liff/LiffBottomNav';
@@ -54,7 +54,6 @@ function EventCard({ event, showViews, compact }: { event: PublicEvent; showView
             src={img}
             alt={event.title}
             fill
-            unoptimized
             sizes={compact ? '128px' : '176px'}
             className="object-cover"
           />
@@ -101,7 +100,6 @@ function RankingCard({ tenant, rank }: { tenant: PublicTenant; rank: number }) {
           alt={displayName}
           width={56}
           height={56}
-          unoptimized
           className="w-14 h-14 rounded-full object-cover mt-3 border-2 border-gray-100"
         />
       ) : (
@@ -123,8 +121,8 @@ function HScroll({ children, gap = 'gap-3' }: { children: React.ReactNode; gap?:
 }
 
 export default function HomeClient({ initialEvents, initialTenants, showHomePrompt }: HomeClientProps) {
-  const [events, setEvents] = useState<PublicEvent[]>(initialEvents);
-  const [tenants, setTenants] = useState<PublicTenant[]>(initialTenants);
+  const events = initialEvents;
+  const tenants = initialTenants;
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
 
@@ -154,14 +152,6 @@ export default function HomeClient({ initialEvents, initialTenants, showHomeProm
     run();
   }, []);
 
-  useEffect(() => {
-    Promise.all([api.public.events(), api.public.tenants()])
-      .then(([evs, tns]) => {
-        setEvents(evs);
-        setTenants(tns);
-      })
-      .catch(() => {});
-  }, []);
 
   function limitPerTenant(list: PublicEvent[], max = 2) {
     const counts: Record<string, number> = {};

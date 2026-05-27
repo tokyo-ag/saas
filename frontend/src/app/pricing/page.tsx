@@ -112,7 +112,7 @@ export default function PricingPage() {
       {
         '@type': 'SoftwareApplication',
         name: 'COMIU',
-        url: `${SITE_URL}/pricing`,
+        url: SITE_URL,
         applicationCategory: 'BusinessApplication',
         operatingSystem: 'Web',
         description: 'コミュニティのイベント管理・参加者募集をLINEで完結するSaaS',
@@ -137,14 +137,14 @@ export default function PricingPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
     <div className="min-h-screen bg-gray-50">
       {/* ヘッダー */}
       <div className="bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between max-w-5xl mx-auto">
         <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 bg-[#06C755] rounded-xl flex items-center justify-center">
-            <span className="text-white text-sm font-bold">A</span>
+            <span className="text-white text-sm font-bold">C</span>
           </div>
           <span className="font-bold text-gray-900">COMIU</span>
         </Link>

@@ -1,5 +1,18 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
-import { LiffService, CreateReservationDto, SubmitReviewDto } from './liff.service';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+} from '@nestjs/common';
+import {
+  LiffService,
+  CreateReservationDto,
+  SubmitReviewDto,
+} from './liff.service';
 
 // /api/liff/:tenantId/... という URL で受け付ける
 @Controller('liff/:tenantId')
@@ -25,7 +38,10 @@ export class LiffController {
   }
 
   @Get('events/:eventId')
-  getEvent(@Param('tenantId') tenantId: string, @Param('eventId') eventId: string) {
+  getEvent(
+    @Param('tenantId') tenantId: string,
+    @Param('eventId') eventId: string,
+  ) {
     return this.liffService.getEvent(tenantId, eventId);
   }
 
@@ -65,7 +81,10 @@ export class LiffController {
   }
 
   @Post('reservations')
-  createReservation(@Param('tenantId') tenantId: string, @Body() dto: CreateReservationDto) {
+  createReservation(
+    @Param('tenantId') tenantId: string,
+    @Body() dto: CreateReservationDto,
+  ) {
     return this.liffService.createReservation(tenantId, dto);
   }
 
@@ -78,7 +97,10 @@ export class LiffController {
   }
 
   @Get('profile')
-  getProfile(@Param('tenantId') tenantId: string, @Query('lineUserId') lineUserId: string) {
+  getProfile(
+    @Param('tenantId') tenantId: string,
+    @Query('lineUserId') lineUserId: string,
+  ) {
     return this.liffService.getProfile(tenantId, lineUserId);
   }
 
@@ -106,11 +128,18 @@ export class LiffController {
     @Query('lineUserId') lineUserId: string,
     @Body() body: { showEventsToConnections: boolean },
   ) {
-    return this.liffService.updateSettings(tenantId, lineUserId, body.showEventsToConnections);
+    return this.liffService.updateSettings(
+      tenantId,
+      lineUserId,
+      body.showEventsToConnections,
+    );
   }
 
   @Get('members/:memberId')
-  getMemberProfile(@Param('tenantId') tenantId: string, @Param('memberId') memberId: string) {
+  getMemberProfile(
+    @Param('tenantId') tenantId: string,
+    @Param('memberId') memberId: string,
+  ) {
     return this.liffService.getMemberProfile(tenantId, memberId);
   }
 
@@ -119,11 +148,18 @@ export class LiffController {
     @Param('tenantId') tenantId: string,
     @Body() body: { myLineUserId: string; targetMemberId: string },
   ) {
-    return this.liffService.createConnection(tenantId, body.myLineUserId, body.targetMemberId);
+    return this.liffService.createConnection(
+      tenantId,
+      body.myLineUserId,
+      body.targetMemberId,
+    );
   }
 
   @Get('connections')
-  getConnections(@Param('tenantId') tenantId: string, @Query('lineUserId') lineUserId: string) {
+  getConnections(
+    @Param('tenantId') tenantId: string,
+    @Query('lineUserId') lineUserId: string,
+  ) {
     return this.liffService.getConnections(tenantId, lineUserId);
   }
 
@@ -142,11 +178,19 @@ export class LiffController {
     @Param('connectionId') connectionId: string,
     @Body() body: { lineUserId: string; content: string },
   ) {
-    return this.liffService.sendMessage(tenantId, connectionId, body.lineUserId, body.content);
+    return this.liffService.sendMessage(
+      tenantId,
+      connectionId,
+      body.lineUserId,
+      body.content,
+    );
   }
 
   @Get('notifications')
-  getNotifications(@Param('tenantId') tenantId: string, @Query('lineUserId') lineUserId: string) {
+  getNotifications(
+    @Param('tenantId') tenantId: string,
+    @Query('lineUserId') lineUserId: string,
+  ) {
     return this.liffService.getNotifications(tenantId, lineUserId);
   }
 
@@ -159,7 +203,10 @@ export class LiffController {
   }
 
   @Patch('notifications/read-all')
-  markAllRead(@Param('tenantId') tenantId: string, @Query('lineUserId') lineUserId: string) {
+  markAllRead(
+    @Param('tenantId') tenantId: string,
+    @Query('lineUserId') lineUserId: string,
+  ) {
     return this.liffService.markAllNotificationsRead(tenantId, lineUserId);
   }
 

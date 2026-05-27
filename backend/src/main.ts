@@ -8,8 +8,12 @@ import { join } from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
-  const frontendUrl = (process.env.FRONTEND_URL ?? 'http://localhost:3000').trim();
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+  });
+  const frontendUrl = (
+    process.env.FRONTEND_URL ?? 'http://localhost:3000'
+  ).trim();
   app.enableCors({
     origin: (origin, callback) => {
       if (!origin || origin === frontendUrl || /\.vercel\.app$/.test(origin)) {
@@ -25,4 +29,4 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', '..', 'public'));
   await app.listen(process.env.PORT ?? 3001);
 }
-bootstrap();
+void bootstrap();

@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
-
 @Injectable()
 export class WebhookService {
   private readonly logger = new Logger(WebhookService.name);
@@ -9,7 +8,9 @@ export class WebhookService {
   constructor(private prisma: PrismaService) {}
 
   async handleWebhook(tenantId: string, body: any): Promise<void> {
-    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
     if (!tenant) {
       this.logger.warn(`Tenant not found: ${tenantId}`);
       return;

@@ -1,4 +1,14 @@
-import { Controller, Get, Put, Post, Body, BadRequestException, UseGuards, Headers, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Post,
+  Body,
+  BadRequestException,
+  UseGuards,
+  Headers,
+  Req,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { AdminGuard } from '../auth/admin.guard';
 import { TenantService, UpdateTenantDto } from './tenant.service';
@@ -21,7 +31,12 @@ export class TenantController {
     @Headers('x-reauth-token') reauthToken: string | undefined,
     @Req() req: Request & { user: { accountId: string } },
   ) {
-    return this.tenantService.update(tenantId, dto, req.user.accountId, reauthToken);
+    return this.tenantService.update(
+      tenantId,
+      dto,
+      req.user.accountId,
+      reauthToken,
+    );
   }
 
   @Get('stats')
@@ -50,7 +65,10 @@ export class TenantController {
   }
 
   @Post('support')
-  sendSupportMessage(@TenantId() tenantId: string, @Body('content') content: string) {
+  sendSupportMessage(
+    @TenantId() tenantId: string,
+    @Body('content') content: string,
+  ) {
     return this.tenantService.sendSupportMessage(tenantId, content);
   }
 
@@ -59,6 +77,6 @@ export class TenantController {
     if (plan !== 'standard' && plan !== 'pro') {
       throw new BadRequestException('plan must be standard or pro');
     }
-    return this.tenantService.createBillingCheckout(tenantId, plan as 'standard' | 'pro');
+    return this.tenantService.createBillingCheckout(tenantId, plan);
   }
 }

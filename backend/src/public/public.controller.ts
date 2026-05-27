@@ -1,4 +1,11 @@
-import { Controller, Get, Post, Param, Query, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('public')
@@ -14,7 +21,7 @@ export class PublicController {
       where: {
         status: 'open',
         heldAt: { gte: new Date() },
-        tenant: { deletedAt: null, code: { not: null } },
+        tenant: { deletedAt: null, bannedAt: null, code: { not: null } },
         ...(category ? { category } : {}),
         ...(tag ? { tags: { has: tag } } : {}),
       },
@@ -28,11 +35,23 @@ export class PublicController {
             lineDisplayName: true,
             linePictureUrl: true,
             iconUrl: true,
-            _count: { select: { liffAccesses: { where: { accessedAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } } } } },
+            _count: {
+              select: {
+                liffAccesses: {
+                  where: {
+                    accessedAt: {
+                      gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                    },
+                  },
+                },
+              },
+            },
           },
         },
         reservations: {
-          where: { status: { in: ['reserved', 'attended', 'waiting_payment'] } },
+          where: {
+            status: { in: ['reserved', 'attended', 'waiting_payment'] },
+          },
           select: { id: true },
         },
       },
@@ -91,7 +110,7 @@ export class PublicController {
       where: {
         status: 'open',
         heldAt: { gte: new Date() },
-        tenant: { deletedAt: null, code: { not: null } },
+        tenant: { deletedAt: null, bannedAt: null, code: { not: null } },
       },
       select: {
         id: true,
@@ -102,7 +121,11 @@ export class PublicController {
     });
     return events
       .filter((e) => e.tenant.code)
-      .map((e) => ({ id: e.id, tenantCode: e.tenant.code!, updatedAt: e.updatedAt }));
+      .map((e) => ({
+        id: e.id,
+        tenantCode: e.tenant.code!,
+        updatedAt: e.updatedAt,
+      }));
   }
 
   @Get('sitemap-tenants')
@@ -110,6 +133,7 @@ export class PublicController {
     const tenants = await this.prisma.tenant.findMany({
       where: {
         deletedAt: null,
+        bannedAt: null,
         code: { not: null },
         events: { some: { status: 'open', heldAt: { gte: new Date() } } },
       },
@@ -130,9 +154,19 @@ export class PublicController {
         tenant: { deletedAt: null },
       },
       include: {
-        tenant: { select: { code: true, name: true, lineDisplayName: true, linePictureUrl: true, iconUrl: true } },
+        tenant: {
+          select: {
+            code: true,
+            name: true,
+            lineDisplayName: true,
+            linePictureUrl: true,
+            iconUrl: true,
+          },
+        },
         reservations: {
-          where: { status: { in: ['reserved', 'attended', 'waiting_payment'] } },
+          where: {
+            status: { in: ['reserved', 'attended', 'waiting_payment'] },
+          },
           select: { id: true },
         },
         reviews: {
@@ -140,7 +174,13 @@ export class PublicController {
           orderBy: { createdAt: 'desc' },
           take: 20,
           include: {
-            member: { select: { lineDisplayName: true, linePictureUrl: true, name: true } },
+            member: {
+              select: {
+                lineDisplayName: true,
+                linePictureUrl: true,
+                name: true,
+              },
+            },
           },
         },
       },
@@ -183,7 +223,7 @@ export class PublicController {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     const tenants = await this.prisma.tenant.findMany({
-      where: { deletedAt: null, code: { not: null } },
+      where: { deletedAt: null, bannedAt: null, code: { not: null } },
       include: {
         _count: {
           select: {
@@ -216,7 +256,7 @@ export class PublicController {
   async getTenantByCode(@Param('tenantCode') tenantCode: string) {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const tenant = await this.prisma.tenant.findFirst({
-      where: { code: tenantCode, deletedAt: null },
+      where: { code: tenantCode, deletedAt: null, bannedAt: null },
       include: {
         _count: {
           select: {
@@ -230,7 +270,9 @@ export class PublicController {
           orderBy: { heldAt: 'asc' },
           include: {
             reservations: {
-              where: { status: { in: ['reserved', 'attended', 'waiting_payment'] } },
+              where: {
+                status: { in: ['reserved', 'attended', 'waiting_payment'] },
+              },
               select: { id: true },
             },
           },

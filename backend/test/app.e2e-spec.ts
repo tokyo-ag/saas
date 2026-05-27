@@ -17,9 +17,7 @@ describe('AppModule (e2e)', () => {
   });
 
   it('starts the application and returns 404 for an unknown route', () => {
-    return request(app.getHttpServer())
-      .get('/unknown-route')
-      .expect(404);
+    return request(app.getHttpServer()).get('/unknown-route').expect(404);
   });
 
   afterEach(async () => {

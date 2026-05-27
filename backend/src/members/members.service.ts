@@ -4,9 +4,15 @@ import { LineMessagingService } from '../line-messaging/line-messaging.service';
 
 @Injectable()
 export class MembersService {
-  constructor(private prisma: PrismaService, private lineMessaging: LineMessagingService) {}
+  constructor(
+    private prisma: PrismaService,
+    private lineMessaging: LineMessagingService,
+  ) {}
 
-  async findAll(tenantId: string, query: { name?: string; grade?: string; gender?: string }) {
+  async findAll(
+    tenantId: string,
+    query: { name?: string; grade?: string; gender?: string },
+  ) {
     const members = await this.prisma.member.findMany({
       where: {
         tenantId,
@@ -15,7 +21,13 @@ export class MembersService {
         ...(query.gender && { gender: query.gender }),
       },
       include: {
-        _count: { select: { reservations: { where: { status: { in: ['reserved', 'attended'] } } } } },
+        _count: {
+          select: {
+            reservations: {
+              where: { status: { in: ['reserved', 'attended'] } },
+            },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -50,19 +62,31 @@ export class MembersService {
   }
 
   async block(tenantId: string, id: string) {
-    const member = await this.prisma.member.findFirst({ where: { id, tenantId } });
+    const member = await this.prisma.member.findFirst({
+      where: { id, tenantId },
+    });
     if (!member) throw new NotFoundException('Member not found');
-    return this.prisma.member.update({ where: { id }, data: { blockedAt: new Date() } });
+    return this.prisma.member.update({
+      where: { id },
+      data: { blockedAt: new Date() },
+    });
   }
 
   async unblock(tenantId: string, id: string) {
-    const member = await this.prisma.member.findFirst({ where: { id, tenantId } });
+    const member = await this.prisma.member.findFirst({
+      where: { id, tenantId },
+    });
     if (!member) throw new NotFoundException('Member not found');
-    return this.prisma.member.update({ where: { id }, data: { blockedAt: null } });
+    return this.prisma.member.update({
+      where: { id },
+      data: { blockedAt: null },
+    });
   }
 
   async getMessages(tenantId: string, memberId: string) {
-    const member = await this.prisma.member.findFirst({ where: { id: memberId, tenantId } });
+    const member = await this.prisma.member.findFirst({
+      where: { id: memberId, tenantId },
+    });
     if (!member) throw new NotFoundException('Member not found');
     await this.prisma.adminMemberMessage.updateMany({
       where: { memberId, tenantId, fromAdmin: false, read: false },
@@ -123,14 +147,20 @@ export class MembersService {
         };
       })
       .sort((a, b) => {
-        const aTime = a.lastMessage ? new Date(a.lastMessage.createdAt).getTime() : 0;
-        const bTime = b.lastMessage ? new Date(b.lastMessage.createdAt).getTime() : 0;
+        const aTime = a.lastMessage
+          ? new Date(a.lastMessage.createdAt).getTime()
+          : 0;
+        const bTime = b.lastMessage
+          ? new Date(b.lastMessage.createdAt).getTime()
+          : 0;
         return bTime - aTime;
       });
   }
 
   async sendMessage(tenantId: string, memberId: string, content: string) {
-    const member = await this.prisma.member.findFirst({ where: { id: memberId, tenantId } });
+    const member = await this.prisma.member.findFirst({
+      where: { id: memberId, tenantId },
+    });
     if (!member) throw new NotFoundException('Member not found');
     const message = await this.prisma.adminMemberMessage.create({
       data: { tenantId, memberId, content, fromAdmin: true },
@@ -138,7 +168,7 @@ export class MembersService {
     return message;
   }
 
-async syncLineProfiles(tenantId: string): Promise<{ updated: number }> {
+  async syncLineProfiles(tenantId: string): Promise<{ updated: number }> {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
       select: { lineChannelAccessToken: true },
@@ -148,7 +178,10 @@ async syncLineProfiles(tenantId: string): Promise<{ updated: number }> {
     const members = await this.prisma.member.findMany({ where: { tenantId } });
     let updated = 0;
     for (const member of members) {
-      const profile = await this.lineMessaging.getLineProfile(tenant.lineChannelAccessToken, member.lineUserId);
+      const profile = await this.lineMessaging.getLineProfile(
+        tenant.lineChannelAccessToken,
+        member.lineUserId,
+      );
       if (!profile) continue;
       await this.prisma.member.update({
         where: { id: member.id },

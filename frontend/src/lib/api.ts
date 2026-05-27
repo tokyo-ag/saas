@@ -102,7 +102,6 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ content }),
       }),
-    exportUrl: () => `${BASE}/admin/members/export`,
   },
   reservations: {
     updateStatus: (id: string, status: string) =>

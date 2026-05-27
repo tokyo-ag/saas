@@ -1,5 +1,16 @@
 import {
-  Controller, Get, Post, Put, Patch, Delete, Param, Body, Res, HttpCode, HttpStatus, UseGuards,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Res,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { AdminGuard } from '../auth/admin.guard';
@@ -28,7 +39,11 @@ export class EventsController {
   }
 
   @Put(':eventId')
-  update(@TenantId() tenantId: string, @Param('eventId') eventId: string, @Body() dto: CreateEventDto) {
+  update(
+    @TenantId() tenantId: string,
+    @Param('eventId') eventId: string,
+    @Body() dto: CreateEventDto,
+  ) {
     return this.eventsService.update(tenantId, eventId, dto);
   }
 
@@ -39,7 +54,10 @@ export class EventsController {
   }
 
   @Get(':eventId/reservations')
-  getReservations(@TenantId() tenantId: string, @Param('eventId') eventId: string) {
+  getReservations(
+    @TenantId() tenantId: string,
+    @Param('eventId') eventId: string,
+  ) {
     return this.eventsService.getReservations(tenantId, eventId);
   }
 
@@ -55,7 +73,12 @@ export class EventsController {
     @Param('reviewId') reviewId: string,
     @Body() body: { isPublished: boolean },
   ) {
-    return this.eventsService.updateReview(tenantId, eventId, reviewId, body.isPublished);
+    return this.eventsService.updateReview(
+      tenantId,
+      eventId,
+      reviewId,
+      body.isPublished,
+    );
   }
 
   @Post(':eventId/remind')
@@ -78,14 +101,27 @@ export class EventsController {
     @Param('eventId') eventId: string,
     @Body() body: { content: string; sendLine: boolean; sendApp: boolean },
   ) {
-    return this.eventsService.sendMessage(tenantId, eventId, body.content, body.sendLine, body.sendApp);
+    return this.eventsService.sendMessage(
+      tenantId,
+      eventId,
+      body.content,
+      body.sendLine,
+      body.sendApp,
+    );
   }
 
   @Get(':eventId/export')
-  async exportCsv(@TenantId() tenantId: string, @Param('eventId') eventId: string, @Res() res: Response) {
+  async exportCsv(
+    @TenantId() tenantId: string,
+    @Param('eventId') eventId: string,
+    @Res() res: Response,
+  ) {
     const csv = await this.eventsService.exportCsv(tenantId, eventId);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="event-${eventId}.csv"`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="event-${eventId}.csv"`,
+    );
     res.send('﻿' + csv);
   }
 }

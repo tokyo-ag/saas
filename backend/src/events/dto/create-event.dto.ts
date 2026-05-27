@@ -44,19 +44,25 @@ export class CreateEventDto {
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Transform(({ value }) => (value === null || value === '' ? null : Number(value)))
+  @Transform(({ value }) =>
+    value === null || value === '' ? null : Number(value),
+  )
   capacity?: number | null;
 
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Transform(({ value }) => (value === null || value === '' ? null : Number(value)))
+  @Transform(({ value }) =>
+    value === null || value === '' ? null : Number(value),
+  )
   capacityMale?: number | null;
 
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Transform(({ value }) => (value === null || value === '' ? null : Number(value)))
+  @Transform(({ value }) =>
+    value === null || value === '' ? null : Number(value),
+  )
   capacityFemale?: number | null;
 
   @IsEnum(EventStatusDto)
@@ -70,13 +76,17 @@ export class CreateEventDto {
   @IsOptional()
   @IsInt()
   @Min(0)
-  @Transform(({ value }) => (value === null || value === '' ? null : Number(value)))
+  @Transform(({ value }) =>
+    value === null || value === '' ? null : Number(value),
+  )
   priceMale?: number | null;
 
   @IsOptional()
   @IsInt()
   @Min(0)
-  @Transform(({ value }) => (value === null || value === '' ? null : Number(value)))
+  @Transform(({ value }) =>
+    value === null || value === '' ? null : Number(value),
+  )
   priceFemale?: number | null;
 
   @IsBoolean()

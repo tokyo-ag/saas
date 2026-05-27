@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Patch, Param, Query, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
 import { AdminGuard } from '../auth/admin.guard';
 import { MembersService } from './members.service';
 import { TenantId } from '../auth/tenant-id.decorator';
@@ -23,7 +32,7 @@ export class MembersController {
     return this.membersService.syncLineProfiles(tenantId);
   }
 
-@Get('messages/threads')
+  @Get('messages/threads')
   getMessageThreads(@TenantId() tenantId: string) {
     return this.membersService.getMessageThreads(tenantId);
   }
@@ -44,7 +53,10 @@ export class MembersController {
   }
 
   @Get(':memberId/messages')
-  getMessages(@TenantId() tenantId: string, @Param('memberId') memberId: string) {
+  getMessages(
+    @TenantId() tenantId: string,
+    @Param('memberId') memberId: string,
+  ) {
     return this.membersService.getMessages(tenantId, memberId);
   }
 

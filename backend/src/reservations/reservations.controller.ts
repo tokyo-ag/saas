@@ -16,7 +16,11 @@ export class ReservationsController {
   constructor(private readonly reservationsService: ReservationsService) {}
 
   @Patch(':id/status')
-  updateStatus(@TenantId() tenantId: string, @Param('id') id: string, @Body() dto: UpdateStatusDto) {
+  updateStatus(
+    @TenantId() tenantId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateStatusDto,
+  ) {
     return this.reservationsService.updateStatus(tenantId, id, dto.status);
   }
 }

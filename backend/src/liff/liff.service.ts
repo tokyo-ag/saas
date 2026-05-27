@@ -75,7 +75,9 @@ export class LiffService {
       where: { tenantId, status: 'open' },
       include: {
         reservations: {
-          where: { status: { in: ['reserved', 'attended', 'waiting_payment'] } },
+          where: {
+            status: { in: ['reserved', 'attended', 'waiting_payment'] },
+          },
           select: { id: true },
         },
       },
@@ -148,7 +150,10 @@ export class LiffService {
     if (!event) throw new NotFoundException('Event not found');
 
     const reservedCount = await this.prisma.reservation.count({
-      where: { eventId, status: { in: ['reserved', 'attended', 'waiting_payment'] } },
+      where: {
+        eventId,
+        status: { in: ['reserved', 'attended', 'waiting_payment'] },
+      },
     });
 
     const reviews = await this.getPublishedReviews(tenantId, eventId);
@@ -189,7 +194,9 @@ export class LiffService {
     tenantId = await this.resolveTenantId(tenantId);
     const content = dto.content.trim();
     if (content.length < 5 || content.length > 300) {
-      throw new BadRequestException('感想は5文字以上300文字以内で入力してください');
+      throw new BadRequestException(
+        '感想は5文字以上300文字以内で入力してください',
+      );
     }
 
     await this.ensureEventExists(tenantId, eventId);
@@ -206,12 +213,20 @@ export class LiffService {
       },
     });
     if (!reservation) {
-      throw new ForbiddenException('予約済みまたは参加済みのイベントにのみ感想を投稿できます');
+      throw new ForbiddenException(
+        '予約済みまたは参加済みのイベントにのみ感想を投稿できます',
+      );
     }
 
     return this.prisma.eventReview.upsert({
       where: { eventId_memberId: { eventId, memberId: member.id } },
-      create: { tenantId, eventId, memberId: member.id, content, isPublished: false },
+      create: {
+        tenantId,
+        eventId,
+        memberId: member.id,
+        content,
+        isPublished: false,
+      },
       update: { content, isPublished: false },
     });
   }
@@ -225,15 +240,24 @@ export class LiffService {
     if (!event) throw new NotFoundException('Event not found or not open');
 
     // グローバルBAN チェック
-    const globalBan = await this.prisma.bannedLineUser.findUnique({ where: { lineUserId: dto.lineUserId } });
-    if (globalBan) throw new ForbiddenException('このアカウントは利用できません');
+    const globalBan = await this.prisma.bannedLineUser.findUnique({
+      where: { lineUserId: dto.lineUserId },
+    });
+    if (globalBan)
+      throw new ForbiddenException('このアカウントは利用できません');
 
     // フリープラン：参加者50人上限チェック
-    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
     if (tenant?.plan === 'free') {
-      const memberCount = await this.prisma.member.count({ where: { tenantId } });
+      const memberCount = await this.prisma.member.count({
+        where: { tenantId },
+      });
       if (memberCount >= PLAN_LIMITS.free.members) {
-        throw new ForbiddenException(`参加者数の上限（${PLAN_LIMITS.free.members}人）に達しました。スタンダードプランにアップグレードしてください。`);
+        throw new ForbiddenException(
+          `参加者数の上限（${PLAN_LIMITS.free.members}人）に達しました。スタンダードプランにアップグレードしてください。`,
+        );
       }
     }
 
@@ -246,12 +270,16 @@ export class LiffService {
     );
 
     // DTO values (from LIFF SDK) take priority over Messaging API profile
-    const resolvedDisplayName = dto.lineDisplayName ?? lineProfile?.displayName ?? null;
-    const resolvedPictureUrl = dto.linePictureUrl ?? lineProfile?.pictureUrl ?? null;
+    const resolvedDisplayName =
+      dto.lineDisplayName ?? lineProfile?.displayName ?? null;
+    const resolvedPictureUrl =
+      dto.linePictureUrl ?? lineProfile?.pictureUrl ?? null;
 
     if (!member) {
       if (!dto.name || !dto.grade || !dto.gender) {
-        throw new BadRequestException('初回予約時はお名前・学年・性別を入力してください');
+        throw new BadRequestException(
+          '初回予約時はお名前・学年・性別を入力してください',
+        );
       }
       member = await this.prisma.member.create({
         data: {
@@ -278,11 +306,16 @@ export class LiffService {
     }
 
     // テナントブロックチェック
-    if (member.blockedAt) throw new ForbiddenException('この団体から利用制限されています');
+    if (member.blockedAt)
+      throw new ForbiddenException('この団体から利用制限されています');
 
     // 同じイベントへの重複予約チェック
     const existingCount = await this.prisma.reservation.count({
-      where: { memberId: member.id, eventId: dto.eventId, status: { not: 'cancelled' } },
+      where: {
+        memberId: member.id,
+        eventId: dto.eventId,
+        status: { not: 'cancelled' },
+      },
     });
     if (existingCount >= 1) {
       throw new ConflictException('このイベントはすでに予約済みです');
@@ -292,7 +325,11 @@ export class LiffService {
     const jstOffset = 9 * 60 * 60 * 1000;
     const eventDateJST = new Date(event.heldAt.getTime() + jstOffset);
     const dayStart = new Date(
-      Date.UTC(eventDateJST.getUTCFullYear(), eventDateJST.getUTCMonth(), eventDateJST.getUTCDate()) - jstOffset,
+      Date.UTC(
+        eventDateJST.getUTCFullYear(),
+        eventDateJST.getUTCMonth(),
+        eventDateJST.getUTCDate(),
+      ) - jstOffset,
     );
     const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
 
@@ -301,17 +338,24 @@ export class LiffService {
         memberId: member.id,
         tenantId,
         eventId: { not: dto.eventId },
-        status: { in: ['reserved', 'attended', 'waiting_payment', 'waitlisted'] },
+        status: {
+          in: ['reserved', 'attended', 'waiting_payment', 'waitlisted'],
+        },
         event: { heldAt: { gte: dayStart, lt: dayEnd } },
       },
     });
     if (sameDayReservation) {
-      throw new ConflictException('同じ日に別のイベントへの予約があるため、予約できません');
+      throw new ConflictException(
+        '同じ日に別のイベントへの予約があるため、予約できません',
+      );
     }
 
     // 定員チェック
     const reservedCount = await this.prisma.reservation.count({
-      where: { eventId: dto.eventId, status: { in: ['reserved', 'attended', 'waiting_payment'] } },
+      where: {
+        eventId: dto.eventId,
+        status: { in: ['reserved', 'attended', 'waiting_payment'] },
+      },
     });
     const isFull = event.capacity !== null && reservedCount >= event.capacity;
 
@@ -320,9 +364,14 @@ export class LiffService {
       throw new BadRequestException('満席のため予約できません');
     }
 
-    const effectivePrice = (event.priceMale != null && event.priceFemale != null)
-      ? (member.gender === '男性' ? event.priceMale : member.gender === '女性' ? event.priceFemale : Math.max(event.priceMale, event.priceFemale))
-      : event.price;
+    const effectivePrice =
+      event.priceMale != null && event.priceFemale != null
+        ? member.gender === '男性'
+          ? event.priceMale
+          : member.gender === '女性'
+            ? event.priceFemale
+            : Math.max(event.priceMale, event.priceFemale)
+        : event.price;
 
     const needsPayment = event.paymentRequired && effectivePrice > 0 && !isFull;
     const status: ReservationStatus = isFull
@@ -341,23 +390,34 @@ export class LiffService {
     }
 
     const reservation = await this.prisma.reservation.create({
-      data: { tenantId, eventId: dto.eventId, memberId: member.id, status, waitlistOrder },
+      data: {
+        tenantId,
+        eventId: dto.eventId,
+        memberId: member.id,
+        status,
+        waitlistOrder,
+      },
     });
 
     // Stripe 決済セッション作成
     let stripeCheckoutUrl: string | undefined;
     if (status === 'waiting_payment') {
-      const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+      });
       if (tenant?.stripeSecretKey) {
         const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
-        const session = await this.stripeService.createCheckoutSession(tenant.stripeSecretKey, {
-          eventTitle: event.title,
-          price: effectivePrice,
-          reservationId: reservation.id,
-          tenantId,
-          successUrl: `${frontendUrl}/liff/${tenantId}/events/${event.id}/done?status=reserved`,
-          cancelUrl: `${frontendUrl}/liff/${tenantId}/events/${event.id}/reserve`,
-        });
+        const session = await this.stripeService.createCheckoutSession(
+          tenant.stripeSecretKey,
+          {
+            eventTitle: event.title,
+            price: effectivePrice,
+            reservationId: reservation.id,
+            tenantId,
+            successUrl: `${frontendUrl}/liff/${tenantId}/events/${event.id}/done?status=reserved`,
+            cancelUrl: `${frontendUrl}/liff/${tenantId}/events/${event.id}/reserve`,
+          },
+        );
         stripeCheckoutUrl = session.url ?? undefined;
         await this.prisma.reservation.update({
           where: { id: reservation.id },
@@ -368,60 +428,84 @@ export class LiffService {
 
     // LINE通知
     if (event.notifyOnReserve && status !== 'waiting_payment') {
-      const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+      });
       const token = tenant?.lineChannelAccessToken ?? '';
       if (status === 'reserved') {
         await this.lineMessaging.sendReservationConfirm(
-          token, dto.lineUserId,
-          event.title, event.heldAt, event.location,
-          event.price, event.description,
+          token,
+          dto.lineUserId,
+          event.title,
+          event.heldAt,
+          event.location,
+          event.price,
+          event.description,
         );
       } else {
         await this.lineMessaging.sendWaitlistRegistered(
-          token, dto.lineUserId,
-          event.title, waitlistOrder!,
+          token,
+          dto.lineUserId,
+          event.title,
+          waitlistOrder!,
         );
       }
     }
 
     // TALKに予約詳細を送信
     if (event.notifyOnReserveApp && status !== 'waiting_payment') {
-      const dateStr = new Date(event.heldAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+      const dateStr = new Date(event.heldAt).toLocaleString('ja-JP', {
+        timeZone: 'Asia/Tokyo',
+      });
       const descText = event.description
-        ? event.description.slice(0, 300) + (event.description.length > 300 ? '…' : '')
+        ? event.description.slice(0, 300) +
+          (event.description.length > 300 ? '…' : '')
         : '';
 
       // TALK（詳細・適切な改行）
-      const talkContent = status === 'reserved'
-        ? [
-            `【予約完了】`,
-            ``,
-            `${event.title}`,
-            ``,
-            `📅 ${dateStr}`,
-            `📍 ${event.location}`,
-            ...(descText ? [``, `─────────────`, ``, descText] : []),
-          ].join('\n')
-        : [
-            `【キャンセル待ち登録】`,
-            ``,
-            `${event.title}`,
-            ``,
-            `📅 ${dateStr}`,
-            `📍 ${event.location}`,
-            ``,
-            `キャンセル待ち ${waitlistOrder} 番目に登録されました。`,
-          ].join('\n');
+      const talkContent =
+        status === 'reserved'
+          ? [
+              `【予約完了】`,
+              ``,
+              `${event.title}`,
+              ``,
+              `📅 ${dateStr}`,
+              `📍 ${event.location}`,
+              ...(descText ? [``, `─────────────`, ``, descText] : []),
+            ].join('\n')
+          : [
+              `【キャンセル待ち登録】`,
+              ``,
+              `${event.title}`,
+              ``,
+              `📅 ${dateStr}`,
+              `📍 ${event.location}`,
+              ``,
+              `キャンセル待ち ${waitlistOrder} 番目に登録されました。`,
+            ].join('\n');
       // 参加者向け（Talkに表示される予約詳細）
       await this.prisma.adminMemberMessage.create({
-        data: { tenantId, memberId: member.id, content: talkContent, fromAdmin: true },
+        data: {
+          tenantId,
+          memberId: member.id,
+          content: talkContent,
+          fromAdmin: true,
+        },
       });
       // 管理者向けバッジ用（システム通知・LIFF側には非表示）
-      const adminNotifContent = status === 'reserved'
-        ? `✅ ${member.lineDisplayName ?? member.name ?? '参加者'}が「${event.title}」を予約しました`
-        : `⏳ ${member.lineDisplayName ?? member.name ?? '参加者'}が「${event.title}」キャンセル待ち${waitlistOrder}番目に登録しました`;
+      const adminNotifContent =
+        status === 'reserved'
+          ? `✅ ${member.lineDisplayName ?? member.name ?? '参加者'}が「${event.title}」を予約しました`
+          : `⏳ ${member.lineDisplayName ?? member.name ?? '参加者'}が「${event.title}」キャンセル待ち${waitlistOrder}番目に登録しました`;
       await this.prisma.adminMemberMessage.create({
-        data: { tenantId, memberId: member.id, content: adminNotifContent, fromAdmin: false, isSystem: true },
+        data: {
+          tenantId,
+          memberId: member.id,
+          content: adminNotifContent,
+          fromAdmin: false,
+          isSystem: true,
+        },
       });
     }
 
@@ -429,7 +513,11 @@ export class LiffService {
   }
 
   // 自分の予約を確認（lineUserId で検索）
-  async getMyReservation(tenantId: string, eventId: string, lineUserId: string) {
+  async getMyReservation(
+    tenantId: string,
+    eventId: string,
+    lineUserId: string,
+  ) {
     tenantId = await this.resolveTenantId(tenantId);
     const member = await this.findMember(tenantId, lineUserId);
     if (!member) return null;
@@ -465,7 +553,10 @@ export class LiffService {
   async getProfile(tenantId: string, lineUserId: string) {
     tenantId = await this.resolveTenantId(tenantId);
     const member = await this.findMember(tenantId, lineUserId);
-    if (!member) throw new NotFoundException('プロフィールが見つかりません。先にイベントに予約してください。');
+    if (!member)
+      throw new NotFoundException(
+        'プロフィールが見つかりません。先にイベントに予約してください。',
+      );
     return {
       id: member.id,
       name: member.name,
@@ -475,7 +566,11 @@ export class LiffService {
     };
   }
 
-  async updateProfile(tenantId: string, lineUserId: string, data: { name: string; grade: string; gender: string }) {
+  async updateProfile(
+    tenantId: string,
+    lineUserId: string,
+    data: { name: string; grade: string; gender: string },
+  ) {
     tenantId = await this.resolveTenantId(tenantId);
     const member = await this.findMember(tenantId, lineUserId);
     if (!member) throw new NotFoundException('プロフィールが見つかりません');
@@ -483,12 +578,24 @@ export class LiffService {
       where: { id: member.id },
       data: { name: data.name, grade: data.grade, gender: data.gender },
     });
-    return { id: updated.id, name: updated.name, grade: updated.grade, gender: updated.gender, showEventsToConnections: updated.showEventsToConnections };
+    return {
+      id: updated.id,
+      name: updated.name,
+      grade: updated.grade,
+      gender: updated.gender,
+      showEventsToConnections: updated.showEventsToConnections,
+    };
   }
 
-  async syncLineProfile(tenantId: string, lineUserId: string, data: { lineDisplayName?: string; linePictureUrl?: string }) {
+  async syncLineProfile(
+    tenantId: string,
+    lineUserId: string,
+    data: { lineDisplayName?: string; linePictureUrl?: string },
+  ) {
     tenantId = await this.resolveTenantId(tenantId);
-    const member = await this.prisma.member.findFirst({ where: { tenantId, lineUserId } });
+    const member = await this.prisma.member.findFirst({
+      where: { tenantId, lineUserId },
+    });
     if (!member) return;
     await this.prisma.member.update({
       where: { id: member.id },
@@ -499,7 +606,11 @@ export class LiffService {
     });
   }
 
-  async updateSettings(tenantId: string, lineUserId: string, showEventsToConnections: boolean) {
+  async updateSettings(
+    tenantId: string,
+    lineUserId: string,
+    showEventsToConnections: boolean,
+  ) {
     tenantId = await this.resolveTenantId(tenantId);
     const member = await this.prisma.member.update({
       where: { tenantId_lineUserId: { tenantId, lineUserId } },
@@ -510,18 +621,32 @@ export class LiffService {
 
   async getMemberProfile(tenantId: string, memberId: string) {
     tenantId = await this.resolveTenantId(tenantId);
-    const member = await this.prisma.member.findFirst({ where: { id: memberId, tenantId } });
+    const member = await this.prisma.member.findFirst({
+      where: { id: memberId, tenantId },
+    });
     if (!member) throw new NotFoundException('メンバーが見つかりません');
-    return { id: member.id, name: member.name, grade: member.grade, gender: member.gender };
+    return {
+      id: member.id,
+      name: member.name,
+      grade: member.grade,
+      gender: member.gender,
+    };
   }
 
-  async createConnection(tenantId: string, myLineUserId: string, targetMemberId: string) {
+  async createConnection(
+    tenantId: string,
+    myLineUserId: string,
+    targetMemberId: string,
+  ) {
     tenantId = await this.resolveTenantId(tenantId);
     const me = await this.findMember(tenantId, myLineUserId);
     if (!me) throw new NotFoundException('自分のプロフィールが見つかりません');
-    if (me.id === targetMemberId) throw new BadRequestException('自分自身と繋がることはできません');
+    if (me.id === targetMemberId)
+      throw new BadRequestException('自分自身と繋がることはできません');
 
-    const target = await this.prisma.member.findFirst({ where: { id: targetMemberId, tenantId } });
+    const target = await this.prisma.member.findFirst({
+      where: { id: targetMemberId, tenantId },
+    });
     if (!target) throw new NotFoundException('相手が見つかりません');
 
     const [m1, m2] = [me.id, targetMemberId].sort();
@@ -557,19 +682,29 @@ export class LiffService {
       return {
         id: c.id,
         partner,
-        lastMessage: last ? { content: last.content, createdAt: last.createdAt } : null,
+        lastMessage: last
+          ? { content: last.content, createdAt: last.createdAt }
+          : null,
         createdAt: c.createdAt,
       };
     });
   }
 
-  async getMessages(tenantId: string, connectionId: string, lineUserId: string) {
+  async getMessages(
+    tenantId: string,
+    connectionId: string,
+    lineUserId: string,
+  ) {
     tenantId = await this.resolveTenantId(tenantId);
     const me = await this.findMember(tenantId, lineUserId);
     if (!me) throw new NotFoundException('メンバーが見つかりません');
 
     const conn = await this.prisma.connection.findFirst({
-      where: { id: connectionId, tenantId, OR: [{ member1Id: me.id }, { member2Id: me.id }] },
+      where: {
+        id: connectionId,
+        tenantId,
+        OR: [{ member1Id: me.id }, { member2Id: me.id }],
+      },
       include: {
         member1: { select: { id: true, name: true } },
         member2: { select: { id: true, name: true } },
@@ -598,13 +733,22 @@ export class LiffService {
     };
   }
 
-  async sendMessage(tenantId: string, connectionId: string, lineUserId: string, content: string) {
+  async sendMessage(
+    tenantId: string,
+    connectionId: string,
+    lineUserId: string,
+    content: string,
+  ) {
     tenantId = await this.resolveTenantId(tenantId);
     const me = await this.findMember(tenantId, lineUserId);
     if (!me) throw new NotFoundException('メンバーが見つかりません');
 
     const conn = await this.prisma.connection.findFirst({
-      where: { id: connectionId, tenantId, OR: [{ member1Id: me.id }, { member2Id: me.id }] },
+      where: {
+        id: connectionId,
+        tenantId,
+        OR: [{ member1Id: me.id }, { member2Id: me.id }],
+      },
       include: {
         member1: { select: { id: true, lineUserId: true } },
         member2: { select: { id: true, lineUserId: true } },
@@ -618,7 +762,9 @@ export class LiffService {
 
     // 相手にLINEプッシュ通知
     const partner = conn.member1Id === me.id ? conn.member2 : conn.member1;
-    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
     if (partner.lineUserId) {
       await this.lineMessaging.sendTalkNotification(
         tenant?.lineChannelAccessToken ?? '',
@@ -648,7 +794,10 @@ export class LiffService {
     // 定員がある場合のみ繰り上げ処理
     if (reservation.event.capacity !== null) {
       const activeCount = await this.prisma.reservation.count({
-        where: { eventId: reservation.eventId, status: { in: ['reserved', 'attended', 'waiting_payment'] } },
+        where: {
+          eventId: reservation.eventId,
+          status: { in: ['reserved', 'attended', 'waiting_payment'] },
+        },
       });
 
       if (activeCount < reservation.event.capacity) {
@@ -664,11 +813,16 @@ export class LiffService {
             data: { status: ReservationStatus.reserved, waitlistOrder: null },
           });
 
-          const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+          const tenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+          });
           if (tenant?.lineChannelAccessToken) {
             await this.lineMessaging.sendWaitlistPromoted(
-              tenant.lineChannelAccessToken, next.member.lineUserId,
-              reservation.event.title, reservation.event.heldAt, reservation.event.location,
+              tenant.lineChannelAccessToken,
+              next.member.lineUserId,
+              reservation.event.title,
+              reservation.event.heldAt,
+              reservation.event.location,
             );
           }
         }
@@ -676,7 +830,9 @@ export class LiffService {
     }
 
     // 主催者へのキャンセル通知
-    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
     if (tenant?.lineChannelAccessToken && tenant.organizerLineUserId) {
       await this.lineMessaging.sendCancelNotifyToOrganizer(
         tenant.lineChannelAccessToken,
@@ -766,7 +922,11 @@ export class LiffService {
     });
   }
 
-  async sendSupportMessage(lineUserId: string, tenantId: string, content: string) {
+  async sendSupportMessage(
+    lineUserId: string,
+    tenantId: string,
+    content: string,
+  ) {
     tenantId = await this.resolveTenantId(tenantId);
     return this.prisma.supportMessage.create({
       data: { lineUserId, tenantId, content, fromUser: true },

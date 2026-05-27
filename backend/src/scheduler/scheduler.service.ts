@@ -28,7 +28,9 @@ export class SchedulerService {
     for (const event of events) {
       this.logger.log(`Sending reminders for event: ${event.title}`);
 
-      const tenant = await this.prisma.tenant.findUnique({ where: { id: event.tenantId } });
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: event.tenantId },
+      });
       if (!tenant?.lineChannelAccessToken) {
         // LINE未設定なら送信をスキップして済み扱いにする
         await this.prisma.event.update({
@@ -47,7 +49,9 @@ export class SchedulerService {
         include: { member: true },
       });
 
-      const dateStr = new Date(event.heldAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+      const dateStr = new Date(event.heldAt).toLocaleString('ja-JP', {
+        timeZone: 'Asia/Tokyo',
+      });
       for (const r of reservations) {
         if (r.member.lineUserId && tenant?.lineChannelAccessToken) {
           await this.lineMessaging.sendRemind(
@@ -76,7 +80,9 @@ export class SchedulerService {
         data: { remindedAt: now },
       });
 
-      this.logger.log(`Sent ${reservations.length} reminders for event: ${event.title}`);
+      this.logger.log(
+        `Sent ${reservations.length} reminders for event: ${event.title}`,
+      );
     }
   }
 }

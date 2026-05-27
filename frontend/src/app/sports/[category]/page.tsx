@@ -5,8 +5,7 @@ import Link from 'next/link';
 import type { PublicEvent } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 
-const API_URL = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'https://comiu.up.railway.app';
-import { SITE_URL } from '@/lib/config';
+import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
 
 export const revalidate = 60;
 
@@ -101,11 +100,13 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
       url: `${SITE_URL}/sports/${category}`,
       locale: 'ja_JP',
       type: 'website',
+      images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630 }],
     },
     twitter: {
       card: 'summary_large_image',
       title: `${title} | COMIU`,
       description: meta.intro,
+      images: [`${SITE_URL}/opengraph-image`],
     },
   };
 }
@@ -237,7 +238,7 @@ export default async function SportsCategoryPage({
         ) : (
           <div className="space-y-3">
             {events.map((ev) => {
-              const img = imgUrl(ev.imageUrl, API_URL);
+              const img = imgUrl(ev.imageUrl, IMAGE_BASE_URL);
               const org = ev.tenant.lineDisplayName ?? ev.tenant.name;
               const remaining = ev.capacity != null ? ev.capacity - ev.reservedCount : null;
 
@@ -252,7 +253,7 @@ export default async function SportsCategoryPage({
                         src={img}
                         alt={ev.title}
                         fill
-                        unoptimized
+
                         sizes="80px"
                         className="object-cover"
                       />

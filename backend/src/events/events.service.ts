@@ -1,5 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { EventStatus, ReservationStatus } from '@prisma/client';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
+import { ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LineMessagingService } from '../line-messaging/line-messaging.service';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -17,7 +21,9 @@ export class EventsService {
       where: { tenantId },
       include: {
         reservations: {
-          where: { status: { in: ['reserved', 'attended', 'waiting_payment'] } },
+          where: {
+            status: { in: ['reserved', 'attended', 'waiting_payment'] },
+          },
           select: { id: true, status: true },
         },
       },
@@ -55,7 +61,9 @@ export class EventsService {
       const reserved = e.reservations.filter((r) =>
         ['reserved', 'attended', 'waiting_payment'].includes(r.status),
       ).length;
-      const waitlisted = e.reservations.filter((r) => r.status === 'waitlisted').length;
+      const waitlisted = e.reservations.filter(
+        (r) => r.status === 'waitlisted',
+      ).length;
       return {
         id: e.id,
         tenantId: e.tenantId,
@@ -90,7 +98,10 @@ export class EventsService {
     });
     if (!event) throw new NotFoundException('Event not found');
     const reserved = await this.prisma.reservation.count({
-      where: { eventId: id, status: { in: ['reserved', 'attended', 'waiting_payment'] } },
+      where: {
+        eventId: id,
+        status: { in: ['reserved', 'attended', 'waiting_payment'] },
+      },
     });
     const waitlisted = await this.prisma.reservation.count({
       where: { eventId: id, status: 'waitlisted' },
@@ -99,7 +110,9 @@ export class EventsService {
   }
 
   async create(tenantId: string, dto: CreateEventDto) {
-    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
     if (tenant?.plan === 'free') {
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -107,10 +120,14 @@ export class EventsService {
         where: { tenantId, createdAt: { gte: monthStart } },
       });
       if (count >= PLAN_LIMITS.free.eventsPerMonth) {
-        throw new ForbiddenException(`今月のイベント作成上限（${PLAN_LIMITS.free.eventsPerMonth}件）に達しました。スタンダードプランにアップグレードしてください。`);
+        throw new ForbiddenException(
+          `今月のイベント作成上限（${PLAN_LIMITS.free.eventsPerMonth}件）に達しました。スタンダードプランにアップグレードしてください。`,
+        );
       }
       if (dto.remindEnabled) {
-        throw new ForbiddenException('リマインド機能はスタンダードプランでご利用いただけます。');
+        throw new ForbiddenException(
+          'リマインド機能はスタンダードプランでご利用いただけます。',
+        );
       }
     }
     return this.prisma.event.create({
@@ -125,7 +142,7 @@ export class EventsService {
         capacity: dto.capacity ?? null,
         capacityMale: dto.capacityMale ?? null,
         capacityFemale: dto.capacityFemale ?? null,
-        status: dto.status as EventStatus,
+        status: dto.status,
         price: dto.price,
         priceMale: dto.priceMale ?? null,
         priceFemale: dto.priceFemale ?? null,
@@ -147,9 +164,13 @@ export class EventsService {
   async update(tenantId: string, id: string, dto: Partial<CreateEventDto>) {
     await this.findOne(tenantId, id);
     if (dto.remindEnabled) {
-      const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+      });
       if (tenant?.plan === 'free') {
-        throw new ForbiddenException('リマインド機能はスタンダードプランでご利用いただけます。');
+        throw new ForbiddenException(
+          'リマインド機能はスタンダードプランでご利用いただけます。',
+        );
       }
     }
     return this.prisma.event.update({
@@ -158,21 +179,44 @@ export class EventsService {
         ...(dto.title !== undefined && { title: dto.title }),
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.heldAt !== undefined && { heldAt: new Date(dto.heldAt) }),
-        ...(dto.endAt !== undefined && { endAt: dto.endAt ? new Date(dto.endAt) : null }),
+        ...(dto.endAt !== undefined && {
+          endAt: dto.endAt ? new Date(dto.endAt) : null,
+        }),
         ...(dto.location !== undefined && { location: dto.location }),
         ...(dto.capacity !== undefined && { capacity: dto.capacity ?? null }),
-        ...(dto.status !== undefined && { status: dto.status as EventStatus }),
+        ...(dto.status !== undefined && { status: dto.status }),
         ...(dto.price !== undefined && { price: dto.price }),
-        ...(dto.paymentRequired !== undefined && { paymentRequired: dto.paymentRequired }),
-        ...(dto.locationUrl !== undefined && { locationUrl: dto.locationUrl ?? null }),
-        ...(dto.capacityMale !== undefined && { capacityMale: dto.capacityMale ?? null }),
-        ...(dto.capacityFemale !== undefined && { capacityFemale: dto.capacityFemale ?? null }),
-        ...(dto.priceMale !== undefined && { priceMale: dto.priceMale ?? null }),
-        ...(dto.priceFemale !== undefined && { priceFemale: dto.priceFemale ?? null }),
-        ...(dto.paymentTiming !== undefined && { paymentTiming: dto.paymentTiming, paymentRequired: dto.paymentTiming === 'prepay' }),
-        ...(dto.notifyOnReserve !== undefined && { notifyOnReserve: dto.notifyOnReserve }),
-        ...(dto.notifyOnReserveApp !== undefined && { notifyOnReserveApp: dto.notifyOnReserveApp }),
-        ...(dto.remindEnabled !== undefined && { remindEnabled: dto.remindEnabled }),
+        ...(dto.paymentRequired !== undefined && {
+          paymentRequired: dto.paymentRequired,
+        }),
+        ...(dto.locationUrl !== undefined && {
+          locationUrl: dto.locationUrl ?? null,
+        }),
+        ...(dto.capacityMale !== undefined && {
+          capacityMale: dto.capacityMale ?? null,
+        }),
+        ...(dto.capacityFemale !== undefined && {
+          capacityFemale: dto.capacityFemale ?? null,
+        }),
+        ...(dto.priceMale !== undefined && {
+          priceMale: dto.priceMale ?? null,
+        }),
+        ...(dto.priceFemale !== undefined && {
+          priceFemale: dto.priceFemale ?? null,
+        }),
+        ...(dto.paymentTiming !== undefined && {
+          paymentTiming: dto.paymentTiming,
+          paymentRequired: dto.paymentTiming === 'prepay',
+        }),
+        ...(dto.notifyOnReserve !== undefined && {
+          notifyOnReserve: dto.notifyOnReserve,
+        }),
+        ...(dto.notifyOnReserveApp !== undefined && {
+          notifyOnReserveApp: dto.notifyOnReserveApp,
+        }),
+        ...(dto.remindEnabled !== undefined && {
+          remindEnabled: dto.remindEnabled,
+        }),
         ...(dto.remindApp !== undefined && { remindApp: dto.remindApp }),
         ...(dto.remindAt !== undefined && {
           remindAt: dto.remindAt ? new Date(dto.remindAt) : null,
@@ -216,12 +260,19 @@ export class EventsService {
     await this.findOne(tenantId, eventId);
     return this.prisma.eventReview.findMany({
       where: { tenantId, eventId },
-      include: { member: { select: { id: true, name: true, grade: true, gender: true } } },
+      include: {
+        member: { select: { id: true, name: true, grade: true, gender: true } },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async updateReview(tenantId: string, eventId: string, reviewId: string, isPublished: boolean) {
+  async updateReview(
+    tenantId: string,
+    eventId: string,
+    reviewId: string,
+    isPublished: boolean,
+  ) {
     const review = await this.prisma.eventReview.findFirst({
       where: { id: reviewId, tenantId, eventId },
     });
@@ -240,16 +291,25 @@ export class EventsService {
     });
     if (!reservation) throw new NotFoundException('予約が見つかりません');
     if (reservation.status === ReservationStatus.attended) {
-      return { alreadyCheckedIn: true, memberName: reservation.member.name ?? '不明' };
+      return {
+        alreadyCheckedIn: true,
+        memberName: reservation.member.name ?? '不明',
+      };
     }
-    if (reservation.status !== ReservationStatus.reserved && reservation.status !== ReservationStatus.waiting_payment) {
+    if (
+      reservation.status !== ReservationStatus.reserved &&
+      reservation.status !== ReservationStatus.waiting_payment
+    ) {
       throw new NotFoundException('有効な予約が見つかりません');
     }
     await this.prisma.reservation.update({
       where: { id: reservation.id },
       data: { status: ReservationStatus.attended },
     });
-    return { alreadyCheckedIn: false, memberName: reservation.member.name ?? '不明' };
+    return {
+      alreadyCheckedIn: false,
+      memberName: reservation.member.name ?? '不明',
+    };
   }
 
   async sendMessage(
@@ -260,10 +320,16 @@ export class EventsService {
     sendApp: boolean,
   ) {
     const event = await this.findOne(tenantId, eventId);
-    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
 
     const reservations = await this.prisma.reservation.findMany({
-      where: { eventId, tenantId, status: { in: ['reserved', 'attended', 'waiting_payment'] } },
+      where: {
+        eventId,
+        tenantId,
+        status: { in: ['reserved', 'attended', 'waiting_payment'] },
+      },
       include: { member: true },
     });
 
@@ -281,7 +347,12 @@ export class EventsService {
       }
       if (sendApp) {
         await this.prisma.notification.create({
-          data: { tenantId, memberId: r.memberId, title: event.title, body: content },
+          data: {
+            tenantId,
+            memberId: r.memberId,
+            title: event.title,
+            body: content,
+          },
         });
         appSentCount++;
       }
@@ -292,7 +363,9 @@ export class EventsService {
 
   async sendRemind(tenantId: string, eventId: string) {
     const event = await this.findOne(tenantId, eventId);
-    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
     if (!tenant?.lineChannelAccessToken) return { sentCount: 0 };
 
     const reservations = await this.prisma.reservation.findMany({
@@ -329,8 +402,14 @@ export class EventsService {
     const header = '名前,学年,性別,予約日時,ステータス,支払い状況';
     const rows = reservations.map((r) => {
       const statusLabel = this.statusLabel(r.status, r.waitlistOrder);
-      const paymentLabel = r.paidAt ? '支払済' : event.price === 0 ? '無料' : '未払い';
-      const date = new Date(r.reservedAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+      const paymentLabel = r.paidAt
+        ? '支払済'
+        : event.price === 0
+          ? '無料'
+          : '未払い';
+      const date = new Date(r.reservedAt).toLocaleString('ja-JP', {
+        timeZone: 'Asia/Tokyo',
+      });
       return `${r.member.name ?? ''},${r.member.grade ?? ''},${r.member.gender ?? ''},${date},${statusLabel},${paymentLabel}`;
     });
 

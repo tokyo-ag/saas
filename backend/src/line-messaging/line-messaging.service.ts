@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import * as line from '@line/bot-sdk';
 
 @Injectable()
@@ -7,12 +6,20 @@ export class LineMessagingService {
   private readonly logger = new Logger(LineMessagingService.name);
 
   private getClient(accessToken: string) {
-    return new line.messagingApi.MessagingApiClient({ channelAccessToken: accessToken });
+    return new line.messagingApi.MessagingApiClient({
+      channelAccessToken: accessToken,
+    });
   }
 
-  async sendPushMessage(accessToken: string, lineUserId: string, text: string): Promise<void> {
+  async sendPushMessage(
+    accessToken: string,
+    lineUserId: string,
+    text: string,
+  ): Promise<void> {
     if (!accessToken || !lineUserId) {
-      this.logger.log(`[DEV] LINE未設定のため送信スキップ → to: ${lineUserId || '(不明)'}\n${text}`);
+      this.logger.log(
+        `[DEV] LINE未設定のため送信スキップ → to: ${lineUserId || '(不明)'}\n${text}`,
+      );
       return;
     }
     try {
@@ -37,13 +44,22 @@ export class LineMessagingService {
     description?: string | null,
   ): Promise<void> {
     const dateStr = this.formatDate(heldAt);
-    const priceStr = price != null ? (price === 0 ? '無料' : `¥${price.toLocaleString()}`) : null;
+    const priceStr =
+      price != null
+        ? price === 0
+          ? '無料'
+          : `¥${price.toLocaleString()}`
+        : null;
     const lines = [
       `【${eventTitle}】ご予約ありがとうございます！`,
       `日時：${dateStr}`,
       `場所：${location}`,
       ...(priceStr ? [`料金：${priceStr}`] : []),
-      ...(description ? [`\n${description.slice(0, 300)}${description.length > 300 ? '…' : ''}`] : []),
+      ...(description
+        ? [
+            `\n${description.slice(0, 300)}${description.length > 300 ? '…' : ''}`,
+          ]
+        : []),
     ];
     await this.sendPushMessage(accessToken, lineUserId, lines.join('\n'));
   }
@@ -119,12 +135,18 @@ export class LineMessagingService {
     );
   }
 
-  async getLineProfile(accessToken: string, lineUserId: string): Promise<{ displayName: string; pictureUrl?: string } | null> {
+  async getLineProfile(
+    accessToken: string,
+    lineUserId: string,
+  ): Promise<{ displayName: string; pictureUrl?: string } | null> {
     if (!accessToken || !lineUserId) return null;
     try {
       const client = this.getClient(accessToken);
       const profile = await client.getProfile(lineUserId);
-      return { displayName: profile.displayName, pictureUrl: profile.pictureUrl };
+      return {
+        displayName: profile.displayName,
+        pictureUrl: profile.pictureUrl,
+      };
     } catch {
       return null;
     }

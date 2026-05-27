@@ -52,7 +52,7 @@ async function compressImage(file: File, maxBytes = 4 * 1024 * 1024): Promise<Bl
     const url = URL.createObjectURL(file);
     img.onload = () => {
       URL.revokeObjectURL(url);
-      let quality = 0.8;
+      const quality = 0.8;
       const canvas = document.createElement('canvas');
       let { width, height } = img;
       if (width > 1920) { height = Math.round(height * 1920 / width); width = 1920; }

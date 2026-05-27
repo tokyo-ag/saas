@@ -1,13 +1,28 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException, OnApplicationBootstrap } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+  OnApplicationBootstrap,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { IsString, IsOptional, IsEnum, IsEmail, MinLength } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsEmail,
+  MinLength,
+} from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 
 export class CreateTenantDto {
   @IsString() name: string;
   @IsOptional() @IsString() description?: string;
-  @IsOptional() @IsEnum(['free', 'standard', 'pro']) plan?: 'free' | 'standard' | 'pro';
+  @IsOptional() @IsEnum(['free', 'standard', 'pro']) plan?:
+    | 'free'
+    | 'standard'
+    | 'pro';
   @IsEmail() email: string;
   @IsString() @MinLength(8) password: string;
 }
@@ -15,7 +30,10 @@ export class CreateTenantDto {
 export class UpdateTenantDto {
   @IsOptional() @IsString() name?: string;
   @IsOptional() @IsString() description?: string;
-  @IsOptional() @IsEnum(['free', 'standard', 'pro']) plan?: 'free' | 'standard' | 'pro';
+  @IsOptional() @IsEnum(['free', 'standard', 'pro']) plan?:
+    | 'free'
+    | 'standard'
+    | 'pro';
   @IsOptional() @IsString() code?: string;
 }
 
@@ -26,14 +44,22 @@ export class BanUserDto {
 
 @Injectable()
 export class SuperadminService implements OnApplicationBootstrap {
-  constructor(private prisma: PrismaService, private jwt: JwtService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwt: JwtService,
+  ) {}
 
   async onApplicationBootstrap() {
-    const tenants = await this.prisma.tenant.findMany({ select: { id: true, code: true } });
+    const tenants = await this.prisma.tenant.findMany({
+      select: { id: true, code: true },
+    });
     for (const t of tenants) {
       if (!t.code || !/^\d{8}$/.test(t.code)) {
         const code = await this.generateUniqueCode();
-        await this.prisma.tenant.update({ where: { id: t.id }, data: { code } });
+        await this.prisma.tenant.update({
+          where: { id: t.id },
+          data: { code },
+        });
       }
     }
   }
@@ -74,7 +100,10 @@ export class SuperadminService implements OnApplicationBootstrap {
   async restoreTenant(id: string) {
     const tenant = await this.prisma.tenant.findUnique({ where: { id } });
     if (!tenant) throw new NotFoundException('Tenant not found');
-    if (tenant.bannedAt) throw new BadRequestException('この団体は永久BANされており復元できません');
+    if (tenant.bannedAt)
+      throw new BadRequestException(
+        'この団体は永久BANされており復元できません',
+      );
     return this.prisma.tenant.update({
       where: { id },
       data: { deletedAt: null },
@@ -92,8 +121,10 @@ export class SuperadminService implements OnApplicationBootstrap {
 
   async createTenant(dto: CreateTenantDto) {
     const normalizedEmail = dto.email.trim().toLowerCase();
-    const accounts = await this.prisma.organizerAccount.findMany({ where: { email: { not: null } } });
-    if (accounts.some(a => a.email?.toLowerCase() === normalizedEmail)) {
+    const accounts = await this.prisma.organizerAccount.findMany({
+      where: { email: { not: null } },
+    });
+    if (accounts.some((a) => a.email?.toLowerCase() === normalizedEmail)) {
       throw new ConflictException('このメールアドレスは既に使用されています');
     }
     const passwordHash = await bcrypt.hash(dto.password, 10);
@@ -107,7 +138,11 @@ export class SuperadminService implements OnApplicationBootstrap {
         description: dto.description,
         plan: dto.plan ?? 'free',
         organizerAccounts: {
-          create: { email: normalizedEmail, passwordHash, emailVerifiedAt: new Date() },
+          create: {
+            email: normalizedEmail,
+            passwordHash,
+            emailVerifiedAt: new Date(),
+          },
         },
       },
     });
@@ -122,7 +157,9 @@ export class SuperadminService implements OnApplicationBootstrap {
         ...(dto.name !== undefined && { name: dto.name }),
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.plan !== undefined && { plan: dto.plan }),
-        ...(dto.code !== undefined && { code: dto.code.trim().toLowerCase() || null }),
+        ...(dto.code !== undefined && {
+          code: dto.code.trim().toLowerCase() || null,
+        }),
       },
     });
   }
@@ -138,7 +175,9 @@ export class SuperadminService implements OnApplicationBootstrap {
   }
 
   async listBannedUsers() {
-    return this.prisma.bannedLineUser.findMany({ orderBy: { bannedAt: 'desc' } });
+    return this.prisma.bannedLineUser.findMany({
+      orderBy: { bannedAt: 'desc' },
+    });
   }
 
   async banUser(dto: BanUserDto) {
@@ -150,14 +189,19 @@ export class SuperadminService implements OnApplicationBootstrap {
   }
 
   async impersonate(tenantId: string): Promise<{ token: string }> {
-    const account = await this.prisma.organizerAccount.findFirst({ where: { tenantId } });
-    if (!account) throw new NotFoundException('この団体にアカウントがありません');
+    const account = await this.prisma.organizerAccount.findFirst({
+      where: { tenantId },
+    });
+    if (!account)
+      throw new NotFoundException('この団体にアカウントがありません');
     const token = this.jwt.sign({ tenantId, accountId: account.id });
     return { token };
   }
 
   async unbanUser(lineUserId: string) {
-    const banned = await this.prisma.bannedLineUser.findUnique({ where: { lineUserId } });
+    const banned = await this.prisma.bannedLineUser.findUnique({
+      where: { lineUserId },
+    });
     if (!banned) throw new NotFoundException('Banned user not found');
     await this.prisma.bannedLineUser.delete({ where: { lineUserId } });
     return { message: 'unbanned' };
@@ -167,7 +211,16 @@ export class SuperadminService implements OnApplicationBootstrap {
     const messages = await this.prisma.supportMessage.findMany({
       orderBy: { createdAt: 'desc' },
     });
-    const threadMap = new Map<string, { lineUserId: string; tenantId: string | null; lastMessage: string; lastAt: Date; unread: number }>();
+    const threadMap = new Map<
+      string,
+      {
+        lineUserId: string;
+        tenantId: string | null;
+        lastMessage: string;
+        lastAt: Date;
+        unread: number;
+      }
+    >();
     for (const m of messages) {
       if (!threadMap.has(m.lineUserId)) {
         threadMap.set(m.lineUserId, {
@@ -182,7 +235,9 @@ export class SuperadminService implements OnApplicationBootstrap {
         threadMap.get(m.lineUserId)!.unread++;
       }
     }
-    return Array.from(threadMap.values()).sort((a, b) => b.lastAt.getTime() - a.lastAt.getTime());
+    return Array.from(threadMap.values()).sort(
+      (a, b) => b.lastAt.getTime() - a.lastAt.getTime(),
+    );
   }
 
   async getSupportMessages(lineUserId: string) {
@@ -203,7 +258,12 @@ export class SuperadminService implements OnApplicationBootstrap {
       select: { tenantId: true },
     });
     return this.prisma.supportMessage.create({
-      data: { lineUserId, tenantId: latest?.tenantId ?? null, content, fromUser: false },
+      data: {
+        lineUserId,
+        tenantId: latest?.tenantId ?? null,
+        content,
+        fromUser: false,
+      },
     });
   }
 }

@@ -1,5 +1,10 @@
 import {
-  Controller, Post, UploadedFile, UseInterceptors, BadRequestException, UseGuards,
+  Controller,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+  BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -27,7 +32,12 @@ export class UploadController {
         if (ALLOWED_MIME.includes(file.mimetype)) {
           cb(null, true);
         } else {
-          cb(new BadRequestException('画像ファイル（JPEG/PNG/GIF/WebP）のみ許可されています'), false);
+          cb(
+            new BadRequestException(
+              '画像ファイル（JPEG/PNG/GIF/WebP）のみ許可されています',
+            ),
+            false,
+          );
         }
       },
     }),

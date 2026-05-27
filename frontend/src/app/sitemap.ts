@@ -1,25 +1,40 @@
 import type { MetadataRoute } from 'next';
 
-import { SITE_URL } from '@/lib/config';
-const API_URL = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'https://comiu.up.railway.app';
+import { SITE_URL, API_URL } from '@/lib/config';
+
+type SitemapEvent = { id: string; tenantCode: string; updatedAt: string };
+type SitemapTenant = { tenantCode: string; updatedAt: string };
+
+let lastSuccessfulEvents: SitemapEvent[] = [];
+let lastSuccessfulTenants: SitemapTenant[] = [];
 
 async function fetchSitemapEvents(): Promise<{ id: string; tenantCode: string; updatedAt: string }[]> {
   try {
     const res = await fetch(`${API_URL}/api/public/sitemap-events`, { next: { revalidate: 3600 } });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
+    if (!res.ok) throw new Error(`sitemap-events returned ${res.status}`);
+    const events = (await res.json()) as SitemapEvent[];
+    lastSuccessfulEvents = events;
+    return events;
+  } catch (error) {
+    if (lastSuccessfulEvents.length > 0) {
+      console.warn('[sitemap] using cached events after API failure', error);
+    }
+    return lastSuccessfulEvents;
   }
 }
 
-async function fetchSitemapTenants(): Promise<{ tenantCode: string; updatedAt: string }[]> {
+async function fetchSitemapTenants(): Promise<SitemapTenant[]> {
   try {
     const res = await fetch(`${API_URL}/api/public/sitemap-tenants`, { next: { revalidate: 3600 } });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
+    if (!res.ok) throw new Error(`sitemap-tenants returned ${res.status}`);
+    const tenants = (await res.json()) as SitemapTenant[];
+    lastSuccessfulTenants = tenants;
+    return tenants;
+  } catch (error) {
+    if (lastSuccessfulTenants.length > 0) {
+      console.warn('[sitemap] using cached tenants after API failure', error);
+    }
+    return lastSuccessfulTenants;
   }
 }
 
@@ -49,14 +64,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const eventPages: MetadataRoute.Sitemap = events.map((e) => ({
     url: `${SITE_URL}/e/${e.tenantCode}/${e.id}`,
-    lastModified: new Date(e.updatedAt),
+    lastModified: e.updatedAt ? new Date(e.updatedAt) : STATIC_LAST_MODIFIED,
     changeFrequency: 'daily' as const,
     priority: 0.8,
   }));
 
   const clubPages: MetadataRoute.Sitemap = tenants.map((t) => ({
     url: `${SITE_URL}/clubs/${t.tenantCode}`,
-    lastModified: new Date(t.updatedAt),
+    lastModified: t.updatedAt ? new Date(t.updatedAt) : STATIC_LAST_MODIFIED,
     changeFrequency: 'weekly' as const,
     priority: 0.75,
   }));

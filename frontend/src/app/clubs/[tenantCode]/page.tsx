@@ -5,8 +5,7 @@ import Link from 'next/link';
 import type { PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 
-const API_URL = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'https://comiu.up.railway.app';
-import { SITE_URL } from '@/lib/config';
+import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
 
 export const revalidate = 60;
 
@@ -48,7 +47,7 @@ export async function generateMetadata({
 
   const name = club.lineDisplayName ?? club.name;
   const description = club.description ?? `${name}のイベント・交流会情報。開催予定のイベントをCOMIUで確認できます。`;
-  const image = imgUrl(club.linePictureUrl, API_URL);
+  const image = imgUrl(club.linePictureUrl, IMAGE_BASE_URL);
 
   return {
     title: `${name}のイベント・交流会`,
@@ -83,7 +82,7 @@ export default async function ClubPage({
   if (!club) notFound();
 
   const name = club.lineDisplayName ?? club.name;
-  const image = imgUrl(club.linePictureUrl, API_URL);
+  const image = imgUrl(club.linePictureUrl, IMAGE_BASE_URL);
   const clubUrl = `${SITE_URL}/clubs/${club.code ?? tenantCode}`;
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -103,22 +102,22 @@ export default async function ClubPage({
         ],
       },
       ...(club.events.length > 0
-        ? [
-            {
-              '@type': 'ItemList',
-              name: `${name}の開催予定イベント`,
-              numberOfItems: club.events.length,
-              itemListElement: club.events
-                .filter((event) => event.tenantCode)
-                .slice(0, 10)
-                .map((event, i) => ({
+        ? (() => {
+            const listedEvents = club.events.filter((event) => event.tenantCode).slice(0, 10);
+            return listedEvents.length === 0 ? [] : [
+              {
+                '@type': 'ItemList',
+                name: `${name}の開催予定イベント`,
+                numberOfItems: listedEvents.length,
+                itemListElement: listedEvents.map((event, i) => ({
                   '@type': 'ListItem',
                   position: i + 1,
                   url: `${SITE_URL}/e/${event.tenantCode}/${event.id}`,
                   name: event.title,
                 })),
-            },
-          ]
+              },
+            ];
+          })()
         : []),
     ],
   };
@@ -150,7 +149,6 @@ export default async function ClubPage({
                 alt={name}
                 width={64}
                 height={64}
-                unoptimized
                 className="w-16 h-16 rounded-full object-cover border border-gray-100 shrink-0"
               />
             ) : (
@@ -195,7 +193,7 @@ export default async function ClubPage({
           ) : (
             <div className="space-y-3">
               {club.events.map((event) => {
-                const eventImage = imgUrl(event.imageUrl, API_URL);
+                const eventImage = imgUrl(event.imageUrl, IMAGE_BASE_URL);
                 const remaining = event.capacity != null ? event.capacity - event.reservedCount : null;
                 return (
                   <Link
@@ -209,7 +207,6 @@ export default async function ClubPage({
                           src={eventImage}
                           alt={event.title}
                           fill
-                          unoptimized
                           sizes="80px"
                           className="object-cover"
                         />
