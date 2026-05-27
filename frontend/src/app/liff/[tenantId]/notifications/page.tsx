@@ -42,7 +42,7 @@ export default function NotificationsPage() {
       <div className="min-h-screen bg-[#F5F5F5] pb-24">
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
           <div className="flex items-center justify-between px-4 pt-12 pb-3 sm:pt-4">
-            <h1 className="text-[18px] font-bold text-white">通知</h1>
+            <h1 className="text-[18px] font-bold text-gray-900">通知</h1>
             {unreadCount > 0 && (
               <button onClick={handleMarkAllRead} className="text-xs text-gray-600 font-medium">
                 すべて既読

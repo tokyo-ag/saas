@@ -456,6 +456,12 @@ export class LiffService {
     if (event.notifyOnReserveApp && status !== 'waiting_payment') {
       const dateStr = new Date(event.heldAt).toLocaleString('ja-JP', {
         timeZone: 'Asia/Tokyo',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
       });
       const descText = event.description
         ? event.description.slice(0, 300) +

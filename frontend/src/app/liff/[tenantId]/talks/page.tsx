@@ -55,7 +55,7 @@ export default function TalksPage() {
       <div className="min-h-screen bg-[#F5F5F5] pb-24">
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
           <div className="flex items-center justify-between px-4 pt-12 pb-3">
-            <h1 className="text-[20px] font-bold text-gray-900 tracking-tight">Talk</h1>
+            <h1 className="text-[20px] font-bold text-gray-900 tracking-tight">連絡</h1>
             <Link
               href={`/liff/${tenantId}/qr`}
               className="flex items-center gap-1.5 bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-full active:bg-white/30"
