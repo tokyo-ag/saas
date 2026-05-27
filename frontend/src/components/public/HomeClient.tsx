@@ -122,20 +122,11 @@ function HScroll({ children, gap = 'gap-3' }: { children: React.ReactNode; gap?:
   );
 }
 
-type VisitedEntry = {
-  tenantId: string;
-  tenantCode: string;
-  name: string;
-  iconUrl: string | null;
-  visitedAt: number;
-};
-
 export default function HomeClient({ initialEvents, initialTenants, showHomePrompt }: HomeClientProps) {
   const [events, setEvents] = useState<PublicEvent[]>(initialEvents);
   const [tenants, setTenants] = useState<PublicTenant[]>(initialTenants);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [visited, setVisited] = useState<VisitedEntry[]>([]);
 
   // LINE認証後のリダイレクト
   useEffect(() => {
@@ -161,13 +152,6 @@ export default function HomeClient({ initialEvents, initialTenants, showHomeProm
       }
     }
     run();
-  }, []);
-
-  useEffect(() => {
-    const raw = localStorage.getItem('comiu_visited');
-    if (raw) {
-      try { setVisited(JSON.parse(raw)); } catch { /* ignore */ }
-    }
   }, []);
 
   useEffect(() => {
@@ -286,31 +270,6 @@ export default function HomeClient({ initialEvents, initialTenants, showHomeProm
             ))}
           </div>
         </div>
-
-        {visited.length > 0 && (
-          <div className="pt-5 pb-2">
-            <SectionHeader title="最近見た団体" />
-            <div className="flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-none">
-              {visited.map((v) => (
-                <Link
-                  key={v.tenantId}
-                  href={`/liff/${v.tenantCode}`}
-                  className="flex-none flex flex-col items-center gap-1.5 active:opacity-70 transition-opacity"
-                  style={{ width: 64 }}
-                >
-                  {v.iconUrl ? (
-                    <img src={v.iconUrl} alt={v.name} className="w-12 h-12 rounded-full object-cover border border-gray-100" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-[#06C755]/15 flex items-center justify-center text-lg font-bold text-[#06C755]">
-                      {v.name[0]}
-                    </div>
-                  )}
-                  <p className="text-[10px] text-gray-600 font-medium text-center leading-tight line-clamp-2">{v.name}</p>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
 
         <div className="pt-5 pb-2">
           <SectionHeader title="人気のイベント" />

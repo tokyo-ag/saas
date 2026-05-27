@@ -210,6 +210,7 @@ export default function LiffTopPage() {
   const [loading, setLoading] = useState(true);
   const [otherTenants, setOtherTenants] = useState<PublicTenant[]>([]);
   const [isOffline, setIsOffline] = useState(false);
+  const [visitedOthers, setVisitedOthers] = useState<{ tenantId: string; tenantCode: string; name: string; iconUrl: string | null }[]>([]);
 
   useEffect(() => {
     async function init() {
@@ -269,6 +270,15 @@ export default function LiffTopPage() {
       }
     }
     init();
+
+    // 他の団体の閲覧履歴を読み込む
+    try {
+      const raw = localStorage.getItem('comiu_visited');
+      if (raw) {
+        const all = JSON.parse(raw) as { tenantId: string; tenantCode: string; name: string; iconUrl: string | null }[];
+        setVisitedOthers(all.filter((v) => v.tenantCode !== tenantId && v.tenantId !== tenantId));
+      }
+    } catch { /* ignore */ }
   }, [tenantId]);
 
   return (
@@ -316,6 +326,35 @@ export default function LiffTopPage() {
               {events.map((ev) => <EventCard key={ev.id} event={ev} tenantId={tenantId} />)}
             </div>
           )}
+          {/* 最近見た団体 */}
+          {visitedOthers.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center gap-2 px-1 mb-3">
+                <span className="w-1 h-4 rounded-full bg-[#06C755] shrink-0" />
+                <p className="text-[13px] font-bold text-gray-800">最近見た団体</p>
+              </div>
+              <div className="flex gap-4 overflow-x-auto pb-1 scrollbar-none">
+                {visitedOthers.map((v) => (
+                  <Link
+                    key={v.tenantId}
+                    href={`/liff/${v.tenantCode}`}
+                    className="flex-none flex flex-col items-center gap-1.5 active:opacity-70 transition-opacity"
+                    style={{ width: 60 }}
+                  >
+                    {v.iconUrl ? (
+                      <img src={v.iconUrl} alt={v.name} className="w-12 h-12 rounded-full object-cover border border-gray-100" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-[#06C755]/15 flex items-center justify-center text-lg font-bold text-[#06C755]">
+                        {v.name[0]}
+                      </div>
+                    )}
+                    <p className="text-[10px] text-gray-600 font-medium text-center leading-tight line-clamp-2">{v.name}</p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* COMIU注目の団体！ */}
           {otherTenants.length > 0 && (
             <div className="mt-6">
