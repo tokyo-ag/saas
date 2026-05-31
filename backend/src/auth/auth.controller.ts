@@ -91,6 +91,7 @@ export class AuthController {
     return this.authService.forgotPassword(dto.email);
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('reset-password')
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto.token, dto.password);
@@ -137,13 +138,23 @@ export class AuthController {
   async lineCallback(
     @Query('code') code: string,
     @Query('state') state: string,
+    @Query('error') error: string | undefined,
     @Res() res: Response,
   ) {
-    const { redirectUrl } = await this.authService.handleLineCallback(
-      code,
-      state,
-    );
-    res.redirect(redirectUrl);
+    if (error) {
+      res.redirect(this.authService.getLineFailureRedirectUrl(error));
+      return;
+    }
+
+    try {
+      const { redirectUrl } = await this.authService.handleLineCallback(
+        code,
+        state,
+      );
+      res.redirect(redirectUrl);
+    } catch {
+      res.redirect(this.authService.getLineFailureRedirectUrl());
+    }
   }
 
   @Post('line/complete')

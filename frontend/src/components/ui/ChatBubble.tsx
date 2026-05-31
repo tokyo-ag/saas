@@ -72,7 +72,7 @@ export function ChatInput({ value, onChange, onSubmit, sending, placeholder = 'ã
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         rows={1}
-        maxLength={2000}
+        maxLength={10000}
         className="flex-1 border border-gray-200 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755] bg-gray-50 resize-none overflow-hidden"
         style={{ maxHeight: '120px', overflowY: value.split('\n').length > 3 ? 'auto' : 'hidden' }}
       />

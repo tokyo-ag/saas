@@ -6,6 +6,7 @@ import {
   IsBoolean,
   IsEnum,
   IsArray,
+  IsUrl,
   Min,
   MaxLength,
 } from 'class-validator';
@@ -24,6 +25,7 @@ export class CreateEventDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(5000)
   description?: string;
 
   @IsDateString()
@@ -38,7 +40,8 @@ export class CreateEventDto {
   location: string;
 
   @IsOptional()
-  @IsString()
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
+  @MaxLength(500)
   locationUrl?: string;
 
   @IsOptional()
@@ -120,11 +123,13 @@ export class CreateEventDto {
   remindAt?: string | null;
 
   @IsOptional()
-  @IsString()
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
+  @MaxLength(500)
   imageUrl?: string;
 
   @IsOptional()
-  @IsString()
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
+  @MaxLength(500)
   iconUrl?: string;
 
   @IsOptional()

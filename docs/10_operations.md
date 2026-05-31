@@ -35,6 +35,7 @@
 | `BACKEND_URL` | LINE OAuth callback |
 | `LINE_LOGIN_CHANNEL_ID` | LINE Login |
 | `LINE_LOGIN_CHANNEL_SECRET` | LINE Login |
+| `LIFF_CHANNEL_ID` | LIFF ID token検証用。テナントの `liffId` から判定できる場合は任意 |
 | `GMAIL_CLIENT_ID` | Gmail OAuth |
 | `GMAIL_CLIENT_SECRET` | Gmail OAuth |
 | `GMAIL_REFRESH_TOKEN` | Gmail OAuth |

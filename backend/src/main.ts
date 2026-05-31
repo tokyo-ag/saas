@@ -6,6 +6,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import { AppModule } from './app.module';
+import { ErrorLogFilter } from './common/error-log.filter';
+import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -14,9 +16,14 @@ async function bootstrap() {
   const frontendUrl = (
     process.env.FRONTEND_URL ?? 'http://localhost:3000'
   ).trim();
+  const extraOrigins = (process.env.CORS_ORIGINS ?? '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+  const allowedOrigins = new Set([frontendUrl, ...extraOrigins]);
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || origin === frontendUrl || /\.vercel\.app$/.test(origin)) {
+      if (!origin || allowedOrigins.has(origin)) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
@@ -24,6 +31,8 @@ async function bootstrap() {
     },
     credentials: true,
   });
+  const prisma = app.get(PrismaService);
+  app.useGlobalFilters(new ErrorLogFilter(prisma));
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useStaticAssets(join(__dirname, '..', '..', 'public'));

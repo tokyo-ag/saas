@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api, TenantWithStats, BannedUser } from '@/lib/api';
+import { api, TenantWithStats, BannedUser, ErrorLog } from '@/lib/api';
 
 export default function SuperadminPage() {
-  const [tab, setTab] = useState<'tenants' | 'users'>('tenants');
+  const [tab, setTab] = useState<'tenants' | 'users' | 'errors'>('tenants');
   const [tenants, setTenants] = useState<TenantWithStats[]>([]);
   const [banned, setBanned] = useState<BannedUser[]>([]);
+  const [errors, setErrors] = useState<ErrorLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [editTarget, setEditTarget] = useState<TenantWithStats | null>(null);
@@ -14,8 +15,12 @@ export default function SuperadminPage() {
 
   const load = () => {
     setLoading(true);
-    Promise.all([api.superadmin.list(), api.superadmin.listBannedUsers()])
-      .then(([t, b]) => { setTenants(t); setBanned(b); })
+    Promise.all([
+      api.superadmin.list(),
+      api.superadmin.listBannedUsers(),
+      api.superadmin.errorLogs(),
+    ])
+      .then(([t, b, e]) => { setTenants(t); setBanned(b); setErrors(e); })
       .finally(() => setLoading(false));
   };
 
@@ -99,12 +104,20 @@ export default function SuperadminPage() {
           >
             BANユーザー {banned.length > 0 && <span className="ml-1 text-xs bg-red-100 text-red-500 px-1.5 py-0.5 rounded-full">{banned.length}</span>}
           </button>
+          <button
+            onClick={() => setTab('errors')}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${tab === 'errors' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            エラー {errors.length > 0 && <span className="ml-1 text-xs bg-orange-100 text-orange-500 px-1.5 py-0.5 rounded-full">{errors.length}</span>}
+          </button>
         </div>
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-8 py-4 sm:py-6">
         {loading ? (
           <p className="text-gray-400 text-sm">読み込み中...</p>
+        ) : tab === 'errors' ? (
+          <ErrorLogTab errors={errors} onClear={async () => { await api.superadmin.clearErrorLogs(); load(); }} />
         ) : tab === 'tenants' ? (
           <div className="space-y-3">
             {tenants.map((t) => {
@@ -348,6 +361,61 @@ function TenantModal({
           </div>
         </form>
       </div>
+    </div>
+  );
+}
+
+function ErrorLogTab({ errors, onClear }: { errors: ErrorLog[]; onClear: () => void }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  if (errors.length === 0) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400 text-sm">
+        エラーログはありません
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-end">
+        <button
+          onClick={() => { if (confirm('エラーログを全件削除しますか？')) onClear(); }}
+          className="text-xs text-red-400 hover:text-red-600 underline"
+        >
+          全件削除
+        </button>
+      </div>
+      {errors.map((e) => (
+        <div key={e.id} className="bg-white rounded-xl border border-orange-200 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-mono font-bold text-red-500">{e.status}</span>
+                <span className="text-xs font-mono text-gray-500">{e.method}</span>
+                <span className="text-xs font-mono text-gray-700 truncate max-w-xs">{e.url}</span>
+              </div>
+              <p className="text-xs text-gray-600 mt-1 break-all">{e.message}</p>
+            </div>
+            <div className="text-right shrink-0">
+              <p className="text-xs text-gray-400">{new Date(e.createdAt).toLocaleString('ja-JP')}</p>
+              {e.stack && (
+                <button
+                  onClick={() => setExpanded(expanded === e.id ? null : e.id)}
+                  className="text-xs text-blue-400 hover:underline mt-1"
+                >
+                  {expanded === e.id ? '閉じる' : 'スタック'}
+                </button>
+              )}
+            </div>
+          </div>
+          {expanded === e.id && e.stack && (
+            <pre className="mt-3 text-[10px] text-gray-500 bg-gray-50 rounded p-3 overflow-x-auto whitespace-pre-wrap break-all">
+              {e.stack}
+            </pre>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

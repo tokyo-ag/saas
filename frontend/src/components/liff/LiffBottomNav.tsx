@@ -45,12 +45,23 @@ function BellIcon({ active }: { active: boolean }) {
   );
 }
 
+function useLineBrowserPad() {
+  const [pad, setPad] = useState(0);
+  useEffect(() => {
+    if (/Line\//i.test(navigator.userAgent) && !window.location.href.includes('liff.line.me')) {
+      setPad(49);
+    }
+  }, []);
+  return pad;
+}
+
 export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string }) {
   const pathname = usePathname();
   const params = useParams();
   const [tid, setTid] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
   const [talkUnread, setTalkUnread] = useState(0);
+  const linePad = useLineBrowserPad();
 
   useEffect(() => {
     const fromUrl = propId ?? (params?.tenantId as string | undefined);
@@ -114,7 +125,7 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex z-50"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      style={{ paddingBottom: `calc(env(safe-area-inset-bottom) + ${linePad}px)` }}
     >
       {items.map(({ href, label, Icon, active, badge }) => {
         const cls = `flex-1 flex flex-col items-center py-2 gap-0.5 ${active ? 'text-[#06C755]' : 'text-gray-400'}`;

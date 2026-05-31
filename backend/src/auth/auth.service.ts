@@ -48,11 +48,27 @@ export class AuthService {
     return crypto.randomBytes(32).toString('hex');
   }
 
+  private getBackendUrl(): string {
+    return (this.config.get<string>('BACKEND_URL') ?? 'http://localhost:3001')
+      .trim()
+      .replace(/\/$/, '');
+  }
+
+  private getFrontendUrl(): string {
+    return (this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:3000')
+      .trim()
+      .replace(/\/$/, '');
+  }
+
+  getLineFailureRedirectUrl(reason = 'line_auth_failed'): string {
+    const params = new URLSearchParams({ lineError: reason });
+    return `${this.getFrontendUrl()}/login?${params}`;
+  }
+
   getLineAuthUrl(): string {
     const channelId = this.config.get<string>('LINE_LOGIN_CHANNEL_ID');
     if (!channelId) throw new BadRequestException('LINE Login未設定');
-    const backendUrl =
-      this.config.get<string>('BACKEND_URL') ?? 'http://localhost:3001';
+    const backendUrl = this.getBackendUrl();
     const state = this.jwtService.sign(
       { ts: Date.now() },
       { expiresIn: '10m' },
@@ -71,13 +87,18 @@ export class AuthService {
     code: string,
     state: string,
   ): Promise<{ redirectUrl: string }> {
-    const channelId = this.config.get<string>('LINE_LOGIN_CHANNEL_ID') ?? '';
-    const channelSecret =
-      this.config.get<string>('LINE_LOGIN_CHANNEL_SECRET') ?? '';
-    const backendUrl =
-      this.config.get<string>('BACKEND_URL') ?? 'http://localhost:3001';
-    const frontendUrl =
-      this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:3000';
+    if (!code || !state) {
+      throw new BadRequestException('LINE認証情報が不足しています');
+    }
+
+    const channelId = this.config.get<string>('LINE_LOGIN_CHANNEL_ID');
+    const channelSecret = this.config.get<string>('LINE_LOGIN_CHANNEL_SECRET');
+    if (!channelId || !channelSecret) {
+      throw new BadRequestException('LINE Login未設定');
+    }
+
+    const backendUrl = this.getBackendUrl();
+    const frontendUrl = this.getFrontendUrl();
 
     try {
       this.jwtService.verify(state);
@@ -96,15 +117,31 @@ export class AuthService {
         client_secret: channelSecret,
       }),
     });
-    const tokenData = (await tokenRes.json()) as { access_token: string };
+    const tokenData = (await tokenRes.json().catch(() => ({}))) as {
+      access_token?: string;
+      error?: string;
+      error_description?: string;
+    };
+    if (!tokenRes.ok || !tokenData.access_token) {
+      this.logger.warn(
+        `LINE token exchange failed: ${tokenData.error_description ?? tokenData.error ?? tokenRes.statusText}`,
+      );
+      throw new BadRequestException(
+        'LINE認証に失敗しました。Callback URLとChannel設定を確認してください。',
+      );
+    }
 
     const profileRes = await fetch('https://api.line.me/v2/profile', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
-    const profile = (await profileRes.json()) as {
-      userId: string;
-      displayName: string;
+    const profile = (await profileRes.json().catch(() => ({}))) as {
+      userId?: string;
+      displayName?: string;
     };
+    if (!profileRes.ok || !profile.userId) {
+      this.logger.warn(`LINE profile fetch failed: ${profileRes.statusText}`);
+      throw new BadRequestException('LINEプロフィール取得に失敗しました');
+    }
 
     const account = await this.prisma.organizerAccount.findUnique({
       where: { lineUserId: profile.userId },
@@ -116,7 +153,7 @@ export class AuthService {
     }
 
     const lineToken = this.jwtService.sign(
-      { lineUserId: profile.userId, displayName: profile.displayName },
+      { lineUserId: profile.userId, displayName: profile.displayName ?? '' },
       { expiresIn: '30m' },
     );
     return {
@@ -201,11 +238,16 @@ export class AuthService {
     const account = await this.prisma.organizerAccount.findFirst({
       where: { email: { equals: trimmedEmail, mode: 'insensitive' } },
     });
-    if (!account?.passwordHash)
+    // Always run bcrypt to prevent timing-based email enumeration
+    const DUMMY_HASH = '$2b$10$dummyhashfornoaccountXXXXXXXXXXXXXXXXXXXXXXXX';
+    const valid = await bcrypt.compare(
+      password,
+      account?.passwordHash ?? DUMMY_HASH,
+    );
+    if (!account?.passwordHash || !valid)
       throw new UnauthorizedException(
         'メールアドレスまたはパスワードが正しくありません',
       );
-    const valid = await bcrypt.compare(password, account.passwordHash);
     if (!valid)
       throw new UnauthorizedException(
         'メールアドレスまたはパスワードが正しくありません',
@@ -268,10 +310,11 @@ export class AuthService {
           'リンクの有効期限が切れています。もう一度登録してください。',
         );
       }
-      const accounts = await this.prisma.organizerAccount.findMany({
-        where: { email: { not: null } },
+      const existingAccount = await this.prisma.organizerAccount.findFirst({
+        where: { email: { equals: pending.email, mode: 'insensitive' } },
+        select: { id: true },
       });
-      if (accounts.some((a) => a.email?.toLowerCase() === pending.email)) {
+      if (existingAccount) {
         await this.prisma.pendingRegistration.delete({ where: { token } });
         throw new ConflictException('このメールアドレスは既に登録されています');
       }
@@ -313,11 +356,9 @@ export class AuthService {
 
   async forgotPassword(email: string): Promise<{ message: string }> {
     const trimmedEmail = email.trim().toLowerCase();
-    const accounts = await this.prisma.organizerAccount.findMany({
-      where: { email: { not: null } },
+    const account = await this.prisma.organizerAccount.findFirst({
+      where: { email: { equals: trimmedEmail, mode: 'insensitive' } },
     });
-    const account =
-      accounts.find((a) => a.email?.toLowerCase() === trimmedEmail) ?? null;
 
     // セキュリティのため、アカウントが存在しない場合も同じレスポンスを返す
     if (!account?.passwordHash) {
@@ -391,10 +432,11 @@ export class AuthService {
     if (account.passwordHash)
       throw new BadRequestException('既にパスワードが設定されています');
 
-    const existing = await this.prisma.organizerAccount.findMany({
-      where: { email: { not: null } },
+    const existing = await this.prisma.organizerAccount.findFirst({
+      where: { email: { equals: trimmedEmail, mode: 'insensitive' } },
+      select: { id: true },
     });
-    if (existing.some((a) => a.email?.toLowerCase() === trimmedEmail)) {
+    if (existing) {
       throw new ConflictException('このメールアドレスは既に使用されています');
     }
 
@@ -476,11 +518,9 @@ export class AuthService {
     }
 
     // setEmailPassword フロー（LINE登録ユーザーのメール追加）
-    const accounts = await this.prisma.organizerAccount.findMany({
-      where: { email: { not: null } },
+    const account = await this.prisma.organizerAccount.findFirst({
+      where: { email: { equals: trimmedEmail, mode: 'insensitive' } },
     });
-    const account =
-      accounts.find((a) => a.email?.toLowerCase() === trimmedEmail) ?? null;
     if (!account?.email || account.emailVerifiedAt) return msg;
 
     const token = this.generateToken();
@@ -500,7 +540,7 @@ export class AuthService {
 
   async getMe(tenantId: string, accountId: string) {
     const account = await this.prisma.organizerAccount.findUnique({
-      where: { id: accountId },
+      where: { id: accountId, tenantId },
     });
     return {
       tenantId,

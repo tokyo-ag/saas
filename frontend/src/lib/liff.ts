@@ -1,6 +1,7 @@
 'use client';
 
 import liff from '@line/liff';
+import { setLiffToken } from './api';
 
 let initialized = false;
 let lastError: string | null = null;
@@ -20,6 +21,7 @@ export async function initLiff(liffId?: string): Promise<boolean> {
     await liff.init({ liffId: id });
     initialized = true;
     lastError = null;
+    setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
     return true;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -63,12 +65,8 @@ export function closeLiff() {
 }
 
 export async function scanQrCode(): Promise<string | null> {
-  try {
-    const result = await liff.scanCodeV2();
-    return result.value ?? null;
-  } catch {
-    return null;
-  }
+  // liff.scanCodeV2はスコープ設定が必要なためブラウザカメラで代替
+  return null;
 }
 
 export { liff };

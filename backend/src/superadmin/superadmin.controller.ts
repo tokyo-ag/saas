@@ -77,6 +77,16 @@ export class SuperadminController {
     return this.service.unbanUser(lineUserId);
   }
 
+  @Get('errors')
+  getErrorLogs() {
+    return this.service.getErrorLogs();
+  }
+
+  @Delete('errors')
+  clearErrorLogs() {
+    return this.service.clearErrorLogs();
+  }
+
   @Get('support')
   getSupportThreads() {
     return this.service.getSupportThreads();

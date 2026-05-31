@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import QRCode from 'react-qr-code';
+import jsQR from 'jsqr';
 import { api, LiffProfile } from '@/lib/api';
-import { initLiff, getLiffUserId, loginIfNeeded, scanQrCode } from '@/lib/liff';
+import { initLiff, getLiffProfile, loginIfNeeded } from '@/lib/liff';
 
 export default function QrPage() {
   const { tenantId } = useParams<{ tenantId: string }>();
@@ -16,19 +17,29 @@ export default function QrPage() {
   const [toggling, setToggling] = useState(false);
   const [error, setError] = useState('');
 
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const rafRef = useRef<number>(0);
+
   useEffect(() => {
     async function init() {
       const ok = await initLiff();
       let uid = '';
+      let lineDisplayName: string | undefined;
+      let linePictureUrl: string | undefined;
       if (ok) {
         await loginIfNeeded();
-        uid = (await getLiffUserId()) ?? '';
+        const liffProfile = await getLiffProfile();
+        uid = liffProfile?.userId ?? '';
+        lineDisplayName = liffProfile?.displayName;
+        linePictureUrl = liffProfile?.pictureUrl;
       } else {
         uid = `demo-${tenantId}`;
       }
       setLineUserId(uid);
       if (uid) {
-        api.liff.profile(tenantId, uid)
+        api.liff.join(tenantId, { lineDisplayName, linePictureUrl })
           .then(setProfile)
           .catch(() => setProfile(null))
           .finally(() => setLoading(false));
@@ -37,23 +48,59 @@ export default function QrPage() {
       }
     }
     init();
+    return () => stopCamera();
   }, [tenantId]);
+
+  function stopCamera() {
+    cancelAnimationFrame(rafRef.current);
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+  }
 
   async function handleScan() {
     setError('');
     setScanning(true);
     try {
-      const value = await scanQrCode();
-      if (value) {
-        router.push(`/liff/${tenantId}/connect/${value}`);
-      } else {
-        setError('QRコードを読み取れませんでした');
-      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+      });
+      streamRef.current = stream;
+      const video = videoRef.current!;
+      video.srcObject = stream;
+      await video.play();
+      tick();
     } catch {
-      setError('カメラを起動できませんでした');
-    } finally {
+      setError('カメラの起動に失敗しました。カメラの許可を確認してください。');
       setScanning(false);
     }
+  }
+
+  function tick() {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas || !streamRef.current) return;
+
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(video, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (code?.data) {
+        stopCamera();
+        setScanning(false);
+        router.push(`/liff/${tenantId}/connect/${code.data}`);
+        return;
+      }
+    }
+    rafRef.current = requestAnimationFrame(tick);
+  }
+
+  function handleCancelScan() {
+    stopCamera();
+    setScanning(false);
+    setError('');
   }
 
   async function handleToggleShowEvents() {
@@ -73,7 +120,7 @@ export default function QrPage() {
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
       <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 pt-12 pb-3 flex items-center gap-3">
-        <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-gray-600 p-1 -ml-1">
+        <button onClick={() => { if (scanning) handleCancelScan(); else router.push(`/liff/${tenantId}`); }} className="text-gray-600 p-1 -ml-1">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
@@ -81,12 +128,36 @@ export default function QrPage() {
         <h1 className="text-[17px] font-bold text-gray-900">QRコード</h1>
       </div>
 
+      {/* カメラスキャン画面 */}
+      {scanning && (
+        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+          <div className="flex items-center justify-between px-4 pt-12 pb-3">
+            <button onClick={handleCancelScan} className="text-white text-sm font-medium">キャンセル</button>
+            <p className="text-white text-sm font-medium">QRコードをスキャン</p>
+            <div className="w-16" />
+          </div>
+          <div className="flex-1 relative flex items-center justify-center">
+            <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
+            <canvas ref={canvasRef} className="hidden" />
+            {/* スキャン枠 */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-64 h-64 relative">
+                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#06C755] rounded-tl-sm" />
+                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[#06C755] rounded-tr-sm" />
+                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-[#06C755] rounded-bl-sm" />
+                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-[#06C755] rounded-br-sm" />
+              </div>
+            </div>
+          </div>
+          <p className="text-white/70 text-xs text-center pb-12">相手のQRコードを枠に合わせてください</p>
+        </div>
+      )}
+
       {loading && (
         <div className="flex items-center justify-center py-24 text-[#06C755] text-sm">読み込み中...</div>
       )}
       {!loading && (
         <div className="px-4 py-6 space-y-5">
-          {/* 使い方説明 */}
           <div className="bg-[#06C755]/8 rounded-2xl px-4 py-4 space-y-2">
             <p className="text-sm font-semibold text-[#05a847]">友達追加の使い方</p>
             <div className="space-y-1.5 text-xs text-gray-600">
@@ -98,11 +169,11 @@ export default function QrPage() {
 
           <button
             onClick={handleScan}
-            disabled={scanning || !profile}
+            disabled={!profile}
             className="w-full bg-[#06C755] text-white py-5 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[#05a847] shadow-sm flex items-center justify-center gap-3"
           >
             <span className="text-2xl">📷</span>
-            {scanning ? 'カメラ起動中...' : '相手のQRをスキャン'}
+            相手のQRをスキャン
           </button>
 
           {error && (

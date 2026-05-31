@@ -311,3 +311,17 @@ model Reservation {
 
   @@map("reservations")
 }
+
+
+model ErrorLog {
+  id        String   @id @default(uuid())
+  method    String   @db.VarChar(10)
+  url       String   @db.VarChar(500)
+  status    Int
+  message   String   @db.Text
+  stack     String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("error_logs")
+}

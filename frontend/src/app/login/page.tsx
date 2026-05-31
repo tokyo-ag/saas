@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { setToken } from '@/lib/auth';
@@ -16,6 +16,13 @@ export default function LoginPage() {
   const [emailNotVerified, setEmailNotVerified] = useState(false);
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('lineError')) {
+      setError('LINEログインに失敗しました。もう一度お試しください。');
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -114,6 +121,19 @@ export default function LoginPage() {
               {submitting ? 'ログイン中...' : 'ログイン'}
             </button>
           </form>
+
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-gray-200" />
+            <span className="text-xs text-gray-400">または</span>
+            <div className="h-px flex-1 bg-gray-200" />
+          </div>
+
+          <a
+            href={`${BASE}/api/auth/line`}
+            className="block w-full bg-[#06C755] text-white py-3.5 rounded-xl font-semibold text-sm text-center hover:bg-[#05a847] transition-colors"
+          >
+            LINEでログイン
+          </a>
         </div>
 
         <p className="text-center text-sm text-gray-500 mt-5">

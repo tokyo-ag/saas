@@ -67,16 +67,30 @@ export class SuperadminService implements OnApplicationBootstrap {
   async listTenants() {
     const tenants = await this.prisma.tenant.findMany({
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        plan: true,
+        bannedAt: true,
+        deletedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        stripeCustomerId: true,
+        stripeSubscriptionId: true,
+        lineChannelAccessToken: true,
         _count: { select: { members: true } },
         organizerAccounts: { select: { email: true }, take: 1 },
       },
     });
-    return tenants.map(({ _count, organizerAccounts, ...t }) => ({
-      ...t,
-      memberCount: _count.members,
-      organizerEmail: organizerAccounts[0]?.email ?? null,
-    }));
+    return tenants.map(
+      ({ _count, organizerAccounts, lineChannelAccessToken, ...t }) => ({
+        ...t,
+        lineConfigured: Boolean(lineChannelAccessToken),
+        memberCount: _count.members,
+        organizerEmail: organizerAccounts[0]?.email ?? null,
+      }),
+    );
   }
 
   async deactivateTenant(id: string) {
@@ -121,16 +135,17 @@ export class SuperadminService implements OnApplicationBootstrap {
 
   async createTenant(dto: CreateTenantDto) {
     const normalizedEmail = dto.email.trim().toLowerCase();
-    const accounts = await this.prisma.organizerAccount.findMany({
-      where: { email: { not: null } },
+    const existing = await this.prisma.organizerAccount.findFirst({
+      where: { email: { equals: normalizedEmail, mode: 'insensitive' } },
+      select: { id: true },
     });
-    if (accounts.some((a) => a.email?.toLowerCase() === normalizedEmail)) {
+    if (existing) {
       throw new ConflictException('このメールアドレスは既に使用されています');
     }
     const passwordHash = await bcrypt.hash(dto.password, 10);
     const id = `tenant-${Date.now()}`;
     const code = await this.generateUniqueCode();
-    return this.prisma.tenant.create({
+    const tenant = await this.prisma.tenant.create({
       data: {
         id,
         code,
@@ -145,7 +160,9 @@ export class SuperadminService implements OnApplicationBootstrap {
           },
         },
       },
+      select: { id: true, name: true, code: true, plan: true, createdAt: true },
     });
+    return tenant;
   }
 
   async updateTenant(id: string, dto: UpdateTenantDto) {
@@ -161,6 +178,7 @@ export class SuperadminService implements OnApplicationBootstrap {
           code: dto.code.trim().toLowerCase() || null,
         }),
       },
+      select: { id: true, name: true, code: true, plan: true, updatedAt: true },
     });
   }
 
@@ -249,6 +267,18 @@ export class SuperadminService implements OnApplicationBootstrap {
       where: { lineUserId },
       orderBy: { createdAt: 'asc' },
     });
+  }
+
+  async getErrorLogs() {
+    return this.prisma.errorLog.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
+  }
+
+  async clearErrorLogs() {
+    await this.prisma.errorLog.deleteMany();
+    return { message: 'cleared' };
   }
 
   async replySupportMessage(lineUserId: string, content: string) {

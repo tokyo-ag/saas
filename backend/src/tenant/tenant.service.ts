@@ -48,14 +48,14 @@ export class TenantService {
 
     const {
       lineChannelSecret: _lineChannelSecret,
-      lineChannelAccessToken,
+      lineChannelAccessToken: _lineChannelAccessToken,
       stripeSecretKey: _stripeSecretKey,
       stripeWebhookSecret: _stripeWebhookSecret,
       ...safe
     } = tenant;
     return {
       ...safe,
-      lineConfigured: Boolean(lineChannelAccessToken),
+      lineConfigured: Boolean(_lineChannelAccessToken),
     };
   }
 

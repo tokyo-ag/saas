@@ -79,6 +79,19 @@ export default function RegisterPage() {
             <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl">{error}</div>
           )}
 
+          <a
+            href={`${BASE}/api/auth/line`}
+            className="block w-full bg-[#06C755] text-white py-3.5 rounded-xl font-semibold text-sm text-center hover:bg-[#05a847] transition-colors"
+          >
+            LINEで登録する
+          </a>
+
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-gray-200" />
+            <span className="text-xs text-gray-400">または</span>
+            <div className="h-px flex-1 bg-gray-200" />
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">団体名・サークル名</label>

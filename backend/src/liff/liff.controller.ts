@@ -7,17 +7,23 @@ import {
   Param,
   Body,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   LiffService,
   CreateReservationDto,
   SubmitReviewDto,
+  SendMessageDto,
 } from './liff.service';
+import { LiffGuard } from '../auth/liff.guard';
+import { LiffUser } from '../auth/liff-user.decorator';
 
 // /api/liff/:tenantId/... という URL で受け付ける
 @Controller('liff/:tenantId')
 export class LiffController {
   constructor(private readonly liffService: LiffService) {}
+
+  // ---- 認証不要（公開） ----
 
   @Get()
   getTenantInfo(@Param('tenantId') tenantId: string) {
@@ -45,94 +51,12 @@ export class LiffController {
     return this.liffService.getEvent(tenantId, eventId);
   }
 
-  @Get('events/:eventId/my-reservation')
-  getMyReservation(
-    @Param('tenantId') tenantId: string,
-    @Param('eventId') eventId: string,
-    @Query('lineUserId') lineUserId: string,
-  ) {
-    return this.liffService.getMyReservation(tenantId, eventId, lineUserId);
-  }
-
   @Get('events/:eventId/reviews')
   getPublishedReviews(
     @Param('tenantId') tenantId: string,
     @Param('eventId') eventId: string,
   ) {
     return this.liffService.getPublishedReviews(tenantId, eventId);
-  }
-
-  @Get('events/:eventId/my-review')
-  getMyReview(
-    @Param('tenantId') tenantId: string,
-    @Param('eventId') eventId: string,
-    @Query('lineUserId') lineUserId: string,
-  ) {
-    return this.liffService.getMyReview(tenantId, eventId, lineUserId);
-  }
-
-  @Post('events/:eventId/reviews')
-  submitReview(
-    @Param('tenantId') tenantId: string,
-    @Param('eventId') eventId: string,
-    @Body() dto: SubmitReviewDto,
-  ) {
-    return this.liffService.submitReview(tenantId, eventId, dto);
-  }
-
-  @Post('reservations')
-  createReservation(
-    @Param('tenantId') tenantId: string,
-    @Body() dto: CreateReservationDto,
-  ) {
-    return this.liffService.createReservation(tenantId, dto);
-  }
-
-  @Delete('reservations/:reservationId')
-  cancelReservation(
-    @Param('tenantId') tenantId: string,
-    @Param('reservationId') reservationId: string,
-  ) {
-    return this.liffService.cancelReservation(tenantId, reservationId);
-  }
-
-  @Get('profile')
-  getProfile(
-    @Param('tenantId') tenantId: string,
-    @Query('lineUserId') lineUserId: string,
-  ) {
-    return this.liffService.getProfile(tenantId, lineUserId);
-  }
-
-  @Patch('profile')
-  updateProfile(
-    @Param('tenantId') tenantId: string,
-    @Query('lineUserId') lineUserId: string,
-    @Body() body: { name: string; grade: string; gender: string },
-  ) {
-    return this.liffService.updateProfile(tenantId, lineUserId, body);
-  }
-
-  @Patch('profile/line')
-  syncLineProfile(
-    @Param('tenantId') tenantId: string,
-    @Query('lineUserId') lineUserId: string,
-    @Body() body: { lineDisplayName?: string; linePictureUrl?: string },
-  ) {
-    return this.liffService.syncLineProfile(tenantId, lineUserId, body);
-  }
-
-  @Patch('profile/settings')
-  updateSettings(
-    @Param('tenantId') tenantId: string,
-    @Query('lineUserId') lineUserId: string,
-    @Body() body: { showEventsToConnections: boolean },
-  ) {
-    return this.liffService.updateSettings(
-      tenantId,
-      lineUserId,
-      body.showEventsToConnections,
-    );
   }
 
   @Get('members/:memberId')
@@ -143,57 +67,182 @@ export class LiffController {
     return this.liffService.getMemberProfile(tenantId, memberId);
   }
 
+  // ---- 認証必須（LINEトークン検証） ----
+
+  @UseGuards(LiffGuard)
+  @Get('events/:eventId/my-reservation')
+  getMyReservation(
+    @Param('tenantId') tenantId: string,
+    @Param('eventId') eventId: string,
+    @LiffUser() lineUserId: string,
+  ) {
+    return this.liffService.getMyReservation(tenantId, eventId, lineUserId);
+  }
+
+  @UseGuards(LiffGuard)
+  @Get('events/:eventId/my-review')
+  getMyReview(
+    @Param('tenantId') tenantId: string,
+    @Param('eventId') eventId: string,
+    @LiffUser() lineUserId: string,
+  ) {
+    return this.liffService.getMyReview(tenantId, eventId, lineUserId);
+  }
+
+  @UseGuards(LiffGuard)
+  @Post('events/:eventId/reviews')
+  submitReview(
+    @Param('tenantId') tenantId: string,
+    @Param('eventId') eventId: string,
+    @LiffUser() lineUserId: string,
+    @Body() dto: SubmitReviewDto,
+  ) {
+    dto.lineUserId = lineUserId;
+    return this.liffService.submitReview(tenantId, eventId, dto);
+  }
+
+  @UseGuards(LiffGuard)
+  @Post('reservations')
+  createReservation(
+    @Param('tenantId') tenantId: string,
+    @LiffUser() lineUserId: string,
+    @Body() dto: CreateReservationDto,
+  ) {
+    dto.lineUserId = lineUserId;
+    return this.liffService.createReservation(tenantId, dto);
+  }
+
+  @UseGuards(LiffGuard)
+  @Delete('reservations/:reservationId')
+  cancelReservation(
+    @Param('tenantId') tenantId: string,
+    @Param('reservationId') reservationId: string,
+    @LiffUser() lineUserId: string,
+  ) {
+    return this.liffService.cancelReservation(
+      tenantId,
+      reservationId,
+      lineUserId,
+    );
+  }
+
+  @UseGuards(LiffGuard)
+  @Post('join')
+  joinTenant(
+    @Param('tenantId') tenantId: string,
+    @LiffUser() lineUserId: string,
+    @Body() body: { lineDisplayName?: string; linePictureUrl?: string },
+  ) {
+    return this.liffService.joinTenant(
+      tenantId,
+      lineUserId,
+      body.lineDisplayName,
+      body.linePictureUrl,
+    );
+  }
+
+  @UseGuards(LiffGuard)
+  @Get('profile')
+  getProfile(
+    @Param('tenantId') tenantId: string,
+    @LiffUser() lineUserId: string,
+  ) {
+    return this.liffService.getProfile(tenantId, lineUserId);
+  }
+
+  @UseGuards(LiffGuard)
+  @Patch('profile')
+  updateProfile(
+    @Param('tenantId') tenantId: string,
+    @LiffUser() lineUserId: string,
+    @Body() body: { name: string; grade: string; gender: string },
+  ) {
+    return this.liffService.updateProfile(tenantId, lineUserId, body);
+  }
+
+  @UseGuards(LiffGuard)
+  @Patch('profile/line')
+  syncLineProfile(
+    @Param('tenantId') tenantId: string,
+    @LiffUser() lineUserId: string,
+    @Body() body: { lineDisplayName?: string; linePictureUrl?: string },
+  ) {
+    return this.liffService.syncLineProfile(tenantId, lineUserId, body);
+  }
+
+  @UseGuards(LiffGuard)
+  @Patch('profile/settings')
+  updateSettings(
+    @Param('tenantId') tenantId: string,
+    @LiffUser() lineUserId: string,
+    @Body() body: { showEventsToConnections: boolean },
+  ) {
+    return this.liffService.updateSettings(
+      tenantId,
+      lineUserId,
+      body.showEventsToConnections,
+    );
+  }
+
+  @UseGuards(LiffGuard)
   @Post('connections')
   createConnection(
     @Param('tenantId') tenantId: string,
-    @Body() body: { myLineUserId: string; targetMemberId: string },
+    @LiffUser() lineUserId: string,
+    @Body() body: { targetMemberId: string },
   ) {
     return this.liffService.createConnection(
       tenantId,
-      body.myLineUserId,
+      lineUserId,
       body.targetMemberId,
     );
   }
 
+  @UseGuards(LiffGuard)
   @Get('connections')
   getConnections(
     @Param('tenantId') tenantId: string,
-    @Query('lineUserId') lineUserId: string,
+    @LiffUser() lineUserId: string,
   ) {
     return this.liffService.getConnections(tenantId, lineUserId);
   }
 
+  @UseGuards(LiffGuard)
   @Get('connections/:connectionId/messages')
   getMessages(
     @Param('tenantId') tenantId: string,
     @Param('connectionId') connectionId: string,
-    @Query('lineUserId') lineUserId: string,
+    @LiffUser() lineUserId: string,
   ) {
     return this.liffService.getMessages(tenantId, connectionId, lineUserId);
   }
 
+  @UseGuards(LiffGuard)
   @Post('connections/:connectionId/messages')
   sendMessage(
     @Param('tenantId') tenantId: string,
     @Param('connectionId') connectionId: string,
-    @Body() body: { lineUserId: string; content: string },
+    @LiffUser() lineUserId: string,
+    @Body() dto: SendMessageDto,
   ) {
     return this.liffService.sendMessage(
       tenantId,
       connectionId,
-      body.lineUserId,
-      body.content,
+      lineUserId,
+      dto.content,
     );
   }
 
+  @UseGuards(LiffGuard)
   @Get('notifications')
   getNotifications(
     @Param('tenantId') tenantId: string,
-    @Query('lineUserId') lineUserId: string,
+    @LiffUser() lineUserId: string,
   ) {
     return this.liffService.getNotifications(tenantId, lineUserId);
   }
 
+  @UseGuards(LiffGuard)
   @Patch('notifications/:notificationId/read')
   markRead(
     @Param('tenantId') tenantId: string,
@@ -202,55 +251,63 @@ export class LiffController {
     return this.liffService.markNotificationRead(tenantId, notificationId);
   }
 
+  @UseGuards(LiffGuard)
   @Patch('notifications/read-all')
   markAllRead(
     @Param('tenantId') tenantId: string,
-    @Query('lineUserId') lineUserId: string,
+    @LiffUser() lineUserId: string,
   ) {
     return this.liffService.markAllNotificationsRead(tenantId, lineUserId);
   }
 
-  // 管理者↔メンバー トーク（メンバー側）
+  @UseGuards(LiffGuard)
   @Get('admin-messages')
   getAdminMessages(
     @Param('tenantId') tenantId: string,
-    @Query('lineUserId') lineUserId: string,
+    @LiffUser() lineUserId: string,
   ) {
     return this.liffService.getAdminMessages(tenantId, lineUserId);
   }
 
+  @UseGuards(LiffGuard)
   @Post('admin-messages')
   sendToAdmin(
     @Param('tenantId') tenantId: string,
-    @Body('lineUserId') lineUserId: string,
-    @Body('content') content: string,
+    @LiffUser() lineUserId: string,
+    @Body() dto: SendMessageDto,
   ) {
-    return this.liffService.sendToAdmin(tenantId, lineUserId, content);
+    return this.liffService.sendToAdmin(tenantId, lineUserId, dto.content);
   }
 
+  @UseGuards(LiffGuard)
   @Patch('admin-messages/read')
   markAdminMessagesRead(
     @Param('tenantId') tenantId: string,
-    @Query('lineUserId') lineUserId: string,
+    @LiffUser() lineUserId: string,
   ) {
     return this.liffService.markAdminMessagesRead(tenantId, lineUserId);
   }
 
-  // サポート（ユーザー↔COMIU）
+  @UseGuards(LiffGuard)
   @Get('support')
   getSupportMessages(
     @Param('tenantId') tenantId: string,
-    @Query('lineUserId') lineUserId: string,
+    @LiffUser() lineUserId: string,
   ) {
     return this.liffService.getSupportMessages(lineUserId);
   }
 
+  @UseGuards(LiffGuard)
   @Post('support')
   sendSupportMessage(
     @Param('tenantId') tenantId: string,
-    @Body('lineUserId') lineUserId: string,
-    @Body('content') content: string,
+    @LiffUser() lineUserId: string,
+    @Body() dto: SendMessageDto,
   ) {
-    return this.liffService.sendSupportMessage(lineUserId, tenantId, content);
+    return this.liffService.sendSupportMessage(
+      lineUserId,
+      tenantId,
+      dto.content,
+    );
   }
 }

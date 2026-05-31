@@ -98,7 +98,11 @@ export class PublicController {
   @Get('tenant-theme/:tenantId')
   async getTenantTheme(@Param('tenantId') tenantId: string) {
     const tenant = await this.prisma.tenant.findFirst({
-      where: { OR: [{ id: tenantId }, { code: tenantId }], deletedAt: null },
+      where: {
+        OR: [{ id: tenantId }, { code: tenantId }],
+        deletedAt: null,
+        bannedAt: null,
+      },
       select: { themeColor: true },
     });
     return { themeColor: tenant?.themeColor ?? 'green' };
@@ -151,7 +155,7 @@ export class PublicController {
     const event = await this.prisma.event.findFirst({
       where: {
         id: eventId,
-        tenant: { deletedAt: null },
+        tenant: { deletedAt: null, bannedAt: null },
       },
       include: {
         tenant: {

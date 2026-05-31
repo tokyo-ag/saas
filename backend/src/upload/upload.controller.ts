@@ -12,6 +12,7 @@ import { extname, join } from 'path';
 import { AdminGuard } from '../auth/admin.guard';
 
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const ALLOWED_EXT = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
 const MAX_SIZE = 5 * 1024 * 1024;
 
 @UseGuards(AdminGuard)
@@ -29,7 +30,8 @@ export class UploadController {
       }),
       limits: { fileSize: MAX_SIZE },
       fileFilter: (_req, file, cb) => {
-        if (ALLOWED_MIME.includes(file.mimetype)) {
+        const ext = extname(file.originalname).toLowerCase();
+        if (ALLOWED_MIME.includes(file.mimetype) && ALLOWED_EXT.includes(ext)) {
           cb(null, true);
         } else {
           cb(

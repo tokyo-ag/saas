@@ -35,7 +35,6 @@ export class MembersService {
     return members.map((m) => ({
       id: m.id,
       tenantId: m.tenantId,
-      lineUserId: m.lineUserId,
       lineDisplayName: m.lineDisplayName,
       linePictureUrl: m.linePictureUrl,
       name: m.name,

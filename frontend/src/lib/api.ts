@@ -3,13 +3,20 @@ const BASE = API_URL + '/api';
 
 import { getToken, clearToken } from './auth';
 
+let _liffToken: string | null = null;
+export function setLiffToken(token: string | null) {
+  _liffToken = token;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const isSuperadmin = path.startsWith('/superadmin');
   const isAdmin = path.startsWith('/admin');
+  const isLiff = path.startsWith('/liff/');
   const needsAuth = isSuperadmin || isAdmin || path === '/auth/reconfirm' || path === '/auth/me' || path === '/auth/set-email-password' || path === '/auth/resend-verification';
   const token = needsAuth ? getToken() : null;
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
+  if (isLiff && _liffToken) headers['Authorization'] = `Bearer ${_liffToken}`;
 
   const { headers: optionHeaders, ...restOptions } = options ?? {};
   const res = await fetch(`${BASE}${path}`, {
@@ -139,6 +146,8 @@ export const api = {
       }),
     cancel: (tenantId: string, reservationId: string) =>
       request<void>(`/liff/${tenantId}/reservations/${reservationId}`, { method: 'DELETE' }),
+    join: (tenantId: string, data: { lineDisplayName?: string; linePictureUrl?: string }) =>
+      request<LiffProfile>(`/liff/${tenantId}/join`, { method: 'POST', body: JSON.stringify(data) }),
     profile: (tenantId: string, lineUserId: string) =>
       request<LiffProfile>(`/liff/${tenantId}/profile?lineUserId=${encodeURIComponent(lineUserId)}`),
     memberProfile: (tenantId: string, memberId: string) =>
@@ -281,6 +290,8 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ content }),
       }),
+    errorLogs: () => request<ErrorLog[]>('/superadmin/errors'),
+    clearErrorLogs: () => request<void>('/superadmin/errors', { method: 'DELETE' }),
   },
 };
 
@@ -397,6 +408,16 @@ export interface SupportMessage {
   content: string;
   fromUser: boolean;
   read: boolean;
+  createdAt: string;
+}
+
+export interface ErrorLog {
+  id: string;
+  method: string;
+  url: string;
+  status: number;
+  message: string;
+  stack?: string | null;
   createdAt: string;
 }
 
