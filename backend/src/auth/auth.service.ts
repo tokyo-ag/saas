@@ -239,16 +239,13 @@ export class AuthService {
       where: { email: { equals: trimmedEmail, mode: 'insensitive' } },
     });
     // Always run bcrypt to prevent timing-based email enumeration
-    const DUMMY_HASH = '$2b$10$dummyhashfornoaccountXXXXXXXXXXXXXXXXXXXXXXXX';
+    const DUMMY_HASH =
+      '$2b$10$m3uTNheJt3kDmW/E0lwjcOKRYLI0JIGwJ5e5Youmc7jUPbPETHUwu';
     const valid = await bcrypt.compare(
       password,
       account?.passwordHash ?? DUMMY_HASH,
     );
     if (!account?.passwordHash || !valid)
-      throw new UnauthorizedException(
-        'メールアドレスまたはパスワードが正しくありません',
-      );
-    if (!valid)
       throw new UnauthorizedException(
         'メールアドレスまたはパスワードが正しくありません',
       );

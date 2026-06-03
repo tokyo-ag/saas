@@ -20,7 +20,6 @@ export class StripeService {
   ) {
     const stripe = this.getClient(secretKey);
     return stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
       line_items: [
         {
           price_data: {

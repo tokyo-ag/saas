@@ -433,7 +433,6 @@ export class TenantService {
     const stripe = new Stripe(secretKey, { apiVersion: '2026-04-22.dahlia' });
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
-      payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
       customer: tenant.stripeCustomerId ?? undefined,
       success_url: `${frontendUrl}/admin/settings/plan?success=true`,

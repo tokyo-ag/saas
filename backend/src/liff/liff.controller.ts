@@ -6,7 +6,6 @@ import {
   Delete,
   Param,
   Body,
-  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -36,9 +35,15 @@ export class LiffController {
   }
 
   @Get('events')
-  getEvents(
+  getEvents(@Param('tenantId') tenantId: string) {
+    return this.liffService.getEvents(tenantId);
+  }
+
+  @UseGuards(LiffGuard)
+  @Get('events/with-friends')
+  getEventsWithFriends(
     @Param('tenantId') tenantId: string,
-    @Query('lineUserId') lineUserId?: string,
+    @LiffUser() lineUserId: string,
   ) {
     return this.liffService.getEvents(tenantId, lineUserId);
   }
@@ -247,8 +252,13 @@ export class LiffController {
   markRead(
     @Param('tenantId') tenantId: string,
     @Param('notificationId') notificationId: string,
+    @LiffUser() lineUserId: string,
   ) {
-    return this.liffService.markNotificationRead(tenantId, notificationId);
+    return this.liffService.markNotificationRead(
+      tenantId,
+      notificationId,
+      lineUserId,
+    );
   }
 
   @UseGuards(LiffGuard)

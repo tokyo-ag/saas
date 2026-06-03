@@ -16,10 +16,16 @@ import { SuperadminGuard } from './superadmin.guard';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') ?? 'dev-secret-change-me',
-        signOptions: { expiresIn: '30d' },
-      }),
+      useFactory: (config: ConfigService) => {
+        const secret = config.get<string>('JWT_SECRET');
+        if (!secret && process.env.NODE_ENV === 'production') {
+          throw new Error('JWT_SECRET is required in production');
+        }
+        return {
+          secret: secret ?? 'dev-secret-change-me',
+          signOptions: { expiresIn: '30d' },
+        };
+      },
     }),
   ],
   controllers: [AuthController],
