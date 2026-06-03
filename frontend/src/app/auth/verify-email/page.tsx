@@ -3,8 +3,9 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { CLIENT_API_BASE } from '@/lib/client-api-base';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const BASE = CLIENT_API_BASE;
 
 function VerifyEmailInner() {
   const searchParams = useSearchParams();
@@ -18,7 +19,7 @@ function VerifyEmailInner() {
       setMessage('無効なリンクです');
       return;
     }
-    fetch(`${BASE}/api/auth/verify-email?token=${encodeURIComponent(token)}`)
+    fetch(`${BASE}/auth/verify-email?token=${encodeURIComponent(token)}`)
       .then(async (res) => {
         const data = await res.json() as { message?: string };
         if (res.ok) {

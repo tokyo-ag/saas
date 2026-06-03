@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, Tenant, TenantInput } from '@/lib/api';
+import { DIRECT_API_URL } from '@/lib/client-api-base';
 import { SaveToast } from '@/components/ui/SaveToast';
 
 const tabs = [
@@ -97,7 +98,7 @@ export default function StripeSettingsPage() {
     );
   }
 
-  const webhookUrl = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api/stripe-webhook/${tenant.id}`;
+  const webhookUrl = `${DIRECT_API_URL}/api/stripe-webhook/${tenant.id}`;
 
   return (
     <div className="px-4 py-4 md:px-6 md:py-6">

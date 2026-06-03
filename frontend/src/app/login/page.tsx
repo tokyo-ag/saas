@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { setToken } from '@/lib/auth';
+import { CLIENT_API_BASE, DIRECT_API_URL } from '@/lib/client-api-base';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const BASE = CLIENT_API_BASE;
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function LoginPage() {
     setEmailNotVerified(false);
     setSubmitting(true);
     try {
-      const res = await fetch(`${BASE}/api/auth/login`, {
+      const res = await fetch(`${BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -55,7 +56,7 @@ export default function LoginPage() {
   async function handleResend() {
     setResending(true);
     try {
-      await fetch(`${BASE}/api/auth/resend-verification-by-email`, {
+      await fetch(`${BASE}/auth/resend-verification-by-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -129,7 +130,7 @@ export default function LoginPage() {
           </div>
 
           <a
-            href={`${BASE}/api/auth/line`}
+            href={`${DIRECT_API_URL}/api/auth/line`}
             className="block w-full bg-[#06C755] text-white py-3.5 rounded-xl font-semibold text-sm text-center hover:bg-[#05a847] transition-colors"
           >
             LINEでログイン

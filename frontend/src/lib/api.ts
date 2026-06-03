@@ -1,7 +1,8 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-const BASE = API_URL + '/api';
-
 import { getToken, clearToken } from './auth';
+import { CLIENT_API_BASE, DIRECT_API_URL } from './client-api-base';
+
+export const API_URL = DIRECT_API_URL;
+const BASE = CLIENT_API_BASE;
 
 let _liffToken: string | null = null;
 export function setLiffToken(token: string | null) {
@@ -41,7 +42,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 export async function downloadWithAuth(url: string, filename: string): Promise<void> {
   const token = getToken();
-  const res = await fetch(url, {
+  const requestUrl =
+    typeof window === 'undefined'
+      ? url
+      : url.replace(`${API_URL}/api`, CLIENT_API_BASE);
+  const res = await fetch(requestUrl, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!res.ok) throw new Error('ダウンロードに失敗しました');

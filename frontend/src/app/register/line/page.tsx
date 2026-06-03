@@ -4,8 +4,9 @@ import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { setToken } from '@/lib/auth';
+import { CLIENT_API_BASE } from '@/lib/client-api-base';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const BASE = CLIENT_API_BASE;
 
 function RegisterLineInner() {
   const router = useRouter();
@@ -25,7 +26,7 @@ function RegisterLineInner() {
     setError('');
     setSubmitting(true);
     try {
-      const res = await fetch(`${BASE}/api/auth/line/complete`, {
+      const res = await fetch(`${BASE}/auth/line/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lineToken, orgName }),

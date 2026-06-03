@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getToken } from '@/lib/auth';
+import { CLIENT_API_BASE } from '@/lib/client-api-base';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const BASE = CLIENT_API_BASE;
 
 export default function EmailVerificationBanner() {
   const searchParams = useSearchParams();
@@ -16,7 +17,7 @@ export default function EmailVerificationBanner() {
   useEffect(() => {
     const token = getToken();
     if (!token) return;
-    fetch(`${BASE}/api/auth/me`, {
+    fetch(`${BASE}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (res) => {
@@ -32,7 +33,7 @@ export default function EmailVerificationBanner() {
     if (!token || resending) return;
     setResending(true);
     try {
-      await fetch(`${BASE}/api/auth/resend-verification`, {
+      await fetch(`${BASE}/auth/resend-verification`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });

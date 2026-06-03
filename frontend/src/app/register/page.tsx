@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { CLIENT_API_BASE, DIRECT_API_URL } from '@/lib/client-api-base';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const BASE = CLIENT_API_BASE;
 
 export default function RegisterPage() {
   const [orgName, setOrgName] = useState('');
@@ -22,7 +23,7 @@ export default function RegisterPage() {
     setError('');
     setSubmitting(true);
     try {
-      const res = await fetch(`${BASE}/api/auth/register`, {
+      const res = await fetch(`${BASE}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, orgName }),
@@ -80,7 +81,7 @@ export default function RegisterPage() {
           )}
 
           <a
-            href={`${BASE}/api/auth/line`}
+            href={`${DIRECT_API_URL}/api/auth/line`}
             className="block w-full bg-[#06C755] text-white py-3.5 rounded-xl font-semibold text-sm text-center hover:bg-[#05a847] transition-colors"
           >
             LINEで登録する

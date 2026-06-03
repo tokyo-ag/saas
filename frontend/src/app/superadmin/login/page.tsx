@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { setToken } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
+import { CLIENT_API_BASE } from '@/lib/client-api-base';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const BASE = CLIENT_API_BASE;
 
 export default function SuperadminLoginPage() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function SuperadminLoginPage() {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch(`${BASE}/api/auth/login`, {
+      const res = await fetch(`${BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

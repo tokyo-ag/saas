@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, Tenant, TenantInput } from '@/lib/api';
+import { DIRECT_API_URL } from '@/lib/client-api-base';
 import { SaveToast } from '@/components/ui/SaveToast';
 
-const BASE = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api`;
+const BASE = `${DIRECT_API_URL}/api`;
 
 type Step = 1 | 2 | 3 | 4;
 

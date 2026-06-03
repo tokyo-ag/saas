@@ -3,8 +3,9 @@
 import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { CLIENT_API_BASE } from '@/lib/client-api-base';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const BASE = CLIENT_API_BASE;
 
 function ResetPasswordInner() {
   const searchParams = useSearchParams();
@@ -21,7 +22,7 @@ function ResetPasswordInner() {
     setError('');
     setSubmitting(true);
     try {
-      const res = await fetch(`${BASE}/api/auth/reset-password`, {
+      const res = await fetch(`${BASE}/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, password }),
