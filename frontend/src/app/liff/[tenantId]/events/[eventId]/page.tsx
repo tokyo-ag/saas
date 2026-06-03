@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api, API_URL, formatDate, LiffEvent, LiffReservation } from '@/lib/api';
@@ -41,6 +42,18 @@ function Linkified({ text }: { text: string }) {
       )}
     </>
   );
+}
+
+function useLineBrowserBottomPad() {
+  const [pad, setPad] = useState(0);
+
+  useEffect(() => {
+    if (/Line\//i.test(navigator.userAgent) && !window.location.href.includes('liff.line.me')) {
+      setPad(49);
+    }
+  }, []);
+
+  return pad;
 }
 
 function CalendarIcon() {
@@ -91,6 +104,7 @@ export default function LiffEventDetailPage() {
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
+  const lineBrowserBottomPad = useLineBrowserBottomPad();
 
   useEffect(() => {
     async function load() {
@@ -191,7 +205,10 @@ export default function LiffEventDetailPage() {
   const reviews = event.reviews ?? [];
 
   return (
-    <div className="min-h-screen bg-white pb-48">
+    <div
+      className="min-h-screen bg-white"
+      style={{ paddingBottom: `calc(12rem + ${lineBrowserBottomPad}px + env(safe-area-inset-bottom))` }}
+    >
       {/* header */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 pt-12 pb-3 flex items-center gap-3">
         <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-gray-600 p-1 -ml-1 shrink-0">
@@ -208,7 +225,7 @@ export default function LiffEventDetailPage() {
       {/* hero image */}
       {event.imageUrl ? (
         <div className="relative">
-          <img src={imgUrl(event.imageUrl, API_URL)!} alt={event.title} className="w-full aspect-[4/5] object-cover" />
+          <Image src={imgUrl(event.imageUrl, API_URL)!} alt={event.title} width={1200} height={1500} className="w-full aspect-[4/5] object-cover" unoptimized />
           {(isFull || isClosed) && (
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
               <span className="bg-white/90 text-gray-800 text-sm font-bold px-4 py-1.5 rounded-full">
@@ -366,7 +383,10 @@ export default function LiffEventDetailPage() {
       )}
 
       {/* bottom action bar — sits above LiffBottomNav */}
-      <div className="fixed left-0 right-0 bg-white border-t border-gray-100 px-4 py-3" style={{ bottom: 'calc(56px + env(safe-area-inset-bottom))' }}>
+      <div
+        className="fixed left-0 right-0 z-40 bg-white border-t border-gray-100 px-4 py-3"
+        style={{ bottom: `calc(56px + ${lineBrowserBottomPad}px + env(safe-area-inset-bottom))` }}
+      >
         {myReservation ? (
           <div className="space-y-2">
             <p className="text-center text-sm font-semibold text-[#06C755]">
