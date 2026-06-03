@@ -10,6 +10,15 @@ function getCanonicalUrl() {
   }
 }
 
+function getApiUrl() {
+  const value =
+    process.env.API_BASE_URL ??
+    process.env.NEXT_PUBLIC_API_URL ??
+    "https://comiu.up.railway.app";
+
+  return value.replace(/\/+$/, "");
+}
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -49,6 +58,16 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
     ];
+  },
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: "/api/backend/:path*",
+          destination: `${getApiUrl()}/api/:path*`,
+        },
+      ],
+    };
   },
 };
 
