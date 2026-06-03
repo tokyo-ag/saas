@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -110,6 +111,7 @@ export class EventsService {
   }
 
   async create(tenantId: string, dto: CreateEventDto) {
+    const { heldAt, endAt, remindAt } = this.validateEventDates(dto);
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
     });
@@ -135,8 +137,8 @@ export class EventsService {
         tenantId,
         title: dto.title,
         description: dto.description,
-        heldAt: new Date(dto.heldAt),
-        endAt: dto.endAt ? new Date(dto.endAt) : null,
+        heldAt,
+        endAt,
         location: dto.location,
         locationUrl: dto.locationUrl ?? null,
         capacity: dto.capacity ?? null,
@@ -152,7 +154,7 @@ export class EventsService {
         notifyOnReserveApp: dto.notifyOnReserveApp ?? false,
         remindEnabled: dto.remindEnabled,
         remindApp: dto.remindApp ?? false,
-        remindAt: dto.remindAt ? new Date(dto.remindAt) : null,
+        remindAt,
         imageUrl: dto.imageUrl ?? null,
         iconUrl: dto.iconUrl ?? null,
         category: dto.category ?? null,
@@ -162,7 +164,12 @@ export class EventsService {
   }
 
   async update(tenantId: string, id: string, dto: Partial<CreateEventDto>) {
-    await this.findOne(tenantId, id);
+    const current = await this.findOne(tenantId, id);
+    const { heldAt, endAt, remindAt } = this.validateEventDates(dto, {
+      heldAt: current.heldAt,
+      endAt: current.endAt,
+      remindAt: current.remindAt,
+    });
     if (dto.remindEnabled) {
       const tenant = await this.prisma.tenant.findUnique({
         where: { id: tenantId },
@@ -178,10 +185,8 @@ export class EventsService {
       data: {
         ...(dto.title !== undefined && { title: dto.title }),
         ...(dto.description !== undefined && { description: dto.description }),
-        ...(dto.heldAt !== undefined && { heldAt: new Date(dto.heldAt) }),
-        ...(dto.endAt !== undefined && {
-          endAt: dto.endAt ? new Date(dto.endAt) : null,
-        }),
+        ...(dto.heldAt !== undefined && { heldAt }),
+        ...(dto.endAt !== undefined && { endAt }),
         ...(dto.location !== undefined && { location: dto.location }),
         ...(dto.capacity !== undefined && { capacity: dto.capacity ?? null }),
         ...(dto.status !== undefined && { status: dto.status }),
@@ -219,7 +224,7 @@ export class EventsService {
         }),
         ...(dto.remindApp !== undefined && { remindApp: dto.remindApp }),
         ...(dto.remindAt !== undefined && {
-          remindAt: dto.remindAt ? new Date(dto.remindAt) : null,
+          remindAt,
         }),
         ...(dto.imageUrl !== undefined && { imageUrl: dto.imageUrl || null }),
         ...(dto.iconUrl !== undefined && { iconUrl: dto.iconUrl || null }),
@@ -399,6 +404,11 @@ export class EventsService {
       orderBy: { reservedAt: 'asc' },
     });
 
+    const csvCell = (value: string | number | null | undefined) => {
+      const text = String(value ?? '');
+      return `"${text.replace(/"/g, '""')}"`;
+    };
+
     const header = '名前,学年,性別,予約日時,ステータス,支払い状況';
     const rows = reservations.map((r) => {
       const statusLabel = this.statusLabel(r.status, r.waitlistOrder);
@@ -410,7 +420,16 @@ export class EventsService {
       const date = new Date(r.reservedAt).toLocaleString('ja-JP', {
         timeZone: 'Asia/Tokyo',
       });
-      return `${r.member.name ?? ''},${r.member.grade ?? ''},${r.member.gender ?? ''},${date},${statusLabel},${paymentLabel}`;
+      return [
+        r.member.name,
+        r.member.grade,
+        r.member.gender,
+        date,
+        statusLabel,
+        paymentLabel,
+      ]
+        .map(csvCell)
+        .join(',');
     });
 
     return [header, ...rows].join('\n');
@@ -425,5 +444,49 @@ export class EventsService {
       waitlisted: `キャンセル待ち${waitlistOrder ?? ''}番`,
     };
     return map[status] ?? status;
+  }
+
+  private validateEventDates(
+    dto: Partial<CreateEventDto>,
+    current?: {
+      heldAt: Date;
+      endAt: Date | null;
+      remindAt: Date | null;
+    },
+  ) {
+    const heldAt =
+      dto.heldAt !== undefined ? new Date(dto.heldAt) : current?.heldAt;
+    const endAt =
+      dto.endAt !== undefined
+        ? dto.endAt
+          ? new Date(dto.endAt)
+          : null
+        : (current?.endAt ?? null);
+    const remindAt =
+      dto.remindAt !== undefined
+        ? dto.remindAt
+          ? new Date(dto.remindAt)
+          : null
+        : (current?.remindAt ?? null);
+
+    if (!heldAt || Number.isNaN(heldAt.getTime())) {
+      throw new BadRequestException('開始日時を正しく入力してください。');
+    }
+    if (endAt && Number.isNaN(endAt.getTime())) {
+      throw new BadRequestException('終了日時を正しく入力してください。');
+    }
+    if (remindAt && Number.isNaN(remindAt.getTime())) {
+      throw new BadRequestException('リマインド日時を正しく入力してください。');
+    }
+    if (endAt && endAt <= heldAt) {
+      throw new BadRequestException('終了日時は開始日時より後にしてください。');
+    }
+    if (remindAt && remindAt >= heldAt) {
+      throw new BadRequestException(
+        'リマインド日時は開始日時より前にしてください。',
+      );
+    }
+
+    return { heldAt, endAt, remindAt };
   }
 }

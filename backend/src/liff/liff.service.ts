@@ -101,7 +101,7 @@ export class LiffService {
       title: e.title,
       description: e.description,
       heldAt: e.heldAt,
-      endAt: e.endAt,
+      endAt: this.publicEndAt(e.heldAt, e.endAt),
       location: e.location,
       capacity: e.capacity,
       status: e.status,
@@ -170,7 +170,12 @@ export class LiffService {
 
     const reviews = await this.getPublishedReviews(tenantId, eventId);
 
-    return { ...event, reservedCount, reviews };
+    return {
+      ...event,
+      endAt: this.publicEndAt(event.heldAt, event.endAt),
+      reservedCount,
+      reviews,
+    };
   }
 
   async getPublishedReviews(tenantId: string, eventId: string) {
@@ -559,6 +564,11 @@ export class LiffService {
     if (!event) throw new NotFoundException('Event not found');
   }
 
+  private publicEndAt(heldAt: Date, endAt: Date | null) {
+    if (!endAt || endAt <= heldAt) return null;
+    return endAt;
+  }
+
   private async findMember(tenantId: string, lineUserId: string) {
     return this.prisma.member.findUnique({
       where: { tenantId_lineUserId: { tenantId, lineUserId } },
@@ -917,10 +927,16 @@ export class LiffService {
     });
   }
 
-  async markNotificationRead(tenantId: string, notificationId: string) {
+  async markNotificationRead(
+    tenantId: string,
+    notificationId: string,
+    lineUserId: string,
+  ) {
     tenantId = await this.resolveTenantId(tenantId);
+    const member = await this.findMember(tenantId, lineUserId);
+    if (!member) return;
     return this.prisma.notification.updateMany({
-      where: { id: notificationId, tenantId },
+      where: { id: notificationId, tenantId, memberId: member.id },
       data: { read: true },
     });
   }

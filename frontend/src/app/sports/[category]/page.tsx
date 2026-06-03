@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { PublicEvent } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
+import PublicFooter from '@/components/public/PublicFooter';
 
 import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
 
@@ -11,8 +12,7 @@ export const revalidate = 60;
 
 type CategoryMeta = {
   label: string;
-  emoji: string;
-  desc: string;
+  slug: string;
   intro: string;
   area: string;
   audience: string;
@@ -21,59 +21,99 @@ type CategoryMeta = {
 
 const CATEGORY_META: Record<string, CategoryMeta> = {
   badminton: {
+    slug: 'badminton',
     label: 'バドミントン',
-    emoji: '🏸',
-    desc: 'バドミントンサークル・交流イベント一覧',
     intro:
-      '東京で20代向けのバドミントンサークルや交流イベントを探せます。初心者歓迎の練習会から、社会人が仕事帰りや週末に参加しやすいイベントまで掲載しています。',
-    area: '池袋・豊島区・板橋区・北区・文京区など、東京の体育館やスポーツ施設で開催されるイベントを中心に掲載しています。',
-    audience: '20代社会人、初心者、久しぶりに運動したい人、同世代の友だちを増やしたい人が参加しやすいイベントを探せます。',
+      '東京で20代向けのバドミントンサークル・交流イベントを探せます。初心者歓迎、社会人向け、ひとり参加しやすいイベントを掲載しています。',
+    area:
+      '池袋、板橋、文京、豊島、新宿など、東京の体育館やスポーツ施設で開催されるイベントを中心に掲載します。',
+    audience:
+      '20代社会人、初心者、久しぶりに運動したい人、同年代の友達を増やしたい人に向いています。',
     faq: [
-      { q: '初心者でも参加できますか？', a: 'はい。初心者歓迎や経験不問のイベントが多く、ラケット貸出の有無もイベント詳細で確認できます。' },
-      { q: '参加費はどのくらいですか？', a: '会場費やシャトル代込みで500〜1,500円程度のイベントが中心です。詳細ページで事前に確認できます。' },
-      { q: '参加申込はどうやって行いますか？', a: 'イベント詳細からLINEの予約画面へ進み、必要事項を入力するだけで申込できます。' },
+      {
+        q: '初心者でも参加できますか？',
+        a: 'イベントごとに条件は異なりますが、初心者歓迎や経験不問のイベントを掲載しています。詳細ページでレベルや持ち物を確認できます。',
+      },
+      {
+        q: 'ラケットを持っていなくても大丈夫ですか？',
+        a: '貸出の有無はイベントごとに異なります。イベント詳細ページで主催者の案内を確認してください。',
+      },
+      {
+        q: '参加費はどのくらいですか？',
+        a: '無料イベントから、会場費を参加者で分けるイベントまであります。参加費は詳細ページで事前に確認できます。',
+      },
     ],
   },
   futsal: {
+    slug: 'futsal',
     label: 'フットサル',
-    emoji: '⚽',
-    desc: 'フットサルサークル・交流イベント一覧',
     intro:
-      '東京で20代向けのフットサルサークルや交流イベントを探せます。男女混合で楽しめる試合形式から、初心者も入りやすいゆるめのイベントまで掲載しています。',
-    area: '池袋周辺、豊島区、板橋区、北区、練馬区など、アクセスしやすい東京のフットサルコートで開催されるイベントを中心に掲載しています。',
-    audience: 'サッカー経験者だけでなく、運動不足を解消したい人、同世代と気軽に試合を楽しみたい人にも向いています。',
+      '東京で20代向けのフットサルサークル・交流イベントを探せます。男女混合、初心者歓迎、社会人向けのイベントを掲載しています。',
+    area:
+      '池袋、渋谷、新宿、練馬、豊島など、アクセスしやすい東京のフットサルコートで開催されるイベントを中心に掲載します。',
+    audience:
+      'サッカー経験者だけでなく、運動不足を解消したい人、同年代と気軽に試合を楽しみたい人にも向いています。',
     faq: [
-      { q: 'サッカー未経験でも参加できますか？', a: '初心者歓迎やエンジョイ寄りのイベントなら参加しやすいです。強度やレベルはイベント詳細で確認してください。' },
-      { q: '一人参加でも大丈夫ですか？', a: '一人参加を前提にした交流イベントもあります。主催者や参加条件を見て選べます。' },
-      { q: '必要な持ち物はありますか？', a: '動きやすい服装、シューズ、飲み物が基本です。屋内外やコート条件はイベント詳細で確認できます。' },
+      {
+        q: 'サッカー未経験でも参加できますか？',
+        a: '初心者歓迎やエンジョイ寄りのイベントであれば参加しやすいです。強度やレベルはイベント詳細で確認してください。',
+      },
+      {
+        q: 'ひとり参加でも大丈夫ですか？',
+        a: 'ひとり参加を前提にした交流イベントもあります。主催者や参加条件を見て選べます。',
+      },
+      {
+        q: '必要な持ち物はありますか？',
+        a: '動きやすい服装、シューズ、飲み物が基本です。屋内外やコート条件はイベント詳細で確認できます。',
+      },
     ],
   },
   basketball: {
-    label: 'バスケットボール',
-    emoji: '🏀',
-    desc: 'バスケットボールサークル・交流イベント一覧',
+    slug: 'basketball',
+    label: 'バスケ',
     intro:
-      '東京で20代向けのバスケットボールサークルや交流イベントを探せます。3on3から5on5まで、社会人が参加しやすい日程のイベントを掲載しています。',
-    area: '池袋・豊島区・板橋区・北区・文京区など、東京の体育館やレンタルコートで開催されるイベントを中心に掲載しています。',
-    audience: '経験者はもちろん、久しぶりにバスケをしたい人、初心者歓迎の交流会を探している人にも使いやすい一覧です。',
+      '東京で20代向けのバスケサークル・交流イベントを探せます。3on3から5on5まで、社会人が参加しやすいイベントを掲載しています。',
+    area:
+      '池袋、板橋、文京、豊島、新宿など、東京の体育館やレンタルコートで開催されるイベントを中心に掲載します。',
+    audience:
+      '経験者はもちろん、久しぶりにバスケをしたい人、初心者歓迎の交流会を探している人にも使いやすい一覧です。',
     faq: [
-      { q: 'ブランクがあっても参加できますか？', a: 'はい。エンジョイ寄りや初心者歓迎のイベントなら、久しぶりの方でも参加しやすいです。' },
-      { q: '男女混合のイベントはありますか？', a: 'イベントごとに参加条件が異なります。詳細ページで男女比や対象レベルを確認できます。' },
-      { q: '参加費は事前に分かりますか？', a: '各イベント詳細に参加費が表示されます。無料または会場費を参加者で分担するイベントがあります。' },
+      {
+        q: 'ブランクがあっても参加できますか？',
+        a: 'エンジョイ寄りや初心者歓迎のイベントなら参加しやすいです。イベント詳細でレベル感を確認してください。',
+      },
+      {
+        q: '男女混合のイベントはありますか？',
+        a: 'イベントごとに参加条件が異なります。詳細ページで対象者や雰囲気を確認できます。',
+      },
+      {
+        q: '参加費は事前に分かりますか？',
+        a: 'はい。イベント詳細に参加費を表示しています。無料または会場費を分けるイベントがあります。',
+      },
     ],
   },
   volleyball: {
-    label: 'バレーボール',
-    emoji: '🏐',
-    desc: 'バレーボールサークル・交流イベント一覧',
+    slug: 'volleyball',
+    label: 'バレー',
     intro:
-      '東京で20代向けのバレーボールサークルや交流イベントを探せます。初心者歓迎のゆるい交流会から、社会人向けの練習会まで掲載しています。',
-    area: '池袋・豊島区・板橋区・北区・文京区など、東京の体育館で開催されるイベントを中心に掲載しています。',
-    audience: 'バレー経験者、初心者、同世代とチームスポーツを楽しみたい人が参加しやすいイベントを探せます。',
+      '東京で20代向けのバレーサークル・交流イベントを探せます。初心者歓迎、経験者向け、社会人向けの練習会を掲載しています。',
+    area:
+      '池袋、板橋、文京、豊島、新宿など、東京の体育館で開催されるイベントを中心に掲載します。',
+    audience:
+      'バレー経験者、初心者、同年代とチームスポーツを楽しみたい人が参加しやすいイベントを探せます。',
     faq: [
-      { q: 'バレーボール初心者でも参加できますか？', a: '初心者歓迎や経験不問のイベントなら参加しやすいです。レベル感はイベント詳細で確認できます。' },
-      { q: '一人でも参加できますか？', a: '一人参加を受け付けているイベントがあります。LINEから申込できるので、初参加でも流れを確認しやすいです。' },
-      { q: 'どのエリアで開催されていますか？', a: '池袋周辺や豊島区、板橋区、北区、文京区など、東京の体育館開催が中心です。' },
+      {
+        q: 'バレー初心者でも参加できますか？',
+        a: '初心者歓迎や経験不問のイベントなら参加しやすいです。ルールやレベル感はイベント詳細で確認できます。',
+      },
+      {
+        q: 'ひとりでも参加できますか？',
+        a: 'ひとり参加を受け付けているイベントがあります。LINEから申し込めるので、流れを確認しやすいです。',
+      },
+      {
+        q: 'どのエリアで開催されていますか？',
+        a: '池袋周辺、豊島、板橋、文京、新宿など、東京の体育館開催が中心です。',
+      },
     ],
   },
 };
@@ -82,7 +122,11 @@ export function generateStaticParams() {
   return Object.keys(CATEGORY_META).map((category) => ({ category }));
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ category: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ category: string }>;
+}): Promise<Metadata> {
   if (process.env.NEXT_PUBLIC_DISCOVERY_LOCKED === 'true') {
     return { robots: { index: false, follow: false } };
   }
@@ -114,7 +158,9 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
 async function fetchEvents(category: string): Promise<PublicEvent[]> {
   try {
     const params = new URLSearchParams({ category });
-    const res = await fetch(`${API_URL}/api/public/events?${params.toString()}`, { next: { revalidate } });
+    const res = await fetch(`${API_URL}/api/public/events?${params.toString()}`, {
+      next: { revalidate },
+    });
     if (!res.ok) return [];
     return res.json();
   } catch {
@@ -124,15 +170,24 @@ async function fetchEvents(category: string): Promise<PublicEvent[]> {
 
 function fmtDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('ja-JP', {
-    month: 'numeric', day: 'numeric', weekday: 'short',
-    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo',
+    month: 'numeric',
+    day: 'numeric',
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Tokyo',
   });
 }
 
 function eventHref(event: PublicEvent) {
-  return event.tenantCode
-    ? `/e/${event.tenantCode}/${event.id}`
-    : '/';
+  return event.tenantCode ? `/e/${event.tenantCode}/${event.id}` : '/';
+}
+
+function priceLabel(event: PublicEvent) {
+  if (event.priceMale != null && event.priceFemale != null) {
+    return `¥${Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜`;
+  }
+  return event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
 }
 
 export default async function SportsCategoryPage({
@@ -143,17 +198,16 @@ export default async function SportsCategoryPage({
   if (process.env.NEXT_PUBLIC_DISCOVERY_LOCKED === 'true') {
     return (
       <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-8 text-center gap-5">
-        <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-        </div>
         <div>
-          <p className="text-lg font-bold text-gray-800">まもなくオープン</p>
-          <p className="text-sm text-gray-400 mt-1">このページは準備中です</p>
+          <p className="text-lg font-bold text-gray-800">まもなく公開</p>
+          <p className="text-sm text-gray-400 mt-1">
+            このページは準備中です
+          </p>
         </div>
-        <Link href="/" className="bg-[#06C755] text-white font-bold text-sm px-8 py-3 rounded-full">
+        <Link
+          href="/"
+          className="bg-[#06C755] text-white font-bold text-sm px-8 py-3 rounded-full"
+        >
           ホームへ戻る
         </Link>
       </div>
@@ -165,6 +219,7 @@ export default async function SportsCategoryPage({
   if (!meta) notFound();
 
   const events = await fetchEvents(category);
+  const listedEvents = events.filter((ev) => ev.tenantCode).slice(0, 10);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -173,24 +228,26 @@ export default async function SportsCategoryPage({
         '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'ホーム', item: SITE_URL },
-          { '@type': 'ListItem', position: 2, name: `${meta.label}サークル・交流会 東京`, item: `${SITE_URL}/sports/${category}` },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: `${meta.label}サークル・交流会 東京`,
+            item: `${SITE_URL}/sports/${category}`,
+          },
         ],
       },
-      ...(events.length > 0
+      ...(listedEvents.length > 0
         ? [
             {
               '@type': 'ItemList',
-              name: `${meta.label}のイベント一覧`,
-              numberOfItems: events.length,
-              itemListElement: events
-                .filter((ev) => ev.tenantCode)
-                .slice(0, 10)
-                .map((ev, i) => ({
-                  '@type': 'ListItem',
-                  position: i + 1,
-                  url: `${SITE_URL}/e/${ev.tenantCode}/${ev.id}`,
-                  name: ev.title,
-                })),
+              name: `${meta.label}イベント一覧`,
+              numberOfItems: listedEvents.length,
+              itemListElement: listedEvents.map((ev, i) => ({
+                '@type': 'ListItem',
+                position: i + 1,
+                url: `${SITE_URL}/e/${ev.tenantCode}/${ev.id}`,
+                name: ev.title,
+              })),
             },
           ]
         : []),
@@ -209,18 +266,33 @@ export default async function SportsCategoryPage({
     <div className="min-h-screen bg-[#F5F5F5] pb-16">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+        }}
       />
       <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 pt-12 pb-3 sm:pt-4">
         <div className="flex items-center gap-3">
           <Link href="/" className="text-gray-500 p-1 -ml-1">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </Link>
           <div>
-            <h1 className="text-[18px] font-bold text-gray-900">{meta.emoji} {meta.label}サークル・交流会 東京</h1>
-            <p className="text-[11px] text-gray-400">{meta.desc}</p>
+            <h1 className="text-[18px] font-bold text-gray-900">
+              {meta.label}サークル・交流会 東京
+            </h1>
+            <p className="text-[11px] text-gray-400">
+              20代向けイベントをLINEで参加予約
+            </p>
           </div>
         </div>
       </div>
@@ -228,54 +300,72 @@ export default async function SportsCategoryPage({
       <div className="px-4 pt-2">
         {events.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <p className="text-4xl mb-3">{meta.emoji}</p>
-            <p className="text-gray-700 font-semibold text-sm">{meta.label}のイベントは現在ありません</p>
-            <p className="text-gray-400 text-xs mt-1 leading-relaxed">主催者が増えるとここにイベントが表示されます</p>
-            <Link href="/" className="mt-6 bg-[#06C755] text-white font-bold text-sm px-6 py-2.5 rounded-full">
+            <p className="text-gray-700 font-semibold text-sm">
+              {meta.label}のイベントは現在ありません
+            </p>
+            <p className="text-gray-400 text-xs mt-1 leading-relaxed">
+              主催者がイベントを公開すると、ここに表示されます。
+            </p>
+            <Link
+              href="/"
+              className="mt-6 bg-[#06C755] text-white font-bold text-sm px-6 py-2.5 rounded-full"
+            >
               トップへ戻る
             </Link>
           </div>
         ) : (
           <div className="space-y-3">
             {events.map((ev) => {
-              const img = imgUrl(ev.imageUrl, IMAGE_BASE_URL);
+              const image = imgUrl(ev.imageUrl, IMAGE_BASE_URL);
               const org = ev.tenant.lineDisplayName ?? ev.tenant.name;
-              const remaining = ev.capacity != null ? ev.capacity - ev.reservedCount : null;
+              const remaining =
+                ev.capacity != null ? ev.capacity - ev.reservedCount : null;
 
               return (
-                <Link key={ev.id} href={eventHref(ev)}
+                <Link
+                  key={ev.id}
+                  href={eventHref(ev)}
                   className="bg-white rounded-2xl overflow-hidden flex gap-3 p-3 block"
                   style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
                 >
                   <div className="relative w-20 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-[#06C755] to-[#047a35] aspect-[4/5]">
-                    {img && (
+                    {image && (
                       <Image
-                        src={img}
+                        src={image}
                         alt={ev.title}
                         fill
-
                         sizes="80px"
                         className="object-cover"
                       />
                     )}
                     {remaining !== null && remaining <= 0 && (
-                      <div className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full">満席</div>
+                      <div className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full">
+                        満席
+                      </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0 py-0.5">
-                    <p className="text-[13px] font-bold text-gray-900 line-clamp-2 leading-snug">{ev.title}</p>
-                    <p className="text-[11px] text-gray-400 mt-1">{fmtDate(ev.heldAt)}</p>
-                    <p className="text-[11px] text-gray-400 truncate">{ev.location}</p>
+                    <p className="text-[13px] font-bold text-gray-900 line-clamp-2 leading-snug">
+                      {ev.title}
+                    </p>
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      {fmtDate(ev.heldAt)}
+                    </p>
+                    <p className="text-[11px] text-gray-400 truncate">
+                      {ev.location}
+                    </p>
                     <div className="flex items-center justify-between mt-1.5">
-                      <span className="text-[10px] text-gray-400 truncate max-w-[120px]">{org}</span>
-                      {ev.priceMale != null && ev.priceFemale != null
-                        ? <span className="text-[11px] text-gray-600 font-medium">¥{Math.min(ev.priceMale, ev.priceFemale).toLocaleString()}〜</span>
-                        : ev.price === 0
-                        ? <span className="text-[11px] text-[#06C755] font-semibold">無料</span>
-                        : <span className="text-[11px] text-gray-600 font-medium">¥{ev.price.toLocaleString()}</span>}
+                      <span className="text-[10px] text-gray-400 truncate max-w-[120px]">
+                        {org}
+                      </span>
+                      <span className="text-[11px] text-gray-600 font-medium">
+                        {priceLabel(ev)}
+                      </span>
                     </div>
                     {ev.viewCount > 0 && (
-                      <p className="text-[10px] text-gray-400 mt-1">閲覧数: {ev.viewCount.toLocaleString()}</p>
+                      <p className="text-[10px] text-gray-400 mt-1">
+                        閲覧数: {ev.viewCount.toLocaleString()}
+                      </p>
                     )}
                   </div>
                 </Link>
@@ -288,15 +378,23 @@ export default async function SportsCategoryPage({
           <h2 className="text-base font-bold text-gray-900">
             東京で{meta.label}サークル・交流会を探すなら
           </h2>
-          <p className="mt-3 text-sm leading-relaxed text-gray-600">{meta.intro}</p>
+          <p className="mt-3 text-sm leading-relaxed text-gray-600">
+            {meta.intro}
+          </p>
           <div className="mt-4 space-y-3">
             <div>
               <h3 className="text-xs font-bold text-gray-800">開催エリア</h3>
-              <p className="mt-1 text-xs leading-relaxed text-gray-500">{meta.area}</p>
+              <p className="mt-1 text-xs leading-relaxed text-gray-500">
+                {meta.area}
+              </p>
             </div>
             <div>
-              <h3 className="text-xs font-bold text-gray-800">こんな人におすすめ</h3>
-              <p className="mt-1 text-xs leading-relaxed text-gray-500">{meta.audience}</p>
+              <h3 className="text-xs font-bold text-gray-800">
+                こんな人におすすめ
+              </h3>
+              <p className="mt-1 text-xs leading-relaxed text-gray-500">
+                {meta.audience}
+              </p>
             </div>
             <div>
               <h3 className="text-xs font-bold text-gray-800">申込方法</h3>
@@ -312,13 +410,18 @@ export default async function SportsCategoryPage({
           <div className="mt-4 space-y-4">
             {meta.faq.map((item) => (
               <div key={item.q}>
-                <h3 className="text-sm font-semibold text-gray-800">{item.q}</h3>
-                <p className="mt-1 text-xs leading-relaxed text-gray-500">{item.a}</p>
+                <h3 className="text-sm font-semibold text-gray-800">
+                  {item.q}
+                </h3>
+                <p className="mt-1 text-xs leading-relaxed text-gray-500">
+                  {item.a}
+                </p>
               </div>
             ))}
           </div>
         </section>
       </div>
+      <PublicFooter />
     </div>
   );
 }

@@ -12,6 +12,11 @@ import { PrismaService } from '../prisma/prisma.service';
 export class PublicController {
   constructor(private readonly prisma: PrismaService) {}
 
+  private publicEndAt(heldAt: Date, endAt: Date | null) {
+    if (!endAt || endAt <= heldAt) return null;
+    return endAt;
+  }
+
   @Get('events')
   async getEvents(
     @Query('category') category?: string,
@@ -196,7 +201,7 @@ export class PublicController {
       title: event.title,
       description: event.description,
       heldAt: event.heldAt,
-      endAt: event.endAt,
+      endAt: this.publicEndAt(event.heldAt, event.endAt),
       location: event.location,
       locationUrl: event.locationUrl,
       price: event.price,

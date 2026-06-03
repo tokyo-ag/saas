@@ -1,5 +1,15 @@
 import type { NextConfig } from "next";
 
+function getCanonicalUrl() {
+  const value = process.env.NEXT_PUBLIC_SITE_URL ?? "https://comiu.link";
+
+  try {
+    return new URL(value);
+  } catch {
+    return new URL("https://comiu.link");
+  }
+}
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -24,6 +34,19 @@ const nextConfig: NextConfig = {
             value: "camera=(), microphone=(), geolocation=()",
           },
         ],
+      },
+    ];
+  },
+  async redirects() {
+    const canonical = getCanonicalUrl();
+    if (!canonical || canonical.hostname === "comiu.vercel.app") return [];
+
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "comiu.vercel.app" }],
+        destination: `${canonical.origin}/:path*`,
+        permanent: true,
       },
     ];
   },

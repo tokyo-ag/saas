@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
+import PublicFooter from '@/components/public/PublicFooter';
 
 import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
 
@@ -15,7 +16,9 @@ type PublicClub = PublicTenant & {
 
 async function fetchClub(tenantCode: string): Promise<PublicClub | null> {
   try {
-    const res = await fetch(`${API_URL}/api/public/tenants/${tenantCode}`, { next: { revalidate } });
+    const res = await fetch(`${API_URL}/api/public/tenants/${tenantCode}`, {
+      next: { revalidate },
+    });
     if (!res.ok) return null;
     return res.json();
   } catch {
@@ -25,15 +28,24 @@ async function fetchClub(tenantCode: string): Promise<PublicClub | null> {
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('ja-JP', {
-    month: 'numeric', day: 'numeric', weekday: 'short',
-    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo',
+    month: 'numeric',
+    day: 'numeric',
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Tokyo',
   });
 }
 
 function eventHref(event: PublicEvent) {
-  return event.tenantCode
-    ? `/e/${event.tenantCode}/${event.id}`
-    : '/';
+  return event.tenantCode ? `/e/${event.tenantCode}/${event.id}` : '/';
+}
+
+function priceLabel(event: PublicEvent) {
+  if (event.priceMale != null && event.priceFemale != null) {
+    return `¥${Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜`;
+  }
+  return event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
 }
 
 export async function generateMetadata({
@@ -43,10 +55,18 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { tenantCode } = await params;
   const club = await fetchClub(tenantCode);
-  if (!club) return { title: '団体が見つかりません', robots: { index: false, follow: false } };
+  if (!club) {
+    return {
+      title: '団体が見つかりません',
+      robots: { index: false, follow: false },
+    };
+  }
 
   const name = club.lineDisplayName ?? club.name;
-  const description = club.description ?? `${name}のイベント・交流会情報。開催予定のイベントをCOMIUで確認できます。`;
+  const clubDescription = club.description?.trim();
+  const description =
+    clubDescription ||
+    `${name}のイベント・交流会情報。開催予定のイベントをCOMIUで確認できます。`;
   const image = imgUrl(club.linePictureUrl, IMAGE_BASE_URL);
 
   return {
@@ -82,6 +102,7 @@ export default async function ClubPage({
   if (!club) notFound();
 
   const name = club.lineDisplayName ?? club.name;
+  const clubDescription = club.description?.trim();
   const image = imgUrl(club.linePictureUrl, IMAGE_BASE_URL);
   const clubUrl = `${SITE_URL}/clubs/${club.code ?? tenantCode}`;
   const jsonLd = {
@@ -90,7 +111,9 @@ export default async function ClubPage({
       {
         '@type': 'Organization',
         name,
-        description: club.description,
+        description:
+          clubDescription ||
+          `${name}のイベント・交流会情報。開催予定のイベントをCOMIUで確認できます。`,
         url: clubUrl,
         ...(image ? { image, logo: image } : {}),
       },
@@ -103,20 +126,24 @@ export default async function ClubPage({
       },
       ...(club.events.length > 0
         ? (() => {
-            const listedEvents = club.events.filter((event) => event.tenantCode).slice(0, 10);
-            return listedEvents.length === 0 ? [] : [
-              {
-                '@type': 'ItemList',
-                name: `${name}の開催予定イベント`,
-                numberOfItems: listedEvents.length,
-                itemListElement: listedEvents.map((event, i) => ({
-                  '@type': 'ListItem',
-                  position: i + 1,
-                  url: `${SITE_URL}/e/${event.tenantCode}/${event.id}`,
-                  name: event.title,
-                })),
-              },
-            ];
+            const listedEvents = club.events
+              .filter((event) => event.tenantCode)
+              .slice(0, 10);
+            return listedEvents.length === 0
+              ? []
+              : [
+                  {
+                    '@type': 'ItemList',
+                    name: `${name}の開催予定イベント`,
+                    numberOfItems: listedEvents.length,
+                    itemListElement: listedEvents.map((event, i) => ({
+                      '@type': 'ListItem',
+                      position: i + 1,
+                      url: `${SITE_URL}/e/${event.tenantCode}/${event.id}`,
+                      name: event.title,
+                    })),
+                  },
+                ];
           })()
         : []),
     ],
@@ -126,13 +153,24 @@ export default async function ClubPage({
     <div className="min-h-screen bg-[#F5F5F5] pb-16">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+        }}
       />
 
       <header className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 pt-12 pb-3 sm:pt-4">
         <div className="flex items-center gap-3">
           <Link href="/" className="text-gray-500 p-1 -ml-1">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </Link>
@@ -153,13 +191,23 @@ export default async function ClubPage({
               />
             ) : (
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#06C755] to-[#047a35] flex items-center justify-center shrink-0">
-                <span className="text-white font-bold text-xl">{name.slice(0, 1)}</span>
+                <span className="text-white font-bold text-xl">
+                  {name.slice(0, 1)}
+                </span>
               </div>
             )}
             <div className="min-w-0">
-              <h1 className="text-xl font-bold text-gray-900 leading-snug">{name}</h1>
-              {club.description && (
-                <p className="mt-2 text-sm leading-relaxed text-gray-600 whitespace-pre-wrap">{club.description}</p>
+              <h1 className="text-xl font-bold text-gray-900 leading-snug">
+                {name}
+              </h1>
+              {clubDescription ? (
+                <p className="mt-2 text-sm leading-relaxed text-gray-600 whitespace-pre-wrap">
+                  {clubDescription}
+                </p>
+              ) : (
+                <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                  開催予定のイベントや交流会をCOMIUで確認できます。
+                </p>
               )}
             </div>
           </div>
@@ -169,11 +217,15 @@ export default async function ClubPage({
               <p className="text-[10px] text-gray-400">イベント</p>
             </div>
             <div className="rounded-xl bg-gray-50 px-2 py-3">
-              <p className="text-lg font-bold text-gray-900">{club.memberCount}</p>
+              <p className="text-lg font-bold text-gray-900">
+                {club.memberCount}
+              </p>
               <p className="text-[10px] text-gray-400">メンバー</p>
             </div>
             <div className="rounded-xl bg-gray-50 px-2 py-3">
-              <p className="text-lg font-bold text-gray-900">{club.accessCount}</p>
+              <p className="text-lg font-bold text-gray-900">
+                {club.accessCount}
+              </p>
               <p className="text-[10px] text-gray-400">閲覧</p>
             </div>
           </div>
@@ -182,19 +234,28 @@ export default async function ClubPage({
         <section>
           <div className="flex items-center gap-2 px-1 mb-3">
             <span className="w-1 h-4 rounded-full bg-[#06C755] shrink-0" />
-            <h2 className="text-[13px] font-bold text-gray-800">開催予定のイベント</h2>
+            <h2 className="text-[13px] font-bold text-gray-800">
+              開催予定のイベント
+            </h2>
           </div>
 
           {club.events.length === 0 ? (
             <div className="bg-white rounded-2xl border border-gray-100 px-4 py-10 text-center shadow-sm">
-              <p className="text-sm font-semibold text-gray-700">現在、開催予定のイベントはありません</p>
-              <p className="text-xs text-gray-400 mt-1">新しいイベントが公開されるとここに表示されます</p>
+              <p className="text-sm font-semibold text-gray-700">
+                現在、開催予定のイベントはありません
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                新しいイベントが公開されると、ここに表示されます。
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
               {club.events.map((event) => {
                 const eventImage = imgUrl(event.imageUrl, IMAGE_BASE_URL);
-                const remaining = event.capacity != null ? event.capacity - event.reservedCount : null;
+                const remaining =
+                  event.capacity != null
+                    ? event.capacity - event.reservedCount
+                    : null;
                 return (
                   <Link
                     key={event.id}
@@ -212,19 +273,25 @@ export default async function ClubPage({
                         />
                       )}
                       {remaining !== null && remaining <= 0 && (
-                        <div className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full">満席</div>
+                        <div className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full">
+                          満席
+                        </div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0 py-0.5">
-                      <p className="text-[13px] font-bold text-gray-900 line-clamp-2 leading-snug">{event.title}</p>
-                      <p className="text-[11px] text-gray-400 mt-1">{formatDate(event.heldAt)}</p>
-                      <p className="text-[11px] text-gray-400 truncate">{event.location}</p>
+                      <p className="text-[13px] font-bold text-gray-900 line-clamp-2 leading-snug">
+                        {event.title}
+                      </p>
+                      <p className="text-[11px] text-gray-400 mt-1">
+                        {formatDate(event.heldAt)}
+                      </p>
+                      <p className="text-[11px] text-gray-400 truncate">
+                        {event.location}
+                      </p>
                       <div className="mt-1.5">
-                        {event.priceMale != null && event.priceFemale != null
-                          ? <span className="text-[11px] text-gray-600 font-medium">¥{Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜</span>
-                          : event.price === 0
-                          ? <span className="text-[11px] text-[#06C755] font-semibold">無料</span>
-                          : <span className="text-[11px] text-gray-600 font-medium">¥{event.price.toLocaleString()}</span>}
+                        <span className="text-[11px] text-gray-600 font-medium">
+                          {priceLabel(event)}
+                        </span>
                       </div>
                     </div>
                   </Link>
@@ -234,6 +301,7 @@ export default async function ClubPage({
           )}
         </section>
       </main>
+      <PublicFooter />
     </div>
   );
 }

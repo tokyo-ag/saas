@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import NextImage from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, API_URL, Event, Tenant } from '@/lib/api';
@@ -82,6 +83,13 @@ function numOrNull(value: string) {
   return value === '' || Number.isNaN(n) ? null : n;
 }
 
+function addHours(value: string, hours: number) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  date.setHours(date.getHours() + hours);
+  return toLocalDatetimeValue(date.toISOString());
+}
+
 export default function EventForm({ initial }: { initial?: Event }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -142,22 +150,61 @@ export default function EventForm({ initial }: { initial?: Event }) {
     if (form.endAt && newHeldAt) {
       const newDate = newHeldAt.slice(0, 10);
       const endTime = form.endAt.slice(10);
-      setForm((prev) => ({ ...prev, heldAt: newHeldAt, endAt: newDate + endTime }));
+      const shiftedEndAt = newDate + endTime;
+      const endAt =
+        new Date(shiftedEndAt).getTime() > new Date(newHeldAt).getTime()
+          ? shiftedEndAt
+          : addHours(newHeldAt, 2);
+      setForm((prev) => ({ ...prev, heldAt: newHeldAt, endAt }));
     } else {
       set('heldAt', newHeldAt);
     }
   }
 
   const TITLE_PLACEHOLDERS: Record<string, string> = {
+    meetup: '例：20代社会人交流会 初参加歓迎 池袋開催',
     badminton: '例：バドミントン初心者交流会 20代限定 豊島区開催',
     futsal: '例：フットサル交流会 社会人歓迎 新宿開催',
     basketball: '例：バスケットボール3on3 20代男女 渋谷開催',
+    volleyball: '例：バレー交流会 初心者歓迎 新宿開催',
     '': '例：テニス交流会 20代限定 渋谷開催',
   };
 
-  const AVAILABLE_TAGS = ['初心者歓迎', '20代限定', '30代限定', '男女歓迎', '社会人', '学生歓迎', '18～22歳大学生・短大専門・社会人'];
+  const AVAILABLE_TAGS = [
+    '交流会',
+    'バドミントン',
+    'バスケ',
+    'フットサル',
+    'バレー',
+    '初参加歓迎',
+    'ひとり参加歓迎',
+    '友達作り',
+    '少人数',
+    '初心者歓迎',
+    '20代限定',
+    '30代限定',
+    '男女歓迎',
+    '社会人',
+    '学生歓迎',
+    '18～22歳大学生・短大専門・社会人',
+    'カフェ会',
+    'ランチ会',
+    '飲み会',
+    '週末開催',
+    '平日夜',
+    '駅近',
+  ];
 
   const DESCRIPTION_TEMPLATES: Record<string, string> = {
+    meetup: `東京で20代向けの交流会を開催します。
+初参加・ひとり参加の方も歓迎です。友達作りや新しいつながりを楽しみましょう。
+
+【こんな方におすすめ】
+・同年代の友達を増やしたい方
+・仕事や学校以外のつながりを作りたい方
+・気軽に話せる交流会に参加したい方
+
+当日は受付後、自己紹介や交流しやすい時間を用意します。お気軽にお越しください。`,
     badminton: `東京・豊島区でバドミントン交流会を開催します。
 初心者・未経験者も大歓迎！20代を中心に男女問わず参加できます。
 
@@ -183,6 +230,15 @@ export default function EventForm({ initial }: { initial?: Event }) {
 ・バスケを久しぶりにやりたい方
 ・仲間と一緒に汗を流したい方
 ・新しい出会いを楽しみたい方
+
+動きやすい服装と室内シューズをご持参ください。`,
+    volleyball: `東京でバレー交流会を開催します。
+初心者・経験者どちらも歓迎です。20代を中心に、楽しく体を動かしましょう。
+
+【こんな方におすすめ】
+・バレーを久しぶりにやりたい方
+・同年代とチームスポーツを楽しみたい方
+・新しい仲間と交流したい方
 
 動きやすい服装と室内シューズをご持参ください。`,
   };
@@ -219,9 +275,27 @@ export default function EventForm({ initial }: { initial?: Event }) {
     setUpgradeRequired(false);
     setSubmitting(true);
 
+    const heldAtMs = new Date(form.heldAt).getTime();
+    const endAtMs = form.endAt ? new Date(form.endAt).getTime() : null;
+    if (Number.isNaN(heldAtMs)) {
+      setError('開始日時を正しく入力してください。');
+      setSubmitting(false);
+      return;
+    }
+    if (endAtMs !== null && (Number.isNaN(endAtMs) || endAtMs <= heldAtMs)) {
+      setError('終了日時は開始日時より後にしてください。');
+      setSubmitting(false);
+      return;
+    }
+
     let remindAt: string | null = null;
     if (form.remindEnabled || form.remindApp) {
       const value = form.remindPreset !== 'custom' ? calcRemindAt(form.remindPreset, form.heldAt) : form.remindAt;
+      if (value && new Date(value).getTime() >= heldAtMs) {
+        setError('リマインド日時は開始日時より前にしてください。');
+        setSubmitting(false);
+        return;
+      }
       remindAt = value ? new Date(value).toISOString() : null;
     }
 
@@ -333,9 +407,11 @@ export default function EventForm({ initial }: { initial?: Event }) {
         <Field label="カテゴリ">
           <select value={form.category} onChange={(e) => set('category', e.target.value)} className={inputClass}>
             <option value="">なし</option>
+            <option value="meetup">交流会</option>
             <option value="badminton">バドミントン</option>
             <option value="futsal">フットサル</option>
             <option value="basketball">バスケットボール</option>
+            <option value="volleyball">バレー</option>
           </select>
         </Field>
         <Field label="タイトル" required>
@@ -382,7 +458,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
 
       <Section title="画像">
         <Field label="バナー画像">
-          {form.imageUrl && <img src={imgUrl(form.imageUrl, API_URL)!} alt="" className="mb-2 w-full rounded-lg border border-gray-200 object-cover aspect-[4/5]" />}
+          {form.imageUrl && <NextImage src={imgUrl(form.imageUrl, API_URL)!} alt="" width={1200} height={1500} className="mb-2 w-full rounded-lg border border-gray-200 object-cover aspect-[4/5]" unoptimized />}
           <UploadButton uploading={uploading} onUpload={async (file) => set('imageUrl', await uploadFile(file))} setUploading={setUploading} setError={setError} />
           {form.imageUrl && <button type="button" onClick={() => set('imageUrl', '')} className="mt-2 text-xs text-red-500 hover:underline">削除</button>}
         </Field>
@@ -394,7 +470,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
             <input required type="datetime-local" step={600} value={form.heldAt} onChange={(e) => handleHeldAtChange(e.target.value)} className={inputClass} />
           </Field>
           <Field label="終了日時">
-            <input type="datetime-local" step={600} value={form.endAt} onChange={(e) => set('endAt', e.target.value)} className={inputClass} />
+            <input type="datetime-local" step={600} min={form.heldAt || undefined} value={form.endAt} onChange={(e) => set('endAt', e.target.value)} className={inputClass} />
           </Field>
         </div>
         <Field label="場所名" required>
