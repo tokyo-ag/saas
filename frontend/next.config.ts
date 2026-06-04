@@ -47,6 +47,8 @@ const nextConfig: NextConfig = {
     ];
   },
   async redirects() {
+    if (process.env.CANONICAL_REDIRECT_ENABLED !== "true") return [];
+
     const canonical = getCanonicalUrl();
     if (!canonical || canonical.hostname === "comiu.vercel.app") return [];
 

@@ -15,6 +15,8 @@ function decodeJwtPayload(token: string) {
 }
 
 export function proxy(request: NextRequest) {
+  const canonicalRedirectEnabled =
+    process.env.CANONICAL_REDIRECT_ENABLED === 'true';
   let canonicalUrl: URL;
   try {
     canonicalUrl = new URL(
@@ -24,6 +26,7 @@ export function proxy(request: NextRequest) {
     canonicalUrl = new URL('https://comiu.link');
   }
   if (
+    canonicalRedirectEnabled &&
     request.headers.get('host') === 'comiu.vercel.app' &&
     canonicalUrl.hostname !== 'comiu.vercel.app'
   ) {
