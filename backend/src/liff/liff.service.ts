@@ -4,6 +4,7 @@ import {
   ConflictException,
   BadRequestException,
   ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { ReservationStatus } from '@prisma/client';
@@ -13,7 +14,7 @@ import { StripeService } from '../stripe/stripe.service';
 import { PLAN_LIMITS } from '../config/plan-limits';
 export class CreateReservationDto {
   @IsString() eventId!: string;
-  @IsString() lineUserId!: string;
+  @IsOptional() @IsString() lineUserId?: string;
   @IsOptional() @IsString() name?: string;
   @IsOptional() @IsString() grade?: string;
   @IsOptional() @IsString() gender?: string;
@@ -22,7 +23,7 @@ export class CreateReservationDto {
 }
 
 export class SubmitReviewDto {
-  @IsString() lineUserId!: string;
+  @IsOptional() @IsString() lineUserId?: string;
   @IsString() @MaxLength(2000) content!: string;
 }
 
@@ -209,6 +210,9 @@ export class LiffService {
 
   async submitReview(tenantId: string, eventId: string, dto: SubmitReviewDto) {
     tenantId = await this.resolveTenantId(tenantId);
+    if (!dto.lineUserId) {
+      throw new UnauthorizedException('LIFF認証が必要です');
+    }
     const content = dto.content.trim();
     if (content.length < 5 || content.length > 300) {
       throw new BadRequestException(
@@ -251,6 +255,9 @@ export class LiffService {
   // 予約登録（重複チェック・キャンセル待ち・LINE通知込み）
   async createReservation(tenantId: string, dto: CreateReservationDto) {
     tenantId = await this.resolveTenantId(tenantId);
+    if (!dto.lineUserId) {
+      throw new UnauthorizedException('LIFF認証が必要です');
+    }
     const event = await this.prisma.event.findFirst({
       where: {
         id: dto.eventId,

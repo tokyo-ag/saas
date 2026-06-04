@@ -552,7 +552,6 @@ describe('Core feature flows (e2e)', () => {
       .set('Authorization', `Bearer ${createIdToken()}`)
       .send({
         eventId: 'event-1',
-        lineUserId: 'spoofed-line-user',
         name: 'Reserved User',
         grade: '3',
         gender: 'other',

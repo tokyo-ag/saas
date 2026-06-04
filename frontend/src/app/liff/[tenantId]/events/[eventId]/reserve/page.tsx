@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { api, LiffEvent, LiffProfile, LiffTenant } from '@/lib/api';
+import { api, LiffEvent, LiffProfile, LiffTenant, setLiffToken } from '@/lib/api';
 import { initLiff, getLiffProfile, checkFriendship, liff, getInitError } from '@/lib/liff';
 
 const GRADES = ['高校1年', '高校2年', '高校3年', '大学1年', '大学2年', '大学3年', '大学4年', '大学院生', '社会人', 'その他'];
@@ -124,9 +124,9 @@ function ReservePageInner() {
     setError('');
     setSubmitting(true);
     try {
+      setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
       const body: Record<string, string> = {
         eventId,
-        lineUserId,
         ...(liffProfile?.displayName && { lineDisplayName: liffProfile.displayName }),
         ...(liffProfile?.pictureUrl && { linePictureUrl: liffProfile.pictureUrl }),
         ...(overrides ?? {}),
