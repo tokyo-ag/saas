@@ -224,11 +224,6 @@ export default function HomeClient({ initialEvents, initialTenants, showHomeProm
             </p>
             <p className="text-[11px] text-gray-500 mt-0.5 leading-tight">LINEで探して、そのまま参加予約</p>
           </div>
-          <button onClick={() => setSearchOpen(true)} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 active:bg-gray-200 shrink-0">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-          </button>
         </div>
 
         {showHomePrompt && (
