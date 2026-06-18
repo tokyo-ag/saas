@@ -91,14 +91,13 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
 
   const base = tid ? `/liff/${tid}` : '';
 
+  const discoveryActive =
+    pathname === '/' &&
+    !new URLSearchParams(
+      typeof window !== 'undefined' ? window.location.search : '',
+    ).get('prompt');
+
   const items = [
-    {
-      href: '/',
-      label: '探す',
-      Icon: CompassIcon,
-      active: pathname === '/' && !new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('prompt'),
-      badge: 0,
-    },
     {
       href: base || '/?prompt=home',
       label: '参加',
@@ -123,38 +122,50 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
   ];
 
   return (
-    <nav
-      className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex z-50"
-      style={{ paddingBottom: `calc(env(safe-area-inset-bottom) + ${linePad}px)` }}
-    >
-      {items.map(({ href, label, Icon, active, badge }) => {
-        const cls = `flex-1 flex flex-col items-center py-2 gap-0.5 ${active ? 'text-[#06C755]' : 'text-gray-400'}`;
-        const labelEl = <span className="text-[10px] font-medium tracking-wide">{label}</span>;
-        const iconEl = (
-          <div className="relative">
-            <Icon active={active} />
-            {badge > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                {badge > 9 ? '9+' : badge}
+    <>
+      <Link
+        href="/"
+        aria-label="イベントを探す"
+        className={`fixed right-4 top-[calc(env(safe-area-inset-top)+16px)] z-50 inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white shadow-lg shadow-black/10 ${
+          discoveryActive ? 'border-[#06C755]' : 'border-gray-100'
+        }`}
+      >
+        <CompassIcon active={discoveryActive} />
+      </Link>
+
+      <nav
+        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex z-50"
+        style={{ paddingBottom: `calc(env(safe-area-inset-bottom) + ${linePad}px)` }}
+      >
+        {items.map(({ href, label, Icon, active, badge }) => {
+          const cls = `flex-1 flex flex-col items-center py-2 gap-0.5 ${active ? 'text-[#06C755]' : 'text-gray-400'}`;
+          const labelEl = <span className="text-[10px] font-medium tracking-wide">{label}</span>;
+          const iconEl = (
+            <div className="relative">
+              <Icon active={active} />
+              {badge > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {badge > 9 ? '9+' : badge}
+                </span>
+              )}
+            </div>
+          );
+          if (!href) {
+            return (
+              <span key={label} className={`${cls} opacity-30`}>
+                {iconEl}
+                {labelEl}
               </span>
-            )}
-          </div>
-        );
-        if (!href) {
+            );
+          }
           return (
-            <span key={label} className={`${cls} opacity-30`}>
+            <Link key={label} href={href} className={cls}>
               {iconEl}
               {labelEl}
-            </span>
+            </Link>
           );
-        }
-        return (
-          <Link key={label} href={href} className={cls}>
-            {iconEl}
-            {labelEl}
-          </Link>
-        );
-      })}
-    </nav>
+        })}
+      </nav>
+    </>
   );
 }
