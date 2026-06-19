@@ -5,6 +5,7 @@ import { usePathname, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { initLiff, getLiffUserId } from '@/lib/liff';
+import { DISCOVERY_LOCKED } from '@/lib/config';
 
 function CompassIcon({ active }: { active: boolean }) {
   const s = active ? '#06C755' : '#BDBDBD';
@@ -123,15 +124,17 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
 
   return (
     <>
-      <Link
-        href="/"
-        aria-label="イベントを探す"
-        className={`fixed right-4 top-[calc(env(safe-area-inset-top)+16px)] z-50 inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white shadow-lg shadow-black/10 ${
-          discoveryActive ? 'border-[#06C755]' : 'border-gray-100'
-        }`}
-      >
-        <CompassIcon active={discoveryActive} />
-      </Link>
+      {!DISCOVERY_LOCKED && (
+        <Link
+          href="/"
+          aria-label="イベントを探す"
+          className={`fixed right-4 top-[calc(env(safe-area-inset-top)+16px)] z-50 inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white shadow-lg shadow-black/10 ${
+            discoveryActive ? 'border-[#06C755]' : 'border-gray-100'
+          }`}
+        >
+          <CompassIcon active={discoveryActive} />
+        </Link>
+      )}
 
       <nav
         className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex z-50"
