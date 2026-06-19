@@ -2,25 +2,29 @@ function withoutTrailingSlash(value: string) {
   return value.replace(/\/+$/, '');
 }
 
+function envOr(name: string, fallback: string) {
+  const value = process.env[name]?.trim();
+  return value || fallback;
+}
+
 export const SITE_URL = withoutTrailingSlash(
-  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.link',
+  envOr('NEXT_PUBLIC_SITE_URL', 'https://comiu.link'),
 );
 
 export const SUPPORT_EMAIL =
-  process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? 'comiunoreply@gmail.com';
+  envOr('NEXT_PUBLIC_SUPPORT_EMAIL', 'comiunoreply@gmail.com');
 
 export const OFFICIAL_LINE_URL =
-  process.env.NEXT_PUBLIC_OFFICIAL_LINE_URL ?? 'https://lin.ee/oLnMgPkA';
+  envOr('NEXT_PUBLIC_OFFICIAL_LINE_URL', 'https://lin.ee/oLnMgPkA');
 
 export const DISCOVERY_LOCKED =
   process.env.NEXT_PUBLIC_DISCOVERY_LOCKED !== 'false';
 
 export const API_URL = withoutTrailingSlash(
-  process.env.API_BASE_URL ??
-    process.env.NEXT_PUBLIC_API_URL ??
-    'https://comiu.up.railway.app',
+  process.env.API_BASE_URL?.trim() ||
+    envOr('NEXT_PUBLIC_API_URL', 'https://comiu.up.railway.app'),
 );
 
 export const IMAGE_BASE_URL = withoutTrailingSlash(
-  process.env.NEXT_PUBLIC_API_URL ?? 'https://comiu.up.railway.app',
+  envOr('NEXT_PUBLIC_API_URL', 'https://comiu.up.railway.app'),
 );

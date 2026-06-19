@@ -4,8 +4,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
-import PublicFooter from '@/components/public/PublicFooter';
-
 import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
 
 export const revalidate = 60;
@@ -26,15 +24,24 @@ async function fetchClub(tenantCode: string): Promise<PublicClub | null> {
   }
 }
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('ja-JP', {
-    month: 'numeric',
-    day: 'numeric',
-    weekday: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Asia/Tokyo',
-  });
+function formatDateParts(dateStr: string) {
+  const date = new Date(dateStr);
+  return {
+    monthDay: date.toLocaleDateString('ja-JP', {
+      month: 'numeric',
+      day: 'numeric',
+      timeZone: 'Asia/Tokyo',
+    }),
+    weekday: date.toLocaleDateString('ja-JP', {
+      weekday: 'short',
+      timeZone: 'Asia/Tokyo',
+    }),
+    time: date.toLocaleTimeString('ja-JP', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Asia/Tokyo',
+    }),
+  };
 }
 
 function eventHref(event: PublicEvent) {
@@ -46,6 +53,14 @@ function priceLabel(event: PublicEvent) {
     return `¥${Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜`;
   }
   return event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
+}
+
+function remainingLabel(event: PublicEvent) {
+  if (event.capacity == null) return null;
+  const remaining = event.capacity - event.reservedCount;
+  if (remaining <= 0) return '満席';
+  if (remaining <= 5) return `残り${remaining}席`;
+  return null;
 }
 
 export async function generateMetadata({
@@ -63,20 +78,17 @@ export async function generateMetadata({
   }
 
   const name = club.lineDisplayName ?? club.name;
-  const clubDescription = club.description?.trim();
-  const description =
-    clubDescription ||
-    `${name}のイベント・交流会情報。開催予定のイベントをCOMIUで確認できます。`;
+  const description = `${name}の開催予定イベント一覧です。日程を選んでCOMIUから参加予約できます。`;
   const image = imgUrl(club.linePictureUrl, IMAGE_BASE_URL);
 
   return {
-    title: `${name}のイベント・交流会`,
+    title: `${name}の日程・参加予約`,
     description,
     alternates: {
       canonical: `${SITE_URL}/clubs/${club.code ?? tenantCode}`,
     },
     openGraph: {
-      title: `${name} | COMIU`,
+      title: `${name}の日程・参加予約 | COMIU`,
       description,
       locale: 'ja_JP',
       type: 'website',
@@ -85,7 +97,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: image ? 'summary_large_image' : 'summary',
-      title: `${name} | COMIU`,
+      title: `${name}の日程・参加予約 | COMIU`,
       description,
       ...(image ? { images: [image] } : {}),
     },
@@ -102,7 +114,6 @@ export default async function ClubPage({
   if (!club) notFound();
 
   const name = club.lineDisplayName ?? club.name;
-  const clubDescription = club.description?.trim();
   const image = imgUrl(club.linePictureUrl, IMAGE_BASE_URL);
   const clubUrl = `${SITE_URL}/clubs/${club.code ?? tenantCode}`;
   const jsonLd = {
@@ -111,46 +122,30 @@ export default async function ClubPage({
       {
         '@type': 'Organization',
         name,
-        description:
-          clubDescription ||
-          `${name}のイベント・交流会情報。開催予定のイベントをCOMIUで確認できます。`,
+        description: `${name}の開催予定イベント一覧です。日程を選んで参加予約できます。`,
         url: clubUrl,
         ...(image ? { image, logo: image } : {}),
       },
-      {
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'ホーム', item: SITE_URL },
-          { '@type': 'ListItem', position: 2, name, item: clubUrl },
-        ],
-      },
       ...(club.events.length > 0
-        ? (() => {
-            const listedEvents = club.events
-              .filter((event) => event.tenantCode)
-              .slice(0, 10);
-            return listedEvents.length === 0
-              ? []
-              : [
-                  {
-                    '@type': 'ItemList',
-                    name: `${name}の開催予定イベント`,
-                    numberOfItems: listedEvents.length,
-                    itemListElement: listedEvents.map((event, i) => ({
-                      '@type': 'ListItem',
-                      position: i + 1,
-                      url: `${SITE_URL}/e/${event.tenantCode}/${event.id}`,
-                      name: event.title,
-                    })),
-                  },
-                ];
-          })()
+        ? [
+            {
+              '@type': 'ItemList',
+              name: `${name}の開催予定`,
+              numberOfItems: club.events.length,
+              itemListElement: club.events.slice(0, 10).map((event, i) => ({
+                '@type': 'ListItem',
+                position: i + 1,
+                url: `${SITE_URL}${eventHref(event)}`,
+                name: event.title,
+              })),
+            },
+          ]
         : []),
     ],
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] pb-16">
+    <main className="min-h-screen bg-[#F5F5F5] pb-8 text-gray-900">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -158,9 +153,9 @@ export default async function ClubPage({
         }}
       />
 
-      <header className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 pt-12 pb-3 sm:pt-4">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="text-gray-500 p-1 -ml-1">
+      <header className="sticky top-0 z-10 border-b border-gray-100 bg-white px-4 pb-3 pt-12 sm:pt-4">
+        <div className="mx-auto flex max-w-2xl items-center gap-3">
+          <Link href="/" className="-ml-1 p-1 text-gray-500" aria-label="戻る">
             <svg
               width="22"
               height="22"
@@ -174,96 +169,111 @@ export default async function ClubPage({
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </Link>
-          <span className="font-bold text-gray-900">COMIU</span>
+          <span className="font-bold text-gray-900">日程を選択</span>
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-4 py-5 space-y-5">
-        <section className="bg-white rounded-2xl border border-gray-100 px-4 py-5 shadow-sm">
-          <div className="flex items-start gap-4">
-            {image ? (
-              <Image
-                src={image}
-                alt={name}
-                width={64}
-                height={64}
-                className="w-16 h-16 rounded-full object-cover border border-gray-100 shrink-0"
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#06C755] to-[#047a35] flex items-center justify-center shrink-0">
-                <span className="text-white font-bold text-xl">
-                  {name.slice(0, 1)}
-                </span>
-              </div>
-            )}
-            <div className="min-w-0">
-              <h1 className="text-xl font-bold text-gray-900 leading-snug">
-                {name}
-              </h1>
-              {clubDescription ? (
-                <p className="mt-2 text-sm leading-relaxed text-gray-600 whitespace-pre-wrap">
-                  {clubDescription}
-                </p>
-              ) : (
-                <p className="mt-2 text-sm leading-relaxed text-gray-600">
-                  開催予定のイベントや交流会をCOMIUで確認できます。
-                </p>
-              )}
+      <div className="mx-auto max-w-2xl px-4 py-4">
+        <section className="mb-4 flex items-center gap-3">
+          {image ? (
+            <Image
+              src={image}
+              alt={name}
+              width={48}
+              height={48}
+              className="h-12 w-12 shrink-0 rounded-full border border-gray-100 object-cover"
+            />
+          ) : (
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#06C755]/10 text-base font-bold text-[#06C755]">
+              {name.slice(0, 1)}
             </div>
-          </div>
-          <div className="mt-5 grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-xl bg-gray-50 px-2 py-3">
-              <p className="text-lg font-bold text-gray-900">{club.eventCount}</p>
-              <p className="text-[10px] text-gray-400">イベント</p>
-            </div>
-            <div className="rounded-xl bg-gray-50 px-2 py-3">
-              <p className="text-lg font-bold text-gray-900">
-                {club.memberCount}
-              </p>
-              <p className="text-[10px] text-gray-400">メンバー</p>
-            </div>
-            <div className="rounded-xl bg-gray-50 px-2 py-3">
-              <p className="text-lg font-bold text-gray-900">
-                {club.accessCount}
-              </p>
-              <p className="text-[10px] text-gray-400">閲覧</p>
-            </div>
+          )}
+          <div className="min-w-0">
+            <p className="truncate text-[11px] font-bold text-[#06C755]">
+              COMIU
+            </p>
+            <h1 className="truncate text-lg font-bold tracking-tight text-gray-900">
+              {name}
+            </h1>
           </div>
         </section>
 
-        <section>
-          <div className="flex items-center gap-2 px-1 mb-3">
-            <span className="w-1 h-4 rounded-full bg-[#06C755] shrink-0" />
-            <h2 className="text-[13px] font-bold text-gray-800">
-              開催予定のイベント
-            </h2>
-          </div>
+        {club.events.length === 0 ? (
+          <section className="rounded-2xl border border-gray-100 bg-white px-5 py-12 text-center shadow-sm">
+            <p className="text-sm font-bold text-gray-800">
+              現在、予約できる日程はありません
+            </p>
+            <p className="mt-2 text-xs leading-6 text-gray-400">
+              新しい日程が公開されると、ここに表示されます。
+            </p>
+          </section>
+        ) : (
+          <section className="space-y-3">
+            {club.events.map((event) => {
+              const eventImage = imgUrl(event.imageUrl, IMAGE_BASE_URL);
+              const date = formatDateParts(event.heldAt);
+              const remaining = remainingLabel(event);
+              const isFull = remaining === '満席';
 
-          {club.events.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 px-4 py-10 text-center shadow-sm">
-              <p className="text-sm font-semibold text-gray-700">
-                現在、開催予定のイベントはありません
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                新しいイベントが公開されると、ここに表示されます。
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {club.events.map((event) => {
-                const eventImage = imgUrl(event.imageUrl, IMAGE_BASE_URL);
-                const remaining =
-                  event.capacity != null
-                    ? event.capacity - event.reservedCount
-                    : null;
-                return (
-                  <Link
-                    key={event.id}
-                    href={eventHref(event)}
-                    className="bg-white rounded-2xl overflow-hidden flex gap-3 p-3 block shadow-sm border border-gray-100"
-                  >
-                    <div className="relative w-20 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-[#06C755] to-[#047a35] aspect-[4/5]">
-                      {eventImage && (
+              return (
+                <Link
+                  key={event.id}
+                  href={eventHref(event)}
+                  className="block overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm active:bg-gray-50"
+                >
+                  <div className="flex gap-3 p-3">
+                    <div className="flex w-[74px] shrink-0 flex-col overflow-hidden rounded-xl border border-gray-100 bg-white text-center">
+                      <div className="bg-[#06C755] px-1 py-2 text-white">
+                        <p className="text-lg font-bold leading-none">
+                          {date.monthDay}
+                        </p>
+                        <p className="mt-1 text-[10px] font-bold">
+                          {date.weekday}
+                        </p>
+                      </div>
+                      <div className="px-1 py-2 text-[11px] font-bold text-gray-700">
+                        {date.time}
+                      </div>
+                    </div>
+
+                    <div className="min-w-0 flex-1 py-0.5">
+                      <div className="flex items-start gap-2">
+                        <h2 className="min-w-0 flex-1 text-[15px] font-bold leading-snug text-gray-900">
+                          {event.title}
+                        </h2>
+                        {remaining && (
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                              isFull
+                                ? 'bg-red-50 text-red-500'
+                                : 'bg-amber-50 text-amber-600'
+                            }`}
+                          >
+                            {remaining}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 truncate text-[12px] text-gray-500">
+                        {event.location}
+                      </p>
+                      <div className="mt-3 flex items-center justify-between gap-2">
+                        <span className="text-[13px] font-bold text-gray-800">
+                          {priceLabel(event)}
+                        </span>
+                        <span
+                          className={`rounded-full px-3 py-1.5 text-[12px] font-bold ${
+                            isFull
+                              ? 'bg-gray-100 text-gray-400'
+                              : 'bg-[#06C755] text-white'
+                          }`}
+                        >
+                          {isFull ? '詳細を見る' : '予約へ進む'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {eventImage && (
+                      <div className="relative hidden w-20 shrink-0 overflow-hidden rounded-xl bg-gray-100 sm:block">
                         <Image
                           src={eventImage}
                           alt={event.title}
@@ -271,37 +281,15 @@ export default async function ClubPage({
                           sizes="80px"
                           className="object-cover"
                         />
-                      )}
-                      {remaining !== null && remaining <= 0 && (
-                        <div className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full">
-                          満席
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0 py-0.5">
-                      <p className="text-[13px] font-bold text-gray-900 line-clamp-2 leading-snug">
-                        {event.title}
-                      </p>
-                      <p className="text-[11px] text-gray-400 mt-1">
-                        {formatDate(event.heldAt)}
-                      </p>
-                      <p className="text-[11px] text-gray-400 truncate">
-                        {event.location}
-                      </p>
-                      <div className="mt-1.5">
-                        <span className="text-[11px] text-gray-600 font-medium">
-                          {priceLabel(event)}
-                        </span>
                       </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </section>
-      </main>
-      <PublicFooter />
-    </div>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </section>
+        )}
+      </div>
+    </main>
   );
 }
