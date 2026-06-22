@@ -22,12 +22,16 @@ function getPendingRedirect() {
 
 function getLiffStateRedirect(searchParams: URLSearchParams) {
   const state = searchParams.get('liff.state');
-  if (!state || !state.startsWith('/liff/')) return null;
+  if (!state) return null;
+
+  const path = state.startsWith('/') ? state : `/${state}`;
+  if (path === '/' || path.startsWith('//')) return null;
+  const target = path.startsWith('/liff/') ? path : `/liff${path}`;
 
   const nextParams = new URLSearchParams(searchParams);
   nextParams.delete('liff.state');
   const query = nextParams.toString();
-  return `${state}${query ? `?${query}` : ''}`;
+  return `${target}${query ? `?${query}` : ''}`;
 }
 
 export default function LiffReturnRedirector() {
