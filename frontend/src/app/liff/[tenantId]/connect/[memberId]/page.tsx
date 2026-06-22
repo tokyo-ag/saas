@@ -22,8 +22,10 @@ export default function ConnectPage() {
       const ok = await initLiff();
       let uid = '';
       if (ok) {
-        await loginIfNeeded();
-        uid = (await getLiffUserId()) ?? '';
+        const loggedIn = await loginIfNeeded();
+        if (loggedIn) {
+          uid = (await getLiffUserId()) ?? '';
+        }
       } else {
         uid = `demo-${tenantId}`;
       }
@@ -83,7 +85,7 @@ export default function ConnectPage() {
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
       <div className="bg-[#06C755] text-white px-4 py-4 flex items-center gap-3">
-        <button onClick={() => router.push(`/liff/${tenantId}/qr`)} className="text-white text-xl leading-none p-1">‹</button>
+        <button onClick={() => router.push(`/liff/${tenantId}/talks`)} className="text-white text-xl leading-none p-1">‹</button>
         <h1 className="text-base font-bold">繋がりの確認</h1>
       </div>
 
@@ -116,7 +118,7 @@ export default function ConnectPage() {
               {connecting ? '繋がり中...' : `${target.name ?? 'この人'}と繋がる`}
             </button>
             <button
-              onClick={() => router.push(`/liff/${tenantId}/qr`)}
+              onClick={() => router.push(`/liff/${tenantId}/talks`)}
               className="w-full border border-gray-200 text-gray-500 py-3.5 rounded-2xl text-sm"
             >
               キャンセル
