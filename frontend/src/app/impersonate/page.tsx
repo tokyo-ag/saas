@@ -16,7 +16,7 @@ export default function ImpersonatePage() {
     } else {
       router.replace('/login');
     }
-  }, []);
+  }, [router]);
 
   return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">読み込み中...</div>;
 }

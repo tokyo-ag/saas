@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -47,7 +48,7 @@ function EventCard({ event, tenantId }: { event: LiffEvent; tenantId: string }) 
     >
       <div className="relative" style={{ aspectRatio: '4/5' }}>
         {img ? (
-          <img src={img} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />
+          <Image src={img} alt={event.title} fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" unoptimized />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-[#06C755] to-[#05a847]" />
         )}
@@ -97,7 +98,7 @@ function TenantCard({ tenant }: { tenant: PublicTenant }) {
       style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)' }}
     >
       {tenant.linePictureUrl ? (
-        <img src={tenant.linePictureUrl} alt={name} className="w-10 h-10 rounded-full shrink-0 object-cover" />
+        <Image src={tenant.linePictureUrl} alt={name} width={40} height={40} className="w-10 h-10 rounded-full shrink-0 object-cover" unoptimized />
       ) : (
         <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-[#06C755] to-[#05a847] flex items-center justify-center">
           <span className="text-white font-bold text-sm">{name[0]}</span>
@@ -258,8 +259,10 @@ export default function LiffTopPage() {
       const ok = await initLiff();
       const lineProfile = ok ? await getLiffProfile().catch(() => null) : null;
       const uid = lineProfile?.userId ?? `demo-${tenantId}`;
-      if (uid) {
-        const eventsWithFriends = await api.liff.events(tenantId, uid).catch(() => null);
+      if (uid && lineProfile?.userId) {
+        const eventsWithFriends = await api.liff
+          .events(tenantId, true)
+          .catch(() => null);
         if (eventsWithFriends) setEvents(eventsWithFriends);
       }
       if (lineProfile?.userId) {
@@ -288,7 +291,7 @@ export default function LiffTopPage() {
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
           <div className="flex items-center gap-2.5 px-4 pt-12 pb-3 sm:pt-4 max-w-4xl mx-auto">
             {(tenant?.linePictureUrl ?? tenant?.iconUrl) ? (
-              <img src={(tenant?.linePictureUrl ?? tenant?.iconUrl)!} className="w-7 h-7 rounded-full object-cover shrink-0" alt="" />
+              <Image src={(tenant?.linePictureUrl ?? tenant?.iconUrl)!} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" alt="" unoptimized />
             ) : (
               <div className="w-7 h-7 rounded-full bg-[#06C755]/20 flex items-center justify-center shrink-0 text-sm">🎉</div>
             )}
@@ -342,7 +345,7 @@ export default function LiffTopPage() {
                     style={{ width: 60 }}
                   >
                     {v.iconUrl ? (
-                      <img src={v.iconUrl} alt={v.name} className="w-12 h-12 rounded-full object-cover border border-gray-100" />
+                      <Image src={v.iconUrl} alt={v.name} width={48} height={48} className="w-12 h-12 rounded-full object-cover border border-gray-100" unoptimized />
                     ) : (
                       <div className="w-12 h-12 rounded-full bg-[#06C755]/15 flex items-center justify-center text-lg font-bold text-[#06C755]">
                         {v.name[0]}

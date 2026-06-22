@@ -1,21 +1,21 @@
-import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
-import "./globals.css";
+import type { Metadata, Viewport } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
+import Script from 'next/script';
+import './globals.css';
 
-const GA_ID = process.env.NEXT_PUBLIC_GA_ID
+import { SITE_URL } from '@/lib/config';
+
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
 });
-
-import { SITE_URL } from '@/lib/config';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -25,15 +25,20 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'COMIU｜コミュニティ・サークルのイベント管理をLINEで',
+    default: 'COMIU | 東京の20代向けサークル・交流イベント検索',
     template: '%s | COMIU',
   },
   description:
-    'バドミントンサークル・交流会・勉強会など、あらゆるコミュニティのイベント管理・参加者募集をLINEで完結。東京を中心に20代向けサークルも多数。フリープランは無料で始められます。',
-openGraph: {
-    title: 'COMIU｜コミュニティのイベント管理をLINEで',
+    'COMIUは、東京の20代向けサークル・交流イベントを探してLINEで参加予約できるサービスです。バドミントン、フットサル、バスケ、バレーなどのイベントを掲載しています。',
+  applicationName: 'COMIU',
+  alternates: {
+    canonical: SITE_URL,
+  },
+  openGraph: {
+    title: 'COMIU | 東京の20代向けサークル・交流イベント検索',
     description:
-      'バドミントンサークル・交流会など、コミュニティのイベント管理・参加者募集をLINEで完結。東京を中心に20代向けサークルも多数。',
+      '東京の20代向けサークル・交流イベントを探して、LINEでかんたんに参加予約できます。',
+    url: SITE_URL,
     locale: 'ja_JP',
     type: 'website',
     siteName: 'COMIU',
@@ -41,14 +46,21 @@ openGraph: {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'COMIU｜コミュニティのイベント管理をLINEで',
+    title: 'COMIU | 東京の20代向けサークル・交流イベント検索',
     description:
-      'バドミントンサークル・交流会など、コミュニティのイベント管理・参加者募集をLINEで完結。',
+      '東京の20代向けサークル・交流イベントを探して、LINEでかんたんに参加予約できます。',
     images: [`${SITE_URL}/opengraph-image`],
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
   },
 };
 

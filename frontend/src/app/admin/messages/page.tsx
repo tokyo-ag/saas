@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { api, AdminMessageThread, SupportMessage } from '@/lib/api';
 
@@ -108,7 +109,7 @@ export default function AdminMessagesPage() {
                 }`}
               >
                 {row.avatarImg ? (
-                  <img src={row.avatarImg} alt="" className="w-11 h-11 rounded-full object-cover shrink-0" />
+                  <Image src={row.avatarImg} alt="" width={44} height={44} className="w-11 h-11 rounded-full object-cover shrink-0" unoptimized />
                 ) : (
                   <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold shrink-0 ${
                     row.kind === 'comiu'

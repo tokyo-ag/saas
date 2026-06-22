@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { api, Tenant } from '@/lib/api';
@@ -38,7 +39,7 @@ export default function Sidebar() {
     } else if (tenant.code && firstSegment === tenant.id) {
       router.replace(pathname.replace(tenant.id, tenant.code));
     }
-  }, [tenant, pathname]);
+  }, [tenant, pathname, router]);
 
   const displayName = tenant?.lineDisplayName ?? tenant?.name ?? 'イベント管理';
 
@@ -55,7 +56,7 @@ export default function Sidebar() {
       <div className="px-4 py-4 border-b border-white/10">
         <div className="flex items-center gap-2.5">
           {(tenant?.linePictureUrl ?? tenant?.iconUrl) ? (
-            <img src={(tenant?.linePictureUrl ?? tenant?.iconUrl)!} className="w-8 h-8 rounded-lg object-cover shrink-0" alt="" />
+            <Image src={(tenant?.linePictureUrl ?? tenant?.iconUrl)!} width={32} height={32} className="w-8 h-8 rounded-lg object-cover shrink-0" alt="" unoptimized />
           ) : (
             <div className="w-8 h-8 rounded-lg bg-[#06C755] flex items-center justify-center text-white text-xs font-bold shrink-0">
               {displayName.slice(0, 1)}
@@ -102,7 +103,7 @@ export default function Sidebar() {
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-[#1B1F2E] flex items-center justify-between px-4 h-14">
         <div className="flex items-center gap-2.5">
           {(tenant?.linePictureUrl ?? tenant?.iconUrl) ? (
-            <img src={(tenant?.linePictureUrl ?? tenant?.iconUrl)!} className="w-7 h-7 rounded-lg object-cover shrink-0" alt="" />
+            <Image src={(tenant?.linePictureUrl ?? tenant?.iconUrl)!} width={28} height={28} className="w-7 h-7 rounded-lg object-cover shrink-0" alt="" unoptimized />
           ) : (
             <div className="w-7 h-7 rounded-lg bg-[#06C755] flex items-center justify-center text-white text-xs font-bold shrink-0">
               {displayName.slice(0, 1)}

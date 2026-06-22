@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -94,7 +95,7 @@ export default function MemberDetailPage() {
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-center gap-3">
             {member.linePictureUrl ? (
-              <img src={member.linePictureUrl} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
+              <Image src={member.linePictureUrl} alt="" width={48} height={48} className="w-12 h-12 rounded-full object-cover shrink-0" unoptimized />
             ) : (
               <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-400 shrink-0">
                 {(member.lineDisplayName ?? member.name ?? '?')[0]}

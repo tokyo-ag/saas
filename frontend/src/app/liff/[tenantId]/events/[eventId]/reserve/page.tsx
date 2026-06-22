@@ -25,6 +25,8 @@ function ReservePageInner() {
   const [liffProfile, setLiffProfile] = useState<{ displayName: string; pictureUrl?: string } | null>(null);
   const [profile, setProfile] = useState<LiffProfile | null>(null);
   const [isFriend, setIsFriend] = useState<boolean | null>(null);
+  const isPastEvent = event ? new Date(event.heldAt).getTime() < Date.now() : false;
+  const isClosed = event ? event.status === 'closed' || isPastEvent : false;
 
   const [name, setName] = useState('');
   const [grade, setGrade] = useState('');
@@ -158,6 +160,28 @@ function ReservePageInner() {
   }
 
   const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#06C755] focus:border-transparent';
+
+  if (event && isClosed) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center gap-4">
+        <div className="w-16 h-16 rounded-full bg-[#06C755]/10 flex items-center justify-center text-3xl">⚠️</div>
+        <div>
+          <p className="text-lg font-bold text-gray-900">このイベントは予約できません</p>
+          <p className="text-sm text-gray-500 mt-2">
+            {isPastEvent
+              ? '開催日時を過ぎたため、受付は終了しました。'
+              : 'このイベントは現在受付を終了しています。'}
+          </p>
+        </div>
+        <button
+          onClick={() => router.push(`/liff/${tenantId}/events/${eventId}`)}
+          className="bg-[#06C755] text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:bg-[#05a847]"
+        >
+          イベントページへ戻る
+        </button>
+      </div>
+    );
+  }
 
   // ── ローディング ──
   if (authStatus === 'loading') {

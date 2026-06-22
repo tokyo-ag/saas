@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import { SITE_URL } from '@/lib/config';
+import PublicFooter from '@/components/public/PublicFooter';
+import { SITE_URL, SUPPORT_EMAIL } from '@/lib/config';
 
 export const metadata: Metadata = {
   title: '利用規約',
@@ -76,10 +77,11 @@ export default function TermsPage() {
 
         <p className="text-center text-sm text-gray-500 mt-8">
           ご不明な点は{' '}
-          <a href="mailto:support@comiu.jp" className="text-[#06C755] hover:underline">support@comiu.jp</a>
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="text-[#06C755] hover:underline">{SUPPORT_EMAIL}</a>
           {' '}までお問い合わせください。
         </p>
       </div>
+      <PublicFooter />
     </div>
   );
 }

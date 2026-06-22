@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { api, TenantWithStats, BannedUser, ErrorLog } from '@/lib/api';
 
 export default function SuperadminPage() {
@@ -127,7 +128,7 @@ export default function SuperadminPage() {
                 <div key={t.id} className={`bg-white rounded-xl border shadow-sm p-4 sm:p-5 ${isBanned ? 'border-red-300 opacity-70' : isDeactivated ? 'border-orange-200 opacity-70' : 'border-gray-200'}`}>
                   <div className="flex items-start gap-3 sm:gap-4">
                     {(t.linePictureUrl ?? t.iconUrl) ? (
-                      <img src={(t.linePictureUrl ?? t.iconUrl)!} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-gray-200 shrink-0" alt="" />
+                      <Image src={(t.linePictureUrl ?? t.iconUrl)!} width={48} height={48} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-gray-200 shrink-0" alt="" unoptimized />
                     ) : (
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#06C755]/10 flex items-center justify-center shrink-0 text-lg font-bold text-[#06C755]">
                         {(t.lineDisplayName ?? t.name).slice(0, 1)}

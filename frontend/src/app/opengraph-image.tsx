@@ -1,7 +1,7 @@
-import { ImageResponse } from 'next/og'
+import { ImageResponse } from 'next/og';
 
-export const size = { width: 1200, height: 630 }
-export const contentType = 'image/png'
+export const size = { width: 1200, height: 630 };
+export const contentType = 'image/png';
 
 export default function Image() {
   return new ImageResponse(
@@ -18,7 +18,6 @@ export default function Image() {
           fontFamily: 'sans-serif',
         }}
       >
-        {/* ロゴ */}
         <div
           style={{
             width: 80,
@@ -31,37 +30,35 @@ export default function Image() {
             marginBottom: 32,
           }}
         >
-          <span style={{ fontSize: 40, fontWeight: 900, color: '#06C755' }}>C</span>
+          <span style={{ fontSize: 40, fontWeight: 900, color: '#06C755' }}>
+            C
+          </span>
         </div>
 
-        {/* サービス名 */}
         <div
           style={{
             fontSize: 72,
             fontWeight: 900,
             color: 'white',
-            letterSpacing: '-2px',
             marginBottom: 16,
           }}
         >
           COMIU
         </div>
 
-        {/* キャッチコピー */}
         <div
           style={{
             fontSize: 30,
             color: 'rgba(255,255,255,0.85)',
             fontWeight: 600,
             textAlign: 'center',
-            maxWidth: 800,
+            maxWidth: 820,
             lineHeight: 1.5,
           }}
         >
-          コミュニティのイベント管理をLINEで完結
+          東京の20代向けサークル・交流イベントをLINEで予約
         </div>
 
-        {/* 下部バッジ */}
         <div
           style={{
             display: 'flex',
@@ -69,25 +66,27 @@ export default function Image() {
             marginTop: 40,
           }}
         >
-          {['バドミントン', 'バスケ', 'フットサル', 'バレーボール', '交流会'].map((label) => (
-            <div
-              key={label}
-              style={{
-                background: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                fontSize: 18,
-                fontWeight: 600,
-                padding: '8px 20px',
-                borderRadius: 100,
-                border: '1px solid rgba(255,255,255,0.3)',
-              }}
-            >
-              {label}
-            </div>
-          ))}
+          {['バドミントン', 'バスケ', 'フットサル', 'バレー', '交流会'].map(
+            (label) => (
+              <div
+                key={label}
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  color: 'white',
+                  fontSize: 18,
+                  fontWeight: 600,
+                  padding: '8px 20px',
+                  borderRadius: 100,
+                  border: '1px solid rgba(255,255,255,0.3)',
+                }}
+              >
+                {label}
+              </div>
+            ),
+          )}
         </div>
       </div>
     ),
-    { ...size }
-  )
+    { ...size },
+  );
 }

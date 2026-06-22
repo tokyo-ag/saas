@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api, SupportMessage } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded } from '@/lib/liff';
@@ -19,13 +19,24 @@ export default function SupportPage() {
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const load = useCallback((uid: string) => {
+    api.liff.supportMessages(tenantId, uid)
+      .then((data) => {
+        setMessages(data);
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+      })
+      .catch(() => {});
+  }, [tenantId]);
+
   useEffect(() => {
     async function init() {
       const ok = await initLiff();
       let uid = '';
       if (ok) {
-        await loginIfNeeded();
-        uid = (await getLiffUserId()) ?? '';
+        const loggedIn = await loginIfNeeded();
+        if (loggedIn) {
+          uid = (await getLiffUserId()) ?? '';
+        }
       } else {
         uid = `demo-${tenantId}`;
       }
@@ -33,22 +44,13 @@ export default function SupportPage() {
       if (uid) load(uid);
     }
     init();
-  }, [tenantId]);
+  }, [tenantId, load]);
 
   useEffect(() => {
     if (!lineUserId) return;
     const id = setInterval(() => load(lineUserId), 5000);
     return () => clearInterval(id);
-  }, [lineUserId]);
-
-  function load(uid: string) {
-    api.liff.supportMessages(tenantId, uid)
-      .then((data) => {
-        setMessages(data);
-        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
-      })
-      .catch(() => {});
-  }
+  }, [lineUserId, load]);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -76,7 +78,7 @@ export default function SupportPage() {
           <span className="text-base">🛟</span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-white leading-tight">COMIU サポートチャット</p>
+          <p className="text-sm font-bold text-gray-900 leading-tight">COMIU サポートチャット</p>
           <p className="text-[10px] text-gray-500">運営チームにメッセージ</p>
         </div>
       </div>

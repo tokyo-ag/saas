@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api, AdminMessage, LiffTenant } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded } from '@/lib/liff';
@@ -20,13 +21,25 @@ export default function AdminTalkPage() {
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const load = useCallback((uid: string) => {
+    api.liff.adminMessages(tenantId, uid)
+      .then((data) => {
+        setMessages(data);
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+        api.liff.markAdminMessagesRead(tenantId, uid).catch(() => {});
+      })
+      .catch(() => {});
+  }, [tenantId]);
+
   useEffect(() => {
     async function init() {
       const ok = await initLiff();
       let uid = '';
       if (ok) {
-        await loginIfNeeded();
-        uid = (await getLiffUserId()) ?? '';
+        const loggedIn = await loginIfNeeded();
+        if (loggedIn) {
+          uid = (await getLiffUserId()) ?? '';
+        }
       } else {
         uid = `demo-${tenantId}`;
       }
@@ -36,23 +49,13 @@ export default function AdminTalkPage() {
       if (uid) load(uid);
     }
     init();
-  }, [tenantId]);
+  }, [tenantId, load]);
 
   useEffect(() => {
     if (!lineUserId) return;
     const id = setInterval(() => load(lineUserId), 4000);
     return () => clearInterval(id);
-  }, [lineUserId]);
-
-  function load(uid: string) {
-    api.liff.adminMessages(tenantId, uid)
-      .then((data) => {
-        setMessages(data);
-        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
-        api.liff.markAdminMessagesRead(tenantId, uid).catch(() => {});
-      })
-      .catch(() => {});
-  }
+  }, [lineUserId, load]);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -72,7 +75,7 @@ export default function AdminTalkPage() {
   const organizerPicture = tenant?.linePictureUrl ?? tenant?.iconUrl;
 
   const organizerAvatar = organizerPicture ? (
-    <img src={organizerPicture} className="w-8 h-8 rounded-full object-cover" alt="" />
+    <Image src={organizerPicture} width={32} height={32} className="w-8 h-8 rounded-full object-cover" alt="" unoptimized />
   ) : (
     <div className="w-8 h-8 rounded-full bg-[#06C755]/10 flex items-center justify-center text-xs font-bold text-[#06C755]">
       {organizerName.slice(0, 1)}
@@ -84,7 +87,7 @@ export default function AdminTalkPage() {
       <div className="bg-white border-b border-gray-100 px-4 flex items-center gap-3 shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 16px)', paddingBottom: '12px' }}>
         <button onClick={() => router.back()} className="text-gray-600 text-xl leading-none p-1">‹</button>
         {organizerPicture ? (
-          <img src={organizerPicture} className="w-9 h-9 rounded-full object-cover shrink-0" alt="" />
+          <Image src={organizerPicture} width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0" alt="" unoptimized />
         ) : (
           <div className="w-9 h-9 rounded-full bg-[#06C755]/20 flex items-center justify-center shrink-0 text-sm font-bold text-[#06C755]">
             {organizerName.slice(0, 1)}
@@ -100,7 +103,7 @@ export default function AdminTalkPage() {
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center px-6">
             {organizerPicture ? (
-              <img src={organizerPicture} className="w-16 h-16 rounded-full object-cover mb-4" alt="" />
+              <Image src={organizerPicture} width={64} height={64} className="w-16 h-16 rounded-full object-cover mb-4" alt="" unoptimized />
             ) : (
               <div className="w-16 h-16 rounded-full bg-[#06C755]/10 flex items-center justify-center mb-4 text-lg font-bold text-[#06C755]">
                 {organizerName.slice(0, 1)}

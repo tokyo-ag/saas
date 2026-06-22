@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+import { API_URL } from '@/lib/config';
 
 const NO_INDEX = { robots: { index: false, follow: false } } satisfies Partial<Metadata>;
 

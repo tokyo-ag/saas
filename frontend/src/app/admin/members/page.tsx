@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, formatDateOnly, Member } from '@/lib/api';
@@ -21,7 +22,7 @@ export default function MembersPage() {
   }
 
   useEffect(() => {
-    load().catch(console.error).finally(() => setLoading(false));
+    api.members.list().then(setMembers).catch(console.error).finally(() => setLoading(false));
   }, []);
 
   async function handleSearch() {
@@ -84,7 +85,7 @@ export default function MembersPage() {
                 <article key={member.id} className={`p-4 ${member.blockedAt ? 'opacity-60' : ''}`}>
                   <div className="flex items-start gap-3">
                     {member.linePictureUrl ? (
-                      <img src={member.linePictureUrl} alt="" className="w-9 h-9 rounded-full object-cover shrink-0 mt-0.5" />
+                      <Image src={member.linePictureUrl} alt="" width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0 mt-0.5" unoptimized />
                     ) : (
                       <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-400 shrink-0 mt-0.5">
                         {(member.lineDisplayName ?? member.name ?? '?')[0]}
@@ -148,7 +149,7 @@ export default function MembersPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2.5">
                           {member.linePictureUrl ? (
-                            <img src={member.linePictureUrl} alt="" className="w-7 h-7 rounded-full object-cover shrink-0" />
+                            <Image src={member.linePictureUrl} alt="" width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" unoptimized />
                           ) : (
                             <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-400 shrink-0">
                               {(member.lineDisplayName ?? member.name ?? '?')[0]}

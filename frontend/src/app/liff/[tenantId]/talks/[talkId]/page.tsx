@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api, ChatRoom } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded } from '@/lib/liff';
@@ -14,13 +14,24 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const loadMessages = useCallback((uid: string) => {
+    api.liff.messages(tenantId, talkId, uid)
+      .then((data) => {
+        setRoom(data);
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+      })
+      .catch(() => {});
+  }, [tenantId, talkId]);
+
   useEffect(() => {
     async function init() {
       const ok = await initLiff();
       let uid = '';
       if (ok) {
-        await loginIfNeeded();
-        uid = (await getLiffUserId()) ?? '';
+        const loggedIn = await loginIfNeeded();
+        if (loggedIn) {
+          uid = (await getLiffUserId()) ?? '';
+        }
       } else {
         uid = `demo-${tenantId}`;
       }
@@ -28,22 +39,13 @@ export default function ChatPage() {
       return uid;
     }
     init().then((uid) => { if (uid) loadMessages(uid); });
-  }, [tenantId, talkId]);
+  }, [tenantId, talkId, loadMessages]);
 
   useEffect(() => {
     if (!lineUserId) return;
     const id = setInterval(() => loadMessages(lineUserId), 3000);
     return () => clearInterval(id);
-  }, [lineUserId, tenantId, talkId]);
-
-  function loadMessages(uid: string) {
-    api.liff.messages(tenantId, talkId, uid)
-      .then((data) => {
-        setRoom(data);
-        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
-      })
-      .catch(() => {});
-  }
+  }, [lineUserId, loadMessages]);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();

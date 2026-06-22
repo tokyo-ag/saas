@@ -3,6 +3,7 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
@@ -18,6 +19,7 @@ export class LiffGuard implements CanActivate {
     string,
     { lineUserId: string; exp: number }
   >();
+  private readonly logger = new Logger(LiffGuard.name);
 
   constructor(private config: ConfigService) {}
 
@@ -34,7 +36,11 @@ export class LiffGuard implements CanActivate {
       .switchToHttp()
       .getRequest<Request & { lineUserId?: string }>();
     const auth = req.headers.authorization;
+    this.logger.debug(
+      `LIFF guard invoked: path=${req.path} method=${req.method} authPresent=${Boolean(auth)}`,
+    );
     if (!auth?.startsWith('Bearer ')) {
+      this.logger.warn('LIFF authorization header missing or malformed');
       throw new UnauthorizedException('LIFF認証が必要です');
     }
 
@@ -47,6 +53,7 @@ export class LiffGuard implements CanActivate {
     const cached = this.cache.get(idToken);
     if (cached && cached.exp > Date.now()) {
       req.lineUserId = cached.lineUserId;
+      this.logger.debug(`LIFF token cache hit for user=${cached.lineUserId}`);
       return true;
     }
 
@@ -57,11 +64,16 @@ export class LiffGuard implements CanActivate {
     });
 
     if (!res.ok) {
+      const body = await res.text().catch(() => '<no-body>');
+      this.logger.warn(
+        `LINE token verify failed: status=${res.status} body=${body}`,
+      );
       throw new UnauthorizedException('LINEトークンが無効です');
     }
 
     const payload = (await res.json()) as LiffIdTokenPayload;
     req.lineUserId = payload.sub;
+    this.logger.debug(`LIFF token verified for user=${payload.sub}`);
 
     // Cache for 5 minutes (tokens expire at 10 min; 5 min gives safety margin)
     this.cache.set(idToken, {

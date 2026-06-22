@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { api, AdminMessage } from '@/lib/api';
@@ -22,24 +22,24 @@ export default function MemberMessagesPage() {
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    api.members.get(memberId).then((m) => setMemberName(m.name ?? '（名前未設定）')).catch(() => {});
-    load();
-  }, [memberId]);
-
-  useEffect(() => {
-    const id = setInterval(load, 5000);
-    return () => clearInterval(id);
-  }, [memberId]);
-
-  function load() {
+  const load = useCallback(() => {
     api.members.messages(memberId)
       .then((data) => {
         setMessages(data);
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
       })
       .catch(() => {});
-  }
+  }, [memberId]);
+
+  useEffect(() => {
+    api.members.get(memberId).then((m) => setMemberName(m.name ?? '（名前未設定）')).catch(() => {});
+    load();
+  }, [memberId, load]);
+
+  useEffect(() => {
+    const id = setInterval(load, 5000);
+    return () => clearInterval(id);
+  }, [load]);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();

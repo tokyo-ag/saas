@@ -7,6 +7,7 @@ import {
   Body,
   HttpCode,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import type { RawBodyRequest } from '@nestjs/common';
 import { Request } from 'express';
@@ -16,6 +17,8 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('webhook')
 export class WebhookController {
+  private readonly logger = new Logger(WebhookController.name);
+
   constructor(
     private readonly webhookService: WebhookService,
     private readonly prisma: PrismaService,
@@ -33,6 +36,9 @@ export class WebhookController {
       where: { id: tenantId },
     });
     if (!tenant?.lineChannelSecret || !req.rawBody) {
+      this.logger.warn(
+        `Webhook rejected for tenant=${tenantId} missing secret or rawBody`,
+      );
       throw new UnauthorizedException('LINE webhook not configured');
     }
     const valid = validateSignature(
@@ -40,7 +46,13 @@ export class WebhookController {
       tenant.lineChannelSecret,
       signature ?? '',
     );
-    if (!valid) throw new UnauthorizedException('Invalid LINE signature');
+    if (!valid) {
+      this.logger.warn(`Invalid LINE signature for tenant=${tenantId}`);
+      throw new UnauthorizedException('Invalid LINE signature');
+    }
+    this.logger.debug(
+      `Valid LINE webhook received for tenant=${tenantId} payloadLength=${req.rawBody.length}`,
+    );
     return this.webhookService.handleWebhook(tenantId, body);
   }
 }

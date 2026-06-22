@@ -198,9 +198,9 @@ export default function LiffEventDetailPage() {
   }
 
   const isFull = event.capacity != null && event.reservedCount >= event.capacity;
-  const isClosed = event.status === 'closed';
-  const remaining = event.capacity != null ? event.capacity - event.reservedCount : null;
   const isPastEvent = new Date(event.heldAt).getTime() < Date.now();
+  const isClosed = event.status === 'closed' || isPastEvent;
+  const remaining = event.capacity != null ? event.capacity - event.reservedCount : null;
   const canReview = !!myReservation && ['reserved', 'attended'].includes(myReservation.status) && isPastEvent;
   const reviews = event.reviews ?? [];
 

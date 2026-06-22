@@ -1,4 +1,4 @@
-export const TOKEN_KEY = 'organizer_token';
+const TOKEN_KEY = 'organizer_token';
 const COOKIE_KEY = 'admin_token';
 
 function setCookie(value: string) {
@@ -33,8 +33,11 @@ export function clearToken() {
 
 export function decodeJwt<T = Record<string, unknown>>(token: string): T | null {
   try {
-    const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    return JSON.parse(atob(b64)) as T;
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    const b64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = b64.padEnd(b64.length + ((4 - (b64.length % 4)) % 4), '=');
+    return JSON.parse(atob(padded)) as T;
   } catch {
     return null;
   }

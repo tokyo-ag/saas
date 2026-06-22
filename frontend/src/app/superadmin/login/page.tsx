@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { setToken } from '@/lib/auth';
+import { decodeJwt, setToken } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { CLIENT_API_BASE } from '@/lib/client-api-base';
 
@@ -26,14 +26,18 @@ export default function SuperadminLoginPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message ?? 'ログインに失敗しました');
-      let isSuperadmin = false;
-      try {
-        const p = JSON.parse(atob(data.token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-        isSuperadmin = !!p?.isSuperadmin;
-      } catch { /* ignore */ }
-      if (!isSuperadmin) throw new Error('スーパー管理者権限がありません');
+      const payload = decodeJwt<{ isSuperadmin?: boolean }>(data.token);
+      if (!payload?.isSuperadmin) throw new Error('スーパー管理者権限がありません');
       setToken(data.token);
-      document.cookie = `sa_token=${data.token}; path=/; SameSite=Strict; max-age=86400`;
+      document.cookie = [
+        `sa_token=${data.token}`,
+        'path=/',
+        'SameSite=Strict',
+        'max-age=86400',
+        location.protocol === 'https:' ? 'Secure' : '',
+      ]
+        .filter(Boolean)
+        .join('; ');
       router.push('/superadmin');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'ログインに失敗しました');

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { api, formatDate, downloadWithAuth, API_URL, Event, Reservation, AdminEventReview } from '@/lib/api';
@@ -24,7 +25,7 @@ export default function EventDetailPage() {
   const [reviews, setReviews] = useState<AdminEventReview[]>([]);
   const [loading, setLoading] = useState(true);
 
-  async function load() {
+  const load = useCallback(async () => {
     const [eventData, reservationList, reviewList] = await Promise.all([
       api.events.get(eventId),
       api.events.reservations(eventId),
@@ -33,11 +34,11 @@ export default function EventDetailPage() {
     setEvent(eventData);
     setReservations(reservationList as EventReservation[]);
     setReviews(reviewList);
-  }
+  }, [eventId]);
 
   useEffect(() => {
     load().catch(console.error).finally(() => setLoading(false));
-  }, [eventId]);
+  }, [load]);
 
   async function updateStatus(reservationId: string, status: string) {
     try {
@@ -65,17 +66,20 @@ export default function EventDetailPage() {
     <>
     <div className="px-4 py-4 md:px-6 md:py-6">
       {event.imageUrl && (
-        <img
+        <Image
           src={imgUrl(event.imageUrl, API_URL)!}
           alt={event.title}
+          width={1200}
+          height={1500}
           className="mb-5 w-full rounded-xl border border-gray-200 object-cover aspect-[4/5]"
+          unoptimized
         />
       )}
 
       <div className="mb-6 space-y-4">
         <div className="flex items-start gap-3">
           {event.iconUrl && (
-            <img src={`${API_URL}${event.iconUrl}`} className="h-10 w-10 shrink-0 rounded-full object-cover" alt="" />
+            <Image src={`${API_URL}${event.iconUrl}`} width={40} height={40} className="h-10 w-10 shrink-0 rounded-full object-cover" alt="" unoptimized />
           )}
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -115,7 +119,7 @@ export default function EventDetailPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-2.5 min-w-0">
                       {reservation.member.linePictureUrl ? (
-                        <img src={reservation.member.linePictureUrl} alt="" className="w-9 h-9 rounded-full shrink-0 object-cover" />
+                        <Image src={reservation.member.linePictureUrl} alt="" width={36} height={36} className="w-9 h-9 rounded-full shrink-0 object-cover" unoptimized />
                       ) : (
                         <div className="w-9 h-9 rounded-full shrink-0 bg-gray-200 flex items-center justify-center">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -174,7 +178,7 @@ export default function EventDetailPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           {reservation.member.linePictureUrl ? (
-                            <img src={reservation.member.linePictureUrl} alt="" className="w-8 h-8 rounded-full shrink-0 object-cover" />
+                            <Image src={reservation.member.linePictureUrl} alt="" width={32} height={32} className="w-8 h-8 rounded-full shrink-0 object-cover" unoptimized />
                           ) : (
                             <div className="w-8 h-8 rounded-full shrink-0 bg-gray-200 flex items-center justify-center">
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>

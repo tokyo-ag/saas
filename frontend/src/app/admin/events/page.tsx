@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, formatDate, API_URL } from '@/lib/api';
+import { SITE_URL } from '@/lib/config';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
 import { EventStatusBadge } from '@/components/ui/StatusBadge';
 import type { Event } from '@/lib/api';
@@ -138,10 +140,10 @@ export default function EventsPage() {
   const [tenantId, setTenantId] = useState<string>('');
   const [copied, setCopied] = useState(false);
 
-  function load() {
+  const load = useCallback(() => {
     setLoading(true);
     api.events.list().then(setEvents).catch(console.error).finally(() => setLoading(false));
-  }
+  }, []);
 
   useEffect(() => {
     load();
@@ -149,10 +151,9 @@ export default function EventsPage() {
       setViewMode(t.liffEventView === 'calendar' ? 'calendar' : 'card');
       setTenantId(t.code ?? t.id);
     }).catch(() => {});
-  }, []);
+  }, [load]);
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.jp';
-  const scheduleUrl = tenantId ? `${siteUrl}/liff/${tenantId}` : '';
+  const scheduleUrl = tenantId ? `${SITE_URL}/liff/${tenantId}` : '';
 
   function copyScheduleUrl() {
     if (!scheduleUrl) return;
@@ -260,7 +261,7 @@ export default function EventsPage() {
                 <div className="min-w-0 flex-1">
                   <div className="mb-2 flex flex-wrap items-center gap-2">
                     {event.iconUrl && (
-                      <img src={`${API_URL}${event.iconUrl}`} className="w-8 h-8 rounded-full object-cover shrink-0" alt="" />
+                      <Image src={`${API_URL}${event.iconUrl}`} width={32} height={32} className="w-8 h-8 rounded-full object-cover shrink-0" alt="" unoptimized />
                     )}
                     <EventStatusBadge status={event.status} />
                     <Link href={`/admin/events/${event.id}`} className="font-bold text-gray-900 hover:text-[#06C755] break-words">

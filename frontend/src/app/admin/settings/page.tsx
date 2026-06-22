@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import NextImage from 'next/image';
 import Link from 'next/link';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
 import { api, Tenant, TenantInput } from '@/lib/api';
+import { SITE_URL } from '@/lib/config';
 import { SaveToast } from '@/components/ui/SaveToast';
 
 const tabs = [
@@ -210,11 +212,11 @@ export default function SettingsPage() {
           {tenant.id && (
             <div className="flex items-center gap-2 mb-4">
               <span className="flex-1 truncate rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-xs font-mono text-gray-600">
-                {`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.jp'}/liff/${tenant.code ?? tenant.id}`}
+                {`${SITE_URL}/liff/${tenant.code ?? tenant.id}`}
               </span>
               <button
                 type="button"
-                onClick={() => copyInviteLink(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.jp'}/liff/${tenant.code ?? tenant.id}`)}
+                onClick={() => copyInviteLink(`${SITE_URL}/liff/${tenant.code ?? tenant.id}`)}
                 className="shrink-0 rounded-lg bg-[#06C755] px-4 py-2 text-xs font-bold text-white hover:bg-[#05a847]"
               >
                 {copied ? 'コピー済み ✓' : 'コピー'}
@@ -235,7 +237,7 @@ export default function SettingsPage() {
                 className="relative flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-gray-300 bg-gray-50 transition-colors hover:border-[#06C755] hover:bg-green-50 disabled:opacity-60"
               >
                 {(form.iconUrl || tenant.linePictureUrl) ? (
-                  <img src={form.iconUrl || tenant.linePictureUrl!} alt="アイコン" className="h-full w-full object-cover" />
+                  <NextImage src={form.iconUrl || tenant.linePictureUrl!} alt="アイコン" fill sizes="80px" className="object-cover" unoptimized />
                 ) : (
                   <span className="text-3xl font-bold text-gray-300">{form.name?.[0] ?? '?'}</span>
                 )}

@@ -41,7 +41,7 @@ async function main() {
   await prisma.$executeRaw`DELETE FROM tenants WHERE id = ${OLD_ID}`;
 
   console.log(`✅ 完了！新しいテナントID: ${newId}`);
-  console.log(`🔗 新しいLIFF URL: https://comiu.vercel.app/liff/${newId}`);
+  console.log(`🔗 新しいLIFF URL: https://comiu.link/liff/${newId}`);
 }
 
 main()

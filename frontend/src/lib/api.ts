@@ -13,11 +13,33 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const isSuperadmin = path.startsWith('/superadmin');
   const isAdmin = path.startsWith('/admin');
   const isLiff = path.startsWith('/liff/');
+  const method = (options?.method ?? 'GET').toString().toUpperCase();
+  const isLiffPublicEndpoint =
+    isLiff &&
+    ((method === 'GET' &&
+      /^\/liff\/[^/]+(\/(events(|\/[^/]+(|\/reviews))|members\/[^/]+)?)?$/.test(path)) ||
+      (method === 'POST' && /^\/liff\/[^/]+\/access$/.test(path)));
   const needsAuth = isSuperadmin || isAdmin || path === '/auth/reconfirm' || path === '/auth/me' || path === '/auth/set-email-password' || path === '/auth/resend-verification';
   const token = needsAuth ? getToken() : null;
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  if (isLiff && _liffToken) headers['Authorization'] = `Bearer ${_liffToken}`;
+  if (isLiff) {
+    if (_liffToken) {
+      headers['Authorization'] = `Bearer ${_liffToken}`;
+    } else if (!isLiffPublicEndpoint) {
+      // LIFF保護付きエンドポイントに対して、LIFF ID token が未設定のまま呼ばれた。
+      if (typeof window !== 'undefined') {
+        console.warn('[LIFF] LIFF protected endpoint called without LIFF ID token; responses may be limited.');
+        try {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          window.__LIFF_MISSING_TOKEN = (window.__LIFF_MISSING_TOKEN || 0) + 1;
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }
 
   const { headers: optionHeaders, ...restOptions } = options ?? {};
   const res = await fetch(`${BASE}${path}`, {
@@ -57,10 +79,6 @@ export async function downloadWithAuth(url: string, filename: string): Promise<v
   a.download = filename;
   a.click();
   URL.revokeObjectURL(objUrl);
-}
-
-export function apiFetch<T = unknown>(path: string, options?: RequestInit): Promise<T> {
-  return request<T>(path, options);
 }
 
 // ---- イベント ----
@@ -125,25 +143,37 @@ export const api = {
   liff: {
     recordAccess: (tenantId: string) => request<{ ok: boolean }>(`/liff/${tenantId}/access`, { method: 'POST' }),
     tenant: (tenantId: string) => request<LiffTenant>(`/liff/${tenantId}`),
-    events: (tenantId: string, lineUserId?: string) =>
-      request<LiffEvent[]>(`/liff/${tenantId}/events${lineUserId ? `?lineUserId=${encodeURIComponent(lineUserId)}` : ''}`),
+    events: (tenantId: string, includeFriends?: boolean) =>
+      request<LiffEvent[]>(
+        `/liff/${tenantId}/${includeFriends ? 'events/with-friends' : 'events'}`,
+      ),
     event: (tenantId: string, eventId: string) =>
       request<LiffEvent>(`/liff/${tenantId}/events/${eventId}`),
-    myReservation: (tenantId: string, eventId: string, lineUserId: string) =>
-      request<LiffReservation | null>(
-        `/liff/${tenantId}/events/${eventId}/my-reservation?lineUserId=${encodeURIComponent(lineUserId)}`,
-      ),
+    myReservation: (
+      tenantId: string,
+      eventId: string,
+      lineUserId: string,
+    ) => {
+      void lineUserId;
+      return request<LiffReservation | null>(
+        `/liff/${tenantId}/events/${eventId}/my-reservation`,
+      );
+    },
     reviews: (tenantId: string, eventId: string) =>
       request<EventReview[]>(`/liff/${tenantId}/events/${eventId}/reviews`),
-    myReview: (tenantId: string, eventId: string, lineUserId: string) =>
-      request<EventReview | null>(
-        `/liff/${tenantId}/events/${eventId}/my-review?lineUserId=${encodeURIComponent(lineUserId)}`,
-      ),
-    submitReview: (tenantId: string, eventId: string, lineUserId: string, content: string) =>
-      request<EventReview>(`/liff/${tenantId}/events/${eventId}/reviews`, {
+    myReview: (tenantId: string, eventId: string, lineUserId: string) => {
+      void lineUserId;
+      return request<EventReview | null>(
+        `/liff/${tenantId}/events/${eventId}/my-review`,
+      );
+    },
+    submitReview: (tenantId: string, eventId: string, lineUserId: string, content: string) => {
+      void lineUserId;
+      return request<EventReview>(`/liff/${tenantId}/events/${eventId}/reviews`, {
         method: 'POST',
-        body: JSON.stringify({ lineUserId, content }),
-      }),
+        body: JSON.stringify({ content }),
+      });
+    },
     reserve: (tenantId: string, data: ReserveInput) =>
       request<ReserveResult>(`/liff/${tenantId}/reservations`, {
         method: 'POST',
@@ -153,63 +183,85 @@ export const api = {
       request<void>(`/liff/${tenantId}/reservations/${reservationId}`, { method: 'DELETE' }),
     join: (tenantId: string, data: { lineDisplayName?: string; linePictureUrl?: string }) =>
       request<LiffProfile>(`/liff/${tenantId}/join`, { method: 'POST', body: JSON.stringify(data) }),
-    profile: (tenantId: string, lineUserId: string) =>
-      request<LiffProfile>(`/liff/${tenantId}/profile?lineUserId=${encodeURIComponent(lineUserId)}`),
+    profile: (tenantId: string, lineUserId: string) => {
+      void lineUserId;
+      return request<LiffProfile>(`/liff/${tenantId}/profile`);
+    },
     memberProfile: (tenantId: string, memberId: string) =>
       request<LiffProfile>(`/liff/${tenantId}/members/${memberId}`),
-    createConnection: (tenantId: string, myLineUserId: string, targetMemberId: string) =>
+    createConnection: (tenantId: string, _myLineUserId: string, targetMemberId: string) =>
       request<LiffConnection & { alreadyConnected: boolean }>(`/liff/${tenantId}/connections`, {
         method: 'POST',
-        body: JSON.stringify({ myLineUserId, targetMemberId }),
+        body: JSON.stringify({ targetMemberId }),
       }),
-    connections: (tenantId: string, lineUserId: string) =>
-      request<LiffConnection[]>(`/liff/${tenantId}/connections?lineUserId=${encodeURIComponent(lineUserId)}`),
-    messages: (tenantId: string, connectionId: string, lineUserId: string) =>
-      request<ChatRoom>(`/liff/${tenantId}/connections/${connectionId}/messages?lineUserId=${encodeURIComponent(lineUserId)}`),
-    sendMessage: (tenantId: string, connectionId: string, lineUserId: string, content: string) =>
-      request<ChatMessage>(`/liff/${tenantId}/connections/${connectionId}/messages`, {
+    connections: (tenantId: string, lineUserId: string) => {
+      void lineUserId;
+      return request<LiffConnection[]>(`/liff/${tenantId}/connections`);
+    },
+    messages: (tenantId: string, connectionId: string, lineUserId: string) => {
+      void lineUserId;
+      return request<ChatRoom>(`/liff/${tenantId}/connections/${connectionId}/messages`);
+    },
+    sendMessage: (tenantId: string, connectionId: string, lineUserId: string, content: string) => {
+      void lineUserId;
+      return request<ChatMessage>(`/liff/${tenantId}/connections/${connectionId}/messages`, {
         method: 'POST',
-        body: JSON.stringify({ lineUserId, content }),
-      }),
-    updateProfile: (tenantId: string, lineUserId: string, data: { name: string; grade: string; gender: string }) =>
+        body: JSON.stringify({ content }),
+      });
+    },
+    updateProfile: (tenantId: string, _lineUserId: string, data: { name: string; grade: string; gender: string }) =>
       request<LiffProfile>(
-        `/liff/${tenantId}/profile?lineUserId=${encodeURIComponent(lineUserId)}`,
+        `/liff/${tenantId}/profile`,
         { method: 'PATCH', body: JSON.stringify(data) },
       ),
-    syncLineProfile: (tenantId: string, lineUserId: string, data: { lineDisplayName?: string; linePictureUrl?: string }) =>
+    syncLineProfile: (tenantId: string, _lineUserId: string, data: { lineDisplayName?: string; linePictureUrl?: string }) =>
       request<void>(
-        `/liff/${tenantId}/profile/line?lineUserId=${encodeURIComponent(lineUserId)}`,
+        `/liff/${tenantId}/profile/line`,
         { method: 'PATCH', body: JSON.stringify(data) },
       ),
-    updateSettings: (tenantId: string, lineUserId: string, settings: { showEventsToConnections: boolean }) =>
+    updateSettings: (tenantId: string, _lineUserId: string, settings: { showEventsToConnections: boolean }) =>
       request<{ showEventsToConnections: boolean }>(
-        `/liff/${tenantId}/profile/settings?lineUserId=${encodeURIComponent(lineUserId)}`,
+        `/liff/${tenantId}/profile/settings`,
         { method: 'PATCH', body: JSON.stringify(settings) },
       ),
-    adminMessages: (tenantId: string, lineUserId: string) =>
-      request<AdminMessage[]>(`/liff/${tenantId}/admin-messages?lineUserId=${encodeURIComponent(lineUserId)}`),
-    sendToAdmin: (tenantId: string, lineUserId: string, content: string) =>
-      request<AdminMessage>(`/liff/${tenantId}/admin-messages`, {
+    adminMessages: (tenantId: string, lineUserId: string) => {
+      void lineUserId;
+      return request<AdminMessage[]>(`/liff/${tenantId}/admin-messages`);
+    },
+    sendToAdmin: (tenantId: string, lineUserId: string, content: string) => {
+      void lineUserId;
+      return request<AdminMessage>(`/liff/${tenantId}/admin-messages`, {
         method: 'POST',
-        body: JSON.stringify({ lineUserId, content }),
-      }),
-    markAdminMessagesRead: (tenantId: string, lineUserId: string) =>
-      request<void>(`/liff/${tenantId}/admin-messages/read?lineUserId=${encodeURIComponent(lineUserId)}`, { method: 'PATCH' }),
-    supportMessages: (tenantId: string, lineUserId: string) =>
-      request<SupportMessage[]>(`/liff/${tenantId}/support?lineUserId=${encodeURIComponent(lineUserId)}`),
-    sendSupport: (tenantId: string, lineUserId: string, content: string) =>
-      request<SupportMessage>(`/liff/${tenantId}/support`, {
+        body: JSON.stringify({ content }),
+      });
+    },
+    markAdminMessagesRead: (tenantId: string, lineUserId: string) => {
+      void lineUserId;
+      return request<void>(`/liff/${tenantId}/admin-messages/read`, { method: 'PATCH' });
+    },
+    supportMessages: (tenantId: string, lineUserId: string) => {
+      void lineUserId;
+      return request<SupportMessage[]>(`/liff/${tenantId}/support`);
+    },
+    sendSupport: (tenantId: string, lineUserId: string, content: string) => {
+      void lineUserId;
+      return request<SupportMessage>(`/liff/${tenantId}/support`, {
         method: 'POST',
-        body: JSON.stringify({ lineUserId, content }),
-      }),
+        body: JSON.stringify({ content }),
+      });
+    },
   },
   notifications: {
-    list: (tenantId: string, lineUserId: string) =>
-      request<AppNotification[]>(`/liff/${tenantId}/notifications?lineUserId=${encodeURIComponent(lineUserId)}`),
+    list: (tenantId: string, lineUserId: string) => {
+      void lineUserId;
+      return request<AppNotification[]>(`/liff/${tenantId}/notifications`);
+    },
     markRead: (tenantId: string, id: string) =>
       request(`/liff/${tenantId}/notifications/${id}/read`, { method: 'PATCH' }),
-    markAllRead: (tenantId: string, lineUserId: string) =>
-      request(`/liff/${tenantId}/notifications/read-all?lineUserId=${encodeURIComponent(lineUserId)}`, { method: 'PATCH' }),
+    markAllRead: (tenantId: string, lineUserId: string) => {
+      void lineUserId;
+      return request(`/liff/${tenantId}/notifications/read-all`, { method: 'PATCH' });
+    },
   },
   public: {
     events: (category?: string, tag?: string) => {
@@ -517,7 +569,6 @@ export interface Tenant {
   lineChannelSecret?: string;
   lineChannelAccessToken?: string;
   lineConfigured?: boolean;
-  liffId?: string;
   organizerLineUserId?: string;
   lineDisplayName?: string;
   linePictureUrl?: string;
@@ -546,7 +597,6 @@ export interface TenantInput {
   lineChannelId?: string;
   lineChannelSecret?: string;
   lineChannelAccessToken?: string;
-  liffId?: string;
   organizerLineUserId?: string;
   stripePublishableKey?: string;
   stripeSecretKey?: string;
@@ -565,7 +615,6 @@ export interface LiffTenant {
   linePictureUrl?: string;
   iconUrl?: string;
   lineChannelId?: string;
-  liffId?: string;
   liffEventView?: string;
   themeColor?: string;
 }
@@ -682,17 +731,3 @@ export function formatDateShort(dateStr: string): string {
     timeZone: 'Asia/Tokyo',
   });
 }
-
-export const STATUS_LABELS: Record<ReservationStatus, string> = {
-  reserved: '予約確定',
-  waitlisted: 'キャンセル待ち',
-  attended: '参加済',
-  cancelled: 'キャンセル',
-  waiting_payment: '支払待ち',
-};
-
-export const EVENT_STATUS_LABELS: Record<EventStatus, string> = {
-  draft: '下書き',
-  open: '受付中',
-  closed: '受付終了',
-};

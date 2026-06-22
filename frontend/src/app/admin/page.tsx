@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { api, formatDate, API_URL } from '@/lib/api';
+import { api } from '@/lib/api';
 import type { Event, Tenant } from '@/lib/api';
 import {
   Area,

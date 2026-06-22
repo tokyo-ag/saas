@@ -259,14 +259,15 @@ export class LiffService {
       throw new UnauthorizedException('LIFF認証が必要です');
     }
     const event = await this.prisma.event.findFirst({
-      where: {
-        id: dto.eventId,
-        tenantId,
-        status: 'open',
-        heldAt: { gte: new Date() },
-      },
+      where: { id: dto.eventId, tenantId },
     });
-    if (!event) throw new NotFoundException('Event not found or not open');
+    if (!event) throw new NotFoundException('イベントが見つかりません');
+    if (event.status !== 'open') {
+      throw new BadRequestException('このイベントは現在予約できません');
+    }
+    if (event.heldAt.getTime() < Date.now()) {
+      throw new BadRequestException('このイベントの受付は終了しました');
+    }
 
     // グローバルBAN チェック
     const globalBan = await this.prisma.bannedLineUser.findUnique({

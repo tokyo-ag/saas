@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link';
 
+import PublicFooter from '@/components/public/PublicFooter';
 import { SITE_URL } from '@/lib/config';
 
 export const metadata: Metadata = {
@@ -233,6 +234,7 @@ export default function PricingPage() {
           </Link>
         </div>
       </div>
+      <PublicFooter />
     </div>
     </>
   );

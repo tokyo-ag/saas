@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { formatDate } from '@/lib/api';
 import { initLiff, liff } from '@/lib/liff';
+import { SITE_URL } from '@/lib/config';
 
 type FriendInviteCardProps = {
   tenantId: string;
@@ -13,8 +14,7 @@ type FriendInviteCardProps = {
 };
 
 function buildEventUrl(tenantId: string, eventId: string) {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.jp';
-  return `${base}/liff/${tenantId}/events/${eventId}`;
+  return `${SITE_URL}/liff/${tenantId}/events/${eventId}`;
 }
 
 export function FriendInviteCard({ tenantId, eventId, title, heldAt, location }: FriendInviteCardProps) {

@@ -19,10 +19,17 @@ dist/
 .env.development.local
 .env.test.local
 .env.production.local
+.env*
+!.env.example
 
 # logs
 *.log
 npm-debug.log*
+*-log.txt
+
+# build cache / local tools
+*.tsbuildinfo
+stripe_*/
 
 # OS
 .DS_Store
