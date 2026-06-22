@@ -85,7 +85,11 @@ export class LiffService {
   async getEvents(tenantId: string, lineUserId?: string) {
     tenantId = await this.resolveTenantId(tenantId);
     const events = await this.prisma.event.findMany({
-      where: { tenantId, status: 'open' },
+      where: {
+        tenantId,
+        status: 'open',
+        heldAt: { gte: new Date() },
+      },
       include: {
         reservations: {
           where: {
