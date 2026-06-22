@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
-import { PrismaService } from '../prisma/prisma.service';
 
 interface LiffIdTokenPayload {
   sub: string;
@@ -23,13 +22,7 @@ export class LiffGuard implements CanActivate {
 
   constructor(
     private config: ConfigService,
-    private prisma: PrismaService,
   ) {}
-
-  private getChannelIdFromLiffId(liffId?: string | null): string | null {
-    const channelId = liffId?.split('-')[0]?.trim();
-    return channelId && /^\d+$/.test(channelId) ? channelId : null;
-  }
 
   private getAudienceFromIdToken(idToken: string): string | null {
     try {
@@ -44,19 +37,7 @@ export class LiffGuard implements CanActivate {
     }
   }
 
-  private async getExpectedChannelId(
-    tenantId: string | undefined,
-    idToken: string,
-  ): Promise<string | null> {
-    if (tenantId) {
-      const tenant = await this.prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { liffId: true },
-      });
-      const tenantChannelId = this.getChannelIdFromLiffId(tenant?.liffId);
-      if (tenantChannelId) return tenantChannelId;
-    }
-
+  private getExpectedChannelId(idToken: string): string | null {
     return (
       this.config.get<string>('LIFF_CHANNEL_ID')?.trim() ||
       this.config.get<string>('LINE_LOGIN_CHANNEL_ID')?.trim() ||
@@ -74,9 +55,7 @@ export class LiffGuard implements CanActivate {
     }
 
     const idToken = auth.slice(7);
-    const tenantParam = req.params?.tenantId;
-    const tenantId = Array.isArray(tenantParam) ? tenantParam[0] : tenantParam;
-    const channelId = await this.getExpectedChannelId(tenantId, idToken);
+    const channelId = this.getExpectedChannelId(idToken);
     if (!channelId) {
       throw new UnauthorizedException('LIFF Channel IDが未設定です');
     }

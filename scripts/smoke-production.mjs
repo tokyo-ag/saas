@@ -59,7 +59,7 @@ const suites = {
       },
     },
     {
-      name: 'backend LIFF tenant exposes LINE/LIFF settings',
+      name: 'backend LIFF tenant exposes tenant messaging settings',
       run: async () => {
         const tenant = await fetchJson(`${apiUrl}/api/liff/${tenantCode}`);
         if (!tenant?.id || !tenant?.name) {
@@ -67,9 +67,6 @@ const suites = {
         }
         if (!tenant?.lineChannelId) {
           throw new Error('LIFF tenant response is missing lineChannelId');
-        }
-        if (!tenant?.liffId) {
-          throw new Error('LIFF tenant response is missing liffId');
         }
       },
     },

@@ -38,7 +38,7 @@ function ReservePageInner() {
       const tenantInfo = await api.liff.tenant(tenantId).catch(() => null);
       if (tenantInfo) setTenant(tenantInfo);
 
-      const initOk = await initLiff(tenantInfo?.liffId);
+      const initOk = await initLiff();
 
       if (!initOk) {
         setAuthError(`Step1: ${getInitError() ?? '不明'}`);

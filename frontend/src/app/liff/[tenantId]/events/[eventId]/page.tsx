@@ -124,8 +124,7 @@ export default function LiffEventDetailPage() {
         }
         return;
       }
-      const tenantInfo = await api.liff.tenant(tenantId).catch(() => null);
-      const liffOk = await initLiff(tenantInfo?.liffId);
+      const liffOk = await initLiff();
       if (liffOk && liff.isLoggedIn()) {
         const uid = await getLiffUserId();
         if (uid) {
