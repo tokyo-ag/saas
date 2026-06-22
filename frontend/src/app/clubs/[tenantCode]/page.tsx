@@ -209,6 +209,28 @@ export default async function ClubPage({
             )}
           </div>
         </section>
+        {club.pages && club.pages.length > 0 && (
+          <section className="mb-5 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="text-base font-bold text-gray-900">紹介ページ</h2>
+              <span className="text-xs font-bold text-[#06C755]">{club.pages.length}件</span>
+            </div>
+            <div className="space-y-2">
+              {club.pages.map((page) => (
+                <Link
+                  key={page.id}
+                  href={`/clubs/${club.code ?? tenantCode}/${page.slug}`}
+                  className="block rounded-xl border border-gray-100 px-4 py-3 transition hover:bg-gray-50"
+                >
+                  <p className="text-sm font-bold text-gray-900">{page.title}</p>
+                  {page.seoDescription && (
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-gray-500">{page.seoDescription}</p>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
         {club.events.length === 0 ? (
           <section className="rounded-2xl border border-gray-100 bg-white px-5 py-12 text-center shadow-sm">
             <p className="text-sm font-bold text-gray-800">

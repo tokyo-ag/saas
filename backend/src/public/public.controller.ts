@@ -155,6 +155,30 @@ export class PublicController {
       .map((t) => ({ tenantCode: t.code!, updatedAt: t.updatedAt }));
   }
 
+  @Get('sitemap-pages')
+  async getSitemapPages() {
+    const pages = await this.prisma.publicPage.findMany({
+      where: {
+        status: 'published',
+        tenant: { deletedAt: null, bannedAt: null, code: { not: null } },
+      },
+      select: {
+        slug: true,
+        updatedAt: true,
+        tenant: { select: { code: true } },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return pages
+      .filter((p) => p.tenant.code)
+      .map((p) => ({
+        tenantCode: p.tenant.code!,
+        slug: p.slug,
+        updatedAt: p.updatedAt,
+      }));
+  }
+
   @Get('events/:eventId')
   async getEventDetail(@Param('eventId') eventId: string) {
     const event = await this.prisma.event.findFirst({
@@ -286,6 +310,17 @@ export class PublicController {
             },
           },
         },
+        publicPages: {
+          where: { status: 'published' },
+          orderBy: { updatedAt: 'desc' },
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            seoDescription: true,
+            updatedAt: true,
+          },
+        },
       },
     });
 
@@ -299,10 +334,10 @@ export class PublicController {
       description: tenant.description,
       lineDisplayName: tenant.lineDisplayName,
       linePictureUrl: tenant.linePictureUrl ?? tenant.iconUrl,
-      publicBlogUrl: tenant.publicBlogUrl,
       memberCount: tenant._count.members,
       eventCount: tenant._count.events,
       accessCount: tenant._count.liffAccesses,
+      pages: tenant.publicPages,
     };
 
     return {
@@ -334,6 +369,51 @@ export class PublicController {
           iconUrl: tenant.iconUrl,
         },
       })),
+    };
+  }
+
+  @Get('tenants/:tenantCode/pages/:slug')
+  async getTenantPage(
+    @Param('tenantCode') tenantCode: string,
+    @Param('slug') slug: string,
+  ) {
+    const page = await this.prisma.publicPage.findFirst({
+      where: {
+        slug,
+        status: 'published',
+        tenant: { code: tenantCode, deletedAt: null, bannedAt: null },
+      },
+      include: {
+        tenant: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            description: true,
+            lineDisplayName: true,
+            linePictureUrl: true,
+            iconUrl: true,
+          },
+        },
+      },
+    });
+
+    if (!page) throw new NotFoundException('Public page not found');
+
+    return {
+      id: page.id,
+      title: page.title,
+      slug: page.slug,
+      body: page.body,
+      coverImageUrl: page.coverImageUrl,
+      seoTitle: page.seoTitle,
+      seoDescription: page.seoDescription,
+      publishedAt: page.publishedAt,
+      updatedAt: page.updatedAt,
+      tenant: {
+        ...page.tenant,
+        linePictureUrl: page.tenant.linePictureUrl ?? page.tenant.iconUrl,
+      },
     };
   }
 }

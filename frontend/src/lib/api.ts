@@ -272,8 +272,20 @@ export const api = {
       return request<PublicEvent[]>(`/public/events${qs ? `?${qs}` : ''}`);
     },
     tenants: () => request<PublicTenant[]>('/public/tenants'),
+    tenantPage: (tenantCode: string, slug: string) =>
+      request<PublicCmsPage>(`/public/tenants/${tenantCode}/pages/${slug}`),
     recordView: (eventId: string) =>
       request<{ ok: boolean }>(`/public/events/${eventId}/view`, { method: 'POST' }),
+  },
+  publicPages: {
+    list: () => request<PublicPage[]>('/admin/public-pages'),
+    get: (id: string) => request<PublicPage>(`/admin/public-pages/${id}`),
+    create: (data: PublicPageInput) =>
+      request<PublicPage>('/admin/public-pages', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: PublicPageInput) =>
+      request<PublicPage>(`/admin/public-pages/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      request<{ ok: boolean }>(`/admin/public-pages/${id}`, { method: 'DELETE' }),
   },
   tenant: {
     get: () => request<Tenant>('/admin/tenant'),
@@ -689,6 +701,61 @@ export interface PublicTenant {
   memberCount: number;
   eventCount: number;
   accessCount: number;
+  pages?: PublicPageSummary[];
+}
+
+export interface PublicPageSummary {
+  id: string;
+  title: string;
+  slug: string;
+  seoDescription?: string | null;
+  updatedAt: string;
+}
+
+export interface PublicPage {
+  id: string;
+  tenantId: string;
+  title: string;
+  slug: string;
+  body: string;
+  coverImageUrl?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  status: 'draft' | 'published';
+  publishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PublicPageInput {
+  title: string;
+  slug?: string;
+  body: string;
+  coverImageUrl?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  status?: 'draft' | 'published';
+}
+
+export interface PublicCmsPage {
+  id: string;
+  title: string;
+  slug: string;
+  body: string;
+  coverImageUrl?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  publishedAt?: string | null;
+  updatedAt: string;
+  tenant: {
+    id: string;
+    code?: string | null;
+    name: string;
+    description?: string | null;
+    lineDisplayName?: string | null;
+    linePictureUrl?: string | null;
+    iconUrl?: string | null;
+  };
 }
 
 export interface PublicEvent {

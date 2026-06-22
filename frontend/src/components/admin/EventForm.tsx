@@ -90,6 +90,15 @@ function addHours(value: string, hours: number) {
   return toLocalDatetimeValue(date.toISOString());
 }
 
+function timeFromLocalDatetime(value: string) {
+  return value ? value.slice(11, 16) : '';
+}
+
+function sameDayDatetime(dateTime: string, time: string) {
+  if (!dateTime || !time) return '';
+  return `${dateTime.slice(0, 10)}T${time}`;
+}
+
 export default function EventForm({ initial }: { initial?: Event }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -100,12 +109,16 @@ export default function EventForm({ initial }: { initial?: Event }) {
   const [isPro, setIsPro] = useState(false);
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const isLineConfigured = !!tenant?.lineConfigured;
+  const initialHeldAt = toLocalDatetimeValue(initial?.heldAt);
+  const initialEndAt = initial?.endAt
+    ? sameDayDatetime(initialHeldAt, timeFromLocalDatetime(toLocalDatetimeValue(initial.endAt)))
+    : '';
 
   const [form, setForm] = useState<EventFormData>({
     title: initial?.title ?? '',
     description: initial?.description ?? '',
-    heldAt: toLocalDatetimeValue(initial?.heldAt),
-    endAt: toLocalDatetimeValue(initial?.endAt),
+    heldAt: initialHeldAt,
+    endAt: initialEndAt,
     location: initial?.location ?? '',
     locationUrl: initial?.locationUrl ?? '',
     capacityMode: initial?.capacityMale != null || initial?.capacityFemale != null ? 'gender' : initial?.capacity != null ? 'total' : 'none',
@@ -159,6 +172,15 @@ export default function EventForm({ initial }: { initial?: Event }) {
     } else {
       set('heldAt', newHeldAt);
     }
+  }
+
+  function handleEndTimeChange(time: string) {
+    const endAt = sameDayDatetime(form.heldAt, time);
+    if (endAt && new Date(endAt).getTime() <= new Date(form.heldAt).getTime()) {
+      set('endAt', addHours(form.heldAt, 2));
+      return;
+    }
+    set('endAt', endAt);
   }
 
   const TITLE_PLACEHOLDERS: Record<string, string> = {
@@ -467,10 +489,23 @@ export default function EventForm({ initial }: { initial?: Event }) {
       <Section title="日時と場所">
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="開始日時" required>
-            <input required type="datetime-local" step={600} value={form.heldAt} onChange={(e) => handleHeldAtChange(e.target.value)} className={inputClass} />
+            <input required type="datetime-local" step={1800} value={form.heldAt} onChange={(e) => handleHeldAtChange(e.target.value)} className={inputClass} />
           </Field>
           <Field label="終了日時">
-            <input type="datetime-local" step={600} min={form.heldAt || undefined} value={form.endAt} onChange={(e) => set('endAt', e.target.value)} className={inputClass} />
+            <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
+              <input
+                type="time"
+                step={1800}
+                min={timeFromLocalDatetime(form.heldAt) || undefined}
+                disabled={!form.heldAt}
+                value={timeFromLocalDatetime(form.endAt)}
+                onChange={(e) => handleEndTimeChange(e.target.value)}
+                className={inputClass}
+              />
+              <p className="text-xs leading-5 text-gray-500">
+                {form.heldAt ? `${form.heldAt.slice(0, 10)} と同じ日で保存されます。` : '開始日時を選ぶと入力できます。'}
+              </p>
+            </div>
           </Field>
         </div>
         <Field label="場所名" required>
@@ -623,7 +658,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
                 ]}
               />
               {form.remindPreset === 'custom' && (
-                <input type="datetime-local" step={600} value={form.remindAt} onChange={(e) => set('remindAt', e.target.value)} className={`${inputClass} max-w-xs`} />
+                <input type="datetime-local" step={1800} value={form.remindAt} onChange={(e) => set('remindAt', e.target.value)} className={`${inputClass} max-w-xs`} />
               )}
             </div>
           )}

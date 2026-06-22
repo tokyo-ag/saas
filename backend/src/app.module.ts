@@ -17,6 +17,7 @@ import { SuperadminModule } from './superadmin/superadmin.module';
 import { StripeModule } from './stripe/stripe.module';
 import { AuthModule } from './auth/auth.module';
 import { PublicModule } from './public/public.module';
+import { PublicPagesModule } from './public-pages/public-pages.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -36,6 +37,7 @@ import { PublicModule } from './public/public.module';
     StripeModule,
     AuthModule,
     PublicModule,
+    PublicPagesModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
