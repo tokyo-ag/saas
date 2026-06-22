@@ -2,8 +2,12 @@ function withoutTrailingSlash(value: string) {
   return value.replace(/\/+$/, '');
 }
 
+function normalizeUrl(value: string) {
+  return value.trim().replace(/\s+/g, '');
+}
+
 function envOr(name: string, fallback: string) {
-  const value = process.env[name]?.trim();
+  const value = process.env[name] ? normalizeUrl(process.env[name]) : '';
   return value || fallback;
 }
 
@@ -21,7 +25,7 @@ export const DISCOVERY_LOCKED =
   process.env.NEXT_PUBLIC_DISCOVERY_LOCKED !== 'false';
 
 export const API_URL = withoutTrailingSlash(
-  process.env.API_BASE_URL?.trim() ||
+  (process.env.API_BASE_URL ? normalizeUrl(process.env.API_BASE_URL) : '') ||
     envOr('NEXT_PUBLIC_API_URL', 'https://comiu.up.railway.app'),
 );
 
