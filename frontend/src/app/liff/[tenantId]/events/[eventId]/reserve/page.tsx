@@ -11,6 +11,14 @@ const GENDERS = ['男性', '女性', 'その他・回答しない'];
 // auth状態を3値で管理
 type AuthStatus = 'loading' | 'error' | 'ok';
 
+function isLineAuthErrorMessage(message: string): boolean {
+  return (
+    message.includes('LINEトークン') ||
+    message.includes('LIFF認証') ||
+    message.includes('Unauthorized')
+  );
+}
+
 function ReservePageInner() {
   const { tenantId, eventId } = useParams<{ tenantId: string; eventId: string }>();
   const searchParams = useSearchParams();
@@ -33,6 +41,29 @@ function ReservePageInner() {
   const [gender, setGender] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  function restartLineAuth() {
+    setError('LINE認証を更新しています。画面が切り替わらない場合は、LINEからもう一度開き直してください。');
+    setAuthError('');
+    localStorage.removeItem('liff-login-tried');
+    localStorage.setItem(
+      'liff-pending-redirect',
+      JSON.stringify({ url: window.location.href, expires: Date.now() + 10 * 60 * 1000 }),
+    );
+    setLiffToken(null);
+
+    if (liff.isInClient()) {
+      window.location.reload();
+      return;
+    }
+
+    try {
+      if (liff.isLoggedIn()) liff.logout();
+    } catch {
+      // ignore
+    }
+    liff.login({ redirectUri: window.location.href });
+  }
 
   useEffect(() => {
     async function init() {
@@ -64,6 +95,7 @@ function ReservePageInner() {
           if (tried) {
             // 1回試みたが戻ってきても未認証 → エラー表示
             localStorage.removeItem('liff-login-tried');
+            setAuthError('LINE認証を完了できませんでした。LINEログインをやり直してください。');
             setAuthStatus('error');
             return;
           }
@@ -146,6 +178,10 @@ function ReservePageInner() {
       window.location.href = `/liff/${tenantId}/events/${eventId}/done?status=${result.status}&order=${result.waitlistOrder ?? ''}`;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '予約に失敗しました';
+      if (isLineAuthErrorMessage(msg)) {
+        restartLineAuth();
+        return;
+      }
       const isDuplicate = msg.includes('予約済み') || msg.includes('同じ日');
       if (isDuplicate) {
         alert('既に予約済みです');
