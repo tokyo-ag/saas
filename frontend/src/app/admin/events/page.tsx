@@ -93,16 +93,26 @@ function CalendarView({ events, onDuplicate }: { events: Event[]; onDuplicate: (
                   <div className="space-y-0.5">
                     {evs.slice(0, 3).map((ev) => (
                       <div key={ev.id} className="relative">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setPopoverId(popoverId === ev.id ? null : ev.id); }}
-                          className="block w-full truncate rounded px-1 py-0.5 text-[10px] font-medium bg-[#06C755]/10 text-[#06C755] hover:bg-[#06C755]/20 text-left"
-                          title={ev.title}
-                        >
-                          {ev.title}
-                        </button>
+                        <div className="flex items-center overflow-hidden rounded bg-[#06C755]/10 text-[#06C755] hover:bg-[#06C755]/20">
+                          <Link
+                            href={`/admin/events/${ev.id}`}
+                            className="min-w-0 flex-1 truncate px-1 py-0.5 text-left text-[10px] font-medium"
+                            title={ev.title}
+                          >
+                            {ev.title}
+                          </Link>
+                          <button
+                            type="button"
+                            aria-label="イベント操作メニュー"
+                            onClick={(e) => { e.stopPropagation(); setPopoverId(popoverId === ev.id ? null : ev.id); }}
+                            className="flex h-5 w-5 shrink-0 items-center justify-center text-[#06C755] hover:bg-[#06C755]/15"
+                          >
+                            <span className="text-[13px] leading-none">⋯</span>
+                          </button>
+                        </div>
                         {popoverId === ev.id && (
                           <div
-                            className={`absolute z-50 mt-0.5 w-24 rounded-lg border border-gray-200 bg-white shadow-lg py-1 ${col >= 5 ? 'right-0' : 'left-0'}`}
+                            className={`absolute z-50 mt-0.5 w-28 rounded-lg border border-gray-200 bg-white shadow-lg py-1 ${col >= 5 ? 'right-0' : 'left-0'}`}
                             onClick={(e) => e.stopPropagation()}
                           >
                             <Link href={`/admin/events/${ev.id}`} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">詳細</Link>
