@@ -20,8 +20,44 @@ function getPendingRedirect() {
   return null;
 }
 
+function normalizeLiffState(raw: string | null) {
+  if (!raw) return null;
+  let state = raw;
+  const seen = new Set<string>();
+
+  while (state && !seen.has(state)) {
+    seen.add(state);
+
+    try {
+      const decoded = decodeURIComponent(state);
+      if (decoded !== state) {
+        state = decoded;
+        continue;
+      }
+    } catch {
+      // ignore decode failures
+    }
+
+    if (state.startsWith('?')) {
+      const params = new URLSearchParams(state.slice(1));
+      const nested = params.get('liff.state');
+      if (nested) {
+        params.delete('liff.state');
+        const rest = params.toString();
+        state = nested + (rest ? `?${rest}` : '');
+        continue;
+      }
+    }
+
+    break;
+  }
+
+  return state || null;
+}
+
 function getLiffStateRedirect(searchParams: URLSearchParams) {
-  const state = searchParams.get('liff.state');
+  const rawState = searchParams.get('liff.state');
+  const state = normalizeLiffState(rawState);
   if (!state) return null;
 
   const path = state.startsWith('/') ? state : `/${state}`;

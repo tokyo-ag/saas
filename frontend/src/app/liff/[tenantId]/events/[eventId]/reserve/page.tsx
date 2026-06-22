@@ -3,7 +3,15 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { api, LiffEvent, LiffProfile, LiffTenant, setLiffToken } from '@/lib/api';
-import { initLiff, getLiffProfile, checkFriendship, liff, getInitError, redirectToLiffApp } from '@/lib/liff';
+import {
+  initLiff,
+  getLiffProfile,
+  checkFriendship,
+  liff,
+  getInitError,
+  loginIfNeeded,
+  redirectToLiffApp,
+} from '@/lib/liff';
 
 const GRADES = ['高校1年', '高校2年', '高校3年', '大学1年', '大学2年', '大学3年', '大学4年', '大学院生', '社会人', 'その他'];
 const GENDERS = ['男性', '女性', 'その他・回答しない'];
@@ -33,6 +41,7 @@ function ReservePageInner() {
   const [liffProfile, setLiffProfile] = useState<{ displayName: string; pictureUrl?: string } | null>(null);
   const [profile, setProfile] = useState<LiffProfile | null>(null);
   const [isFriend, setIsFriend] = useState<boolean | null>(null);
+  const [loginRequired, setLoginRequired] = useState(false);
   const isPastEvent = event ? new Date(event.heldAt).getTime() < Date.now() : false;
   const isClosed = event ? event.status === 'closed' || isPastEvent : false;
 
@@ -92,21 +101,15 @@ function ReservePageInner() {
             return;
           }
 
-          // 外部ブラウザ: LINEログインへリダイレクト（1回のみ）
-          const tried = localStorage.getItem('liff-login-tried');
-          if (tried) {
-            // 1回試みたが戻ってきても未認証 → エラー表示
-            localStorage.removeItem('liff-login-tried');
-            setAuthError('LINE認証を完了できませんでした。LINEログインをやり直してください。');
+          const loggedIn = await loginIfNeeded();
+          if (!loggedIn) {
+            setLoginRequired(true);
+            setAuthError(
+              'LINEへのログインが必要です。ログインを完了すると予約を続行できます。'
+            );
             setAuthStatus('error');
             return;
           }
-          localStorage.setItem('liff-login-tried', '1');
-          localStorage.setItem('liff-pending-redirect', JSON.stringify({ url: window.location.href, expires: Date.now() + 10 * 60 * 1000 }));
-          if (!redirectToLiffApp()) {
-            liff.login({ redirectUri: window.location.href });
-          }
-          return; // リダイレクト待ち
         }
       } catch (e) {
         setAuthError(`Step2-catch: ${e instanceof Error ? e.message : String(e)}`);
@@ -233,6 +236,15 @@ function ReservePageInner() {
   }
 
   // ── 認証エラー（リダイレクトは一切しない・ループ防止） ──
+  async function handleLoginRetry() {
+    if (redirectToLiffApp()) return;
+    try {
+      liff.login({ redirectUri: window.location.href });
+    } catch {
+      window.location.reload();
+    }
+  }
+
   if (authStatus === 'error') {
     return (
       <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center gap-5">
@@ -240,12 +252,21 @@ function ReservePageInner() {
         {authError && (
           <p className="text-xs text-red-400 bg-red-50 px-3 py-2 rounded-lg font-mono break-all">{authError}</p>
         )}
-        <button
-          onClick={() => window.location.reload()}
-          className="bg-[#06C755] text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:bg-[#05a847]"
-        >
-          再試行する
-        </button>
+        {loginRequired ? (
+          <button
+            onClick={handleLoginRetry}
+            className="bg-[#06C755] text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:bg-[#05a847]"
+          >
+            LINEログインをやり直す
+          </button>
+        ) : (
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-[#06C755] text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:bg-[#05a847]"
+          >
+            再試行する
+          </button>
+        )}
       </div>
     );
   }

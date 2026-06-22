@@ -36,7 +36,11 @@ export async function initLiff(): Promise<boolean> {
   }
 
   try {
-    await liff.init({ liffId: id });
+    await withTimeout(
+      liff.init({ liffId: id }),
+      10000,
+      'LIFF初期化がタイムアウトしました',
+    );
     initialized = true;
     initializedLiffId = id;
     lastError = null;
@@ -82,6 +86,21 @@ export function redirectToLiffApp(): boolean {
 function exposeDebugValue(key: string, value: unknown): void {
   if (typeof window === 'undefined') return;
   (window as unknown as Record<string, unknown>)[key] = value;
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, errorMessage: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeout = window.setTimeout(() => reject(new Error(errorMessage)), ms);
+    promise
+      .then((value) => {
+        window.clearTimeout(timeout);
+        resolve(value);
+      })
+      .catch((err) => {
+        window.clearTimeout(timeout);
+        reject(err);
+      });
+  });
 }
 
 function hasRecentLoginAttempt(): boolean {

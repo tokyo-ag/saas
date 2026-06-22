@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
-import { initLiff } from '@/lib/liff';
 import LiffBottomNav from '@/components/liff/LiffBottomNav';
 import PublicFooter from '@/components/public/PublicFooter';
 
@@ -186,34 +185,6 @@ export default function HomeClient({
   const tenants = initialTenants;
   const [searchOpen, setSearchOpen] = useState(initialSearchQuery.trim().length > 0);
   const [query, setQuery] = useState(initialSearchQuery);
-
-  useEffect(() => {
-    async function run() {
-      const raw = localStorage.getItem('liff-pending-redirect');
-      const search = window.location.search;
-      let pending: string | null = null;
-      if (raw) {
-        try {
-          const { url, expires } = JSON.parse(raw) as {
-            url: string;
-            expires: number;
-          };
-          if (Date.now() < expires) pending = url;
-          else localStorage.removeItem('liff-pending-redirect');
-        } catch {
-          localStorage.removeItem('liff-pending-redirect');
-        }
-      }
-      if (search.includes('code=') || search.includes('liff.state=') || pending) {
-        await initLiff();
-      }
-      if (pending) {
-        localStorage.removeItem('liff-pending-redirect');
-        window.location.replace(pending);
-      }
-    }
-    void run();
-  }, []);
 
   function limitPerTenant(list: PublicEvent[], max = 2) {
     const counts: Record<string, number> = {};
