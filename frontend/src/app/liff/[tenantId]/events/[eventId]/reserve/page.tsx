@@ -35,7 +35,10 @@ function ReservePageInner() {
   useEffect(() => {
     async function init() {
       // ── Step 1: LIFF初期化 ──
-      const initOk = await initLiff();
+      const tenantInfo = await api.liff.tenant(tenantId).catch(() => null);
+      if (tenantInfo) setTenant(tenantInfo);
+
+      const initOk = await initLiff(tenantInfo?.liffId);
 
       if (!initOk) {
         setAuthError(`Step1: ${getInitError() ?? '不明'}`);
@@ -96,17 +99,15 @@ function ReservePageInner() {
       setLineUserId(uid);
 
       // ── Step 4: データ取得 ──
-      const [ev, prof, tenantInfo] = await Promise.allSettled([
+      const [ev, prof] = await Promise.allSettled([
         api.liff.event(tenantId, eventId),
         api.liff.profile(tenantId, uid).catch(() => null),
-        api.liff.tenant(tenantId),
       ]);
       if (ev.status === 'fulfilled') setEvent(ev.value);
       if (prof.status === 'fulfilled') setProfile(prof.value);
-      if (tenantInfo.status === 'fulfilled') setTenant(tenantInfo.value);
 
       const hasProfile = prof.status === 'fulfilled' && prof.value?.name && prof.value?.grade && prof.value?.gender;
-      const tenantLineId = tenantInfo.status === 'fulfilled' ? tenantInfo.value?.lineChannelId : null;
+      const tenantLineId = tenantInfo?.lineChannelId ?? null;
       if (!hasProfile && tenantLineId) {
         const friend = await checkFriendship();
         setIsFriend(friend);

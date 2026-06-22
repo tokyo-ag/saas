@@ -565,6 +565,7 @@ export interface LiffTenant {
   linePictureUrl?: string;
   iconUrl?: string;
   lineChannelId?: string;
+  liffId?: string;
   liffEventView?: string;
   themeColor?: string;
 }

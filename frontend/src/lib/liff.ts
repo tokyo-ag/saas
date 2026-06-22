@@ -4,6 +4,7 @@ import liff from '@line/liff';
 import { setLiffToken } from './api';
 
 let initialized = false;
+let initializedLiffId: string | null = null;
 let lastError: string | null = null;
 
 export function getInitError(): string | null {
@@ -11,15 +12,20 @@ export function getInitError(): string | null {
 }
 
 export async function initLiff(liffId?: string): Promise<boolean> {
-  if (initialized) return true;
   const id = liffId ?? process.env.NEXT_PUBLIC_LIFF_ID ?? '';
+  if (initialized && initializedLiffId === id) return true;
   if (!id) {
     lastError = 'LIFF_ID未設定';
+    return false;
+  }
+  if (initialized && initializedLiffId !== id) {
+    lastError = 'LIFF_ID changed after initialization';
     return false;
   }
   try {
     await liff.init({ liffId: id });
     initialized = true;
+    initializedLiffId = id;
     lastError = null;
     setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
     return true;
@@ -55,12 +61,6 @@ export async function checkFriendship(): Promise<boolean> {
     return result.friendFlag;
   } catch {
     return true;
-  }
-}
-
-export function closeLiff() {
-  if (liff.isInClient()) {
-    liff.closeWindow();
   }
 }
 

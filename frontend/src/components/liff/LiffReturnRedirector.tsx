@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import { initLiff } from '@/lib/liff';
 
 function getPendingRedirect() {
   const raw = localStorage.getItem('liff-pending-redirect');
@@ -37,10 +36,6 @@ export default function LiffReturnRedirector() {
       const searchParams = new URLSearchParams(window.location.search);
       const pending = getPendingRedirect();
       const liffStateRedirect = getLiffStateRedirect(searchParams);
-
-      if (!pending && !liffStateRedirect && !searchParams.has('code')) return;
-
-      await initLiff();
 
       const redirectTo = pending ?? liffStateRedirect;
       if (redirectTo) {

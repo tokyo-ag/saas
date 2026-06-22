@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:prod": "node ../scripts/smoke-production.mjs"
+    "test:prod": "node ../scripts/smoke-production.mjs --suite=all",
+    "test:prod:saas": "node ../scripts/smoke-production.mjs --suite=saas",
+    "test:prod:seo": "node ../scripts/smoke-production.mjs --suite=seo"
   },
   "dependencies": {
     "@line/liff": "^2.28.0",

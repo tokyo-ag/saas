@@ -255,7 +255,7 @@ export default function LiffTopPage() {
       const allTenants = await api.public.tenants().catch(() => []);
       setOtherTenants(allTenants.filter((t) => t.id !== tenantId));
 
-      const ok = await initLiff();
+      const ok = await initLiff(t?.liffId);
       const lineProfile = ok ? await getLiffProfile().catch(() => null) : null;
       const uid = lineProfile?.userId ?? `demo-${tenantId}`;
       if (uid) {

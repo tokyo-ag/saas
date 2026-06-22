@@ -91,8 +91,9 @@ export default function LineSettingsPage() {
   }
 
   const webhookUrl = `${BASE}/webhook/${tenant?.id ?? ''}`;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.jp';
-  const liffEndpoint = tenant?.id ? `${siteUrl}/liff/${tenant.id}` : '';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.link';
+  const liffTenantKey = tenant?.code ?? tenant?.id;
+  const liffEndpoint = liffTenantKey ? `${siteUrl}/liff/${liffTenantKey}` : '';
   const lineCredentialsLocked = !!tenant?.lineConfigured && !editUnlocked;
 
   async function unlockLineSettings(e: React.FormEvent) {
