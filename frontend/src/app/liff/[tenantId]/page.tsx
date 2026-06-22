@@ -91,6 +91,108 @@ function EventCard({ event, tenantId }: { event: LiffEvent; tenantId: string }) 
   );
 }
 
+function formatThreadDate(event: LiffEvent) {
+  const start = new Date(event.heldAt);
+  const date = start.toLocaleDateString('ja-JP', {
+    month: 'numeric',
+    day: 'numeric',
+    weekday: 'short',
+    timeZone: 'Asia/Tokyo',
+  });
+  const startTime = start.toLocaleTimeString('ja-JP', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Tokyo',
+  });
+  if (!event.endAt) return `${date} ${startTime}`;
+  const endTime = new Date(event.endAt).toLocaleTimeString('ja-JP', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Tokyo',
+  });
+  return `${date} ${startTime}-${endTime}`;
+}
+
+function threadMonthLabel(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('ja-JP', {
+    year: 'numeric',
+    month: 'long',
+    timeZone: 'Asia/Tokyo',
+  });
+}
+
+function threadPriceLabel(event: LiffEvent) {
+  if (event.priceMale != null && event.priceFemale != null) {
+    return `男性 ${event.priceMale.toLocaleString()}円 / 女性 ${event.priceFemale.toLocaleString()}円`;
+  }
+  return event.price === 0 ? '無料' : `${event.price.toLocaleString()}円`;
+}
+
+function threadStatusLabel(event: LiffEvent) {
+  if (event.capacity == null) return '募集中';
+  const remaining = event.capacity - event.reservedCount;
+  if (remaining <= 0) return '満席';
+  if (remaining <= 5) return `残り${remaining}席`;
+  return '募集中';
+}
+
+function LiffThreadView({ events, tenantId }: { events: LiffEvent[]; tenantId: string }) {
+  const groups = events.reduce<Record<string, LiffEvent[]>>((acc, event) => {
+    const key = threadMonthLabel(event.heldAt);
+    (acc[key] ??= []).push(event);
+    return acc;
+  }, {});
+
+  return (
+    <div className="space-y-5">
+      {Object.entries(groups).map(([month, monthEvents]) => (
+        <section key={month}>
+          <div className="mb-2 flex items-center gap-2 px-1">
+            <span className="h-4 w-1 rounded-full bg-[#06C755]" />
+            <h2 className="text-[15px] font-bold text-gray-800">{month}のスケジュール</h2>
+          </div>
+          <div className="space-y-2">
+            {monthEvents.map((event) => {
+              const status = threadStatusLabel(event);
+              const isFull = status === '満席';
+              return (
+                <Link
+                  key={event.id}
+                  href={`/liff/${tenantId}/events/${event.id}`}
+                  className="block rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm active:bg-gray-50"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[15px] font-bold leading-snug text-gray-900">{event.title}</p>
+                      <div className="mt-2 space-y-1 text-[12px] leading-5 text-gray-600">
+                        <p>{formatThreadDate(event)}</p>
+                        <p className="truncate">{event.location}</p>
+                        <p>
+                          {event.capacity ? `${event.reservedCount}/${event.capacity}人` : `${event.reservedCount}人予約`}
+                          <span className="mx-1 text-gray-300">/</span>
+                          {threadPriceLabel(event)}
+                        </p>
+                      </div>
+                      {event.description && (
+                        <p className="mt-2 line-clamp-2 text-[12px] leading-5 text-gray-400">{event.description}</p>
+                      )}
+                    </div>
+                    <span className={`shrink-0 rounded-md px-2.5 py-1 text-[11px] font-bold ${
+                      isFull ? 'bg-gray-100 text-gray-400' : 'bg-[#06C755] text-white'
+                    }`}>
+                      {status}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
 function TenantCard({ tenant }: { tenant: PublicTenant }) {
   const name = tenant.lineDisplayName ?? tenant.name;
   return (
@@ -316,8 +418,6 @@ export default function LiffTopPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
               {Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)}
             </div>
-          ) : tenant?.liffEventView === 'calendar' ? (
-            <LiffCalendarView events={events} tenantId={tenantId} />
           ) : events.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 px-8 text-center">
               <div className="w-16 h-16 rounded-full bg-[#06C755]/8 flex items-center justify-center mb-4">
@@ -328,6 +428,10 @@ export default function LiffTopPage() {
               <p className="text-gray-600 font-semibold text-sm mb-1">現在募集中のイベントはありません</p>
               <p className="text-gray-400 text-xs">新しいイベントをお待ちください</p>
             </div>
+          ) : tenant?.liffEventView === 'calendar' ? (
+            <LiffCalendarView events={events} tenantId={tenantId} />
+          ) : tenant?.liffEventView === 'thread' ? (
+            <LiffThreadView events={events} tenantId={tenantId} />
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
               {events.map((ev) => <EventCard key={ev.id} event={ev} tenantId={tenantId} />)}

@@ -12,7 +12,7 @@ import type { Event } from '@/lib/api';
 
 
 type Tab = 'upcoming' | 'past' | 'draft';
-type ViewMode = 'card' | 'calendar';
+type ViewMode = 'card' | 'calendar' | 'thread';
 
 const tabs: { key: Tab; label: string }[] = [
   { key: 'upcoming', label: '予定' },
@@ -148,7 +148,7 @@ export default function EventsPage() {
   useEffect(() => {
     load();
     api.tenant.get().then((t) => {
-      setViewMode(t.liffEventView === 'calendar' ? 'calendar' : 'card');
+      setViewMode(t.liffEventView === 'calendar' || t.liffEventView === 'thread' ? t.liffEventView : 'card');
       setTenantId(t.code ?? t.id);
     }).catch(() => {});
   }, [load]);

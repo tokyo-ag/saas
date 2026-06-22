@@ -72,8 +72,8 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
-  const [viewMode, setViewMode] = useState<'card' | 'calendar'>('card');
-  const [savedViewMode, setSavedViewMode] = useState<'card' | 'calendar'>('card');
+  const [viewMode, setViewMode] = useState<'card' | 'calendar' | 'thread'>('card');
+  const [savedViewMode, setSavedViewMode] = useState<'card' | 'calendar' | 'thread'>('card');
   const [savingView, setSavingView] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -146,7 +146,7 @@ export default function SettingsPage() {
         iconUrl: tenantData.iconUrl ?? '',
         publicBlogUrl: tenantData.publicBlogUrl ?? '',
       });
-      const v = tenantData.liffEventView === 'calendar' ? 'calendar' : 'card';
+      const v = tenantData.liffEventView === 'calendar' || tenantData.liffEventView === 'thread' ? tenantData.liffEventView : 'card';
       setViewMode(v);
       setSavedViewMode(v);
     });
@@ -204,6 +204,13 @@ export default function SettingsPage() {
                 className={`px-4 py-2 transition-colors ${viewMode === 'calendar' ? 'bg-[#06C755] text-white' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 カレンダー
+              </button>
+              <div className="w-px bg-gray-200" />
+              <button
+                onClick={() => setViewMode('thread')}
+                className={`px-4 py-2 transition-colors ${viewMode === 'thread' ? 'bg-[#06C755] text-white' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                スレッド
               </button>
             </div>
             <button
