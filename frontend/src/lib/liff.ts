@@ -11,6 +11,10 @@ let initInfo: { ok: boolean; hasId: boolean; loggedIn: boolean } | null = null;
 const LIFF_LOGIN_TRY_KEY = 'liff-login-tried';
 const LIFF_LOGIN_RETRY_INTERVAL_MS = 5 * 60 * 1000;
 
+function getLiffId(): string {
+  return process.env.NEXT_PUBLIC_LIFF_ID ?? '';
+}
+
 export function getInitError(): string | null {
   return lastError;
 }
@@ -20,7 +24,7 @@ export function getInitInfo() {
 }
 
 export async function initLiff(): Promise<boolean> {
-  const id = process.env.NEXT_PUBLIC_LIFF_ID ?? '';
+  const id = getLiffId();
   if (initialized && initializedLiffId === id) return true;
   if (!id) {
     lastError = 'LIFF_ID未設定';
@@ -49,6 +53,30 @@ export async function initLiff(): Promise<boolean> {
     exposeDebugValue('__LIFF_INIT_INFO', initInfo);
     return false;
   }
+}
+
+export function buildCurrentLiffUrl(): string | null {
+  if (typeof window === 'undefined') return null;
+  const id = getLiffId();
+  if (!id) return null;
+
+  const current = new URL(window.location.href);
+  const params = new URLSearchParams(current.search);
+  params.delete('code');
+  params.delete('state');
+  params.delete('liff.state');
+
+  const pathWithQuery = `${current.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+  const liffUrl = new URL(`https://liff.line.me/${id}`);
+  liffUrl.searchParams.set('liff.state', pathWithQuery);
+  return liffUrl.toString();
+}
+
+export function redirectToLiffApp(): boolean {
+  const url = buildCurrentLiffUrl();
+  if (!url) return false;
+  window.location.href = url;
+  return true;
 }
 
 function exposeDebugValue(key: string, value: unknown): void {

@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { api, LiffEvent, LiffProfile, LiffTenant, setLiffToken } from '@/lib/api';
-import { initLiff, getLiffProfile, checkFriendship, liff, getInitError } from '@/lib/liff';
+import { initLiff, getLiffProfile, checkFriendship, liff, getInitError, redirectToLiffApp } from '@/lib/liff';
 
 const GRADES = ['高校1年', '高校2年', '高校3年', '大学1年', '大学2年', '大学3年', '大学4年', '大学院生', '社会人', 'その他'];
 const GENDERS = ['男性', '女性', 'その他・回答しない'];
@@ -62,7 +62,9 @@ function ReservePageInner() {
     } catch {
       // ignore
     }
-    liff.login({ redirectUri: window.location.href });
+    if (!redirectToLiffApp()) {
+      liff.login({ redirectUri: window.location.href });
+    }
   }
 
   useEffect(() => {
@@ -101,7 +103,9 @@ function ReservePageInner() {
           }
           localStorage.setItem('liff-login-tried', '1');
           localStorage.setItem('liff-pending-redirect', JSON.stringify({ url: window.location.href, expires: Date.now() + 10 * 60 * 1000 }));
-          liff.login({ redirectUri: window.location.href });
+          if (!redirectToLiffApp()) {
+            liff.login({ redirectUri: window.location.href });
+          }
           return; // リダイレクト待ち
         }
       } catch (e) {
