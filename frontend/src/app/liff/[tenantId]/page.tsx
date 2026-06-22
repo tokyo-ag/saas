@@ -11,6 +11,8 @@ import { initLiff, getLiffProfile } from '@/lib/liff';
 import LiffBottomNav from '@/components/liff/LiffBottomNav';
 import { EventCardSkeleton } from '@/components/liff/EventCardSkeleton';
 
+const SHOW_FEATURED_TENANTS = false;
+
 function AvatarRow({ count, friends }: { count: number; friends?: { id: string; name: string | null }[] }) {
   const friendCount = friends?.length ?? 0;
   const total = count;
@@ -252,9 +254,11 @@ export default function LiffTopPage() {
       }
       setLoading(false);
 
-      // 他の団体を取得
-      const allTenants = await api.public.tenants().catch(() => []);
-      setOtherTenants(allTenants.filter((t) => t.id !== tenantId));
+      // 主催者向け画面では他団体レコメンドを非表示にする。必要になったらフラグで戻す。
+      if (SHOW_FEATURED_TENANTS) {
+        const allTenants = await api.public.tenants().catch(() => []);
+        setOtherTenants(allTenants.filter((t) => t.id !== tenantId));
+      }
 
       const ok = await initLiff();
       const lineProfile = ok ? await getLiffProfile().catch(() => null) : null;
@@ -359,7 +363,7 @@ export default function LiffTopPage() {
           )}
 
           {/* COMIU注目の団体！ */}
-          {otherTenants.length > 0 && (
+          {SHOW_FEATURED_TENANTS && otherTenants.length > 0 && (
             <div className="mt-6">
               <div className="flex items-center gap-2 px-1 mb-3">
                 <span className="w-1 h-4 rounded-full bg-[#06C755] shrink-0" />
