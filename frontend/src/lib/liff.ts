@@ -11,8 +11,8 @@ export function getInitError(): string | null {
   return lastError;
 }
 
-export async function initLiff(liffId?: string): Promise<boolean> {
-  const id = liffId ?? process.env.NEXT_PUBLIC_LIFF_ID ?? '';
+export async function initLiff(): Promise<boolean> {
+  const id = process.env.NEXT_PUBLIC_LIFF_ID ?? '';
   if (initialized && initializedLiffId === id) return true;
   if (!id) {
     lastError = 'LIFF_ID未設定';

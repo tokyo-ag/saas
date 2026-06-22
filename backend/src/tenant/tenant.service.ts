@@ -18,7 +18,6 @@ export class UpdateTenantDto {
   @IsOptional() @IsString() lineChannelId?: string;
   @IsOptional() @IsString() lineChannelSecret?: string;
   @IsOptional() @IsString() lineChannelAccessToken?: string;
-  @IsOptional() @IsString() liffId?: string;
   @IsOptional() @IsString() organizerLineUserId?: string;
   @IsOptional() @IsString() stripePublishableKey?: string;
   @IsOptional() @IsString() stripeSecretKey?: string;
@@ -40,6 +39,7 @@ export class TenantService {
     T extends {
       lineChannelSecret: unknown;
       lineChannelAccessToken: unknown;
+      liffId?: unknown;
       stripeSecretKey: unknown;
       stripeWebhookSecret: unknown;
     },
@@ -49,6 +49,7 @@ export class TenantService {
     const {
       lineChannelSecret: _lineChannelSecret,
       lineChannelAccessToken: _lineChannelAccessToken,
+      liffId: _liffId,
       stripeSecretKey: _stripeSecretKey,
       stripeWebhookSecret: _stripeWebhookSecret,
       ...safe
@@ -83,7 +84,6 @@ export class TenantService {
       dto.lineChannelId,
       dto.lineChannelSecret,
       dto.lineChannelAccessToken,
-      dto.liffId,
       dto.organizerLineUserId,
     ].some((value) => value !== undefined);
 
@@ -144,7 +144,6 @@ export class TenantService {
       dto.lineChannelId,
       dto.lineChannelSecret,
       dto.lineChannelAccessToken,
-      dto.liffId,
       dto.organizerLineUserId,
     ].some((v) => v !== undefined);
     const changesStripeSettings = [
@@ -184,7 +183,6 @@ export class TenantService {
         ...(dto.lineChannelAccessToken !== undefined && {
           lineChannelAccessToken: dto.lineChannelAccessToken.trim() || null,
         }),
-        ...(dto.liffId !== undefined && { liffId: dto.liffId.trim() || null }),
         ...(dto.organizerLineUserId !== undefined && {
           organizerLineUserId: dto.organizerLineUserId || null,
         }),

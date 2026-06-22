@@ -1,12 +1,14 @@
 const DEFAULT_FRONTEND_URL = 'https://comiu.link';
 const DEFAULT_API_URL = 'https://comiu.up.railway.app';
 const DEFAULT_TENANT_CODE = '11221185';
+const DEFAULT_LIFF_ID = '2010103126-bNpbUgjb';
 
 const frontendUrl = stripTrailingSlash(
   process.env.SMOKE_FRONTEND_URL || DEFAULT_FRONTEND_URL,
 );
 const apiUrl = stripTrailingSlash(process.env.SMOKE_API_URL || DEFAULT_API_URL);
 const tenantCode = process.env.SMOKE_TENANT_CODE || DEFAULT_TENANT_CODE;
+const expectedLiffId = process.env.SMOKE_LIFF_ID || DEFAULT_LIFF_ID;
 const selectedSuite = parseSuiteArg();
 
 const suites = {
@@ -68,6 +70,9 @@ const suites = {
         if (!tenant?.lineChannelId) {
           throw new Error('LIFF tenant response is missing lineChannelId');
         }
+        if ('liffId' in tenant) {
+          throw new Error('LIFF tenant response must not expose tenant liffId');
+        }
       },
     },
     {
@@ -77,6 +82,38 @@ const suites = {
         assertStatus(res, 200, 399);
         const html = await res.text();
         assertIncludes(html, 'noindex', 'LIFF schedule page is missing noindex robots metadata');
+      },
+    },
+    {
+      name: 'frontend bundle contains shared COMIU LIFF ID',
+      run: async () => {
+        const html = await fetchWithTimeout(`${frontendUrl}/liff/${tenantCode}`).then((res) => {
+          assertStatus(res, 200, 399);
+          return res.text();
+        });
+        const scripts = getScriptSrcs(html)
+          .filter((src) => src.startsWith('/_next/') && src.endsWith('.js'))
+          .slice(0, 40);
+        if (scripts.length === 0) {
+          throw new Error('LIFF page did not include any Next.js script chunks');
+        }
+
+        const bundleText = (
+          await Promise.all(
+            scripts.map((src) =>
+              fetchWithTimeout(`${frontendUrl}${src}`).then((res) => {
+                assertStatus(res, 200, 299);
+                return res.text();
+              }),
+            ),
+          )
+        ).join('\n');
+
+        assertIncludes(
+          bundleText,
+          expectedLiffId,
+          `frontend bundle does not include expected NEXT_PUBLIC_LIFF_ID ${expectedLiffId}`,
+        );
       },
     },
     {
@@ -306,6 +343,10 @@ function assertExcludes(value, unexpected, message) {
 
 function getSitemapLocs(xml) {
   return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
+}
+
+function getScriptSrcs(html) {
+  return [...html.matchAll(/<script[^>]+src="([^"]+)"/g)].map((match) => match[1]);
 }
 
 function assertNoDuplicates(values, message) {

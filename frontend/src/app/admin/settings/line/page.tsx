@@ -8,7 +8,7 @@ import { SaveToast } from '@/components/ui/SaveToast';
 
 const BASE = `${DIRECT_API_URL}/api`;
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3;
 
 const tabs = [
   { label: '団体情報', href: '/admin/settings' },
@@ -39,11 +39,10 @@ export default function LineSettingsPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [hasPassword, setHasPassword] = useState<boolean | null>(null);
   const [step, setStep] = useState<Step>(1);
-  const [form, setForm] = useState<Pick<TenantInput, 'lineChannelId' | 'lineChannelSecret' | 'lineChannelAccessToken' | 'liffId'>>({
+  const [form, setForm] = useState<Pick<TenantInput, 'lineChannelId' | 'lineChannelSecret' | 'lineChannelAccessToken'>>({
     lineChannelId: '',
     lineChannelSecret: '',
     lineChannelAccessToken: '',
-    liffId: '',
   });
   const [organizerLineUserId, setOrganizerLineUserId] = useState('');
   const [saving, setSaving] = useState(false);
@@ -63,11 +62,9 @@ export default function LineSettingsPage() {
         lineChannelId: tenantData.lineChannelId ?? '',
         lineChannelSecret: tenantData.lineChannelSecret ?? '',
         lineChannelAccessToken: '',
-        liffId: tenantData.liffId ?? '',
       });
       setOrganizerLineUserId(tenantData.organizerLineUserId ?? '');
       if (tenantData.lineConfigured) setStep(3);
-      if (tenantData.liffId) setStep(4);
     });
   }, []);
 
@@ -91,8 +88,6 @@ export default function LineSettingsPage() {
   }
 
   const webhookUrl = `${BASE}/webhook/${tenant?.id ?? ''}`;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://comiu.link';
-  const liffEndpoint = siteUrl;
   const lineCredentialsLocked = !!tenant?.lineConfigured && !editUnlocked;
 
   async function unlockLineSettings(e: React.FormEvent) {
@@ -219,31 +214,7 @@ export default function LineSettingsPage() {
             </button>
           </StepCard>
 
-          <StepCard step={3} currentStep={step} title="LIFFアプリを追加する" forceExpanded={editUnlocked}>
-            <p className="mb-3 text-sm leading-relaxed text-gray-600">
-              LINE Developers でLIFFアプリを追加し、エンドポイントURLに以下を設定してください。
-            </p>
-            <CopyBox value={liffEndpoint} />
-            <div className="mt-4">
-              <Field label="LIFF ID" value={form.liffId ?? ''} onChange={(value) => set('liffId', value)} placeholder="1234567890-xxxxxxxx" disabled={lineCredentialsLocked} />
-            </div>
-            <button
-              disabled={saving || lineCredentialsLocked || !form.liffId}
-              onClick={async () => {
-                const ok = await save({ liffId: form.liffId });
-                if (ok) {
-                  setEditUnlocked(false);
-                  setReauthToken('');
-                  setStep(4);
-                }
-              }}
-              className="mt-4 w-full rounded-lg bg-[#06C755] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] disabled:opacity-50 sm:w-auto"
-            >
-              {saving ? '保存中...' : '保存して次へ'}
-            </button>
-          </StepCard>
-
-          <StepCard step={4} currentStep={step} title="Webhook URLを設定する">
+          <StepCard step={3} currentStep={step} title="Webhook URLを設定する">
             <p className="mb-3 text-sm leading-relaxed text-gray-600">
               LINE Developers の Messaging API 設定で、Webhook URLに以下を設定して検証してください。
             </p>

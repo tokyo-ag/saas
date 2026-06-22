@@ -10,7 +10,6 @@ import { Request } from 'express';
 interface LiffIdTokenPayload {
   sub: string;
   exp: number;
-  aud?: string;
 }
 
 @Injectable()
@@ -20,28 +19,13 @@ export class LiffGuard implements CanActivate {
     { lineUserId: string; exp: number }
   >();
 
-  constructor(
-    private config: ConfigService,
-  ) {}
+  constructor(private config: ConfigService) {}
 
-  private getAudienceFromIdToken(idToken: string): string | null {
-    try {
-      const [, payload] = idToken.split('.');
-      if (!payload) return null;
-      const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
-      const decoded = Buffer.from(normalized, 'base64').toString('utf8');
-      const json = JSON.parse(decoded) as { aud?: unknown };
-      return typeof json.aud === 'string' ? json.aud : null;
-    } catch {
-      return null;
-    }
-  }
-
-  private getExpectedChannelId(idToken: string): string | null {
+  private getExpectedChannelId(): string | null {
     return (
       this.config.get<string>('LIFF_CHANNEL_ID')?.trim() ||
       this.config.get<string>('LINE_LOGIN_CHANNEL_ID')?.trim() ||
-      this.getAudienceFromIdToken(idToken)
+      null
     );
   }
 
@@ -55,7 +39,7 @@ export class LiffGuard implements CanActivate {
     }
 
     const idToken = auth.slice(7);
-    const channelId = this.getExpectedChannelId(idToken);
+    const channelId = this.getExpectedChannelId();
     if (!channelId) {
       throw new UnauthorizedException('LIFF Channel IDが未設定です');
     }
