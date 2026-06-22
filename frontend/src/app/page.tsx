@@ -50,7 +50,7 @@ async function fetchPublic<T>(path: string, fallback: T): Promise<T> {
 }
 
 function tenantHref(tenant: PublicTenant) {
-  return tenant.code ? `/clubs/${tenant.code}` : `/liff/${tenant.id}`;
+  return `/liff/${tenant.code ?? tenant.id}`;
 }
 
 function tenantName(tenant: PublicTenant) {
