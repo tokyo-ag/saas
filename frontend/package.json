@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:prod": "node ../scripts/smoke-production.mjs"
   },
   "dependencies": {
     "@line/liff": "^2.28.0",
