@@ -174,30 +174,41 @@ export default async function ClubPage({
       </header>
 
       <div className="mx-auto max-w-2xl px-4 py-4">
-        <section className="mb-4 flex items-center gap-3">
-          {image ? (
-            <Image
-              src={image}
-              alt={name}
-              width={48}
-              height={48}
-              className="h-12 w-12 shrink-0 rounded-full border border-gray-100 object-cover"
-            />
-          ) : (
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#06C755]/10 text-base font-bold text-[#06C755]">
+        <section className="mb-5 rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-[#06C755]/10 text-2xl font-bold text-[#06C755]">
               {name.slice(0, 1)}
             </div>
-          )}
-          <div className="min-w-0">
-            <p className="truncate text-[11px] font-bold text-[#06C755]">
-              COMIU
-            </p>
-            <h1 className="truncate text-lg font-bold tracking-tight text-gray-900">
-              {name}
-            </h1>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#06C755]">COMIU</p>
+              <h1 className="mt-2 text-2xl font-bold tracking-tight text-gray-900">{name}</h1>
+              {club.description && (
+                <p className="mt-3 text-sm leading-relaxed text-gray-600 whitespace-pre-line">
+                  {club.description}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Link
+              href={`/liff/${club.code ?? tenantCode}`}
+              className="inline-flex w-full items-center justify-center rounded-2xl bg-[#06C755] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#05a847] sm:w-auto"
+            >
+              参加予約はこちら
+            </Link>
+            {club.publicBlogUrl && (
+              <a
+                href={club.publicBlogUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex w-full items-center justify-center rounded-2xl border border-gray-200 bg-white px-5 py-3 text-sm font-bold text-gray-700 transition hover:bg-gray-50 sm:w-auto"
+              >
+                ブログを見る
+              </a>
+            )}
           </div>
         </section>
-
         {club.events.length === 0 ? (
           <section className="rounded-2xl border border-gray-100 bg-white px-5 py-12 text-center shadow-sm">
             <p className="text-sm font-bold text-gray-800">

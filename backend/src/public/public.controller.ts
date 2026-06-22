@@ -299,6 +299,7 @@ export class PublicController {
       description: tenant.description,
       lineDisplayName: tenant.lineDisplayName,
       linePictureUrl: tenant.linePictureUrl ?? tenant.iconUrl,
+      publicBlogUrl: tenant.publicBlogUrl,
       memberCount: tenant._count.members,
       eventCount: tenant._count.events,
       accessCount: tenant._count.liffAccesses,

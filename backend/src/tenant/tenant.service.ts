@@ -15,6 +15,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export class UpdateTenantDto {
   @IsOptional() @IsString() name?: string;
   @IsOptional() @IsString() description?: string;
+  @IsOptional() @IsString() publicBlogUrl?: string;
   @IsOptional() @IsString() lineChannelId?: string;
   @IsOptional() @IsString() lineChannelSecret?: string;
   @IsOptional() @IsString() lineChannelAccessToken?: string;
@@ -174,6 +175,9 @@ export class TenantService {
       data: {
         ...(dto.name !== undefined && { name: dto.name }),
         ...(dto.description !== undefined && { description: dto.description }),
+        ...(dto.publicBlogUrl !== undefined && {
+          publicBlogUrl: dto.publicBlogUrl || null,
+        }),
         ...(dto.lineChannelId !== undefined && {
           lineChannelId: dto.lineChannelId.trim() || null,
         }),

@@ -565,6 +565,7 @@ export interface Tenant {
   code?: string;
   name: string;
   description?: string;
+  publicBlogUrl?: string;
   lineChannelId?: string;
   lineChannelSecret?: string;
   lineChannelAccessToken?: string;
@@ -594,6 +595,7 @@ export interface TenantWithStats extends Tenant {
 export interface TenantInput {
   name: string;
   description?: string;
+  publicBlogUrl?: string;
   lineChannelId?: string;
   lineChannelSecret?: string;
   lineChannelAccessToken?: string;
@@ -683,6 +685,7 @@ export interface PublicTenant {
   description?: string;
   lineDisplayName?: string;
   linePictureUrl?: string;
+  publicBlogUrl?: string;
   memberCount: number;
   eventCount: number;
   accessCount: number;

@@ -83,6 +83,10 @@ export default function DashboardPage() {
   const [growth, setGrowth] = useState<GrowthPoint[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [description, setDescription] = useState('');
+  const [savingDescription, setSavingDescription] = useState(false);
+  const [descriptionSaved, setDescriptionSaved] = useState(false);
+  const [descriptionError, setDescriptionError] = useState('');
   const [loading, setLoading] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
@@ -98,6 +102,7 @@ export default function DashboardPage() {
         setEvents(eventList);
         setStats(statData);
         setTenant(tenantData);
+        setDescription(tenantData.description ?? '');
         setGrowth(growthData);
         setActivities(activityData);
       })
@@ -109,6 +114,22 @@ export default function DashboardPage() {
   const upcoming = events
     .filter((event) => new Date(event.heldAt) > now && event.status !== 'closed')
     .slice(0, 5);
+
+  async function handleSaveDescription() {
+    if (!tenant) return;
+    setSavingDescription(true);
+    setDescriptionError('');
+    try {
+      const updated = await api.tenant.update({ description });
+      setTenant(updated);
+      setDescriptionSaved(true);
+      setTimeout(() => setDescriptionSaved(false), 2500);
+    } catch (error: any) {
+      setDescriptionError(error?.message ?? '保存に失敗しました');
+    } finally {
+      setSavingDescription(false);
+    }
+  }
 
   const isFree = tenant?.plan === 'free';
   const eventPct = stats ? stats.thisMonthEventCount / FREE_EVENT_LIMIT : 0;
@@ -136,6 +157,31 @@ export default function DashboardPage() {
           イベントを作成
         </Link>
       </div>
+
+      <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-800">公開ページの説明文</h2>
+            <p className="mt-1 text-xs text-gray-500">公開クラブページに表示される文章です。ここで編集して保存できます。</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleSaveDescription}
+            disabled={savingDescription}
+            className="w-full rounded-lg bg-[#06C755] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#05a847] disabled:opacity-50 sm:w-auto"
+          >
+            {savingDescription ? '保存中...' : descriptionSaved ? '保存済み' : '保存'}
+          </button>
+        </div>
+        <textarea
+          rows={4}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+          placeholder="公開ページに表示される説明文を入力してください"
+        />
+        {descriptionError && <p className="mt-2 text-sm text-red-600">{descriptionError}</p>}
+      </section>
 
       {isFree && stats && (
         <section className={`rounded-xl border p-4 ${atLimit ? 'border-red-200 bg-red-50' : nearLimit ? 'border-amber-200 bg-amber-50' : 'border-gray-200 bg-gray-50'}`}>

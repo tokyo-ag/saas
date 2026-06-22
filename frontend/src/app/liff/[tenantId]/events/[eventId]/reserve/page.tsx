@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { api, LiffEvent, LiffProfile, LiffTenant, setLiffToken } from '@/lib/api';
+import { api, LiffEvent, LiffProfile, LiffTenant, setLiffToken, formatDate } from '@/lib/api';
 import {
   initLiff,
   getLiffProfile,
@@ -12,6 +12,7 @@ import {
   loginIfNeeded,
   redirectToLiffApp,
 } from '@/lib/liff';
+import { FriendInviteCard } from '@/components/liff/FriendInviteCard';
 
 const GRADES = ['高校1年', '高校2年', '高校3年', '大学1年', '大学2年', '大学3年', '大学4年', '大学院生', '社会人', 'その他'];
 const GENDERS = ['男性', '女性', 'その他・回答しない'];
@@ -31,7 +32,10 @@ function ReservePageInner() {
   const { tenantId, eventId } = useParams<{ tenantId: string; eventId: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const isWaitlist = searchParams.get('waitlist') === '1';
+  const status = searchParams.get('status');
+  const order = searchParams.get('order');
+  const isResultView = status !== null;
+  const isWaitlist = isResultView ? status === 'waitlisted' : searchParams.get('waitlist') === '1';
 
   const [authStatus, setAuthStatus] = useState<AuthStatus>('loading');
   const [authError, setAuthError] = useState('');
@@ -78,10 +82,22 @@ function ReservePageInner() {
 
   useEffect(() => {
     async function init() {
-      // ── Step 1: LIFF初期化 ──
       const tenantInfo = await api.liff.tenant(tenantId).catch(() => null);
       if (tenantInfo) setTenant(tenantInfo);
 
+      if (isResultView) {
+        const ev = await api.liff.event(tenantId, eventId).catch(() => null);
+        if (ev) {
+          setEvent(ev);
+          setAuthStatus('ok');
+          return;
+        }
+        setAuthError('予約結果の表示に必要なイベント情報の取得に失敗しました。');
+        setAuthStatus('error');
+        return;
+      }
+
+      // ── Step 1: LIFF初期化 ──
       const initOk = await initLiff();
 
       if (!initOk) {
@@ -159,7 +175,7 @@ function ReservePageInner() {
       setAuthStatus('ok');
     }
     init();
-  }, [tenantId, eventId]);
+  }, [tenantId, eventId, isResultView]);
 
   async function submit(overrides?: { name: string; grade: string; gender: string }) {
     if (!lineUserId) return;
@@ -182,7 +198,7 @@ function ReservePageInner() {
         return;
       }
       // router.push()はLIFF(iOS WKWebView)で動作しない場合があるためhrefを使う
-      window.location.href = `/liff/${tenantId}/events/${eventId}/done?status=${result.status}&order=${result.waitlistOrder ?? ''}`;
+      window.location.href = `/liff/${tenantId}/events/${eventId}/reserve?status=${result.status}&order=${result.waitlistOrder ?? ''}`;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '予約に失敗しました';
       if (isLineAuthErrorMessage(msg)) {
@@ -231,6 +247,55 @@ function ReservePageInner() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-[#06C755] text-sm">読み込み中...</div>
+      </div>
+    );
+  }
+
+  if (isResultView && authStatus === 'ok') {
+    const resultOrder = order ?? '';
+    return (
+      <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center">
+        <div className={`w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-6 ${isWaitlist ? 'bg-yellow-100' : 'bg-[#06C755]/10'}`}>
+          {isWaitlist ? '⏳' : '✓'}
+        </div>
+        <h1 className="text-xl font-bold text-gray-900 mb-2">
+          {isWaitlist ? (
+            <>
+              <span>キャンセル待ち</span>
+              <br />
+              <span>{resultOrder}番目に登録しました</span>
+            </>
+          ) : (
+            'ご予約ありがとうございます！'
+          )}
+        </h1>
+        {!isWaitlist && (
+          <p className="text-sm text-gray-500 mb-6">連絡に主催者が詳細を送りました。</p>
+        )}
+
+        {event && (
+          <div className="w-full max-w-sm mt-2 mb-8 space-y-3">
+            <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-5 text-left space-y-2">
+              <p className="font-semibold text-gray-900 text-sm">{event.title}</p>
+              <p className="text-xs text-gray-500">📅 {formatDate(event.heldAt)}</p>
+              <p className="text-xs text-gray-500">📍 {event.location}</p>
+            </div>
+            <FriendInviteCard
+              tenantId={tenantId}
+              eventId={eventId}
+              title={event.title}
+              heldAt={event.heldAt}
+              location={event.location}
+            />
+          </div>
+        )}
+
+        <button
+          onClick={() => router.push(`/liff/${tenantId}`)}
+          className="w-full max-w-sm bg-[#06C755] text-white py-4 rounded-2xl font-bold text-base active:bg-[#05a847] transition-colors shadow-sm"
+        >
+          イベント一覧に戻る
+        </button>
       </div>
     );
   }

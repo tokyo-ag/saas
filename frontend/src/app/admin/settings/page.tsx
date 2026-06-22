@@ -67,7 +67,7 @@ async function uploadIconBlob(blob: Blob): Promise<string> {
 
 export default function SettingsPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [form, setForm] = useState<Pick<TenantInput, 'name' | 'description' | 'iconUrl'>>({ name: '', description: '', iconUrl: '' });
+  const [form, setForm] = useState<Pick<TenantInput, 'name' | 'description' | 'iconUrl' | 'publicBlogUrl'>>({ name: '', description: '', iconUrl: '', publicBlogUrl: '' });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
@@ -140,7 +140,12 @@ export default function SettingsPage() {
   useEffect(() => {
     api.tenant.get().then((tenantData) => {
       setTenant(tenantData);
-      setForm({ name: tenantData.name, description: tenantData.description ?? '', iconUrl: tenantData.iconUrl ?? '' });
+      setForm({
+        name: tenantData.name,
+        description: tenantData.description ?? '',
+        iconUrl: tenantData.iconUrl ?? '',
+        publicBlogUrl: tenantData.publicBlogUrl ?? '',
+      });
       const v = tenantData.liffEventView === 'calendar' ? 'calendar' : 'card';
       setViewMode(v);
       setSavedViewMode(v);
@@ -153,7 +158,12 @@ export default function SettingsPage() {
     setError('');
     setSaved(false);
     try {
-      const updated = await api.tenant.update({ name: form.name, description: form.description, iconUrl: form.iconUrl });
+      const updated = await api.tenant.update({
+        name: form.name,
+        description: form.description,
+        iconUrl: form.iconUrl,
+        publicBlogUrl: form.publicBlogUrl,
+      });
       setTenant(updated);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -330,6 +340,17 @@ export default function SettingsPage() {
               placeholder="ユーザー画面や公開ページに表示する説明文"
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
             />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">公開ページのブログURL</label>
+            <input
+              value={form.publicBlogUrl}
+              onChange={(e) => setForm((prev) => ({ ...prev, publicBlogUrl: e.target.value }))}
+              placeholder="https://example.com/blog"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+            />
+            <p className="mt-2 text-xs text-gray-500">公開ページにブログリンクを表示します。</p>
           </div>
 
           <div>

@@ -44,6 +44,7 @@ export default function Sidebar() {
   const displayName = tenant?.lineDisplayName ?? tenant?.name ?? 'イベント管理';
 
   const links = [
+    { href: '/admin/public-page', label: '公開ページ', icon: 'P' },
     { href: '/admin', label: 'ダッシュボード', icon: 'D' },
     { href: '/admin/events', label: 'イベント管理', icon: 'E' },
     { href: '/admin/messages', label: 'メッセージ', icon: 'M' },
