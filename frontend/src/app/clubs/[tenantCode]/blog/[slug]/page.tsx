@@ -48,6 +48,30 @@ function formatDate(iso: string | null | undefined) {
   return new Date(iso).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
+
+function BodyRenderer({ body }: { body: string }) {
+  const parts = body.split('\n');
+  return (
+    <div className="space-y-2 text-sm leading-8 text-gray-700">
+      {parts.map((line, i) => {
+        const m = IMAGE_RE.exec(line.trim());
+        if (m) {
+          return (
+            <img
+              key={i}
+              src={m[2]}
+              alt={m[1]}
+              className="my-2 max-w-full rounded-lg"
+            />
+          );
+        }
+        return line ? <p key={i}>{line}</p> : <br key={i} />;
+      })}
+    </div>
+  );
+}
+
 export default async function BlogPostPage({
   params,
 }: {
@@ -84,9 +108,7 @@ export default async function BlogPostPage({
           <article className="rounded-xl border border-gray-200 bg-white px-6 py-8">
             <p className="mb-2 text-xs text-gray-400">{formatDate(post.publishedAt)}</p>
             <h1 className="mb-6 text-2xl font-bold leading-tight text-gray-900">{post.title}</h1>
-            <div className="prose prose-sm max-w-none whitespace-pre-wrap text-sm leading-8 text-gray-700">
-              {post.body}
-            </div>
+            <BodyRenderer body={post.body} />
           </article>
           <div className="mt-8 text-center">
             <Link

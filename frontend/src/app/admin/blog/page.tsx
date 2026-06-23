@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api, BlogPost, BlogPostInput } from '@/lib/api';
 
 type Mode = 'list' | 'edit';
@@ -10,6 +10,18 @@ function formatDate(iso: string | null | undefined) {
   return new Date(iso).toLocaleDateString('ja-JP', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+async function uploadImage(file: File): Promise<string> {
+  const ext = file.name.split('.').pop() ?? 'jpg';
+  const res = await fetch(`/api/upload?filename=blog-${Date.now()}.${ext}`, {
+    method: 'POST',
+    body: file,
+    headers: { 'content-type': file.type },
+  });
+  if (!res.ok) throw new Error('アップロード失敗');
+  const data = await res.json();
+  return data.url as string;
+}
+
 export default function AdminBlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,7 +29,10 @@ export default function AdminBlogPage() {
   const [editing, setEditing] = useState<BlogPost | null>(null);
   const [form, setForm] = useState<BlogPostInput>({ title: '', body: '', excerpt: '', status: 'draft' });
   const [saving, setSaving] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
   const [error, setError] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function load() {
     setLoading(true);
@@ -67,6 +82,41 @@ export default function AdminBlogPage() {
     } catch { alert('削除に失敗しました'); }
   }
 
+  function handleImageButtonClick() {
+    fileInputRef.current?.click();
+  }
+
+  async function handleImageFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    setImageUploading(true);
+    try {
+      const url = await uploadImage(file);
+      const ta = textareaRef.current;
+      if (ta) {
+        const start = ta.selectionStart ?? form.body.length;
+        const end = ta.selectionEnd ?? start;
+        const before = form.body.slice(0, start);
+        const after = form.body.slice(end);
+        const insert = `\n![](${url})\n`;
+        const newBody = before + insert + after;
+        setForm((p) => ({ ...p, body: newBody }));
+        setTimeout(() => {
+          ta.focus();
+          const pos = start + insert.length;
+          ta.setSelectionRange(pos, pos);
+        }, 0);
+      } else {
+        setForm((p) => ({ ...p, body: p.body + `\n![](${url})\n` }));
+      }
+    } catch {
+      alert('画像のアップロードに失敗しました');
+    } finally {
+      setImageUploading(false);
+    }
+  }
+
   if (mode === 'edit') {
     return (
       <div className="mx-auto max-w-3xl px-4 py-6 md:px-6">
@@ -101,8 +151,26 @@ export default function AdminBlogPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-bold text-gray-700">本文</label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-sm font-bold text-gray-700">本文</label>
+              <button
+                type="button"
+                onClick={handleImageButtonClick}
+                disabled={imageUploading}
+                className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1 text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                {imageUploading ? 'アップロード中...' : '📷 画像を挿入'}
+              </button>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageFileChange}
+            />
             <textarea
+              ref={textareaRef}
               value={form.body}
               onChange={(e) => setForm((p) => ({ ...p, body: e.target.value }))}
               placeholder="活動の様子やお知らせを書いてください..."
