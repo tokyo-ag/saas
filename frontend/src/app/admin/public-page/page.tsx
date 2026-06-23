@@ -1,10 +1,11 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { api, PublicPageInput, Tenant } from '@/lib/api';
 import { SITE_URL } from '@/lib/config';
 import { SaveToast } from '@/components/ui/SaveToast';
+import { ReservationViewShowcase } from '@/components/public/ReservationViewShowcase';
 
 const emptyForm: PublicPageInput = {
   title: '',
@@ -22,8 +23,8 @@ const emptyForm: PublicPageInput = {
   titleAlign: 'left',
   bodySize: 'base',
   layoutVariant: 'one_page',
-  aboutLabel: '団体詳細',
-  reserveLabel: '予約画面',
+  aboutLabel: '公開サイト',
+  reserveLabel: '予約管理',
   blogLabel: 'ブログ',
   seoTitle: '',
   seoDescription: '',
@@ -102,10 +103,66 @@ function slugify(value: string) {
     .trim()
     .toLowerCase()
     .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\u3040-\u30ff\u3400-\u9fff]+/g, '-')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9぀-ヿ㐀-鿿]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 80);
+}
+
+type FocusedBlock = 'subtitle' | 'body' | null;
+
+function TextToolbar({
+  block,
+  form,
+  onChange,
+}: {
+  block: FocusedBlock;
+  form: PublicPageInput;
+  onChange: (patch: Partial<PublicPageInput>) => void;
+}) {
+  if (!block) return null;
+  const sizeOptions = block === 'subtitle' ? titleSizeOptions : bodySizeOptions;
+  const currentSize = block === 'subtitle' ? form.titleSize : form.bodySize;
+  const sizeKey = block === 'subtitle' ? 'titleSize' : 'bodySize';
+
+  return (
+    <div className="absolute -top-11 left-0 z-20 flex items-center gap-1 rounded-xl bg-gray-950 px-2 py-1.5 shadow-xl">
+      {fontOptions.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          onMouseDown={(e) => { e.preventDefault(); onChange({ fontFamily: opt.value }); }}
+          className={`rounded-md px-2 py-1 text-xs font-bold transition ${
+            form.fontFamily === opt.value ? 'bg-white text-gray-900' : 'text-white/60 hover:text-white'
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+      <span className="mx-1 h-4 w-px bg-white/20" />
+      {sizeOptions.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          onMouseDown={(e) => { e.preventDefault(); onChange({ [sizeKey]: opt.value }); }}
+          className={`rounded-md px-2 py-1 text-xs font-bold transition ${
+            currentSize === opt.value ? 'bg-white text-gray-900' : 'text-white/60 hover:text-white'
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+      <span className="mx-1 h-4 w-px bg-white/20" />
+      <input
+        type="color"
+        value={form.textColor ?? '#111827'}
+        onMouseDown={(e) => e.stopPropagation()}
+        onChange={(e) => onChange({ textColor: e.target.value })}
+        className="h-6 w-8 cursor-pointer rounded border border-white/20 bg-transparent p-0"
+        title="文字色"
+      />
+    </div>
+  );
 }
 
 export default function AdminPublicPage() {
@@ -115,11 +172,14 @@ export default function AdminPublicPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<(typeof navItems)[number]['key']>('about');
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [focusedBlock, setFocusedBlock] = useState<FocusedBlock>(null);
+
+  const subtitleRef = useRef<HTMLParagraphElement>(null);
+  const bodyRef = useRef<HTMLParagraphElement>(null);
 
   const tenantCode = tenant?.code ?? tenant?.id ?? '';
   const displayName = tenant?.lineDisplayName ?? tenant?.name ?? '公開サイト';
@@ -141,8 +201,8 @@ export default function AdminPublicPage() {
     .filter(Boolean)
     .slice(0, 3);
   const navLabels = {
-    about: form.aboutLabel?.trim() || '団体詳細',
-    reserve: form.reserveLabel?.trim() || '予約画面',
+    about: form.aboutLabel?.trim() || '公開サイト',
+    reserve: form.reserveLabel?.trim() || '予約管理',
     blog: form.blogLabel?.trim() || 'ブログ',
   };
 
@@ -171,8 +231,8 @@ export default function AdminPublicPage() {
             titleAlign: first.titleAlign ?? 'left',
             bodySize: first.bodySize ?? 'base',
             layoutVariant: first.layoutVariant ?? 'one_page',
-            aboutLabel: first.aboutLabel ?? '団体詳細',
-            reserveLabel: first.reserveLabel ?? '予約画面',
+            aboutLabel: first.aboutLabel ?? '公開サイト',
+            reserveLabel: first.reserveLabel ?? '予約管理',
             blogLabel: first.blogLabel ?? 'ブログ',
             seoTitle: first.seoTitle ?? '',
             seoDescription: first.seoDescription ?? '',
@@ -195,8 +255,8 @@ export default function AdminPublicPage() {
             titleAlign: 'left',
             bodySize: 'base',
             layoutVariant: 'one_page',
-            aboutLabel: '団体詳細',
-            reserveLabel: '予約画面',
+            aboutLabel: '公開サイト',
+            reserveLabel: '予約管理',
             blogLabel: 'ブログ',
           });
         }
@@ -276,8 +336,8 @@ export default function AdminPublicPage() {
         titleAlign: page.titleAlign ?? 'left',
         bodySize: page.bodySize ?? 'base',
         layoutVariant: page.layoutVariant ?? 'one_page',
-        aboutLabel: page.aboutLabel ?? '団体詳細',
-        reserveLabel: page.reserveLabel ?? '予約画面',
+        aboutLabel: page.aboutLabel ?? '公開サイト',
+        reserveLabel: page.reserveLabel ?? '予約管理',
         blogLabel: page.blogLabel ?? 'ブログ',
         seoTitle: page.seoTitle ?? '',
         seoDescription: page.seoDescription ?? '',
@@ -297,8 +357,9 @@ export default function AdminPublicPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 md:px-6">
-      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <form onSubmit={handleSubmit} className="mx-auto max-w-6xl px-4 py-6 md:px-6">
+      {/* Top bar */}
+      <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold text-gray-900">公開サイト</h1>
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex rounded-lg border border-gray-200 bg-white p-1">
@@ -341,7 +402,6 @@ export default function AdminPublicPage() {
             </>
           )}
           <button
-            form="public-site-editor-settings"
             type="submit"
             disabled={saving}
             className="rounded-lg bg-[#06C755] px-5 py-2 text-sm font-bold text-white hover:bg-[#05a847] disabled:opacity-50"
@@ -353,6 +413,111 @@ export default function AdminPublicPage() {
 
       {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
       <SaveToast show={saved} />
+
+      {/* Inline editing panel */}
+      <div className="mb-5 space-y-4 rounded-xl border border-gray-200 bg-white p-4">
+        {/* Nav labels */}
+        <div>
+          <p className="mb-2 text-xs font-bold text-gray-500">目次・ナビ名</p>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="mb-1 block text-[11px] text-gray-400">公開サイト</label>
+              <input
+                value={form.aboutLabel ?? ''}
+                onChange={(e) => setForm((prev) => ({ ...prev, aboutLabel: e.target.value }))}
+                placeholder="公開サイト"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] text-gray-400">ブログ</label>
+              <input
+                value={form.blogLabel ?? ''}
+                onChange={(e) => setForm((prev) => ({ ...prev, blogLabel: e.target.value }))}
+                placeholder="ブログ"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] text-gray-400">予約管理</label>
+              <input
+                value={form.reserveLabel ?? ''}
+                onChange={(e) => setForm((prev) => ({ ...prev, reserveLabel: e.target.value }))}
+                placeholder="予約管理"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Image upload */}
+        <div>
+          <p className="mb-2 text-xs font-bold text-gray-500">画像（3枚まで）</p>
+          <div className="flex flex-wrap items-center gap-2">
+            {imageUrls.map((url, index) => (
+              <button
+                key={`${url}-${index}`}
+                type="button"
+                onClick={() => setForm((prev) => {
+                  const nextImages = (prev.imageUrls ?? []).filter((_, i) => i !== index);
+                  return { ...prev, imageUrls: nextImages, coverImageUrl: nextImages[0] ?? '' };
+                })}
+                className="group relative h-16 w-24 overflow-hidden rounded-lg border border-gray-200"
+              >
+                <img src={url} alt="" className="h-full w-full object-cover" />
+                <span className="absolute inset-0 hidden items-center justify-center bg-black/50 text-xs font-bold text-white group-hover:flex">削除</span>
+              </button>
+            ))}
+            {imageUrls.length < 3 && (
+              <label className={`flex h-16 w-24 cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 text-xs font-bold text-gray-500 hover:border-[#06C755] hover:text-[#06C755] ${uploading ? 'opacity-50' : ''}`}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={uploading}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) void handleImageFile(file);
+                    e.currentTarget.value = '';
+                  }}
+                  className="hidden"
+                />
+                {uploading ? '...' : '+ 追加'}
+              </label>
+            )}
+          </div>
+        </div>
+
+        {/* Background */}
+        <div>
+          <p className="mb-2 text-xs font-bold text-gray-500">背景</p>
+          <div className="flex flex-wrap items-center gap-2">
+            {backgroundOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setForm((prev) => ({ ...prev, backgroundColor: option.value }))}
+                className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold ${
+                  backgroundColor.toLowerCase() === option.value.toLowerCase()
+                    ? 'border-[#06C755] bg-green-50 text-gray-900'
+                    : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                <span className="h-3.5 w-3.5 rounded-full border border-black/10" style={{ backgroundColor: option.value }} />
+                {option.label}
+              </button>
+            ))}
+            <input
+              type="color"
+              value={backgroundColor}
+              onChange={(e) => setForm((prev) => ({ ...prev, backgroundColor: e.target.value }))}
+              className="h-9 w-10 cursor-pointer rounded-lg border border-gray-200 bg-white p-1"
+              title="カスタム背景色"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Slide animation */}
       <style jsx global>{`
         @keyframes public-site-slide {
           0%, 28% { transform: translateX(0); }
@@ -362,421 +527,194 @@ export default function AdminPublicPage() {
         }
       `}</style>
 
-      <div className="relative">
-        <form
-          id="public-site-editor-settings"
-          onSubmit={handleSubmit}
-          className={`${settingsOpen ? 'fixed inset-x-4 bottom-4 z-50 max-h-[82vh] overflow-y-auto rounded-xl border border-gray-200 bg-white p-4 shadow-2xl md:left-auto md:right-6 md:w-[420px]' : 'hidden'}`}
+      {/* Preview */}
+      <aside className="mx-auto max-w-4xl">
+        <div
+          className="overflow-hidden rounded-xl border border-gray-200 shadow-sm"
+          style={{ fontFamily, backgroundColor }}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            const file = e.dataTransfer.files?.[0];
+            if (file) void handleImageFile(file);
+          }}
         >
-          <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
-            <p className="text-sm font-bold text-gray-900">編集</p>
-            <button
-              type="button"
-              onClick={() => setSettingsOpen(false)}
-              className="rounded-lg px-3 py-1 text-sm font-bold text-gray-500 hover:bg-gray-100"
-            >
-              閉じる
-            </button>
-          </div>
-          <div className="space-y-5">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">UIパターン</label>
-            <div className="flex flex-wrap gap-2">
-              {layoutOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setForm((prev) => ({ ...prev, layoutVariant: option.value }))}
-                  className={`rounded-full border px-4 py-2 text-sm font-bold ${
-                    layoutVariant === option.value
-                      ? 'border-transparent text-white'
-                      : 'border-gray-200 text-gray-500 hover:bg-gray-50'
-                  }`}
-                  style={layoutVariant === option.value ? { backgroundColor: accentColor } : undefined}
-                >
-                  {option.label}
-                </button>
-              ))}
+          {/* Nav header */}
+          {layoutVariant === 'one_page' && (
+            <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 text-xs font-bold">
+              <span style={{ color: textColor }}>{displayName}</span>
             </div>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">ボタン・ナビ名</label>
-            <div className="grid gap-2">
-              <input
-                value={form.aboutLabel ?? ''}
-                onChange={(e) => setForm((prev) => ({ ...prev, aboutLabel: e.target.value }))}
-                placeholder="団体詳細"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              />
-              <input
-                value={form.reserveLabel ?? ''}
-                onChange={(e) => setForm((prev) => ({ ...prev, reserveLabel: e.target.value }))}
-                placeholder="予約画面"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              />
-              <input
-                value={form.blogLabel ?? ''}
-                onChange={(e) => setForm((prev) => ({ ...prev, blogLabel: e.target.value }))}
-                placeholder="ブログ"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">背景</label>
-            <div className="flex flex-wrap items-center gap-2">
-              {backgroundOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setForm((prev) => ({ ...prev, backgroundColor: option.value }))}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold ${
-                    backgroundColor.toLowerCase() === option.value.toLowerCase()
-                      ? 'border-[#06C755] bg-green-50 text-gray-900'
-                      : 'border-gray-200 text-gray-500 hover:bg-gray-50'
-                  }`}
-                >
-                  <span className="h-4 w-4 rounded-full border border-black/10" style={{ backgroundColor: option.value }} />
-                  {option.label}
-                </button>
-              ))}
-              <input
-                type="color"
-                value={backgroundColor}
-                onChange={(e) => setForm((prev) => ({ ...prev, backgroundColor: e.target.value }))}
-                className="h-10 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">メイン画像</label>
-            <label className={`flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 px-3 py-6 text-sm font-bold text-gray-600 hover:border-[#06C755] ${(uploading || imageUrls.length >= 3) ? 'opacity-50' : ''}`}>
-              <input
-                type="file"
-                accept="image/*"
-                disabled={uploading || imageUrls.length >= 3}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) void handleImageFile(file);
-                  e.currentTarget.value = '';
-                }}
-                className="hidden"
-              />
-              {uploading ? 'アップロード中...' : imageUrls.length >= 3 ? '画像は3枚まで' : '画像を挿入'}
-            </label>
-            {imageUrls.length > 0 && (
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                {imageUrls.map((url, index) => (
-                  <button
-                    key={`${url}-${index}`}
-                    type="button"
-                    onClick={() => setForm((prev) => {
-                      const nextImages = (prev.imageUrls ?? []).filter((_, imageIndex) => imageIndex !== index);
-                      return { ...prev, imageUrls: nextImages, coverImageUrl: nextImages[0] ?? '' };
-                    })}
-                    className="group relative aspect-video overflow-hidden rounded-lg border border-gray-200"
-                  >
-                    <img src={url} alt="" className="h-full w-full object-cover" />
-                    <span className="absolute inset-0 hidden items-center justify-center bg-black/50 text-xs font-bold text-white group-hover:flex">
-                      削除
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">サブタイトル</label>
-            <input
-              maxLength={160}
-              value={form.subtitle ?? ''}
-              onChange={(e) => setForm((prev) => ({ ...prev, subtitle: e.target.value }))}
-              placeholder="例：初心者歓迎の社会人サークル"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">文字色</label>
-            <div className="flex flex-wrap items-center gap-2">
-              {textColorOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setForm((prev) => ({ ...prev, textColor: option.value }))}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold ${
-                    textColor.toLowerCase() === option.value.toLowerCase()
-                      ? 'border-[#06C755] bg-green-50 text-gray-900'
-                      : 'border-gray-200 text-gray-500 hover:bg-gray-50'
-                  }`}
-                >
-                  <span
-                    className="h-4 w-4 rounded-full border border-black/10"
-                    style={{ backgroundColor: option.value }}
-                  />
-                  {option.label}
-                </button>
-              ))}
-              <input
-                type="color"
-                value={textColor}
-                onChange={(e) => setForm((prev) => ({ ...prev, textColor: e.target.value }))}
-                className="h-10 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">アクセントカラー</label>
-            <input
-              type="color"
-              value={accentColor}
-              onChange={(e) => setForm((prev) => ({ ...prev, accentColor: e.target.value }))}
-              className="h-10 w-16 cursor-pointer rounded-lg border border-gray-200 bg-white p-1"
-            />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">フォント</label>
-              <select
-                value={form.fontFamily ?? 'system'}
-                onChange={(e) => setForm((prev) => ({ ...prev, fontFamily: e.target.value }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              >
-                {fontOptions.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">団体名の配置</label>
-              <select
-                value={titleAlign}
-                onChange={(e) => setForm((prev) => ({ ...prev, titleAlign: e.target.value }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              >
-                {alignOptions.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">団体名の大きさ</label>
-              <select
-                value={form.titleSize ?? 'large'}
-                onChange={(e) => setForm((prev) => ({ ...prev, titleSize: e.target.value }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              >
-                {titleSizeOptions.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">本文の大きさ</label>
-              <select
-                value={form.bodySize ?? 'base'}
-                onChange={(e) => setForm((prev) => ({ ...prev, bodySize: e.target.value }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              >
-                {bodySizeOptions.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">団体説明</label>
-            <textarea
-              required
-              rows={16}
-              value={form.body}
-              onChange={(e) => setForm((prev) => ({ ...prev, body: e.target.value }))}
-              placeholder={`${displayName}の紹介文`}
-              className="w-full rounded-lg border border-gray-300 px-3 py-3 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-            />
-          </div>
-
-          <div className="flex justify-end border-t border-gray-100 pt-4">
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-lg bg-[#06C755] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#05a847] disabled:opacity-50"
-            >
-              {saving ? '保存中...' : '保存する'}
-            </button>
-          </div>
-          </div>
-        </form>
-
-        <aside className="mx-auto max-w-4xl">
-          <div className="relative overflow-hidden rounded-xl border border-gray-200 shadow-sm" style={{ fontFamily, backgroundColor }}>
-            {layoutVariant === 'one_page' && (
-              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 text-xs font-bold">
-                <span style={{ color: textColor }}>{displayName}</span>
-              </div>
-            )}
-            {layoutVariant === 'hamburger' && (
-              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-                <span className="text-xs font-bold" style={{ color: textColor }}>{displayName}</span>
-                <details className="relative">
-                  <summary className="flex cursor-pointer list-none flex-col gap-1">
-                    <span className="h-0.5 w-6 rounded-full bg-gray-500" />
-                    <span className="h-0.5 w-6 rounded-full bg-gray-500" />
-                    <span className="h-0.5 w-6 rounded-full bg-gray-500" />
-                  </summary>
-                  <div className="absolute right-0 top-7 z-20 w-36 rounded-lg bg-white p-2 text-xs font-bold text-gray-600 shadow-lg ring-1 ring-gray-100">
-                    {navItems.map((item) => (
-                      <button
-                        key={item.key}
-                        type="button"
-                        onClick={() => setActiveSection(item.key)}
-                        className="block w-full rounded px-3 py-2 text-left hover:bg-gray-50"
-                      >
-                        {navLabels[item.key]}
-                      </button>
-                    ))}
-                  </div>
-                </details>
-              </div>
-            )}
-            <div
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const file = e.dataTransfer.files?.[0];
-                if (file) void handleImageFile(file);
-              }}
-            >
-              {imageUrls.length > 0 ? (
-                <div className="relative h-64 overflow-hidden bg-gray-100">
-                  <div
-                    className="flex h-full"
-                    style={{
-                      width: `${imageUrls.length * 100}%`,
-                      animation: imageUrls.length >= 3 ? 'public-site-slide 12s infinite' : undefined,
-                    }}
-                  >
-                    {imageUrls.map((url, index) => (
-                      <img
-                        key={`${url}-${index}`}
-                        src={url}
-                        alt=""
-                        className="h-full object-cover"
-                        style={{ width: `${100 / imageUrls.length}%` }}
-                      />
-                    ))}
-                  </div>
-                  {imageUrls.length > 1 && (
-                    <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
-                      {imageUrls.map((url, index) => (
-                        <span key={`${url}-dot-${index}`} className="h-1.5 w-1.5 rounded-full bg-white/80" />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex h-64 items-center justify-center bg-gray-100 text-4xl font-bold text-gray-300">
-                  {uploading ? '...' : displayName.slice(0, 1)}
-                </div>
-              )}
-            </div>
-            <div className="space-y-4 p-5">
-              {layoutVariant === 'one_page' && (
-                <nav className="rounded-lg bg-gray-50 p-3">
-                  <p className="mb-2 text-xs font-bold text-gray-400">目次</p>
-                  <div className="flex flex-wrap gap-2 text-xs font-bold">
-                    {navItems.map((item) => (
-                      <a key={item.key} href={`#preview-${item.key}`} className="rounded-full bg-white px-3 py-1 text-gray-600 ring-1 ring-gray-100">
-                        {navLabels[item.key]}
-                      </a>
-                    ))}
-                  </div>
-                </nav>
-              )}
-              {layoutVariant === 'tabs' && (
-                <div className="flex flex-wrap gap-2 text-xs font-bold">
+          )}
+          {layoutVariant === 'hamburger' && (
+            <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+              <span className="text-xs font-bold" style={{ color: textColor }}>{displayName}</span>
+              <details className="relative">
+                <summary className="flex cursor-pointer list-none flex-col gap-1">
+                  <span className="h-0.5 w-6 rounded-full bg-gray-500" />
+                  <span className="h-0.5 w-6 rounded-full bg-gray-500" />
+                  <span className="h-0.5 w-6 rounded-full bg-gray-500" />
+                </summary>
+                <div className="absolute right-0 top-7 z-20 w-36 rounded-lg bg-white p-2 text-xs font-bold text-gray-600 shadow-lg ring-1 ring-gray-100">
                   {navItems.map((item) => (
                     <button
                       key={item.key}
                       type="button"
                       onClick={() => setActiveSection(item.key)}
-                      className={`rounded-full px-3 py-1 ${activeSection === item.key ? 'text-white' : 'bg-gray-100 text-gray-500'}`}
-                      style={activeSection === item.key ? { backgroundColor: accentColor } : undefined}
+                      className="block w-full rounded px-3 py-2 text-left hover:bg-gray-50"
                     >
                       {navLabels[item.key]}
                     </button>
                   ))}
                 </div>
+              </details>
+            </div>
+          )}
+
+          {/* Hero image */}
+          {imageUrls.length > 0 ? (
+            <div className="relative h-64 overflow-hidden bg-gray-100">
+              <div
+                className="flex h-full"
+                style={{
+                  width: `${imageUrls.length * 100}%`,
+                  animation: imageUrls.length >= 3 ? 'public-site-slide 12s infinite' : undefined,
+                }}
+              >
+                {imageUrls.map((url, index) => (
+                  <img
+                    key={`${url}-${index}`}
+                    src={url}
+                    alt=""
+                    className="h-full object-cover"
+                    style={{ width: `${100 / imageUrls.length}%` }}
+                  />
+                ))}
+              </div>
+              {imageUrls.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+                  {imageUrls.map((url, index) => (
+                    <span key={`${url}-dot-${index}`} className="h-1.5 w-1.5 rounded-full bg-white/80" />
+                  ))}
+                </div>
               )}
-              {(layoutVariant === 'one_page' || activeSection === 'about') && (
-                <section id="preview-about" className="space-y-4">
-                  <h2 className={`${titleSizeClass} font-bold leading-tight outline-none`} style={{ color: textColor, textAlign: titleAlign }}>
-                    {displayName}
-                  </h2>
+            </div>
+          ) : (
+            <div className="flex h-64 cursor-pointer items-center justify-center bg-gray-100 text-4xl font-bold text-gray-300 hover:bg-gray-50">
+              {uploading ? '...' : displayName.slice(0, 1)}
+            </div>
+          )}
+
+          {/* Content */}
+          <div className="space-y-4 p-5">
+            {layoutVariant === 'one_page' && (
+              <nav className="rounded-lg bg-gray-50 p-3">
+                <p className="mb-2 text-xs font-bold text-gray-400">目次</p>
+                <div className="flex flex-wrap gap-2 text-xs font-bold">
+                  {navItems.map((item) => (
+                    <a key={item.key} href={`#preview-${item.key}`} className="rounded-full bg-white px-3 py-1 text-gray-600 ring-1 ring-gray-100">
+                      {navLabels[item.key]}
+                    </a>
+                  ))}
+                </div>
+              </nav>
+            )}
+            {layoutVariant === 'tabs' && (
+              <div className="flex flex-wrap gap-2 text-xs font-bold">
+                {navItems.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setActiveSection(item.key)}
+                    className={`rounded-full px-3 py-1 ${activeSection === item.key ? 'text-white' : 'bg-gray-100 text-gray-500'}`}
+                    style={activeSection === item.key ? { backgroundColor: accentColor } : undefined}
+                  >
+                    {navLabels[item.key]}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {(layoutVariant === 'one_page' || activeSection === 'about') && (
+              <section id="preview-about" className="space-y-4">
+                <h2 className={`${titleSizeClass} font-bold leading-tight`} style={{ color: textColor, textAlign: titleAlign }}>
+                  {displayName}
+                </h2>
+
+                {/* Subtitle block with toolbar */}
+                <div className="relative pt-10">
+                  <TextToolbar
+                    block={focusedBlock === 'subtitle' ? 'subtitle' : null}
+                    form={form}
+                    onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
+                  />
                   <p
+                    ref={subtitleRef}
                     contentEditable
                     suppressContentEditableWarning
-                    onFocus={(e) => {
-                      if (!subtitle) e.currentTarget.innerText = '';
+                    onFocus={() => {
+                      setFocusedBlock('subtitle');
+                      if (!subtitle && subtitleRef.current) subtitleRef.current.innerText = '';
                     }}
-                    onBlur={(e) => setForm((prev) => ({ ...prev, subtitle: e.currentTarget.innerText.trim() }))}
-                    className="min-h-6 rounded px-1 text-sm font-bold leading-6 opacity-75 outline-none focus:bg-gray-50"
+                    onBlur={(e) => {
+                      setFocusedBlock(null);
+                      setForm((prev) => ({ ...prev, subtitle: e.currentTarget.innerText.trim() }));
+                    }}
+                    className="min-h-6 rounded px-1 text-sm font-bold leading-6 opacity-75 outline-none focus:bg-gray-50 focus:ring-1 focus:ring-[#06C755]/30"
                     style={{ color: textColor, textAlign: titleAlign }}
                   >
                     {subtitle || 'サブタイトル'}
                   </p>
+                </div>
+
+                {/* Body block with toolbar */}
+                <div className="relative pt-10">
+                  <TextToolbar
+                    block={focusedBlock === 'body' ? 'body' : null}
+                    form={form}
+                    onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
+                  />
                   <p
+                    ref={bodyRef}
                     contentEditable
                     suppressContentEditableWarning
-                    onFocus={(e) => {
-                      if (!previewBody) e.currentTarget.innerText = '';
+                    onFocus={() => {
+                      setFocusedBlock('body');
+                      if (!previewBody && bodyRef.current) bodyRef.current.innerText = '';
                     }}
-                    onBlur={(e) => setForm((prev) => ({ ...prev, body: e.currentTarget.innerText }))}
-                    className={`${bodySizeClass} min-h-32 whitespace-pre-wrap rounded px-1 opacity-85 outline-none focus:bg-gray-50`}
+                    onBlur={(e) => {
+                      setFocusedBlock(null);
+                      setForm((prev) => ({ ...prev, body: e.currentTarget.innerText }));
+                    }}
+                    className={`${bodySizeClass} min-h-32 whitespace-pre-wrap rounded px-1 opacity-85 outline-none focus:bg-gray-50 focus:ring-1 focus:ring-[#06C755]/30`}
                     style={{ color: textColor }}
                   >
                     {previewBody || '団体説明'}
                   </p>
-                </section>
-              )}
-              {(layoutVariant === 'one_page' || activeSection === 'blog') && (
-                <section id="preview-blog" className="rounded-lg bg-gray-50 p-4">
-                  <p className="text-sm font-bold text-gray-900">{navLabels.blog}</p>
-                  <p className="mt-2 text-sm leading-7 text-gray-500">活動日記やお知らせを表示するエリアです。</p>
-                </section>
-              )}
-              {(layoutVariant === 'one_page' || activeSection === 'reserve') && (
-                <section id="preview-reserve" className="rounded-lg bg-gray-50 p-4">
-                  <p className="text-sm font-bold text-gray-900">{navLabels.reserve}</p>
-                  <p className="mt-2 text-sm leading-7 text-gray-500">募集中のイベントや予約ボタンを表示します。</p>
-                  <button type="button" className="mt-4 w-full rounded-lg px-4 py-2.5 text-sm font-bold text-white" style={{ backgroundColor: accentColor }}>
-                    {navLabels.reserve}
-                  </button>
-                </section>
-              )}
-            </div>
-            {layoutVariant === 'one_page' && (
-              <div className="border-t border-gray-100 px-4 py-3 text-center text-xs text-gray-400">
-                {displayName}
-              </div>
+                </div>
+              </section>
             )}
-            <button
-              type="button"
-              onClick={() => setSettingsOpen(true)}
-              className="absolute bottom-4 right-4 rounded-full bg-gray-950/90 px-4 py-2 text-xs font-bold text-white shadow-lg hover:bg-gray-950"
-            >
-              編集
-            </button>
+
+            {(layoutVariant === 'one_page' || activeSection === 'blog') && (
+              <section id="preview-blog" className="rounded-lg bg-gray-50 p-4">
+                <p className="text-sm font-bold text-gray-900">{navLabels.blog}</p>
+                <p className="mt-2 text-sm leading-7 text-gray-500">活動日記やお知らせを表示するエリアです。</p>
+              </section>
+            )}
+            {(layoutVariant === 'one_page' || activeSection === 'reserve') && (
+              <section id="preview-reserve" className="rounded-lg bg-gray-50 p-4">
+                <p className="text-sm font-bold text-gray-900">{navLabels.reserve}</p>
+                <ReservationViewShowcase accentColor={accentColor} buttonLabel={navLabels.reserve} className="mt-3" />
+              </section>
+            )}
           </div>
-        </aside>
-      </div>
-    </div>
+
+          {layoutVariant === 'one_page' && (
+            <div className="border-t border-gray-100 px-4 py-3 text-center text-xs text-gray-400">
+              {displayName}
+            </div>
+          )}
+        </div>
+      </aside>
+    </form>
   );
 }

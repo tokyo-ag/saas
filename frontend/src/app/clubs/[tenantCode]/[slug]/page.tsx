@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { PublicCmsPage } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
+import { ReservationViewShowcase } from '@/components/public/ReservationViewShowcase';
 
 export const revalidate = 60;
 
@@ -121,6 +122,7 @@ export default async function ClubCmsPage({
     .filter(Boolean) as string[];
   const image = images[0];
   const clubHref = `/clubs/${page.tenant.code ?? tenantCode}`;
+  const liffHref = `/liff/${page.tenant.code ?? tenantCode}`;
   const textColor = page.textColor || '#111827';
   const accentColor = page.accentColor || '#06C755';
   const backgroundColor = page.backgroundColor || '#F7F8FA';
@@ -185,7 +187,7 @@ export default async function ClubCmsPage({
           ) : (
             <div className="flex items-center gap-4">
               <Link
-                href={`/liff/${page.tenant.code ?? tenantCode}`}
+                href={liffHref}
                 className="rounded-full px-4 py-2 text-xs font-bold text-white"
                 style={{ backgroundColor: accentColor }}
               >
@@ -214,8 +216,7 @@ export default async function ClubCmsPage({
             <a href="#reserve" className="rounded-full bg-white px-4 py-2 text-gray-500 shadow-sm ring-1 ring-gray-100">{navLabels.reserve}</a>
           </div>
         )}
-        <p id="about" className="mb-3 text-xs font-bold uppercase tracking-[0.18em]" style={{ color: accentColor }}>COMIU GUIDE</p>
-        <h1 className={`${titleSizeClass} font-bold leading-tight`} style={{ color: textColor, textAlign: titleAlign }}>{page.title}</h1>
+        <h1 id="about" className={`${titleSizeClass} font-bold leading-tight`} style={{ color: textColor, textAlign: titleAlign }}>{page.title}</h1>
         {page.subtitle && (
           <p className="mt-3 text-lg font-bold leading-8 opacity-75" style={{ color: textColor, textAlign: titleAlign }}>{page.subtitle}</p>
         )}
@@ -261,18 +262,9 @@ export default async function ClubCmsPage({
           <p className="mt-2 text-sm leading-7 text-gray-500">活動日記やお知らせを表示するエリアです。</p>
         </section>
 
-        <div id="reserve" className="mt-8 flex flex-col gap-3 rounded-xl bg-white px-5 py-5 shadow-sm ring-1 ring-gray-100 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-bold text-gray-900">{navLabels.reserve}</p>
-            <p className="mt-1 text-xs text-gray-500">開催中のイベント一覧から参加予約できます。</p>
-          </div>
-          <Link
-            href={clubHref}
-            className="inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-bold text-white"
-            style={{ backgroundColor: accentColor }}
-          >
-            {navLabels.reserve}
-          </Link>
+        <div id="reserve" className="mt-8 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
+          <p className="text-lg font-bold text-gray-900">{navLabels.reserve}</p>
+          <ReservationViewShowcase accentColor={accentColor} buttonLabel={navLabels.reserve} href={liffHref} className="mt-4" />
         </div>
       </article>
     </main>
