@@ -742,29 +742,25 @@ export default function AdminPublicPage() {
           {/* 静止サイト型 preview */}
           {!isCategory && (
             <>
-              <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-3">
-                <span className="text-sm font-bold leading-5" style={{ color: textColor }}>{displayName}</span>
-                <div className="grid grid-cols-2 gap-2 text-[11px] font-bold">
+              {/* ヘッダー: 背景モードのときは画像を背景に、ナビ/団体名を重ねる */}
+              <div className="relative flex flex-col gap-3 border-b border-gray-100 px-4 py-3"
+                style={heroImageMode === 'background' && imageUrls[0] ? {
+                  backgroundImage: `url(${imageUrls[0]})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                } : undefined}>
+                {heroImageMode === 'background' && imageUrls[0] && (
+                  <div className="absolute inset-0" style={{ backgroundColor: navBg }} />
+                )}
+                <span className="relative text-sm font-bold leading-5" style={{ color: textColor }}>{displayName}</span>
+                <div className="relative grid grid-cols-2 gap-2 text-[11px] font-bold">
                   {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
                     <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderColor: accentColor, color: textColor, ...buttonOpacityStyle }}>{label}</span>
                   ))}
                 </div>
               </div>
-              {/* 背景モード: フルヒーロー */}
-              {heroImageMode === 'background' && imageUrls[0] && (
-                <div className="relative flex min-h-[160px] items-center justify-center"
-                  style={{ backgroundImage: `url(${imageUrls[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-                  <div className="absolute inset-0" style={{ backgroundColor: heroOverlayColor, opacity: heroOverlayOpacity / 100 }} />
-                  <div className="relative z-10 px-5 py-8 text-center">
-                    <p className="text-lg font-bold text-white drop-shadow">{displayName}</p>
-                    {form.subtitle?.trim() && (
-                      <p className="mt-1 text-sm text-white/80 drop-shadow">{form.subtitle.trim()}</p>
-                    )}
-                  </div>
-                </div>
-              )}
               <div className="space-y-4 p-5">
-                {heroImageMode !== 'background' && form.subtitle?.trim() && (
+                {form.subtitle?.trim() && (
                   <p className="text-sm font-bold leading-6 opacity-75" style={{ color: textColor, textAlign: titleAlign }}>
                     {form.subtitle.trim()}
                   </p>

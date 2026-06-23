@@ -361,8 +361,14 @@ export default async function ClubCmsPage({
         }
       `}</style>
 
-      <header className="sticky top-0 z-10 px-4 py-3" style={{ backgroundColor: navBg }}>
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
+      <header className="relative sticky top-0 z-10 px-4 py-3"
+        style={heroImageMode === 'background' && images[0]
+          ? { backgroundImage: `url(${images[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+          : { backgroundColor: navBg }}>
+        {heroImageMode === 'background' && images[0] && (
+          <div className="absolute inset-0" style={{ backgroundColor: navBg }} />
+        )}
+        <div className="relative mx-auto flex max-w-3xl items-center justify-between gap-3">
           <Link href={clubHref} className="text-sm font-bold" style={{ color: textColor }}>{tenantName}</Link>
           <div className="flex items-center gap-2 text-xs font-bold">
             <a href="#about" className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.about}</a>
@@ -376,20 +382,6 @@ export default async function ClubCmsPage({
           </div>
         </div>
       </header>
-
-      {/* 背景モード: フルヒーロー */}
-      {heroImageMode === 'background' && images[0] && (
-        <div className="relative flex min-h-[300px] items-center justify-center md:min-h-[420px]"
-          style={{ backgroundImage: `url(${images[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-          <div className="absolute inset-0" style={{ backgroundColor: heroOverlayColor, opacity: heroOverlayOpacity / 100 }} />
-          <div className="relative z-10 px-6 py-16 text-center">
-            <h1 className={`${titleSizeClass} font-bold text-white drop-shadow-lg`}>{tenantName}</h1>
-            {page.subtitle && (
-              <p className="mt-3 text-lg text-white/85 drop-shadow">{page.subtitle}</p>
-            )}
-          </div>
-        </div>
-      )}
 
       <article id="about" className="mx-auto max-w-3xl px-4 py-8 md:py-12">
         {heroImageMode !== 'background' && (
