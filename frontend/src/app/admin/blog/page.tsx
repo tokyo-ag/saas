@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, BlogPost, BlogPostInput } from '@/lib/api';
 
+type TextBlock = { type: 'text'; content: string };
+type ImageBlock = { type: 'image'; url: string };
+type Block = TextBlock | ImageBlock;
 type Mode = 'list' | 'edit';
 
 function formatDate(iso: string | null | undefined) {
@@ -22,16 +25,41 @@ async function uploadImage(file: File): Promise<string> {
   return data.url as string;
 }
 
+const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
+
+function bodyToBlocks(body: string): Block[] {
+  const result: Block[] = [];
+  let textLines: string[] = [];
+  for (const line of body.split('\n')) {
+    const m = IMAGE_RE.exec(line.trim());
+    if (m) {
+      result.push({ type: 'text', content: textLines.join('\n') });
+      textLines = [];
+      result.push({ type: 'image', url: m[2] });
+    } else {
+      textLines.push(line);
+    }
+  }
+  result.push({ type: 'text', content: textLines.join('\n') });
+  const filtered = result.filter((b, i) => b.type === 'image' || b.content !== '' || i === 0);
+  return filtered.length > 0 ? filtered : [{ type: 'text', content: '' }];
+}
+
+function blocksToBody(blocks: Block[]): string {
+  return blocks.map((b) => (b.type === 'image' ? `![](${b.url})` : b.content)).join('\n');
+}
+
 export default function AdminBlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<Mode>('list');
   const [editing, setEditing] = useState<BlogPost | null>(null);
   const [form, setForm] = useState<BlogPostInput>({ title: '', body: '', excerpt: '', status: 'draft' });
+  const [blocks, setBlocks] = useState<Block[]>([{ type: 'text', content: '' }]);
+  const [activeBlockIdx, setActiveBlockIdx] = useState(0);
   const [saving, setSaving] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
   const [error, setError] = useState('');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function load() {
@@ -44,6 +72,8 @@ export default function AdminBlogPage() {
   function openNew() {
     setEditing(null);
     setForm({ title: '', body: '', excerpt: '', status: 'draft' });
+    setBlocks([{ type: 'text', content: '' }]);
+    setActiveBlockIdx(0);
     setError('');
     setMode('edit');
   }
@@ -51,15 +81,20 @@ export default function AdminBlogPage() {
   function openEdit(post: BlogPost) {
     setEditing(post);
     setForm({ title: post.title, body: post.body, excerpt: post.excerpt ?? '', status: post.status });
+    setBlocks(bodyToBlocks(post.body));
+    setActiveBlockIdx(0);
     setError('');
     setMode('edit');
   }
 
   async function handleSave(publish: boolean) {
-    if (!form.title.trim() || !form.body.trim()) { setError('タイトルと本文は必須です'); return; }
+    const body = blocksToBody(blocks);
+    if (!form.title.trim() || !body.replace(/\n/g, '').trim()) {
+      setError('タイトルと本文は必須です'); return;
+    }
     setSaving(true); setError('');
     try {
-      const payload: BlogPostInput = { ...form, status: publish ? 'published' : 'draft' };
+      const payload: BlogPostInput = { ...form, body, status: publish ? 'published' : 'draft' };
       if (editing) {
         await api.blog.update(editing.id, payload);
       } else {
@@ -82,39 +117,44 @@ export default function AdminBlogPage() {
     } catch { alert('削除に失敗しました'); }
   }
 
-  function handleImageButtonClick() {
-    fileInputRef.current?.click();
-  }
-
-  async function handleImageFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = '';
+  async function handleImageFile(file: File) {
     setImageUploading(true);
     try {
       const url = await uploadImage(file);
-      const ta = textareaRef.current;
-      if (ta) {
-        const start = ta.selectionStart ?? form.body.length;
-        const end = ta.selectionEnd ?? start;
-        const before = form.body.slice(0, start);
-        const after = form.body.slice(end);
-        const insert = `\n![](${url})\n`;
-        const newBody = before + insert + after;
-        setForm((p) => ({ ...p, body: newBody }));
-        setTimeout(() => {
-          ta.focus();
-          const pos = start + insert.length;
-          ta.setSelectionRange(pos, pos);
-        }, 0);
-      } else {
-        setForm((p) => ({ ...p, body: p.body + `\n![](${url})\n` }));
-      }
+      setBlocks((prev) => {
+        const insertAt = activeBlockIdx + 1;
+        const next = [...prev];
+        next.splice(insertAt, 0, { type: 'image', url });
+        // ensure there's a text block after the image
+        if (insertAt + 1 >= next.length || next[insertAt + 1].type === 'image') {
+          next.splice(insertAt + 1, 0, { type: 'text', content: '' });
+        }
+        return next;
+      });
+      setActiveBlockIdx((i) => i + 2);
     } catch {
       alert('画像のアップロードに失敗しました');
     } finally {
       setImageUploading(false);
     }
+  }
+
+  function removeImage(idx: number) {
+    setBlocks((prev) => {
+      const next = [...prev];
+      const before = prev[idx - 1] as TextBlock | undefined;
+      const after = prev[idx + 1] as TextBlock | undefined;
+      if (before?.type === 'text' && after?.type === 'text') {
+        const merged: TextBlock = {
+          type: 'text',
+          content: [before.content, after.content].filter(Boolean).join('\n'),
+        };
+        next.splice(idx - 1, 3, merged);
+      } else {
+        next.splice(idx, 1);
+      }
+      return next.length > 0 ? next : [{ type: 'text', content: '' }];
+    });
   }
 
   if (mode === 'edit') {
@@ -150,34 +190,56 @@ export default function AdminBlogPage() {
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
             />
           </div>
+
+          {/* Block editor */}
           <div>
-            <div className="mb-1 flex items-center justify-between">
+            <div className="mb-2 flex items-center justify-between">
               <label className="text-sm font-bold text-gray-700">本文</label>
-              <button
-                type="button"
-                onClick={handleImageButtonClick}
-                disabled={imageUploading}
-                className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1 text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-              >
-                {imageUploading ? 'アップロード中...' : '📷 画像を挿入'}
-              </button>
+              <label className={`flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1 text-xs font-bold text-gray-600 hover:bg-gray-50 ${imageUploading ? 'pointer-events-none opacity-50' : ''}`}>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={imageUploading}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImageFile(f); e.currentTarget.value = ''; }}
+                />
+                {imageUploading ? (
+                  <><span className="h-3 w-3 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />アップロード中</>
+                ) : (
+                  <><svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 5.5 2-3.5 3 6z" clipRule="evenodd" /></svg>画像を追加</>
+                )}
+              </label>
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageFileChange}
-            />
-            <textarea
-              ref={textareaRef}
-              value={form.body}
-              onChange={(e) => setForm((p) => ({ ...p, body: e.target.value }))}
-              placeholder="活動の様子やお知らせを書いてください..."
-              rows={18}
-              className="w-full rounded-lg border border-gray-300 px-3 py-3 text-sm leading-7 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-            />
+
+            <div className="space-y-1 rounded-xl border border-[#06C755] p-1">
+              {blocks.map((block, i) =>
+                block.type === 'image' ? (
+                  <div key={i} className="group relative overflow-hidden rounded-lg">
+                    <img src={block.url} alt="" className="w-full max-h-72 rounded-lg object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(i)}
+                      className="absolute right-2 top-2 hidden h-7 w-7 items-center justify-center rounded-full bg-black/60 text-xs font-bold text-white group-hover:flex hover:bg-black/80"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <textarea
+                    key={i}
+                    value={block.content}
+                    onChange={(e) => setBlocks((prev) => prev.map((b, idx) => idx === i ? { ...b, content: e.target.value } : b))}
+                    onFocus={() => setActiveBlockIdx(i)}
+                    placeholder={blocks.filter(b => b.type === 'text').indexOf(block as TextBlock) === 0 ? '活動の様子やお知らせを書いてください...' : '続きを入力...'}
+                    rows={Math.max(3, (block.content.split('\n').length || 1) + 1)}
+                    className="w-full resize-none rounded-lg bg-transparent px-3 py-2 text-sm leading-7 text-gray-800 outline-none placeholder:text-gray-300 focus:bg-gray-50/60"
+                  />
+                )
+              )}
+            </div>
           </div>
+
           <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
             <button
               type="button"
