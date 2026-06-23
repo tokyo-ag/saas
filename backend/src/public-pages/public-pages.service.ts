@@ -54,6 +54,11 @@ export class UpsertPublicPageDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(20)
+  backgroundColor?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(40)
   fontFamily?: string;
 
@@ -76,6 +81,21 @@ export class UpsertPublicPageDto {
   @IsString()
   @MaxLength(40)
   layoutVariant?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  aboutLabel?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  reserveLabel?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  blogLabel?: string;
 
   @IsOptional()
   @IsString()
@@ -129,7 +149,7 @@ export class PublicPagesService {
   }
 
   private pageData(dto: UpsertPublicPageDto, currentStatus?: string) {
-    const status = dto.status ?? currentStatus ?? 'draft';
+    const status = dto.status ?? currentStatus ?? 'published';
     if (!PAGE_STATUS.includes(status as PageStatus)) {
       throw new BadRequestException('status must be draft or published');
     }
@@ -147,11 +167,15 @@ export class PublicPagesService {
       dividerText: dto.dividerText?.trim() || null,
       textColor: dto.textColor?.trim() || null,
       accentColor: dto.accentColor?.trim() || null,
+      backgroundColor: dto.backgroundColor?.trim() || null,
       fontFamily: dto.fontFamily?.trim() || null,
       titleSize: dto.titleSize?.trim() || null,
       titleAlign: dto.titleAlign?.trim() || null,
       bodySize: dto.bodySize?.trim() || null,
       layoutVariant: dto.layoutVariant?.trim() || null,
+      aboutLabel: dto.aboutLabel?.trim() || null,
+      reserveLabel: dto.reserveLabel?.trim() || null,
+      blogLabel: dto.blogLabel?.trim() || null,
       seoTitle: dto.seoTitle?.trim() || null,
       seoDescription: dto.seoDescription?.trim() || null,
       status,

@@ -16,11 +16,15 @@ const emptyForm: PublicPageInput = {
   dividerText: '',
   textColor: '#111827',
   accentColor: '#06C755',
-  fontFamily: 'system',
+  backgroundColor: '#F7F8FA',
+  fontFamily: 'mincho',
   titleSize: 'large',
   titleAlign: 'left',
   bodySize: 'base',
   layoutVariant: 'one_page',
+  aboutLabel: '団体詳細',
+  reserveLabel: '予約画面',
+  blogLabel: 'ブログ',
   seoTitle: '',
   seoDescription: '',
   status: 'published',
@@ -42,9 +46,9 @@ const layoutOptions = [
 ];
 
 const fontOptions = [
-  { label: '標準', value: 'system', family: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' },
-  { label: '丸ゴシック', value: 'rounded', family: '"Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif' },
-  { label: '明朝', value: 'serif', family: '"Yu Mincho", "Hiragino Mincho ProN", serif' },
+  { label: '明朝', value: 'mincho', family: '"Yu Mincho", "Hiragino Mincho ProN", serif' },
+  { label: '手書き', value: 'handwriting', family: '"Hachi Maru Pop", "Comic Sans MS", "Yu Gothic", cursive' },
+  { label: 'マジックペン', value: 'marker', family: '"Arial Rounded MT Bold", "Arial Black", "Yu Gothic", sans-serif' },
 ];
 
 const titleSizeOptions = [
@@ -66,10 +70,19 @@ const alignOptions = [
 ];
 
 const navItems = [
-  { key: 'about', label: '団体説明' },
-  { key: 'blog', label: 'ブログ' },
-  { key: 'reserve', label: '予約管理' },
+  { key: 'about', field: 'aboutLabel' },
+  { key: 'blog', field: 'blogLabel' },
+  { key: 'reserve', field: 'reserveLabel' },
 ] as const;
+
+const backgroundOptions = [
+  { label: 'ホワイト', value: '#FFFFFF' },
+  { label: 'ミント', value: '#F0FDF4' },
+  { label: 'ブルー', value: '#EFF6FF' },
+  { label: 'ピンク', value: '#FDF2F8' },
+  { label: 'ラベンダー', value: '#F5F3FF' },
+  { label: 'クリーム', value: '#FFF7ED' },
+];
 
 async function uploadFile(file: File): Promise<string> {
   const ext = file.name.split('.').pop() ?? 'jpg';
@@ -104,6 +117,7 @@ export default function AdminPublicPage() {
   const [uploading, setUploading] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<(typeof navItems)[number]['key']>('about');
+  const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
@@ -116,6 +130,7 @@ export default function AdminPublicPage() {
   const subtitle = form.subtitle?.trim() ?? '';
   const textColor = form.textColor?.trim() || '#111827';
   const accentColor = form.accentColor?.trim() || '#06C755';
+  const backgroundColor = form.backgroundColor?.trim() || '#F7F8FA';
   const fontFamily = fontOptions.find((option) => option.value === form.fontFamily)?.family ?? fontOptions[0].family;
   const titleSizeClass = titleSizeOptions.find((option) => option.value === form.titleSize)?.className ?? titleSizeOptions[1].className;
   const bodySizeClass = bodySizeOptions.find((option) => option.value === form.bodySize)?.className ?? bodySizeOptions[1].className;
@@ -125,6 +140,11 @@ export default function AdminPublicPage() {
   const imageUrls = (form.imageUrls?.length ? form.imageUrls : form.coverImageUrl ? [form.coverImageUrl] : [])
     .filter(Boolean)
     .slice(0, 3);
+  const navLabels = {
+    about: form.aboutLabel?.trim() || '団体詳細',
+    reserve: form.reserveLabel?.trim() || '予約画面',
+    blog: form.blogLabel?.trim() || 'ブログ',
+  };
 
   useEffect(() => {
     Promise.all([api.tenant.get(), api.publicPages.list()])
@@ -145,11 +165,15 @@ export default function AdminPublicPage() {
             dividerText: first.dividerText ?? '',
             textColor: first.textColor ?? '#111827',
             accentColor: first.accentColor ?? '#06C755',
-            fontFamily: first.fontFamily ?? 'system',
+            backgroundColor: first.backgroundColor ?? '#F7F8FA',
+            fontFamily: first.fontFamily ?? 'mincho',
             titleSize: first.titleSize ?? 'large',
             titleAlign: first.titleAlign ?? 'left',
             bodySize: first.bodySize ?? 'base',
             layoutVariant: first.layoutVariant ?? 'one_page',
+            aboutLabel: first.aboutLabel ?? '団体詳細',
+            reserveLabel: first.reserveLabel ?? '予約画面',
+            blogLabel: first.blogLabel ?? 'ブログ',
             seoTitle: first.seoTitle ?? '',
             seoDescription: first.seoDescription ?? '',
             status: 'published',
@@ -165,11 +189,15 @@ export default function AdminPublicPage() {
             dividerText: '',
             textColor: '#111827',
             accentColor: '#06C755',
-            fontFamily: 'system',
+            backgroundColor: '#F7F8FA',
+            fontFamily: 'mincho',
             titleSize: 'large',
             titleAlign: 'left',
             bodySize: 'base',
             layoutVariant: 'one_page',
+            aboutLabel: '団体詳細',
+            reserveLabel: '予約画面',
+            blogLabel: 'ブログ',
           });
         }
       })
@@ -209,11 +237,15 @@ export default function AdminPublicPage() {
       dividerText: '',
       textColor,
       accentColor,
+      backgroundColor,
       fontFamily: form.fontFamily,
       titleSize: form.titleSize,
       titleAlign,
       bodySize: form.bodySize,
       layoutVariant,
+      aboutLabel: navLabels.about,
+      reserveLabel: navLabels.reserve,
+      blogLabel: navLabels.blog,
       status: 'published',
       seoTitle: displayName,
       seoDescription: form.body
@@ -238,11 +270,15 @@ export default function AdminPublicPage() {
         dividerText: page.dividerText ?? '',
         textColor: page.textColor ?? '#111827',
         accentColor: page.accentColor ?? '#06C755',
-        fontFamily: page.fontFamily ?? 'system',
+        backgroundColor: page.backgroundColor ?? '#F7F8FA',
+        fontFamily: page.fontFamily ?? 'mincho',
         titleSize: page.titleSize ?? 'large',
         titleAlign: page.titleAlign ?? 'left',
         bodySize: page.bodySize ?? 'base',
         layoutVariant: page.layoutVariant ?? 'one_page',
+        aboutLabel: page.aboutLabel ?? '団体詳細',
+        reserveLabel: page.reserveLabel ?? '予約画面',
+        blogLabel: page.blogLabel ?? 'ブログ',
         seoTitle: page.seoTitle ?? '',
         seoDescription: page.seoDescription ?? '',
         status: page.status,
@@ -264,15 +300,45 @@ export default function AdminPublicPage() {
     <div className="mx-auto max-w-6xl px-4 py-6 md:px-6">
       <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold text-gray-900">公開サイト</h1>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex rounded-lg border border-gray-200 bg-white p-1">
+            {layoutOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setForm((prev) => ({ ...prev, layoutVariant: option.value }))}
+                className={`rounded-md px-3 py-2 text-sm font-bold transition ${
+                  layoutVariant === option.value
+                    ? 'text-white'
+                    : 'text-gray-500 hover:bg-gray-50'
+                }`}
+                style={layoutVariant === option.value ? { backgroundColor: accentColor } : undefined}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
           {previewUrl && (
-            <Link
-              href={previewUrl}
-              target="_blank"
-              className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50"
-            >
-              公開ページ
-            </Link>
+            <>
+              <Link
+                href={previewUrl}
+                target="_blank"
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50"
+              >
+                公開ページ
+              </Link>
+              <button
+                type="button"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(previewUrl);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1600);
+                }}
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50"
+              >
+                {copied ? 'コピー済み' : 'URLコピー'}
+              </button>
+            </>
           )}
           <button
             form="public-site-editor-settings"
@@ -331,6 +397,57 @@ export default function AdminPublicPage() {
                   {option.label}
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">ボタン・ナビ名</label>
+            <div className="grid gap-2">
+              <input
+                value={form.aboutLabel ?? ''}
+                onChange={(e) => setForm((prev) => ({ ...prev, aboutLabel: e.target.value }))}
+                placeholder="団体詳細"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+              />
+              <input
+                value={form.reserveLabel ?? ''}
+                onChange={(e) => setForm((prev) => ({ ...prev, reserveLabel: e.target.value }))}
+                placeholder="予約画面"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+              />
+              <input
+                value={form.blogLabel ?? ''}
+                onChange={(e) => setForm((prev) => ({ ...prev, blogLabel: e.target.value }))}
+                placeholder="ブログ"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">背景</label>
+            <div className="flex flex-wrap items-center gap-2">
+              {backgroundOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, backgroundColor: option.value }))}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold ${
+                    backgroundColor.toLowerCase() === option.value.toLowerCase()
+                      ? 'border-[#06C755] bg-green-50 text-gray-900'
+                      : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="h-4 w-4 rounded-full border border-black/10" style={{ backgroundColor: option.value }} />
+                  {option.label}
+                </button>
+              ))}
+              <input
+                type="color"
+                value={backgroundColor}
+                onChange={(e) => setForm((prev) => ({ ...prev, backgroundColor: e.target.value }))}
+                className="h-10 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1"
+              />
             </div>
           </div>
 
@@ -499,13 +616,13 @@ export default function AdminPublicPage() {
         </form>
 
         <aside className="mx-auto max-w-4xl">
-          <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm" style={{ fontFamily }}>
+          <div className="relative overflow-hidden rounded-xl border border-gray-200 shadow-sm" style={{ fontFamily, backgroundColor }}>
             {layoutVariant === 'one_page' && (
               <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 text-xs font-bold">
                 <span style={{ color: textColor }}>{displayName}</span>
                 <div className="flex gap-3 text-gray-400">
-                  <span>ブログ</span>
-                  <span>予約</span>
+                  <span>{navLabels.blog}</span>
+                  <span>{navLabels.reserve}</span>
                 </div>
               </div>
             )}
@@ -567,7 +684,7 @@ export default function AdminPublicPage() {
                   <div className="flex flex-wrap gap-2 text-xs font-bold">
                     {navItems.map((item) => (
                       <a key={item.key} href={`#preview-${item.key}`} className="rounded-full bg-white px-3 py-1 text-gray-600 ring-1 ring-gray-100">
-                        {item.label}
+                        {navLabels[item.key]}
                       </a>
                     ))}
                   </div>
@@ -585,7 +702,7 @@ export default function AdminPublicPage() {
                         className={`rounded-full px-3 py-1 ${activeSection === item.key ? 'text-white' : 'bg-white text-gray-600 ring-1 ring-gray-100'}`}
                         style={activeSection === item.key ? { backgroundColor: accentColor } : undefined}
                       >
-                        {item.label}
+                        {navLabels[item.key]}
                       </button>
                     ))}
                   </div>
@@ -601,7 +718,7 @@ export default function AdminPublicPage() {
                       className={`rounded-full px-3 py-1 ${activeSection === item.key ? 'text-white' : 'bg-gray-100 text-gray-500'}`}
                       style={activeSection === item.key ? { backgroundColor: accentColor } : undefined}
                     >
-                      {item.label}
+                      {navLabels[item.key]}
                     </button>
                   ))}
                 </div>
@@ -639,16 +756,16 @@ export default function AdminPublicPage() {
               )}
               {(layoutVariant === 'one_page' || activeSection === 'blog') && (
                 <section id="preview-blog" className="rounded-lg bg-gray-50 p-4">
-                  <p className="text-sm font-bold text-gray-900">ブログ</p>
+                  <p className="text-sm font-bold text-gray-900">{navLabels.blog}</p>
                   <p className="mt-2 text-sm leading-7 text-gray-500">活動日記やお知らせを表示するエリアです。</p>
                 </section>
               )}
               {(layoutVariant === 'one_page' || activeSection === 'reserve') && (
                 <section id="preview-reserve" className="rounded-lg bg-gray-50 p-4">
-                  <p className="text-sm font-bold text-gray-900">予約管理</p>
+                  <p className="text-sm font-bold text-gray-900">{navLabels.reserve}</p>
                   <p className="mt-2 text-sm leading-7 text-gray-500">募集中のイベントや予約ボタンを表示します。</p>
                   <button type="button" className="mt-4 w-full rounded-lg px-4 py-2.5 text-sm font-bold text-white" style={{ backgroundColor: accentColor }}>
-                    予約する
+                    {navLabels.reserve}
                   </button>
                 </section>
               )}

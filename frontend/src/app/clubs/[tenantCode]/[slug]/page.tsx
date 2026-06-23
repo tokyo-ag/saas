@@ -31,6 +31,9 @@ function descriptionFromPage(page: PublicCmsPage) {
 }
 
 const fontFamilyMap: Record<string, string> = {
+  mincho: '"Yu Mincho", "Hiragino Mincho ProN", serif',
+  handwriting: '"Hachi Maru Pop", "Comic Sans MS", "Yu Gothic", cursive',
+  marker: '"Arial Rounded MT Bold", "Arial Black", "Yu Gothic", sans-serif',
   system: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   rounded: '"Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif',
   serif: '"Yu Mincho", "Hiragino Mincho ProN", serif',
@@ -120,11 +123,17 @@ export default async function ClubCmsPage({
   const clubHref = `/clubs/${page.tenant.code ?? tenantCode}`;
   const textColor = page.textColor || '#111827';
   const accentColor = page.accentColor || '#06C755';
-  const fontFamily = fontFamilyMap[page.fontFamily || 'system'] ?? fontFamilyMap.system;
+  const backgroundColor = page.backgroundColor || '#F7F8FA';
+  const fontFamily = fontFamilyMap[page.fontFamily || 'mincho'] ?? fontFamilyMap.mincho;
   const titleSizeClass = titleSizeMap[page.titleSize || 'large'] ?? titleSizeMap.large;
   const bodySizeClass = bodySizeMap[page.bodySize || 'base'] ?? bodySizeMap.base;
   const titleAlign = (['left', 'center', 'right'].includes(page.titleAlign || '') ? page.titleAlign! : 'left') as 'left' | 'center' | 'right';
   const layoutVariant = page.layoutVariant || 'one_page';
+  const navLabels = {
+    about: page.aboutLabel || '団体詳細',
+    reserve: page.reserveLabel || '予約画面',
+    blog: page.blogLabel || 'ブログ',
+  };
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -139,7 +148,7 @@ export default async function ClubCmsPage({
   };
 
   return (
-    <main className="min-h-screen bg-[#F7F8FA] text-gray-900" style={{ fontFamily }}>
+    <main className="min-h-screen text-gray-900" style={{ fontFamily, backgroundColor }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -168,17 +177,17 @@ export default async function ClubCmsPage({
                 <span className="h-0.5 w-6 rounded-full bg-gray-500" />
               </summary>
               <div className="absolute right-0 top-8 z-20 w-40 rounded-lg bg-white p-2 text-sm font-bold text-gray-600 shadow-lg ring-1 ring-gray-100">
-                <a href="#about" className="block rounded px-3 py-2 hover:bg-gray-50">団体説明</a>
-                <a href="#blog" className="block rounded px-3 py-2 hover:bg-gray-50">ブログ</a>
-                <a href="#reserve" className="block rounded px-3 py-2 hover:bg-gray-50">予約管理</a>
+                <a href="#about" className="block rounded px-3 py-2 hover:bg-gray-50">{navLabels.about}</a>
+                <a href="#blog" className="block rounded px-3 py-2 hover:bg-gray-50">{navLabels.blog}</a>
+                <a href="#reserve" className="block rounded px-3 py-2 hover:bg-gray-50">{navLabels.reserve}</a>
               </div>
             </details>
           ) : (
             <div className="flex items-center gap-4">
               {layoutVariant === 'one_page' && (
                 <div className="hidden gap-4 text-xs font-bold text-gray-400 sm:flex">
-                  <span>ブログ</span>
-                  <span>予約管理</span>
+                  <span>{navLabels.blog}</span>
+                  <span>{navLabels.reserve}</span>
                 </div>
               )}
               <Link
@@ -186,7 +195,7 @@ export default async function ClubCmsPage({
                 className="rounded-full px-4 py-2 text-xs font-bold text-white"
                 style={{ backgroundColor: accentColor }}
               >
-                参加予約
+                {navLabels.reserve}
               </Link>
             </div>
           )}
@@ -198,17 +207,17 @@ export default async function ClubCmsPage({
           <nav className="mb-6 rounded-xl bg-white px-4 py-4 shadow-sm ring-1 ring-gray-100">
             <p className="mb-3 text-xs font-bold text-gray-400">目次</p>
             <div className="flex flex-wrap gap-2 text-sm font-bold">
-              <a href="#about" className="rounded-full bg-gray-50 px-4 py-2 text-gray-600">団体説明</a>
-              <a href="#blog" className="rounded-full bg-gray-50 px-4 py-2 text-gray-600">ブログ</a>
-              <a href="#reserve" className="rounded-full bg-gray-50 px-4 py-2 text-gray-600">予約管理</a>
+              <a href="#about" className="rounded-full bg-gray-50 px-4 py-2 text-gray-600">{navLabels.about}</a>
+              <a href="#blog" className="rounded-full bg-gray-50 px-4 py-2 text-gray-600">{navLabels.blog}</a>
+              <a href="#reserve" className="rounded-full bg-gray-50 px-4 py-2 text-gray-600">{navLabels.reserve}</a>
             </div>
           </nav>
         )}
         {layoutVariant === 'tabs' && (
           <div className="mb-6 flex flex-wrap gap-2 text-sm font-bold">
-            <a href="#about" className="rounded-full px-4 py-2 text-white" style={{ backgroundColor: accentColor }}>団体説明</a>
-            <a href="#blog" className="rounded-full bg-white px-4 py-2 text-gray-500 shadow-sm ring-1 ring-gray-100">ブログ</a>
-            <a href="#reserve" className="rounded-full bg-white px-4 py-2 text-gray-500 shadow-sm ring-1 ring-gray-100">予約</a>
+            <a href="#about" className="rounded-full px-4 py-2 text-white" style={{ backgroundColor: accentColor }}>{navLabels.about}</a>
+            <a href="#blog" className="rounded-full bg-white px-4 py-2 text-gray-500 shadow-sm ring-1 ring-gray-100">{navLabels.blog}</a>
+            <a href="#reserve" className="rounded-full bg-white px-4 py-2 text-gray-500 shadow-sm ring-1 ring-gray-100">{navLabels.reserve}</a>
           </div>
         )}
         <p id="about" className="mb-3 text-xs font-bold uppercase tracking-[0.18em]" style={{ color: accentColor }}>COMIU GUIDE</p>
@@ -254,13 +263,13 @@ export default async function ClubCmsPage({
         </div>
 
         <section id="blog" className="mt-8 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
-          <p className="text-lg font-bold text-gray-900">ブログ</p>
+          <p className="text-lg font-bold text-gray-900">{navLabels.blog}</p>
           <p className="mt-2 text-sm leading-7 text-gray-500">活動日記やお知らせを表示するエリアです。</p>
         </section>
 
         <div id="reserve" className="mt-8 flex flex-col gap-3 rounded-xl bg-white px-5 py-5 shadow-sm ring-1 ring-gray-100 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-bold text-gray-900">{tenantName}</p>
+            <p className="text-sm font-bold text-gray-900">{navLabels.reserve}</p>
             <p className="mt-1 text-xs text-gray-500">開催中のイベント一覧から参加予約できます。</p>
           </div>
           <Link
@@ -268,7 +277,7 @@ export default async function ClubCmsPage({
             className="inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-bold text-white"
             style={{ backgroundColor: accentColor }}
           >
-            イベントを見る
+            {navLabels.reserve}
           </Link>
         </div>
       </article>
