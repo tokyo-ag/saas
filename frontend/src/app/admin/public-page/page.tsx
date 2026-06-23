@@ -1,11 +1,10 @@
 'use client';
 
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { api, PublicPageInput, Tenant } from '@/lib/api';
 import { SITE_URL } from '@/lib/config';
 import { SaveToast } from '@/components/ui/SaveToast';
-import { ReservationViewShowcase } from '@/components/public/ReservationViewShowcase';
 
 const emptyForm: PublicPageInput = {
   title: '',
@@ -18,6 +17,9 @@ const emptyForm: PublicPageInput = {
   textColor: '#111827',
   accentColor: '#06C755',
   backgroundColor: '#F7F8FA',
+  navColor: '#F3F4F6',
+  imageLayout: 'slider',
+  reserveViewStyle: 'calendar',
   fontFamily: 'mincho',
   titleSize: 'large',
   titleAlign: 'left',
@@ -31,15 +33,6 @@ const emptyForm: PublicPageInput = {
   status: 'published',
 };
 
-const textColorOptions = [
-  { label: '標準', value: '#111827' },
-  { label: 'やわらかい', value: '#374151' },
-  { label: 'ブラウン', value: '#4B3528' },
-  { label: 'ネイビー', value: '#1E3A5F' },
-  { label: 'グリーン', value: '#14532D' },
-  { label: 'ダーク', value: '#020617' },
-];
-
 const layoutOptions = [
   { label: '静止サイト', value: 'one_page' },
   { label: 'メニュー型', value: 'hamburger' },
@@ -49,7 +42,7 @@ const layoutOptions = [
 const fontOptions = [
   { label: '明朝', value: 'mincho', family: '"Yu Mincho", "Hiragino Mincho ProN", serif' },
   { label: '手書き', value: 'handwriting', family: '"Hachi Maru Pop", "Comic Sans MS", "Yu Gothic", cursive' },
-  { label: 'マジックペン', value: 'marker', family: '"Arial Rounded MT Bold", "Arial Black", "Yu Gothic", sans-serif' },
+  { label: '強調', value: 'marker', family: '"Arial Rounded MT Bold", "Arial Black", "Yu Gothic", sans-serif' },
 ];
 
 const titleSizeOptions = [
@@ -76,13 +69,10 @@ const navItems = [
   { key: 'reserve', field: 'reserveLabel' },
 ] as const;
 
-const backgroundOptions = [
-  { label: 'ホワイト', value: '#FFFFFF' },
-  { label: 'ミント', value: '#F0FDF4' },
-  { label: 'ブルー', value: '#EFF6FF' },
-  { label: 'ピンク', value: '#FDF2F8' },
-  { label: 'ラベンダー', value: '#F5F3FF' },
-  { label: 'クリーム', value: '#FFF7ED' },
+const imageLayoutOptions = [
+  { label: 'スライダー', value: 'slider' },
+  { label: 'グリッド', value: 'grid' },
+  { label: '1枚', value: 'single' },
 ];
 
 async function uploadFile(file: File): Promise<string> {
@@ -165,6 +155,65 @@ function TextToolbar({
   );
 }
 
+function HeroImages({
+  imageUrls,
+  imageLayout,
+  displayName,
+  uploading,
+}: {
+  imageUrls: string[];
+  imageLayout: string;
+  displayName: string;
+  uploading: boolean;
+}) {
+  if (imageUrls.length === 0) {
+    return (
+      <div className="flex h-56 items-center justify-center bg-gray-100 text-4xl font-bold text-gray-300">
+        {uploading ? '...' : displayName.slice(0, 1)}
+      </div>
+    );
+  }
+  if (imageLayout === 'single') {
+    return (
+      <div className="h-56 overflow-hidden bg-gray-100">
+        <img src={imageUrls[0]} alt="" className="h-full w-full object-cover" />
+      </div>
+    );
+  }
+  if (imageLayout === 'grid') {
+    return (
+      <div className={`grid h-56 gap-0.5 bg-gray-100 ${imageUrls.length === 1 ? '' : imageUrls.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+        {imageUrls.map((url, i) => (
+          <img key={`${url}-${i}`} src={url} alt="" className="h-full w-full object-cover" />
+        ))}
+      </div>
+    );
+  }
+  // slider (default)
+  return (
+    <div className="relative h-56 overflow-hidden bg-gray-100">
+      <div
+        className="flex h-full"
+        style={{
+          width: `${imageUrls.length * 100}%`,
+          animation: imageUrls.length >= 2 ? 'public-site-slide 10s infinite' : undefined,
+        }}
+      >
+        {imageUrls.map((url, i) => (
+          <img key={`${url}-${i}`} src={url} alt="" className="h-full object-cover" style={{ width: `${100 / imageUrls.length}%` }} />
+        ))}
+      </div>
+      {imageUrls.length > 1 && (
+        <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
+          {imageUrls.map((url, i) => (
+            <span key={`${url}-dot-${i}`} className="h-1.5 w-1.5 rounded-full bg-white/80" />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminPublicPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -184,22 +233,21 @@ export default function AdminPublicPage() {
   const tenantCode = tenant?.code ?? tenant?.id ?? '';
   const displayName = tenant?.lineDisplayName ?? tenant?.name ?? '公開サイト';
   const generatedSlug = slugify(displayName) || slugify(tenantCode) || 'home';
-  const previewUrl = tenantCode
-    ? `${SITE_URL}/clubs/${tenantCode}/${generatedSlug}`
-    : '';
+  const previewUrl = tenantCode ? `${SITE_URL}/clubs/${tenantCode}/${generatedSlug}` : '';
   const subtitle = form.subtitle?.trim() ?? '';
   const textColor = form.textColor?.trim() || '#111827';
   const accentColor = form.accentColor?.trim() || '#06C755';
   const backgroundColor = form.backgroundColor?.trim() || '#F7F8FA';
-  const fontFamily = fontOptions.find((option) => option.value === form.fontFamily)?.family ?? fontOptions[0].family;
-  const titleSizeClass = titleSizeOptions.find((option) => option.value === form.titleSize)?.className ?? titleSizeOptions[1].className;
-  const bodySizeClass = bodySizeOptions.find((option) => option.value === form.bodySize)?.className ?? bodySizeOptions[1].className;
-  const titleAlign = (alignOptions.some((option) => option.value === form.titleAlign) ? form.titleAlign! : 'left') as 'left' | 'center' | 'right';
+  const navColor = form.navColor?.trim() || '#F3F4F6';
+  const fontFamily = fontOptions.find((o) => o.value === form.fontFamily)?.family ?? fontOptions[0].family;
+  const titleSizeClass = titleSizeOptions.find((o) => o.value === form.titleSize)?.className ?? titleSizeOptions[1].className;
+  const bodySizeClass = bodySizeOptions.find((o) => o.value === form.bodySize)?.className ?? bodySizeOptions[1].className;
+  const titleAlign = (alignOptions.some((o) => o.value === form.titleAlign) ? form.titleAlign! : 'left') as 'left' | 'center' | 'right';
   const layoutVariant = form.layoutVariant || 'one_page';
+  const imageLayout = form.imageLayout || 'slider';
   const previewBody = form.body.trim() || tenant?.description || '';
   const imageUrls = (form.imageUrls?.length ? form.imageUrls : form.coverImageUrl ? [form.coverImageUrl] : [])
-    .filter(Boolean)
-    .slice(0, 3);
+    .filter(Boolean).slice(0, 3);
   const navLabels = {
     about: form.aboutLabel?.trim() || '公開サイト',
     reserve: form.reserveLabel?.trim() || '予約管理',
@@ -216,8 +264,7 @@ export default function AdminPublicPage() {
         if (first) {
           setSelectedId(first.id);
           setForm({
-            title: tenantName,
-            slug: tenantSlug,
+            title: tenantName, slug: tenantSlug,
             subtitle: first.subtitle ?? '',
             body: first.body,
             coverImageUrl: first.coverImageUrl ?? '',
@@ -226,6 +273,9 @@ export default function AdminPublicPage() {
             textColor: first.textColor ?? '#111827',
             accentColor: first.accentColor ?? '#06C755',
             backgroundColor: first.backgroundColor ?? '#F7F8FA',
+            navColor: first.navColor ?? '#F3F4F6',
+            imageLayout: first.imageLayout ?? 'slider',
+            reserveViewStyle: first.reserveViewStyle ?? 'calendar',
             fontFamily: first.fontFamily ?? 'mincho',
             titleSize: first.titleSize ?? 'large',
             titleAlign: first.titleAlign ?? 'left',
@@ -240,24 +290,8 @@ export default function AdminPublicPage() {
           });
         } else {
           setForm({
-            ...emptyForm,
-            title: tenantName,
-            slug: tenantSlug,
-            subtitle: '',
+            ...emptyForm, title: tenantName, slug: tenantSlug,
             body: tenantData.description ?? '',
-            imageUrls: [],
-            dividerText: '',
-            textColor: '#111827',
-            accentColor: '#06C755',
-            backgroundColor: '#F7F8FA',
-            fontFamily: 'mincho',
-            titleSize: 'large',
-            titleAlign: 'left',
-            bodySize: 'base',
-            layoutVariant: 'one_page',
-            aboutLabel: '公開サイト',
-            reserveLabel: '予約管理',
-            blogLabel: 'ブログ',
           });
         }
       })
@@ -271,8 +305,8 @@ export default function AdminPublicPage() {
     try {
       const url = await uploadFile(file);
       setForm((prev) => {
-        const nextImages = [...(prev.imageUrls ?? []), url].filter(Boolean).slice(0, 3);
-        return { ...prev, imageUrls: nextImages, coverImageUrl: nextImages[0] ?? '' };
+        const next = [...(prev.imageUrls ?? []), url].filter(Boolean).slice(0, 3);
+        return { ...prev, imageUrls: next, coverImageUrl: next[0] ?? '' };
       });
     } catch (err: any) {
       setError(err?.message ?? 'アップロードに失敗しました');
@@ -281,23 +315,18 @@ export default function AdminPublicPage() {
     }
   }
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: { preventDefault(): void }) {
     e.preventDefault();
-    setSaving(true);
-    setError('');
-    setSaved(false);
-
+    setSaving(true); setError(''); setSaved(false);
     const payload: PublicPageInput = {
       ...form,
-      title: displayName,
-      slug: generatedSlug,
+      title: displayName, slug: generatedSlug,
       subtitle: form.subtitle?.trim(),
       coverImageUrl: imageUrls[0]?.trim(),
       imageUrls,
       dividerText: '',
-      textColor,
-      accentColor,
-      backgroundColor,
+      textColor, accentColor, backgroundColor, navColor,
+      imageLayout,
       fontFamily: form.fontFamily,
       titleSize: form.titleSize,
       titleAlign,
@@ -308,29 +337,25 @@ export default function AdminPublicPage() {
       blogLabel: navLabels.blog,
       status: 'published',
       seoTitle: displayName,
-      seoDescription: form.body
-        .replace(/[#>*_-]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, 150),
+      seoDescription: form.body.replace(/[#>*_-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 150),
     };
-
     try {
       const page = selectedId
         ? await api.publicPages.update(selectedId, payload)
         : await api.publicPages.create(payload);
       setSelectedId(page.id);
       setForm({
-        title: displayName,
-        slug: generatedSlug,
-        subtitle: page.subtitle ?? '',
-        body: page.body,
+        title: displayName, slug: generatedSlug,
+        subtitle: page.subtitle ?? '', body: page.body,
         coverImageUrl: page.coverImageUrl ?? '',
         imageUrls: page.imageUrls?.length ? page.imageUrls : page.coverImageUrl ? [page.coverImageUrl] : [],
         dividerText: page.dividerText ?? '',
         textColor: page.textColor ?? '#111827',
         accentColor: page.accentColor ?? '#06C755',
         backgroundColor: page.backgroundColor ?? '#F7F8FA',
+        navColor: page.navColor ?? '#F3F4F6',
+        imageLayout: page.imageLayout ?? 'slider',
+        reserveViewStyle: page.reserveViewStyle ?? 'calendar',
         fontFamily: page.fontFamily ?? 'mincho',
         titleSize: page.titleSize ?? 'large',
         titleAlign: page.titleAlign ?? 'left',
@@ -339,8 +364,7 @@ export default function AdminPublicPage() {
         aboutLabel: page.aboutLabel ?? '公開サイト',
         reserveLabel: page.reserveLabel ?? '予約管理',
         blogLabel: page.blogLabel ?? 'ブログ',
-        seoTitle: page.seoTitle ?? '',
-        seoDescription: page.seoDescription ?? '',
+        seoTitle: page.seoTitle ?? '', seoDescription: page.seoDescription ?? '',
         status: page.status,
       });
       setSaved(true);
@@ -369,9 +393,7 @@ export default function AdminPublicPage() {
                 type="button"
                 onClick={() => setForm((prev) => ({ ...prev, layoutVariant: option.value }))}
                 className={`rounded-md px-3 py-2 text-sm font-bold transition ${
-                  layoutVariant === option.value
-                    ? 'text-white'
-                    : 'text-gray-500 hover:bg-gray-50'
+                  layoutVariant === option.value ? 'text-white' : 'text-gray-500 hover:bg-gray-50'
                 }`}
                 style={layoutVariant === option.value ? { backgroundColor: accentColor } : undefined}
               >
@@ -381,31 +403,19 @@ export default function AdminPublicPage() {
           </div>
           {previewUrl && (
             <>
-              <Link
-                href={previewUrl}
-                target="_blank"
-                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50"
-              >
+              <Link href={previewUrl} target="_blank" className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50">
                 公開ページ
               </Link>
               <button
                 type="button"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(previewUrl);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 1600);
-                }}
+                onClick={async () => { await navigator.clipboard.writeText(previewUrl); setCopied(true); setTimeout(() => setCopied(false), 1600); }}
                 className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50"
               >
                 {copied ? 'コピー済み' : 'URLコピー'}
               </button>
             </>
           )}
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-lg bg-[#06C755] px-5 py-2 text-sm font-bold text-white hover:bg-[#05a847] disabled:opacity-50"
-          >
+          <button type="submit" disabled={saving} className="rounded-lg bg-[#06C755] px-5 py-2 text-sm font-bold text-white hover:bg-[#05a847] disabled:opacity-50">
             {saving ? '保存中...' : '保存する'}
           </button>
         </div>
@@ -420,99 +430,85 @@ export default function AdminPublicPage() {
         <div>
           <p className="mb-2 text-xs font-bold text-gray-500">目次・ナビ名</p>
           <div className="grid grid-cols-3 gap-2">
-            <div>
-              <label className="mb-1 block text-[11px] text-gray-400">公開サイト</label>
-              <input
-                value={form.aboutLabel ?? ''}
-                onChange={(e) => setForm((prev) => ({ ...prev, aboutLabel: e.target.value }))}
-                placeholder="公開サイト"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-[11px] text-gray-400">ブログ</label>
-              <input
-                value={form.blogLabel ?? ''}
-                onChange={(e) => setForm((prev) => ({ ...prev, blogLabel: e.target.value }))}
-                placeholder="ブログ"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-[11px] text-gray-400">予約管理</label>
-              <input
-                value={form.reserveLabel ?? ''}
-                onChange={(e) => setForm((prev) => ({ ...prev, reserveLabel: e.target.value }))}
-                placeholder="予約管理"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              />
-            </div>
+            {[
+              { field: 'aboutLabel' as const, label: '公開サイト' },
+              { field: 'blogLabel' as const, label: 'ブログ' },
+              { field: 'reserveLabel' as const, label: '予約管理' },
+            ].map(({ field, label }) => (
+              <div key={field}>
+                <p className="mb-1 text-[11px] text-gray-400">{label}</p>
+                <input
+                  value={(form[field] as string) ?? ''}
+                  onChange={(e) => setForm((prev) => ({ ...prev, [field]: e.target.value }))}
+                  placeholder={label}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                />
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Image upload */}
+        {/* Images */}
         <div>
           <p className="mb-2 text-xs font-bold text-gray-500">画像（3枚まで）</p>
           <div className="flex flex-wrap items-center gap-2">
-            {imageUrls.map((url, index) => (
-              <button
-                key={`${url}-${index}`}
-                type="button"
-                onClick={() => setForm((prev) => {
-                  const nextImages = (prev.imageUrls ?? []).filter((_, i) => i !== index);
-                  return { ...prev, imageUrls: nextImages, coverImageUrl: nextImages[0] ?? '' };
-                })}
-                className="group relative h-16 w-24 overflow-hidden rounded-lg border border-gray-200"
-              >
-                <img src={url} alt="" className="h-full w-full object-cover" />
-                <span className="absolute inset-0 hidden items-center justify-center bg-black/50 text-xs font-bold text-white group-hover:flex">削除</span>
-              </button>
-            ))}
-            {imageUrls.length < 3 && (
-              <label className={`flex h-16 w-24 cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 text-xs font-bold text-gray-500 hover:border-[#06C755] hover:text-[#06C755] ${uploading ? 'opacity-50' : ''}`}>
-                <input
-                  type="file"
-                  accept="image/*"
-                  disabled={uploading}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) void handleImageFile(file);
-                    e.currentTarget.value = '';
-                  }}
-                  className="hidden"
-                />
-                {uploading ? '...' : '+ 追加'}
-              </label>
-            )}
+            {/* Image layout selector */}
+            <div className="flex rounded-lg border border-gray-200 p-0.5">
+              {imageLayoutOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, imageLayout: opt.value }))}
+                  className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
+                    imageLayout === opt.value ? 'text-white' : 'text-gray-500 hover:bg-gray-50'
+                  }`}
+                  style={imageLayout === opt.value ? { backgroundColor: accentColor } : undefined}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {imageUrls.map((url, index) => (
+                <button
+                  key={`${url}-${index}`}
+                  type="button"
+                  onClick={() => setForm((prev) => {
+                    const next = (prev.imageUrls ?? []).filter((_, i) => i !== index);
+                    return { ...prev, imageUrls: next, coverImageUrl: next[0] ?? '' };
+                  })}
+                  className="group relative h-14 w-20 overflow-hidden rounded-lg border border-gray-200"
+                >
+                  <img src={url} alt="" className="h-full w-full object-cover" />
+                  <span className="absolute inset-0 hidden items-center justify-center bg-black/50 text-xs font-bold text-white group-hover:flex">削除</span>
+                </button>
+              ))}
+              {imageUrls.length < 3 && (
+                <label className={`flex h-14 w-20 cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 text-xs font-bold text-gray-500 hover:border-[#06C755] hover:text-[#06C755] ${uploading ? 'opacity-50' : ''}`}>
+                  <input type="file" accept="image/*" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImageFile(f); e.currentTarget.value = ''; }} className="hidden" />
+                  {uploading ? '...' : '+ 追加'}
+                </label>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Background */}
+        {/* Colors: 背景 / ボタン / 目次 */}
         <div>
-          <p className="mb-2 text-xs font-bold text-gray-500">背景</p>
-          <div className="flex flex-wrap items-center gap-2">
-            {backgroundOptions.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setForm((prev) => ({ ...prev, backgroundColor: option.value }))}
-                className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold ${
-                  backgroundColor.toLowerCase() === option.value.toLowerCase()
-                    ? 'border-[#06C755] bg-green-50 text-gray-900'
-                    : 'border-gray-200 text-gray-500 hover:bg-gray-50'
-                }`}
-              >
-                <span className="h-3.5 w-3.5 rounded-full border border-black/10" style={{ backgroundColor: option.value }} />
-                {option.label}
-              </button>
-            ))}
-            <input
-              type="color"
-              value={backgroundColor}
-              onChange={(e) => setForm((prev) => ({ ...prev, backgroundColor: e.target.value }))}
-              className="h-9 w-10 cursor-pointer rounded-lg border border-gray-200 bg-white p-1"
-              title="カスタム背景色"
-            />
+          <p className="mb-2 text-xs font-bold text-gray-500">カラー</p>
+          <div className="flex flex-wrap gap-4">
+            <label className="flex flex-col items-center gap-1">
+              <span className="text-[11px] text-gray-400">背景</span>
+              <input type="color" value={backgroundColor} onChange={(e) => setForm((prev) => ({ ...prev, backgroundColor: e.target.value }))} className="h-10 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+            </label>
+            <label className="flex flex-col items-center gap-1">
+              <span className="text-[11px] text-gray-400">ボタン</span>
+              <input type="color" value={accentColor} onChange={(e) => setForm((prev) => ({ ...prev, accentColor: e.target.value }))} className="h-10 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+            </label>
+            <label className="flex flex-col items-center gap-1">
+              <span className="text-[11px] text-gray-400">目次</span>
+              <input type="color" value={navColor} onChange={(e) => setForm((prev) => ({ ...prev, navColor: e.target.value }))} className="h-10 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+            </label>
           </div>
         </div>
       </div>
@@ -520,9 +516,9 @@ export default function AdminPublicPage() {
       {/* Slide animation */}
       <style jsx global>{`
         @keyframes public-site-slide {
-          0%, 28% { transform: translateX(0); }
-          34%, 62% { transform: translateX(-100%); }
-          68%, 96% { transform: translateX(-200%); }
+          0%, 30% { transform: translateX(0); }
+          36%, 64% { transform: translateX(-100%); }
+          70%, 98% { transform: translateX(-200%); }
           100% { transform: translateX(0); }
         }
       `}</style>
@@ -533,11 +529,7 @@ export default function AdminPublicPage() {
           className="overflow-hidden rounded-xl border border-gray-200 shadow-sm"
           style={{ fontFamily, backgroundColor }}
           onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            const file = e.dataTransfer.files?.[0];
-            if (file) void handleImageFile(file);
-          }}
+          onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) void handleImageFile(f); }}
         >
           {/* Nav header */}
           {layoutVariant === 'one_page' && (
@@ -548,70 +540,25 @@ export default function AdminPublicPage() {
           {layoutVariant === 'hamburger' && (
             <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
               <span className="text-xs font-bold" style={{ color: textColor }}>{displayName}</span>
-              <details className="relative">
-                <summary className="flex cursor-pointer list-none flex-col gap-1">
-                  <span className="h-0.5 w-6 rounded-full bg-gray-500" />
-                  <span className="h-0.5 w-6 rounded-full bg-gray-500" />
-                  <span className="h-0.5 w-6 rounded-full bg-gray-500" />
-                </summary>
-                <div className="absolute right-0 top-7 z-20 w-36 rounded-lg bg-white p-2 text-xs font-bold text-gray-600 shadow-lg ring-1 ring-gray-100">
-                  {navItems.map((item) => (
-                    <button
-                      key={item.key}
-                      type="button"
-                      onClick={() => setActiveSection(item.key)}
-                      className="block w-full rounded px-3 py-2 text-left hover:bg-gray-50"
-                    >
-                      {navLabels[item.key]}
-                    </button>
-                  ))}
-                </div>
-              </details>
+              <div className="flex flex-col gap-1">
+                <span className="h-0.5 w-5 rounded-full bg-gray-500" />
+                <span className="h-0.5 w-5 rounded-full bg-gray-500" />
+                <span className="h-0.5 w-5 rounded-full bg-gray-500" />
+              </div>
             </div>
           )}
 
-          {/* Hero image */}
-          {imageUrls.length > 0 ? (
-            <div className="relative h-64 overflow-hidden bg-gray-100">
-              <div
-                className="flex h-full"
-                style={{
-                  width: `${imageUrls.length * 100}%`,
-                  animation: imageUrls.length >= 3 ? 'public-site-slide 12s infinite' : undefined,
-                }}
-              >
-                {imageUrls.map((url, index) => (
-                  <img
-                    key={`${url}-${index}`}
-                    src={url}
-                    alt=""
-                    className="h-full object-cover"
-                    style={{ width: `${100 / imageUrls.length}%` }}
-                  />
-                ))}
-              </div>
-              {imageUrls.length > 1 && (
-                <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
-                  {imageUrls.map((url, index) => (
-                    <span key={`${url}-dot-${index}`} className="h-1.5 w-1.5 rounded-full bg-white/80" />
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex h-64 cursor-pointer items-center justify-center bg-gray-100 text-4xl font-bold text-gray-300 hover:bg-gray-50">
-              {uploading ? '...' : displayName.slice(0, 1)}
-            </div>
-          )}
+          {/* Hero */}
+          <HeroImages imageUrls={imageUrls} imageLayout={imageLayout} displayName={displayName} uploading={uploading} />
 
           {/* Content */}
           <div className="space-y-4 p-5">
             {layoutVariant === 'one_page' && (
-              <nav className="rounded-lg bg-gray-50 p-3">
+              <nav className="rounded-lg p-3" style={{ backgroundColor: navColor }}>
                 <p className="mb-2 text-xs font-bold text-gray-400">目次</p>
                 <div className="flex flex-wrap gap-2 text-xs font-bold">
                   {navItems.map((item) => (
-                    <a key={item.key} href={`#preview-${item.key}`} className="rounded-full bg-white px-3 py-1 text-gray-600 ring-1 ring-gray-100">
+                    <a key={item.key} href={`#preview-${item.key}`} className="rounded-full bg-white px-3 py-1 text-gray-600 ring-1 ring-gray-200">
                       {navLabels[item.key]}
                     </a>
                   ))}
@@ -625,8 +572,8 @@ export default function AdminPublicPage() {
                     key={item.key}
                     type="button"
                     onClick={() => setActiveSection(item.key)}
-                    className={`rounded-full px-3 py-1 ${activeSection === item.key ? 'text-white' : 'bg-gray-100 text-gray-500'}`}
-                    style={activeSection === item.key ? { backgroundColor: accentColor } : undefined}
+                    className={`rounded-full px-3 py-1 ${activeSection === item.key ? 'text-white' : 'text-gray-500'}`}
+                    style={activeSection === item.key ? { backgroundColor: accentColor } : { backgroundColor: navColor }}
                   >
                     {navLabels[item.key]}
                   </button>
@@ -639,52 +586,26 @@ export default function AdminPublicPage() {
                 <h2 className={`${titleSizeClass} font-bold leading-tight`} style={{ color: textColor, textAlign: titleAlign }}>
                   {displayName}
                 </h2>
-
-                {/* Subtitle block with toolbar */}
                 <div className="relative pt-10">
-                  <TextToolbar
-                    block={focusedBlock === 'subtitle' ? 'subtitle' : null}
-                    form={form}
-                    onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
-                  />
+                  <TextToolbar block={focusedBlock === 'subtitle' ? 'subtitle' : null} form={form} onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))} />
                   <p
                     ref={subtitleRef}
-                    contentEditable
-                    suppressContentEditableWarning
-                    onFocus={() => {
-                      setFocusedBlock('subtitle');
-                      if (!subtitle && subtitleRef.current) subtitleRef.current.innerText = '';
-                    }}
-                    onBlur={(e) => {
-                      setFocusedBlock(null);
-                      setForm((prev) => ({ ...prev, subtitle: e.currentTarget.innerText.trim() }));
-                    }}
+                    contentEditable suppressContentEditableWarning
+                    onFocus={() => { setFocusedBlock('subtitle'); if (!subtitle && subtitleRef.current) subtitleRef.current.innerText = ''; }}
+                    onBlur={(e) => { setFocusedBlock(null); setForm((prev) => ({ ...prev, subtitle: e.currentTarget.innerText.trim() })); }}
                     className="min-h-6 rounded px-1 text-sm font-bold leading-6 opacity-75 outline-none focus:bg-gray-50 focus:ring-1 focus:ring-[#06C755]/30"
                     style={{ color: textColor, textAlign: titleAlign }}
                   >
                     {subtitle || 'サブタイトル'}
                   </p>
                 </div>
-
-                {/* Body block with toolbar */}
                 <div className="relative pt-10">
-                  <TextToolbar
-                    block={focusedBlock === 'body' ? 'body' : null}
-                    form={form}
-                    onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
-                  />
+                  <TextToolbar block={focusedBlock === 'body' ? 'body' : null} form={form} onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))} />
                   <p
                     ref={bodyRef}
-                    contentEditable
-                    suppressContentEditableWarning
-                    onFocus={() => {
-                      setFocusedBlock('body');
-                      if (!previewBody && bodyRef.current) bodyRef.current.innerText = '';
-                    }}
-                    onBlur={(e) => {
-                      setFocusedBlock(null);
-                      setForm((prev) => ({ ...prev, body: e.currentTarget.innerText }));
-                    }}
+                    contentEditable suppressContentEditableWarning
+                    onFocus={() => { setFocusedBlock('body'); if (!previewBody && bodyRef.current) bodyRef.current.innerText = ''; }}
+                    onBlur={(e) => { setFocusedBlock(null); setForm((prev) => ({ ...prev, body: e.currentTarget.innerText })); }}
                     className={`${bodySizeClass} min-h-32 whitespace-pre-wrap rounded px-1 opacity-85 outline-none focus:bg-gray-50 focus:ring-1 focus:ring-[#06C755]/30`}
                     style={{ color: textColor }}
                   >
@@ -693,17 +614,16 @@ export default function AdminPublicPage() {
                 </div>
               </section>
             )}
-
             {(layoutVariant === 'one_page' || activeSection === 'blog') && (
-              <section id="preview-blog" className="rounded-lg bg-gray-50 p-4">
-                <p className="text-sm font-bold text-gray-900">{navLabels.blog}</p>
+              <section id="preview-blog" className="rounded-lg p-4" style={{ backgroundColor: navColor }}>
+                <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.blog}</p>
                 <p className="mt-2 text-sm leading-7 text-gray-500">活動日記やお知らせを表示するエリアです。</p>
               </section>
             )}
             {(layoutVariant === 'one_page' || activeSection === 'reserve') && (
-              <section id="preview-reserve" className="rounded-lg bg-gray-50 p-4">
-                <p className="text-sm font-bold text-gray-900">{navLabels.reserve}</p>
-                <ReservationViewShowcase accentColor={accentColor} buttonLabel={navLabels.reserve} className="mt-3" />
+              <section id="preview-reserve" className="rounded-lg p-4" style={{ backgroundColor: navColor }}>
+                <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.reserve}</p>
+                <p className="mt-2 text-sm leading-7 text-gray-500">予約表示スタイルは「予約管理」ページで設定できます。</p>
               </section>
             )}
           </div>

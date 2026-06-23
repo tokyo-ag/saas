@@ -7,10 +7,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { BlogService } from '../blog/blog.service';
 
 @Controller('public')
 export class PublicController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly blogService: BlogService,
+  ) {}
 
   private publicEndAt(heldAt: Date, endAt: Date | null) {
     if (!endAt || endAt <= heldAt) return null;
@@ -412,6 +416,9 @@ export class PublicController {
       textColor: page.textColor,
       accentColor: page.accentColor,
       backgroundColor: page.backgroundColor,
+      navColor: page.navColor,
+      imageLayout: page.imageLayout,
+      reserveViewStyle: page.reserveViewStyle,
       fontFamily: page.fontFamily,
       titleSize: page.titleSize,
       titleAlign: page.titleAlign,
@@ -429,5 +436,25 @@ export class PublicController {
         linePictureUrl: page.tenant.linePictureUrl ?? page.tenant.iconUrl,
       },
     };
+  }
+
+  @Get('tenants/:tenantCode/blog')
+  listBlogPosts(@Param('tenantCode') tenantCode: string) {
+    return this.prisma.blogPost.findMany({
+      where: {
+        status: 'published',
+        tenant: { code: tenantCode, deletedAt: null, bannedAt: null },
+      },
+      orderBy: { publishedAt: 'desc' },
+      select: { id: true, title: true, slug: true, excerpt: true, publishedAt: true, createdAt: true },
+    });
+  }
+
+  @Get('tenants/:tenantCode/blog/:slug')
+  async getBlogPost(
+    @Param('tenantCode') tenantCode: string,
+    @Param('slug') slug: string,
+  ) {
+    return this.blogService.getPublic(tenantCode, slug);
   }
 }

@@ -18,6 +18,7 @@ import { StripeModule } from './stripe/stripe.module';
 import { AuthModule } from './auth/auth.module';
 import { PublicModule } from './public/public.module';
 import { PublicPagesModule } from './public-pages/public-pages.module';
+import { BlogModule } from './blog/blog.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -38,6 +39,7 @@ import { PublicPagesModule } from './public-pages/public-pages.module';
     AuthModule,
     PublicModule,
     PublicPagesModule,
+    BlogModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

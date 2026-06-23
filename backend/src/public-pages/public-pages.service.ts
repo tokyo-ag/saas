@@ -59,6 +59,21 @@ export class UpsertPublicPageDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(20)
+  navColor?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  imageLayout?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  reserveViewStyle?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(40)
   fontFamily?: string;
 
@@ -168,6 +183,9 @@ export class PublicPagesService {
       textColor: dto.textColor?.trim() || null,
       accentColor: dto.accentColor?.trim() || null,
       backgroundColor: dto.backgroundColor?.trim() || null,
+      navColor: dto.navColor?.trim() || null,
+      imageLayout: dto.imageLayout?.trim() || null,
+      reserveViewStyle: dto.reserveViewStyle?.trim() || null,
       fontFamily: dto.fontFamily?.trim() || null,
       titleSize: dto.titleSize?.trim() || null,
       titleAlign: dto.titleAlign?.trim() || null,

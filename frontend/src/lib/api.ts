@@ -276,6 +276,20 @@ export const api = {
       request<PublicCmsPage>(`/public/tenants/${tenantCode}/pages/${slug}`),
     recordView: (eventId: string) =>
       request<{ ok: boolean }>(`/public/events/${eventId}/view`, { method: 'POST' }),
+    blogPosts: (tenantCode: string) =>
+      request<BlogPostSummary[]>(`/public/tenants/${tenantCode}/blog`),
+    blogPost: (tenantCode: string, slug: string) =>
+      request<BlogPost>(`/public/tenants/${tenantCode}/blog/${slug}`),
+  },
+  blog: {
+    list: () => request<BlogPost[]>('/admin/blog'),
+    get: (id: string) => request<BlogPost>(`/admin/blog/${id}`),
+    create: (data: BlogPostInput) =>
+      request<BlogPost>('/admin/blog', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: BlogPostInput) =>
+      request<BlogPost>(`/admin/blog/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      request<void>(`/admin/blog/${id}`, { method: 'DELETE' }),
   },
   publicPages: {
     list: () => request<PublicPage[]>('/admin/public-pages'),
@@ -725,6 +739,9 @@ export interface PublicPage {
   textColor?: string | null;
   accentColor?: string | null;
   backgroundColor?: string | null;
+  navColor?: string | null;
+  imageLayout?: string | null;
+  reserveViewStyle?: string | null;
   fontFamily?: string | null;
   titleSize?: string | null;
   titleAlign?: string | null;
@@ -752,6 +769,9 @@ export interface PublicPageInput {
   textColor?: string;
   accentColor?: string;
   backgroundColor?: string;
+  navColor?: string;
+  imageLayout?: string;
+  reserveViewStyle?: string;
   fontFamily?: string;
   titleSize?: string;
   titleAlign?: string;
@@ -762,6 +782,36 @@ export interface PublicPageInput {
   blogLabel?: string;
   seoTitle?: string;
   seoDescription?: string;
+  status?: 'draft' | 'published';
+}
+
+export interface BlogPostSummary {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  publishedAt?: string | null;
+  createdAt: string;
+}
+
+export interface BlogPost extends BlogPostSummary {
+  body: string;
+  status: 'draft' | 'published';
+  updatedAt: string;
+  tenant?: {
+    id: string;
+    code?: string | null;
+    name: string;
+    lineDisplayName?: string | null;
+    linePictureUrl?: string | null;
+    iconUrl?: string | null;
+  };
+}
+
+export interface BlogPostInput {
+  title: string;
+  body: string;
+  excerpt?: string;
   status?: 'draft' | 'published';
 }
 

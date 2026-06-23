@@ -10,6 +10,12 @@ import { useCalendarMonth } from '@/lib/useCalendarMonth';
 import { EventStatusBadge } from '@/components/ui/StatusBadge';
 import type { Event } from '@/lib/api';
 
+const reserveViewOptions = [
+  { label: '日程カレンダー', value: 'calendar' },
+  { label: 'カード', value: 'card' },
+  { label: 'スレッド', value: 'thread' },
+];
+
 
 type Tab = 'upcoming' | 'past' | 'draft';
 type ViewMode = 'card' | 'calendar' | 'thread';
@@ -149,6 +155,9 @@ export default function EventsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('card');
   const [tenantId, setTenantId] = useState<string>('');
   const [copied, setCopied] = useState(false);
+  const [publicPageId, setPublicPageId] = useState<string | null>(null);
+  const [reserveViewStyle, setReserveViewStyle] = useState<string>('calendar');
+  const [savingStyle, setSavingStyle] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -161,7 +170,25 @@ export default function EventsPage() {
       setViewMode(t.liffEventView === 'calendar' || t.liffEventView === 'thread' ? t.liffEventView : 'card');
       setTenantId(t.code ?? t.id);
     }).catch(() => {});
+    api.publicPages.list().then((pages) => {
+      const first = pages[0];
+      if (first) {
+        setPublicPageId(first.id);
+        setReserveViewStyle(first.reserveViewStyle ?? 'calendar');
+      }
+    }).catch(() => {});
   }, [load]);
+
+  async function saveReserveViewStyle(style: string) {
+    setReserveViewStyle(style);
+    if (!publicPageId) return;
+    setSavingStyle(true);
+    try {
+      await api.publicPages.update(publicPageId, { reserveViewStyle: style } as any);
+    } catch { /* silent */ } finally {
+      setSavingStyle(false);
+    }
+  }
 
   const scheduleUrl = tenantId ? `${SITE_URL}/liff/${tenantId}` : '';
 
@@ -236,11 +263,32 @@ export default function EventsPage() {
 
       <div className="mb-5 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">イベント管理</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">予約管理</h1>
         </div>
         <Link href="/admin/events/new" className="shrink-0 rounded-lg bg-[#06C755] px-4 py-2 text-sm font-bold text-white hover:bg-[#05a847]">
           新規作成
         </Link>
+      </div>
+
+      {/* Public reservation view style */}
+      <div className="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
+        <span className="text-xs font-bold text-gray-500">公開サイトの表示スタイル{savingStyle ? ' 保存中...' : ''}</span>
+        <div className="flex gap-1 rounded-lg border border-gray-200 p-0.5">
+          {reserveViewOptions.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => saveReserveViewStyle(opt.value)}
+              className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
+                reserveViewStyle === opt.value
+                  ? 'bg-[#06C755] text-white'
+                  : 'text-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="mb-5 flex gap-1 overflow-x-auto border-b border-gray-200">
