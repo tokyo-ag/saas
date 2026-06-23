@@ -121,7 +121,7 @@ export default async function ClubCmsPage({
     .filter(Boolean) as string[];
   const image = images[0];
   const clubHref = `/clubs/${page.tenant.code ?? tenantCode}`;
-  const liffHref = `/liff/${page.tenant.code ?? tenantCode}`;
+  const reserveHref = `/clubs/${page.tenant.code ?? tenantCode}/reserve`;
   const textColor = page.textColor || '#111827';
   const accentColor = page.accentColor || '#06C755';
   const backgroundColor = page.backgroundColor || '#F7F8FA';
@@ -154,7 +154,7 @@ export default async function ClubCmsPage({
     ...(image ? { image } : {}),
   };
 
-  const contactHref = `${liffHref}/admin-talk`;
+  const contactHref = `/liff/${page.tenant.code ?? tenantCode}/admin-talk`;
 
   // カテゴリー型
   if (layoutVariant === 'category') {
@@ -178,7 +178,7 @@ export default async function ClubCmsPage({
               style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
               {navLabels.about}
             </a>
-            <Link href={liffHref} className={`flex-1 min-w-[6rem] px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
+            <Link href={reserveHref} className={`flex-1 min-w-[6rem] px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
               style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
               {navLabels.reserve}
             </Link>
@@ -220,12 +220,6 @@ export default async function ClubCmsPage({
         }
       `}</style>
 
-      {page.headerText && (
-        <div className="border-b border-gray-100 px-4 py-2 text-center text-xs font-bold" style={{ backgroundColor: navColor, color: textColor }}>
-          {page.headerText}
-        </div>
-      )}
-
       <header className="border-b border-gray-100 bg-white px-4 py-4">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
           <Link href={clubHref} className="text-sm font-bold" style={{ color: accentColor }}>{tenantName}</Link>
@@ -233,7 +227,7 @@ export default async function ClubCmsPage({
             <a href="#about" className="hidden sm:block text-gray-500 hover:text-gray-900">{navLabels.about}</a>
             <a href="#blog" className="hidden sm:block text-gray-500 hover:text-gray-900">{navLabels.blog}</a>
             <a href="#contact" className="hidden sm:block text-gray-500 hover:text-gray-900">お問い合わせ</a>
-            <Link href={liffHref} className="rounded-full px-4 py-2 text-white" style={{ backgroundColor: accentColor }}>
+            <Link href={reserveHref} className="rounded-full px-4 py-2 text-white" style={{ backgroundColor: accentColor }}>
               {navLabels.reserve}
             </Link>
           </div>
@@ -282,7 +276,7 @@ export default async function ClubCmsPage({
 
         <div id="reserve" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
           <p className="text-lg font-bold text-gray-900">{navLabels.reserve}</p>
-          <ReservationViewShowcase accentColor={accentColor} buttonLabel={navLabels.reserve} href={liffHref} className="mt-4" />
+          <ReservationViewShowcase accentColor={accentColor} buttonLabel={navLabels.reserve} href={reserveHref} className="mt-4" />
         </div>
 
         <div id="contact" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
@@ -296,11 +290,6 @@ export default async function ClubCmsPage({
         </div>
       </article>
 
-      {page.footerText && (
-        <footer className="border-t border-gray-100 px-4 py-4 text-center text-xs" style={{ backgroundColor: navColor, color: textColor }}>
-          {page.footerText}
-        </footer>
-      )}
     </main>
   );
 }
