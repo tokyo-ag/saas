@@ -18,8 +18,8 @@ export const metadata: Metadata = {
   title: '東京の20代向けサークル・交流イベント検索',
   description:
     '東京の20代向けサークル・交流イベントをCOMIUで検索。バドミントン、フットサル、バスケ、バレーなどのイベントをLINEでかんたんに参加予約できます。初心者歓迎・社会人向けのイベントを掲載中です。',
-  alternates: {
-    canonical: SITE_URL,
+  alternates: { 
+    canonical: SITE_URL,  
   },
   openGraph: {
     title: '東京の20代向けサークル・交流イベント検索 | COMIU',
@@ -60,6 +60,7 @@ function tenantName(tenant: PublicTenant) {
 function LockedDiscoveryHome({ tenants }: { tenants: PublicTenant[] }) {
   return (
     <main className="min-h-screen bg-[#F7F8FA] px-5 py-8 text-gray-900">
+      <LiffReturnRedirector />
       <div className="mx-auto flex min-h-[calc(100vh-64px)] w-full max-w-sm flex-col">
         <div>
           <p className="text-[12px] font-bold tracking-wide text-[#06C755]">
@@ -144,21 +145,14 @@ function LockedDiscoveryHome({ tenants }: { tenants: PublicTenant[] }) {
 export default async function TopPage({
   searchParams,
 }: {
-  searchParams?: Promise<Record<string, string | undefined>>;
+  searchParams?: Promise<{ prompt?: string }>;
 }) {
-  const params = (await searchParams) ?? {};
-  const isLiffReturn =
-    Boolean(params['liff.state']) || Boolean(params.code) || Boolean(params.state);
-
-  if (isLiffReturn) {
-    return <LiffReturnRedirector />;
-  }
-
   if (DISCOVERY_LOCKED) {
     const tenants = await fetchPublic<PublicTenant[]>('/public/tenants', []);
     return <LockedDiscoveryHome tenants={tenants} />;
   }
 
+  const params = await searchParams;
   const [events, tenants] = await Promise.all([
     fetchPublic<PublicEvent[]>('/public/events', []),
     fetchPublic<PublicTenant[]>('/public/tenants', []),
@@ -198,7 +192,8 @@ export default async function TopPage({
   };
 
   return (
-    <>      <LiffReturnRedirector />      <script
+    <>
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
