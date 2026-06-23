@@ -101,7 +101,7 @@ function getBtnShapeClass(style: string | null | undefined) {
   }
 }
 
-type FocusedBlock = 'subtitle' | 'body' | null;
+type FocusedBlock = 'subtitle' | 'body' | 'header' | 'footer' | null;
 
 function TextToolbar({
   block,
@@ -413,92 +413,47 @@ export default function AdminPublicPage() {
               )}
             </div>
           </div>
-        </div>
-
-        {/* カテゴリー型 settings */}
-        {isCategory && (
-          <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-4">
-            <div>
-              <p className="mb-2 text-xs font-bold text-gray-500">ボタン名称</p>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { field: 'aboutLabel' as const, label: '団体詳細' },
-                  { field: 'reserveLabel' as const, label: '予約する' },
-                  { field: 'blogLabel' as const, label: 'ブログ' },
-                ].map(({ field, label }) => (
-                  <div key={field}>
-                    <p className="mb-1 text-[11px] text-gray-400">{label}</p>
-                    <input value={(form[field] as string) ?? ''}
-                      onChange={(e) => setForm((p) => ({ ...p, [field]: e.target.value }))}
-                      placeholder={label}
-                      className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="mb-3 text-xs font-bold text-gray-500">ボタン枠</p>
-              <div className="flex flex-wrap gap-2">
-                {buttonStyleOptions.map((opt) => {
-                  const selected = buttonStyle === opt.value;
-                  const isGorgeous = opt.value === 'gorgeous';
-                  const shape = opt.value === 'pill' ? 'rounded-full border-2'
-                    : opt.value === 'square' ? 'rounded-none border-2'
-                    : opt.value === 'stylish' ? 'rounded-lg border border-dashed'
-                    : opt.value === 'gorgeous' ? 'rounded-xl border-4 border-double shadow-sm'
-                    : 'rounded-xl border-2';
-                  return (
-                    <button key={opt.value} type="button"
-                      onClick={() => setForm((p) => ({ ...p, buttonStyle: opt.value }))}
-                      className={`px-4 py-2 text-xs font-bold transition ${shape} ${selected ? 'text-white' : 'hover:bg-gray-50'}`}
-                      style={selected
-                        ? { backgroundColor: isGorgeous ? gorgeousColor : accentColor, borderColor: isGorgeous ? gorgeousColor : accentColor }
-                        : { borderColor: isGorgeous ? gorgeousColor : '#d1d5db', color: isGorgeous ? gorgeousColor : '#6b7280' }}>
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
+          <div>
+            <p className="mb-2 text-xs font-bold text-gray-500">ラベル名称</p>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { field: 'aboutLabel' as const, placeholder: '団体詳細' },
+                { field: 'reserveLabel' as const, placeholder: '予約する' },
+                { field: 'blogLabel' as const, placeholder: 'ブログ' },
+              ].map(({ field, placeholder }) => (
+                <input key={field} value={(form[field] as string) ?? ''}
+                  onChange={(e) => setForm((p) => ({ ...p, [field]: e.target.value }))}
+                  placeholder={placeholder}
+                  className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+              ))}
             </div>
           </div>
-        )}
+        </div>
 
-        {/* 静止サイト型 settings */}
-        {!isCategory && (
-          <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-4">
-            <div>
-              <p className="mb-1 text-xs font-bold text-gray-500">ヘッダーテキスト（任意）</p>
-              <input value={form.headerText ?? ''}
-                onChange={(e) => setForm((p) => ({ ...p, headerText: e.target.value }))}
-                placeholder="団体のキャッチコピーなど"
-                maxLength={300}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-            </div>
-            <div>
-              <p className="mb-2 text-xs font-bold text-gray-500">目次ラベル</p>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { field: 'aboutLabel' as const, label: '団体詳細' },
-                  { field: 'reserveLabel' as const, label: '予約する' },
-                  { field: 'blogLabel' as const, label: 'ブログ' },
-                ].map(({ field, label }) => (
-                  <div key={field}>
-                    <p className="mb-1 text-[11px] text-gray-400">{label}</p>
-                    <input value={(form[field] as string) ?? ''}
-                      onChange={(e) => setForm((p) => ({ ...p, [field]: e.target.value }))}
-                      placeholder={label}
-                      className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="mb-1 text-xs font-bold text-gray-500">フッターテキスト（任意）</p>
-              <input value={form.footerText ?? ''}
-                onChange={(e) => setForm((p) => ({ ...p, footerText: e.target.value }))}
-                placeholder="お問い合わせ先・SNSなど"
-                maxLength={300}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+        {/* カテゴリー型: ボタン枠のみ */}
+        {isCategory && (
+          <div className="rounded-xl border border-gray-200 bg-white p-4">
+            <p className="mb-3 text-xs font-bold text-gray-500">ボタン枠</p>
+            <div className="flex flex-wrap gap-2">
+              {buttonStyleOptions.map((opt) => {
+                const selected = buttonStyle === opt.value;
+                const isGorgeous = opt.value === 'gorgeous';
+                const shape = opt.value === 'pill' ? 'rounded-full border-2'
+                  : opt.value === 'square' ? 'rounded-none border-2'
+                  : opt.value === 'stylish' ? 'rounded-lg border border-dashed'
+                  : opt.value === 'gorgeous' ? 'rounded-xl border-4 border-double shadow-sm'
+                  : 'rounded-xl border-2';
+                return (
+                  <button key={opt.value} type="button"
+                    onClick={() => setForm((p) => ({ ...p, buttonStyle: opt.value }))}
+                    className={`px-4 py-2 text-xs font-bold transition ${shape} ${selected ? 'text-white' : 'hover:bg-gray-50'}`}
+                    style={selected
+                      ? { backgroundColor: isGorgeous ? gorgeousColor : accentColor, borderColor: isGorgeous ? gorgeousColor : accentColor }
+                      : { borderColor: isGorgeous ? gorgeousColor : '#d1d5db', color: isGorgeous ? gorgeousColor : '#6b7280' }}>
+                    {opt.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -553,11 +508,14 @@ export default function AdminPublicPage() {
           {/* 静止サイト型 preview */}
           {!isCategory && (
             <>
-              {form.headerText?.trim() && (
-                <div className="border-b border-gray-100 px-4 py-2 text-center text-xs font-bold" style={{ backgroundColor: navColor, color: textColor }}>
-                  {form.headerText}
-                </div>
-              )}
+              <div
+                contentEditable suppressContentEditableWarning
+                onFocus={() => setFocusedBlock('header')}
+                onBlur={(e) => { setFocusedBlock(null); setForm((p) => ({ ...p, headerText: e.currentTarget.innerText.trim() })); }}
+                className="min-h-8 border-b border-dashed border-gray-200 px-4 py-2 text-center text-xs font-bold outline-none focus:border-[#06C755]/40 focus:bg-[#06C755]/5"
+                style={{ backgroundColor: navColor, color: focusedBlock === 'header' ? textColor : (form.headerText?.trim() ? textColor : '#9ca3af') }}>
+                {form.headerText?.trim() || 'ヘッダー（クリックして編集）'}
+              </div>
               <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
                 <span className="text-sm font-bold" style={{ color: textColor }}>{displayName}</span>
                 <div className="flex gap-2 text-xs font-bold">
@@ -600,11 +558,14 @@ export default function AdminPublicPage() {
                   <p className="mt-1 text-xs text-gray-400">公開した記事が表示されます</p>
                 </section>
               </div>
-              {form.footerText?.trim() && (
-                <div className="border-t border-gray-100 px-4 py-3 text-center text-xs" style={{ backgroundColor: navColor, color: textColor }}>
-                  {form.footerText}
-                </div>
-              )}
+              <div
+                contentEditable suppressContentEditableWarning
+                onFocus={() => setFocusedBlock('footer')}
+                onBlur={(e) => { setFocusedBlock(null); setForm((p) => ({ ...p, footerText: e.currentTarget.innerText.trim() })); }}
+                className="min-h-8 border-t border-dashed border-gray-200 px-4 py-3 text-center text-xs outline-none focus:border-[#06C755]/40 focus:bg-[#06C755]/5"
+                style={{ backgroundColor: navColor, color: focusedBlock === 'footer' ? textColor : (form.footerText?.trim() ? textColor : '#9ca3af') }}>
+                {form.footerText?.trim() || 'フッター（クリックして編集）'}
+              </div>
             </>
           )}
         </div>
