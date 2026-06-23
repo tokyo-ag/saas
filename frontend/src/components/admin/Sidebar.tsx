@@ -24,9 +24,10 @@ export default function Sidebar() {
   const displayName = tenant?.lineDisplayName ?? tenant?.name ?? 'イベント管理';
 
   const links = [
-    { href: '/admin/public-page', label: '公開ページ', icon: 'P' },
+    { href: '/admin/public-page', label: '公開サイト', icon: 'P' },
+    { href: '/admin/events', label: '予約管理', icon: 'E' },
+    { href: '/admin/blog', label: 'ブログ', icon: 'B' },
     { href: '/admin', label: 'ダッシュボード', icon: 'D' },
-    { href: '/admin/events', label: 'イベント管理', icon: 'E' },
     { href: '/admin/messages', label: 'メッセージ', icon: 'M' },
     { href: '/admin/members', label: '参加者名簿', icon: 'U' },
     { href: '/admin/settings', label: '設定', icon: 'S' },
