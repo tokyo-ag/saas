@@ -42,7 +42,7 @@ const textColorOptions = [
 const layoutOptions = [
   { label: '静止サイト', value: 'one_page' },
   { label: 'メニュー型', value: 'hamburger' },
-  { label: '上部ボタン型', value: 'tabs' },
+  { label: 'ボタン型', value: 'tabs' },
 ];
 
 const fontOptions = [
@@ -620,20 +620,30 @@ export default function AdminPublicPage() {
             {layoutVariant === 'one_page' && (
               <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 text-xs font-bold">
                 <span style={{ color: textColor }}>{displayName}</span>
-                <div className="flex gap-3 text-gray-400">
-                  <span>{navLabels.blog}</span>
-                  <span>{navLabels.reserve}</span>
-                </div>
               </div>
             )}
             {layoutVariant === 'hamburger' && (
               <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
                 <span className="text-xs font-bold" style={{ color: textColor }}>{displayName}</span>
-                <span className="flex flex-col gap-1">
-                  <span className="h-0.5 w-6 rounded-full bg-gray-500" />
-                  <span className="h-0.5 w-6 rounded-full bg-gray-500" />
-                  <span className="h-0.5 w-6 rounded-full bg-gray-500" />
-                </span>
+                <details className="relative">
+                  <summary className="flex cursor-pointer list-none flex-col gap-1">
+                    <span className="h-0.5 w-6 rounded-full bg-gray-500" />
+                    <span className="h-0.5 w-6 rounded-full bg-gray-500" />
+                    <span className="h-0.5 w-6 rounded-full bg-gray-500" />
+                  </summary>
+                  <div className="absolute right-0 top-7 z-20 w-36 rounded-lg bg-white p-2 text-xs font-bold text-gray-600 shadow-lg ring-1 ring-gray-100">
+                    {navItems.map((item) => (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => setActiveSection(item.key)}
+                        className="block w-full rounded px-3 py-2 text-left hover:bg-gray-50"
+                      >
+                        {navLabels[item.key]}
+                      </button>
+                    ))}
+                  </div>
+                </details>
               </div>
             )}
             <div
@@ -689,24 +699,6 @@ export default function AdminPublicPage() {
                     ))}
                   </div>
                 </nav>
-              )}
-              {layoutVariant === 'hamburger' && (
-                <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                  <p className="mb-2 text-xs font-bold text-gray-400">ナビメニュー</p>
-                  <div className="flex flex-wrap gap-2 text-xs font-bold">
-                    {navItems.map((item) => (
-                      <button
-                        key={item.key}
-                        type="button"
-                        onClick={() => setActiveSection(item.key)}
-                        className={`rounded-full px-3 py-1 ${activeSection === item.key ? 'text-white' : 'bg-white text-gray-600 ring-1 ring-gray-100'}`}
-                        style={activeSection === item.key ? { backgroundColor: accentColor } : undefined}
-                      >
-                        {navLabels[item.key]}
-                      </button>
-                    ))}
-                  </div>
-                </div>
               )}
               {layoutVariant === 'tabs' && (
                 <div className="flex flex-wrap gap-2 text-xs font-bold">

@@ -184,12 +184,6 @@ export default async function ClubCmsPage({
             </details>
           ) : (
             <div className="flex items-center gap-4">
-              {layoutVariant === 'one_page' && (
-                <div className="hidden gap-4 text-xs font-bold text-gray-400 sm:flex">
-                  <span>{navLabels.blog}</span>
-                  <span>{navLabels.reserve}</span>
-                </div>
-              )}
               <Link
                 href={`/liff/${page.tenant.code ?? tenantCode}`}
                 className="rounded-full px-4 py-2 text-xs font-bold text-white"
