@@ -94,6 +94,18 @@ export class UpsertPublicPageDto {
   buttonBgColor?: string;
 
   @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  buttonBgOpacity?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  buttonTextOpacity?: number;
+
+  @IsOptional()
   @IsArray()
   blocks?: any[];
 
@@ -264,6 +276,8 @@ export class PublicPagesService {
       heroImageMode: dto.heroImageMode?.trim() || null,
       heroNavPosition: dto.heroNavPosition?.trim() || null,
       buttonBgColor: dto.buttonBgColor?.trim() || null,
+      buttonBgOpacity: Number.isInteger(dto.buttonBgOpacity) ? dto.buttonBgOpacity : null,
+      buttonTextOpacity: Number.isInteger(dto.buttonTextOpacity) ? dto.buttonTextOpacity : null,
       blocks: dto.blocks ?? null,
       heroOverlayOpacity: Number.isInteger(dto.heroOverlayOpacity) ? dto.heroOverlayOpacity : null,
       heroOverlayColor: dto.heroOverlayColor?.trim() || null,
