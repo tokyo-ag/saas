@@ -300,7 +300,13 @@ export default async function ClubCmsPage({
 
         <div id="reserve" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
           <p className="text-lg font-bold text-gray-900">{navLabels.reserve}</p>
-          <ReservationViewShowcase accentColor={accentColor} buttonLabel={navLabels.reserve} href={reserveHref} className="mt-4" />
+          <ReservationViewShowcase
+            accentColor={accentColor}
+            buttonLabel={navLabels.reserve}
+            href={reserveHref}
+            viewStyle={page.reserveViewStyle}
+            className="mt-4"
+          />
         </div>
 
         <div id="contact" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">

@@ -27,6 +27,7 @@ export default function Sidebar() {
     { href: '/admin/public-page', label: '公開サイト', icon: 'P' },
     { href: '/admin/events', label: '予約管理', icon: 'E' },
     { href: '/admin/blog', label: 'ブログ', icon: 'B' },
+    { href: '/admin/reviews', label: '口コミ', icon: 'R' },
     { href: '/admin/messages', label: 'お問い合わせ', icon: 'C' },
     { href: '/admin', label: 'ダッシュボード', icon: 'D' },
     { href: '/admin/members', label: '参加者名簿', icon: 'U' },

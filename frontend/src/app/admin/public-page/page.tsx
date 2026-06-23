@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, PublicPageInput, Tenant } from '@/lib/api';
 import { SITE_URL } from '@/lib/config';
 import { SaveToast } from '@/components/ui/SaveToast';
+import { ReservationViewShowcase } from '@/components/public/ReservationViewShowcase';
 
 const emptyForm: PublicPageInput = {
   title: '',
@@ -681,7 +682,12 @@ export default function AdminPublicPage() {
                 <section className="rounded-lg p-4" style={{ backgroundColor: navColor }}>
                   <p className="text-xs font-bold text-gray-400 mb-1">必須 — 予約セクション</p>
                   <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.reserve}</p>
-                  <p className="mt-1 text-xs text-gray-400">予約カレンダー・カード・スレッドが表示されます</p>
+                  <ReservationViewShowcase
+                    accentColor={accentColor}
+                    buttonLabel={navLabels.reserve}
+                    viewStyle={form.reserveViewStyle}
+                    className="mt-3"
+                  />
                 </section>
                 <section className="rounded-lg p-4" style={{ backgroundColor: navColor }}>
                   <p className="text-xs font-bold text-gray-400 mb-1">必須 — ブログセクション</p>

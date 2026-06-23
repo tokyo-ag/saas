@@ -5,6 +5,7 @@ type ReservationViewShowcaseProps = {
   buttonLabel: string;
   href?: string;
   className?: string;
+  viewStyle?: string | null;
 };
 
 const calendarDays = Array.from({ length: 14 }, (_, index) => index + 1);
@@ -76,26 +77,19 @@ export function ReservationViewShowcase({
   buttonLabel,
   href,
   className = '',
+  viewStyle = 'calendar',
 }: ReservationViewShowcaseProps) {
   const buttonClassName =
     'inline-flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-bold text-white transition hover:opacity-90';
   const buttonStyle = { backgroundColor: accentColor };
+  const selectedView = viewStyle === 'card' || viewStyle === 'thread' ? viewStyle : 'calendar';
 
   return (
     <div className={`space-y-3 ${className}`}>
-      <div className="grid grid-cols-3 gap-2">
-        <div className="min-w-0 rounded-xl border border-gray-100 bg-white p-2 shadow-sm">
-          <p className="mb-2 text-center text-[11px] font-bold text-gray-900">日程カレンダー</p>
-          <CalendarMini accentColor={accentColor} />
-        </div>
-        <div className="min-w-0 rounded-xl border border-gray-100 bg-white p-2 shadow-sm">
-          <p className="mb-2 text-center text-[11px] font-bold text-gray-900">カード</p>
-          <CardMini accentColor={accentColor} />
-        </div>
-        <div className="min-w-0 rounded-xl border border-gray-100 bg-white p-2 shadow-sm">
-          <p className="mb-2 text-center text-[11px] font-bold text-gray-900">スレッド</p>
-          <ThreadMini accentColor={accentColor} />
-        </div>
+      <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+        {selectedView === 'calendar' && <CalendarMini accentColor={accentColor} />}
+        {selectedView === 'card' && <CardMini accentColor={accentColor} />}
+        {selectedView === 'thread' && <ThreadMini accentColor={accentColor} />}
       </div>
       {href ? (
         <Link href={href} className={buttonClassName} style={buttonStyle}>
