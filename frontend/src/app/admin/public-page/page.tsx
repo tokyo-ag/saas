@@ -1,10 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api, PublicPageInput, Tenant } from '@/lib/api';
 import { SITE_URL } from '@/lib/config';
 import { SaveToast } from '@/components/ui/SaveToast';
 import { ReservationViewShowcase } from '@/components/public/ReservationViewShowcase';
+
+type BlockType = 'text' | 'media-text' | 'profile' | 'feature';
+interface Block {
+  id: string;
+  type: BlockType;
+  content: string;
+  imageUrl?: string;
+  imagePosition?: 'left' | 'right';
+}
+const BLOCK_LABELS: Record<BlockType, string> = {
+  'text': 'テキスト',
+  'media-text': 'メディアテキスト',
+  'profile': 'プロフィール',
+  'feature': 'フィーチャー',
+};
+function genId() { return Math.random().toString(36).slice(2); }
 
 const emptyForm: PublicPageInput = {
   title: '',
@@ -229,10 +245,12 @@ export default function AdminPublicPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [form, setForm] = useState<PublicPageInput>(emptyForm);
+  const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const blockUploadRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
@@ -328,13 +346,50 @@ export default function AdminPublicPage() {
             seoDescription: first.seoDescription ?? '',
             status: 'published',
           });
+          const loaded = (first.blocks as any[] | null);
+          if (loaded?.length) {
+            setBlocks(loaded.map((b: any) => ({ ...b, id: genId() })));
+          } else if (first.body) {
+            setBlocks([{ id: genId(), type: 'text', content: first.body }]);
+          }
         } else {
-          setForm({ ...emptyForm, title: tenantName, slug: tenantSlug, body: tenantData.description ?? '' });
+          const desc = tenantData.description ?? '';
+          setForm({ ...emptyForm, title: tenantName, slug: tenantSlug, body: desc });
+          if (desc) setBlocks([{ id: genId(), type: 'text', content: desc }]);
         }
       })
       .catch((err: any) => setError(err?.message ?? '読み込みに失敗しました'))
       .finally(() => setLoading(false));
   }, []);
+
+  function addBlock(type: BlockType) {
+    setBlocks(prev => [...prev, { id: genId(), type, content: '', imagePosition: 'left' as const }]);
+  }
+  function updateBlock(id: string, updates: Partial<Block>) {
+    setBlocks(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
+  }
+  function deleteBlock(id: string) {
+    setBlocks(prev => prev.filter(b => b.id !== id));
+  }
+  function moveBlock(id: string, dir: -1 | 1) {
+    setBlocks(prev => {
+      const idx = prev.findIndex(b => b.id === id);
+      if (idx < 0) return prev;
+      const next = [...prev];
+      const target = idx + dir;
+      if (target < 0 || target >= next.length) return prev;
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return next;
+    });
+  }
+  async function handleBlockImage(id: string, file: File) {
+    try {
+      const url = await uploadFile(file);
+      updateBlock(id, { imageUrl: url });
+    } catch (err: any) {
+      setError(err?.message ?? 'アップロードに失敗しました');
+    }
+  }
 
   async function handleImageFile(file: File) {
     setUploading(true); setError('');
@@ -382,9 +437,10 @@ export default function AdminPublicPage() {
       buttonLayout,
       buttonOpacity,
       buttonBgColor: form.buttonBgColor?.trim() || undefined,
+      blocks: blocks.length > 0 ? blocks.map(({ id: _id, ...rest }) => rest) : undefined,
       status: 'published',
       seoTitle: displayName,
-      seoDescription: form.body.replace(/[#>*_-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 150),
+      seoDescription: blocks.map(b => b.content).join(' ').replace(/\s+/g, ' ').trim().slice(0, 150) || form.body.replace(/[#>*_-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 150),
     };
     try {
       const page = selectedId
@@ -681,14 +737,87 @@ export default function AdminPublicPage() {
               ))}
             </div>
           </div>
-          <label className="block">
-            <span className="mb-1 block text-[11px] font-bold text-gray-400">説明文</span>
-            <textarea value={form.body}
-              onChange={(e) => setForm((p) => ({ ...p, body: e.target.value }))}
-              rows={7}
-              placeholder="団体の雰囲気や参加者に伝えたい内容"
-              className="w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-sm leading-7 focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-          </label>
+
+          {/* ブロック追加ボタン */}
+          <div>
+            <p className="mb-2 text-[11px] font-bold text-gray-400">ブロック追加</p>
+            <div className="flex flex-wrap gap-2">
+              {(['text', 'media-text', 'profile', 'feature'] as BlockType[]).map((type) => (
+                <button key={type} type="button"
+                  onClick={() => addBlock(type)}
+                  className="rounded-full border border-dashed border-gray-300 px-3 py-1.5 text-xs text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition">
+                  + {BLOCK_LABELS[type]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ブロックリスト */}
+          <div className="space-y-2">
+            {blocks.map((block, index) => (
+              <div key={block.id} className="rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-2">
+                {/* ヘッダー行 */}
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-gray-400">{BLOCK_LABELS[block.type]}</span>
+                  <div className="flex gap-1">
+                    <button type="button" onClick={() => moveBlock(block.id, -1)} disabled={index === 0}
+                      className="flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-gray-200 disabled:opacity-30">↑</button>
+                    <button type="button" onClick={() => moveBlock(block.id, 1)} disabled={index === blocks.length - 1}
+                      className="flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-gray-200 disabled:opacity-30">↓</button>
+                    <button type="button" onClick={() => deleteBlock(block.id)}
+                      className="flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-red-100 hover:text-red-500">×</button>
+                  </div>
+                </div>
+
+                {/* 画像フィールド (media-text / profile / feature) */}
+                {(block.type === 'media-text' || block.type === 'profile' || block.type === 'feature') && (
+                  <div className="space-y-1.5">
+                    {block.imageUrl ? (
+                      <div className="flex items-center gap-2">
+                        <img src={block.imageUrl} alt=""
+                          className={`object-cover ${block.type === 'profile' ? 'h-12 w-12 rounded-full' : 'h-14 w-20 rounded-lg'}`} />
+                        <button type="button" onClick={() => updateBlock(block.id, { imageUrl: undefined })}
+                          className="text-xs text-gray-400 hover:text-red-500">削除</button>
+                      </div>
+                    ) : (
+                      <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-xs text-gray-500 hover:bg-gray-100">
+                        + 画像追加
+                        <input type="file" accept="image/*" className="hidden"
+                          ref={el => { blockUploadRefs.current[block.id] = el; }}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) await handleBlockImage(block.id, file);
+                            e.target.value = '';
+                          }} />
+                      </label>
+                    )}
+                    {block.type === 'media-text' && (
+                      <div className="flex gap-2">
+                        {(['left', 'right'] as const).map(pos => (
+                          <button key={pos} type="button"
+                            onClick={() => updateBlock(block.id, { imagePosition: pos })}
+                            className={`rounded-full border px-3 py-1 text-[11px] font-bold transition ${block.imagePosition === pos ? 'text-white' : 'border-gray-200 text-gray-500'}`}
+                            style={block.imagePosition === pos ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                            {pos === 'left' ? '画像を左' : '画像を右'}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* テキスト */}
+                <textarea value={block.content}
+                  onChange={(e) => updateBlock(block.id, { content: e.target.value })}
+                  rows={3}
+                  placeholder={block.type === 'profile' ? '名前や紹介文' : block.type === 'feature' ? 'キャプションや説明文' : '内容を入力'}
+                  className="w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm leading-7 focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+              </div>
+            ))}
+            {blocks.length === 0 && (
+              <p className="py-4 text-center text-xs text-gray-400">上のボタンからブロックを追加してください</p>
+            )}
+          </div>
         </div>
 
       </section>

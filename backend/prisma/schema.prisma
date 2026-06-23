@@ -86,6 +86,7 @@ model PublicPage {
   heroImageMode  String?   @map("hero_image_mode") @db.VarChar(20)
   heroNavPosition String?  @map("hero_nav_position") @db.VarChar(20)
   buttonBgColor  String?   @map("button_bg_color") @db.VarChar(20)
+  blocks         Json?     @map("blocks")
   heroOverlayOpacity Int?  @map("hero_overlay_opacity")
   heroOverlayColor String? @map("hero_overlay_color") @db.VarChar(20)
   reserveViewStyle String? @map("reserve_view_style") @db.VarChar(20)

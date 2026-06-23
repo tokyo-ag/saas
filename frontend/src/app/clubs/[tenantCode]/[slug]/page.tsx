@@ -427,8 +427,60 @@ export default async function ClubCmsPage({
           />
         )}
 
-        <div className="mt-8 space-y-2 rounded-xl px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8" style={{ backgroundColor: navBg }}>
-          {page.body.split('\n').map((line, index) => renderLine(line, index, textColor, bodySizeClass))}
+        <div className="mt-8 rounded-xl px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8" style={{ backgroundColor: navBg }}>
+          {page.blocks?.length ? (
+            <div className="space-y-8">
+              {(page.blocks as any[]).map((block: any, i: number) => {
+                if (block.type === 'media-text') {
+                  const isLeft = block.imagePosition !== 'right';
+                  return (
+                    <div key={i} className={`flex flex-col gap-4 sm:flex-row ${!isLeft ? 'sm:flex-row-reverse' : ''}`}>
+                      {block.imageUrl && (
+                        <img src={block.imageUrl} alt="" className="h-40 w-full rounded-xl object-cover sm:h-auto sm:w-2/5" />
+                      )}
+                      <div className={`flex-1 space-y-1 ${bodySizeClass}`} style={{ color: textColor }}>
+                        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, bodySizeClass))}
+                      </div>
+                    </div>
+                  );
+                }
+                if (block.type === 'profile') {
+                  return (
+                    <div key={i} className="flex gap-4">
+                      {block.imageUrl && (
+                        <img src={block.imageUrl} alt="" className="h-16 w-16 shrink-0 rounded-full object-cover" />
+                      )}
+                      <div className={`space-y-1 ${bodySizeClass}`} style={{ color: textColor }}>
+                        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, bodySizeClass))}
+                      </div>
+                    </div>
+                  );
+                }
+                if (block.type === 'feature') {
+                  return (
+                    <div key={i} className="space-y-3">
+                      {block.imageUrl && (
+                        <img src={block.imageUrl} alt="" className="w-full rounded-xl object-cover" />
+                      )}
+                      <div className={`space-y-1 ${bodySizeClass}`} style={{ color: textColor }}>
+                        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, bodySizeClass))}
+                      </div>
+                    </div>
+                  );
+                }
+                // text
+                return (
+                  <div key={i} className={`space-y-1 ${bodySizeClass}`} style={{ color: textColor }}>
+                    {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, bodySizeClass))}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className={`space-y-2 ${bodySizeClass}`}>
+              {page.body.split('\n').map((line, index) => renderLine(line, index, textColor, bodySizeClass))}
+            </div>
+          )}
         </div>
 
         <section id="blog" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">

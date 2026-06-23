@@ -423,6 +423,7 @@ export class PublicController {
       heroImageMode: page.heroImageMode,
       heroNavPosition: page.heroNavPosition,
       buttonBgColor: page.buttonBgColor,
+      blocks: page.blocks,
       heroOverlayOpacity: page.heroOverlayOpacity,
       heroOverlayColor: page.heroOverlayColor,
       reserveViewStyle: page.reserveViewStyle,
