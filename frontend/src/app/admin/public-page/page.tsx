@@ -13,12 +13,16 @@ const emptyForm: PublicPageInput = {
   body: '',
   coverImageUrl: '',
   imageUrls: [],
+  imageCaptions: [],
   dividerText: '',
   textColor: '#111827',
   accentColor: '#06C755',
   backgroundColor: '#F7F8FA',
   navColor: '#F3F4F6',
   imageLayout: 'slider',
+  heroImageMode: 'slider',
+  heroOverlayOpacity: 0,
+  heroOverlayColor: '#000000',
   reserveViewStyle: 'calendar',
   fontFamily: 'mincho',
   titleSize: 'large',
@@ -26,6 +30,7 @@ const emptyForm: PublicPageInput = {
   bodySize: 'base',
   layoutVariant: 'static',
   buttonStyle: 'rounded',
+  buttonLayout: 'grid2x2',
   headerText: '',
   footerText: '',
   aboutLabel: '団体詳細',
@@ -72,6 +77,25 @@ const BTN_SIZE_OPTIONS = [
   { label: '小', value: 'small', cls: 'px-3 py-2.5 text-xs min-w-[5rem]' },
   { label: '中', value: 'medium', cls: 'px-5 py-4 text-sm min-w-[6.5rem]' },
   { label: '大', value: 'large', cls: 'px-6 py-5 text-base min-w-[8rem]' },
+];
+
+const HERO_IMAGE_MODE_OPTIONS = [
+  { label: '自動', value: 'auto' },
+  { label: 'スライダー', value: 'slider' },
+  { label: '横並び', value: 'grid' },
+];
+
+const BUTTON_LAYOUT_OPTIONS = [
+  { label: '2×2', value: 'grid2x2' },
+  { label: '1×4', value: 'row1x4' },
+];
+
+const TONE_COLORS = [
+  { label: '黒', value: '#000000' },
+  { label: '白', value: '#FFFFFF' },
+  { label: '緑', value: '#064E3B' },
+  { label: '紺', value: '#172554' },
+  { label: 'ピンク', value: '#BE185D' },
 ];
 
 async function uploadFile(file: File): Promise<string> {
@@ -125,6 +149,82 @@ function CheckIcon() {
   );
 }
 
+function clampPercent(value: number | string | null | undefined) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.min(100, Math.max(0, Math.round(parsed)));
+}
+
+function HeaderImagePreview({
+  images,
+  captions,
+  mode,
+  overlayColor,
+  overlayOpacity,
+  className = 'h-52',
+}: {
+  images: string[];
+  captions: string[];
+  mode: string;
+  overlayColor: string;
+  overlayOpacity: number;
+  className?: string;
+}) {
+  const list = images.slice(0, 3);
+  if (!list.length) return null;
+
+  const opacity = clampPercent(overlayOpacity) / 100;
+  const overlayStyle = { backgroundColor: overlayColor, opacity };
+  const useGrid = mode === 'grid' && list.length > 1;
+
+  if (useGrid) {
+    return (
+      <div className={`grid grid-cols-3 gap-2 ${className}`}>
+        {list.map((url, i) => (
+          <div key={`${url}-${i}`} className="relative h-full overflow-hidden rounded-xl bg-gray-100">
+            <img src={url} alt="" className="h-full w-full object-cover" />
+            <div className="absolute inset-0" style={overlayStyle} />
+            {captions[i]?.trim() && (
+              <p className="absolute bottom-2 left-2 right-2 rounded bg-white/85 px-2 py-1 text-[11px] font-bold text-gray-900">
+                {captions[i]}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const animation = list.length >= 3
+    ? 'public-site-slide-3 12s infinite'
+    : list.length === 2
+      ? 'public-site-slide-2 9s infinite'
+      : undefined;
+
+  return (
+    <div className={`relative overflow-hidden rounded-xl bg-gray-100 ${className}`}>
+      <div className="flex h-full" style={{ width: `${list.length * 100}%`, animation }}>
+        {list.map((url, i) => (
+          <div key={`${url}-${i}`} className="relative h-full shrink-0" style={{ width: `${100 / list.length}%` }}>
+            <img src={url} alt="" className="h-full w-full object-cover" />
+            <div className="absolute inset-0" style={overlayStyle} />
+            {captions[i]?.trim() && (
+              <p className="absolute bottom-4 left-4 right-4 rounded bg-white/85 px-3 py-2 text-xs font-bold text-gray-900">
+                {captions[i]}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+      {list.length > 1 && (
+        <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
+          {list.map((_, i) => <span key={i} className="h-1.5 w-1.5 rounded-full bg-white/80 shadow-sm" />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminPublicPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -137,9 +237,7 @@ export default function AdminPublicPage() {
   const [error, setError] = useState('');
 
   // UI-only states (not persisted)
-  const [btnEditOpen, setBtnEditOpen] = useState(false);
-  const [textEditOpen, setTextEditOpen] = useState(false);
-  const [btnSize, setBtnSize] = useState('medium');
+  const [btnSize] = useState('medium');
   const [focusedBody, setFocusedBody] = useState(false);
 
   const bodyRef = useRef<HTMLParagraphElement>(null);
@@ -160,6 +258,10 @@ export default function AdminPublicPage() {
   const isCategory = form.layoutVariant === 'category';
   const previewBody = form.body.trim() || tenant?.description || '';
   const imageUrls = (form.imageUrls?.length ? form.imageUrls : form.coverImageUrl ? [form.coverImageUrl] : []).filter(Boolean).slice(0, 3);
+  const imageCaptions = imageUrls.map((_, i) => (form.imageCaptions?.[i] ?? '').slice(0, 80));
+  const heroImageMode = ['auto', 'slider', 'grid'].includes(form.heroImageMode || '') ? form.heroImageMode! : 'slider';
+  const heroOverlayOpacity = clampPercent(form.heroOverlayOpacity);
+  const heroOverlayColor = form.heroOverlayColor?.trim() || '#000000';
   const navLabels = {
     about: form.aboutLabel?.trim() || '団体詳細',
     reserve: form.reserveLabel?.trim() || '予約する',
@@ -167,6 +269,10 @@ export default function AdminPublicPage() {
     contact: form.contactLabel?.trim() || 'お問い合わせ',
   };
   const buttonStyle = form.buttonStyle ?? 'rounded';
+  const buttonLayout = form.buttonLayout === 'row1x4' ? 'row1x4' : 'grid2x2';
+  const buttonLayoutClass = buttonLayout === 'row1x4'
+    ? 'grid grid-cols-2 sm:grid-cols-4'
+    : 'grid grid-cols-2';
   const btnSizeCls = BTN_SIZE_OPTIONS.find((o) => o.value === btnSize)?.cls ?? BTN_SIZE_OPTIONS[1].cls;
 
   useEffect(() => {
@@ -185,12 +291,16 @@ export default function AdminPublicPage() {
             body: first.body,
             coverImageUrl: first.coverImageUrl ?? '',
             imageUrls: first.imageUrls?.length ? first.imageUrls : first.coverImageUrl ? [first.coverImageUrl] : [],
+            imageCaptions: first.imageCaptions ?? [],
             dividerText: first.dividerText ?? '',
             textColor: first.textColor ?? '#111827',
             accentColor: first.accentColor ?? '#06C755',
             backgroundColor: first.backgroundColor ?? '#F7F8FA',
             navColor: first.navColor ?? '#F3F4F6',
             imageLayout: first.imageLayout ?? 'slider',
+            heroImageMode: first.heroImageMode ?? 'slider',
+            heroOverlayOpacity: first.heroOverlayOpacity ?? 0,
+            heroOverlayColor: first.heroOverlayColor ?? '#000000',
             reserveViewStyle: first.reserveViewStyle ?? 'calendar',
             fontFamily: first.fontFamily ?? 'mincho',
             titleSize: first.titleSize ?? 'large',
@@ -198,6 +308,7 @@ export default function AdminPublicPage() {
             bodySize: first.bodySize ?? 'base',
             layoutVariant: variant === 'category' ? 'category' : 'static',
             buttonStyle: (first as any).buttonStyle ?? 'rounded',
+            buttonLayout: first.buttonLayout ?? 'grid2x2',
             headerText: (first as any).headerText ?? '',
             footerText: (first as any).footerText ?? '',
             aboutLabel: first.aboutLabel ?? '団体詳細',
@@ -222,7 +333,8 @@ export default function AdminPublicPage() {
       const url = await uploadFile(file);
       setForm((prev) => {
         const next = [...(prev.imageUrls ?? []), url].filter(Boolean).slice(0, 3);
-        return { ...prev, imageUrls: next, coverImageUrl: next[0] ?? '' };
+        const captions = [...(prev.imageCaptions ?? []), ''].slice(0, next.length);
+        return { ...prev, imageUrls: next, imageCaptions: captions, coverImageUrl: next[0] ?? '' };
       });
     } catch (err: any) {
       setError(err?.message ?? 'アップロードに失敗しました');
@@ -240,9 +352,13 @@ export default function AdminPublicPage() {
       subtitle: form.subtitle?.trim(),
       coverImageUrl: imageUrls[0]?.trim(),
       imageUrls,
+      imageCaptions: imageCaptions.map((caption) => caption.trim()).slice(0, imageUrls.length),
       dividerText: '',
       textColor, accentColor, backgroundColor, navColor,
       imageLayout: form.imageLayout || 'slider',
+      heroImageMode,
+      heroOverlayOpacity,
+      heroOverlayColor,
       fontFamily: form.fontFamily,
       titleSize: form.titleSize,
       titleAlign,
@@ -252,6 +368,8 @@ export default function AdminPublicPage() {
       reserveLabel: navLabels.reserve,
       blogLabel: navLabels.blog,
       contactLabel: navLabels.contact,
+      buttonStyle,
+      buttonLayout,
       status: 'published',
       seoTitle: displayName,
       seoDescription: form.body.replace(/[#>*_-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 150),
@@ -273,7 +391,7 @@ export default function AdminPublicPage() {
   if (loading) return <div className="px-4 py-12 text-center text-sm text-gray-400">読み込み中...</div>;
 
   return (
-    <form onSubmit={handleSubmit} className="pb-20" onClick={() => { setBtnEditOpen(false); setTextEditOpen(false); }}>
+    <form onSubmit={handleSubmit} className="pb-20">
       <SaveToast show={saved} />
 
       {/* Top bar */}
@@ -334,6 +452,41 @@ export default function AdminPublicPage() {
           </div>
         </div>
 
+        {/* テキスト */}
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <p className="mb-3 text-xs font-bold text-gray-500">テキスト</p>
+          <div className="space-y-4">
+            <div>
+              <p className="mb-2 text-[11px] font-bold text-gray-400">フォント</p>
+              <div className="flex flex-wrap gap-2">
+                {fontOptions.map((opt) => (
+                  <button key={opt.value} type="button"
+                    onClick={() => setForm((p) => ({ ...p, fontFamily: opt.value }))}
+                    className={`rounded-full border px-4 py-2 text-xs font-bold transition ${form.fontFamily === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                    style={form.fontFamily === opt.value
+                      ? { backgroundColor: accentColor, borderColor: accentColor, fontFamily: opt.family }
+                      : { fontFamily: opt.family }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="mb-2 text-[11px] font-bold text-gray-400">本文サイズ</p>
+              <div className="flex flex-wrap gap-2">
+                {bodySizeOptions.map((opt) => (
+                  <button key={opt.value} type="button"
+                    onClick={() => setForm((p) => ({ ...p, bodySize: opt.value }))}
+                    className={`rounded-full border px-4 py-2 text-xs font-bold transition ${form.bodySize === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                    style={form.bodySize === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* ラベル名称 */}
         <div className="rounded-xl border border-gray-200 bg-white p-4">
           <p className="mb-2 text-xs font-bold text-gray-500">ラベル名称</p>
@@ -352,29 +505,104 @@ export default function AdminPublicPage() {
           </div>
         </div>
 
-        {/* 画像 */}
+        {/* ボタン */}
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <p className="mb-3 text-xs font-bold text-gray-500">ボタン</p>
+          <div className="space-y-4">
+            <div>
+              <p className="mb-2 text-[11px] font-bold text-gray-400">配置</p>
+              <div className="flex flex-wrap gap-2">
+                {BUTTON_LAYOUT_OPTIONS.map((opt) => (
+                  <button key={opt.value} type="button"
+                    onClick={() => setForm((p) => ({ ...p, buttonLayout: opt.value }))}
+                    className={`rounded-full border px-4 py-2 text-sm font-bold transition ${buttonLayout === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                    style={buttonLayout === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="mb-2 text-[11px] font-bold text-gray-400">形</p>
+              <div className="flex flex-wrap gap-2">
+                {BTN_SHAPE_OPTIONS.map((opt) => {
+                  const selected = buttonStyle === opt.value;
+                  return (
+                    <button key={opt.value} type="button"
+                      onClick={() => setForm((p) => ({ ...p, buttonStyle: opt.value }))}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${selected ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                      style={selected ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="flex items-center gap-3 text-xs font-bold text-gray-500">
+                <span>ボタン色</span>
+                <input type="color" value={accentColor}
+                  onChange={(e) => setForm((p) => ({ ...p, accentColor: e.target.value }))}
+                  className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+              </label>
+              <label className="flex items-center gap-3 text-xs font-bold text-gray-500">
+                <span>文字色</span>
+                <input type="color" value={textColor}
+                  onChange={(e) => setForm((p) => ({ ...p, textColor: e.target.value }))}
+                  className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* ヘッダー */}
         <div className="rounded-xl border border-gray-200 bg-white p-4">
           <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-xs font-bold text-gray-500">画像</p>
+            <p className="text-xs font-bold text-gray-500">ヘッダー</p>
             <span className="text-[11px] font-bold text-gray-400">{imageUrls.length}/3</span>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {imageUrls.map((url, i) => (
-              <button
-                key={`${url}-${i}`}
-                type="button"
-                onClick={() => setForm((prev) => {
-                  const next = (prev.imageUrls ?? []).filter((_, idx) => idx !== i);
-                  return { ...prev, imageUrls: next, coverImageUrl: next[0] ?? '' };
-                })}
-                className="group relative h-16 w-24 overflow-hidden rounded-lg border border-gray-200"
-              >
-                <img src={url} alt="" className="h-full w-full object-cover" />
-                <span className="absolute inset-0 hidden items-center justify-center bg-black/50 text-xs font-bold text-white group-hover:flex">削除</span>
+          <div className="mb-4 flex flex-wrap gap-2">
+            {HERO_IMAGE_MODE_OPTIONS.map((opt) => (
+              <button key={opt.value} type="button"
+                onClick={() => setForm((p) => ({ ...p, heroImageMode: opt.value }))}
+                className={`rounded-full border px-4 py-2 text-xs font-bold transition ${heroImageMode === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                style={heroImageMode === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                {opt.label}
               </button>
             ))}
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {imageUrls.map((url, i) => (
+              <div
+                key={`${url}-${i}`}
+                className="rounded-lg border border-gray-200 bg-gray-50 p-2"
+              >
+                <div className="group relative h-24 overflow-hidden rounded-lg bg-gray-100">
+                  <img src={url} alt="" className="h-full w-full object-cover" />
+                  <button type="button"
+                    onClick={() => setForm((prev) => {
+                      const next = (prev.imageUrls ?? []).filter((_, idx) => idx !== i);
+                      const captions = (prev.imageCaptions ?? []).filter((_, idx) => idx !== i).slice(0, next.length);
+                      return { ...prev, imageUrls: next, imageCaptions: captions, coverImageUrl: next[0] ?? '' };
+                    })}
+                    className="absolute inset-0 hidden items-center justify-center bg-black/50 text-xs font-bold text-white group-hover:flex">
+                    削除
+                  </button>
+                </div>
+                <input
+                  value={imageCaptions[i] ?? ''}
+                  onChange={(e) => setForm((prev) => {
+                    const captions = [...(prev.imageCaptions ?? [])];
+                    captions[i] = e.target.value.slice(0, 80);
+                    return { ...prev, imageCaptions: captions.slice(0, 3) };
+                  })}
+                  placeholder="画像説明（任意）"
+                  className="mt-2 w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                />
+              </div>
+            ))}
             {imageUrls.length < 3 && (
-              <label className={`flex h-16 w-24 cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 text-xs font-bold text-gray-400 hover:border-[#06C755] hover:text-[#06C755] ${uploading ? 'opacity-50' : ''}`}>
+              <label className={`flex min-h-[8.7rem] cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 text-xs font-bold text-gray-400 hover:border-[#06C755] hover:text-[#06C755] ${uploading ? 'opacity-50' : ''}`}>
                 <input
                   type="file"
                   accept="image/*"
@@ -390,15 +618,43 @@ export default function AdminPublicPage() {
               </label>
             )}
           </div>
+          <div className="mt-4 grid gap-4 border-t border-gray-100 pt-4 sm:grid-cols-2">
+            <div>
+              <p className="mb-2 text-[11px] font-bold text-gray-400">色味</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <input type="color" value={heroOverlayColor}
+                  onChange={(e) => setForm((p) => ({ ...p, heroOverlayColor: e.target.value }))}
+                  className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+                {TONE_COLORS.map((c) => (
+                  <button key={c.value} type="button"
+                    title={c.label}
+                    onClick={() => setForm((p) => ({ ...p, heroOverlayColor: c.value }))}
+                    className={`h-8 w-8 rounded-full border-2 ${heroOverlayColor === c.value ? 'border-gray-500' : 'border-transparent'}`}
+                    style={{ backgroundColor: c.value, boxShadow: '0 0 0 1px #e5e7eb' }} />
+                ))}
+              </div>
+            </div>
+            <label className="block">
+              <span className="mb-2 block text-[11px] font-bold text-gray-400">透明度 {heroOverlayOpacity}%</span>
+              <input type="range" min="0" max="80" step="5" value={heroOverlayOpacity}
+                onChange={(e) => setForm((p) => ({ ...p, heroOverlayOpacity: Number(e.target.value) }))}
+                className="w-full accent-[#06C755]" />
+            </label>
+          </div>
         </div>
       </div>
 
       {/* Slide animation */}
       <style jsx global>{`
-        @keyframes public-site-slide {
+        @keyframes public-site-slide-2 {
+          0%, 42% { transform: translateX(0); }
+          50%, 92% { transform: translateX(-50%); }
+          100% { transform: translateX(0); }
+        }
+        @keyframes public-site-slide-3 {
           0%, 30% { transform: translateX(0); }
-          36%, 64% { transform: translateX(-100%); }
-          70%, 98% { transform: translateX(-200%); }
+          36%, 64% { transform: translateX(-33.333%); }
+          70%, 98% { transform: translateX(-66.666%); }
           100% { transform: translateX(0); }
         }
       `}</style>
@@ -424,161 +680,28 @@ export default function AdminPublicPage() {
                 <p className="text-xl font-bold" style={{ color: textColor }}>{displayName}</p>
               </div>
 
-              {imageUrls.length > 0 && (
-                <div className="relative h-40 w-full max-w-sm overflow-hidden rounded-xl bg-gray-100">
-                  <div className="flex h-full" style={{ width: `${imageUrls.length * 100}%`, animation: imageUrls.length >= 2 ? 'public-site-slide 10s infinite' : undefined }}>
-                    {imageUrls.map((url, i) => (
-                      <img key={`${url}-${i}`} src={url} alt="" className="h-full object-cover" style={{ width: `${100 / imageUrls.length}%` }} />
-                    ))}
-                  </div>
-                  {imageUrls.length > 1 && (
-                    <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
-                      {imageUrls.map((_, i) => <span key={i} className="h-1.5 w-1.5 rounded-full bg-white/80" />)}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* ボタン行 — 右下に編集ボタン */}
-              <div className="relative w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-                <div className="flex w-full flex-wrap justify-center gap-3">
-                  {[navLabels.about, navLabels.reserve, navLabels.blog, navLabels.contact].map((label) => (
-                    <div key={label}
-                      className={`text-center font-bold ${getBtnShapeClass(buttonStyle)} ${btnSizeCls}`}
-                      style={{ borderColor: accentColor, color: accentColor }}>
-                      {label}
-                    </div>
-                  ))}
-                </div>
-
-                {/* ボタン編集ボタン */}
-                <button type="button"
-                  onClick={() => { setBtnEditOpen((o) => !o); setTextEditOpen(false); }}
-                  className="absolute -bottom-3 -right-3 flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white shadow-md text-gray-500 hover:text-[#06C755] hover:border-[#06C755] transition z-10">
-                  {btnEditOpen ? <CheckIcon /> : <PencilIcon />}
-                </button>
-
-                {/* ボタン編集パネル */}
-                {btnEditOpen && (
-                  <div className="absolute right-0 top-full mt-4 z-30 w-72 rounded-2xl border border-gray-100 bg-white p-4 shadow-xl space-y-4">
-                    {/* 枠スタイル */}
-                    <div>
-                      <p className="mb-2 text-[11px] font-bold text-gray-400">枠スタイル</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {BTN_SHAPE_OPTIONS.map((opt) => {
-                          const selected = buttonStyle === opt.value;
-                          const shapeClass = opt.value === 'pill' ? 'rounded-full border-2'
-                            : opt.value === 'square' ? 'rounded-none border-2'
-                            : opt.value === 'stylish' ? 'rounded-lg border border-dashed'
-                            : opt.value === 'gorgeous' ? 'rounded-xl border-4 border-double'
-                            : 'rounded-xl border-2';
-                          return (
-                            <button key={opt.value} type="button"
-                              onClick={() => setForm((p) => ({ ...p, buttonStyle: opt.value }))}
-                              className={`px-3 py-1.5 text-xs font-bold transition ${shapeClass} ${selected ? 'text-white' : 'border-gray-200 text-gray-500 hover:border-gray-400'}`}
-                              style={selected ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
-                              {opt.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    {/* サイズ */}
-                    <div>
-                      <p className="mb-2 text-[11px] font-bold text-gray-400">ボタンサイズ</p>
-                      <div className="flex gap-2">
-                        {BTN_SIZE_OPTIONS.map((opt) => (
-                          <button key={opt.value} type="button"
-                            onClick={() => setBtnSize(opt.value)}
-                            className={`flex-1 rounded-lg border py-1.5 text-xs font-bold transition ${btnSize === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                            style={btnSize === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    {/* ボタン色 */}
-                    <div>
-                      <p className="mb-2 text-[11px] font-bold text-gray-400">ボタン色（枠＋文字）</p>
-                      <div className="flex items-center gap-3">
-                        <label className="cursor-pointer">
-                          <input type="color" value={accentColor}
-                            onChange={(e) => setForm((p) => ({ ...p, accentColor: e.target.value }))}
-                            className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 p-1" />
-                        </label>
-                        <span className="text-xs text-gray-400">{accentColor}</span>
-                      </div>
-                    </div>
-                    {/* 文字色 */}
-                    <div>
-                      <p className="mb-2 text-[11px] font-bold text-gray-400">テキスト色</p>
-                      <div className="flex items-center gap-3">
-                        <label className="cursor-pointer">
-                          <input type="color" value={textColor}
-                            onChange={(e) => setForm((p) => ({ ...p, textColor: e.target.value }))}
-                            className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 p-1" />
-                        </label>
-                        <span className="text-xs text-gray-400">{textColor}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
+              <div className="w-full max-w-sm">
+                <HeaderImagePreview
+                  images={imageUrls}
+                  captions={imageCaptions}
+                  mode={heroImageMode}
+                  overlayColor={heroOverlayColor}
+                  overlayOpacity={heroOverlayOpacity}
+                  className="h-40"
+                />
               </div>
 
-              {/* 団体詳細テキスト — 右上に編集ボタン */}
-              <div className="relative w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-                {/* テキスト編集ボタン */}
-                <button type="button"
-                  onClick={() => { setTextEditOpen((o) => !o); setBtnEditOpen(false); }}
-                  className="absolute -right-3 -top-3 flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white shadow-md text-gray-500 hover:text-[#06C755] hover:border-[#06C755] transition z-10">
-                  {textEditOpen ? <CheckIcon /> : <PencilIcon />}
-                </button>
-
-                {/* テキスト編集パネル */}
-                {textEditOpen && (
-                  <div className="absolute right-0 top-full mt-4 z-30 w-64 rounded-2xl border border-gray-100 bg-white p-4 shadow-xl space-y-4">
-                    <div>
-                      <p className="mb-2 text-[11px] font-bold text-gray-400">フォント</p>
-                      <div className="flex gap-1.5">
-                        {fontOptions.map((opt) => (
-                          <button key={opt.value} type="button"
-                            onClick={() => setForm((p) => ({ ...p, fontFamily: opt.value }))}
-                            className={`flex-1 rounded-lg border py-2 text-xs font-bold transition ${form.fontFamily === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                            style={form.fontFamily === opt.value
-                              ? { backgroundColor: accentColor, borderColor: accentColor, fontFamily: opt.family }
-                              : { fontFamily: opt.family }}>
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="mb-2 text-[11px] font-bold text-gray-400">文字色</p>
-                      <div className="flex items-center gap-3">
-                        <label className="cursor-pointer">
-                          <input type="color" value={textColor}
-                            onChange={(e) => setForm((p) => ({ ...p, textColor: e.target.value }))}
-                            className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 p-1" />
-                        </label>
-                        <span className="text-xs text-gray-400">{textColor}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="mb-2 text-[11px] font-bold text-gray-400">テキストサイズ</p>
-                      <div className="flex gap-1.5">
-                        {bodySizeOptions.map((opt) => (
-                          <button key={opt.value} type="button"
-                            onClick={() => setForm((p) => ({ ...p, bodySize: opt.value }))}
-                            className={`flex-1 rounded-lg border py-1.5 text-xs font-bold transition ${form.bodySize === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                            style={form.bodySize === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+              <div className={`w-full max-w-lg gap-3 ${buttonLayoutClass}`}>
+                {[navLabels.about, navLabels.reserve, navLabels.blog, navLabels.contact].map((label) => (
+                  <div key={label}
+                    className={`text-center font-bold ${getBtnShapeClass(buttonStyle)} ${btnSizeCls}`}
+                    style={{ borderColor: accentColor, color: accentColor }}>
+                    {label}
                   </div>
-                )}
+                ))}
+              </div>
 
+              <div className="w-full max-w-sm">
                 <div className="rounded-xl bg-white px-5 py-4 shadow-sm ring-1 ring-gray-100">
                   <p className="mb-2 text-xs font-bold text-gray-400">{navLabels.about}</p>
                   <p ref={bodyRef}
@@ -619,20 +742,13 @@ export default function AdminPublicPage() {
                     {form.subtitle?.trim() || 'サブタイトル（クリックして編集）'}
                   </p>
                 </div>
-                {imageUrls.length > 0 && (
-                  <div className="relative h-52 overflow-hidden rounded-xl bg-gray-100">
-                    <div className="flex h-full" style={{ width: `${imageUrls.length * 100}%`, animation: imageUrls.length >= 2 ? 'public-site-slide 10s infinite' : undefined }}>
-                      {imageUrls.map((url, i) => (
-                        <img key={`${url}-${i}`} src={url} alt="" className="h-full object-cover" style={{ width: `${100 / imageUrls.length}%` }} />
-                      ))}
-                    </div>
-                    {imageUrls.length > 1 && (
-                      <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
-                        {imageUrls.map((_, i) => <span key={i} className="h-1.5 w-1.5 rounded-full bg-white/80" />)}
-                      </div>
-                    )}
-                  </div>
-                )}
+                <HeaderImagePreview
+                  images={imageUrls}
+                  captions={imageCaptions}
+                  mode={heroImageMode}
+                  overlayColor={heroOverlayColor}
+                  overlayOpacity={heroOverlayOpacity}
+                />
                 <div className="relative">
                   <p ref={bodyRef} contentEditable suppressContentEditableWarning
                     onBlur={(e) => { setForm((p) => ({ ...p, body: e.currentTarget.innerText })); }}

@@ -70,6 +70,83 @@ function getBtnClass(style: string | null | undefined) {
   }
 }
 
+function clampPercent(value: number | string | null | undefined) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.min(100, Math.max(0, Math.round(parsed)));
+}
+
+function HeroImageBlock({
+  images,
+  captions,
+  mode,
+  overlayColor,
+  overlayOpacity,
+  alt,
+  className = 'mt-7 aspect-[16/9]',
+}: {
+  images: string[];
+  captions: string[];
+  mode: string;
+  overlayColor: string;
+  overlayOpacity: number;
+  alt: string;
+  className?: string;
+}) {
+  const list = images.slice(0, 3);
+  if (!list.length) return null;
+
+  const overlayStyle = { backgroundColor: overlayColor, opacity: clampPercent(overlayOpacity) / 100 };
+  const useGrid = mode === 'grid' && list.length > 1;
+
+  if (useGrid) {
+    return (
+      <div className={`grid grid-cols-3 gap-2 ${className}`}>
+        {list.map((url, index) => (
+          <div key={`${url}-${index}`} className="relative h-full overflow-hidden rounded-xl bg-gray-100">
+            <img src={url} alt={alt} className="h-full w-full object-cover" />
+            <div className="absolute inset-0" style={overlayStyle} />
+            {captions[index]?.trim() && (
+              <p className="absolute bottom-2 left-2 right-2 rounded bg-white/85 px-2 py-1 text-[11px] font-bold text-gray-900 md:text-xs">
+                {captions[index]}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const animation = list.length >= 3
+    ? 'public-site-slide-3 12s infinite'
+    : list.length === 2
+      ? 'public-site-slide-2 9s infinite'
+      : undefined;
+
+  return (
+    <div className={`relative overflow-hidden rounded-xl bg-gray-100 ${className}`}>
+      <div className="flex h-full" style={{ width: `${list.length * 100}%`, animation }}>
+        {list.map((url, index) => (
+          <div key={`${url}-${index}`} className="relative h-full shrink-0" style={{ width: `${100 / list.length}%` }}>
+            <img src={url} alt={alt} className="h-full w-full object-cover" />
+            <div className="absolute inset-0" style={overlayStyle} />
+            {captions[index]?.trim() && (
+              <p className="absolute bottom-4 left-4 right-4 rounded bg-white/85 px-3 py-2 text-sm font-bold text-gray-900">
+                {captions[index]}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+      {list.length > 1 && (
+        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+          {list.map((_, index) => <span key={index} className="h-1.5 w-1.5 rounded-full bg-white/80 shadow-sm" />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -116,9 +193,10 @@ export default async function ClubCmsPage({
   if (!page) notFound();
 
   const tenantName = page.tenant.lineDisplayName ?? page.tenant.name;
-  const images = (page.imageUrls?.length ? page.imageUrls : page.coverImageUrl ? [page.coverImageUrl] : [page.tenant.linePictureUrl])
+  const images = (page.imageUrls?.length ? page.imageUrls : page.coverImageUrl ? [page.coverImageUrl] : [])
     .map((url) => imgUrl(url, IMAGE_BASE_URL))
     .filter(Boolean) as string[];
+  const imageCaptions = images.map((_, index) => (page.imageCaptions?.[index] ?? '').slice(0, 80));
   const image = images[0];
   const clubHref = `/clubs/${page.tenant.code ?? tenantCode}`;
   const reserveHref = `/clubs/${page.tenant.code ?? tenantCode}/reserve`;
@@ -138,6 +216,11 @@ export default async function ClubCmsPage({
     contact: page.contactLabel || 'お問い合わせ',
   };
   const buttonStyle = page.buttonStyle ?? 'rounded';
+  const buttonLayout = page.buttonLayout === 'row1x4' ? 'row1x4' : 'grid2x2';
+  const buttonLayoutClass = buttonLayout === 'row1x4' ? 'grid grid-cols-2 sm:grid-cols-4' : 'grid grid-cols-2';
+  const heroImageMode = ['auto', 'slider', 'grid'].includes(page.heroImageMode || '') ? page.heroImageMode! : 'slider';
+  const heroOverlayOpacity = clampPercent(page.heroOverlayOpacity);
+  const heroOverlayColor = page.heroOverlayColor || '#000000';
   const gorgeousColor = '#b8860b';
   const btnBorderColor = buttonStyle === 'gorgeous' ? gorgeousColor : accentColor;
   const btnClass = getBtnClass(buttonStyle);
@@ -164,10 +247,15 @@ export default async function ClubCmsPage({
       <main className="min-h-screen" style={{ fontFamily, backgroundColor }}>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
         <style>{`
-          @keyframes public-site-slide {
-            0%, 28% { transform: translateX(0); }
-            34%, 62% { transform: translateX(-100%); }
-            68%, 96% { transform: translateX(-200%); }
+          @keyframes public-site-slide-2 {
+            0%, 42% { transform: translateX(0); }
+            50%, 92% { transform: translateX(-50%); }
+            100% { transform: translateX(0); }
+          }
+          @keyframes public-site-slide-3 {
+            0%, 30% { transform: translateX(0); }
+            36%, 64% { transform: translateX(-33.333%); }
+            70%, 98% { transform: translateX(-66.666%); }
             100% { transform: translateX(0); }
           }
         `}</style>
@@ -182,37 +270,34 @@ export default async function ClubCmsPage({
           <h1 className="mt-4 text-xl font-bold" style={{ color: textColor }}>{tenantName}</h1>
           {page.subtitle && <p className="mt-1 text-sm opacity-70" style={{ color: textColor }}>{page.subtitle}</p>}
 
-          {images.length > 0 && (
-            <div className="relative mt-6 aspect-[16/9] w-full max-w-sm overflow-hidden rounded-xl bg-gray-100">
-              <div className="flex h-full" style={{ width: `${images.length * 100}%`, animation: images.length >= 2 ? 'public-site-slide 12s infinite' : undefined }}>
-                {images.map((url, index) => (
-                  <img key={`${url}-${index}`} src={url} alt={page.title} className="h-full object-cover" style={{ width: `${100 / images.length}%` }} />
-                ))}
-              </div>
-              {images.length > 1 && (
-                <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
-                  {images.map((_, index) => <span key={index} className="h-1.5 w-1.5 rounded-full bg-white/80" />)}
-                </div>
-              )}
-            </div>
-          )}
+          <div className="w-full max-w-sm">
+            <HeroImageBlock
+              images={images}
+              captions={imageCaptions}
+              mode={heroImageMode}
+              overlayColor={heroOverlayColor}
+              overlayOpacity={heroOverlayOpacity}
+              alt={page.title}
+              className="mt-6 aspect-[16/9]"
+            />
+          </div>
 
-          <nav className="mt-10 flex w-full max-w-lg flex-wrap justify-center gap-3">
-            <a href="#about" className={`flex-1 min-w-[6rem] px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
+          <nav className={`mt-10 w-full max-w-lg gap-3 ${buttonLayoutClass}`}>
+            <a href="#about" className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
               style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
               {navLabels.about}
             </a>
-            <Link href={reserveHref} className={`flex-1 min-w-[6rem] px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
+            <Link href={reserveHref} className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
               style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
               {navLabels.reserve}
             </Link>
             <Link href={`/clubs/${page.tenant.code ?? tenantCode}/blog`}
-              className={`flex-1 min-w-[6rem] px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
+              className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
               style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
               {navLabels.blog}
             </Link>
             <Link href={contactHref}
-              className={`flex-1 min-w-[6rem] px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
+              className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
               style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
               {navLabels.contact}
             </Link>
@@ -236,10 +321,15 @@ export default async function ClubCmsPage({
     <main className="min-h-screen text-gray-900" style={{ fontFamily, backgroundColor }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       <style>{`
-        @keyframes public-site-slide {
-          0%, 28% { transform: translateX(0); }
-          34%, 62% { transform: translateX(-100%); }
-          68%, 96% { transform: translateX(-200%); }
+        @keyframes public-site-slide-2 {
+          0%, 42% { transform: translateX(0); }
+          50%, 92% { transform: translateX(-50%); }
+          100% { transform: translateX(0); }
+        }
+        @keyframes public-site-slide-3 {
+          0%, 30% { transform: translateX(0); }
+          36%, 64% { transform: translateX(-33.333%); }
+          70%, 98% { transform: translateX(-66.666%); }
           100% { transform: translateX(0); }
         }
       `}</style>
@@ -274,20 +364,14 @@ export default async function ClubCmsPage({
           <p className="mt-3 text-lg font-bold leading-8 opacity-75" style={{ color: textColor, textAlign: titleAlign }}>{page.subtitle}</p>
         )}
 
-        {images.length > 0 && (
-          <div className="relative mt-7 aspect-[16/9] overflow-hidden rounded-xl bg-gray-100">
-            <div className="flex h-full" style={{ width: `${images.length * 100}%`, animation: images.length >= 2 ? 'public-site-slide 12s infinite' : undefined }}>
-              {images.map((url, index) => (
-                <img key={`${url}-${index}`} src={url} alt={page.title} className="h-full object-cover" style={{ width: `${100 / images.length}%` }} />
-              ))}
-            </div>
-            {images.length > 1 && (
-              <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
-                {images.map((_, index) => <span key={index} className="h-1.5 w-1.5 rounded-full bg-white/80" />)}
-              </div>
-            )}
-          </div>
-        )}
+        <HeroImageBlock
+          images={images}
+          captions={imageCaptions}
+          mode={heroImageMode}
+          overlayColor={heroOverlayColor}
+          overlayOpacity={heroOverlayOpacity}
+          alt={page.title}
+        />
 
         <div className="mt-8 space-y-2 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8">
           {page.body.split('\n').map((line, index) => renderLine(line, index, textColor, bodySizeClass))}

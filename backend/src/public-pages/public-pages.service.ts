@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { IsArray, IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsArray, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 
 const PAGE_STATUS = ['draft', 'published'] as const;
@@ -38,6 +38,11 @@ export class UpsertPublicPageDto {
   imageUrls?: string[];
 
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  imageCaptions?: string[];
+
+  @IsOptional()
   @IsString()
   @MaxLength(80)
   dividerText?: string;
@@ -66,6 +71,22 @@ export class UpsertPublicPageDto {
   @IsString()
   @MaxLength(20)
   imageLayout?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  heroImageMode?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  heroOverlayOpacity?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  heroOverlayColor?: string;
 
   @IsOptional()
   @IsString()
@@ -134,6 +155,11 @@ export class UpsertPublicPageDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(20)
+  buttonLayout?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(300)
   headerText?: string;
 
@@ -199,12 +225,18 @@ export class PublicPagesService {
         .map((url) => url.trim())
         .filter(Boolean)
         .slice(0, 3),
+      imageCaptions: (dto.imageCaptions ?? [])
+        .map((caption) => caption.trim())
+        .slice(0, 3),
       dividerText: dto.dividerText?.trim() || null,
       textColor: dto.textColor?.trim() || null,
       accentColor: dto.accentColor?.trim() || null,
       backgroundColor: dto.backgroundColor?.trim() || null,
       navColor: dto.navColor?.trim() || null,
       imageLayout: dto.imageLayout?.trim() || null,
+      heroImageMode: dto.heroImageMode?.trim() || null,
+      heroOverlayOpacity: Number.isInteger(dto.heroOverlayOpacity) ? dto.heroOverlayOpacity : null,
+      heroOverlayColor: dto.heroOverlayColor?.trim() || null,
       reserveViewStyle: dto.reserveViewStyle?.trim() || null,
       fontFamily: dto.fontFamily?.trim() || null,
       titleSize: dto.titleSize?.trim() || null,
@@ -216,6 +248,7 @@ export class PublicPagesService {
       blogLabel: dto.blogLabel?.trim() || null,
       contactLabel: dto.contactLabel?.trim() || null,
       buttonStyle: dto.buttonStyle?.trim() || null,
+      buttonLayout: dto.buttonLayout?.trim() || null,
       headerText: dto.headerText?.trim() || null,
       footerText: dto.footerText?.trim() || null,
       seoTitle: dto.seoTitle?.trim() || null,
