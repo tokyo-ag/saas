@@ -12,6 +12,7 @@ const emptyForm: PublicPageInput = {
   subtitle: '',
   body: '',
   coverImageUrl: '',
+  imageUrls: [],
   dividerText: '',
   textColor: '#111827',
   accentColor: '#06C755',
@@ -64,6 +65,12 @@ const alignOptions = [
   { label: '右', value: 'right' },
 ];
 
+const navItems = [
+  { key: 'about', label: '団体説明' },
+  { key: 'blog', label: 'ブログ' },
+  { key: 'reserve', label: '予約管理' },
+] as const;
+
 async function uploadFile(file: File): Promise<string> {
   const ext = file.name.split('.').pop() ?? 'jpg';
   const filename = `public-page-${Date.now()}.${ext}`;
@@ -95,6 +102,8 @@ export default function AdminPublicPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<(typeof navItems)[number]['key']>('about');
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
@@ -105,7 +114,6 @@ export default function AdminPublicPage() {
     ? `${SITE_URL}/clubs/${tenantCode}/${generatedSlug}`
     : '';
   const subtitle = form.subtitle?.trim() ?? '';
-  const dividerText = form.dividerText?.trim() ?? '';
   const textColor = form.textColor?.trim() || '#111827';
   const accentColor = form.accentColor?.trim() || '#06C755';
   const fontFamily = fontOptions.find((option) => option.value === form.fontFamily)?.family ?? fontOptions[0].family;
@@ -114,6 +122,9 @@ export default function AdminPublicPage() {
   const titleAlign = (alignOptions.some((option) => option.value === form.titleAlign) ? form.titleAlign! : 'left') as 'left' | 'center' | 'right';
   const layoutVariant = form.layoutVariant || 'one_page';
   const previewBody = form.body.trim() || tenant?.description || '';
+  const imageUrls = (form.imageUrls?.length ? form.imageUrls : form.coverImageUrl ? [form.coverImageUrl] : [])
+    .filter(Boolean)
+    .slice(0, 3);
 
   useEffect(() => {
     Promise.all([api.tenant.get(), api.publicPages.list()])
@@ -130,6 +141,7 @@ export default function AdminPublicPage() {
             subtitle: first.subtitle ?? '',
             body: first.body,
             coverImageUrl: first.coverImageUrl ?? '',
+            imageUrls: first.imageUrls?.length ? first.imageUrls : first.coverImageUrl ? [first.coverImageUrl] : [],
             dividerText: first.dividerText ?? '',
             textColor: first.textColor ?? '#111827',
             accentColor: first.accentColor ?? '#06C755',
@@ -140,7 +152,7 @@ export default function AdminPublicPage() {
             layoutVariant: first.layoutVariant ?? 'one_page',
             seoTitle: first.seoTitle ?? '',
             seoDescription: first.seoDescription ?? '',
-            status: first.status,
+            status: 'published',
           });
         } else {
           setForm({
@@ -149,6 +161,7 @@ export default function AdminPublicPage() {
             slug: tenantSlug,
             subtitle: '',
             body: tenantData.description ?? '',
+            imageUrls: [],
             dividerText: '',
             textColor: '#111827',
             accentColor: '#06C755',
@@ -169,7 +182,10 @@ export default function AdminPublicPage() {
     setError('');
     try {
       const url = await uploadFile(file);
-      setForm((prev) => ({ ...prev, coverImageUrl: url }));
+      setForm((prev) => {
+        const nextImages = [...(prev.imageUrls ?? []), url].filter(Boolean).slice(0, 3);
+        return { ...prev, imageUrls: nextImages, coverImageUrl: nextImages[0] ?? '' };
+      });
     } catch (err: any) {
       setError(err?.message ?? 'アップロードに失敗しました');
     } finally {
@@ -188,8 +204,9 @@ export default function AdminPublicPage() {
       title: displayName,
       slug: generatedSlug,
       subtitle: form.subtitle?.trim(),
-      coverImageUrl: form.coverImageUrl?.trim(),
-      dividerText: form.dividerText?.trim(),
+      coverImageUrl: imageUrls[0]?.trim(),
+      imageUrls,
+      dividerText: '',
       textColor,
       accentColor,
       fontFamily: form.fontFamily,
@@ -197,6 +214,7 @@ export default function AdminPublicPage() {
       titleAlign,
       bodySize: form.bodySize,
       layoutVariant,
+      status: 'published',
       seoTitle: displayName,
       seoDescription: form.body
         .replace(/[#>*_-]/g, '')
@@ -216,6 +234,7 @@ export default function AdminPublicPage() {
         subtitle: page.subtitle ?? '',
         body: page.body,
         coverImageUrl: page.coverImageUrl ?? '',
+        imageUrls: page.imageUrls?.length ? page.imageUrls : page.coverImageUrl ? [page.coverImageUrl] : [],
         dividerText: page.dividerText ?? '',
         textColor: page.textColor ?? '#111827',
         accentColor: page.accentColor ?? '#06C755',
@@ -245,21 +264,55 @@ export default function AdminPublicPage() {
     <div className="mx-auto max-w-6xl px-4 py-6 md:px-6">
       <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold text-gray-900">公開サイト</h1>
-        <select
-          value={form.status}
-          onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value as PublicPageInput['status'] }))}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-        >
-          <option value="draft">下書き</option>
-          <option value="published">公開</option>
-        </select>
+        <div className="flex flex-wrap gap-2">
+          {previewUrl && (
+            <Link
+              href={previewUrl}
+              target="_blank"
+              className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50"
+            >
+              公開ページ
+            </Link>
+          )}
+          <button
+            form="public-site-editor-settings"
+            type="submit"
+            disabled={saving}
+            className="rounded-lg bg-[#06C755] px-5 py-2 text-sm font-bold text-white hover:bg-[#05a847] disabled:opacity-50"
+          >
+            {saving ? '保存中...' : '保存する'}
+          </button>
+        </div>
       </div>
 
       {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
       <SaveToast show={saved} />
+      <style jsx global>{`
+        @keyframes public-site-slide {
+          0%, 28% { transform: translateX(0); }
+          34%, 62% { transform: translateX(-100%); }
+          68%, 96% { transform: translateX(-200%); }
+          100% { transform: translateX(0); }
+        }
+      `}</style>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <form onSubmit={handleSubmit} className="space-y-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-6">
+      <div className="relative">
+        <form
+          id="public-site-editor-settings"
+          onSubmit={handleSubmit}
+          className={`${settingsOpen ? 'fixed inset-x-4 bottom-4 z-50 max-h-[82vh] overflow-y-auto rounded-xl border border-gray-200 bg-white p-4 shadow-2xl md:left-auto md:right-6 md:w-[420px]' : 'hidden'}`}
+        >
+          <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
+            <p className="text-sm font-bold text-gray-900">編集</p>
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(false)}
+              className="rounded-lg px-3 py-1 text-sm font-bold text-gray-500 hover:bg-gray-100"
+            >
+              閉じる
+            </button>
+          </div>
+          <div className="space-y-5">
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">UIパターン</label>
             <div className="flex flex-wrap gap-2">
@@ -283,17 +336,11 @@ export default function AdminPublicPage() {
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">メイン画像</label>
-            <input
-              value={form.coverImageUrl}
-              onChange={(e) => setForm((prev) => ({ ...prev, coverImageUrl: e.target.value }))}
-              placeholder="https://..."
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-            />
-            <label className={`mt-2 flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 px-3 py-3 text-sm font-bold text-gray-600 hover:border-[#06C755] ${uploading ? 'opacity-50' : ''}`}>
+            <label className={`flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 px-3 py-6 text-sm font-bold text-gray-600 hover:border-[#06C755] ${(uploading || imageUrls.length >= 3) ? 'opacity-50' : ''}`}>
               <input
                 type="file"
                 accept="image/*"
-                disabled={uploading}
+                disabled={uploading || imageUrls.length >= 3}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) void handleImageFile(file);
@@ -301,8 +348,28 @@ export default function AdminPublicPage() {
                 }}
                 className="hidden"
               />
-              {uploading ? 'アップロード中...' : '画像を選択'}
+              {uploading ? 'アップロード中...' : imageUrls.length >= 3 ? '画像は3枚まで' : '画像を挿入'}
             </label>
+            {imageUrls.length > 0 && (
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {imageUrls.map((url, index) => (
+                  <button
+                    key={`${url}-${index}`}
+                    type="button"
+                    onClick={() => setForm((prev) => {
+                      const nextImages = (prev.imageUrls ?? []).filter((_, imageIndex) => imageIndex !== index);
+                      return { ...prev, imageUrls: nextImages, coverImageUrl: nextImages[0] ?? '' };
+                    })}
+                    className="group relative aspect-video overflow-hidden rounded-lg border border-gray-200"
+                  >
+                    <img src={url} alt="" className="h-full w-full object-cover" />
+                    <span className="absolute inset-0 hidden items-center justify-center bg-black/50 text-xs font-bold text-white group-hover:flex">
+                      削除
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
@@ -312,17 +379,6 @@ export default function AdminPublicPage() {
               value={form.subtitle ?? ''}
               onChange={(e) => setForm((prev) => ({ ...prev, subtitle: e.target.value }))}
               placeholder="例：初心者歓迎の社会人サークル"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">切り取り線テキスト</label>
-            <input
-              maxLength={80}
-              value={form.dividerText ?? ''}
-              onChange={(e) => setForm((prev) => ({ ...prev, dividerText: e.target.value }))}
-              placeholder="例：こんな人におすすめ"
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
             />
           </div>
@@ -430,16 +486,7 @@ export default function AdminPublicPage() {
             />
           </div>
 
-          <div className="flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-            {previewUrl && (
-              <Link
-                href={previewUrl}
-                target="_blank"
-                className="break-all text-sm font-bold text-[#06C755] hover:underline"
-              >
-                公開ページ
-              </Link>
-            )}
+          <div className="flex justify-end border-t border-gray-100 pt-4">
             <button
               type="submit"
               disabled={saving}
@@ -448,11 +495,11 @@ export default function AdminPublicPage() {
               {saving ? '保存中...' : '保存する'}
             </button>
           </div>
+          </div>
         </form>
 
-        <aside className="lg:sticky lg:top-6 lg:self-start">
-          <p className="mb-2 text-sm font-bold text-gray-900">ページ編集</p>
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm" style={{ fontFamily }}>
+        <aside className="mx-auto max-w-4xl">
+          <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm" style={{ fontFamily }}>
             {layoutVariant === 'one_page' && (
               <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 text-xs font-bold">
                 <span style={{ color: textColor }}>{displayName}</span>
@@ -480,73 +527,144 @@ export default function AdminPublicPage() {
                 if (file) void handleImageFile(file);
               }}
             >
-              {form.coverImageUrl ? (
-                <img src={form.coverImageUrl} alt="" className="h-40 w-full object-cover" />
+              {imageUrls.length > 0 ? (
+                <div className="relative h-64 overflow-hidden bg-gray-100">
+                  <div
+                    className="flex h-full"
+                    style={{
+                      width: `${imageUrls.length * 100}%`,
+                      animation: imageUrls.length >= 3 ? 'public-site-slide 12s infinite' : undefined,
+                    }}
+                  >
+                    {imageUrls.map((url, index) => (
+                      <img
+                        key={`${url}-${index}`}
+                        src={url}
+                        alt=""
+                        className="h-full object-cover"
+                        style={{ width: `${100 / imageUrls.length}%` }}
+                      />
+                    ))}
+                  </div>
+                  {imageUrls.length > 1 && (
+                    <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+                      {imageUrls.map((url, index) => (
+                        <span key={`${url}-dot-${index}`} className="h-1.5 w-1.5 rounded-full bg-white/80" />
+                      ))}
+                    </div>
+                  )}
+                </div>
               ) : (
-                <div className="flex h-40 items-center justify-center bg-gray-100 text-4xl font-bold text-gray-300">
+                <div className="flex h-64 items-center justify-center bg-gray-100 text-4xl font-bold text-gray-300">
                   {uploading ? '...' : displayName.slice(0, 1)}
                 </div>
               )}
             </div>
             <div className="space-y-4 p-5">
-              {layoutVariant === 'tabs' && (
-                <div className="flex flex-wrap gap-2 text-xs font-bold">
-                  <span className="rounded-full px-3 py-1 text-white" style={{ backgroundColor: accentColor }}>団体説明</span>
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-500">ブログ</span>
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-500">予約</span>
+              {layoutVariant === 'one_page' && (
+                <nav className="rounded-lg bg-gray-50 p-3">
+                  <p className="mb-2 text-xs font-bold text-gray-400">目次</p>
+                  <div className="flex flex-wrap gap-2 text-xs font-bold">
+                    {navItems.map((item) => (
+                      <a key={item.key} href={`#preview-${item.key}`} className="rounded-full bg-white px-3 py-1 text-gray-600 ring-1 ring-gray-100">
+                        {item.label}
+                      </a>
+                    ))}
+                  </div>
+                </nav>
+              )}
+              {layoutVariant === 'hamburger' && (
+                <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                  <p className="mb-2 text-xs font-bold text-gray-400">ナビメニュー</p>
+                  <div className="flex flex-wrap gap-2 text-xs font-bold">
+                    {navItems.map((item) => (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => setActiveSection(item.key)}
+                        className={`rounded-full px-3 py-1 ${activeSection === item.key ? 'text-white' : 'bg-white text-gray-600 ring-1 ring-gray-100'}`}
+                        style={activeSection === item.key ? { backgroundColor: accentColor } : undefined}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
-              <h2 className={`${titleSizeClass} font-bold leading-tight outline-none`} style={{ color: textColor, textAlign: titleAlign }}>
-                {displayName}
-              </h2>
-              <p
-                contentEditable
-                suppressContentEditableWarning
-                onFocus={(e) => {
-                  if (!subtitle) e.currentTarget.innerText = '';
-                }}
-                onBlur={(e) => setForm((prev) => ({ ...prev, subtitle: e.currentTarget.innerText.trim() }))}
-                className="min-h-6 rounded px-1 text-sm font-bold leading-6 opacity-75 outline-none focus:bg-gray-50"
-                style={{ color: textColor, textAlign: titleAlign }}
-              >
-                {subtitle || 'サブタイトル'}
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="h-px flex-1 border-t border-dashed border-gray-300" />
-                <span
-                  contentEditable
-                  suppressContentEditableWarning
-                  onFocus={(e) => {
-                    if (!dividerText) e.currentTarget.innerText = '';
-                  }}
-                  onBlur={(e) => setForm((prev) => ({ ...prev, dividerText: e.currentTarget.innerText.trim() }))}
-                  className="min-w-20 rounded px-1 text-center text-xs font-bold text-gray-400 outline-none focus:bg-gray-50"
-                >
-                  {dividerText || '切り取り線'}
-                </span>
-                <div className="h-px flex-1 border-t border-dashed border-gray-300" />
-              </div>
-              <p
-                contentEditable
-                suppressContentEditableWarning
-                onFocus={(e) => {
-                  if (!previewBody) e.currentTarget.innerText = '';
-                }}
-                onBlur={(e) => setForm((prev) => ({ ...prev, body: e.currentTarget.innerText }))}
-                className={`${bodySizeClass} min-h-32 whitespace-pre-wrap rounded px-1 opacity-85 outline-none focus:bg-gray-50`}
-                style={{ color: textColor }}
-              >
-                {previewBody || '団体説明'}
-              </p>
-              <button type="button" className="w-full rounded-lg px-4 py-2.5 text-sm font-bold text-white" style={{ backgroundColor: accentColor }}>
-                予約する
-              </button>
+              {layoutVariant === 'tabs' && (
+                <div className="flex flex-wrap gap-2 text-xs font-bold">
+                  {navItems.map((item) => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => setActiveSection(item.key)}
+                      className={`rounded-full px-3 py-1 ${activeSection === item.key ? 'text-white' : 'bg-gray-100 text-gray-500'}`}
+                      style={activeSection === item.key ? { backgroundColor: accentColor } : undefined}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {(layoutVariant === 'one_page' || activeSection === 'about') && (
+                <section id="preview-about" className="space-y-4">
+                  <h2 className={`${titleSizeClass} font-bold leading-tight outline-none`} style={{ color: textColor, textAlign: titleAlign }}>
+                    {displayName}
+                  </h2>
+                  <p
+                    contentEditable
+                    suppressContentEditableWarning
+                    onFocus={(e) => {
+                      if (!subtitle) e.currentTarget.innerText = '';
+                    }}
+                    onBlur={(e) => setForm((prev) => ({ ...prev, subtitle: e.currentTarget.innerText.trim() }))}
+                    className="min-h-6 rounded px-1 text-sm font-bold leading-6 opacity-75 outline-none focus:bg-gray-50"
+                    style={{ color: textColor, textAlign: titleAlign }}
+                  >
+                    {subtitle || 'サブタイトル'}
+                  </p>
+                  <p
+                    contentEditable
+                    suppressContentEditableWarning
+                    onFocus={(e) => {
+                      if (!previewBody) e.currentTarget.innerText = '';
+                    }}
+                    onBlur={(e) => setForm((prev) => ({ ...prev, body: e.currentTarget.innerText }))}
+                    className={`${bodySizeClass} min-h-32 whitespace-pre-wrap rounded px-1 opacity-85 outline-none focus:bg-gray-50`}
+                    style={{ color: textColor }}
+                  >
+                    {previewBody || '団体説明'}
+                  </p>
+                </section>
+              )}
+              {(layoutVariant === 'one_page' || activeSection === 'blog') && (
+                <section id="preview-blog" className="rounded-lg bg-gray-50 p-4">
+                  <p className="text-sm font-bold text-gray-900">ブログ</p>
+                  <p className="mt-2 text-sm leading-7 text-gray-500">活動日記やお知らせを表示するエリアです。</p>
+                </section>
+              )}
+              {(layoutVariant === 'one_page' || activeSection === 'reserve') && (
+                <section id="preview-reserve" className="rounded-lg bg-gray-50 p-4">
+                  <p className="text-sm font-bold text-gray-900">予約管理</p>
+                  <p className="mt-2 text-sm leading-7 text-gray-500">募集中のイベントや予約ボタンを表示します。</p>
+                  <button type="button" className="mt-4 w-full rounded-lg px-4 py-2.5 text-sm font-bold text-white" style={{ backgroundColor: accentColor }}>
+                    予約する
+                  </button>
+                </section>
+              )}
             </div>
             {layoutVariant === 'one_page' && (
               <div className="border-t border-gray-100 px-4 py-3 text-center text-xs text-gray-400">
                 {displayName}
               </div>
             )}
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              className="absolute bottom-4 right-4 rounded-full bg-gray-950/90 px-4 py-2 text-xs font-bold text-white shadow-lg hover:bg-gray-950"
+            >
+              編集
+            </button>
           </div>
         </aside>
       </div>

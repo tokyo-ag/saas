@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import type { PublicCmsPage } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
@@ -80,7 +79,7 @@ export async function generateMetadata({
   const tenantName = page.tenant.lineDisplayName ?? page.tenant.name;
   const title = page.seoTitle || `${page.title} | ${tenantName}`;
   const description = descriptionFromPage(page);
-  const image = imgUrl(page.coverImageUrl ?? page.tenant.linePictureUrl, IMAGE_BASE_URL);
+  const image = imgUrl(page.imageUrls?.[0] ?? page.coverImageUrl ?? page.tenant.linePictureUrl, IMAGE_BASE_URL);
   const url = `${SITE_URL}/clubs/${page.tenant.code ?? tenantCode}/${page.slug}`;
 
   return {
@@ -114,7 +113,10 @@ export default async function ClubCmsPage({
   if (!page) notFound();
 
   const tenantName = page.tenant.lineDisplayName ?? page.tenant.name;
-  const image = imgUrl(page.coverImageUrl ?? page.tenant.linePictureUrl, IMAGE_BASE_URL);
+  const images = (page.imageUrls?.length ? page.imageUrls : page.coverImageUrl ? [page.coverImageUrl] : [page.tenant.linePictureUrl])
+    .map((url) => imgUrl(url, IMAGE_BASE_URL))
+    .filter(Boolean) as string[];
+  const image = images[0];
   const clubHref = `/clubs/${page.tenant.code ?? tenantCode}`;
   const textColor = page.textColor || '#111827';
   const accentColor = page.accentColor || '#06C755';
@@ -144,6 +146,14 @@ export default async function ClubCmsPage({
           __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
         }}
       />
+      <style>{`
+        @keyframes public-site-slide {
+          0%, 28% { transform: translateX(0); }
+          34%, 62% { transform: translateX(-100%); }
+          68%, 96% { transform: translateX(-200%); }
+          100% { transform: translateX(0); }
+        }
+      `}</style>
 
       <header className="border-b border-gray-100 bg-white px-4 py-4">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
@@ -151,11 +161,18 @@ export default async function ClubCmsPage({
             {tenantName}
           </Link>
           {layoutVariant === 'hamburger' ? (
-            <span className="flex flex-col gap-1">
-              <span className="h-0.5 w-6 rounded-full bg-gray-500" />
-              <span className="h-0.5 w-6 rounded-full bg-gray-500" />
-              <span className="h-0.5 w-6 rounded-full bg-gray-500" />
-            </span>
+            <details className="relative">
+              <summary className="flex cursor-pointer list-none flex-col gap-1">
+                <span className="h-0.5 w-6 rounded-full bg-gray-500" />
+                <span className="h-0.5 w-6 rounded-full bg-gray-500" />
+                <span className="h-0.5 w-6 rounded-full bg-gray-500" />
+              </summary>
+              <div className="absolute right-0 top-8 z-20 w-40 rounded-lg bg-white p-2 text-sm font-bold text-gray-600 shadow-lg ring-1 ring-gray-100">
+                <a href="#about" className="block rounded px-3 py-2 hover:bg-gray-50">団体説明</a>
+                <a href="#blog" className="block rounded px-3 py-2 hover:bg-gray-50">ブログ</a>
+                <a href="#reserve" className="block rounded px-3 py-2 hover:bg-gray-50">予約管理</a>
+              </div>
+            </details>
           ) : (
             <div className="flex items-center gap-4">
               {layoutVariant === 'one_page' && (
@@ -177,14 +194,24 @@ export default async function ClubCmsPage({
       </header>
 
       <article className="mx-auto max-w-3xl px-4 py-8 md:py-12">
+        {layoutVariant === 'one_page' && (
+          <nav className="mb-6 rounded-xl bg-white px-4 py-4 shadow-sm ring-1 ring-gray-100">
+            <p className="mb-3 text-xs font-bold text-gray-400">目次</p>
+            <div className="flex flex-wrap gap-2 text-sm font-bold">
+              <a href="#about" className="rounded-full bg-gray-50 px-4 py-2 text-gray-600">団体説明</a>
+              <a href="#blog" className="rounded-full bg-gray-50 px-4 py-2 text-gray-600">ブログ</a>
+              <a href="#reserve" className="rounded-full bg-gray-50 px-4 py-2 text-gray-600">予約管理</a>
+            </div>
+          </nav>
+        )}
         {layoutVariant === 'tabs' && (
           <div className="mb-6 flex flex-wrap gap-2 text-sm font-bold">
-            <span className="rounded-full px-4 py-2 text-white" style={{ backgroundColor: accentColor }}>団体説明</span>
-            <span className="rounded-full bg-white px-4 py-2 text-gray-500 shadow-sm ring-1 ring-gray-100">ブログ</span>
-            <span className="rounded-full bg-white px-4 py-2 text-gray-500 shadow-sm ring-1 ring-gray-100">予約</span>
+            <a href="#about" className="rounded-full px-4 py-2 text-white" style={{ backgroundColor: accentColor }}>団体説明</a>
+            <a href="#blog" className="rounded-full bg-white px-4 py-2 text-gray-500 shadow-sm ring-1 ring-gray-100">ブログ</a>
+            <a href="#reserve" className="rounded-full bg-white px-4 py-2 text-gray-500 shadow-sm ring-1 ring-gray-100">予約</a>
           </div>
         )}
-        <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em]" style={{ color: accentColor }}>COMIU GUIDE</p>
+        <p id="about" className="mb-3 text-xs font-bold uppercase tracking-[0.18em]" style={{ color: accentColor }}>COMIU GUIDE</p>
         <h1 className={`${titleSizeClass} font-bold leading-tight`} style={{ color: textColor, textAlign: titleAlign }}>{page.title}</h1>
         {page.subtitle && (
           <p className="mt-3 text-lg font-bold leading-8 opacity-75" style={{ color: textColor, textAlign: titleAlign }}>{page.subtitle}</p>
@@ -193,24 +220,45 @@ export default async function ClubCmsPage({
           <p className="mt-4 text-base leading-7 opacity-75" style={{ color: textColor, textAlign: titleAlign }}>{descriptionFromPage(page)}</p>
         )}
 
-        {image && (
+        {images.length > 0 && (
           <div className="relative mt-7 aspect-[16/9] overflow-hidden rounded-xl bg-gray-100">
-            <Image src={image} alt={page.title} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" />
+            <div
+              className="flex h-full"
+              style={{
+                width: `${images.length * 100}%`,
+                animation: images.length >= 3 ? 'public-site-slide 12s infinite' : undefined,
+              }}
+            >
+              {images.map((url, index) => (
+                <img
+                  key={`${url}-${index}`}
+                  src={url}
+                  alt={page.title}
+                  className="h-full object-cover"
+                  style={{ width: `${100 / images.length}%` }}
+                />
+              ))}
+            </div>
+            {images.length > 1 && (
+              <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+                {images.map((url, index) => (
+                  <span key={`${url}-dot-${index}`} className="h-1.5 w-1.5 rounded-full bg-white/80" />
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         <div className="mt-8 space-y-2 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8">
-          {page.dividerText && (
-            <div className="mb-5 flex items-center gap-3">
-              <div className="h-px flex-1 border-t border-dashed border-gray-300" />
-              <span className="text-sm font-bold text-gray-400">{page.dividerText}</span>
-              <div className="h-px flex-1 border-t border-dashed border-gray-300" />
-            </div>
-          )}
           {page.body.split('\n').map((line, index) => renderLine(line, index, textColor, bodySizeClass))}
         </div>
 
-        <div className="mt-8 flex flex-col gap-3 rounded-xl bg-white px-5 py-5 shadow-sm ring-1 ring-gray-100 sm:flex-row sm:items-center sm:justify-between">
+        <section id="blog" className="mt-8 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
+          <p className="text-lg font-bold text-gray-900">ブログ</p>
+          <p className="mt-2 text-sm leading-7 text-gray-500">活動日記やお知らせを表示するエリアです。</p>
+        </section>
+
+        <div id="reserve" className="mt-8 flex flex-col gap-3 rounded-xl bg-white px-5 py-5 shadow-sm ring-1 ring-gray-100 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-bold text-gray-900">{tenantName}</p>
             <p className="mt-1 text-xs text-gray-500">開催中のイベント一覧から参加予約できます。</p>

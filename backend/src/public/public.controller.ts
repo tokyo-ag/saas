@@ -407,6 +407,7 @@ export class PublicController {
       subtitle: page.subtitle,
       body: page.body,
       coverImageUrl: page.coverImageUrl,
+      imageUrls: page.imageUrls,
       dividerText: page.dividerText,
       textColor: page.textColor,
       accentColor: page.accentColor,

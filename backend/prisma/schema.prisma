@@ -73,6 +73,7 @@ model PublicPage {
   subtitle       String?   @db.VarChar(160)
   body           String    @db.Text
   coverImageUrl  String?   @map("cover_image_url") @db.Text
+  imageUrls      String[]  @default([]) @map("image_urls")
   dividerText    String?   @map("divider_text") @db.VarChar(80)
   textColor      String?   @map("text_color") @db.VarChar(20)
   accentColor    String?   @map("accent_color") @db.VarChar(20)

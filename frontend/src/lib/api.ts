@@ -720,6 +720,7 @@ export interface PublicPage {
   subtitle?: string | null;
   body: string;
   coverImageUrl?: string | null;
+  imageUrls?: string[];
   dividerText?: string | null;
   textColor?: string | null;
   accentColor?: string | null;
@@ -742,6 +743,7 @@ export interface PublicPageInput {
   subtitle?: string;
   body: string;
   coverImageUrl?: string;
+  imageUrls?: string[];
   dividerText?: string;
   textColor?: string;
   accentColor?: string;
@@ -762,6 +764,7 @@ export interface PublicCmsPage {
   subtitle?: string | null;
   body: string;
   coverImageUrl?: string | null;
+  imageUrls?: string[];
   dividerText?: string | null;
   textColor?: string | null;
   accentColor?: string | null;

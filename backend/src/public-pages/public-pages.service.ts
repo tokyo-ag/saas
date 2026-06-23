@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsArray, IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 
 const PAGE_STATUS = ['draft', 'published'] as const;
@@ -31,6 +31,11 @@ export class UpsertPublicPageDto {
   @IsOptional()
   @IsString()
   coverImageUrl?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  imageUrls?: string[];
 
   @IsOptional()
   @IsString()
@@ -135,6 +140,10 @@ export class PublicPagesService {
       body: dto.body,
       subtitle: dto.subtitle?.trim() || null,
       coverImageUrl: dto.coverImageUrl?.trim() || null,
+      imageUrls: (dto.imageUrls ?? [])
+        .map((url) => url.trim())
+        .filter(Boolean)
+        .slice(0, 3),
       dividerText: dto.dividerText?.trim() || null,
       textColor: dto.textColor?.trim() || null,
       accentColor: dto.accentColor?.trim() || null,
