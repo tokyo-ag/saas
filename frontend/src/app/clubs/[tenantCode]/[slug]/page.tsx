@@ -53,22 +53,21 @@ const bodySizeMap: Record<string, string> = {
 };
 
 function renderLine(line: string, index: number, textColor: string, bodyClassName: string) {
-  if (line.startsWith('### ')) {
-    return <h3 key={index} className="mt-7 text-xl font-bold" style={{ color: textColor }}>{line.slice(4)}</h3>;
-  }
-  if (line.startsWith('## ')) {
-    return <h2 key={index} className="mt-9 text-2xl font-bold" style={{ color: textColor }}>{line.slice(3)}</h2>;
-  }
-  if (line.startsWith('# ')) {
-    return <h2 key={index} className="mt-9 text-2xl font-bold" style={{ color: textColor }}>{line.slice(2)}</h2>;
-  }
-  if (line.startsWith('- ')) {
-    return <li key={index} className="ml-5 list-disc" style={{ color: textColor }}>{line.slice(2)}</li>;
-  }
-  if (!line.trim()) {
-    return <div key={index} className="h-3" />;
-  }
+  if (line.startsWith('### ')) return <h3 key={index} className="mt-7 text-xl font-bold" style={{ color: textColor }}>{line.slice(4)}</h3>;
+  if (line.startsWith('## ') || line.startsWith('# ')) return <h2 key={index} className="mt-9 text-2xl font-bold" style={{ color: textColor }}>{line.replace(/^#{1,3}\s/, '')}</h2>;
+  if (line.startsWith('- ')) return <li key={index} className="ml-5 list-disc" style={{ color: textColor }}>{line.slice(2)}</li>;
+  if (!line.trim()) return <div key={index} className="h-3" />;
   return <p key={index} className={bodyClassName} style={{ color: textColor }}>{line}</p>;
+}
+
+function getBtnClass(style: string | null | undefined) {
+  switch (style) {
+    case 'pill': return 'rounded-full border-2';
+    case 'square': return 'rounded-none border-2';
+    case 'stylish': return 'rounded-lg border border-dashed';
+    case 'gorgeous': return 'rounded-xl border-4 border-double shadow-lg';
+    default: return 'rounded-xl border-2';
+  }
 }
 
 export async function generateMetadata({
@@ -126,16 +125,22 @@ export default async function ClubCmsPage({
   const textColor = page.textColor || '#111827';
   const accentColor = page.accentColor || '#06C755';
   const backgroundColor = page.backgroundColor || '#F7F8FA';
+  const navColor = page.navColor || '#F3F4F6';
   const fontFamily = fontFamilyMap[page.fontFamily || 'mincho'] ?? fontFamilyMap.mincho;
   const titleSizeClass = titleSizeMap[page.titleSize || 'large'] ?? titleSizeMap.large;
   const bodySizeClass = bodySizeMap[page.bodySize || 'base'] ?? bodySizeMap.base;
   const titleAlign = (['left', 'center', 'right'].includes(page.titleAlign || '') ? page.titleAlign! : 'left') as 'left' | 'center' | 'right';
-  const layoutVariant = page.layoutVariant || 'one_page';
+  const layoutVariant = page.layoutVariant || 'static';
   const navLabels = {
     about: page.aboutLabel || '団体詳細',
-    reserve: page.reserveLabel || '予約画面',
+    reserve: page.reserveLabel || '予約する',
     blog: page.blogLabel || 'ブログ',
   };
+  const buttonStyle = page.buttonStyle ?? 'rounded';
+  const gorgeousColor = '#b8860b';
+  const btnBorderColor = buttonStyle === 'gorgeous' ? gorgeousColor : accentColor;
+  const btnClass = getBtnClass(buttonStyle);
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -149,14 +154,56 @@ export default async function ClubCmsPage({
     ...(image ? { image } : {}),
   };
 
+  // カテゴリー型
+  if (layoutVariant === 'category') {
+    const tenantIcon = imgUrl(page.tenant.iconUrl ?? page.tenant.linePictureUrl, IMAGE_BASE_URL);
+    return (
+      <main className="min-h-screen" style={{ fontFamily, backgroundColor }}>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
+        <div className="flex min-h-screen flex-col items-center px-6 py-16">
+          {tenantIcon ? (
+            <img src={tenantIcon} alt={tenantName} className="h-20 w-20 rounded-full object-cover" />
+          ) : (
+            <div className="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold text-white" style={{ backgroundColor: accentColor }}>
+              {tenantName.slice(0, 1)}
+            </div>
+          )}
+          <h1 className="mt-4 text-xl font-bold" style={{ color: textColor }}>{tenantName}</h1>
+          {page.subtitle && <p className="mt-1 text-sm opacity-70" style={{ color: textColor }}>{page.subtitle}</p>}
+
+          <nav className="mt-10 w-full max-w-xs space-y-4">
+            <a href="#about" className={`block w-full px-6 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
+              style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
+              {navLabels.about}
+            </a>
+            <Link href={liffHref} className={`block w-full px-6 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
+              style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
+              {navLabels.reserve}
+            </Link>
+            <Link href={`/clubs/${page.tenant.code ?? tenantCode}/blog`}
+              className={`block w-full px-6 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
+              style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
+              {navLabels.blog}
+            </Link>
+          </nav>
+
+          {page.body && (
+            <div id="about" className="mt-14 w-full max-w-sm scroll-mt-6 rounded-xl bg-white px-6 py-5 shadow-sm">
+              <p className="mb-3 text-sm font-bold" style={{ color: textColor }}>{navLabels.about}</p>
+              <div className="text-sm leading-7" style={{ color: textColor }}>
+                {page.body.split('\n').map((line, i) => renderLine(line, i, textColor, 'text-sm leading-7'))}
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+    );
+  }
+
+  // 静止サイト型 (default)
   return (
     <main className="min-h-screen text-gray-900" style={{ fontFamily, backgroundColor }}>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
-        }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       <style>{`
         @keyframes public-site-slide {
           0%, 28% { transform: translateX(0); }
@@ -166,88 +213,50 @@ export default async function ClubCmsPage({
         }
       `}</style>
 
+      {page.headerText && (
+        <div className="border-b border-gray-100 px-4 py-2 text-center text-xs font-bold" style={{ backgroundColor: navColor, color: textColor }}>
+          {page.headerText}
+        </div>
+      )}
+
       <header className="border-b border-gray-100 bg-white px-4 py-4">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
-          <Link href={clubHref} className="text-sm font-bold" style={{ color: accentColor }}>
-            {tenantName}
-          </Link>
-          {layoutVariant === 'hamburger' ? (
-            <details className="relative">
-              <summary className="flex cursor-pointer list-none flex-col gap-1">
-                <span className="h-0.5 w-6 rounded-full bg-gray-500" />
-                <span className="h-0.5 w-6 rounded-full bg-gray-500" />
-                <span className="h-0.5 w-6 rounded-full bg-gray-500" />
-              </summary>
-              <div className="absolute right-0 top-8 z-20 w-40 rounded-lg bg-white p-2 text-sm font-bold text-gray-600 shadow-lg ring-1 ring-gray-100">
-                <a href="#about" className="block rounded px-3 py-2 hover:bg-gray-50">{navLabels.about}</a>
-                <a href="#blog" className="block rounded px-3 py-2 hover:bg-gray-50">{navLabels.blog}</a>
-                <a href="#reserve" className="block rounded px-3 py-2 hover:bg-gray-50">{navLabels.reserve}</a>
-              </div>
-            </details>
-          ) : (
-            <div className="flex items-center gap-4">
-              <Link
-                href={liffHref}
-                className="rounded-full px-4 py-2 text-xs font-bold text-white"
-                style={{ backgroundColor: accentColor }}
-              >
-                {navLabels.reserve}
-              </Link>
-            </div>
-          )}
+          <Link href={clubHref} className="text-sm font-bold" style={{ color: accentColor }}>{tenantName}</Link>
+          <div className="flex items-center gap-2 text-xs font-bold">
+            <a href="#about" className="hidden sm:block text-gray-500 hover:text-gray-900">{navLabels.about}</a>
+            <a href="#blog" className="hidden sm:block text-gray-500 hover:text-gray-900">{navLabels.blog}</a>
+            <Link href={liffHref} className="rounded-full px-4 py-2 text-white" style={{ backgroundColor: accentColor }}>
+              {navLabels.reserve}
+            </Link>
+          </div>
         </div>
       </header>
 
       <article className="mx-auto max-w-3xl px-4 py-8 md:py-12">
-        {layoutVariant === 'one_page' && (
-          <nav className="mb-6 rounded-xl bg-white px-4 py-4 shadow-sm ring-1 ring-gray-100">
-            <p className="mb-3 text-xs font-bold text-gray-400">目次</p>
-            <div className="flex flex-wrap gap-2 text-sm font-bold">
-              <a href="#about" className="rounded-full bg-gray-50 px-4 py-2 text-gray-600">{navLabels.about}</a>
-              <a href="#blog" className="rounded-full bg-gray-50 px-4 py-2 text-gray-600">{navLabels.blog}</a>
-              <a href="#reserve" className="rounded-full bg-gray-50 px-4 py-2 text-gray-600">{navLabels.reserve}</a>
-            </div>
-          </nav>
-        )}
-        {layoutVariant === 'tabs' && (
-          <div className="mb-6 flex flex-wrap gap-2 text-sm font-bold">
-            <a href="#about" className="rounded-full px-4 py-2 text-white" style={{ backgroundColor: accentColor }}>{navLabels.about}</a>
-            <a href="#blog" className="rounded-full bg-white px-4 py-2 text-gray-500 shadow-sm ring-1 ring-gray-100">{navLabels.blog}</a>
-            <a href="#reserve" className="rounded-full bg-white px-4 py-2 text-gray-500 shadow-sm ring-1 ring-gray-100">{navLabels.reserve}</a>
+        <nav className="mb-6 rounded-xl px-4 py-4" style={{ backgroundColor: navColor }}>
+          <p className="mb-3 text-xs font-bold text-gray-400">目次</p>
+          <div className="flex flex-wrap gap-2 text-sm font-bold">
+            <a href="#about" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm">{navLabels.about}</a>
+            <a href="#blog" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm">{navLabels.blog}</a>
+            <a href="#reserve" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm">{navLabels.reserve}</a>
           </div>
-        )}
-        <h1 id="about" className={`${titleSizeClass} font-bold leading-tight`} style={{ color: textColor, textAlign: titleAlign }}>{page.title}</h1>
+        </nav>
+
+        <h1 id="about" className={`${titleSizeClass} scroll-mt-6 font-bold leading-tight`} style={{ color: textColor, textAlign: titleAlign }}>{page.title}</h1>
         {page.subtitle && (
           <p className="mt-3 text-lg font-bold leading-8 opacity-75" style={{ color: textColor, textAlign: titleAlign }}>{page.subtitle}</p>
-        )}
-        {!page.subtitle && descriptionFromPage(page) && (
-          <p className="mt-4 text-base leading-7 opacity-75" style={{ color: textColor, textAlign: titleAlign }}>{descriptionFromPage(page)}</p>
         )}
 
         {images.length > 0 && (
           <div className="relative mt-7 aspect-[16/9] overflow-hidden rounded-xl bg-gray-100">
-            <div
-              className="flex h-full"
-              style={{
-                width: `${images.length * 100}%`,
-                animation: images.length >= 3 ? 'public-site-slide 12s infinite' : undefined,
-              }}
-            >
+            <div className="flex h-full" style={{ width: `${images.length * 100}%`, animation: images.length >= 2 ? 'public-site-slide 12s infinite' : undefined }}>
               {images.map((url, index) => (
-                <img
-                  key={`${url}-${index}`}
-                  src={url}
-                  alt={page.title}
-                  className="h-full object-cover"
-                  style={{ width: `${100 / images.length}%` }}
-                />
+                <img key={`${url}-${index}`} src={url} alt={page.title} className="h-full object-cover" style={{ width: `${100 / images.length}%` }} />
               ))}
             </div>
             {images.length > 1 && (
               <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
-                {images.map((url, index) => (
-                  <span key={`${url}-dot-${index}`} className="h-1.5 w-1.5 rounded-full bg-white/80" />
-                ))}
+                {images.map((_, index) => <span key={index} className="h-1.5 w-1.5 rounded-full bg-white/80" />)}
               </div>
             )}
           </div>
@@ -257,16 +266,22 @@ export default async function ClubCmsPage({
           {page.body.split('\n').map((line, index) => renderLine(line, index, textColor, bodySizeClass))}
         </div>
 
-        <section id="blog" className="mt-8 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
+        <section id="blog" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
           <p className="text-lg font-bold text-gray-900">{navLabels.blog}</p>
           <p className="mt-2 text-sm leading-7 text-gray-500">活動日記やお知らせを表示するエリアです。</p>
         </section>
 
-        <div id="reserve" className="mt-8 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
+        <div id="reserve" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
           <p className="text-lg font-bold text-gray-900">{navLabels.reserve}</p>
           <ReservationViewShowcase accentColor={accentColor} buttonLabel={navLabels.reserve} href={liffHref} className="mt-4" />
         </div>
       </article>
+
+      {page.footerText && (
+        <footer className="border-t border-gray-100 px-4 py-4 text-center text-xs" style={{ backgroundColor: navColor, color: textColor }}>
+          {page.footerText}
+        </footer>
+      )}
     </main>
   );
 }

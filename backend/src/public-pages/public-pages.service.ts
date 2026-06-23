@@ -123,6 +123,21 @@ export class UpsertPublicPageDto {
   seoDescription?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  buttonStyle?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  headerText?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  footerText?: string;
+
+  @IsOptional()
   @IsIn(PAGE_STATUS)
   status?: PageStatus;
 }
@@ -194,6 +209,9 @@ export class PublicPagesService {
       aboutLabel: dto.aboutLabel?.trim() || null,
       reserveLabel: dto.reserveLabel?.trim() || null,
       blogLabel: dto.blogLabel?.trim() || null,
+      buttonStyle: dto.buttonStyle?.trim() || null,
+      headerText: dto.headerText?.trim() || null,
+      footerText: dto.footerText?.trim() || null,
       seoTitle: dto.seoTitle?.trim() || null,
       seoDescription: dto.seoDescription?.trim() || null,
       status,

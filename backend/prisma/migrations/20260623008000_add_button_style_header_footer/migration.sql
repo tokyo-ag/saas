@@ -1,0 +1,4 @@
+ALTER TABLE "public_pages"
+ADD COLUMN IF NOT EXISTS "button_style"  VARCHAR(20),
+ADD COLUMN IF NOT EXISTS "header_text"   VARCHAR(300),
+ADD COLUMN IF NOT EXISTS "footer_text"   VARCHAR(300);
