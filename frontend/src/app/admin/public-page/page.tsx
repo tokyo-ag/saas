@@ -641,6 +641,16 @@ export default function AdminPublicPage() {
               ))}
             </div>
           </div>
+          {/* サブタイトル */}
+          <div className="border-t border-gray-100 pt-4">
+            <label className="block">
+              <span className="mb-1 block text-[11px] font-bold text-gray-400">サブタイトル</span>
+              <input value={form.subtitle ?? ''}
+                onChange={(e) => setForm((p) => ({ ...p, subtitle: e.target.value }))}
+                placeholder="例：初心者歓迎の社会人サークル"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+            </label>
+          </div>
         </div>
 
         {/* 団体詳細 */}
@@ -659,13 +669,6 @@ export default function AdminPublicPage() {
               ))}
             </div>
           </div>
-          <label className="block">
-            <span className="mb-1 block text-[11px] font-bold text-gray-400">サブタイトル</span>
-            <input value={form.subtitle ?? ''}
-              onChange={(e) => setForm((p) => ({ ...p, subtitle: e.target.value }))}
-              placeholder="例：初心者歓迎の社会人サークル"
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-          </label>
           <label className="block">
             <span className="mb-1 block text-[11px] font-bold text-gray-400">説明文</span>
             <textarea value={form.body}
