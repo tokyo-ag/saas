@@ -623,11 +623,12 @@ export default function AdminPublicPage() {
           {/* ナビラベル */}
           <div className="border-t border-gray-100 pt-4">
             <p className="mb-2 text-[11px] font-bold text-gray-400">ナビラベル</p>
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-2 grid-cols-2">
               {[
                 { field: 'aboutLabel' as const, placeholder: '団体詳細' },
                 { field: 'reserveLabel' as const, placeholder: '予約する' },
                 { field: 'blogLabel' as const, placeholder: 'ブログ' },
+                { field: 'contactLabel' as const, placeholder: 'お問い合わせ' },
               ].map(({ field, placeholder }) => (
                 <input key={field} value={(form[field] as string) ?? ''}
                   onChange={(e) => setForm((p) => ({ ...p, [field]: e.target.value }))}
@@ -655,18 +656,6 @@ export default function AdminPublicPage() {
               rows={7}
               placeholder="団体の雰囲気や参加者に伝えたい内容"
               className="w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-sm leading-7 focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-          </label>
-        </div>
-
-        {/* フッター */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <p className="mb-2 text-xs font-bold text-gray-500">フッター（お問い合わせ）</p>
-          <label className="block">
-            <span className="mb-1 block text-[11px] font-bold text-gray-400">ラベル名称</span>
-            <input value={(form.contactLabel as string) ?? ''}
-              onChange={(e) => setForm((p) => ({ ...p, contactLabel: e.target.value }))}
-              placeholder="お問い合わせ"
-              className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
           </label>
         </div>
 
