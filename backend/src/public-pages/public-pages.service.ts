@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { IsArray, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -303,7 +304,7 @@ export class PublicPagesService {
       buttonBgColor: dto.buttonBgColor?.trim() || null,
       buttonBgOpacity: Number.isInteger(dto.buttonBgOpacity) ? dto.buttonBgOpacity : null,
       buttonTextOpacity: Number.isInteger(dto.buttonTextOpacity) ? dto.buttonTextOpacity : null,
-      blocks: dto.blocks ?? null,
+      blocks: dto.blocks ?? Prisma.JsonNull,
       heroOverlayOpacity: Number.isInteger(dto.heroOverlayOpacity) ? dto.heroOverlayOpacity : null,
       heroOverlayColor: dto.heroOverlayColor?.trim() || null,
       reserveViewStyle: dto.reserveViewStyle?.trim() || null,
