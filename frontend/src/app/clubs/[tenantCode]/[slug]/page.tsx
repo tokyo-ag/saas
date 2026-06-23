@@ -393,6 +393,7 @@ export default async function ClubCmsPage({
               buttonLabel={navLabels.reserve}
               href={reserveHref}
               viewStyle="calendar"
+              naked
             />
           </div>
         ) : (

@@ -1,13 +1,5 @@
 import Link from 'next/link';
 
-type ReservationViewShowcaseProps = {
-  accentColor: string;
-  buttonLabel: string;
-  href?: string;
-  className?: string;
-  viewStyle?: string | null;
-};
-
 const calendarDays = Array.from({ length: 14 }, (_, index) => index + 1);
 
 function CalendarMini({ accentColor }: { accentColor: string }) {
@@ -72,25 +64,41 @@ function ThreadMini({ accentColor }: { accentColor: string }) {
   );
 }
 
+type ReservationViewShowcaseProps = {
+  accentColor: string;
+  buttonLabel: string;
+  href?: string;
+  className?: string;
+  viewStyle?: string | null;
+  naked?: boolean;
+};
+
 export function ReservationViewShowcase({
   accentColor,
   buttonLabel,
   href,
   className = '',
   viewStyle = 'calendar',
+  naked = false,
 }: ReservationViewShowcaseProps) {
   const buttonClassName =
     'inline-flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-bold text-white transition hover:opacity-90';
   const buttonStyle = { backgroundColor: accentColor };
   const selectedView = viewStyle === 'card' || viewStyle === 'thread' ? viewStyle : 'calendar';
 
+  const inner = (
+    <>
+      {selectedView === 'calendar' && <CalendarMini accentColor={accentColor} />}
+      {selectedView === 'card' && <CardMini accentColor={accentColor} />}
+      {selectedView === 'thread' && <ThreadMini accentColor={accentColor} />}
+    </>
+  );
+
   return (
     <div className={`space-y-3 ${className}`}>
-      <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
-        {selectedView === 'calendar' && <CalendarMini accentColor={accentColor} />}
-        {selectedView === 'card' && <CardMini accentColor={accentColor} />}
-        {selectedView === 'thread' && <ThreadMini accentColor={accentColor} />}
-      </div>
+      {naked ? inner : (
+        <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm">{inner}</div>
+      )}
       {href ? (
         <Link href={href} className={buttonClassName} style={buttonStyle}>
           {buttonLabel}
