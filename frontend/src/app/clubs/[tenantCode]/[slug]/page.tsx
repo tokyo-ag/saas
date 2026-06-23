@@ -31,7 +31,25 @@ function descriptionFromPage(page: PublicCmsPage) {
   );
 }
 
-function renderLine(line: string, index: number, textColor: string) {
+const fontFamilyMap: Record<string, string> = {
+  system: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  rounded: '"Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif',
+  serif: '"Yu Mincho", "Hiragino Mincho ProN", serif',
+};
+
+const titleSizeMap: Record<string, string> = {
+  small: 'text-2xl md:text-3xl',
+  large: 'text-3xl md:text-4xl',
+  xlarge: 'text-4xl md:text-5xl',
+};
+
+const bodySizeMap: Record<string, string> = {
+  small: 'text-sm leading-7',
+  base: 'text-base leading-8',
+  large: 'text-lg leading-9',
+};
+
+function renderLine(line: string, index: number, textColor: string, bodyClassName: string) {
   if (line.startsWith('### ')) {
     return <h3 key={index} className="mt-7 text-xl font-bold" style={{ color: textColor }}>{line.slice(4)}</h3>;
   }
@@ -47,7 +65,7 @@ function renderLine(line: string, index: number, textColor: string) {
   if (!line.trim()) {
     return <div key={index} className="h-3" />;
   }
-  return <p key={index} className="text-base leading-8" style={{ color: textColor }}>{line}</p>;
+  return <p key={index} className={bodyClassName} style={{ color: textColor }}>{line}</p>;
 }
 
 export async function generateMetadata({
@@ -99,6 +117,12 @@ export default async function ClubCmsPage({
   const image = imgUrl(page.coverImageUrl ?? page.tenant.linePictureUrl, IMAGE_BASE_URL);
   const clubHref = `/clubs/${page.tenant.code ?? tenantCode}`;
   const textColor = page.textColor || '#111827';
+  const accentColor = page.accentColor || '#06C755';
+  const fontFamily = fontFamilyMap[page.fontFamily || 'system'] ?? fontFamilyMap.system;
+  const titleSizeClass = titleSizeMap[page.titleSize || 'large'] ?? titleSizeMap.large;
+  const bodySizeClass = bodySizeMap[page.bodySize || 'base'] ?? bodySizeMap.base;
+  const titleAlign = (['left', 'center', 'right'].includes(page.titleAlign || '') ? page.titleAlign! : 'left') as 'left' | 'center' | 'right';
+  const layoutVariant = page.layoutVariant || 'one_page';
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -113,7 +137,7 @@ export default async function ClubCmsPage({
   };
 
   return (
-    <main className="min-h-screen bg-[#F7F8FA] text-gray-900">
+    <main className="min-h-screen bg-[#F7F8FA] text-gray-900" style={{ fontFamily }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -123,26 +147,50 @@ export default async function ClubCmsPage({
 
       <header className="border-b border-gray-100 bg-white px-4 py-4">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
-          <Link href={clubHref} className="text-sm font-bold text-[#06C755]">
+          <Link href={clubHref} className="text-sm font-bold" style={{ color: accentColor }}>
             {tenantName}
           </Link>
-          <Link
-            href={`/liff/${page.tenant.code ?? tenantCode}`}
-            className="rounded-full bg-[#06C755] px-4 py-2 text-xs font-bold text-white"
-          >
-            参加予約
-          </Link>
+          {layoutVariant === 'hamburger' ? (
+            <span className="flex flex-col gap-1">
+              <span className="h-0.5 w-6 rounded-full bg-gray-500" />
+              <span className="h-0.5 w-6 rounded-full bg-gray-500" />
+              <span className="h-0.5 w-6 rounded-full bg-gray-500" />
+            </span>
+          ) : (
+            <div className="flex items-center gap-4">
+              {layoutVariant === 'one_page' && (
+                <div className="hidden gap-4 text-xs font-bold text-gray-400 sm:flex">
+                  <span>ブログ</span>
+                  <span>予約管理</span>
+                </div>
+              )}
+              <Link
+                href={`/liff/${page.tenant.code ?? tenantCode}`}
+                className="rounded-full px-4 py-2 text-xs font-bold text-white"
+                style={{ backgroundColor: accentColor }}
+              >
+                参加予約
+              </Link>
+            </div>
+          )}
         </div>
       </header>
 
       <article className="mx-auto max-w-3xl px-4 py-8 md:py-12">
-        <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-[#06C755]">COMIU GUIDE</p>
-        <h1 className="text-3xl font-bold leading-tight md:text-4xl" style={{ color: textColor }}>{page.title}</h1>
+        {layoutVariant === 'tabs' && (
+          <div className="mb-6 flex flex-wrap gap-2 text-sm font-bold">
+            <span className="rounded-full px-4 py-2 text-white" style={{ backgroundColor: accentColor }}>団体説明</span>
+            <span className="rounded-full bg-white px-4 py-2 text-gray-500 shadow-sm ring-1 ring-gray-100">ブログ</span>
+            <span className="rounded-full bg-white px-4 py-2 text-gray-500 shadow-sm ring-1 ring-gray-100">予約</span>
+          </div>
+        )}
+        <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em]" style={{ color: accentColor }}>COMIU GUIDE</p>
+        <h1 className={`${titleSizeClass} font-bold leading-tight`} style={{ color: textColor, textAlign: titleAlign }}>{page.title}</h1>
         {page.subtitle && (
-          <p className="mt-3 text-lg font-bold leading-8 opacity-75" style={{ color: textColor }}>{page.subtitle}</p>
+          <p className="mt-3 text-lg font-bold leading-8 opacity-75" style={{ color: textColor, textAlign: titleAlign }}>{page.subtitle}</p>
         )}
         {!page.subtitle && descriptionFromPage(page) && (
-          <p className="mt-4 text-base leading-7 opacity-75" style={{ color: textColor }}>{descriptionFromPage(page)}</p>
+          <p className="mt-4 text-base leading-7 opacity-75" style={{ color: textColor, textAlign: titleAlign }}>{descriptionFromPage(page)}</p>
         )}
 
         {image && (
@@ -159,7 +207,7 @@ export default async function ClubCmsPage({
               <div className="h-px flex-1 border-t border-dashed border-gray-300" />
             </div>
           )}
-          {page.body.split('\n').map((line, index) => renderLine(line, index, textColor))}
+          {page.body.split('\n').map((line, index) => renderLine(line, index, textColor, bodySizeClass))}
         </div>
 
         <div className="mt-8 flex flex-col gap-3 rounded-xl bg-white px-5 py-5 shadow-sm ring-1 ring-gray-100 sm:flex-row sm:items-center sm:justify-between">
@@ -169,7 +217,8 @@ export default async function ClubCmsPage({
           </div>
           <Link
             href={clubHref}
-            className="inline-flex items-center justify-center rounded-lg bg-[#06C755] px-4 py-2 text-sm font-bold text-white"
+            className="inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-bold text-white"
+            style={{ backgroundColor: accentColor }}
           >
             イベントを見る
           </Link>

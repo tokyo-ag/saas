@@ -44,6 +44,36 @@ export class UpsertPublicPageDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(20)
+  accentColor?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  fontFamily?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  titleSize?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  titleAlign?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  bodySize?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  layoutVariant?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(160)
   seoTitle?: string;
 
@@ -107,6 +137,12 @@ export class PublicPagesService {
       coverImageUrl: dto.coverImageUrl?.trim() || null,
       dividerText: dto.dividerText?.trim() || null,
       textColor: dto.textColor?.trim() || null,
+      accentColor: dto.accentColor?.trim() || null,
+      fontFamily: dto.fontFamily?.trim() || null,
+      titleSize: dto.titleSize?.trim() || null,
+      titleAlign: dto.titleAlign?.trim() || null,
+      bodySize: dto.bodySize?.trim() || null,
+      layoutVariant: dto.layoutVariant?.trim() || null,
       seoTitle: dto.seoTitle?.trim() || null,
       seoDescription: dto.seoDescription?.trim() || null,
       status,

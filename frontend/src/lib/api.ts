@@ -722,6 +722,12 @@ export interface PublicPage {
   coverImageUrl?: string | null;
   dividerText?: string | null;
   textColor?: string | null;
+  accentColor?: string | null;
+  fontFamily?: string | null;
+  titleSize?: string | null;
+  titleAlign?: string | null;
+  bodySize?: string | null;
+  layoutVariant?: string | null;
   seoTitle?: string | null;
   seoDescription?: string | null;
   status: 'draft' | 'published';
@@ -738,6 +744,12 @@ export interface PublicPageInput {
   coverImageUrl?: string;
   dividerText?: string;
   textColor?: string;
+  accentColor?: string;
+  fontFamily?: string;
+  titleSize?: string;
+  titleAlign?: string;
+  bodySize?: string;
+  layoutVariant?: string;
   seoTitle?: string;
   seoDescription?: string;
   status?: 'draft' | 'published';
@@ -752,6 +764,12 @@ export interface PublicCmsPage {
   coverImageUrl?: string | null;
   dividerText?: string | null;
   textColor?: string | null;
+  accentColor?: string | null;
+  fontFamily?: string | null;
+  titleSize?: string | null;
+  titleAlign?: string | null;
+  bodySize?: string | null;
+  layoutVariant?: string | null;
   seoTitle?: string | null;
   seoDescription?: string | null;
   publishedAt?: string | null;
