@@ -434,6 +434,7 @@ export class PublicController {
       contactLabel: page.contactLabel,
       buttonStyle: page.buttonStyle,
       buttonLayout: page.buttonLayout,
+      buttonOpacity: page.buttonOpacity,
       headerText: page.headerText,
       footerText: page.footerText,
       seoTitle: page.seoTitle,

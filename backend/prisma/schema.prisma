@@ -97,6 +97,7 @@ model PublicPage {
   contactLabel   String?   @map("contact_label") @db.VarChar(40)
   buttonStyle    String?   @map("button_style") @db.VarChar(20)
   buttonLayout   String?   @map("button_layout") @db.VarChar(20)
+  buttonOpacity  Int?      @map("button_opacity")
   headerText     String?   @map("header_text") @db.VarChar(300)
   footerText     String?   @map("footer_text") @db.VarChar(300)
   seoTitle       String?   @map("seo_title") @db.VarChar(160)

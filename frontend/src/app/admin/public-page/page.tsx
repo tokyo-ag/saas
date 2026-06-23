@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api, PublicPageInput, Tenant } from '@/lib/api';
 import { SITE_URL } from '@/lib/config';
 import { SaveToast } from '@/components/ui/SaveToast';
@@ -20,7 +20,7 @@ const emptyForm: PublicPageInput = {
   backgroundColor: '#F7F8FA',
   navColor: '#F3F4F6',
   imageLayout: 'slider',
-  heroImageMode: 'slider',
+  heroImageMode: 'fixed',
   heroOverlayOpacity: 0,
   heroOverlayColor: '#000000',
   reserveViewStyle: 'calendar',
@@ -31,6 +31,7 @@ const emptyForm: PublicPageInput = {
   layoutVariant: 'static',
   buttonStyle: 'rounded',
   buttonLayout: 'grid2x2',
+  buttonOpacity: 100,
   headerText: '',
   footerText: '',
   aboutLabel: '団体詳細',
@@ -80,7 +81,7 @@ const BTN_SIZE_OPTIONS = [
 ];
 
 const HERO_IMAGE_MODE_OPTIONS = [
-  { label: '自動', value: 'auto' },
+  { label: '固定', value: 'fixed' },
   { label: 'スライダー', value: 'slider' },
   { label: '横並び', value: 'grid' },
 ];
@@ -170,7 +171,7 @@ function HeaderImagePreview({
   overlayOpacity: number;
   className?: string;
 }) {
-  const list = images.slice(0, 3);
+  const list = (mode === 'fixed' || mode === 'auto' ? images.slice(0, 1) : images.slice(0, 3));
   if (!list.length) return null;
 
   const opacity = clampPercent(overlayOpacity) / 100;
@@ -238,10 +239,6 @@ export default function AdminPublicPage() {
 
   // UI-only states (not persisted)
   const [btnSize] = useState('medium');
-  const [focusedBody, setFocusedBody] = useState(false);
-
-  const bodyRef = useRef<HTMLParagraphElement>(null);
-  const subtitleRef = useRef<HTMLParagraphElement>(null);
 
   const tenantCode = tenant?.code ?? tenant?.id ?? '';
   const displayName = tenant?.lineDisplayName ?? tenant?.name ?? '公開サイト';
@@ -259,7 +256,12 @@ export default function AdminPublicPage() {
   const previewBody = form.body.trim() || tenant?.description || '';
   const imageUrls = (form.imageUrls?.length ? form.imageUrls : form.coverImageUrl ? [form.coverImageUrl] : []).filter(Boolean).slice(0, 3);
   const imageCaptions = imageUrls.map((_, i) => (form.imageCaptions?.[i] ?? '').slice(0, 80));
-  const heroImageMode = ['auto', 'slider', 'grid'].includes(form.heroImageMode || '') ? form.heroImageMode! : 'slider';
+  const rawHeroImageMode = form.heroImageMode || 'fixed';
+  const heroImageMode = rawHeroImageMode === 'auto'
+    ? 'fixed'
+    : ['fixed', 'slider', 'grid'].includes(rawHeroImageMode)
+      ? rawHeroImageMode
+      : 'fixed';
   const heroOverlayOpacity = clampPercent(form.heroOverlayOpacity);
   const heroOverlayColor = form.heroOverlayColor?.trim() || '#000000';
   const navLabels = {
@@ -270,6 +272,8 @@ export default function AdminPublicPage() {
   };
   const buttonStyle = form.buttonStyle ?? 'rounded';
   const buttonLayout = form.buttonLayout === 'row1x4' ? 'row1x4' : 'grid2x2';
+  const buttonOpacity = clampPercent(form.buttonOpacity ?? 100);
+  const buttonOpacityStyle = { opacity: buttonOpacity / 100 };
   const buttonLayoutClass = buttonLayout === 'row1x4'
     ? 'grid grid-cols-2 sm:grid-cols-4'
     : 'grid grid-cols-2';
@@ -298,7 +302,7 @@ export default function AdminPublicPage() {
             backgroundColor: first.backgroundColor ?? '#F7F8FA',
             navColor: first.navColor ?? '#F3F4F6',
             imageLayout: first.imageLayout ?? 'slider',
-            heroImageMode: first.heroImageMode ?? 'slider',
+            heroImageMode: first.heroImageMode === 'auto' ? 'fixed' : first.heroImageMode ?? 'fixed',
             heroOverlayOpacity: first.heroOverlayOpacity ?? 0,
             heroOverlayColor: first.heroOverlayColor ?? '#000000',
             reserveViewStyle: first.reserveViewStyle ?? 'calendar',
@@ -309,6 +313,7 @@ export default function AdminPublicPage() {
             layoutVariant: variant === 'category' ? 'category' : 'static',
             buttonStyle: (first as any).buttonStyle ?? 'rounded',
             buttonLayout: first.buttonLayout ?? 'grid2x2',
+            buttonOpacity: first.buttonOpacity ?? 100,
             headerText: (first as any).headerText ?? '',
             footerText: (first as any).footerText ?? '',
             aboutLabel: first.aboutLabel ?? '団体詳細',
@@ -370,6 +375,7 @@ export default function AdminPublicPage() {
       contactLabel: navLabels.contact,
       buttonStyle,
       buttonLayout,
+      buttonOpacity,
       status: 'published',
       seoTitle: displayName,
       seoDescription: form.body.replace(/[#>*_-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 150),
@@ -428,19 +434,23 @@ export default function AdminPublicPage() {
 
       {error && <div className="mx-auto max-w-3xl px-4 pt-3"><div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div></div>}
 
+      <div className="mx-auto grid max-w-[1480px] gap-5 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_minmax(390px,0.9fr)] xl:grid-cols-[minmax(0,1fr)_minmax(520px,0.85fr)]">
       {/* Settings panel */}
-      <div className="mx-auto max-w-3xl space-y-3 px-4 py-4">
+      <section className="space-y-3">
 
         {/* 背景 */}
         <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
           <p className="text-xs font-bold text-gray-500">背景</p>
-          <div className="flex items-center gap-3">
-            <label className="cursor-pointer">
-              <input type="color" value={backgroundColor}
-                onChange={(e) => setForm((p) => ({ ...p, backgroundColor: e.target.value }))}
-                className="h-10 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-            </label>
-            <div className="flex flex-wrap gap-2">
+          <div className="grid gap-4 sm:grid-cols-[auto_1fr]">
+            <div className="space-y-2">
+              <p className="text-[11px] font-bold text-gray-400">全体</p>
+              <label className="cursor-pointer">
+                <input type="color" value={backgroundColor}
+                  onChange={(e) => setForm((p) => ({ ...p, backgroundColor: e.target.value }))}
+                  className="h-10 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+              </label>
+            </div>
+            <div className="flex flex-wrap items-end gap-2">
               {PASTEL_COLORS.map((c) => (
                 <button key={c.value} type="button"
                   onClick={() => setForm((p) => ({ ...p, backgroundColor: c.value }))}
@@ -449,6 +459,39 @@ export default function AdminPublicPage() {
                   style={{ backgroundColor: c.value, boxShadow: '0 0 0 1px #e5e7eb' }} />
               ))}
             </div>
+          </div>
+          <label className="flex items-center gap-3 text-xs font-bold text-gray-500">
+            <span>ナビ背景</span>
+            <input type="color" value={navColor}
+              onChange={(e) => setForm((p) => ({ ...p, navColor: e.target.value }))}
+              className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+          </label>
+        </div>
+
+        {/* 内容 */}
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <p className="mb-3 text-xs font-bold text-gray-500">内容</p>
+          <div className="space-y-3">
+            <label className="block">
+              <span className="mb-1 block text-[11px] font-bold text-gray-400">団体名</span>
+              <input value={displayName} readOnly
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-bold text-gray-500" />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-[11px] font-bold text-gray-400">サブタイトル</span>
+              <input value={form.subtitle ?? ''}
+                onChange={(e) => setForm((p) => ({ ...p, subtitle: e.target.value }))}
+                placeholder="例：初心者歓迎の社会人サークル"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-[11px] font-bold text-gray-400">団体説明</span>
+              <textarea value={form.body}
+                onChange={(e) => setForm((p) => ({ ...p, body: e.target.value }))}
+                rows={7}
+                placeholder="団体の雰囲気や参加者に伝えたい内容"
+                className="w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-sm leading-7 focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+            </label>
           </div>
         </div>
 
@@ -552,6 +595,12 @@ export default function AdminPublicPage() {
                   className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
               </label>
             </div>
+            <label className="block">
+              <span className="mb-2 block text-[11px] font-bold text-gray-400">透明度 {buttonOpacity}%</span>
+              <input type="range" min="20" max="100" step="5" value={buttonOpacity}
+                onChange={(e) => setForm((p) => ({ ...p, buttonOpacity: Number(e.target.value) }))}
+                className="w-full accent-[#06C755]" />
+            </label>
           </div>
         </div>
 
@@ -642,7 +691,7 @@ export default function AdminPublicPage() {
             </label>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Slide animation */}
       <style jsx global>{`
@@ -660,9 +709,15 @@ export default function AdminPublicPage() {
       `}</style>
 
       {/* Preview */}
-      <div className="mx-auto max-w-3xl px-4">
-        <p className="mb-2 text-center text-[11px] text-gray-400">プレビュー</p>
-        <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm" style={{ fontFamily, backgroundColor }}>
+      <aside className="lg:sticky lg:top-[73px] lg:self-start">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-xs font-bold text-gray-500">反映後の画面</p>
+          <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-gray-400 ring-1 ring-gray-200">
+            {isCategory ? 'カテゴリー型' : '静止サイト型'}
+          </span>
+        </div>
+        <div className="max-h-none overflow-auto rounded-2xl bg-gray-100 p-2 shadow-inner lg:max-h-[calc(100vh-6.5rem)]">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm" style={{ fontFamily, backgroundColor }}>
 
           {/* カテゴリー型 preview */}
           {isCategory && (
@@ -695,7 +750,7 @@ export default function AdminPublicPage() {
                 {[navLabels.about, navLabels.reserve, navLabels.blog, navLabels.contact].map((label) => (
                   <div key={label}
                     className={`text-center font-bold ${getBtnShapeClass(buttonStyle)} ${btnSizeCls}`}
-                    style={{ borderColor: accentColor, color: accentColor }}>
+                    style={{ borderColor: accentColor, color: accentColor, ...buttonOpacityStyle }}>
                     {label}
                   </div>
                 ))}
@@ -704,17 +759,11 @@ export default function AdminPublicPage() {
               <div className="w-full max-w-sm">
                 <div className="rounded-xl bg-white px-5 py-4 shadow-sm ring-1 ring-gray-100">
                   <p className="mb-2 text-xs font-bold text-gray-400">{navLabels.about}</p>
-                  <p ref={bodyRef}
-                    contentEditable suppressContentEditableWarning
-                    onFocus={() => setFocusedBody(true)}
-                    onBlur={(e) => { setFocusedBody(false); setForm((p) => ({ ...p, body: e.currentTarget.innerText })); }}
-                    className={`${bodySizeClass} min-h-24 whitespace-pre-wrap rounded px-1 opacity-90 outline-none focus:bg-gray-50 focus:ring-1 focus:ring-[#06C755]/30`}
+                  <p
+                    className={`${bodySizeClass} min-h-24 whitespace-pre-wrap opacity-90`}
                     style={{ color: textColor, fontFamily }}>
-                    {previewBody || '団体説明（クリックして編集）'}
+                    {previewBody || '団体説明'}
                   </p>
-                  {!focusedBody && !previewBody && (
-                    <p className="mt-2 text-[10px] text-gray-300">クリックで直接編集できます</p>
-                  )}
                 </div>
               </div>
 
@@ -728,20 +777,17 @@ export default function AdminPublicPage() {
                 <span className="text-sm font-bold" style={{ color: textColor }}>{displayName}</span>
                 <div className="flex gap-2 text-xs font-bold">
                   {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
-                    <span key={label} className="rounded-full px-3 py-1" style={{ backgroundColor: navColor, color: textColor }}>{label}</span>
+                    <span key={label} className="rounded-full px-3 py-1" style={{ backgroundColor: navColor, color: textColor, ...buttonOpacityStyle }}>{label}</span>
                   ))}
                 </div>
               </div>
               <div className="space-y-4 p-5">
                 <h2 className="text-2xl font-bold leading-tight" style={{ color: textColor, textAlign: titleAlign }}>{displayName}</h2>
-                <div className="relative">
-                  <p ref={subtitleRef} contentEditable suppressContentEditableWarning
-                    onBlur={(e) => { setForm((p) => ({ ...p, subtitle: e.currentTarget.innerText.trim() })); }}
-                    className="min-h-6 rounded px-1 text-sm font-bold leading-6 opacity-75 outline-none focus:bg-gray-50 focus:ring-1 focus:ring-[#06C755]/30"
-                    style={{ color: textColor, textAlign: titleAlign }}>
-                    {form.subtitle?.trim() || 'サブタイトル（クリックして編集）'}
+                {form.subtitle?.trim() && (
+                  <p className="text-sm font-bold leading-6 opacity-75" style={{ color: textColor, textAlign: titleAlign }}>
+                    {form.subtitle.trim()}
                   </p>
-                </div>
+                )}
                 <HeaderImagePreview
                   images={imageUrls}
                   captions={imageCaptions}
@@ -749,51 +795,12 @@ export default function AdminPublicPage() {
                   overlayColor={heroOverlayColor}
                   overlayOpacity={heroOverlayOpacity}
                 />
-                <div className="relative">
-                  <p ref={bodyRef} contentEditable suppressContentEditableWarning
-                    onBlur={(e) => { setForm((p) => ({ ...p, body: e.currentTarget.innerText })); }}
-                    className={`${bodySizeClass} min-h-32 whitespace-pre-wrap rounded px-1 opacity-85 outline-none focus:bg-gray-50 focus:ring-1 focus:ring-[#06C755]/30`}
+                <div>
+                  <p
+                    className={`${bodySizeClass} min-h-32 whitespace-pre-wrap opacity-85`}
                     style={{ color: textColor }}>
-                    {previewBody || '団体説明（クリックして編集）'}
+                    {previewBody || '団体説明'}
                   </p>
-                </div>
-                {/* フォント・色設定（静止サイト型） */}
-                <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 space-y-3">
-                  <div>
-                    <p className="mb-2 text-[11px] font-bold text-gray-400">フォント</p>
-                    <div className="flex gap-2">
-                      {fontOptions.map((opt) => (
-                        <button key={opt.value} type="button"
-                          onClick={() => setForm((p) => ({ ...p, fontFamily: opt.value }))}
-                          className={`flex-1 rounded-lg border py-1.5 text-xs font-bold transition ${form.fontFamily === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 bg-white hover:bg-gray-50'}`}
-                          style={form.fontFamily === opt.value
-                            ? { backgroundColor: accentColor, borderColor: accentColor, fontFamily: opt.family }
-                            : { fontFamily: opt.family }}>
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <label className="flex flex-col items-center gap-1 cursor-pointer">
-                      <span className="text-[11px] text-gray-400">ボタン色</span>
-                      <input type="color" value={accentColor}
-                        onChange={(e) => setForm((p) => ({ ...p, accentColor: e.target.value }))}
-                        className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-                    </label>
-                    <label className="flex flex-col items-center gap-1 cursor-pointer">
-                      <span className="text-[11px] text-gray-400">文字色</span>
-                      <input type="color" value={textColor}
-                        onChange={(e) => setForm((p) => ({ ...p, textColor: e.target.value }))}
-                        className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-                    </label>
-                    <label className="flex flex-col items-center gap-1 cursor-pointer">
-                      <span className="text-[11px] text-gray-400">ナビ背景</span>
-                      <input type="color" value={navColor}
-                        onChange={(e) => setForm((p) => ({ ...p, navColor: e.target.value }))}
-                        className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-                    </label>
-                  </div>
                 </div>
                 <section className="rounded-lg p-4" style={{ backgroundColor: navColor }}>
                   <p className="text-xs font-bold text-gray-400 mb-1">必須 — 予約セクション</p>
@@ -819,6 +826,8 @@ export default function AdminPublicPage() {
             </>
           )}
         </div>
+        </div>
+      </aside>
       </div>
     </form>
   );

@@ -159,6 +159,12 @@ export class UpsertPublicPageDto {
   buttonLayout?: string;
 
   @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  buttonOpacity?: number;
+
+  @IsOptional()
   @IsString()
   @MaxLength(300)
   headerText?: string;
@@ -249,6 +255,7 @@ export class PublicPagesService {
       contactLabel: dto.contactLabel?.trim() || null,
       buttonStyle: dto.buttonStyle?.trim() || null,
       buttonLayout: dto.buttonLayout?.trim() || null,
+      buttonOpacity: Number.isInteger(dto.buttonOpacity) ? dto.buttonOpacity : null,
       headerText: dto.headerText?.trim() || null,
       footerText: dto.footerText?.trim() || null,
       seoTitle: dto.seoTitle?.trim() || null,

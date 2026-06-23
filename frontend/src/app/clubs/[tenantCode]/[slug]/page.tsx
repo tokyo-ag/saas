@@ -93,7 +93,7 @@ function HeroImageBlock({
   alt: string;
   className?: string;
 }) {
-  const list = images.slice(0, 3);
+  const list = (mode === 'fixed' || mode === 'auto' ? images.slice(0, 1) : images.slice(0, 3));
   if (!list.length) return null;
 
   const overlayStyle = { backgroundColor: overlayColor, opacity: clampPercent(overlayOpacity) / 100 };
@@ -218,7 +218,14 @@ export default async function ClubCmsPage({
   const buttonStyle = page.buttonStyle ?? 'rounded';
   const buttonLayout = page.buttonLayout === 'row1x4' ? 'row1x4' : 'grid2x2';
   const buttonLayoutClass = buttonLayout === 'row1x4' ? 'grid grid-cols-2 sm:grid-cols-4' : 'grid grid-cols-2';
-  const heroImageMode = ['auto', 'slider', 'grid'].includes(page.heroImageMode || '') ? page.heroImageMode! : 'slider';
+  const buttonOpacity = clampPercent(page.buttonOpacity ?? 100);
+  const buttonOpacityStyle = { opacity: buttonOpacity / 100 };
+  const rawHeroImageMode = page.heroImageMode || 'fixed';
+  const heroImageMode = rawHeroImageMode === 'auto'
+    ? 'fixed'
+    : ['fixed', 'slider', 'grid'].includes(rawHeroImageMode)
+      ? rawHeroImageMode
+      : 'fixed';
   const heroOverlayOpacity = clampPercent(page.heroOverlayOpacity);
   const heroOverlayColor = page.heroOverlayColor || '#000000';
   const gorgeousColor = '#b8860b';
@@ -284,21 +291,21 @@ export default async function ClubCmsPage({
 
           <nav className={`mt-10 w-full max-w-lg gap-3 ${buttonLayoutClass}`}>
             <a href="#about" className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
-              style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
+              style={{ borderColor: btnBorderColor, color: btnBorderColor, ...buttonOpacityStyle }}>
               {navLabels.about}
             </a>
             <Link href={reserveHref} className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
-              style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
+              style={{ borderColor: btnBorderColor, color: btnBorderColor, ...buttonOpacityStyle }}>
               {navLabels.reserve}
             </Link>
             <Link href={`/clubs/${page.tenant.code ?? tenantCode}/blog`}
               className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
-              style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
+              style={{ borderColor: btnBorderColor, color: btnBorderColor, ...buttonOpacityStyle }}>
               {navLabels.blog}
             </Link>
             <Link href={contactHref}
               className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
-              style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
+              style={{ borderColor: btnBorderColor, color: btnBorderColor, ...buttonOpacityStyle }}>
               {navLabels.contact}
             </Link>
           </nav>
@@ -341,7 +348,7 @@ export default async function ClubCmsPage({
             <a href="#about" className="hidden sm:block text-gray-500 hover:text-gray-900">{navLabels.about}</a>
             <a href="#blog" className="hidden sm:block text-gray-500 hover:text-gray-900">{navLabels.blog}</a>
             <a href="#contact" className="hidden sm:block text-gray-500 hover:text-gray-900">{navLabels.contact}</a>
-            <Link href={reserveHref} className="rounded-full px-4 py-2 text-white" style={{ backgroundColor: accentColor }}>
+            <Link href={reserveHref} className="rounded-full px-4 py-2 text-white" style={{ backgroundColor: accentColor, ...buttonOpacityStyle }}>
               {navLabels.reserve}
             </Link>
           </div>
@@ -352,10 +359,10 @@ export default async function ClubCmsPage({
         <nav className="mb-6 rounded-xl px-4 py-4" style={{ backgroundColor: navColor }}>
           <p className="mb-3 text-xs font-bold text-gray-400">目次</p>
           <div className="flex flex-wrap gap-2 text-sm font-bold">
-            <a href="#about" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm">{navLabels.about}</a>
-            <a href="#blog" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm">{navLabels.blog}</a>
-            <a href="#reserve" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm">{navLabels.reserve}</a>
-            <a href="#contact" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm">{navLabels.contact}</a>
+            <a href="#about" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm" style={buttonOpacityStyle}>{navLabels.about}</a>
+            <a href="#blog" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm" style={buttonOpacityStyle}>{navLabels.blog}</a>
+            <a href="#reserve" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm" style={buttonOpacityStyle}>{navLabels.reserve}</a>
+            <a href="#contact" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm" style={buttonOpacityStyle}>{navLabels.contact}</a>
           </div>
         </nav>
 
@@ -398,7 +405,7 @@ export default async function ClubCmsPage({
           <p className="mt-2 text-sm leading-7 text-gray-500">ご質問・ご相談はこちらからお気軽にどうぞ。</p>
           <Link href={contactHref}
             className="mt-4 inline-block rounded-full px-6 py-3 text-sm font-bold text-white transition hover:opacity-80"
-            style={{ backgroundColor: accentColor }}>
+            style={{ backgroundColor: accentColor, ...buttonOpacityStyle }}>
             LINEで問い合わせる
           </Link>
         </div>

@@ -757,6 +757,7 @@ export interface PublicPage {
   contactLabel?: string | null;
   buttonStyle?: string | null;
   buttonLayout?: string | null;
+  buttonOpacity?: number | null;
   headerText?: string | null;
   footerText?: string | null;
   seoTitle?: string | null;
@@ -792,6 +793,7 @@ export interface PublicPageInput {
   layoutVariant?: string;
   buttonStyle?: string;
   buttonLayout?: string;
+  buttonOpacity?: number;
   headerText?: string;
   footerText?: string;
   aboutLabel?: string;
@@ -862,6 +864,7 @@ export interface PublicCmsPage {
   reserveViewStyle?: string | null;
   buttonStyle?: string | null;
   buttonLayout?: string | null;
+  buttonOpacity?: number | null;
   headerText?: string | null;
   footerText?: string | null;
   seoTitle?: string | null;
