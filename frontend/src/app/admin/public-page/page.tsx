@@ -69,11 +69,6 @@ const navItems = [
   { key: 'reserve', field: 'reserveLabel' },
 ] as const;
 
-const imageLayoutOptions = [
-  { label: 'スライダー', value: 'slider' },
-  { label: 'グリッド', value: 'grid' },
-  { label: '1枚', value: 'single' },
-];
 
 async function uploadFile(file: File): Promise<string> {
   const ext = file.name.split('.').pop() ?? 'jpg';
@@ -157,12 +152,10 @@ function TextToolbar({
 
 function HeroImages({
   imageUrls,
-  imageLayout,
   displayName,
   uploading,
 }: {
   imageUrls: string[];
-  imageLayout: string;
   displayName: string;
   uploading: boolean;
 }) {
@@ -173,43 +166,32 @@ function HeroImages({
       </div>
     );
   }
-  if (imageLayout === 'single') {
+  if (imageUrls.length === 1) {
     return (
       <div className="h-56 overflow-hidden bg-gray-100">
         <img src={imageUrls[0]} alt="" className="h-full w-full object-cover" />
       </div>
     );
   }
-  if (imageLayout === 'grid') {
-    return (
-      <div className={`grid h-56 gap-0.5 bg-gray-100 ${imageUrls.length === 1 ? '' : imageUrls.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
-        {imageUrls.map((url, i) => (
-          <img key={`${url}-${i}`} src={url} alt="" className="h-full w-full object-cover" />
-        ))}
-      </div>
-    );
-  }
-  // slider (default)
+  // 2-3 枚: auto slider
   return (
     <div className="relative h-56 overflow-hidden bg-gray-100">
       <div
         className="flex h-full"
         style={{
           width: `${imageUrls.length * 100}%`,
-          animation: imageUrls.length >= 2 ? 'public-site-slide 10s infinite' : undefined,
+          animation: 'public-site-slide 10s infinite',
         }}
       >
         {imageUrls.map((url, i) => (
           <img key={`${url}-${i}`} src={url} alt="" className="h-full object-cover" style={{ width: `${100 / imageUrls.length}%` }} />
         ))}
       </div>
-      {imageUrls.length > 1 && (
-        <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
-          {imageUrls.map((url, i) => (
-            <span key={`${url}-dot-${i}`} className="h-1.5 w-1.5 rounded-full bg-white/80" />
-          ))}
-        </div>
-      )}
+      <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
+        {imageUrls.map((url, i) => (
+          <span key={`${url}-dot-${i}`} className="h-1.5 w-1.5 rounded-full bg-white/80" />
+        ))}
+      </div>
     </div>
   );
 }
@@ -244,7 +226,6 @@ export default function AdminPublicPage() {
   const bodySizeClass = bodySizeOptions.find((o) => o.value === form.bodySize)?.className ?? bodySizeOptions[1].className;
   const titleAlign = (alignOptions.some((o) => o.value === form.titleAlign) ? form.titleAlign! : 'left') as 'left' | 'center' | 'right';
   const layoutVariant = form.layoutVariant || 'one_page';
-  const imageLayout = form.imageLayout || 'slider';
   const previewBody = form.body.trim() || tenant?.description || '';
   const imageUrls = (form.imageUrls?.length ? form.imageUrls : form.coverImageUrl ? [form.coverImageUrl] : [])
     .filter(Boolean).slice(0, 3);
@@ -326,7 +307,7 @@ export default function AdminPublicPage() {
       imageUrls,
       dividerText: '',
       textColor, accentColor, backgroundColor, navColor,
-      imageLayout,
+      imageLayout: form.imageLayout || 'slider',
       fontFamily: form.fontFamily,
       titleSize: form.titleSize,
       titleAlign,
@@ -450,24 +431,8 @@ export default function AdminPublicPage() {
 
         {/* Images */}
         <div>
-          <p className="mb-2 text-xs font-bold text-gray-500">画像（3枚まで）</p>
+          <p className="mb-2 text-xs font-bold text-gray-500">画像（3枚まで・1枚なら固定、2〜3枚なら自動スライド）</p>
           <div className="flex flex-wrap items-center gap-2">
-            {/* Image layout selector */}
-            <div className="flex rounded-lg border border-gray-200 p-0.5">
-              {imageLayoutOptions.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setForm((prev) => ({ ...prev, imageLayout: opt.value }))}
-                  className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
-                    imageLayout === opt.value ? 'text-white' : 'text-gray-500 hover:bg-gray-50'
-                  }`}
-                  style={imageLayout === opt.value ? { backgroundColor: accentColor } : undefined}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
             <div className="flex flex-wrap gap-2">
               {imageUrls.map((url, index) => (
                 <button
@@ -549,7 +514,7 @@ export default function AdminPublicPage() {
           )}
 
           {/* Hero */}
-          <HeroImages imageUrls={imageUrls} imageLayout={imageLayout} displayName={displayName} uploading={uploading} />
+          <HeroImages imageUrls={imageUrls} displayName={displayName} uploading={uploading} />
 
           {/* Content */}
           <div className="space-y-4 p-5">
