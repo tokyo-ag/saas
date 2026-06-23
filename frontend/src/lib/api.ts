@@ -745,6 +745,7 @@ export interface PublicPage {
   imageLayout?: string | null;
   heroImageMode?: string | null;
   heroNavPosition?: string | null;
+  buttonBgColor?: string | null;
   heroOverlayOpacity?: number | null;
   heroOverlayColor?: string | null;
   reserveViewStyle?: string | null;
@@ -787,6 +788,7 @@ export interface PublicPageInput {
   imageLayout?: string;
   heroImageMode?: string;
   heroNavPosition?: string;
+  buttonBgColor?: string;
   heroOverlayOpacity?: number;
   heroOverlayColor?: string;
   reserveViewStyle?: string;
@@ -854,6 +856,7 @@ export interface PublicCmsPage {
   backgroundColor?: string | null;
   heroImageMode?: string | null;
   heroNavPosition?: string | null;
+  buttonBgColor?: string | null;
   heroOverlayOpacity?: number | null;
   heroOverlayColor?: string | null;
   fontFamily?: string | null;

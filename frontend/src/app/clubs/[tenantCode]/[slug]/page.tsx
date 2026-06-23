@@ -252,6 +252,7 @@ export default async function ClubCmsPage({
   const btnBorderColor = buttonStyle === 'gorgeous' ? gorgeousColor : accentColor;
   const btnClass = getBtnClass(buttonStyle);
   const heroNavPosition = page.heroNavPosition === 'inside' ? 'inside' : 'below';
+  const btnBgStyle = page.buttonBgColor ? { backgroundColor: page.buttonBgColor } : {};
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -312,21 +313,21 @@ export default async function ClubCmsPage({
 
           <nav className={`mt-10 w-full max-w-lg gap-3 ${buttonLayoutClass}`}>
             <a href="#about" className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
-              style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>
+              style={{ borderColor: btnBorderColor, color: textColor, ...btnBgStyle, ...buttonOpacityStyle }}>
               {navLabels.about}
             </a>
             <Link href={reserveHref} className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
-              style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>
+              style={{ borderColor: btnBorderColor, color: textColor, ...btnBgStyle, ...buttonOpacityStyle }}>
               {navLabels.reserve}
             </Link>
             <Link href={`/clubs/${page.tenant.code ?? tenantCode}/blog`}
               className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
-              style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>
+              style={{ borderColor: btnBorderColor, color: textColor, ...btnBgStyle, ...buttonOpacityStyle }}>
               {navLabels.blog}
             </Link>
             <Link href={contactHref}
               className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
-              style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>
+              style={{ borderColor: btnBorderColor, color: textColor, ...btnBgStyle, ...buttonOpacityStyle }}>
               {navLabels.contact}
             </Link>
           </nav>
@@ -379,10 +380,10 @@ export default async function ClubCmsPage({
                 {page.subtitle && <p className="mt-2 text-base opacity-80" style={{ color: textColor }}>{page.subtitle}</p>}
                 {heroNavPosition === 'inside' && (
                   <nav className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    <a href="#about" className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>{navLabels.about}</a>
-                    <a href="#blog" className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>{navLabels.blog}</a>
-                    <Link href={reserveHref} className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>{navLabels.reserve}</Link>
-                    <Link href={contactHref} className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>{navLabels.contact}</Link>
+                    <a href="#about" className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...btnBgStyle, ...buttonOpacityStyle }}>{navLabels.about}</a>
+                    <a href="#blog" className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...btnBgStyle, ...buttonOpacityStyle }}>{navLabels.blog}</a>
+                    <Link href={reserveHref} className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...btnBgStyle, ...buttonOpacityStyle }}>{navLabels.reserve}</Link>
+                    <Link href={contactHref} className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...btnBgStyle, ...buttonOpacityStyle }}>{navLabels.contact}</Link>
                   </nav>
                 )}
               </div>
@@ -390,10 +391,10 @@ export default async function ClubCmsPage({
           </div>
           {heroNavPosition === 'below' && (
             <nav className="mx-auto grid max-w-3xl grid-cols-2 gap-3 px-4 py-4 sm:grid-cols-4">
-              <a href="#about" className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>{navLabels.about}</a>
-              <a href="#blog" className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>{navLabels.blog}</a>
-              <Link href={reserveHref} className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>{navLabels.reserve}</Link>
-              <Link href={contactHref} className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>{navLabels.contact}</Link>
+              <a href="#about" className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...btnBgStyle, ...buttonOpacityStyle }}>{navLabels.about}</a>
+              <a href="#blog" className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...btnBgStyle, ...buttonOpacityStyle }}>{navLabels.blog}</a>
+              <Link href={reserveHref} className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...btnBgStyle, ...buttonOpacityStyle }}>{navLabels.reserve}</Link>
+              <Link href={contactHref} className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...btnBgStyle, ...buttonOpacityStyle }}>{navLabels.contact}</Link>
             </nav>
           )}
         </>

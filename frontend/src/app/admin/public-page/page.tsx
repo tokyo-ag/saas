@@ -34,6 +34,7 @@ const emptyForm: PublicPageInput = {
   buttonStyle: 'rounded',
   buttonLayout: 'grid2x2',
   buttonOpacity: 100,
+  buttonBgColor: '',
   headerText: '',
   footerText: '',
   aboutLabel: '団体詳細',
@@ -272,6 +273,8 @@ export default function AdminPublicPage() {
   const buttonLayout = form.buttonLayout === 'row1x4' ? 'row1x4' : 'grid2x2';
   const buttonOpacity = clampPercent(form.buttonOpacity ?? 100);
   const buttonOpacityStyle = { opacity: buttonOpacity / 100 };
+  const buttonBgColor = form.buttonBgColor?.trim() || undefined;
+  const buttonBgStyle = buttonBgColor ? { backgroundColor: buttonBgColor } : {};
   const previewButtonLayoutClass = buttonLayout === 'row1x4' ? 'grid grid-cols-4' : 'grid grid-cols-2';
   const previewButtonSizeClass = buttonLayout === 'row1x4'
     ? 'h-12 px-2 text-xs leading-tight'
@@ -314,6 +317,7 @@ export default function AdminPublicPage() {
             buttonStyle: (first as any).buttonStyle ?? 'rounded',
             buttonLayout: first.buttonLayout ?? 'grid2x2',
             buttonOpacity: first.buttonOpacity ?? 100,
+            buttonBgColor: first.buttonBgColor ?? '',
             headerText: (first as any).headerText ?? '',
             footerText: (first as any).footerText ?? '',
             aboutLabel: first.aboutLabel ?? '団体詳細',
@@ -377,6 +381,7 @@ export default function AdminPublicPage() {
       buttonStyle,
       buttonLayout,
       buttonOpacity,
+      buttonBgColor: form.buttonBgColor?.trim() || undefined,
       status: 'published',
       seoTitle: displayName,
       seoDescription: form.body.replace(/[#>*_-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 150),
@@ -583,6 +588,16 @@ export default function AdminPublicPage() {
                 <span className="w-8 text-right text-xs text-gray-400">{buttonOpacity}%</span>
               </div>
               <div className="flex items-center gap-3">
+                <span className="w-14 shrink-0 text-xs font-bold text-gray-500">中の色</span>
+                <input type="color" value={buttonBgColor || '#ffffff'}
+                  onChange={(e) => setForm((p) => ({ ...p, buttonBgColor: e.target.value }))}
+                  className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+                {buttonBgColor && (
+                  <button type="button" onClick={() => setForm((p) => ({ ...p, buttonBgColor: '' }))}
+                    className="text-xs text-gray-400 hover:text-gray-600">なし</button>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
                 <span className="w-14 shrink-0 text-xs font-bold text-gray-500">文字色</span>
                 <input type="color" value={textColor}
                   onChange={(e) => setForm((p) => ({ ...p, textColor: e.target.value }))}
@@ -738,7 +753,7 @@ export default function AdminPublicPage() {
                 {[navLabels.about, navLabels.reserve, navLabels.blog, navLabels.contact].map((label) => (
                   <div key={label}
                     className={`flex min-w-0 items-center justify-center truncate whitespace-nowrap text-center font-bold ${getBtnShapeClass(buttonStyle)} ${previewButtonSizeClass}`}
-                    style={{ borderColor: accentColor, color: textColor, ...buttonOpacityStyle }}>
+                    style={{ borderColor: accentColor, color: textColor, ...buttonBgStyle, ...buttonOpacityStyle }}>
                     {label}
                   </div>
                 ))}
@@ -781,7 +796,7 @@ export default function AdminPublicPage() {
                         {heroNavPosition === 'inside' && (
                           <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] font-bold">
                             {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
-                              <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderColor: accentColor, color: textColor, ...buttonOpacityStyle }}>{label}</span>
+                              <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderColor: accentColor, color: textColor, ...buttonBgStyle, ...buttonOpacityStyle }}>{label}</span>
                             ))}
                           </div>
                         )}
@@ -791,7 +806,7 @@ export default function AdminPublicPage() {
                   {heroNavPosition === 'below' && (
                     <div className="grid grid-cols-2 gap-2 border-b border-gray-100 px-4 py-3 text-[11px] font-bold">
                       {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
-                        <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderColor: accentColor, color: textColor, ...buttonOpacityStyle }}>{label}</span>
+                        <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderColor: accentColor, color: textColor, ...buttonBgStyle, ...buttonOpacityStyle }}>{label}</span>
                       ))}
                     </div>
                   )}
@@ -802,7 +817,7 @@ export default function AdminPublicPage() {
                   <span className="text-sm font-bold leading-5" style={{ color: textColor }}>{displayName}</span>
                   <div className="grid grid-cols-2 gap-2 text-[11px] font-bold">
                     {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
-                      <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderColor: accentColor, color: textColor, ...buttonOpacityStyle }}>{label}</span>
+                      <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderColor: accentColor, color: textColor, ...buttonBgStyle, ...buttonOpacityStyle }}>{label}</span>
                     ))}
                   </div>
                 </div>
