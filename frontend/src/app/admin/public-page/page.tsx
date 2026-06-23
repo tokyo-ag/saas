@@ -768,7 +768,6 @@ export default function AdminPublicPage() {
                 </div>
               </div>
               <div className="space-y-4 p-5">
-                <h2 className="text-2xl font-bold leading-tight" style={{ color: textColor, textAlign: titleAlign }}>{displayName}</h2>
                 {form.subtitle?.trim() && (
                   <p className="text-sm font-bold leading-6 opacity-75" style={{ color: textColor, textAlign: titleAlign }}>
                     {form.subtitle.trim()}
