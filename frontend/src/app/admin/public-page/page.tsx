@@ -357,22 +357,61 @@ export default function AdminPublicPage() {
       {/* Settings panel */}
       <div className="mx-auto max-w-3xl space-y-3 px-4 py-4">
 
-        {/* Common: colors */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <p className="mb-3 text-xs font-bold text-gray-500">カラー</p>
-          <div className="flex flex-wrap gap-5">
-            {[
-              { label: '背景', key: 'backgroundColor' as const, val: backgroundColor },
-              { label: 'ボタン', key: 'accentColor' as const, val: accentColor },
-              { label: '目次', key: 'navColor' as const, val: navColor },
-            ].map(({ label, key, val }) => (
-              <label key={key} className="flex flex-col items-center gap-1 cursor-pointer">
-                <span className="text-[11px] text-gray-400">{label}</span>
-                <input type="color" value={val}
-                  onChange={(e) => setForm((p) => ({ ...p, [key]: e.target.value }))}
-                  className="h-10 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-              </label>
-            ))}
+        {/* Common: colors + images */}
+        <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-4">
+          <div>
+            <p className="mb-3 text-xs font-bold text-gray-500">カラー</p>
+            <div className="flex flex-wrap gap-5">
+              {[
+                { label: '背景', key: 'backgroundColor' as const, val: backgroundColor },
+                { label: 'ボタン', key: 'accentColor' as const, val: accentColor },
+                { label: '目次', key: 'navColor' as const, val: navColor },
+              ].map(({ label, key, val }) => (
+                <label key={key} className="flex flex-col items-center gap-1 cursor-pointer">
+                  <span className="text-[11px] text-gray-400">{label}</span>
+                  <input type="color" value={val}
+                    onChange={(e) => setForm((p) => ({ ...p, [key]: e.target.value }))}
+                    className="h-10 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+                </label>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="mb-2 text-xs font-bold text-gray-500">フォント</p>
+            <div className="flex gap-2">
+              {fontOptions.map((opt) => (
+                <button key={opt.value} type="button"
+                  onClick={() => setForm((p) => ({ ...p, fontFamily: opt.value }))}
+                  className={`rounded-lg border px-4 py-2 text-sm font-bold transition ${form.fontFamily === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                  style={form.fontFamily === opt.value ? { backgroundColor: accentColor, borderColor: accentColor, fontFamily: opt.family } : { fontFamily: opt.family }}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="mb-2 text-xs font-bold text-gray-500">画像（3枚まで・1枚なら固定、2〜3枚なら自動スライド）</p>
+            <div className="flex flex-wrap gap-2">
+              {imageUrls.map((url, index) => (
+                <button key={`${url}-${index}`} type="button"
+                  onClick={() => setForm((prev) => {
+                    const next = (prev.imageUrls ?? []).filter((_, i) => i !== index);
+                    return { ...prev, imageUrls: next, coverImageUrl: next[0] ?? '' };
+                  })}
+                  className="group relative h-14 w-20 overflow-hidden rounded-lg border border-gray-200">
+                  <img src={url} alt="" className="h-full w-full object-cover" />
+                  <span className="absolute inset-0 hidden items-center justify-center bg-black/50 text-xs font-bold text-white group-hover:flex">削除</span>
+                </button>
+              ))}
+              {imageUrls.length < 3 && (
+                <label className={`flex h-14 w-20 cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 text-xs font-bold text-gray-500 hover:border-[#06C755] hover:text-[#06C755] ${uploading ? 'opacity-50' : ''}`}>
+                  <input type="file" accept="image/*" disabled={uploading}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImageFile(f); e.currentTarget.value = ''; }}
+                    className="hidden" />
+                  {uploading ? '...' : '+ 追加'}
+                </label>
+              )}
+            </div>
           </div>
         </div>
 
@@ -454,30 +493,6 @@ export default function AdminPublicPage() {
               </div>
             </div>
             <div>
-              <p className="mb-2 text-xs font-bold text-gray-500">画像（3枚まで・1枚なら固定、2〜3枚なら自動スライド）</p>
-              <div className="flex flex-wrap gap-2">
-                {imageUrls.map((url, index) => (
-                  <button key={`${url}-${index}`} type="button"
-                    onClick={() => setForm((prev) => {
-                      const next = (prev.imageUrls ?? []).filter((_, i) => i !== index);
-                      return { ...prev, imageUrls: next, coverImageUrl: next[0] ?? '' };
-                    })}
-                    className="group relative h-14 w-20 overflow-hidden rounded-lg border border-gray-200">
-                    <img src={url} alt="" className="h-full w-full object-cover" />
-                    <span className="absolute inset-0 hidden items-center justify-center bg-black/50 text-xs font-bold text-white group-hover:flex">削除</span>
-                  </button>
-                ))}
-                {imageUrls.length < 3 && (
-                  <label className={`flex h-14 w-20 cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 text-xs font-bold text-gray-500 hover:border-[#06C755] hover:text-[#06C755] ${uploading ? 'opacity-50' : ''}`}>
-                    <input type="file" accept="image/*" disabled={uploading}
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImageFile(f); e.currentTarget.value = ''; }}
-                      className="hidden" />
-                    {uploading ? '...' : '+ 追加'}
-                  </label>
-                )}
-              </div>
-            </div>
-            <div>
               <p className="mb-1 text-xs font-bold text-gray-500">フッターテキスト（任意）</p>
               <input value={form.footerText ?? ''}
                 onChange={(e) => setForm((p) => ({ ...p, footerText: e.target.value }))}
@@ -508,7 +523,9 @@ export default function AdminPublicPage() {
 
           {/* カテゴリー型 preview */}
           {isCategory && (
-            <div className="flex flex-col items-center px-6 py-12">
+            <div className="flex flex-col items-center">
+              <HeroImages imageUrls={imageUrls} displayName={displayName} uploading={uploading} />
+              <div className="flex w-full flex-col items-center px-6 py-10">
               {tenantIcon ? (
                 <img src={tenantIcon} alt={displayName} className="h-20 w-20 rounded-full object-cover" />
               ) : (
@@ -528,6 +545,7 @@ export default function AdminPublicPage() {
                     {label}
                   </div>
                 ))}
+              </div>
               </div>
             </div>
           )}
