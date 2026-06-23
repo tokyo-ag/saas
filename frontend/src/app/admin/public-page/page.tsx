@@ -434,6 +434,62 @@ export default function AdminPublicPage() {
     }
   }
 
+  function renderPreviewText(content: string) {
+    return (
+      <p className={`${bodySizeClass} whitespace-pre-wrap opacity-90`} style={{ color: textColor, fontFamily }}>
+        {content || '団体説明'}
+      </p>
+    );
+  }
+
+  function renderPreviewBlocks() {
+    if (!blocks.length) return renderPreviewText(previewBody);
+
+    return (
+      <div className="space-y-5">
+        {blocks.map((block) => {
+          const content = block.content?.trim() || '';
+
+          if (block.type === 'media-text') {
+            const imageRight = block.imagePosition === 'right';
+            return (
+              <div key={block.id} className={`flex items-start gap-3 ${imageRight ? 'flex-row-reverse' : ''}`}>
+                {block.imageUrl && (
+                  <img src={block.imageUrl} alt="" className="h-24 w-28 shrink-0 rounded-xl object-cover" />
+                )}
+                <div className="min-w-0 flex-1">{renderPreviewText(content)}</div>
+              </div>
+            );
+          }
+
+          if (block.type === 'profile') {
+            return (
+              <div key={block.id} className="flex items-start gap-3">
+                {block.imageUrl && (
+                  <img src={block.imageUrl} alt="" className="h-16 w-16 shrink-0 rounded-full object-cover" />
+                )}
+                <div className="min-w-0 flex-1">{renderPreviewText(content)}</div>
+              </div>
+            );
+          }
+
+          if (block.type === 'feature') {
+            return (
+              <div key={block.id} className="space-y-3">
+                {block.imageUrl && (
+                  <img src={block.imageUrl} alt="" className="max-h-52 w-full rounded-xl object-cover" />
+                )}
+                {renderPreviewText(content)}
+              </div>
+            );
+          }
+
+          return <div key={block.id}>{renderPreviewText(content)}</div>;
+        })}
+      </div>
+    );
+  }
+
   async function handleImageFile(file: File) {
     setUploading(true); setError('');
     try {
@@ -1022,11 +1078,7 @@ export default function AdminPublicPage() {
               <div className="w-full max-w-sm">
                 <div className="rounded-xl px-5 py-4 shadow-sm ring-1 ring-gray-100" style={{ backgroundColor: navBg }}>
                   <p className="mb-2 text-xs font-bold text-gray-400">{navLabels.about}</p>
-                  <p
-                    className={`${bodySizeClass} min-h-24 whitespace-pre-wrap opacity-90`}
-                    style={{ color: textColor, fontFamily }}>
-                    {previewBody || '団体説明'}
-                  </p>
+                  {renderPreviewBlocks()}
                 </div>
               </div>
 
@@ -1098,11 +1150,7 @@ export default function AdminPublicPage() {
                   />
                 )}
                 <div className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
-                  <p
-                    className={`${bodySizeClass} min-h-32 whitespace-pre-wrap opacity-85`}
-                    style={{ color: textColor }}>
-                    {previewBody || '団体説明'}
-                  </p>
+                  {renderPreviewBlocks()}
                 </div>
                 <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
                   <p className="text-xs font-bold text-gray-400 mb-1">必須 — 予約セクション</p>
