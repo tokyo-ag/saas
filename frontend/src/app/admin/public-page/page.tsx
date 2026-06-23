@@ -429,12 +429,13 @@ export default function AdminPublicPage() {
       {/* Settings panel */}
       <section className="space-y-3">
 
-        {/* 背景 */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
-          <p className="text-xs font-bold text-gray-500">背景</p>
+        {/* 全体 */}
+        <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-4">
+          <p className="text-xs font-bold text-gray-500">全体</p>
+          {/* 背景色 */}
           <div className="grid gap-4 sm:grid-cols-[auto_1fr]">
             <div className="space-y-2">
-              <p className="text-[11px] font-bold text-gray-400">全体</p>
+              <p className="text-[11px] font-bold text-gray-400">背景色</p>
               <label className="cursor-pointer">
                 <input type="color" value={backgroundColor}
                   onChange={(e) => setForm((p) => ({ ...p, backgroundColor: e.target.value }))}
@@ -451,102 +452,142 @@ export default function AdminPublicPage() {
               ))}
             </div>
           </div>
-        </div>
-
-        {/* 内容 */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <p className="mb-3 text-xs font-bold text-gray-500">内容</p>
-          <div className="space-y-3">
-            <label className="block">
-              <span className="mb-1 block text-[11px] font-bold text-gray-400">サブタイトル</span>
-              <input value={form.subtitle ?? ''}
-                onChange={(e) => setForm((p) => ({ ...p, subtitle: e.target.value }))}
-                placeholder="例：初心者歓迎の社会人サークル"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-            </label>
-            <label className="block">
-              <span className="mb-1 block text-[11px] font-bold text-gray-400">団体説明</span>
-              <textarea value={form.body}
-                onChange={(e) => setForm((p) => ({ ...p, body: e.target.value }))}
-                rows={7}
-                placeholder="団体の雰囲気や参加者に伝えたい内容"
-                className="w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-sm leading-7 focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-            </label>
-          </div>
-        </div>
-
-        {/* テキスト */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <p className="mb-3 text-xs font-bold text-gray-500">テキスト</p>
-          <div className="space-y-4">
-            <div>
-              <p className="mb-2 text-[11px] font-bold text-gray-400">フォント</p>
-              <div className="flex flex-wrap gap-2">
-                {fontOptions.map((opt) => (
-                  <button key={opt.value} type="button"
-                    onClick={() => setForm((p) => ({ ...p, fontFamily: opt.value }))}
-                    className={`rounded-full border px-4 py-2 text-xs font-bold transition ${form.fontFamily === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                    style={form.fontFamily === opt.value
-                      ? { backgroundColor: accentColor, borderColor: accentColor, fontFamily: opt.family }
-                      : { fontFamily: opt.family }}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="mb-2 text-[11px] font-bold text-gray-400">本文サイズ</p>
-              <div className="flex flex-wrap gap-2">
-                {bodySizeOptions.map((opt) => (
-                  <button key={opt.value} type="button"
-                    onClick={() => setForm((p) => ({ ...p, bodySize: opt.value }))}
-                    className={`rounded-full border px-4 py-2 text-xs font-bold transition ${form.bodySize === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                    style={form.bodySize === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
+          {/* フォント */}
+          <div>
+            <p className="mb-2 text-[11px] font-bold text-gray-400">フォント</p>
+            <div className="flex flex-wrap gap-2">
+              {fontOptions.map((opt) => (
+                <button key={opt.value} type="button"
+                  onClick={() => setForm((p) => ({ ...p, fontFamily: opt.value }))}
+                  className={`rounded-full border px-4 py-2 text-xs font-bold transition ${form.fontFamily === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                  style={form.fontFamily === opt.value
+                    ? { backgroundColor: accentColor, borderColor: accentColor, fontFamily: opt.family }
+                    : { fontFamily: opt.family }}>
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
-
-        {/* ラベル名称 */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <p className="mb-2 text-xs font-bold text-gray-500">ラベル名称</p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {[
-              { field: 'aboutLabel' as const, placeholder: '団体詳細' },
-              { field: 'reserveLabel' as const, placeholder: '予約する' },
-              { field: 'blogLabel' as const, placeholder: 'ブログ' },
-              { field: 'contactLabel' as const, placeholder: 'お問い合わせ' },
-            ].map(({ field, placeholder }) => (
-              <input key={field} value={(form[field] as string) ?? ''}
-                onChange={(e) => setForm((p) => ({ ...p, [field]: e.target.value }))}
-                placeholder={placeholder}
-                className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-            ))}
+          {/* 文字サイズ */}
+          <div>
+            <p className="mb-2 text-[11px] font-bold text-gray-400">文字サイズ</p>
+            <div className="flex flex-wrap gap-2">
+              {bodySizeOptions.map((opt) => (
+                <button key={opt.value} type="button"
+                  onClick={() => setForm((p) => ({ ...p, bodySize: opt.value }))}
+                  className={`rounded-full border px-4 py-2 text-xs font-bold transition ${form.bodySize === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                  style={form.bodySize === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
+          {/* 文字色 */}
+          <label className="flex items-center gap-3 text-xs font-bold text-gray-500">
+            <span>文字色</span>
+            <input type="color" value={textColor}
+              onChange={(e) => setForm((p) => ({ ...p, textColor: e.target.value }))}
+              className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+          </label>
         </div>
 
-        {/* ボタン */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <p className="mb-3 text-xs font-bold text-gray-500">ボタン</p>
-          <div className="space-y-4">
-            <div>
-              <p className="mb-2 text-[11px] font-bold text-gray-400">配置</p>
-              <div className="flex flex-wrap gap-2">
-                {BUTTON_LAYOUT_OPTIONS.map((opt) => (
-                  <button key={opt.value} type="button"
-                    onClick={() => setForm((p) => ({ ...p, buttonLayout: opt.value }))}
-                    className={`rounded-full border px-4 py-2 text-sm font-bold transition ${buttonLayout === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                    style={buttonLayout === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
-                    {opt.label}
-                  </button>
-                ))}
+        {/* ヘッダー */}
+        <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-bold text-gray-500">ヘッダー</p>
+            <span className="text-[11px] font-bold text-gray-400">{imageUrls.length}/3</span>
+          </div>
+          {/* 画像 */}
+          <div>
+            <div className="mb-3 flex flex-wrap gap-2">
+              {HERO_IMAGE_MODE_OPTIONS.map((opt) => (
+                <button key={opt.value} type="button"
+                  onClick={() => setForm((p) => ({ ...p, heroImageMode: opt.value }))}
+                  className={`rounded-full border px-4 py-2 text-xs font-bold transition ${heroImageMode === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                  style={heroImageMode === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {imageUrls.map((url, i) => (
+                <div key={`${url}-${i}`} className="rounded-lg border border-gray-200 bg-gray-50 p-2">
+                  <div className="group relative h-24 overflow-hidden rounded-lg bg-gray-100">
+                    <img src={url} alt="" className="h-full w-full object-cover" />
+                    <button type="button"
+                      onClick={() => setForm((prev) => {
+                        const next = (prev.imageUrls ?? []).filter((_, idx) => idx !== i);
+                        const captions = (prev.imageCaptions ?? []).filter((_, idx) => idx !== i).slice(0, next.length);
+                        return { ...prev, imageUrls: next, imageCaptions: captions, coverImageUrl: next[0] ?? '' };
+                      })}
+                      className="absolute inset-0 hidden items-center justify-center bg-black/50 text-xs font-bold text-white group-hover:flex">
+                      削除
+                    </button>
+                  </div>
+                  <input
+                    value={imageCaptions[i] ?? ''}
+                    onChange={(e) => setForm((prev) => {
+                      const captions = [...(prev.imageCaptions ?? [])];
+                      captions[i] = e.target.value.slice(0, 80);
+                      return { ...prev, imageCaptions: captions.slice(0, 3) };
+                    })}
+                    placeholder="画像説明（任意）"
+                    className="mt-2 w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                  />
+                </div>
+              ))}
+              {imageUrls.length < 3 && (
+                <label className={`flex min-h-[8.7rem] cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 text-xs font-bold text-gray-400 hover:border-[#06C755] hover:text-[#06C755] ${uploading ? 'opacity-50' : ''}`}>
+                  <input type="file" accept="image/*" disabled={uploading}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImageFile(f); e.currentTarget.value = ''; }}
+                    className="hidden" />
+                  {uploading ? '...' : '+ 追加'}
+                </label>
+              )}
+            </div>
+            {imageUrls.length > 0 && (
+              <div className="mt-4 grid gap-4 border-t border-gray-100 pt-4 sm:grid-cols-2">
+                <div>
+                  <p className="mb-2 text-[11px] font-bold text-gray-400">画像の色味</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input type="color" value={heroOverlayColor}
+                      onChange={(e) => setForm((p) => ({ ...p, heroOverlayColor: e.target.value }))}
+                      className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+                    {TONE_COLORS.map((c) => (
+                      <button key={c.value} type="button" title={c.label}
+                        onClick={() => setForm((p) => ({ ...p, heroOverlayColor: c.value }))}
+                        className={`h-8 w-8 rounded-full border-2 ${heroOverlayColor === c.value ? 'border-gray-500' : 'border-transparent'}`}
+                        style={{ backgroundColor: c.value, boxShadow: '0 0 0 1px #e5e7eb' }} />
+                    ))}
+                  </div>
+                </div>
+                <label className="block">
+                  <span className="mb-2 block text-[11px] font-bold text-gray-400">画像透明度 {heroOverlayOpacity}%</span>
+                  <input type="range" min="0" max="80" step="5" value={heroOverlayOpacity}
+                    onChange={(e) => setForm((p) => ({ ...p, heroOverlayOpacity: Number(e.target.value) }))}
+                    className="w-full accent-[#06C755]" />
+                </label>
               </div>
+            )}
+          </div>
+          {/* ナビ・ボタン */}
+          <div className="border-t border-gray-100 pt-4 space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="flex items-center gap-3 text-xs font-bold text-gray-500">
+                <span>ナビ背景</span>
+                <input type="color" value={navColor}
+                  onChange={(e) => setForm((p) => ({ ...p, navColor: e.target.value }))}
+                  className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+              </label>
+              <label className="flex items-center gap-3 text-xs font-bold text-gray-500">
+                <span>ボタン色</span>
+                <input type="color" value={accentColor}
+                  onChange={(e) => setForm((p) => ({ ...p, accentColor: e.target.value }))}
+                  className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+              </label>
             </div>
             <div>
-              <p className="mb-2 text-[11px] font-bold text-gray-400">形</p>
+              <p className="mb-2 text-[11px] font-bold text-gray-400">ボタン形状</p>
               <div className="flex flex-wrap gap-2">
                 {BTN_SHAPE_OPTIONS.map((opt) => {
                   const selected = buttonStyle === opt.value;
@@ -561,123 +602,78 @@ export default function AdminPublicPage() {
                 })}
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* ヘッダー */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-xs font-bold text-gray-500">ヘッダー</p>
-            <span className="text-[11px] font-bold text-gray-400">{imageUrls.length}/3</span>
-          </div>
-          <div className="mb-4 flex flex-wrap gap-2">
-            {HERO_IMAGE_MODE_OPTIONS.map((opt) => (
-              <button key={opt.value} type="button"
-                onClick={() => setForm((p) => ({ ...p, heroImageMode: opt.value }))}
-                className={`rounded-full border px-4 py-2 text-xs font-bold transition ${heroImageMode === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                style={heroImageMode === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
-                {opt.label}
-              </button>
-            ))}
-          </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {imageUrls.map((url, i) => (
-              <div
-                key={`${url}-${i}`}
-                className="rounded-lg border border-gray-200 bg-gray-50 p-2"
-              >
-                <div className="group relative h-24 overflow-hidden rounded-lg bg-gray-100">
-                  <img src={url} alt="" className="h-full w-full object-cover" />
-                  <button type="button"
-                    onClick={() => setForm((prev) => {
-                      const next = (prev.imageUrls ?? []).filter((_, idx) => idx !== i);
-                      const captions = (prev.imageCaptions ?? []).filter((_, idx) => idx !== i).slice(0, next.length);
-                      return { ...prev, imageUrls: next, imageCaptions: captions, coverImageUrl: next[0] ?? '' };
-                    })}
-                    className="absolute inset-0 hidden items-center justify-center bg-black/50 text-xs font-bold text-white group-hover:flex">
-                    削除
-                  </button>
+            {isCategory && (
+              <div>
+                <p className="mb-2 text-[11px] font-bold text-gray-400">ボタン配置</p>
+                <div className="flex flex-wrap gap-2">
+                  {BUTTON_LAYOUT_OPTIONS.map((opt) => (
+                    <button key={opt.value} type="button"
+                      onClick={() => setForm((p) => ({ ...p, buttonLayout: opt.value }))}
+                      className={`rounded-full border px-4 py-2 text-xs font-bold transition ${buttonLayout === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                      style={buttonLayout === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                      {opt.label}
+                    </button>
+                  ))}
                 </div>
-                <input
-                  value={imageCaptions[i] ?? ''}
-                  onChange={(e) => setForm((prev) => {
-                    const captions = [...(prev.imageCaptions ?? [])];
-                    captions[i] = e.target.value.slice(0, 80);
-                    return { ...prev, imageCaptions: captions.slice(0, 3) };
-                  })}
-                  placeholder="画像説明（任意）"
-                  className="mt-2 w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-                />
               </div>
-            ))}
-            {imageUrls.length < 3 && (
-              <label className={`flex min-h-[8.7rem] cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 text-xs font-bold text-gray-400 hover:border-[#06C755] hover:text-[#06C755] ${uploading ? 'opacity-50' : ''}`}>
-                <input
-                  type="file"
-                  accept="image/*"
-                  disabled={uploading}
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) void handleImageFile(f);
-                    e.currentTarget.value = '';
-                  }}
-                  className="hidden"
-                />
-                {uploading ? '...' : '+ 追加'}
-              </label>
             )}
-          </div>
-          {/* カラー・透明度 統合 */}
-          <div className="mt-4 border-t border-gray-100 pt-4 space-y-4">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <label className="flex flex-col gap-1 text-xs font-bold text-gray-500">
-                <span>ナビ背景</span>
-                <input type="color" value={navColor}
-                  onChange={(e) => setForm((p) => ({ ...p, navColor: e.target.value }))}
-                  className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-              </label>
-              <label className="flex flex-col gap-1 text-xs font-bold text-gray-500">
-                <span>ボタン色</span>
-                <input type="color" value={accentColor}
-                  onChange={(e) => setForm((p) => ({ ...p, accentColor: e.target.value }))}
-                  className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-              </label>
-              <label className="flex flex-col gap-1 text-xs font-bold text-gray-500">
-                <span>文字色</span>
-                <input type="color" value={textColor}
-                  onChange={(e) => setForm((p) => ({ ...p, textColor: e.target.value }))}
-                  className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-              </label>
-            </div>
             <label className="block">
               <span className="mb-2 block text-[11px] font-bold text-gray-400">ボタン透明度 {buttonOpacity}%</span>
               <input type="range" min="20" max="100" step="5" value={buttonOpacity}
                 onChange={(e) => setForm((p) => ({ ...p, buttonOpacity: Number(e.target.value) }))}
                 className="w-full accent-[#06C755]" />
             </label>
-            <div>
-              <p className="mb-2 text-[11px] font-bold text-gray-400">画像の色味</p>
-              <div className="flex flex-wrap items-center gap-2">
-                <input type="color" value={heroOverlayColor}
-                  onChange={(e) => setForm((p) => ({ ...p, heroOverlayColor: e.target.value }))}
-                  className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-                {TONE_COLORS.map((c) => (
-                  <button key={c.value} type="button"
-                    title={c.label}
-                    onClick={() => setForm((p) => ({ ...p, heroOverlayColor: c.value }))}
-                    className={`h-8 w-8 rounded-full border-2 ${heroOverlayColor === c.value ? 'border-gray-500' : 'border-transparent'}`}
-                    style={{ backgroundColor: c.value, boxShadow: '0 0 0 1px #e5e7eb' }} />
-                ))}
-              </div>
+          </div>
+          {/* ナビラベル */}
+          <div className="border-t border-gray-100 pt-4">
+            <p className="mb-2 text-[11px] font-bold text-gray-400">ナビラベル</p>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {[
+                { field: 'aboutLabel' as const, placeholder: '団体詳細' },
+                { field: 'reserveLabel' as const, placeholder: '予約する' },
+                { field: 'blogLabel' as const, placeholder: 'ブログ' },
+              ].map(({ field, placeholder }) => (
+                <input key={field} value={(form[field] as string) ?? ''}
+                  onChange={(e) => setForm((p) => ({ ...p, [field]: e.target.value }))}
+                  placeholder={placeholder}
+                  className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+              ))}
             </div>
-            <label className="block">
-              <span className="mb-2 block text-[11px] font-bold text-gray-400">画像透明度 {heroOverlayOpacity}%</span>
-              <input type="range" min="0" max="80" step="5" value={heroOverlayOpacity}
-                onChange={(e) => setForm((p) => ({ ...p, heroOverlayOpacity: Number(e.target.value) }))}
-                className="w-full accent-[#06C755]" />
-            </label>
           </div>
         </div>
+
+        {/* メイン */}
+        <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+          <p className="text-xs font-bold text-gray-500">メイン</p>
+          <label className="block">
+            <span className="mb-1 block text-[11px] font-bold text-gray-400">サブタイトル</span>
+            <input value={form.subtitle ?? ''}
+              onChange={(e) => setForm((p) => ({ ...p, subtitle: e.target.value }))}
+              placeholder="例：初心者歓迎の社会人サークル"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-[11px] font-bold text-gray-400">団体説明</span>
+            <textarea value={form.body}
+              onChange={(e) => setForm((p) => ({ ...p, body: e.target.value }))}
+              rows={7}
+              placeholder="団体の雰囲気や参加者に伝えたい内容"
+              className="w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-sm leading-7 focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+          </label>
+        </div>
+
+        {/* フッター */}
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <p className="mb-2 text-xs font-bold text-gray-500">フッター（お問い合わせ）</p>
+          <label className="block">
+            <span className="mb-1 block text-[11px] font-bold text-gray-400">ラベル名称</span>
+            <input value={(form.contactLabel as string) ?? ''}
+              onChange={(e) => setForm((p) => ({ ...p, contactLabel: e.target.value }))}
+              placeholder="お問い合わせ"
+              className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+          </label>
+        </div>
+
       </section>
 
       {/* Slide animation */}
