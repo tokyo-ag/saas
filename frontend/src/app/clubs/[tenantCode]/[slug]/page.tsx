@@ -76,6 +76,14 @@ function clampPercent(value: number | string | null | undefined) {
   return Math.min(100, Math.max(0, Math.round(parsed)));
 }
 
+function hexToRgba(hex: string, opacity: number) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${opacity / 100})`;
+}
+
 function HeroImageBlock({
   images,
   captions,
@@ -204,6 +212,8 @@ export default async function ClubCmsPage({
   const accentColor = page.accentColor || '#06C755';
   const backgroundColor = page.backgroundColor || '#F7F8FA';
   const navColor = page.navColor || '#F3F4F6';
+  const navOpacity = clampPercent(page.navOpacity ?? 100);
+  const navBg = hexToRgba(navColor, navOpacity);
   const fontFamily = fontFamilyMap[page.fontFamily || 'mincho'] ?? fontFamilyMap.mincho;
   const titleSizeClass = titleSizeMap[page.titleSize || 'large'] ?? titleSizeMap.large;
   const bodySizeClass = bodySizeMap[page.bodySize || 'base'] ?? bodySizeMap.base;
@@ -311,7 +321,7 @@ export default async function ClubCmsPage({
           </nav>
 
           {page.body && (
-            <div id="about" className="mt-14 w-full max-w-sm scroll-mt-6 rounded-xl px-6 py-5 shadow-sm" style={{ backgroundColor: navColor }}>
+            <div id="about" className="mt-14 w-full max-w-sm scroll-mt-6 rounded-xl px-6 py-5 shadow-sm" style={{ backgroundColor: navBg }}>
               <p className="mb-3 text-sm font-bold" style={{ color: textColor }}>{navLabels.about}</p>
               <div className="text-sm leading-7" style={{ color: textColor }}>
                 {page.body.split('\n').map((line, i) => renderLine(line, i, textColor, 'text-sm leading-7'))}
@@ -341,7 +351,7 @@ export default async function ClubCmsPage({
         }
       `}</style>
 
-      <header className="sticky top-0 z-10 px-4 py-3" style={{ backgroundColor: navColor }}>
+      <header className="sticky top-0 z-10 px-4 py-3" style={{ backgroundColor: navBg }}>
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
           <Link href={clubHref} className="text-sm font-bold" style={{ color: textColor }}>{tenantName}</Link>
           <div className="flex items-center gap-2 text-xs font-bold">
@@ -367,7 +377,7 @@ export default async function ClubCmsPage({
           alt={page.title}
         />
 
-        <div className="mt-8 space-y-2 rounded-xl px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8" style={{ backgroundColor: navColor }}>
+        <div className="mt-8 space-y-2 rounded-xl px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8" style={{ backgroundColor: navBg }}>
           {page.body.split('\n').map((line, index) => renderLine(line, index, textColor, bodySizeClass))}
         </div>
 

@@ -81,6 +81,7 @@ model PublicPage {
   accentColor    String?   @map("accent_color") @db.VarChar(20)
   backgroundColor String?  @map("background_color") @db.VarChar(20)
   navColor       String?   @map("nav_color") @db.VarChar(20)
+  navOpacity     Int?      @map("nav_opacity")
   imageLayout    String?   @map("image_layout") @db.VarChar(20)
   heroImageMode  String?   @map("hero_image_mode") @db.VarChar(20)
   heroOverlayOpacity Int?  @map("hero_overlay_opacity")

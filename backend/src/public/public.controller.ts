@@ -418,6 +418,7 @@ export class PublicController {
       accentColor: page.accentColor,
       backgroundColor: page.backgroundColor,
       navColor: page.navColor,
+      navOpacity: page.navOpacity,
       imageLayout: page.imageLayout,
       heroImageMode: page.heroImageMode,
       heroOverlayOpacity: page.heroOverlayOpacity,

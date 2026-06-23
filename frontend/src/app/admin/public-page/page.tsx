@@ -19,6 +19,7 @@ const emptyForm: PublicPageInput = {
   accentColor: '#06C755',
   backgroundColor: '#F7F8FA',
   navColor: '#F3F4F6',
+  navOpacity: 100,
   imageLayout: 'slider',
   heroImageMode: 'fixed',
   heroOverlayOpacity: 0,
@@ -150,6 +151,14 @@ function clampPercent(value: number | string | null | undefined) {
   return Math.min(100, Math.max(0, Math.round(parsed)));
 }
 
+function hexToRgba(hex: string, opacity: number) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${opacity / 100})`;
+}
+
 function HeaderImagePreview({
   images,
   captions,
@@ -240,6 +249,8 @@ export default function AdminPublicPage() {
   const accentColor = form.accentColor?.trim() || '#06C755';
   const backgroundColor = form.backgroundColor?.trim() || '#F7F8FA';
   const navColor = form.navColor?.trim() || '#F3F4F6';
+  const navOpacity = clampPercent(form.navOpacity ?? 100);
+  const navBg = hexToRgba(navColor, navOpacity);
   const fontFamily = fontOptions.find((o) => o.value === form.fontFamily)?.family ?? fontOptions[0].family;
   const bodySizeClass = bodySizeOptions.find((o) => o.value === form.bodySize)?.className ?? bodySizeOptions[1].className;
   const titleAlign = (['left', 'center', 'right'].includes(form.titleAlign || '') ? form.titleAlign! : 'left') as 'left' | 'center' | 'right';
@@ -292,6 +303,7 @@ export default function AdminPublicPage() {
             accentColor: first.accentColor ?? '#06C755',
             backgroundColor: first.backgroundColor ?? '#F7F8FA',
             navColor: first.navColor ?? '#F3F4F6',
+            navOpacity: first.navOpacity ?? 100,
             imageLayout: first.imageLayout ?? 'slider',
             heroImageMode: first.heroImageMode === 'auto' ? 'fixed' : first.heroImageMode ?? 'fixed',
             heroOverlayOpacity: first.heroOverlayOpacity ?? 0,
@@ -350,7 +362,7 @@ export default function AdminPublicPage() {
       imageUrls,
       imageCaptions: imageCaptions.map((caption) => caption.trim()).slice(0, imageUrls.length),
       dividerText: '',
-      textColor, accentColor, backgroundColor, navColor,
+      textColor, accentColor, backgroundColor, navColor, navOpacity,
       imageLayout: form.imageLayout || 'slider',
       heroImageMode,
       heroOverlayOpacity,
@@ -482,13 +494,25 @@ export default function AdminPublicPage() {
               ))}
             </div>
           </div>
-          {/* 文字色 */}
-          <label className="flex items-center gap-3 text-xs font-bold text-gray-500">
-            <span>文字色</span>
-            <input type="color" value={textColor}
-              onChange={(e) => setForm((p) => ({ ...p, textColor: e.target.value }))}
-              className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-          </label>
+          {/* 文字色・ナビ背景 */}
+          <div className="space-y-2">
+            <label className="flex items-center gap-3 text-xs font-bold text-gray-500">
+              <span className="w-16 shrink-0">文字色</span>
+              <input type="color" value={textColor}
+                onChange={(e) => setForm((p) => ({ ...p, textColor: e.target.value }))}
+                className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+            </label>
+            <div className="flex items-center gap-3">
+              <span className="w-16 shrink-0 text-xs font-bold text-gray-500">ナビ背景</span>
+              <input type="color" value={navColor}
+                onChange={(e) => setForm((p) => ({ ...p, navColor: e.target.value }))}
+                className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+              <input type="range" min="20" max="100" step="5" value={navOpacity}
+                onChange={(e) => setForm((p) => ({ ...p, navOpacity: Number(e.target.value) }))}
+                className="flex-1 accent-[#06C755]" />
+              <span className="w-8 text-right text-xs text-gray-400">{navOpacity}%</span>
+            </div>
+          </div>
         </div>
 
         {/* ヘッダー */}
@@ -571,12 +595,6 @@ export default function AdminPublicPage() {
           {/* ナビ・ボタン */}
           <div className="border-t border-gray-100 pt-4 space-y-4">
             <div className="space-y-2">
-              <label className="flex items-center gap-3 text-xs font-bold text-gray-500">
-                <span className="w-14 shrink-0">ナビ背景</span>
-                <input type="color" value={navColor}
-                  onChange={(e) => setForm((p) => ({ ...p, navColor: e.target.value }))}
-                  className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-              </label>
               <div className="flex items-center gap-3">
                 <span className="w-14 shrink-0 text-xs font-bold text-gray-500">ボタン色</span>
                 <input type="color" value={accentColor}
@@ -725,7 +743,7 @@ export default function AdminPublicPage() {
               </div>
 
               <div className="w-full max-w-sm">
-                <div className="rounded-xl px-5 py-4 shadow-sm ring-1 ring-gray-100" style={{ backgroundColor: navColor }}>
+                <div className="rounded-xl px-5 py-4 shadow-sm ring-1 ring-gray-100" style={{ backgroundColor: navBg }}>
                   <p className="mb-2 text-xs font-bold text-gray-400">{navLabels.about}</p>
                   <p
                     className={`${bodySizeClass} min-h-24 whitespace-pre-wrap opacity-90`}
@@ -745,7 +763,7 @@ export default function AdminPublicPage() {
                 <span className="text-sm font-bold leading-5" style={{ color: textColor }}>{displayName}</span>
                 <div className="grid grid-cols-2 gap-2 text-[11px] font-bold">
                   {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
-                    <span key={label} className="truncate whitespace-nowrap rounded-full px-3 py-1.5 text-center leading-4" style={{ backgroundColor: navColor, color: textColor, ...buttonOpacityStyle }}>{label}</span>
+                    <span key={label} className="truncate whitespace-nowrap rounded-full px-3 py-1.5 text-center leading-4" style={{ backgroundColor: navBg, color: textColor, ...buttonOpacityStyle }}>{label}</span>
                   ))}
                 </div>
               </div>
@@ -763,14 +781,14 @@ export default function AdminPublicPage() {
                   overlayColor={heroOverlayColor}
                   overlayOpacity={heroOverlayOpacity}
                 />
-                <div className="rounded-lg p-4" style={{ backgroundColor: navColor }}>
+                <div className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
                   <p
                     className={`${bodySizeClass} min-h-32 whitespace-pre-wrap opacity-85`}
                     style={{ color: textColor }}>
                     {previewBody || '団体説明'}
                   </p>
                 </div>
-                <section className="rounded-lg p-4" style={{ backgroundColor: navColor }}>
+                <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
                   <p className="text-xs font-bold text-gray-400 mb-1">必須 — 予約セクション</p>
                   <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.reserve}</p>
                   <ReservationViewShowcase
@@ -780,12 +798,12 @@ export default function AdminPublicPage() {
                     className="mt-3"
                   />
                 </section>
-                <section className="rounded-lg p-4" style={{ backgroundColor: navColor }}>
+                <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
                   <p className="text-xs font-bold text-gray-400 mb-1">必須 — ブログセクション</p>
                   <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.blog}</p>
                   <p className="mt-1 text-xs text-gray-400">公開した記事が表示されます</p>
                 </section>
-                <section className="rounded-lg p-4" style={{ backgroundColor: navColor }}>
+                <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
                   <p className="text-xs font-bold text-gray-400 mb-1">必須 — お問い合わせセクション</p>
                   <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.contact}</p>
                   <p className="mt-1 text-xs text-gray-400">LINEでの問い合わせが表示されます</p>

@@ -741,6 +741,7 @@ export interface PublicPage {
   accentColor?: string | null;
   backgroundColor?: string | null;
   navColor?: string | null;
+  navOpacity?: number | null;
   imageLayout?: string | null;
   heroImageMode?: string | null;
   heroOverlayOpacity?: number | null;
@@ -781,6 +782,7 @@ export interface PublicPageInput {
   accentColor?: string;
   backgroundColor?: string;
   navColor?: string;
+  navOpacity?: number;
   imageLayout?: string;
   heroImageMode?: string;
   heroOverlayOpacity?: number;
@@ -861,6 +863,7 @@ export interface PublicCmsPage {
   blogLabel?: string | null;
   contactLabel?: string | null;
   navColor?: string | null;
+  navOpacity?: number | null;
   reserveViewStyle?: string | null;
   buttonStyle?: string | null;
   buttonLayout?: string | null;
