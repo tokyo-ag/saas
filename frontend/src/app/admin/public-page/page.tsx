@@ -74,12 +74,6 @@ const BTN_SHAPE_OPTIONS = [
   { label: 'ゴージャス', value: 'gorgeous' },
 ];
 
-const BTN_SIZE_OPTIONS = [
-  { label: '小', value: 'small', cls: 'px-3 py-2.5 text-xs min-w-[5rem]' },
-  { label: '中', value: 'medium', cls: 'px-5 py-4 text-sm min-w-[6.5rem]' },
-  { label: '大', value: 'large', cls: 'px-6 py-5 text-base min-w-[8rem]' },
-];
-
 const HERO_IMAGE_MODE_OPTIONS = [
   { label: '固定', value: 'fixed' },
   { label: 'スライダー', value: 'slider' },
@@ -237,9 +231,6 @@ export default function AdminPublicPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
-  // UI-only states (not persisted)
-  const [btnSize] = useState('medium');
-
   const tenantCode = tenant?.code ?? tenant?.id ?? '';
   const displayName = tenant?.lineDisplayName ?? tenant?.name ?? '公開サイト';
   const tenantIcon = tenant?.iconUrl ?? tenant?.linePictureUrl ?? null;
@@ -274,10 +265,10 @@ export default function AdminPublicPage() {
   const buttonLayout = form.buttonLayout === 'row1x4' ? 'row1x4' : 'grid2x2';
   const buttonOpacity = clampPercent(form.buttonOpacity ?? 100);
   const buttonOpacityStyle = { opacity: buttonOpacity / 100 };
-  const buttonLayoutClass = buttonLayout === 'row1x4'
-    ? 'grid grid-cols-2 sm:grid-cols-4'
-    : 'grid grid-cols-2';
-  const btnSizeCls = BTN_SIZE_OPTIONS.find((o) => o.value === btnSize)?.cls ?? BTN_SIZE_OPTIONS[1].cls;
+  const previewButtonLayoutClass = buttonLayout === 'row1x4' ? 'grid grid-cols-4' : 'grid grid-cols-2';
+  const previewButtonSizeClass = buttonLayout === 'row1x4'
+    ? 'h-12 px-2 text-xs leading-tight'
+    : 'h-14 px-3 text-sm leading-tight';
 
   useEffect(() => {
     Promise.all([api.tenant.get(), api.publicPages.list()])
@@ -709,7 +700,7 @@ export default function AdminPublicPage() {
       `}</style>
 
       {/* Preview */}
-      <aside className="w-full max-w-[460px] justify-self-center lg:sticky lg:top-[73px] lg:self-start">
+      <aside className="w-full max-w-[430px] justify-self-center lg:sticky lg:top-[73px] lg:self-start">
         <div className="mb-2 flex items-center justify-between">
           <p className="text-xs font-bold text-gray-500">反映後の画面</p>
           <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-gray-400 ring-1 ring-gray-200">
@@ -717,11 +708,11 @@ export default function AdminPublicPage() {
           </span>
         </div>
         <div className="max-h-none overflow-y-auto overflow-x-hidden rounded-2xl bg-gray-100 p-2 shadow-inner lg:max-h-[calc(100vh-6.5rem)]">
-        <div className="min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm" style={{ fontFamily, backgroundColor }}>
+        <div className="mx-auto min-w-0 max-w-[390px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm" style={{ fontFamily, backgroundColor }}>
 
           {/* カテゴリー型 preview */}
           {isCategory && (
-            <div className="flex flex-col items-center px-6 py-10 space-y-8">
+            <div className="flex flex-col items-center space-y-7 px-5 py-9">
 
               {/* アイコン＋名前 */}
               <div className="flex flex-col items-center gap-2">
@@ -746,10 +737,10 @@ export default function AdminPublicPage() {
                 />
               </div>
 
-              <div className={`w-full max-w-lg gap-3 ${buttonLayoutClass}`}>
+              <div className={`w-full gap-2 ${previewButtonLayoutClass}`}>
                 {[navLabels.about, navLabels.reserve, navLabels.blog, navLabels.contact].map((label) => (
                   <div key={label}
-                    className={`min-w-0 truncate whitespace-nowrap text-center font-bold ${getBtnShapeClass(buttonStyle)} ${btnSizeCls}`}
+                    className={`flex min-w-0 items-center justify-center truncate whitespace-nowrap text-center font-bold ${getBtnShapeClass(buttonStyle)} ${previewButtonSizeClass}`}
                     style={{ borderColor: accentColor, color: accentColor, ...buttonOpacityStyle }}>
                     {label}
                   </div>
@@ -757,7 +748,7 @@ export default function AdminPublicPage() {
               </div>
 
               <div className="w-full max-w-sm">
-                <div className="rounded-xl bg-white px-5 py-4 shadow-sm ring-1 ring-gray-100">
+                <div className="rounded-xl px-5 py-4 shadow-sm ring-1 ring-gray-100" style={{ backgroundColor: navColor }}>
                   <p className="mb-2 text-xs font-bold text-gray-400">{navLabels.about}</p>
                   <p
                     className={`${bodySizeClass} min-h-24 whitespace-pre-wrap opacity-90`}
@@ -795,7 +786,7 @@ export default function AdminPublicPage() {
                   overlayColor={heroOverlayColor}
                   overlayOpacity={heroOverlayOpacity}
                 />
-                <div>
+                <div className="rounded-lg p-4" style={{ backgroundColor: navColor }}>
                   <p
                     className={`${bodySizeClass} min-h-32 whitespace-pre-wrap opacity-85`}
                     style={{ color: textColor }}>

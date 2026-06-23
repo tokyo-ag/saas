@@ -311,7 +311,7 @@ export default async function ClubCmsPage({
           </nav>
 
           {page.body && (
-            <div id="about" className="mt-14 w-full max-w-sm scroll-mt-6 rounded-xl bg-white px-6 py-5 shadow-sm">
+            <div id="about" className="mt-14 w-full max-w-sm scroll-mt-6 rounded-xl px-6 py-5 shadow-sm" style={{ backgroundColor: navColor }}>
               <p className="mb-3 text-sm font-bold" style={{ color: textColor }}>{navLabels.about}</p>
               <div className="text-sm leading-7" style={{ color: textColor }}>
                 {page.body.split('\n').map((line, i) => renderLine(line, i, textColor, 'text-sm leading-7'))}
@@ -380,7 +380,7 @@ export default async function ClubCmsPage({
           alt={page.title}
         />
 
-        <div className="mt-8 space-y-2 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8">
+        <div className="mt-8 space-y-2 rounded-xl px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8" style={{ backgroundColor: navColor }}>
           {page.body.split('\n').map((line, index) => renderLine(line, index, textColor, bodySizeClass))}
         </div>
 
