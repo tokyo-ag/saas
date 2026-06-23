@@ -480,20 +480,6 @@ export default function AdminPublicPage() {
               ))}
             </div>
           </div>
-          {/* 文字サイズ */}
-          <div>
-            <p className="mb-2 text-[11px] font-bold text-gray-400">文字サイズ</p>
-            <div className="flex flex-wrap gap-2">
-              {bodySizeOptions.map((opt) => (
-                <button key={opt.value} type="button"
-                  onClick={() => setForm((p) => ({ ...p, bodySize: opt.value }))}
-                  className={`rounded-full border px-4 py-2 text-xs font-bold transition ${form.bodySize === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                  style={form.bodySize === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
           {/* 文字色・ナビ背景 */}
           <div className="space-y-2">
             <label className="flex items-center gap-3 text-xs font-bold text-gray-500">
@@ -657,9 +643,22 @@ export default function AdminPublicPage() {
           </div>
         </div>
 
-        {/* メイン */}
+        {/* 団体詳細 */}
         <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
-          <p className="text-xs font-bold text-gray-500">メイン</p>
+          <p className="text-xs font-bold text-gray-500">団体詳細</p>
+          <div>
+            <p className="mb-2 text-[11px] font-bold text-gray-400">文字サイズ</p>
+            <div className="flex flex-wrap gap-2">
+              {bodySizeOptions.map((opt) => (
+                <button key={opt.value} type="button"
+                  onClick={() => setForm((p) => ({ ...p, bodySize: opt.value }))}
+                  className={`rounded-full border px-4 py-2 text-xs font-bold transition ${form.bodySize === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                  style={form.bodySize === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <label className="block">
             <span className="mb-1 block text-[11px] font-bold text-gray-400">サブタイトル</span>
             <input value={form.subtitle ?? ''}
@@ -668,7 +667,7 @@ export default function AdminPublicPage() {
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
           </label>
           <label className="block">
-            <span className="mb-1 block text-[11px] font-bold text-gray-400">団体説明</span>
+            <span className="mb-1 block text-[11px] font-bold text-gray-400">説明文</span>
             <textarea value={form.body}
               onChange={(e) => setForm((p) => ({ ...p, body: e.target.value }))}
               rows={7}
