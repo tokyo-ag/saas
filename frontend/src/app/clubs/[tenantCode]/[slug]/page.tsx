@@ -341,14 +341,16 @@ export default async function ClubCmsPage({
         }
       `}</style>
 
-      <header className="border-b border-gray-100 bg-white px-4 py-4">
+      <header className="sticky top-0 z-10 px-4 py-3" style={{ backgroundColor: navColor }}>
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
-          <Link href={clubHref} className="text-sm font-bold" style={{ color: accentColor }}>{tenantName}</Link>
+          <Link href={clubHref} className="text-sm font-bold" style={{ color: textColor }}>{tenantName}</Link>
           <div className="flex items-center gap-2 text-xs font-bold">
-            <a href="#about" className="hidden sm:block text-gray-500 hover:text-gray-900">{navLabels.about}</a>
-            <a href="#blog" className="hidden sm:block text-gray-500 hover:text-gray-900">{navLabels.blog}</a>
-            <a href="#contact" className="hidden sm:block text-gray-500 hover:text-gray-900">{navLabels.contact}</a>
-            <Link href={reserveHref} className="rounded-full px-4 py-2 text-white" style={{ backgroundColor: accentColor, ...buttonOpacityStyle }}>
+            <a href="#about" className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.about}</a>
+            <a href="#blog" className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.blog}</a>
+            <a href="#contact" className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.contact}</a>
+            <Link href={reserveHref}
+              className={`px-4 py-2 font-bold text-white ${btnClass}`}
+              style={{ backgroundColor: accentColor, ...buttonOpacityStyle }}>
               {navLabels.reserve}
             </Link>
           </div>
