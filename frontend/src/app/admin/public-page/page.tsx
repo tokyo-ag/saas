@@ -255,7 +255,7 @@ export default function AdminPublicPage() {
   const rawHeroImageMode = form.heroImageMode || 'fixed';
   const heroImageMode = rawHeroImageMode === 'auto'
     ? 'fixed'
-    : ['fixed', 'slider', 'grid'].includes(rawHeroImageMode)
+    : ['fixed', 'slider', 'grid', 'background'].includes(rawHeroImageMode)
       ? rawHeroImageMode
       : 'fixed';
   const heroOverlayOpacity = clampPercent(form.heroOverlayOpacity);
@@ -750,19 +750,34 @@ export default function AdminPublicPage() {
                   ))}
                 </div>
               </div>
+              {/* 背景モード: フルヒーロー */}
+              {heroImageMode === 'background' && imageUrls[0] && (
+                <div className="relative flex min-h-[160px] items-center justify-center"
+                  style={{ backgroundImage: `url(${imageUrls[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                  <div className="absolute inset-0" style={{ backgroundColor: heroOverlayColor, opacity: heroOverlayOpacity / 100 }} />
+                  <div className="relative z-10 px-5 py-8 text-center">
+                    <p className="text-lg font-bold text-white drop-shadow">{displayName}</p>
+                    {form.subtitle?.trim() && (
+                      <p className="mt-1 text-sm text-white/80 drop-shadow">{form.subtitle.trim()}</p>
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="space-y-4 p-5">
-                {form.subtitle?.trim() && (
+                {heroImageMode !== 'background' && form.subtitle?.trim() && (
                   <p className="text-sm font-bold leading-6 opacity-75" style={{ color: textColor, textAlign: titleAlign }}>
                     {form.subtitle.trim()}
                   </p>
                 )}
-                <HeaderImagePreview
-                  images={imageUrls}
-                  captions={imageCaptions}
-                  mode={heroImageMode}
-                  overlayColor={heroOverlayColor}
-                  overlayOpacity={heroOverlayOpacity}
-                />
+                {heroImageMode !== 'background' && (
+                  <HeaderImagePreview
+                    images={imageUrls}
+                    captions={imageCaptions}
+                    mode={heroImageMode}
+                    overlayColor={heroOverlayColor}
+                    overlayOpacity={heroOverlayOpacity}
+                  />
+                )}
                 <div className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
                   <p
                     className={`${bodySizeClass} min-h-32 whitespace-pre-wrap opacity-85`}

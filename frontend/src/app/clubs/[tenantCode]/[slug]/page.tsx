@@ -243,7 +243,7 @@ export default async function ClubCmsPage({
   const rawHeroImageMode = page.heroImageMode || 'fixed';
   const heroImageMode = rawHeroImageMode === 'auto'
     ? 'fixed'
-    : ['fixed', 'slider', 'grid'].includes(rawHeroImageMode)
+    : ['fixed', 'slider', 'grid', 'background'].includes(rawHeroImageMode)
       ? rawHeroImageMode
       : 'fixed';
   const heroOverlayOpacity = clampPercent(page.heroOverlayOpacity);
@@ -377,15 +377,31 @@ export default async function ClubCmsPage({
         </div>
       </header>
 
+      {/* 背景モード: フルヒーロー */}
+      {heroImageMode === 'background' && images[0] && (
+        <div className="relative flex min-h-[300px] items-center justify-center md:min-h-[420px]"
+          style={{ backgroundImage: `url(${images[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+          <div className="absolute inset-0" style={{ backgroundColor: heroOverlayColor, opacity: heroOverlayOpacity / 100 }} />
+          <div className="relative z-10 px-6 py-16 text-center">
+            <h1 className={`${titleSizeClass} font-bold text-white drop-shadow-lg`}>{tenantName}</h1>
+            {page.subtitle && (
+              <p className="mt-3 text-lg text-white/85 drop-shadow">{page.subtitle}</p>
+            )}
+          </div>
+        </div>
+      )}
+
       <article id="about" className="mx-auto max-w-3xl px-4 py-8 md:py-12">
-        <HeroImageBlock
-          images={images}
-          captions={imageCaptions}
-          mode={heroImageMode}
-          overlayColor={heroOverlayColor}
-          overlayOpacity={heroOverlayOpacity}
-          alt={page.title}
-        />
+        {heroImageMode !== 'background' && (
+          <HeroImageBlock
+            images={images}
+            captions={imageCaptions}
+            mode={heroImageMode}
+            overlayColor={heroOverlayColor}
+            overlayOpacity={heroOverlayOpacity}
+            alt={page.title}
+          />
+        )}
 
         <div className="mt-8 space-y-2 rounded-xl px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8" style={{ backgroundColor: navBg }}>
           {page.body.split('\n').map((line, index) => renderLine(line, index, textColor, bodySizeClass))}
