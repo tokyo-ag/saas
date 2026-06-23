@@ -750,6 +750,7 @@ export interface PublicPage {
   aboutLabel?: string | null;
   reserveLabel?: string | null;
   blogLabel?: string | null;
+  contactLabel?: string | null;
   buttonStyle?: string | null;
   headerText?: string | null;
   footerText?: string | null;
@@ -786,6 +787,7 @@ export interface PublicPageInput {
   aboutLabel?: string;
   reserveLabel?: string;
   blogLabel?: string;
+  contactLabel?: string;
   seoTitle?: string;
   seoDescription?: string;
   status?: 'draft' | 'published';
@@ -841,6 +843,7 @@ export interface PublicCmsPage {
   aboutLabel?: string | null;
   reserveLabel?: string | null;
   blogLabel?: string | null;
+  contactLabel?: string | null;
   navColor?: string | null;
   reserveViewStyle?: string | null;
   buttonStyle?: string | null;

@@ -30,6 +30,7 @@ const emptyForm: PublicPageInput = {
   aboutLabel: '団体詳細',
   reserveLabel: '予約する',
   blogLabel: 'ブログ',
+  contactLabel: 'お問い合わせ',
   seoTitle: '',
   seoDescription: '',
   status: 'published',
@@ -162,6 +163,7 @@ export default function AdminPublicPage() {
     about: form.aboutLabel?.trim() || '団体詳細',
     reserve: form.reserveLabel?.trim() || '予約する',
     blog: form.blogLabel?.trim() || 'ブログ',
+    contact: form.contactLabel?.trim() || 'お問い合わせ',
   };
   const buttonStyle = form.buttonStyle ?? 'rounded';
   const btnSizeCls = BTN_SIZE_OPTIONS.find((o) => o.value === btnSize)?.cls ?? BTN_SIZE_OPTIONS[1].cls;
@@ -200,6 +202,7 @@ export default function AdminPublicPage() {
             aboutLabel: first.aboutLabel ?? '団体詳細',
             reserveLabel: first.reserveLabel ?? '予約する',
             blogLabel: first.blogLabel ?? 'ブログ',
+            contactLabel: first.contactLabel ?? 'お問い合わせ',
             seoTitle: first.seoTitle ?? '',
             seoDescription: first.seoDescription ?? '',
             status: 'published',
@@ -247,6 +250,7 @@ export default function AdminPublicPage() {
       aboutLabel: navLabels.about,
       reserveLabel: navLabels.reserve,
       blogLabel: navLabels.blog,
+      contactLabel: navLabels.contact,
       status: 'published',
       seoTitle: displayName,
       seoDescription: form.body.replace(/[#>*_-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 150),
@@ -332,17 +336,58 @@ export default function AdminPublicPage() {
         {/* ラベル名称 */}
         <div className="rounded-xl border border-gray-200 bg-white p-4">
           <p className="mb-2 text-xs font-bold text-gray-500">ラベル名称</p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid gap-2 sm:grid-cols-2">
             {[
               { field: 'aboutLabel' as const, placeholder: '団体詳細' },
               { field: 'reserveLabel' as const, placeholder: '予約する' },
               { field: 'blogLabel' as const, placeholder: 'ブログ' },
+              { field: 'contactLabel' as const, placeholder: 'お問い合わせ' },
             ].map(({ field, placeholder }) => (
               <input key={field} value={(form[field] as string) ?? ''}
                 onChange={(e) => setForm((p) => ({ ...p, [field]: e.target.value }))}
                 placeholder={placeholder}
                 className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
             ))}
+          </div>
+        </div>
+
+        {/* 画像 */}
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <p className="text-xs font-bold text-gray-500">画像</p>
+            <span className="text-[11px] font-bold text-gray-400">{imageUrls.length}/3</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {imageUrls.map((url, i) => (
+              <button
+                key={`${url}-${i}`}
+                type="button"
+                onClick={() => setForm((prev) => {
+                  const next = (prev.imageUrls ?? []).filter((_, idx) => idx !== i);
+                  return { ...prev, imageUrls: next, coverImageUrl: next[0] ?? '' };
+                })}
+                className="group relative h-16 w-24 overflow-hidden rounded-lg border border-gray-200"
+              >
+                <img src={url} alt="" className="h-full w-full object-cover" />
+                <span className="absolute inset-0 hidden items-center justify-center bg-black/50 text-xs font-bold text-white group-hover:flex">削除</span>
+              </button>
+            ))}
+            {imageUrls.length < 3 && (
+              <label className={`flex h-16 w-24 cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 text-xs font-bold text-gray-400 hover:border-[#06C755] hover:text-[#06C755] ${uploading ? 'opacity-50' : ''}`}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={uploading}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void handleImageFile(f);
+                    e.currentTarget.value = '';
+                  }}
+                  className="hidden"
+                />
+                {uploading ? '...' : '+ 追加'}
+              </label>
+            )}
           </div>
         </div>
       </div>
@@ -378,10 +423,25 @@ export default function AdminPublicPage() {
                 <p className="text-xl font-bold" style={{ color: textColor }}>{displayName}</p>
               </div>
 
+              {imageUrls.length > 0 && (
+                <div className="relative h-40 w-full max-w-sm overflow-hidden rounded-xl bg-gray-100">
+                  <div className="flex h-full" style={{ width: `${imageUrls.length * 100}%`, animation: imageUrls.length >= 2 ? 'public-site-slide 10s infinite' : undefined }}>
+                    {imageUrls.map((url, i) => (
+                      <img key={`${url}-${i}`} src={url} alt="" className="h-full object-cover" style={{ width: `${100 / imageUrls.length}%` }} />
+                    ))}
+                  </div>
+                  {imageUrls.length > 1 && (
+                    <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
+                      {imageUrls.map((_, i) => <span key={i} className="h-1.5 w-1.5 rounded-full bg-white/80" />)}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* ボタン行 — 右下に編集ボタン */}
               <div className="relative w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
                 <div className="flex w-full flex-wrap justify-center gap-3">
-                  {[navLabels.about, navLabels.reserve, navLabels.blog, 'お問い合わせ'].map((label) => (
+                  {[navLabels.about, navLabels.reserve, navLabels.blog, navLabels.contact].map((label) => (
                     <div key={label}
                       className={`text-center font-bold ${getBtnShapeClass(buttonStyle)} ${btnSizeCls}`}
                       style={{ borderColor: accentColor, color: accentColor }}>
@@ -534,43 +594,6 @@ export default function AdminPublicPage() {
                 </div>
               </div>
 
-              {/* 画像追加（任意） */}
-              <div className="w-full max-w-sm">
-                {imageUrls.length > 0 ? (
-                  <div className="space-y-2">
-                    <p className="text-[11px] text-gray-400">画像（{imageUrls.length}/3）</p>
-                    <div className="flex flex-wrap gap-2">
-                      {imageUrls.map((url, i) => (
-                        <button key={`${url}-${i}`} type="button"
-                          onClick={() => setForm((prev) => {
-                            const next = (prev.imageUrls ?? []).filter((_, idx) => idx !== i);
-                            return { ...prev, imageUrls: next, coverImageUrl: next[0] ?? '' };
-                          })}
-                          className="group relative h-14 w-20 overflow-hidden rounded-lg border border-gray-200">
-                          <img src={url} alt="" className="h-full w-full object-cover" />
-                          <span className="absolute inset-0 hidden items-center justify-center bg-black/50 text-xs font-bold text-white group-hover:flex">削除</span>
-                        </button>
-                      ))}
-                      {imageUrls.length < 3 && (
-                        <label className={`flex h-14 w-20 cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 text-xs font-bold text-gray-400 hover:border-[#06C755] hover:text-[#06C755] ${uploading ? 'opacity-50' : ''}`}>
-                          <input type="file" accept="image/*" disabled={uploading}
-                            onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImageFile(f); e.currentTarget.value = ''; }}
-                            className="hidden" />
-                          {uploading ? '...' : '+ 追加'}
-                        </label>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <label className={`flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-gray-200 text-xs text-gray-400 hover:border-[#06C755] hover:text-[#06C755] transition ${uploading ? 'opacity-50' : ''}`}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
-                    <span>{uploading ? 'アップロード中...' : '画像を追加する（任意）'}</span>
-                    <input type="file" accept="image/*" disabled={uploading}
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImageFile(f); e.currentTarget.value = ''; }}
-                      className="hidden" />
-                  </label>
-                )}
-              </div>
             </div>
           )}
 
@@ -580,26 +603,11 @@ export default function AdminPublicPage() {
               <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
                 <span className="text-sm font-bold" style={{ color: textColor }}>{displayName}</span>
                 <div className="flex gap-2 text-xs font-bold">
-                  {[navLabels.about, navLabels.blog, navLabels.reserve].map((label) => (
+                  {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
                     <span key={label} className="rounded-full px-3 py-1" style={{ backgroundColor: navColor, color: textColor }}>{label}</span>
                   ))}
                 </div>
               </div>
-              {/* 画像（任意） */}
-              {imageUrls.length > 0 ? (
-                <div className="relative h-52 overflow-hidden bg-gray-100">
-                  <div className="flex h-full" style={{ width: `${imageUrls.length * 100}%`, animation: imageUrls.length >= 2 ? 'public-site-slide 10s infinite' : undefined }}>
-                    {imageUrls.map((url, i) => (
-                      <img key={`${url}-${i}`} src={url} alt="" className="h-full object-cover" style={{ width: `${100 / imageUrls.length}%` }} />
-                    ))}
-                  </div>
-                  {imageUrls.length > 1 && (
-                    <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
-                      {imageUrls.map((_, i) => <span key={i} className="h-1.5 w-1.5 rounded-full bg-white/80" />)}
-                    </div>
-                  )}
-                </div>
-              ) : null}
               <div className="space-y-4 p-5">
                 <h2 className="text-2xl font-bold leading-tight" style={{ color: textColor, textAlign: titleAlign }}>{displayName}</h2>
                 <div className="relative">
@@ -610,6 +618,20 @@ export default function AdminPublicPage() {
                     {form.subtitle?.trim() || 'サブタイトル（クリックして編集）'}
                   </p>
                 </div>
+                {imageUrls.length > 0 && (
+                  <div className="relative h-52 overflow-hidden rounded-xl bg-gray-100">
+                    <div className="flex h-full" style={{ width: `${imageUrls.length * 100}%`, animation: imageUrls.length >= 2 ? 'public-site-slide 10s infinite' : undefined }}>
+                      {imageUrls.map((url, i) => (
+                        <img key={`${url}-${i}`} src={url} alt="" className="h-full object-cover" style={{ width: `${100 / imageUrls.length}%` }} />
+                      ))}
+                    </div>
+                    {imageUrls.length > 1 && (
+                      <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
+                        {imageUrls.map((_, i) => <span key={i} className="h-1.5 w-1.5 rounded-full bg-white/80" />)}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="relative">
                   <p ref={bodyRef} contentEditable suppressContentEditableWarning
                     onBlur={(e) => { setForm((p) => ({ ...p, body: e.currentTarget.innerText })); }}
@@ -618,16 +640,6 @@ export default function AdminPublicPage() {
                     {previewBody || '団体説明（クリックして編集）'}
                   </p>
                 </div>
-                {/* 画像追加ボタン（任意） */}
-                {imageUrls.length < 3 && (
-                  <label className="flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-gray-200 text-xs text-gray-400 hover:border-[#06C755] hover:text-[#06C755] transition">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
-                    <span>{uploading ? 'アップロード中...' : imageUrls.length > 0 ? `画像を追加（${imageUrls.length}/3）` : '画像を追加する（任意）'}</span>
-                    <input type="file" accept="image/*" disabled={uploading}
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImageFile(f); e.currentTarget.value = ''; }}
-                      className="hidden" />
-                  </label>
-                )}
                 {/* フォント・色設定（静止サイト型） */}
                 <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 space-y-3">
                   <div>
@@ -678,7 +690,7 @@ export default function AdminPublicPage() {
                 </section>
                 <section className="rounded-lg p-4" style={{ backgroundColor: navColor }}>
                   <p className="text-xs font-bold text-gray-400 mb-1">必須 — お問い合わせセクション</p>
-                  <p className="text-sm font-bold" style={{ color: textColor }}>お問い合わせ</p>
+                  <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.contact}</p>
                   <p className="mt-1 text-xs text-gray-400">LINEでの問い合わせが表示されます</p>
                 </section>
               </div>

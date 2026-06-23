@@ -114,6 +114,11 @@ export class UpsertPublicPageDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(40)
+  contactLabel?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(160)
   seoTitle?: string;
 
@@ -209,6 +214,7 @@ export class PublicPagesService {
       aboutLabel: dto.aboutLabel?.trim() || null,
       reserveLabel: dto.reserveLabel?.trim() || null,
       blogLabel: dto.blogLabel?.trim() || null,
+      contactLabel: dto.contactLabel?.trim() || null,
       buttonStyle: dto.buttonStyle?.trim() || null,
       headerText: dto.headerText?.trim() || null,
       footerText: dto.footerText?.trim() || null,

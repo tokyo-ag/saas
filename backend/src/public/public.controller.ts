@@ -427,6 +427,7 @@ export class PublicController {
       aboutLabel: page.aboutLabel,
       reserveLabel: page.reserveLabel,
       blogLabel: page.blogLabel,
+      contactLabel: page.contactLabel,
       seoTitle: page.seoTitle,
       seoDescription: page.seoDescription,
       publishedAt: page.publishedAt,

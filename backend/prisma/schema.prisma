@@ -90,6 +90,7 @@ model PublicPage {
   aboutLabel     String?   @map("about_label") @db.VarChar(40)
   reserveLabel   String?   @map("reserve_label") @db.VarChar(40)
   blogLabel      String?   @map("blog_label") @db.VarChar(40)
+  contactLabel   String?   @map("contact_label") @db.VarChar(40)
   buttonStyle    String?   @map("button_style") @db.VarChar(20)
   headerText     String?   @map("header_text") @db.VarChar(300)
   footerText     String?   @map("footer_text") @db.VarChar(300)

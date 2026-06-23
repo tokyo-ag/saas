@@ -135,6 +135,7 @@ export default async function ClubCmsPage({
     about: page.aboutLabel || '団体詳細',
     reserve: page.reserveLabel || '予約する',
     blog: page.blogLabel || 'ブログ',
+    contact: page.contactLabel || 'お問い合わせ',
   };
   const buttonStyle = page.buttonStyle ?? 'rounded';
   const gorgeousColor = '#b8860b';
@@ -162,6 +163,14 @@ export default async function ClubCmsPage({
     return (
       <main className="min-h-screen" style={{ fontFamily, backgroundColor }}>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
+        <style>{`
+          @keyframes public-site-slide {
+            0%, 28% { transform: translateX(0); }
+            34%, 62% { transform: translateX(-100%); }
+            68%, 96% { transform: translateX(-200%); }
+            100% { transform: translateX(0); }
+          }
+        `}</style>
         <div className="flex min-h-screen flex-col items-center px-6 py-16">
           {tenantIcon ? (
             <img src={tenantIcon} alt={tenantName} className="h-20 w-20 rounded-full object-cover" />
@@ -172,6 +181,21 @@ export default async function ClubCmsPage({
           )}
           <h1 className="mt-4 text-xl font-bold" style={{ color: textColor }}>{tenantName}</h1>
           {page.subtitle && <p className="mt-1 text-sm opacity-70" style={{ color: textColor }}>{page.subtitle}</p>}
+
+          {images.length > 0 && (
+            <div className="relative mt-6 aspect-[16/9] w-full max-w-sm overflow-hidden rounded-xl bg-gray-100">
+              <div className="flex h-full" style={{ width: `${images.length * 100}%`, animation: images.length >= 2 ? 'public-site-slide 12s infinite' : undefined }}>
+                {images.map((url, index) => (
+                  <img key={`${url}-${index}`} src={url} alt={page.title} className="h-full object-cover" style={{ width: `${100 / images.length}%` }} />
+                ))}
+              </div>
+              {images.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+                  {images.map((_, index) => <span key={index} className="h-1.5 w-1.5 rounded-full bg-white/80" />)}
+                </div>
+              )}
+            </div>
+          )}
 
           <nav className="mt-10 flex w-full max-w-lg flex-wrap justify-center gap-3">
             <a href="#about" className={`flex-1 min-w-[6rem] px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
@@ -190,7 +214,7 @@ export default async function ClubCmsPage({
             <Link href={contactHref}
               className={`flex-1 min-w-[6rem] px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
               style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
-              お問い合わせ
+              {navLabels.contact}
             </Link>
           </nav>
 
@@ -226,7 +250,7 @@ export default async function ClubCmsPage({
           <div className="flex items-center gap-2 text-xs font-bold">
             <a href="#about" className="hidden sm:block text-gray-500 hover:text-gray-900">{navLabels.about}</a>
             <a href="#blog" className="hidden sm:block text-gray-500 hover:text-gray-900">{navLabels.blog}</a>
-            <a href="#contact" className="hidden sm:block text-gray-500 hover:text-gray-900">お問い合わせ</a>
+            <a href="#contact" className="hidden sm:block text-gray-500 hover:text-gray-900">{navLabels.contact}</a>
             <Link href={reserveHref} className="rounded-full px-4 py-2 text-white" style={{ backgroundColor: accentColor }}>
               {navLabels.reserve}
             </Link>
@@ -241,7 +265,7 @@ export default async function ClubCmsPage({
             <a href="#about" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm">{navLabels.about}</a>
             <a href="#blog" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm">{navLabels.blog}</a>
             <a href="#reserve" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm">{navLabels.reserve}</a>
-            <a href="#contact" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm">お問い合わせ</a>
+            <a href="#contact" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm">{navLabels.contact}</a>
           </div>
         </nav>
 
@@ -280,7 +304,7 @@ export default async function ClubCmsPage({
         </div>
 
         <div id="contact" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
-          <p className="text-lg font-bold text-gray-900">お問い合わせ</p>
+          <p className="text-lg font-bold text-gray-900">{navLabels.contact}</p>
           <p className="mt-2 text-sm leading-7 text-gray-500">ご質問・ご相談はこちらからお気軽にどうぞ。</p>
           <Link href={contactHref}
             className="mt-4 inline-block rounded-full px-6 py-3 text-sm font-bold text-white transition hover:opacity-80"
