@@ -451,23 +451,12 @@ export default function AdminPublicPage() {
               ))}
             </div>
           </div>
-          <label className="flex items-center gap-3 text-xs font-bold text-gray-500">
-            <span>ナビ背景</span>
-            <input type="color" value={navColor}
-              onChange={(e) => setForm((p) => ({ ...p, navColor: e.target.value }))}
-              className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-          </label>
         </div>
 
         {/* 内容 */}
         <div className="rounded-xl border border-gray-200 bg-white p-4">
           <p className="mb-3 text-xs font-bold text-gray-500">内容</p>
           <div className="space-y-3">
-            <label className="block">
-              <span className="mb-1 block text-[11px] font-bold text-gray-400">団体名</span>
-              <input value={displayName} readOnly
-                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-bold text-gray-500" />
-            </label>
             <label className="block">
               <span className="mb-1 block text-[11px] font-bold text-gray-400">サブタイトル</span>
               <input value={form.subtitle ?? ''}
@@ -572,26 +561,6 @@ export default function AdminPublicPage() {
                 })}
               </div>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="flex items-center gap-3 text-xs font-bold text-gray-500">
-                <span>ボタン色</span>
-                <input type="color" value={accentColor}
-                  onChange={(e) => setForm((p) => ({ ...p, accentColor: e.target.value }))}
-                  className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-              </label>
-              <label className="flex items-center gap-3 text-xs font-bold text-gray-500">
-                <span>文字色</span>
-                <input type="color" value={textColor}
-                  onChange={(e) => setForm((p) => ({ ...p, textColor: e.target.value }))}
-                  className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-              </label>
-            </div>
-            <label className="block">
-              <span className="mb-2 block text-[11px] font-bold text-gray-400">透明度 {buttonOpacity}%</span>
-              <input type="range" min="20" max="100" step="5" value={buttonOpacity}
-                onChange={(e) => setForm((p) => ({ ...p, buttonOpacity: Number(e.target.value) }))}
-                className="w-full accent-[#06C755]" />
-            </label>
           </div>
         </div>
 
@@ -658,9 +627,36 @@ export default function AdminPublicPage() {
               </label>
             )}
           </div>
-          <div className="mt-4 grid gap-4 border-t border-gray-100 pt-4 sm:grid-cols-2">
+          {/* カラー・透明度 統合 */}
+          <div className="mt-4 border-t border-gray-100 pt-4 space-y-4">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <label className="flex flex-col gap-1 text-xs font-bold text-gray-500">
+                <span>ナビ背景</span>
+                <input type="color" value={navColor}
+                  onChange={(e) => setForm((p) => ({ ...p, navColor: e.target.value }))}
+                  className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-bold text-gray-500">
+                <span>ボタン色</span>
+                <input type="color" value={accentColor}
+                  onChange={(e) => setForm((p) => ({ ...p, accentColor: e.target.value }))}
+                  className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-bold text-gray-500">
+                <span>文字色</span>
+                <input type="color" value={textColor}
+                  onChange={(e) => setForm((p) => ({ ...p, textColor: e.target.value }))}
+                  className="h-9 w-14 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+              </label>
+            </div>
+            <label className="block">
+              <span className="mb-2 block text-[11px] font-bold text-gray-400">ボタン透明度 {buttonOpacity}%</span>
+              <input type="range" min="20" max="100" step="5" value={buttonOpacity}
+                onChange={(e) => setForm((p) => ({ ...p, buttonOpacity: Number(e.target.value) }))}
+                className="w-full accent-[#06C755]" />
+            </label>
             <div>
-              <p className="mb-2 text-[11px] font-bold text-gray-400">色味</p>
+              <p className="mb-2 text-[11px] font-bold text-gray-400">画像の色味</p>
               <div className="flex flex-wrap items-center gap-2">
                 <input type="color" value={heroOverlayColor}
                   onChange={(e) => setForm((p) => ({ ...p, heroOverlayColor: e.target.value }))}
@@ -675,7 +671,7 @@ export default function AdminPublicPage() {
               </div>
             </div>
             <label className="block">
-              <span className="mb-2 block text-[11px] font-bold text-gray-400">透明度 {heroOverlayOpacity}%</span>
+              <span className="mb-2 block text-[11px] font-bold text-gray-400">画像透明度 {heroOverlayOpacity}%</span>
               <input type="range" min="0" max="80" step="5" value={heroOverlayOpacity}
                 onChange={(e) => setForm((p) => ({ ...p, heroOverlayOpacity: Number(e.target.value) }))}
                 className="w-full accent-[#06C755]" />
