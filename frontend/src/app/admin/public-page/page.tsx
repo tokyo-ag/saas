@@ -520,16 +520,12 @@ export default function AdminPublicPage() {
               {form.subtitle?.trim() && (
                 <p className="mt-1 text-sm opacity-70" style={{ color: textColor }}>{form.subtitle}</p>
               )}
-              <div className="mt-8 w-full max-w-xs space-y-3">
-                {[
-                  { label: navLabels.about },
-                  { label: navLabels.reserve },
-                  { label: navLabels.blog },
-                ].map((btn) => (
-                  <div key={btn.label}
-                    className={`block w-full px-6 py-4 text-center text-sm font-bold ${getBtnShapeClass(buttonStyle)}`}
+              <div className="mt-8 flex w-full max-w-lg flex-wrap justify-center gap-3">
+                {[navLabels.about, navLabels.reserve, navLabels.blog].map((label) => (
+                  <div key={label}
+                    className={`flex-1 min-w-[6rem] px-5 py-4 text-center text-sm font-bold ${getBtnShapeClass(buttonStyle)}`}
                     style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
-                    {btn.label}
+                    {label}
                   </div>
                 ))}
               </div>

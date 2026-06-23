@@ -171,17 +171,17 @@ export default async function ClubCmsPage({
           <h1 className="mt-4 text-xl font-bold" style={{ color: textColor }}>{tenantName}</h1>
           {page.subtitle && <p className="mt-1 text-sm opacity-70" style={{ color: textColor }}>{page.subtitle}</p>}
 
-          <nav className="mt-10 w-full max-w-xs space-y-4">
-            <a href="#about" className={`block w-full px-6 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
+          <nav className="mt-10 flex w-full max-w-lg flex-wrap justify-center gap-3">
+            <a href="#about" className={`flex-1 min-w-[6rem] px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
               style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
               {navLabels.about}
             </a>
-            <Link href={liffHref} className={`block w-full px-6 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
+            <Link href={liffHref} className={`flex-1 min-w-[6rem] px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
               style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
               {navLabels.reserve}
             </Link>
             <Link href={`/clubs/${page.tenant.code ?? tenantCode}/blog`}
-              className={`block w-full px-6 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
+              className={`flex-1 min-w-[6rem] px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
               style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
               {navLabels.blog}
             </Link>
