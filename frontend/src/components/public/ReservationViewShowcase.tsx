@@ -8,27 +8,46 @@ type ReservationViewShowcaseProps = {
   viewStyle?: string | null;
 };
 
-const calendarDays = Array.from({ length: 14 }, (_, index) => index + 1);
+const WEEK_DAYS = ['日', '月', '火', '水', '木', '金', '土'];
+// July 2026: starts Wednesday (index 3), 31 days, highlight some dates
+const PREVIEW_MONTH = '7月';
+const START_DOW = 3;
+const TOTAL_DAYS = 31;
+const AVAILABLE_DAYS = new Set([5, 7, 12, 19, 20, 26]);
 
-function CalendarMini({ accentColor }: { accentColor: string }) {
+function CalendarFull({ accentColor }: { accentColor: string }) {
+  const cells: (number | null)[] = [
+    ...Array(START_DOW).fill(null),
+    ...Array.from({ length: TOTAL_DAYS }, (_, i) => i + 1),
+  ];
+  // pad to multiple of 7
+  while (cells.length % 7 !== 0) cells.push(null);
+
   return (
-    <div className="rounded-lg border border-gray-100 bg-gray-50 p-2">
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-[10px] font-bold text-gray-500">7月</span>
-        <span className="h-1.5 w-6 rounded-full" style={{ backgroundColor: accentColor }} />
+    <div className="w-full">
+      <div className="mb-3 flex items-center justify-between px-1">
+        <span className="text-sm font-bold text-gray-700">{PREVIEW_MONTH}</span>
+        <span className="h-1.5 w-8 rounded-full" style={{ backgroundColor: accentColor }} />
       </div>
-      <div className="grid grid-cols-7 gap-1">
-        {calendarDays.map((day) => (
-          <span
-            key={day}
-            className={`flex aspect-square items-center justify-center rounded text-[9px] font-bold ${
-              day === 7 || day === 12 ? 'text-white' : 'bg-white text-gray-400'
-            }`}
-            style={day === 7 || day === 12 ? { backgroundColor: accentColor } : undefined}
-          >
-            {day}
-          </span>
+      <div className="grid grid-cols-7 gap-y-1 text-center">
+        {WEEK_DAYS.map((d) => (
+          <span key={d} className="text-[10px] font-bold text-gray-400 pb-1">{d}</span>
         ))}
+        {cells.map((day, i) => {
+          if (!day) return <span key={`e-${i}`} />;
+          const active = AVAILABLE_DAYS.has(day);
+          return (
+            <span
+              key={day}
+              className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+                active ? 'text-white' : 'text-gray-400'
+              }`}
+              style={active ? { backgroundColor: accentColor } : undefined}
+            >
+              {day}
+            </span>
+          );
+        })}
       </div>
     </div>
   );
@@ -87,7 +106,7 @@ export function ReservationViewShowcase({
   return (
     <div className={`space-y-3 ${className}`}>
       <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
-        {selectedView === 'calendar' && <CalendarMini accentColor={accentColor} />}
+        {selectedView === 'calendar' && <CalendarFull accentColor={accentColor} />}
         {selectedView === 'card' && <CardMini accentColor={accentColor} />}
         {selectedView === 'thread' && <ThreadMini accentColor={accentColor} />}
       </div>
