@@ -22,6 +22,7 @@ const emptyForm: PublicPageInput = {
   navOpacity: 100,
   imageLayout: 'slider',
   heroImageMode: 'fixed',
+  heroNavPosition: 'below',
   heroOverlayOpacity: 0,
   heroOverlayColor: '#000000',
   reserveViewStyle: 'calendar',
@@ -260,6 +261,7 @@ export default function AdminPublicPage() {
       : 'fixed';
   const heroOverlayOpacity = clampPercent(form.heroOverlayOpacity);
   const heroOverlayColor = form.heroOverlayColor?.trim() || '#000000';
+  const heroNavPosition = form.heroNavPosition === 'inside' ? 'inside' : 'below';
   const navLabels = {
     about: form.aboutLabel?.trim() || '団体詳細',
     reserve: form.reserveLabel?.trim() || '予約する',
@@ -300,6 +302,7 @@ export default function AdminPublicPage() {
             navOpacity: first.navOpacity ?? 100,
             imageLayout: first.imageLayout ?? 'slider',
             heroImageMode: first.heroImageMode === 'auto' ? 'fixed' : first.heroImageMode ?? 'fixed',
+            heroNavPosition: first.heroNavPosition ?? 'below',
             heroOverlayOpacity: first.heroOverlayOpacity ?? 0,
             heroOverlayColor: first.heroOverlayColor ?? '#000000',
             reserveViewStyle: first.reserveViewStyle ?? 'calendar',
@@ -359,6 +362,7 @@ export default function AdminPublicPage() {
       textColor, accentColor, backgroundColor, navColor, navOpacity,
       imageLayout: form.imageLayout || 'slider',
       heroImageMode,
+      heroNavPosition,
       heroOverlayOpacity,
       heroOverlayColor,
       fontFamily: form.fontFamily,
@@ -527,6 +531,21 @@ export default function AdminPublicPage() {
                 </label>
               )}
             </div>
+            {heroImageMode === 'background' && (
+              <div className="mt-3">
+                <p className="mb-2 text-[11px] font-bold text-gray-400">ナビボタン位置</p>
+                <div className="flex gap-2">
+                  {[{ label: '背景の中', value: 'inside' }, { label: '背景の下', value: 'below' }].map((opt) => (
+                    <button key={opt.value} type="button"
+                      onClick={() => setForm((p) => ({ ...p, heroNavPosition: opt.value }))}
+                      className={`rounded-full border px-4 py-2 text-xs font-bold transition ${heroNavPosition === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                      style={heroNavPosition === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {imageUrls.length > 0 && (
               <div className="mt-4 border-t border-gray-100 pt-4 space-y-2">
                 <p className="text-[11px] font-bold text-gray-400">画像の色味</p>
@@ -742,25 +761,54 @@ export default function AdminPublicPage() {
           {/* 静止サイト型 preview */}
           {!isCategory && (
             <>
-              {/* ヘッダー: 背景モードのときは画像を背景に、ナビ/団体名を重ねる */}
-              <div className="relative flex flex-col gap-3 border-b border-gray-100 px-4 py-3"
-                style={heroImageMode === 'background' && imageUrls[0] ? {
-                  backgroundImage: `url(${imageUrls[0]})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                } : undefined}>
-                {heroImageMode === 'background' && imageUrls[0] && (
-                  <div className="absolute inset-0" style={{ backgroundColor: navBg }} />
-                )}
-                <span className="relative text-sm font-bold leading-5" style={{ color: textColor }}>{displayName}</span>
-                <div className="relative grid grid-cols-2 gap-2 text-[11px] font-bold">
-                  {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
-                    <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderColor: accentColor, color: textColor, ...buttonOpacityStyle }}>{label}</span>
-                  ))}
+              {heroImageMode === 'background' && imageUrls[0] ? (
+                /* 背景モード: 大きいヒーロー */
+                <>
+                  <div className="relative overflow-hidden" style={{ minHeight: 220 }}>
+                    <div className="absolute inset-0" style={{ backgroundImage: `url(${imageUrls[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                    <div className="absolute inset-0" style={{ backgroundColor: navBg }} />
+                    <div className="relative z-10 flex flex-col justify-between px-4 py-4" style={{ minHeight: 220 }}>
+                      <div className="flex items-center justify-end">
+                        <span className={`px-3 py-1 text-[11px] font-bold text-white ${getBtnShapeClass(buttonStyle)}`} style={{ backgroundColor: accentColor }}>
+                          {navLabels.reserve}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold drop-shadow" style={{ color: textColor }}>{displayName}</p>
+                        {form.subtitle?.trim() && (
+                          <p className="mt-1 text-sm opacity-80" style={{ color: textColor }}>{form.subtitle.trim()}</p>
+                        )}
+                        {heroNavPosition === 'inside' && (
+                          <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] font-bold">
+                            {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
+                              <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderColor: accentColor, color: textColor, ...buttonOpacityStyle }}>{label}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {heroNavPosition === 'below' && (
+                    <div className="grid grid-cols-2 gap-2 border-b border-gray-100 px-4 py-3 text-[11px] font-bold">
+                      {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
+                        <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderColor: accentColor, color: textColor, ...buttonOpacityStyle }}>{label}</span>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* 通常モード: 薄いナビバー */
+                <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-3">
+                  <span className="text-sm font-bold leading-5" style={{ color: textColor }}>{displayName}</span>
+                  <div className="grid grid-cols-2 gap-2 text-[11px] font-bold">
+                    {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
+                      <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderColor: accentColor, color: textColor, ...buttonOpacityStyle }}>{label}</span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="space-y-4 p-5">
-                {form.subtitle?.trim() && (
+                {form.subtitle?.trim() && heroImageMode !== 'background' && (
                   <p className="text-sm font-bold leading-6 opacity-75" style={{ color: textColor, textAlign: titleAlign }}>
                     {form.subtitle.trim()}
                   </p>

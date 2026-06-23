@@ -421,6 +421,7 @@ export class PublicController {
       navOpacity: page.navOpacity,
       imageLayout: page.imageLayout,
       heroImageMode: page.heroImageMode,
+      heroNavPosition: page.heroNavPosition,
       heroOverlayOpacity: page.heroOverlayOpacity,
       heroOverlayColor: page.heroOverlayColor,
       reserveViewStyle: page.reserveViewStyle,

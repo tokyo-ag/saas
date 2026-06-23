@@ -84,6 +84,7 @@ model PublicPage {
   navOpacity     Int?      @map("nav_opacity")
   imageLayout    String?   @map("image_layout") @db.VarChar(20)
   heroImageMode  String?   @map("hero_image_mode") @db.VarChar(20)
+  heroNavPosition String?  @map("hero_nav_position") @db.VarChar(20)
   heroOverlayOpacity Int?  @map("hero_overlay_opacity")
   heroOverlayColor String? @map("hero_overlay_color") @db.VarChar(20)
   reserveViewStyle String? @map("reserve_view_style") @db.VarChar(20)

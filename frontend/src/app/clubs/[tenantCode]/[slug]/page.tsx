@@ -251,6 +251,7 @@ export default async function ClubCmsPage({
   const gorgeousColor = '#b8860b';
   const btnBorderColor = buttonStyle === 'gorgeous' ? gorgeousColor : accentColor;
   const btnClass = getBtnClass(buttonStyle);
+  const heroNavPosition = page.heroNavPosition === 'inside' ? 'inside' : 'below';
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -361,27 +362,57 @@ export default async function ClubCmsPage({
         }
       `}</style>
 
-      <header className="relative sticky top-0 z-10 px-4 py-3"
-        style={heroImageMode === 'background' && images[0]
-          ? { backgroundImage: `url(${images[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-          : { backgroundColor: navBg }}>
-        {heroImageMode === 'background' && images[0] && (
-          <div className="absolute inset-0" style={{ backgroundColor: navBg }} />
-        )}
-        <div className="relative mx-auto flex max-w-3xl items-center justify-between gap-3">
-          <Link href={clubHref} className="text-sm font-bold" style={{ color: textColor }}>{tenantName}</Link>
-          <div className="flex items-center gap-2 text-xs font-bold">
-            <a href="#about" className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.about}</a>
-            <a href="#blog" className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.blog}</a>
-            <a href="#contact" className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.contact}</a>
-            <Link href={reserveHref}
-              className={`px-4 py-2 font-bold text-white ${btnClass}`}
-              style={{ backgroundColor: accentColor, ...buttonOpacityStyle }}>
-              {navLabels.reserve}
-            </Link>
+      {heroImageMode === 'background' && images[0] ? (
+        /* 背景モード: 大きいヒーローエリア */
+        <>
+          <div className="relative overflow-hidden" style={{ minHeight: 320 }}>
+            <div className="absolute inset-0" style={{ backgroundImage: `url(${images[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+            <div className="absolute inset-0" style={{ backgroundColor: navBg }} />
+            <div className="relative z-10 flex flex-col justify-between px-6 py-5 md:px-8" style={{ minHeight: 320 }}>
+              <div className="flex items-center justify-end">
+                <Link href={reserveHref} className={`px-4 py-2 text-sm font-bold text-white ${btnClass}`} style={{ backgroundColor: accentColor, ...buttonOpacityStyle }}>
+                  {navLabels.reserve}
+                </Link>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold drop-shadow md:text-3xl" style={{ color: textColor }}>{tenantName}</h1>
+                {page.subtitle && <p className="mt-2 text-base opacity-80" style={{ color: textColor }}>{page.subtitle}</p>}
+                {heroNavPosition === 'inside' && (
+                  <nav className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <a href="#about" className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>{navLabels.about}</a>
+                    <a href="#blog" className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>{navLabels.blog}</a>
+                    <Link href={reserveHref} className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>{navLabels.reserve}</Link>
+                    <Link href={contactHref} className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>{navLabels.contact}</Link>
+                  </nav>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      </header>
+          {heroNavPosition === 'below' && (
+            <nav className="mx-auto grid max-w-3xl grid-cols-2 gap-3 px-4 py-4 sm:grid-cols-4">
+              <a href="#about" className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>{navLabels.about}</a>
+              <a href="#blog" className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>{navLabels.blog}</a>
+              <Link href={reserveHref} className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>{navLabels.reserve}</Link>
+              <Link href={contactHref} className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>{navLabels.contact}</Link>
+            </nav>
+          )}
+        </>
+      ) : (
+        /* 通常モード: 薄いスティッキーヘッダー */
+        <header className="sticky top-0 z-10 px-4 py-3" style={{ backgroundColor: navBg }}>
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
+            <Link href={clubHref} className="text-sm font-bold" style={{ color: textColor }}>{tenantName}</Link>
+            <div className="flex items-center gap-2 text-xs font-bold">
+              <a href="#about" className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.about}</a>
+              <a href="#blog" className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.blog}</a>
+              <a href="#contact" className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.contact}</a>
+              <Link href={reserveHref} className={`px-4 py-2 font-bold text-white ${btnClass}`} style={{ backgroundColor: accentColor, ...buttonOpacityStyle }}>
+                {navLabels.reserve}
+              </Link>
+            </div>
+          </div>
+        </header>
+      )}
 
       <article id="about" className="mx-auto max-w-3xl px-4 py-8 md:py-12">
         {heroImageMode !== 'background' && (
