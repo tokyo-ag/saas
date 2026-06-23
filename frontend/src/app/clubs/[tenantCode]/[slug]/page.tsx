@@ -355,22 +355,7 @@ export default async function ClubCmsPage({
         </div>
       </header>
 
-      <article className="mx-auto max-w-3xl px-4 py-8 md:py-12">
-        <nav className="mb-6 rounded-xl px-4 py-4" style={{ backgroundColor: navColor }}>
-          <p className="mb-3 text-xs font-bold text-gray-400">目次</p>
-          <div className="flex flex-wrap gap-2 text-sm font-bold">
-            <a href="#about" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm" style={buttonOpacityStyle}>{navLabels.about}</a>
-            <a href="#blog" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm" style={buttonOpacityStyle}>{navLabels.blog}</a>
-            <a href="#reserve" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm" style={buttonOpacityStyle}>{navLabels.reserve}</a>
-            <a href="#contact" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm" style={buttonOpacityStyle}>{navLabels.contact}</a>
-          </div>
-        </nav>
-
-        <h1 id="about" className={`${titleSizeClass} scroll-mt-6 font-bold leading-tight`} style={{ color: textColor, textAlign: titleAlign }}>{page.title}</h1>
-        {page.subtitle && (
-          <p className="mt-3 text-lg font-bold leading-8 opacity-75" style={{ color: textColor, textAlign: titleAlign }}>{page.subtitle}</p>
-        )}
-
+      <article id="about" className="mx-auto max-w-3xl px-4 py-8 md:py-12">
         <HeroImageBlock
           images={images}
           captions={imageCaptions}
