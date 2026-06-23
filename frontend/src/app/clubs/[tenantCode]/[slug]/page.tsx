@@ -154,6 +154,8 @@ export default async function ClubCmsPage({
     ...(image ? { image } : {}),
   };
 
+  const contactHref = `${liffHref}/admin-talk`;
+
   // カテゴリー型
   if (layoutVariant === 'category') {
     const tenantIcon = imgUrl(page.tenant.iconUrl ?? page.tenant.linePictureUrl, IMAGE_BASE_URL);
@@ -184,6 +186,11 @@ export default async function ClubCmsPage({
               className={`flex-1 min-w-[6rem] px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
               style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
               {navLabels.blog}
+            </Link>
+            <Link href={contactHref}
+              className={`flex-1 min-w-[6rem] px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
+              style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
+              お問い合わせ
             </Link>
           </nav>
 
@@ -225,6 +232,7 @@ export default async function ClubCmsPage({
           <div className="flex items-center gap-2 text-xs font-bold">
             <a href="#about" className="hidden sm:block text-gray-500 hover:text-gray-900">{navLabels.about}</a>
             <a href="#blog" className="hidden sm:block text-gray-500 hover:text-gray-900">{navLabels.blog}</a>
+            <a href="#contact" className="hidden sm:block text-gray-500 hover:text-gray-900">お問い合わせ</a>
             <Link href={liffHref} className="rounded-full px-4 py-2 text-white" style={{ backgroundColor: accentColor }}>
               {navLabels.reserve}
             </Link>
@@ -239,6 +247,7 @@ export default async function ClubCmsPage({
             <a href="#about" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm">{navLabels.about}</a>
             <a href="#blog" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm">{navLabels.blog}</a>
             <a href="#reserve" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm">{navLabels.reserve}</a>
+            <a href="#contact" className="rounded-full bg-white px-4 py-2 text-gray-600 shadow-sm">お問い合わせ</a>
           </div>
         </nav>
 
@@ -274,6 +283,16 @@ export default async function ClubCmsPage({
         <div id="reserve" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
           <p className="text-lg font-bold text-gray-900">{navLabels.reserve}</p>
           <ReservationViewShowcase accentColor={accentColor} buttonLabel={navLabels.reserve} href={liffHref} className="mt-4" />
+        </div>
+
+        <div id="contact" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
+          <p className="text-lg font-bold text-gray-900">お問い合わせ</p>
+          <p className="mt-2 text-sm leading-7 text-gray-500">ご質問・ご相談はこちらからお気軽にどうぞ。</p>
+          <Link href={contactHref}
+            className="mt-4 inline-block rounded-full px-6 py-3 text-sm font-bold text-white transition hover:opacity-80"
+            style={{ backgroundColor: accentColor }}>
+            LINEで問い合わせる
+          </Link>
         </div>
       </article>
 

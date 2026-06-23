@@ -493,7 +493,7 @@ export default function AdminPublicPage() {
                 <p className="mt-1 text-sm opacity-70" style={{ color: textColor }}>{form.subtitle}</p>
               )}
               <div className="mt-8 flex w-full max-w-lg flex-wrap justify-center gap-3">
-                {[navLabels.about, navLabels.reserve, navLabels.blog].map((label) => (
+                {[navLabels.about, navLabels.reserve, navLabels.blog, 'お問い合わせ'].map((label) => (
                   <div key={label}
                     className={`flex-1 min-w-[6rem] px-5 py-4 text-center text-sm font-bold ${getBtnShapeClass(buttonStyle)}`}
                     style={{ borderColor: btnBorderColor, color: btnBorderColor }}>
@@ -556,6 +556,11 @@ export default function AdminPublicPage() {
                   <p className="text-xs font-bold text-gray-400 mb-1">必須 — ブログセクション</p>
                   <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.blog}</p>
                   <p className="mt-1 text-xs text-gray-400">公開した記事が表示されます</p>
+                </section>
+                <section className="rounded-lg p-4" style={{ backgroundColor: navColor }}>
+                  <p className="text-xs font-bold text-gray-400 mb-1">必須 — お問い合わせセクション</p>
+                  <p className="text-sm font-bold" style={{ color: textColor }}>お問い合わせ</p>
+                  <p className="mt-1 text-xs text-gray-400">LINEでの問い合わせフォームが表示されます</p>
                 </section>
               </div>
               <div
