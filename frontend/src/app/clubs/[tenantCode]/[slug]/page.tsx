@@ -225,7 +225,12 @@ export default async function ClubCmsPage({
   const navOpacity = clampPercent(page.navOpacity ?? 100);
   const navBg = hexToRgba(navColor, navOpacity);
   const fontFamily = fontFamilyMap[page.fontFamily || 'mincho'] ?? fontFamilyMap.mincho;
+  const titleFontFamily = page.titleFont ? (fontFamilyMap[page.titleFont] ?? fontFamily) : fontFamily;
+  const titleTextColor = page.titleColor || textColor;
   const titleSizeClass = titleSizeMap[page.titleSize || 'large'] ?? titleSizeMap.large;
+  const subtitleFontFamily = page.subtitleFont ? (fontFamilyMap[page.subtitleFont] ?? fontFamily) : fontFamily;
+  const subtitleTextColor = page.subtitleColor || textColor;
+  const subtitleSizeClass = page.subtitleSize === 'small' ? 'text-xs' : page.subtitleSize === 'large' ? 'text-base' : 'text-sm';
   const bodySizeClass = bodySizeMap[page.bodySize || 'base'] ?? bodySizeMap.base;
   const titleAlign = (['left', 'center', 'right'].includes(page.titleAlign || '') ? page.titleAlign! : 'left') as 'left' | 'center' | 'right';
   const layoutVariant = page.layoutVariant || 'static';
@@ -300,8 +305,8 @@ export default async function ClubCmsPage({
               {tenantName.slice(0, 1)}
             </div>
           )}
-          <h1 className="mt-4 text-xl font-bold" style={{ color: textColor }}>{tenantName}</h1>
-          {page.subtitle && <p className="mt-1 text-sm opacity-70" style={{ color: textColor }}>{page.subtitle}</p>}
+          <h1 className={`mt-4 ${titleSizeClass} font-bold`} style={{ color: titleTextColor, fontFamily: titleFontFamily }}>{tenantName}</h1>
+          {page.subtitle && <p className={`mt-1 ${subtitleSizeClass}`} style={{ color: subtitleTextColor, fontFamily: subtitleFontFamily }}>{page.subtitle}</p>}
 
           <div className="w-full max-w-sm">
             <HeroImageBlock
@@ -372,7 +377,7 @@ export default async function ClubCmsPage({
         <>
           <div className="relative overflow-hidden" style={{ minHeight: 320 }}>
             <div className="absolute inset-0" style={{ backgroundImage: `url(${images[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
-            <div className="absolute inset-0" style={{ backgroundColor: navBg }} />
+            <div className="absolute inset-0" style={{ backgroundColor: hexToRgba(heroOverlayColor, heroOverlayOpacity) }} />
             <div className="relative z-10 flex flex-col justify-between px-6 py-5 md:px-8" style={{ minHeight: 320 }}>
               <div className="flex items-center justify-end">
                 <Link href={reserveHref} className={`px-4 py-2 text-sm font-bold text-white ${btnClass}`} style={{ backgroundColor: accentColor, ...buttonOpacityStyle }}>
@@ -380,8 +385,8 @@ export default async function ClubCmsPage({
                 </Link>
               </div>
               <div>
-                <h1 className="text-2xl font-bold drop-shadow md:text-3xl" style={{ color: textColor }}>{tenantName}</h1>
-                {page.subtitle && <p className="mt-2 text-base opacity-80" style={{ color: textColor }}>{page.subtitle}</p>}
+                <h1 className={`${titleSizeClass} font-bold drop-shadow`} style={{ color: titleTextColor, fontFamily: titleFontFamily }}>{tenantName}</h1>
+                {page.subtitle && <p className={`mt-2 ${subtitleSizeClass}`} style={{ color: subtitleTextColor, fontFamily: subtitleFontFamily }}>{page.subtitle}</p>}
                 {heroNavPosition === 'inside' && (
                   <nav className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                     <a href="#about" className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle }}>{navLabels.about}</a>

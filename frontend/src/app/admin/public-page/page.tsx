@@ -43,8 +43,13 @@ const emptyForm: PublicPageInput = {
   heroOverlayColor: '#000000',
   reserveViewStyle: 'calendar',
   fontFamily: 'mincho',
+  titleFont: '',
+  titleColor: '',
   titleSize: 'large',
   titleAlign: 'left',
+  subtitleFont: '',
+  subtitleSize: 'base',
+  subtitleColor: '',
   bodySize: 'base',
   layoutVariant: 'static',
   buttonStyle: 'rounded',
@@ -282,6 +287,31 @@ export default function AdminPublicPage() {
       : 'fixed';
   const heroOverlayOpacity = clampPercent(form.heroOverlayOpacity);
   const heroOverlayColor = form.heroOverlayColor?.trim() || '#000000';
+  const heroOverlayBg = hexToRgba(heroOverlayColor, heroOverlayOpacity);
+
+  const titleFontFamily = (form.titleFont?.trim()
+    ? fontOptions.find(f => f.value === form.titleFont)?.family
+    : undefined) ?? fontFamily;
+  const titleColor = form.titleColor?.trim() || textColor;
+  const titleSizeClass = (() => {
+    switch (form.titleSize) {
+      case 'small': return 'text-base';
+      case 'large': return 'text-2xl';
+      case 'xl': return 'text-3xl';
+      default: return 'text-xl';
+    }
+  })();
+  const subtitleFontFamily = (form.subtitleFont?.trim()
+    ? fontOptions.find(f => f.value === form.subtitleFont)?.family
+    : undefined) ?? fontFamily;
+  const subtitleColor = form.subtitleColor?.trim() || textColor;
+  const subtitleSizeClass = (() => {
+    switch (form.subtitleSize) {
+      case 'small': return 'text-xs';
+      case 'large': return 'text-base';
+      default: return 'text-sm';
+    }
+  })();
   const heroNavPosition = form.heroNavPosition === 'inside' ? 'inside' : 'below';
   const navLabels = {
     about: form.aboutLabel?.trim() || '団体詳細',
@@ -334,8 +364,13 @@ export default function AdminPublicPage() {
             heroOverlayColor: first.heroOverlayColor ?? '#000000',
             reserveViewStyle: first.reserveViewStyle ?? 'calendar',
             fontFamily: first.fontFamily ?? 'mincho',
+            titleFont: first.titleFont ?? '',
+            titleColor: first.titleColor ?? '',
             titleSize: first.titleSize ?? 'large',
             titleAlign: first.titleAlign ?? 'left',
+            subtitleFont: first.subtitleFont ?? '',
+            subtitleSize: first.subtitleSize ?? 'base',
+            subtitleColor: first.subtitleColor ?? '',
             bodySize: first.bodySize ?? 'base',
             layoutVariant: variant === 'category' ? 'category' : 'static',
             buttonStyle: (first as any).buttonStyle ?? 'rounded',
@@ -433,8 +468,13 @@ export default function AdminPublicPage() {
       heroOverlayOpacity,
       heroOverlayColor,
       fontFamily: form.fontFamily,
+      titleFont: form.titleFont?.trim() || undefined,
+      titleColor: form.titleColor?.trim() || undefined,
       titleSize: form.titleSize,
       titleAlign,
+      subtitleFont: form.subtitleFont?.trim() || undefined,
+      subtitleSize: form.subtitleSize,
+      subtitleColor: form.subtitleColor?.trim() || undefined,
       bodySize: form.bodySize,
       layoutVariant: isCategory ? 'category' : 'static',
       aboutLabel: navLabels.about,
@@ -469,7 +509,7 @@ export default function AdminPublicPage() {
   if (loading) return <div className="px-4 py-12 text-center text-sm text-gray-400">読み込み中...</div>;
 
   return (
-    <form onSubmit={handleSubmit} className="pb-20">
+    <form onSubmit={handleSubmit} className="flex h-screen flex-col">
       <SaveToast show={saved} />
 
       {/* Top bar */}
@@ -504,11 +544,11 @@ export default function AdminPublicPage() {
         </div>
       </div>
 
-      {error && <div className="mx-auto max-w-3xl px-4 pt-3"><div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div></div>}
+      {error && <div className="px-4 pt-2"><div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div></div>}
 
-      <div className="mx-auto grid max-w-[1420px] gap-5 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_minmax(360px,430px)] xl:grid-cols-[minmax(0,1fr)_minmax(400px,460px)]">
+      <div className="flex flex-1 min-h-0 gap-5 px-4 pb-4 lg:grid lg:max-w-[1420px] lg:grid-cols-[minmax(0,1fr)_minmax(360px,430px)] xl:grid-cols-[minmax(0,1fr)_minmax(400px,460px)] [&>*]:min-h-0 [&>*]:h-full">
       {/* Settings panel */}
-      <section className="space-y-3">
+      <section className="flex-1 space-y-3 overflow-y-auto py-4 pr-1">
 
         {/* 全体 */}
         <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-4">
@@ -741,6 +781,71 @@ export default function AdminPublicPage() {
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
             </label>
           </div>
+
+          {/* タイトル / サブタイトル スタイル */}
+          <div className="border-t border-gray-100 pt-4 space-y-4">
+            {/* タイトル */}
+            <div className="space-y-2">
+              <p className="text-[11px] font-bold text-gray-400">タイトル（団体名）</p>
+              <div className="flex flex-wrap gap-1.5">
+                {fontOptions.map((opt) => (
+                  <button key={opt.value} type="button"
+                    onClick={() => setForm((p) => ({ ...p, titleFont: opt.value }))}
+                    className={`rounded-full border px-3 py-1 text-xs font-bold transition ${(form.titleFont || form.fontFamily) === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                    style={(form.titleFont || form.fontFamily) === opt.value ? { backgroundColor: accentColor, borderColor: accentColor, fontFamily: opt.family } : { fontFamily: opt.family }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-1.5">
+                {[{ label: '小', value: 'small' }, { label: '標準', value: 'base' }, { label: '大', value: 'large' }, { label: '特大', value: 'xl' }].map((opt) => (
+                  <button key={opt.value} type="button"
+                    onClick={() => setForm((p) => ({ ...p, titleSize: opt.value }))}
+                    className={`rounded-full border px-3 py-1 text-xs font-bold transition ${form.titleSize === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                    style={form.titleSize === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">色</span>
+                <input type="color" value={form.titleColor || textColor}
+                  onChange={(e) => setForm((p) => ({ ...p, titleColor: e.target.value }))}
+                  className="h-8 w-10 cursor-pointer rounded border border-gray-200 bg-white p-0.5" />
+              </div>
+            </div>
+
+            {/* サブタイトル スタイル */}
+            <div className="space-y-2">
+              <p className="text-[11px] font-bold text-gray-400">サブタイトル スタイル</p>
+              <div className="flex flex-wrap gap-1.5">
+                {fontOptions.map((opt) => (
+                  <button key={opt.value} type="button"
+                    onClick={() => setForm((p) => ({ ...p, subtitleFont: opt.value }))}
+                    className={`rounded-full border px-3 py-1 text-xs font-bold transition ${(form.subtitleFont || form.fontFamily) === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                    style={(form.subtitleFont || form.fontFamily) === opt.value ? { backgroundColor: accentColor, borderColor: accentColor, fontFamily: opt.family } : { fontFamily: opt.family }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-1.5">
+                {[{ label: '小', value: 'small' }, { label: '標準', value: 'base' }, { label: '大', value: 'large' }].map((opt) => (
+                  <button key={opt.value} type="button"
+                    onClick={() => setForm((p) => ({ ...p, subtitleSize: opt.value }))}
+                    className={`rounded-full border px-3 py-1 text-xs font-bold transition ${form.subtitleSize === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                    style={form.subtitleSize === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">色</span>
+                <input type="color" value={form.subtitleColor || textColor}
+                  onChange={(e) => setForm((p) => ({ ...p, subtitleColor: e.target.value }))}
+                  className="h-8 w-10 cursor-pointer rounded border border-gray-200 bg-white p-0.5" />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* 団体詳細 */}
@@ -864,7 +969,7 @@ export default function AdminPublicPage() {
       `}</style>
 
       {/* Preview */}
-      <aside className="w-full max-w-[430px] justify-self-center lg:sticky lg:top-[73px] lg:self-start">
+      <aside className="hidden w-full max-w-[430px] shrink-0 overflow-y-auto py-4 lg:block">
         <div className="mb-2 flex items-center justify-between">
           <p className="text-xs font-bold text-gray-500">反映後の画面</p>
           <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-gray-400 ring-1 ring-gray-200">
@@ -887,9 +992,9 @@ export default function AdminPublicPage() {
                     {displayName.slice(0, 1)}
                   </div>
                 )}
-                <p className="text-xl font-bold" style={{ color: textColor }}>{displayName}</p>
+                <p className={`${titleSizeClass} font-bold`} style={{ color: titleColor, fontFamily: titleFontFamily }}>{displayName}</p>
                 {form.subtitle?.trim() && (
-                  <p className="text-sm opacity-70" style={{ color: textColor }}>{form.subtitle.trim()}</p>
+                  <p className={subtitleSizeClass} style={{ color: subtitleColor, fontFamily: subtitleFontFamily }}>{form.subtitle.trim()}</p>
                 )}
               </div>
 
@@ -936,7 +1041,7 @@ export default function AdminPublicPage() {
                 <>
                   <div className="relative overflow-hidden" style={{ minHeight: 220 }}>
                     <div className="absolute inset-0" style={{ backgroundImage: `url(${imageUrls[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
-                    <div className="absolute inset-0" style={{ backgroundColor: navBg }} />
+                    <div className="absolute inset-0" style={{ backgroundColor: heroOverlayBg }} />
                     <div className="relative z-10 flex flex-col justify-between px-4 py-4" style={{ minHeight: 220 }}>
                       <div className="flex items-center justify-end">
                         <span className={`px-3 py-1 text-[11px] font-bold text-white ${getBtnShapeClass(buttonStyle)}`} style={{ backgroundColor: accentColor }}>
@@ -944,9 +1049,9 @@ export default function AdminPublicPage() {
                         </span>
                       </div>
                       <div>
-                        <p className="text-lg font-bold drop-shadow" style={{ color: textColor }}>{displayName}</p>
+                        <p className={`${titleSizeClass} font-bold drop-shadow`} style={{ color: titleColor, fontFamily: titleFontFamily }}>{displayName}</p>
                         {form.subtitle?.trim() && (
-                          <p className="mt-1 text-sm opacity-80" style={{ color: textColor }}>{form.subtitle.trim()}</p>
+                          <p className={`mt-1 ${subtitleSizeClass}`} style={{ color: subtitleColor, fontFamily: subtitleFontFamily }}>{form.subtitle.trim()}</p>
                         )}
                         {heroNavPosition === 'inside' && (
                           <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] font-bold">

@@ -132,6 +132,31 @@ export class UpsertPublicPageDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(40)
+  titleFont?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  titleColor?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  subtitleFont?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  subtitleSize?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  subtitleColor?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(20)
   titleSize?: string;
 
@@ -283,6 +308,11 @@ export class PublicPagesService {
       heroOverlayColor: dto.heroOverlayColor?.trim() || null,
       reserveViewStyle: dto.reserveViewStyle?.trim() || null,
       fontFamily: dto.fontFamily?.trim() || null,
+      titleFont: dto.titleFont?.trim() || null,
+      titleColor: dto.titleColor?.trim() || null,
+      subtitleFont: dto.subtitleFont?.trim() || null,
+      subtitleSize: dto.subtitleSize?.trim() || null,
+      subtitleColor: dto.subtitleColor?.trim() || null,
       titleSize: dto.titleSize?.trim() || null,
       titleAlign: dto.titleAlign?.trim() || null,
       bodySize: dto.bodySize?.trim() || null,
