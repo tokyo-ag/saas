@@ -162,7 +162,7 @@ function HeaderImagePreview({
   mode,
   overlayColor,
   overlayOpacity,
-  className = 'h-52',
+  className = 'aspect-[16/9]',
 }: {
   images: string[];
   captions: string[];
@@ -180,7 +180,7 @@ function HeaderImagePreview({
 
   if (useGrid) {
     return (
-      <div className={`grid grid-cols-3 gap-2 ${className}`}>
+      <div className={`grid grid-cols-3 gap-2 overflow-hidden ${className}`}>
         {list.map((url, i) => (
           <div key={`${url}-${i}`} className="relative h-full overflow-hidden rounded-xl bg-gray-100">
             <img src={url} alt="" className="h-full w-full object-cover" />
@@ -434,7 +434,7 @@ export default function AdminPublicPage() {
 
       {error && <div className="mx-auto max-w-3xl px-4 pt-3"><div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div></div>}
 
-      <div className="mx-auto grid max-w-[1480px] gap-5 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_minmax(390px,0.9fr)] xl:grid-cols-[minmax(0,1fr)_minmax(520px,0.85fr)]">
+      <div className="mx-auto grid max-w-[1420px] gap-5 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_minmax(360px,430px)] xl:grid-cols-[minmax(0,1fr)_minmax(400px,460px)]">
       {/* Settings panel */}
       <section className="space-y-3">
 
@@ -709,15 +709,15 @@ export default function AdminPublicPage() {
       `}</style>
 
       {/* Preview */}
-      <aside className="lg:sticky lg:top-[73px] lg:self-start">
+      <aside className="w-full max-w-[460px] justify-self-center lg:sticky lg:top-[73px] lg:self-start">
         <div className="mb-2 flex items-center justify-between">
           <p className="text-xs font-bold text-gray-500">反映後の画面</p>
           <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-gray-400 ring-1 ring-gray-200">
             {isCategory ? 'カテゴリー型' : '静止サイト型'}
           </span>
         </div>
-        <div className="max-h-none overflow-auto rounded-2xl bg-gray-100 p-2 shadow-inner lg:max-h-[calc(100vh-6.5rem)]">
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm" style={{ fontFamily, backgroundColor }}>
+        <div className="max-h-none overflow-y-auto overflow-x-hidden rounded-2xl bg-gray-100 p-2 shadow-inner lg:max-h-[calc(100vh-6.5rem)]">
+        <div className="min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm" style={{ fontFamily, backgroundColor }}>
 
           {/* カテゴリー型 preview */}
           {isCategory && (
@@ -749,7 +749,7 @@ export default function AdminPublicPage() {
               <div className={`w-full max-w-lg gap-3 ${buttonLayoutClass}`}>
                 {[navLabels.about, navLabels.reserve, navLabels.blog, navLabels.contact].map((label) => (
                   <div key={label}
-                    className={`text-center font-bold ${getBtnShapeClass(buttonStyle)} ${btnSizeCls}`}
+                    className={`min-w-0 truncate whitespace-nowrap text-center font-bold ${getBtnShapeClass(buttonStyle)} ${btnSizeCls}`}
                     style={{ borderColor: accentColor, color: accentColor, ...buttonOpacityStyle }}>
                     {label}
                   </div>
@@ -773,11 +773,11 @@ export default function AdminPublicPage() {
           {/* 静止サイト型 preview */}
           {!isCategory && (
             <>
-              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-                <span className="text-sm font-bold" style={{ color: textColor }}>{displayName}</span>
-                <div className="flex gap-2 text-xs font-bold">
+              <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-3">
+                <span className="text-sm font-bold leading-5" style={{ color: textColor }}>{displayName}</span>
+                <div className="grid grid-cols-2 gap-2 text-[11px] font-bold">
                   {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
-                    <span key={label} className="rounded-full px-3 py-1" style={{ backgroundColor: navColor, color: textColor, ...buttonOpacityStyle }}>{label}</span>
+                    <span key={label} className="truncate whitespace-nowrap rounded-full px-3 py-1.5 text-center leading-4" style={{ backgroundColor: navColor, color: textColor, ...buttonOpacityStyle }}>{label}</span>
                   ))}
                 </div>
               </div>
