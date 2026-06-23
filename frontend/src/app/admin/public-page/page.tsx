@@ -79,6 +79,7 @@ const HERO_IMAGE_MODE_OPTIONS = [
   { label: '固定', value: 'fixed' },
   { label: 'スライダー', value: 'slider' },
   { label: '横並び', value: 'grid' },
+  { label: '背景', value: 'background' },
 ];
 
 const BUTTON_LAYOUT_OPTIONS = [
@@ -128,23 +129,6 @@ function slugify(value: string) {
     .slice(0, 80);
 }
 
-function PencilIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
-
 function clampPercent(value: number | string | null | undefined) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return 0;
@@ -179,6 +163,16 @@ function HeaderImagePreview({
 
   const opacity = clampPercent(overlayOpacity) / 100;
   const overlayStyle = { backgroundColor: overlayColor, opacity };
+
+  if (mode === 'background') {
+    return (
+      <div className={`relative overflow-hidden rounded-xl ${className}`}
+        style={{ backgroundImage: `url(${list[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <div className="absolute inset-0" style={overlayStyle} />
+      </div>
+    );
+  }
+
   const useGrid = mode === 'grid' && list.length > 1;
 
   if (useGrid) {
@@ -464,30 +458,8 @@ export default function AdminPublicPage() {
               ))}
             </div>
           </div>
-          {/* フォント */}
-          <div>
-            <p className="mb-2 text-[11px] font-bold text-gray-400">フォント</p>
-            <div className="flex flex-wrap gap-2">
-              {fontOptions.map((opt) => (
-                <button key={opt.value} type="button"
-                  onClick={() => setForm((p) => ({ ...p, fontFamily: opt.value }))}
-                  className={`rounded-full border px-4 py-2 text-xs font-bold transition ${form.fontFamily === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                  style={form.fontFamily === opt.value
-                    ? { backgroundColor: accentColor, borderColor: accentColor, fontFamily: opt.family }
-                    : { fontFamily: opt.family }}>
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          {/* 文字色・ナビ背景 */}
+          {/* ナビ背景 */}
           <div className="space-y-2">
-            <label className="flex items-center gap-3 text-xs font-bold text-gray-500">
-              <span className="w-16 shrink-0">文字色</span>
-              <input type="color" value={textColor}
-                onChange={(e) => setForm((p) => ({ ...p, textColor: e.target.value }))}
-                className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-            </label>
             <div className="flex items-center gap-3">
               <span className="w-16 shrink-0 text-xs font-bold text-gray-500">ナビ背景</span>
               <input type="color" value={navColor}
@@ -582,7 +554,7 @@ export default function AdminPublicPage() {
           <div className="border-t border-gray-100 pt-4 space-y-4">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <span className="w-14 shrink-0 text-xs font-bold text-gray-500">ボタン色</span>
+                <span className="w-14 shrink-0 text-xs font-bold text-gray-500">外枠色</span>
                 <input type="color" value={accentColor}
                   onChange={(e) => setForm((p) => ({ ...p, accentColor: e.target.value }))}
                   className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
@@ -590,6 +562,12 @@ export default function AdminPublicPage() {
                   onChange={(e) => setForm((p) => ({ ...p, buttonOpacity: Number(e.target.value) }))}
                   className="flex-1 accent-[#06C755]" />
                 <span className="w-8 text-right text-xs text-gray-400">{buttonOpacity}%</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="w-14 shrink-0 text-xs font-bold text-gray-500">文字色</span>
+                <input type="color" value={textColor}
+                  onChange={(e) => setForm((p) => ({ ...p, textColor: e.target.value }))}
+                  className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
               </div>
             </div>
             <div>
@@ -721,6 +699,9 @@ export default function AdminPublicPage() {
                   </div>
                 )}
                 <p className="text-xl font-bold" style={{ color: textColor }}>{displayName}</p>
+                {form.subtitle?.trim() && (
+                  <p className="text-sm opacity-70" style={{ color: textColor }}>{form.subtitle.trim()}</p>
+                )}
               </div>
 
               <div className="w-full max-w-sm">
@@ -738,7 +719,7 @@ export default function AdminPublicPage() {
                 {[navLabels.about, navLabels.reserve, navLabels.blog, navLabels.contact].map((label) => (
                   <div key={label}
                     className={`flex min-w-0 items-center justify-center truncate whitespace-nowrap text-center font-bold ${getBtnShapeClass(buttonStyle)} ${previewButtonSizeClass}`}
-                    style={{ borderColor: accentColor, color: accentColor, ...buttonOpacityStyle }}>
+                    style={{ borderColor: accentColor, color: textColor, ...buttonOpacityStyle }}>
                     {label}
                   </div>
                 ))}
@@ -765,7 +746,7 @@ export default function AdminPublicPage() {
                 <span className="text-sm font-bold leading-5" style={{ color: textColor }}>{displayName}</span>
                 <div className="grid grid-cols-2 gap-2 text-[11px] font-bold">
                   {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
-                    <span key={label} className="truncate whitespace-nowrap rounded-full px-3 py-1.5 text-center leading-4" style={{ backgroundColor: navBg, color: textColor, ...buttonOpacityStyle }}>{label}</span>
+                    <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderColor: accentColor, color: textColor, ...buttonOpacityStyle }}>{label}</span>
                   ))}
                 </div>
               </div>

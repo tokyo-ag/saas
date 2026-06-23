@@ -105,6 +105,16 @@ function HeroImageBlock({
   if (!list.length) return null;
 
   const overlayStyle = { backgroundColor: overlayColor, opacity: clampPercent(overlayOpacity) / 100 };
+
+  if (mode === 'background') {
+    return (
+      <div className={`relative overflow-hidden rounded-xl ${className}`}
+        style={{ backgroundImage: `url(${list[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <div className="absolute inset-0" style={overlayStyle} />
+      </div>
+    );
+  }
+
   const useGrid = mode === 'grid' && list.length > 1;
 
   if (useGrid) {
@@ -301,21 +311,21 @@ export default async function ClubCmsPage({
 
           <nav className={`mt-10 w-full max-w-lg gap-3 ${buttonLayoutClass}`}>
             <a href="#about" className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
-              style={{ borderColor: btnBorderColor, color: btnBorderColor, ...buttonOpacityStyle }}>
+              style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>
               {navLabels.about}
             </a>
             <Link href={reserveHref} className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
-              style={{ borderColor: btnBorderColor, color: btnBorderColor, ...buttonOpacityStyle }}>
+              style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>
               {navLabels.reserve}
             </Link>
             <Link href={`/clubs/${page.tenant.code ?? tenantCode}/blog`}
               className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
-              style={{ borderColor: btnBorderColor, color: btnBorderColor, ...buttonOpacityStyle }}>
+              style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>
               {navLabels.blog}
             </Link>
             <Link href={contactHref}
               className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
-              style={{ borderColor: btnBorderColor, color: btnBorderColor, ...buttonOpacityStyle }}>
+              style={{ borderColor: btnBorderColor, color: textColor, ...buttonOpacityStyle }}>
               {navLabels.contact}
             </Link>
           </nav>
