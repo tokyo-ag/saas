@@ -1,32 +1,37 @@
 import Link from 'next/link';
 
+type ReservationViewShowcaseProps = {
+  accentColor: string;
+  buttonLabel: string;
+  href?: string;
+  className?: string;
+  viewStyle?: string | null;
+};
+
 const calendarDays = Array.from({ length: 14 }, (_, index) => index + 1);
 
-function CalendarMini({ accentColor, naked = false }: { accentColor: string; naked?: boolean }) {
-  const grid = (
-    <>
-      <div className={`mb-2 flex items-center justify-between ${naked ? 'px-1' : ''}`}>
-        <span className={`font-bold text-gray-500 ${naked ? 'text-sm' : 'text-[10px]'}`}>7月</span>
+function CalendarMini({ accentColor }: { accentColor: string }) {
+  return (
+    <div className="rounded-lg border border-gray-100 bg-gray-50 p-2">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-[10px] font-bold text-gray-500">7月</span>
         <span className="h-1.5 w-6 rounded-full" style={{ backgroundColor: accentColor }} />
       </div>
-      <div className={`grid grid-cols-7 ${naked ? 'gap-1.5' : 'gap-1'}`}>
+      <div className="grid grid-cols-7 gap-1">
         {calendarDays.map((day) => (
           <span
             key={day}
-            className={`flex aspect-square items-center justify-center rounded font-bold ${
-              naked ? 'text-xs' : 'text-[9px]'
-            } ${day === 7 || day === 12 ? 'text-white' : 'bg-white text-gray-400'}`}
+            className={`flex aspect-square items-center justify-center rounded text-[9px] font-bold ${
+              day === 7 || day === 12 ? 'text-white' : 'bg-white text-gray-400'
+            }`}
             style={day === 7 || day === 12 ? { backgroundColor: accentColor } : undefined}
           >
             {day}
           </span>
         ))}
       </div>
-    </>
+    </div>
   );
-
-  if (naked) return <div className="w-full">{grid}</div>;
-  return <div className="rounded-lg border border-gray-100 bg-gray-50 p-2">{grid}</div>;
 }
 
 function CardMini({ accentColor }: { accentColor: string }) {
@@ -67,41 +72,25 @@ function ThreadMini({ accentColor }: { accentColor: string }) {
   );
 }
 
-type ReservationViewShowcaseProps = {
-  accentColor: string;
-  buttonLabel: string;
-  href?: string;
-  className?: string;
-  viewStyle?: string | null;
-  naked?: boolean;
-};
-
 export function ReservationViewShowcase({
   accentColor,
   buttonLabel,
   href,
   className = '',
   viewStyle = 'calendar',
-  naked = false,
 }: ReservationViewShowcaseProps) {
   const buttonClassName =
     'inline-flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-bold text-white transition hover:opacity-90';
   const buttonStyle = { backgroundColor: accentColor };
   const selectedView = viewStyle === 'card' || viewStyle === 'thread' ? viewStyle : 'calendar';
 
-  const inner = (
-    <>
-      {selectedView === 'calendar' && <CalendarMini accentColor={accentColor} naked={naked} />}
-      {selectedView === 'card' && <CardMini accentColor={accentColor} />}
-      {selectedView === 'thread' && <ThreadMini accentColor={accentColor} />}
-    </>
-  );
-
   return (
     <div className={`space-y-3 ${className}`}>
-      {naked ? inner : (
-        <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm">{inner}</div>
-      )}
+      <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+        {selectedView === 'calendar' && <CalendarMini accentColor={accentColor} />}
+        {selectedView === 'card' && <CardMini accentColor={accentColor} />}
+        {selectedView === 'thread' && <ThreadMini accentColor={accentColor} />}
+      </div>
       {href ? (
         <Link href={href} className={buttonClassName} style={buttonStyle}>
           {buttonLabel}

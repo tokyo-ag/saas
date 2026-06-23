@@ -128,7 +128,22 @@ function slugify(value: string) {
     .slice(0, 80);
 }
 
+function PencilIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+  );
+}
 
+function CheckIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
 
 function clampPercent(value: number | string | null | undefined) {
   const parsed = Number(value);
@@ -774,27 +789,16 @@ export default function AdminPublicPage() {
                     {previewBody || '団体説明'}
                   </p>
                 </div>
-                {form.reserveViewStyle === 'calendar' ? (
-                  <div className="mt-2">
-                    <ReservationViewShowcase
-                      accentColor={accentColor}
-                      buttonLabel={navLabels.reserve}
-                      viewStyle="calendar"
-                      naked
-                    />
-                  </div>
-                ) : (
-                  <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
-                    <p className="text-xs font-bold text-gray-400 mb-1">必須 — 予約セクション</p>
-                    <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.reserve}</p>
-                    <ReservationViewShowcase
-                      accentColor={accentColor}
-                      buttonLabel={navLabels.reserve}
-                      viewStyle={form.reserveViewStyle}
-                      className="mt-3"
-                    />
-                  </section>
-                )}
+                <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
+                  <p className="text-xs font-bold text-gray-400 mb-1">必須 — 予約セクション</p>
+                  <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.reserve}</p>
+                  <ReservationViewShowcase
+                    accentColor={accentColor}
+                    buttonLabel={navLabels.reserve}
+                    viewStyle={form.reserveViewStyle}
+                    className="mt-3"
+                  />
+                </section>
                 <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
                   <p className="text-xs font-bold text-gray-400 mb-1">必須 — ブログセクション</p>
                   <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.blog}</p>
