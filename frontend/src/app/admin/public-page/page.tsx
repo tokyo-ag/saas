@@ -704,7 +704,7 @@ export default function AdminPublicPage() {
             {isCategory ? 'カテゴリー型' : '静止サイト型'}
           </span>
         </div>
-        <div className="max-h-none overflow-y-auto overflow-x-hidden rounded-2xl bg-gray-100 p-2 shadow-inner lg:max-h-[calc(100vh-6.5rem)]">
+        <div className="overflow-x-hidden rounded-2xl bg-gray-100 p-2 shadow-inner">
         <div className="mx-auto min-w-0 max-w-[390px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm" style={{ fontFamily, backgroundColor }}>
 
           {/* カテゴリー型 preview */}
@@ -789,16 +789,26 @@ export default function AdminPublicPage() {
                     {previewBody || '団体説明'}
                   </p>
                 </div>
-                <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
-                  <p className="text-xs font-bold text-gray-400 mb-1">必須 — 予約セクション</p>
-                  <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.reserve}</p>
-                  <ReservationViewShowcase
-                    accentColor={accentColor}
-                    buttonLabel={navLabels.reserve}
-                    viewStyle={form.reserveViewStyle}
-                    className="mt-3"
-                  />
-                </section>
+                {form.reserveViewStyle === 'calendar' ? (
+                  <div className="mt-2">
+                    <ReservationViewShowcase
+                      accentColor={accentColor}
+                      buttonLabel={navLabels.reserve}
+                      viewStyle="calendar"
+                    />
+                  </div>
+                ) : (
+                  <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
+                    <p className="text-xs font-bold text-gray-400 mb-1">必須 — 予約セクション</p>
+                    <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.reserve}</p>
+                    <ReservationViewShowcase
+                      accentColor={accentColor}
+                      buttonLabel={navLabels.reserve}
+                      viewStyle={form.reserveViewStyle}
+                      className="mt-3"
+                    />
+                  </section>
+                )}
                 <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
                   <p className="text-xs font-bold text-gray-400 mb-1">必須 — ブログセクション</p>
                   <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.blog}</p>

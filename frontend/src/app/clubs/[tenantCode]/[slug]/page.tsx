@@ -386,16 +386,27 @@ export default async function ClubCmsPage({
           <p className="mt-2 text-sm leading-7 text-gray-500">活動日記やお知らせを表示するエリアです。</p>
         </section>
 
-        <div id="reserve" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
-          <p className="text-lg font-bold text-gray-900">{navLabels.reserve}</p>
-          <ReservationViewShowcase
-            accentColor={accentColor}
-            buttonLabel={navLabels.reserve}
-            href={reserveHref}
-            viewStyle={page.reserveViewStyle}
-            className="mt-4"
-          />
-        </div>
+        {page.reserveViewStyle === 'calendar' ? (
+          <div id="reserve" className="mt-8 scroll-mt-6">
+            <ReservationViewShowcase
+              accentColor={accentColor}
+              buttonLabel={navLabels.reserve}
+              href={reserveHref}
+              viewStyle="calendar"
+            />
+          </div>
+        ) : (
+          <div id="reserve" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
+            <p className="text-lg font-bold text-gray-900">{navLabels.reserve}</p>
+            <ReservationViewShowcase
+              accentColor={accentColor}
+              buttonLabel={navLabels.reserve}
+              href={reserveHref}
+              viewStyle={page.reserveViewStyle}
+              className="mt-4"
+            />
+          </div>
+        )}
 
         <div id="contact" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
           <p className="text-lg font-bold text-gray-900">{navLabels.contact}</p>
