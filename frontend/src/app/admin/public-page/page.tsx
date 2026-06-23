@@ -16,7 +16,7 @@ const emptyForm: PublicPageInput = {
   textColor: '#111827',
   seoTitle: '',
   seoDescription: '',
-  status: 'draft',
+  status: 'published',
 };
 
 const textColorOptions = [
