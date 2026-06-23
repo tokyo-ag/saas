@@ -1,0 +1,3 @@
+ALTER TABLE "public_pages"
+ADD COLUMN IF NOT EXISTS "subtitle" VARCHAR(160),
+ADD COLUMN IF NOT EXISTS "divider_text" VARCHAR(80);

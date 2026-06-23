@@ -25,7 +25,22 @@ export class UpsertPublicPageDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(160)
+  subtitle?: string;
+
+  @IsOptional()
+  @IsString()
   coverImageUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  dividerText?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  textColor?: string;
 
   @IsOptional()
   @IsString()
@@ -88,7 +103,10 @@ export class PublicPagesService {
     return {
       title: dto.title.trim(),
       body: dto.body,
+      subtitle: dto.subtitle?.trim() || null,
       coverImageUrl: dto.coverImageUrl?.trim() || null,
+      dividerText: dto.dividerText?.trim() || null,
+      textColor: dto.textColor?.trim() || null,
       seoTitle: dto.seoTitle?.trim() || null,
       seoDescription: dto.seoDescription?.trim() || null,
       status,

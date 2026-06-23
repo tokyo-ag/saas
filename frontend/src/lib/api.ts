@@ -717,8 +717,11 @@ export interface PublicPage {
   tenantId: string;
   title: string;
   slug: string;
+  subtitle?: string | null;
   body: string;
   coverImageUrl?: string | null;
+  dividerText?: string | null;
+  textColor?: string | null;
   seoTitle?: string | null;
   seoDescription?: string | null;
   status: 'draft' | 'published';
@@ -730,8 +733,11 @@ export interface PublicPage {
 export interface PublicPageInput {
   title: string;
   slug?: string;
+  subtitle?: string;
   body: string;
   coverImageUrl?: string;
+  dividerText?: string;
+  textColor?: string;
   seoTitle?: string;
   seoDescription?: string;
   status?: 'draft' | 'published';
@@ -741,8 +747,11 @@ export interface PublicCmsPage {
   id: string;
   title: string;
   slug: string;
+  subtitle?: string | null;
   body: string;
   coverImageUrl?: string | null;
+  dividerText?: string | null;
+  textColor?: string | null;
   seoTitle?: string | null;
   seoDescription?: string | null;
   publishedAt?: string | null;

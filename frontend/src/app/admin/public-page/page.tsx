@@ -1,20 +1,32 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { api, PublicPage, PublicPageInput, Tenant } from '@/lib/api';
+import { api, PublicPageInput, Tenant } from '@/lib/api';
 import { SITE_URL } from '@/lib/config';
 import { SaveToast } from '@/components/ui/SaveToast';
 
 const emptyForm: PublicPageInput = {
   title: '',
   slug: '',
+  subtitle: '',
   body: '',
   coverImageUrl: '',
+  dividerText: '',
+  textColor: '#111827',
   seoTitle: '',
   seoDescription: '',
   status: 'draft',
 };
+
+const textColorOptions = [
+  { label: '標準', value: '#111827' },
+  { label: 'やわらかい', value: '#374151' },
+  { label: 'ブラウン', value: '#4B3528' },
+  { label: 'ネイビー', value: '#1E3A5F' },
+  { label: 'グリーン', value: '#14532D' },
+  { label: 'ダーク', value: '#020617' },
+];
 
 function slugify(value: string) {
   return value
@@ -29,7 +41,6 @@ function slugify(value: string) {
 
 export default function AdminPublicPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [pages, setPages] = useState<PublicPage[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [form, setForm] = useState<PublicPageInput>(emptyForm);
   const [loading, setLoading] = useState(true);
@@ -37,67 +48,53 @@ export default function AdminPublicPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
-  const selected = pages.find((page) => page.id === selectedId) ?? null;
   const tenantCode = tenant?.code ?? tenant?.id ?? '';
-  const previewUrl = tenantCode && form.slug
-    ? `${SITE_URL}/clubs/${tenantCode}/${form.slug}`
+  const displayName = tenant?.lineDisplayName ?? tenant?.name ?? '公開サイト';
+  const generatedSlug = slugify(displayName) || slugify(tenantCode) || 'home';
+  const previewUrl = tenantCode
+    ? `${SITE_URL}/clubs/${tenantCode}/${generatedSlug}`
     : '';
-
-  const publishedPages = useMemo(
-    () => pages.filter((page) => page.status === 'published').length,
-    [pages],
-  );
+  const subtitle = form.subtitle?.trim() ?? '';
+  const dividerText = form.dividerText?.trim() ?? '';
+  const textColor = form.textColor?.trim() || '#111827';
+  const previewBody = form.body.trim() || tenant?.description || '';
 
   useEffect(() => {
     Promise.all([api.tenant.get(), api.publicPages.list()])
       .then(([tenantData, pageData]) => {
         setTenant(tenantData);
-        setPages(pageData);
+        const tenantName = tenantData.lineDisplayName ?? tenantData.name;
+        const tenantSlug = slugify(tenantName) || slugify(tenantData.code ?? tenantData.id) || 'home';
         const first = pageData[0];
         if (first) {
           setSelectedId(first.id);
           setForm({
-            title: first.title,
-            slug: first.slug,
+            title: tenantName,
+            slug: tenantSlug,
+            subtitle: first.subtitle ?? '',
             body: first.body,
             coverImageUrl: first.coverImageUrl ?? '',
+            dividerText: first.dividerText ?? '',
+            textColor: first.textColor ?? '#111827',
             seoTitle: first.seoTitle ?? '',
             seoDescription: first.seoDescription ?? '',
             status: first.status,
+          });
+        } else {
+          setForm({
+            ...emptyForm,
+            title: tenantName,
+            slug: tenantSlug,
+            subtitle: '',
+            body: tenantData.description ?? '',
+            dividerText: '',
+            textColor: '#111827',
           });
         }
       })
       .catch((err: any) => setError(err?.message ?? '読み込みに失敗しました'))
       .finally(() => setLoading(false));
   }, []);
-
-  function selectPage(page: PublicPage) {
-    setSelectedId(page.id);
-    setForm({
-      title: page.title,
-      slug: page.slug,
-      body: page.body,
-      coverImageUrl: page.coverImageUrl ?? '',
-      seoTitle: page.seoTitle ?? '',
-      seoDescription: page.seoDescription ?? '',
-      status: page.status,
-    });
-    setError('');
-  }
-
-  function newPage() {
-    setSelectedId(null);
-    setForm(emptyForm);
-    setError('');
-  }
-
-  function updateTitle(title: string) {
-    setForm((prev) => ({
-      ...prev,
-      title,
-      slug: selectedId || prev.slug ? prev.slug : slugify(title),
-    }));
-  }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -107,28 +104,33 @@ export default function AdminPublicPage() {
 
     const payload: PublicPageInput = {
       ...form,
-      slug: slugify(form.slug || form.title),
+      title: displayName,
+      slug: generatedSlug,
+      subtitle: form.subtitle?.trim(),
       coverImageUrl: form.coverImageUrl?.trim(),
-      seoTitle: form.seoTitle?.trim(),
-      seoDescription: form.seoDescription?.trim(),
+      dividerText: form.dividerText?.trim(),
+      textColor,
+      seoTitle: displayName,
+      seoDescription: form.body
+        .replace(/[#>*_-]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 150),
     };
 
     try {
       const page = selectedId
         ? await api.publicPages.update(selectedId, payload)
         : await api.publicPages.create(payload);
-      setPages((prev) => {
-        const exists = prev.some((item) => item.id === page.id);
-        return exists
-          ? prev.map((item) => (item.id === page.id ? page : item))
-          : [page, ...prev];
-      });
       setSelectedId(page.id);
       setForm({
-        title: page.title,
-        slug: page.slug,
+        title: displayName,
+        slug: generatedSlug,
+        subtitle: page.subtitle ?? '',
         body: page.body,
         coverImageUrl: page.coverImageUrl ?? '',
+        dividerText: page.dividerText ?? '',
+        textColor: page.textColor ?? '#111827',
         seoTitle: page.seoTitle ?? '',
         seoDescription: page.seoDescription ?? '',
         status: page.status,
@@ -142,152 +144,43 @@ export default function AdminPublicPage() {
     }
   }
 
-  async function deletePage() {
-    if (!selectedId || !selected) return;
-    if (!window.confirm(`「${selected.title}」を削除しますか？`)) return;
-    setSaving(true);
-    setError('');
-    try {
-      await api.publicPages.delete(selectedId);
-      const nextPages = pages.filter((page) => page.id !== selectedId);
-      setPages(nextPages);
-      const next = nextPages[0];
-      if (next) selectPage(next);
-      else newPage();
-    } catch (err: any) {
-      setError(err?.message ?? '削除に失敗しました');
-    } finally {
-      setSaving(false);
-    }
-  }
-
   if (loading) {
     return <div className="px-4 py-12 text-center text-sm text-gray-400">読み込み中...</div>;
   }
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 md:px-6">
-      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">SEOページCMS</h1>
-          <p className="mt-2 text-sm text-gray-500">
-            COMIU配下に公開される集客ページを作成・編集できます。
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={newPage}
-          className="rounded-lg bg-[#06C755] px-4 py-2 text-sm font-bold text-white hover:bg-[#05a847]"
+      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">公開サイト</h1>
+        <select
+          value={form.status}
+          onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value as PublicPageInput['status'] }))}
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
         >
-          新規ページ
-        </button>
+          <option value="draft">下書き</option>
+          <option value="published">公開</option>
+        </select>
       </div>
 
       {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
       <SaveToast show={saved} />
 
-      <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
-        <aside className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm font-bold text-gray-900">ページ一覧</p>
-            <span className="text-xs text-gray-400">{publishedPages}/{pages.length} 公開</span>
-          </div>
-          {pages.length === 0 ? (
-            <p className="rounded-lg bg-gray-50 px-3 py-8 text-center text-sm text-gray-400">
-              まだページがありません
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {pages.map((page) => (
-                <button
-                  key={page.id}
-                  type="button"
-                  onClick={() => selectPage(page)}
-                  className={`w-full rounded-lg border px-3 py-3 text-left transition ${
-                    selectedId === page.id
-                      ? 'border-[#06C755] bg-green-50'
-                      : 'border-gray-100 bg-white hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="line-clamp-2 text-sm font-bold text-gray-900">{page.title}</p>
-                    <span className={`shrink-0 rounded px-2 py-0.5 text-[11px] font-bold ${
-                      page.status === 'published'
-                        ? 'bg-[#06C755]/10 text-[#06C755]'
-                        : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {page.status === 'published' ? '公開' : '下書き'}
-                    </span>
-                  </div>
-                  <p className="mt-1 truncate text-xs text-gray-400">/{page.slug}</p>
-                </button>
-              ))}
-            </div>
-          )}
-        </aside>
-
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         <form onSubmit={handleSubmit} className="space-y-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-6">
-          <div className="flex flex-col gap-3 border-b border-gray-100 pb-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-sm font-bold text-gray-900">{selectedId ? 'ページ編集' : '新規ページ作成'}</p>
-              {previewUrl && (
-                <Link
-                  href={previewUrl}
-                  target="_blank"
-                  className="mt-1 block break-all text-xs text-[#06C755] hover:underline"
-                >
-                  {previewUrl}
-                </Link>
-              )}
-            </div>
-            <select
-              value={form.status}
-              onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value as PublicPageInput['status'] }))}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-            >
-              <option value="draft">下書き</option>
-              <option value="published">公開</option>
-            </select>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">タイトル</label>
-              <input
-                required
-                maxLength={120}
-                value={form.title}
-                onChange={(e) => updateTitle(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">URL slug</label>
-              <input
-                required
-                maxLength={80}
-                value={form.slug}
-                onChange={(e) => setForm((prev) => ({ ...prev, slug: slugify(e.target.value) }))}
-                placeholder="welcome"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              />
-            </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="rounded-full bg-[#06C755] px-4 py-2 text-sm font-bold text-white">
+              団体説明
+            </button>
+            <button type="button" disabled className="rounded-full border border-gray-200 px-4 py-2 text-sm font-bold text-gray-300">
+              ブログ
+            </button>
+            <button type="button" disabled className="rounded-full border border-gray-200 px-4 py-2 text-sm font-bold text-gray-300">
+              予約管理
+            </button>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">本文</label>
-            <textarea
-              required
-              rows={14}
-              value={form.body}
-              onChange={(e) => setForm((prev) => ({ ...prev, body: e.target.value }))}
-              placeholder={'## 見出し\n本文を入力してください。\n- 箇条書きも使えます'}
-              className="w-full rounded-lg border border-gray-300 px-3 py-3 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">カバー画像URL</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">メイン画像</label>
             <input
               value={form.coverImageUrl}
               onChange={(e) => setForm((prev) => ({ ...prev, coverImageUrl: e.target.value }))}
@@ -296,38 +189,80 @@ export default function AdminPublicPage() {
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">SEOタイトル</label>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">サブタイトル</label>
+            <input
+              maxLength={160}
+              value={form.subtitle ?? ''}
+              onChange={(e) => setForm((prev) => ({ ...prev, subtitle: e.target.value }))}
+              placeholder="例：初心者歓迎の社会人サークル"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">切り取り線テキスト</label>
+            <input
+              maxLength={80}
+              value={form.dividerText ?? ''}
+              onChange={(e) => setForm((prev) => ({ ...prev, dividerText: e.target.value }))}
+              placeholder="例：こんな人におすすめ"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">文字色</label>
+            <div className="flex flex-wrap items-center gap-2">
+              {textColorOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, textColor: option.value }))}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold ${
+                    textColor.toLowerCase() === option.value.toLowerCase()
+                      ? 'border-[#06C755] bg-green-50 text-gray-900'
+                      : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                  }`}
+                >
+                  <span
+                    className="h-4 w-4 rounded-full border border-black/10"
+                    style={{ backgroundColor: option.value }}
+                  />
+                  {option.label}
+                </button>
+              ))}
               <input
-                maxLength={160}
-                value={form.seoTitle}
-                onChange={(e) => setForm((prev) => ({ ...prev, seoTitle: e.target.value }))}
-                placeholder="未入力ならタイトルを使用"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">SEO説明文</label>
-              <input
-                maxLength={300}
-                value={form.seoDescription}
-                onChange={(e) => setForm((prev) => ({ ...prev, seoDescription: e.target.value }))}
-                placeholder="検索結果やOGPに使う説明"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                type="color"
+                value={textColor}
+                onChange={(e) => setForm((prev) => ({ ...prev, textColor: e.target.value }))}
+                className="h-10 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1"
               />
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:justify-between">
-            <button
-              type="button"
-              onClick={deletePage}
-              disabled={!selectedId || saving}
-              className="rounded-lg border border-red-200 px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 disabled:cursor-default disabled:opacity-40"
-            >
-              削除
-            </button>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">団体説明</label>
+            <textarea
+              required
+              rows={16}
+              value={form.body}
+              onChange={(e) => setForm((prev) => ({ ...prev, body: e.target.value }))}
+              placeholder={`${displayName}の紹介文`}
+              className="w-full rounded-lg border border-gray-300 px-3 py-3 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+            />
+          </div>
+
+          <div className="flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+            {previewUrl && (
+              <Link
+                href={previewUrl}
+                target="_blank"
+                className="break-all text-sm font-bold text-[#06C755] hover:underline"
+              >
+                公開ページ
+              </Link>
+            )}
             <button
               type="submit"
               disabled={saving}
@@ -337,6 +272,43 @@ export default function AdminPublicPage() {
             </button>
           </div>
         </form>
+
+        <aside className="lg:sticky lg:top-6 lg:self-start">
+          <p className="mb-2 text-sm font-bold text-gray-900">公開イメージ</p>
+          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            {form.coverImageUrl ? (
+              <img src={form.coverImageUrl} alt="" className="h-40 w-full object-cover" />
+            ) : (
+              <div className="flex h-40 items-center justify-center bg-gray-100 text-4xl font-bold text-gray-300">
+                {displayName.slice(0, 1)}
+              </div>
+            )}
+            <div className="space-y-4 p-5">
+              <div className="flex flex-wrap gap-2 text-xs font-bold">
+                <span className="rounded-full bg-[#06C755]/10 px-3 py-1 text-[#06C755]">団体説明</span>
+                <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-500">ブログ</span>
+                <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-500">予約</span>
+              </div>
+              <h2 className="text-2xl font-bold leading-tight" style={{ color: textColor }}>{displayName}</h2>
+              {subtitle && (
+                <p className="text-sm font-bold leading-6 opacity-75" style={{ color: textColor }}>{subtitle}</p>
+              )}
+              {dividerText && (
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 border-t border-dashed border-gray-300" />
+                  <span className="text-xs font-bold text-gray-400">{dividerText}</span>
+                  <div className="h-px flex-1 border-t border-dashed border-gray-300" />
+                </div>
+              )}
+              {previewBody && (
+                <p className="whitespace-pre-wrap text-sm leading-7 opacity-85" style={{ color: textColor }}>{previewBody}</p>
+              )}
+              <button type="button" className="w-full rounded-lg bg-[#06C755] px-4 py-2.5 text-sm font-bold text-white">
+                予約する
+              </button>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   );

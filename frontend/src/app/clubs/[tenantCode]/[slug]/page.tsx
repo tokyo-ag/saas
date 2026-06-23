@@ -31,23 +31,23 @@ function descriptionFromPage(page: PublicCmsPage) {
   );
 }
 
-function renderLine(line: string, index: number) {
+function renderLine(line: string, index: number, textColor: string) {
   if (line.startsWith('### ')) {
-    return <h3 key={index} className="mt-7 text-xl font-bold text-gray-900">{line.slice(4)}</h3>;
+    return <h3 key={index} className="mt-7 text-xl font-bold" style={{ color: textColor }}>{line.slice(4)}</h3>;
   }
   if (line.startsWith('## ')) {
-    return <h2 key={index} className="mt-9 text-2xl font-bold text-gray-900">{line.slice(3)}</h2>;
+    return <h2 key={index} className="mt-9 text-2xl font-bold" style={{ color: textColor }}>{line.slice(3)}</h2>;
   }
   if (line.startsWith('# ')) {
-    return <h2 key={index} className="mt-9 text-2xl font-bold text-gray-900">{line.slice(2)}</h2>;
+    return <h2 key={index} className="mt-9 text-2xl font-bold" style={{ color: textColor }}>{line.slice(2)}</h2>;
   }
   if (line.startsWith('- ')) {
-    return <li key={index} className="ml-5 list-disc text-gray-700">{line.slice(2)}</li>;
+    return <li key={index} className="ml-5 list-disc" style={{ color: textColor }}>{line.slice(2)}</li>;
   }
   if (!line.trim()) {
     return <div key={index} className="h-3" />;
   }
-  return <p key={index} className="text-base leading-8 text-gray-700">{line}</p>;
+  return <p key={index} className="text-base leading-8" style={{ color: textColor }}>{line}</p>;
 }
 
 export async function generateMetadata({
@@ -98,6 +98,7 @@ export default async function ClubCmsPage({
   const tenantName = page.tenant.lineDisplayName ?? page.tenant.name;
   const image = imgUrl(page.coverImageUrl ?? page.tenant.linePictureUrl, IMAGE_BASE_URL);
   const clubHref = `/clubs/${page.tenant.code ?? tenantCode}`;
+  const textColor = page.textColor || '#111827';
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -136,9 +137,12 @@ export default async function ClubCmsPage({
 
       <article className="mx-auto max-w-3xl px-4 py-8 md:py-12">
         <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-[#06C755]">COMIU GUIDE</p>
-        <h1 className="text-3xl font-bold leading-tight text-gray-950 md:text-4xl">{page.title}</h1>
-        {descriptionFromPage(page) && (
-          <p className="mt-4 text-base leading-7 text-gray-500">{descriptionFromPage(page)}</p>
+        <h1 className="text-3xl font-bold leading-tight md:text-4xl" style={{ color: textColor }}>{page.title}</h1>
+        {page.subtitle && (
+          <p className="mt-3 text-lg font-bold leading-8 opacity-75" style={{ color: textColor }}>{page.subtitle}</p>
+        )}
+        {!page.subtitle && descriptionFromPage(page) && (
+          <p className="mt-4 text-base leading-7 opacity-75" style={{ color: textColor }}>{descriptionFromPage(page)}</p>
         )}
 
         {image && (
@@ -148,7 +152,14 @@ export default async function ClubCmsPage({
         )}
 
         <div className="mt-8 space-y-2 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8">
-          {page.body.split('\n').map(renderLine)}
+          {page.dividerText && (
+            <div className="mb-5 flex items-center gap-3">
+              <div className="h-px flex-1 border-t border-dashed border-gray-300" />
+              <span className="text-sm font-bold text-gray-400">{page.dividerText}</span>
+              <div className="h-px flex-1 border-t border-dashed border-gray-300" />
+            </div>
+          )}
+          {page.body.split('\n').map((line, index) => renderLine(line, index, textColor))}
         </div>
 
         <div className="mt-8 flex flex-col gap-3 rounded-xl bg-white px-5 py-5 shadow-sm ring-1 ring-gray-100 sm:flex-row sm:items-center sm:justify-between">

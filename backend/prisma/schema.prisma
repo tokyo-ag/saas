@@ -70,8 +70,11 @@ model PublicPage {
   tenantId       String    @map("tenant_id")
   title          String    @db.VarChar(120)
   slug           String    @db.VarChar(80)
+  subtitle       String?   @db.VarChar(160)
   body           String    @db.Text
   coverImageUrl  String?   @map("cover_image_url") @db.Text
+  dividerText    String?   @map("divider_text") @db.VarChar(80)
+  textColor      String?   @map("text_color") @db.VarChar(20)
   seoTitle       String?   @map("seo_title") @db.VarChar(160)
   seoDescription String?   @map("seo_description") @db.VarChar(300)
   status         String    @default("draft") @db.VarChar(20)
