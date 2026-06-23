@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useCalendarMonth } from '@/lib/useCalendarMonth';
 
 type ReservationViewShowcaseProps = {
   accentColor: string;
@@ -8,44 +11,68 @@ type ReservationViewShowcaseProps = {
   viewStyle?: string | null;
 };
 
-const WEEK_DAYS = ['日', '月', '火', '水', '木', '金', '土'];
-// July 2026: starts Wednesday (index 3), 31 days, highlight some dates
-const PREVIEW_MONTH = '7月';
-const START_DOW = 3;
-const TOTAL_DAYS = 31;
-const AVAILABLE_DAYS = new Set([5, 7, 12, 19, 20, 26]);
+const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+const DUMMY_EVENT_DAYS = new Set([5, 12]);
 
-function CalendarFull({ accentColor }: { accentColor: string }) {
-  const cells: (number | null)[] = [
-    ...Array(START_DOW).fill(null),
-    ...Array.from({ length: TOTAL_DAYS }, (_, i) => i + 1),
-  ];
-  // pad to multiple of 7
-  while (cells.length % 7 !== 0) cells.push(null);
+function CalendarPreview({ accentColor }: { accentColor: string }) {
+  const { year, month, prevMonth, nextMonth, cells, isToday } = useCalendarMonth();
 
   return (
-    <div className="w-full">
-      <div className="mb-3 flex items-center justify-between px-1">
-        <span className="text-sm font-bold text-gray-700">{PREVIEW_MONTH}</span>
-        <span className="h-1.5 w-8 rounded-full" style={{ backgroundColor: accentColor }} />
+    <div className="rounded-2xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.10)' }}>
+      <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: accentColor }}>
+        <button type="button" onClick={prevMonth} className="w-7 h-7 flex items-center justify-center rounded-full bg-white/20">
+          <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <span className="text-sm font-bold text-white tracking-wide">{year}年 {month + 1}月</span>
+        <button type="button" onClick={nextMonth} className="w-7 h-7 flex items-center justify-center rounded-full bg-white/20">
+          <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
-      <div className="grid grid-cols-7 gap-y-1 text-center">
-        {WEEK_DAYS.map((d) => (
-          <span key={d} className="text-[10px] font-bold text-gray-400 pb-1">{d}</span>
+
+      <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-100">
+        {WEEKDAYS.map((w, i) => (
+          <div key={w} className={`py-2 text-center text-[11px] font-bold ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-gray-500'}`}>
+            {w}
+          </div>
         ))}
+      </div>
+
+      <div className="grid grid-cols-7 bg-white">
         {cells.map((day, i) => {
-          if (!day) return <span key={`e-${i}`} />;
-          const active = AVAILABLE_DAYS.has(day);
+          const col = i % 7;
+          const today = day ? isToday(day) : false;
+          const hasEvent = day ? DUMMY_EVENT_DAYS.has(day) : false;
           return (
-            <span
-              key={day}
-              className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
-                active ? 'text-white' : 'text-gray-400'
+            <div
+              key={i}
+              className={`border-b border-r border-gray-100 p-1 min-h-[56px] ${
+                !day ? 'bg-gray-50/60' : today ? 'bg-green-50' : ''
               }`}
-              style={active ? { backgroundColor: accentColor } : undefined}
+              style={today ? { backgroundColor: `${accentColor}10` } : undefined}
             >
-              {day}
-            </span>
+              {day && (
+                <>
+                  <span
+                    className={`flex w-6 h-6 items-center justify-center rounded-full text-[11px] font-semibold mx-auto mb-1 ${
+                      today ? 'text-white shadow-sm' : col === 0 ? 'text-red-400' : col === 6 ? 'text-blue-400' : 'text-gray-600'
+                    }`}
+                    style={today ? { backgroundColor: accentColor } : undefined}
+                  >
+                    {day}
+                  </span>
+                  {hasEvent && (
+                    <div className="rounded px-1 py-0.5" style={{ backgroundColor: accentColor }}>
+                      <p className="text-[8px] font-bold text-white truncate leading-tight">イベント</p>
+                      <p className="text-[7px] text-white/80 leading-none">19:00</p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           );
         })}
       </div>
@@ -105,11 +132,14 @@ export function ReservationViewShowcase({
 
   return (
     <div className={`space-y-3 ${className}`}>
-      <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
-        {selectedView === 'calendar' && <CalendarFull accentColor={accentColor} />}
-        {selectedView === 'card' && <CardMini accentColor={accentColor} />}
-        {selectedView === 'thread' && <ThreadMini accentColor={accentColor} />}
-      </div>
+      {selectedView === 'calendar' ? (
+        <CalendarPreview accentColor={accentColor} />
+      ) : (
+        <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+          {selectedView === 'card' && <CardMini accentColor={accentColor} />}
+          {selectedView === 'thread' && <ThreadMini accentColor={accentColor} />}
+        </div>
+      )}
       {href ? (
         <Link href={href} className={buttonClassName} style={buttonStyle}>
           {buttonLabel}
