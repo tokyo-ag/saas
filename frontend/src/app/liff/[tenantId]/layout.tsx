@@ -15,23 +15,19 @@ function hexToRgba(hex: string, opacity: number): string {
 
 async function fetchTheme(tenantId: string): Promise<LiffTheme> {
   try {
-    const tenant = await fetch(`${API_URL}/api/liff/${tenantId}`, { next: { revalidate: 60 } })
+    const data = await fetch(`${API_URL}/api/public/tenant-theme/${tenantId}`, { next: { revalidate: 60 } })
       .then(r => r.ok ? r.json() : null);
-    if (!tenant?.code) return DEFAULT_LIFF_THEME;
+    if (!data) return DEFAULT_LIFF_THEME;
 
-    const page = await fetch(`${API_URL}/api/public/tenants/${tenant.code}/pages/home`, { next: { revalidate: 60 } })
-      .then(r => r.ok ? r.json() : null);
-    if (!page) return DEFAULT_LIFF_THEME;
-
-    const accentColor = page.accentColor?.trim() || DEFAULT_LIFF_THEME.accentColor;
-    const backgroundColor = page.backgroundColor?.trim() || DEFAULT_LIFF_THEME.backgroundColor;
-    const navColor = page.navColor?.trim() || '#ffffff';
-    const navOpacity = typeof page.navOpacity === 'number' ? page.navOpacity : 100;
+    const accentColor = data.accentColor?.trim() || DEFAULT_LIFF_THEME.accentColor;
+    const backgroundColor = data.backgroundColor?.trim() || DEFAULT_LIFF_THEME.backgroundColor;
+    const navColor = data.navColor?.trim() || '#ffffff';
+    const navOpacity = typeof data.navOpacity === 'number' ? data.navOpacity : 100;
     const navBg = hexToRgba(navColor, navOpacity);
 
     let eventCardBg = DEFAULT_LIFF_THEME.eventCardBg;
     try {
-      const fd = JSON.parse(page.footerText ?? '{}');
+      const fd = JSON.parse(data.footerText ?? '{}');
       eventCardBg = fd.reserveEventCardBg?.trim() || DEFAULT_LIFF_THEME.eventCardBg;
     } catch { /* ignore */ }
 

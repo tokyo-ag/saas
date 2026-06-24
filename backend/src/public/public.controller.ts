@@ -117,9 +117,31 @@ export class PublicController {
         deletedAt: null,
         bannedAt: null,
       },
-      select: { themeColor: true },
+      select: {
+        themeColor: true,
+        publicPages: {
+          where: { status: 'published' },
+          orderBy: { updatedAt: 'desc' },
+          take: 1,
+          select: {
+            accentColor: true,
+            backgroundColor: true,
+            navColor: true,
+            navOpacity: true,
+            footerText: true,
+          },
+        },
+      },
     });
-    return { themeColor: tenant?.themeColor ?? 'green' };
+    const page = tenant?.publicPages?.[0] ?? null;
+    return {
+      themeColor: tenant?.themeColor ?? 'green',
+      accentColor: page?.accentColor ?? null,
+      backgroundColor: page?.backgroundColor ?? null,
+      navColor: page?.navColor ?? null,
+      navOpacity: page?.navOpacity ?? null,
+      footerText: page?.footerText ?? null,
+    };
   }
 
   @Get('sitemap-events')
