@@ -3,11 +3,9 @@ import type { MetadataRoute } from 'next';
 import { SITE_URL, API_URL } from '@/lib/config';
 
 type SitemapEvent = { id: string; tenantCode: string; updatedAt: string };
-type SitemapTenant = { tenantCode: string; updatedAt: string };
 type SitemapPage = { tenantCode: string; slug: string; updatedAt: string };
 
 let lastSuccessfulEvents: SitemapEvent[] = [];
-let lastSuccessfulTenants: SitemapTenant[] = [];
 let lastSuccessfulPages: SitemapPage[] = [];
 
 function staticLastModified() {
@@ -33,21 +31,6 @@ async function fetchSitemapEvents(): Promise<{ id: string; tenantCode: string; u
   }
 }
 
-async function fetchSitemapTenants(): Promise<SitemapTenant[]> {
-  try {
-    const res = await fetch(`${API_URL}/api/public/sitemap-tenants`, { next: { revalidate: 3600 } });
-    if (!res.ok) throw new Error(`sitemap-tenants returned ${res.status}`);
-    const tenants = (await res.json()) as SitemapTenant[];
-    lastSuccessfulTenants = tenants;
-    return tenants;
-  } catch (error) {
-    if (lastSuccessfulTenants.length > 0) {
-      console.warn('[sitemap] using cached tenants after API failure', error);
-    }
-    return lastSuccessfulTenants;
-  }
-}
-
 async function fetchSitemapPages(): Promise<SitemapPage[]> {
   try {
     const res = await fetch(`${API_URL}/api/public/sitemap-pages`, { next: { revalidate: 3600 } });
@@ -64,9 +47,8 @@ async function fetchSitemapPages(): Promise<SitemapPage[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [events, tenants, pages] = await Promise.all([
+  const [events, pages] = await Promise.all([
     fetchSitemapEvents(),
-    fetchSitemapTenants(),
     fetchSitemapPages(),
   ]);
 
@@ -95,13 +77,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  const clubPages: MetadataRoute.Sitemap = tenants.map((t) => ({
-    url: `${SITE_URL}/clubs/${t.tenantCode}`,
-    lastModified: t.updatedAt ? new Date(t.updatedAt) : STATIC_LAST_MODIFIED,
-    changeFrequency: 'weekly' as const,
-    priority: 0.75,
-  }));
-
   const cmsPages: MetadataRoute.Sitemap = pages.map((p) => ({
     url: `${SITE_URL}/clubs/${p.tenantCode}/${p.slug}`,
     lastModified: p.updatedAt ? new Date(p.updatedAt) : STATIC_LAST_MODIFIED,
@@ -109,5 +84,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticPages, ...clubPages, ...cmsPages, ...eventPages];
+  return [...staticPages, ...cmsPages, ...eventPages];
 }
