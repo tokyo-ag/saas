@@ -122,29 +122,7 @@ export default async function OrganizersPage() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-[#F7F8FA] p-4 shadow-sm">
-            <div className="rounded-lg bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-3 border-b border-gray-100 pb-3">
-                <Image src="/icon.png" alt="" width={42} height={42} className="rounded-xl" />
-                <div>
-                  <p className="text-sm font-bold">公開WEBサイト</p>
-                  <p className="text-xs text-gray-400">団体説明・予約・ブログをひとまとめ</p>
-                </div>
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                {['団体説明', '予約画面', '活動ブログ', 'お問い合わせ'].map((label) => (
-                  <span key={label} className="rounded-lg border border-[#06C755]/30 bg-[#06C755]/5 px-3 py-2 text-center text-xs font-bold text-[#06C755]">
-                    {label}
-                  </span>
-                ))}
-              </div>
-              <div className="mt-4 space-y-2">
-                <div className="h-3 w-5/6 rounded-full bg-gray-800" />
-                <div className="h-2 w-2/3 rounded-full bg-gray-200" />
-                <div className="h-2 w-3/4 rounded-full bg-gray-200" />
-              </div>
-            </div>
-          </div>
+          <PublicSitePreview />
         </div>
       </section>
 
@@ -185,5 +163,76 @@ export default async function OrganizersPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+function PublicSitePreview() {
+  return (
+    <div className="mx-auto w-full max-w-[360px] rounded-[2rem] border border-gray-200 bg-gray-950 p-2 shadow-2xl">
+      <div className="overflow-hidden rounded-[1.5rem] bg-[#d73333] text-[#18181b]">
+        <div className="relative h-44 overflow-hidden">
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(180deg, rgba(255,255,255,0.18), rgba(215,51,51,0.08)), linear-gradient(120deg, #263446 0%, #6f8a7a 32%, #d8c56d 58%, #2f3f38 100%)',
+            }}
+          />
+          <div className="absolute inset-x-0 top-10 flex justify-center gap-1 opacity-75">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <span key={i} className={`h-7 w-2 rounded-full ${i % 3 === 0 ? 'bg-gray-900' : i % 3 === 1 ? 'bg-white' : 'bg-[#06C755]'}`} />
+            ))}
+          </div>
+          <div className="absolute bottom-4 left-5">
+            <p className="font-serif text-4xl leading-none text-black">GAKUORI</p>
+            <p className="mt-2 text-xs text-black/70">失われた青春を取り戻せ</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 px-3 py-3">
+          {['団体詳細', '活動ブログ', '予約する', 'お問い合わせ'].map((label) => (
+            <span key={label} className="rounded-md border-2 border-white/90 bg-white/20 px-3 py-2 text-center text-xs font-bold text-black shadow-sm">
+              {label}
+            </span>
+          ))}
+        </div>
+
+        <div className="space-y-4 px-3 pb-5">
+          <section className="rounded-xl border border-white/60 bg-white/25 p-4">
+            <div className="flex gap-3">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm">
+                <Image src="/icon.png" alt="" width={54} height={54} className="rounded-md" />
+              </div>
+              <div className="min-w-0 flex-1 pt-1">
+                <p className="text-sm font-bold">学生×オリンピック</p>
+                <p className="mt-2 text-xs leading-5">"失われた青春を取り戻せ"</p>
+                <p className="mt-2 text-xs leading-5">スローガンに掲げ活動中。</p>
+              </div>
+            </div>
+            <div className="mt-4 rounded-lg border-2 border-pink-500/80 px-4 py-3 text-center text-xs font-bold text-pink-600">
+              Instagramでフォロー
+            </div>
+          </section>
+
+          <section className="rounded-xl bg-white/25 p-4">
+            <p className="text-sm font-bold">予約する</p>
+            <div className="mt-3 overflow-hidden rounded-xl bg-white shadow-sm">
+              <div
+                className="h-24"
+                style={{
+                  background:
+                    'linear-gradient(180deg, rgba(255,255,255,0.05), rgba(0,0,0,0.18)), linear-gradient(120deg, #172334, #4f6e60 45%, #c7b66a)',
+                }}
+              />
+              <div className="space-y-2 p-3">
+                <p className="line-clamp-2 text-sm font-bold leading-5">初心者でも楽しめるイベントを開催！</p>
+                <p className="text-xs font-bold text-gray-700">6/25(木) 20:00</p>
+                <p className="text-xs text-gray-400">吉祥寺付近で開催予定！</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
   );
 }
