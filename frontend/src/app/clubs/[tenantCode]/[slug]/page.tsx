@@ -547,7 +547,7 @@ export default async function ClubCmsPage({
           )}
         </div>
 
-        <div id="reserve" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
+        <div id="reserve" className="mt-8 scroll-mt-6 rounded-xl px-5 py-6 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
           <p className="text-lg font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
           {reserveSectionLead && (
             <p className="mt-2 text-sm leading-7" style={{ color: reserveLeadColor }}>{reserveSectionLead}</p>
@@ -567,7 +567,7 @@ export default async function ClubCmsPage({
           />
         </div>
 
-        <section id="blog" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
+        <section id="blog" className="mt-8 scroll-mt-6 rounded-xl px-5 py-6 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
           <p className="text-lg font-bold" style={{ color: blogTitleColor }}>{blogSectionTitle}</p>
           {blogSectionLead && (
             <p className="mt-2 text-sm leading-7" style={{ color: blogLeadColor }}>{blogSectionLead}</p>
@@ -597,7 +597,7 @@ export default async function ClubCmsPage({
           )}
         </section>
 
-        <div id="contact" className="mt-6 scroll-mt-6 rounded-xl bg-white px-4 py-4 shadow-sm ring-1 ring-gray-100">
+        <div id="contact" className="mt-6 scroll-mt-6 rounded-xl px-4 py-4 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
           <p className="text-lg font-bold" style={{ color: contactTitleColor }}>{contactSectionTitle}</p>
           {contactSectionLead && (
             <p className="mt-2 text-sm leading-7" style={{ color: contactLeadColor }}>{contactSectionLead}</p>
