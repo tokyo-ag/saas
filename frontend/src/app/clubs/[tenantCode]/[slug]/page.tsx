@@ -483,11 +483,6 @@ export default async function ClubCmsPage({
           )}
         </div>
 
-        <section id="blog" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
-          <p className="text-lg font-bold text-gray-900">{navLabels.blog}</p>
-          <p className="mt-2 text-sm leading-7 text-gray-500">活動日記やお知らせを表示するエリアです。</p>
-        </section>
-
         <div id="reserve" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
           <p className="text-lg font-bold text-gray-900">{navLabels.reserve}</p>
           <ReservationViewShowcase
@@ -500,6 +495,11 @@ export default async function ClubCmsPage({
             className="mt-4"
           />
         </div>
+
+        <section id="blog" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
+          <p className="text-lg font-bold text-gray-900">{navLabels.blog}</p>
+          <p className="mt-2 text-sm leading-7 text-gray-500">活動日記やお知らせを表示するエリアです。</p>
+        </section>
 
         <div id="contact" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
           <p className="text-lg font-bold text-gray-900">{navLabels.contact}</p>
