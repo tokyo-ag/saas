@@ -122,6 +122,7 @@ function CalendarPreview({
   fallbackHref,
   eventTitleColor,
   eventDateColor,
+  cardBg,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
@@ -129,6 +130,7 @@ function CalendarPreview({
   fallbackHref?: string;
   eventTitleColor?: string;
   eventDateColor?: string;
+  cardBg?: string;
 }) {
   const visible = readableAccent(accentColor);
   const actualEvents = events ?? [];
@@ -166,7 +168,7 @@ function CalendarPreview({
         ))}
       </div>
 
-      <div className="grid grid-cols-7 bg-white">
+      <div className="grid grid-cols-7" style={{ backgroundColor: cardBg || '#ffffff' }}>
         {cells.map((day, i) => {
           const col = i % 7;
           const today = day ? isToday(day) : false;
@@ -176,9 +178,9 @@ function CalendarPreview({
             <div
               key={i}
               className={`border-b border-r border-gray-100 p-1 min-h-[56px] ${
-                !day ? 'bg-gray-50/60' : today ? 'bg-green-50' : ''
+                !day ? 'bg-black/[0.03]' : ''
               }`}
-              style={today ? { backgroundColor: `${visible.accent}10` } : undefined}
+              style={today ? { backgroundColor: `${visible.accent}18` } : undefined}
             >
               {day && (
                 <>
@@ -423,7 +425,7 @@ export function ReservationViewShowcase({
   return (
     <div className={`space-y-3 ${className}`}>
       {selectedView === 'calendar' ? (
-        <CalendarPreview accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} />
+        <CalendarPreview accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} cardBg={eventCardBg} />
       ) : (
         <div className="rounded-xl">
           {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} />}

@@ -8,6 +8,7 @@ import { api, formatDate, API_URL } from '@/lib/api';
 import { SITE_URL } from '@/lib/config';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
 import { EventStatusBadge } from '@/components/ui/StatusBadge';
+import { ReservationViewShowcase } from '@/components/public/ReservationViewShowcase';
 import type { Event } from '@/lib/api';
 
 const reserveViewOptions = [
@@ -273,24 +274,54 @@ export default function EventsPage() {
       </div>
 
       {/* Public reservation view style */}
-      <div className="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
-        <span className="text-xs font-bold text-gray-500">公開サイトの表示スタイル{savingStyle ? ' 保存中...' : ''}</span>
-        <div className="flex gap-1 rounded-lg border border-gray-200 p-0.5">
-          {reserveViewOptions.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => saveReserveViewStyle(opt.value)}
-              className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
-                reserveViewStyle === opt.value
-                  ? 'bg-[#06C755] text-white'
-                  : 'text-gray-500 hover:bg-gray-50'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+      <div className="mb-5 rounded-xl border border-gray-200 bg-white">
+        <div className="flex flex-wrap items-center gap-3 px-4 py-3">
+          <span className="text-xs font-bold text-gray-500">公開サイトの表示スタイル{savingStyle ? ' 保存中...' : ''}</span>
+          <div className="flex gap-1 rounded-lg border border-gray-200 p-0.5">
+            {reserveViewOptions.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => saveReserveViewStyle(opt.value)}
+                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
+                  reserveViewStyle === opt.value
+                    ? 'bg-[#06C755] text-white'
+                    : 'text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
+        {publicPageData && (
+          <div className="border-t border-gray-100 px-4 pb-4 pt-3">
+            <p className="mb-3 text-[11px] font-bold text-gray-400">公開サイトプレビュー</p>
+            <div className="mx-auto max-w-sm">
+              <ReservationViewShowcase
+                accentColor={publicPageData.accentColor || '#06C755'}
+                buttonLabel="予約する"
+                viewStyle={reserveViewStyle}
+                events={events
+                  .filter(e => e.status === 'open' && new Date(e.heldAt) >= new Date())
+                  .slice(0, 6)
+                  .map(e => ({
+                    id: e.id,
+                    title: e.title,
+                    heldAt: e.heldAt,
+                    endAt: e.endAt,
+                    location: e.location,
+                    capacity: e.capacity,
+                    reservedCount: e.reservedCount,
+                    price: e.price,
+                    priceMale: e.priceMale,
+                    priceFemale: e.priceFemale,
+                    imageUrl: e.imageUrl,
+                  }))}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="mb-5 flex gap-1 overflow-x-auto border-b border-gray-200">
