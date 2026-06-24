@@ -105,8 +105,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const cmsPages: MetadataRoute.Sitemap = pages.map((p) => ({
     url: `${SITE_URL}/clubs/${p.tenantCode}/${p.slug}`,
     lastModified: p.updatedAt ? new Date(p.updatedAt) : STATIC_LAST_MODIFIED,
-    changeFrequency: 'monthly' as const,
-    priority: 0.65,
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
   }));
 
   return [...staticPages, ...clubPages, ...cmsPages, ...eventPages];

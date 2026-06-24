@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import type { CSSProperties } from 'react';
 import type { BlogPostSummary, LiffEvent, PublicCmsPage } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
@@ -50,7 +51,11 @@ function descriptionFromPage(page: PublicCmsPage) {
   return (
     page.seoDescription ||
     page.body
-      .replace(/[#>*_-]/g, '')
+      .replace(/!\[.*?\]\(.*?\)/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/#{1,6}\s*/g, '')
+      .replace(/[*_~`>|\\]/g, '')
+      .replace(/^[-*+]\s+/gm, '')
       .replace(/\s+/g, ' ')
       .trim()
       .slice(0, 150)
@@ -163,7 +168,7 @@ function HeroImageBlock({
       <div className={`grid grid-cols-3 gap-2 ${className}`}>
         {list.map((url, index) => (
           <div key={`${url}-${index}`} className="relative h-full overflow-hidden rounded-xl bg-gray-100">
-            <img src={url} alt={alt} className="h-full w-full object-cover" />
+            <Image src={url} alt={alt} fill className="object-cover" sizes="33vw" priority={index === 0} />
             <div className="absolute inset-0" style={overlayStyle} />
             {captions[index]?.trim() && (
               <p className="absolute bottom-2 left-2 right-2 rounded bg-white/85 px-2 py-1 text-[11px] font-bold text-gray-900 md:text-xs">
@@ -187,7 +192,7 @@ function HeroImageBlock({
       <div className="flex h-full" style={{ width: `${list.length * 100}%`, animation }}>
         {list.map((url, index) => (
           <div key={`${url}-${index}`} className="relative h-full shrink-0" style={{ width: `${100 / list.length}%` }}>
-            <img src={url} alt={alt} className="h-full w-full object-cover" />
+            <Image src={url} alt={alt} fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" priority={index === 0} />
             <div className="absolute inset-0" style={overlayStyle} />
             {captions[index]?.trim() && (
               <p className="absolute bottom-4 left-4 right-4 rounded bg-white/85 px-3 py-2 text-sm font-bold text-gray-900">
@@ -317,15 +322,11 @@ export default async function ClubCmsPage({
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: page.title,
+    '@type': 'SportsOrganization',
+    name: tenantName,
     description: descriptionFromPage(page),
-    datePublished: page.publishedAt,
-    dateModified: page.updatedAt,
-    author: { '@type': 'Organization', name: tenantName },
-    publisher: { '@type': 'Organization', name: tenantName },
-    mainEntityOfPage: `${SITE_URL}/clubs/${page.tenant.code ?? tenantCode}/${page.slug}`,
-    ...(image ? { image } : {}),
+    url: `${SITE_URL}/clubs/${page.tenant.code ?? tenantCode}/${page.slug}`,
+    ...(image ? { image, logo: image } : {}),
   };
 
   const contactHref = `/liff/${page.tenant.code ?? tenantCode}/admin-talk`;
@@ -486,8 +487,8 @@ export default async function ClubCmsPage({
                   return (
                     <div key={i} className={`flex items-start gap-3 ${!isLeft ? 'flex-row-reverse' : ''}`}>
                       {block.imageUrl && (
-                        <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl">
-                          <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
+                        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl">
+                          <Image src={block.imageUrl} alt="" fill className="object-cover" sizes="96px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                         </div>
                       )}
                       <div className={`min-w-0 flex-1 space-y-1 ${blockBodyClass}`} style={{ color: textColor, ...blockTextStyle }}>
@@ -500,8 +501,8 @@ export default async function ClubCmsPage({
                   return (
                     <div key={i} className="flex gap-4">
                       {block.imageUrl && (
-                        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full">
-                          <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
+                        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full">
+                          <Image src={block.imageUrl} alt="" fill className="object-cover" sizes="80px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                         </div>
                       )}
                       <div className={`min-w-0 space-y-1 ${blockBodyClass}`} style={{ color: textColor, ...blockTextStyle }}>
@@ -514,8 +515,8 @@ export default async function ClubCmsPage({
                   return (
                     <div key={i} className="space-y-3">
                       {block.imageUrl && (
-                        <div className="h-56 w-full overflow-hidden rounded-xl">
-                          <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
+                        <div className="relative h-56 w-full overflow-hidden rounded-xl">
+                          <Image src={block.imageUrl} alt="" fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                         </div>
                       )}
                       <div className={`space-y-1 ${blockBodyClass}`} style={{ color: textColor, ...blockTextStyle }}>
@@ -593,7 +594,7 @@ export default async function ClubCmsPage({
                     <Link key={post.id} href={`/clubs/${page.tenant.code ?? tenantCode}/blog/${post.slug}`}
                       className="flex gap-3 rounded-xl border border-gray-100 p-3 transition hover:opacity-90"
                       style={{ backgroundColor: blogPostCardBg }}>
-                      {postImage && <img src={postImage} alt="" className="h-16 w-20 shrink-0 rounded-lg object-cover" />}
+                      {postImage && <Image src={postImage} alt="" width={80} height={64} className="h-16 w-20 shrink-0 rounded-lg object-cover" />}
                       <div className="min-w-0">
                         <p className="line-clamp-2 text-sm font-bold leading-5" style={{ color: textColor }}>{post.title}</p>
                         {post.excerpt && <p className="mt-1 line-clamp-2 text-xs leading-5" style={{ color: blogLeadColor }}>{post.excerpt}</p>}
