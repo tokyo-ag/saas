@@ -1,7 +1,23 @@
 'use client';
 
 import Link from 'next/link';
+import { API_URL, formatDateShort } from '@/lib/api';
+import { imgUrl } from '@/lib/imgUrl';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
+
+export type ReservationShowcaseEvent = {
+  id: string;
+  title: string;
+  heldAt: string;
+  endAt?: string | null;
+  location?: string | null;
+  capacity?: number | null;
+  reservedCount?: number | null;
+  price?: number | null;
+  priceMale?: number | null;
+  priceFemale?: number | null;
+  imageUrl?: string | null;
+};
 
 type ReservationViewShowcaseProps = {
   accentColor: string;
@@ -9,6 +25,8 @@ type ReservationViewShowcaseProps = {
   href?: string;
   className?: string;
   viewStyle?: string | null;
+  events?: ReservationShowcaseEvent[];
+  tenantCode?: string;
 };
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
@@ -42,9 +60,79 @@ function readableAccent(color: string | null | undefined) {
   };
 }
 
-function CalendarPreview({ accentColor }: { accentColor: string }) {
+function eventHref(event: ReservationShowcaseEvent, tenantCode?: string, fallbackHref?: string) {
+  return tenantCode ? `/clubs/${tenantCode}/events/${event.id}` : fallbackHref || '#';
+}
+
+function eventTime(event: ReservationShowcaseEvent) {
+  return new Date(event.heldAt).toLocaleTimeString('ja-JP', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Tokyo',
+  });
+}
+
+function eventDate(event: ReservationShowcaseEvent) {
+  return formatDateShort(event.heldAt);
+}
+
+function eventStatus(event: ReservationShowcaseEvent) {
+  if (!event.capacity) return '募集中';
+  const remaining = event.capacity - (event.reservedCount ?? 0);
+  if (remaining <= 0) return '満席';
+  if (remaining <= 5) return `残り${remaining}席`;
+  return '募集中';
+}
+
+function eventPrice(event: ReservationShowcaseEvent) {
+  if (event.priceMale != null && event.priceFemale != null) {
+    return `男性 ${event.priceMale.toLocaleString()}円 / 女性 ${event.priceFemale.toLocaleString()}円`;
+  }
+  if (event.price == null) return '';
+  return event.price === 0 ? '無料' : `${event.price.toLocaleString()}円`;
+}
+
+function monthLabel(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('ja-JP', {
+    year: 'numeric',
+    month: 'long',
+    timeZone: 'Asia/Tokyo',
+  });
+}
+
+function EmptyEvents({ accentColor }: { accentColor: string }) {
   const visible = readableAccent(accentColor);
-  const { year, month, prevMonth, nextMonth, cells, isToday } = useCalendarMonth();
+  return (
+    <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-8 text-center">
+      <p className="text-sm font-bold text-gray-500">現在募集中のイベントはありません</p>
+      <p className="mt-1 text-xs text-gray-400">新しい日程が公開されるとここに表示されます</p>
+      <span className="mx-auto mt-4 block h-1.5 w-14 rounded-full" style={{ backgroundColor: visible.accent }} />
+    </div>
+  );
+}
+
+function CalendarPreview({
+  accentColor,
+  events,
+  tenantCode,
+  fallbackHref,
+}: {
+  accentColor: string;
+  events?: ReservationShowcaseEvent[];
+  tenantCode?: string;
+  fallbackHref?: string;
+}) {
+  const visible = readableAccent(accentColor);
+  const actualEvents = events ?? [];
+  const { year, month, prevMonth, nextMonth, cells, isToday } = useCalendarMonth(actualEvents[0]?.heldAt);
+  const byDate: Record<string, ReservationShowcaseEvent[]> = {};
+  for (const event of actualEvents) {
+    const date = new Date(event.heldAt);
+    if (date.getFullYear() === year && date.getMonth() === month) {
+      const key = date.getDate().toString();
+      (byDate[key] ??= []).push(event);
+    }
+  }
 
   return (
     <div className="rounded-2xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.10)' }}>
@@ -74,7 +162,8 @@ function CalendarPreview({ accentColor }: { accentColor: string }) {
         {cells.map((day, i) => {
           const col = i % 7;
           const today = day ? isToday(day) : false;
-          const hasEvent = day ? DUMMY_EVENT_DAYS.has(day) : false;
+          const dayEvents = day ? (byDate[day.toString()] ?? []) : [];
+          const hasDummyEvent = !events && day ? DUMMY_EVENT_DAYS.has(day) : false;
           return (
             <div
               key={i}
@@ -93,7 +182,18 @@ function CalendarPreview({ accentColor }: { accentColor: string }) {
                   >
                     {day}
                   </span>
-                  {hasEvent && (
+                  {dayEvents.map((event) => (
+                    <Link
+                      key={event.id}
+                      href={eventHref(event, tenantCode, fallbackHref)}
+                      className="mb-0.5 block rounded px-1 py-0.5"
+                      style={{ backgroundColor: visible.accent }}
+                    >
+                      <p className="truncate text-[8px] font-bold leading-tight" style={{ color: visible.text }}>{event.title}</p>
+                      <p className="text-[7px] leading-none opacity-75" style={{ color: visible.text }}>{eventTime(event)}</p>
+                    </Link>
+                  ))}
+                  {hasDummyEvent && (
                     <div className="rounded px-1 py-0.5" style={{ backgroundColor: visible.accent }}>
                       <p className="text-[8px] font-bold text-white truncate leading-tight">イベント</p>
                       <p className="text-[7px] text-white/80 leading-none">19:00</p>
@@ -109,8 +209,55 @@ function CalendarPreview({ accentColor }: { accentColor: string }) {
   );
 }
 
-function CardMini({ accentColor }: { accentColor: string }) {
+function CardMini({
+  accentColor,
+  events,
+  tenantCode,
+  fallbackHref,
+}: {
+  accentColor: string;
+  events?: ReservationShowcaseEvent[];
+  tenantCode?: string;
+  fallbackHref?: string;
+}) {
   const visible = readableAccent(accentColor);
+  if (events) {
+    if (events.length === 0) return <EmptyEvents accentColor={accentColor} />;
+    return (
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {events.map((event) => {
+          const image = imgUrl(event.imageUrl, API_URL);
+          const status = eventStatus(event);
+          const full = status === '満席';
+          return (
+            <Link
+              key={event.id}
+              href={eventHref(event, tenantCode, fallbackHref)}
+              className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-100 transition hover:opacity-90"
+            >
+              <div className="relative aspect-[4/3]">
+                {image ? (
+                  <img src={image} alt={event.title} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="h-full w-full" style={{ background: `linear-gradient(135deg, ${visible.accent}, #111827)` }} />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
+                <p className="absolute bottom-2 left-2 right-2 line-clamp-2 text-xs font-bold leading-snug text-white">{event.title}</p>
+                <span className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold text-white ${full ? 'bg-gray-400' : ''}`} style={full ? undefined : { backgroundColor: visible.accent }}>
+                  {status}
+                </span>
+              </div>
+              <div className="space-y-1 px-3 py-2">
+                <p className="text-[11px] font-bold text-gray-600">{eventDate(event)}</p>
+                {event.location && <p className="truncate text-[10px] text-gray-400">{event.location}</p>}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm">
       <div className="h-12" style={{ background: `linear-gradient(135deg, ${visible.accent}, #111827)` }} />
@@ -127,8 +274,69 @@ function CardMini({ accentColor }: { accentColor: string }) {
   );
 }
 
-function ThreadMini({ accentColor }: { accentColor: string }) {
+function ThreadMini({
+  accentColor,
+  events,
+  tenantCode,
+  fallbackHref,
+}: {
+  accentColor: string;
+  events?: ReservationShowcaseEvent[];
+  tenantCode?: string;
+  fallbackHref?: string;
+}) {
   const visible = readableAccent(accentColor);
+  if (events) {
+    if (events.length === 0) return <EmptyEvents accentColor={accentColor} />;
+    const groups = events.reduce<Record<string, ReservationShowcaseEvent[]>>((acc, event) => {
+      const key = monthLabel(event.heldAt);
+      (acc[key] ??= []).push(event);
+      return acc;
+    }, {});
+
+    return (
+      <div className="space-y-5">
+        {Object.entries(groups).map(([month, monthEvents]) => (
+          <section key={month}>
+            <div className="mb-2 flex items-center gap-2 px-1">
+              <span className="h-4 w-1 rounded-full" style={{ backgroundColor: visible.accent }} />
+              <p className="text-sm font-bold text-gray-800">{month}のスケジュール</p>
+            </div>
+            <div className="space-y-2">
+              {monthEvents.map((event) => {
+                const status = eventStatus(event);
+                const full = status === '満席';
+                const price = eventPrice(event);
+                return (
+                  <Link
+                    key={event.id}
+                    href={eventHref(event, tenantCode, fallbackHref)}
+                    className="block rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition hover:bg-gray-50"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-gray-900">{event.title}</p>
+                        <p className="mt-1 text-xs text-gray-500">{eventDate(event)}</p>
+                        {event.location && <p className="truncate text-xs text-gray-400">{event.location}</p>}
+                        <p className="text-xs text-gray-500">
+                          {event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : `${event.reservedCount ?? 0}人予約`}
+                          {price && ` / ${price}`}
+                        </p>
+                      </div>
+                      <span className={`shrink-0 rounded-md px-2.5 py-1 text-[11px] font-bold ${full ? 'bg-gray-100 text-gray-400' : ''}`} style={full ? undefined : { backgroundColor: visible.accent, color: visible.text }}>
+                        {status}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-1.5">
       {[17, 24, 31].map((day, index) => (
@@ -155,6 +363,8 @@ export function ReservationViewShowcase({
   href,
   className = '',
   viewStyle = 'calendar',
+  events,
+  tenantCode,
 }: ReservationViewShowcaseProps) {
   const visible = readableAccent(accentColor);
   const buttonClassName =
@@ -165,11 +375,11 @@ export function ReservationViewShowcase({
   return (
     <div className={`space-y-3 ${className}`}>
       {selectedView === 'calendar' ? (
-        <CalendarPreview accentColor={accentColor} />
+        <CalendarPreview accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} />
       ) : (
         <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
-          {selectedView === 'card' && <CardMini accentColor={accentColor} />}
-          {selectedView === 'thread' && <ThreadMini accentColor={accentColor} />}
+          {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} />}
+          {selectedView === 'thread' && <ThreadMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} />}
         </div>
       )}
       {href ? (

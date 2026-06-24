@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api, PublicPageInput, Tenant } from '@/lib/api';
+import { api, LiffEvent, PublicPageInput, Tenant } from '@/lib/api';
 import { SITE_URL } from '@/lib/config';
 import { SaveToast } from '@/components/ui/SaveToast';
 import { ReservationViewShowcase } from '@/components/public/ReservationViewShowcase';
@@ -314,6 +314,7 @@ export default function AdminPublicPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [form, setForm] = useState<PublicPageInput>(emptyForm);
   const [blocks, setBlocks] = useState<Block[]>([]);
+  const [reserveEvents, setReserveEvents] = useState<LiffEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -428,6 +429,9 @@ export default function AdminPublicPage() {
     Promise.all([api.tenant.get(), api.publicPages.list()])
       .then(([tenantData, pageData]) => {
         setTenant(tenantData);
+        void api.liff.events(tenantData.code ?? tenantData.id)
+          .then(setReserveEvents)
+          .catch(() => setReserveEvents([]));
         const tenantName = tenantData.lineDisplayName ?? tenantData.name;
         const tenantSlug = slugify(tenantName) || slugify(tenantData.code ?? tenantData.id) || 'home';
         const first = pageData[0];
@@ -1498,6 +1502,8 @@ export default function AdminPublicPage() {
                     accentColor={accentColor}
                     buttonLabel={navLabels.reserve}
                     viewStyle={form.reserveViewStyle}
+                    events={reserveEvents}
+                    tenantCode={tenantCode}
                     className="mt-3"
                   />
                 </section>

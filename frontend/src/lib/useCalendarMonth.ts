@@ -1,11 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-export function useCalendarMonth() {
+export function useCalendarMonth(initialDate?: string | Date | null) {
   const today = new Date();
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth());
+  const initial = initialDate ? new Date(initialDate) : today;
+  const initialValid = Number.isFinite(initial.getTime());
+  const [year, setYear] = useState(initialValid ? initial.getFullYear() : today.getFullYear());
+  const [month, setMonth] = useState(initialValid ? initial.getMonth() : today.getMonth());
+  const initialKey = initialValid ? `${initial.getFullYear()}-${initial.getMonth()}` : '';
+
+  useEffect(() => {
+    if (!initialValid) return;
+    setYear(initial.getFullYear());
+    setMonth(initial.getMonth());
+  }, [initialKey, initialValid]);
 
   function prevMonth() {
     if (month === 0) { setYear((y) => y - 1); setMonth(11); }

@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
-import type { PublicCmsPage } from '@/lib/api';
+import type { LiffEvent, PublicCmsPage } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
 import { ReservationViewShowcase } from '@/components/public/ReservationViewShowcase';
@@ -19,6 +19,18 @@ async function fetchPage(tenantCode: string, slug: string): Promise<PublicCmsPag
     return res.json();
   } catch {
     return null;
+  }
+}
+
+async function fetchReserveEvents(tenantCode: string): Promise<LiffEvent[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/liff/${tenantCode}/events`, {
+      next: { revalidate },
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
   }
 }
 
@@ -224,7 +236,10 @@ export default async function ClubCmsPage({
   params: Promise<{ tenantCode: string; slug: string }>;
 }) {
   const { tenantCode, slug } = await params;
-  const page = await fetchPage(tenantCode, slug);
+  const [page, reserveEvents] = await Promise.all([
+    fetchPage(tenantCode, slug),
+    fetchReserveEvents(tenantCode),
+  ]);
   if (!page) notFound();
 
   const tenantName = page.tenant.lineDisplayName ?? page.tenant.name;
@@ -480,6 +495,8 @@ export default async function ClubCmsPage({
             buttonLabel={navLabels.reserve}
             href={reserveHref}
             viewStyle={page.reserveViewStyle}
+            events={reserveEvents}
+            tenantCode={page.tenant.code ?? tenantCode}
             className="mt-4"
           />
         </div>
