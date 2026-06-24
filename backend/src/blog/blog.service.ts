@@ -2,7 +2,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ArrayMaxSize, IsArray, IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 
 const POST_STATUS = ['draft', 'published'] as const;
@@ -21,12 +21,12 @@ export class UpsertBlogPostDto {
   @MaxLength(300)
   excerpt?: string;
 
-  @IsOptional()
   @IsArray()
+  @ArrayMinSize(1)
   @ArrayMaxSize(1)
   @IsString({ each: true })
   @MaxLength(30, { each: true })
-  tags?: string[];
+  tags!: string[];
 
   @IsOptional()
   @IsIn(POST_STATUS)

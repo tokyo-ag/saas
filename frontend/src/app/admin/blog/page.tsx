@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api, BlogPost, BlogPostInput } from '@/lib/api';
 import { API_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
@@ -285,6 +285,9 @@ export default function AdminBlogPage() {
     if (!form.title.trim() || !body.replace(/\n/g, '').trim()) {
       setError('タイトルと本文は必須です'); return;
     }
+    if (!form.tags || form.tags.length === 0) {
+      setError('タグを1つ入力してください'); return;
+    }
     setSaving(true); setError('');
     try {
       const payload: BlogPostInput = { ...form, body, status: publish ? 'published' : 'draft' };
@@ -397,8 +400,8 @@ export default function AdminBlogPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-bold text-gray-700">タグ（1つまで）</label>
-            <p className="mb-1.5 text-xs text-gray-400">カテゴリページに表示されます。例：バドミントン・交流会</p>
+            <label className="mb-1 block text-sm font-bold text-gray-700">カテゴリタグ <span className="text-red-500">*</span></label>
+            <p className="mb-1.5 text-xs text-gray-400">カテゴリページへの掲載に必要です。例：バドミントン・交流会（1つまで）</p>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {(form.tags ?? []).map(tag => (
                 <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-[#06C755]/10 px-2.5 py-1 text-xs font-medium text-[#047a35]">
