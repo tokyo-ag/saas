@@ -5,7 +5,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
-import LiffBottomNav from '@/components/liff/LiffBottomNav';
 import PublicFooter from '@/components/public/PublicFooter';
 
 type HomeClientProps = {
@@ -432,7 +431,6 @@ export default function HomeClient({
         </div>
       </div>
 
-      <LiffBottomNav />
     </>
   );
 }
