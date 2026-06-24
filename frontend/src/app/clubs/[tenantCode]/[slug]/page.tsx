@@ -300,8 +300,8 @@ export default async function ClubCmsPage({
   const contactHref = `/liff/${page.tenant.code ?? tenantCode}/admin-talk`;
 
   return (
-    <main className="min-h-screen" style={{ fontFamily, backgroundColor }}>
-      <div className="mx-auto w-full max-w-[480px] sm:my-6 sm:overflow-hidden sm:rounded-3xl sm:shadow-2xl">
+    <main className="min-h-screen sm:bg-gray-200" style={{ fontFamily, backgroundColor }}>
+      <div className="mx-auto w-full max-w-[480px] sm:my-8 sm:overflow-hidden sm:rounded-3xl sm:shadow-2xl" style={{ backgroundColor, minHeight: '100dvh' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       <style>{`
         @keyframes public-site-slide-2 {
