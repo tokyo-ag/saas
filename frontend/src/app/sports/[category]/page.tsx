@@ -388,10 +388,13 @@ export default async function SportsCategoryPage({
                       {ev.location}
                     </p>
                     <div className="flex items-center justify-between mt-1.5">
-                      <span className="text-[10px] text-gray-400 truncate max-w-[120px]">
-                        {org}
-                      </span>
-                      <span className="text-[11px] text-gray-600 font-medium">
+                      <div className="flex items-center gap-1 min-w-0">
+                        <span className="text-[10px] text-gray-400 truncate max-w-[80px]">{org}</span>
+                        {ev.tags?.[0] && (
+                          <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500 shrink-0">{ev.tags[0]}</span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-gray-600 font-medium shrink-0">
                         {priceLabel(ev)}
                       </span>
                     </div>

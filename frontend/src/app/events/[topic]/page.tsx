@@ -319,21 +319,14 @@ export default async function EventTopicPage({
                     <p className="text-[11px] text-gray-400 mt-1">{fmtDate(ev.heldAt)}</p>
                     <p className="text-[11px] text-gray-400 truncate">{ev.location}</p>
                     <div className="flex items-center justify-between mt-1.5">
-                      <span className="text-[10px] text-gray-400 truncate max-w-[120px]">{org}</span>
-                      <span className="text-[11px] text-gray-600 font-medium">{priceLabel(ev)}</span>
-                    </div>
-                    {ev.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {ev.tags.slice(0, 3).map((tag) => (
-                          <span
-                            key={tag}
-                            className="rounded-full bg-[#06C755]/10 px-2 py-0.5 text-[10px] font-semibold text-[#047a35]"
-                          >
-                            {tag}
-                          </span>
-                        ))}
+                      <div className="flex items-center gap-1 min-w-0">
+                        <span className="text-[10px] text-gray-400 truncate max-w-[80px]">{org}</span>
+                        {ev.tags[0] && (
+                          <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500 shrink-0">{ev.tags[0]}</span>
+                        )}
                       </div>
-                    )}
+                      <span className="text-[11px] text-gray-600 font-medium shrink-0">{priceLabel(ev)}</span>
+                    </div>
                   </div>
                 </Link>
               );
