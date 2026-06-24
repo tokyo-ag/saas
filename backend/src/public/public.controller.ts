@@ -212,6 +212,37 @@ export class PublicController {
       }));
   }
 
+  @Get('sitemap-blog-posts')
+  async getSitemapBlogPosts() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const posts = await (this.prisma.blogPost as any).findMany({
+      where: {
+        status: 'published',
+        tenant: { deletedAt: null, bannedAt: null, code: { not: null } },
+      },
+      select: {
+        slug: true,
+        updatedAt: true,
+        publishedAt: true,
+        tenant: { select: { code: true } },
+      },
+      orderBy: { updatedAt: 'desc' },
+    }) as Array<{
+      slug: string;
+      updatedAt: Date;
+      publishedAt: Date | null;
+      tenant: { code: string | null };
+    }>;
+
+    return posts
+      .filter((p) => p.tenant.code)
+      .map((p) => ({
+        tenantCode: p.tenant.code!,
+        slug: p.slug,
+        updatedAt: p.updatedAt ?? p.publishedAt,
+      }));
+  }
+
   @Get('events/:eventId')
   async getEventDetail(@Param('eventId') eventId: string) {
     const event = await this.prisma.event.findFirst({

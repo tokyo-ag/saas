@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, BlogPost, LiffEvent, PublicPageInput, Tenant } from '@/lib/api';
 import { API_URL, SITE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
+import { getToken } from '@/lib/auth';
 import { SaveToast } from '@/components/ui/SaveToast';
 import { ReservationViewShowcase } from '@/components/public/ReservationViewShowcase';
 
@@ -899,6 +900,17 @@ export default function AdminPublicPage() {
         ? await api.publicPages.update(selectedId, payload)
         : await api.publicPages.create(payload);
       setSelectedId(page.id);
+      if (tenantCode) {
+        const token = getToken();
+        await fetch('/api/revalidate-public-page', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ tenantCode, slug: page.slug || generatedSlug }),
+        }).catch(() => null);
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err: any) {

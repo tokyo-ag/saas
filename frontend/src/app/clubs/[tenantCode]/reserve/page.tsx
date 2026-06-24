@@ -61,7 +61,7 @@ function CalendarView({ events, tenantCode }: { events: LiffEvent[]; tenantCode:
                   {dayEvents.map((ev) => {
                     const t = new Date(ev.heldAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
                     return (
-                      <Link key={ev.id} href={`/clubs/${tenantCode}/events/${ev.id}`} className="block rounded-sm bg-[#06C755] px-1 py-0.5 mb-0.5">
+                      <Link key={ev.id} href={`/e/${tenantCode}/${ev.id}`} className="block rounded-sm bg-[#06C755] px-1 py-0.5 mb-0.5">
                         <p className="text-[8px] font-bold text-white truncate">{ev.title}</p>
                         <p className="text-[8px] text-white/80">{t}</p>
                       </Link>
@@ -96,7 +96,7 @@ function ThreadView({ events, tenantCode }: { events: LiffEvent[]; tenantCode: s
               const st = statusLabel(ev);
               const full = st === '満席';
               return (
-                <Link key={ev.id} href={`/clubs/${tenantCode}/events/${ev.id}`}
+                <Link key={ev.id} href={`/e/${tenantCode}/${ev.id}`}
                   className="block rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm active:bg-gray-50">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -124,7 +124,7 @@ function CardView({ events, tenantCode }: { events: LiffEvent[]; tenantCode: str
         const img = imgUrl(ev.imageUrl, API_URL);
         const rem = ev.capacity != null ? ev.capacity - ev.reservedCount : null;
         return (
-          <Link key={ev.id} href={`/clubs/${tenantCode}/events/${ev.id}`}
+          <Link key={ev.id} href={`/e/${tenantCode}/${ev.id}`}
             className="block rounded-xl overflow-hidden bg-white shadow-sm active:opacity-70">
             <div className="relative aspect-[4/5]">
               {img ? <Image src={img} alt={ev.title} fill className="object-cover" unoptimized /> : <div className="absolute inset-0 bg-gradient-to-br from-[#06C755] to-[#05a847]" />}

@@ -4,9 +4,11 @@ import { SITE_URL, API_URL } from '@/lib/config';
 
 type SitemapEvent = { id: string; tenantCode: string; updatedAt: string };
 type SitemapPage = { tenantCode: string; slug: string; updatedAt: string };
+type SitemapBlogPost = { tenantCode: string; slug: string; updatedAt: string };
 
 let lastSuccessfulEvents: SitemapEvent[] = [];
 let lastSuccessfulPages: SitemapPage[] = [];
+let lastSuccessfulBlogPosts: SitemapBlogPost[] = [];
 
 function staticLastModified() {
   const value = process.env.NEXT_PUBLIC_SITE_LAST_MODIFIED;
@@ -46,10 +48,26 @@ async function fetchSitemapPages(): Promise<SitemapPage[]> {
   }
 }
 
+async function fetchSitemapBlogPosts(): Promise<SitemapBlogPost[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/sitemap-blog-posts`, { next: { revalidate: 3600 } });
+    if (!res.ok) throw new Error(`sitemap-blog-posts returned ${res.status}`);
+    const posts = (await res.json()) as SitemapBlogPost[];
+    lastSuccessfulBlogPosts = posts;
+    return posts;
+  } catch (error) {
+    if (lastSuccessfulBlogPosts.length > 0) {
+      console.warn('[sitemap] using cached blog posts after API failure', error);
+    }
+    return lastSuccessfulBlogPosts;
+  }
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [events, pages] = await Promise.all([
+  const [events, pages, blogPosts] = await Promise.all([
     fetchSitemapEvents(),
     fetchSitemapPages(),
+    fetchSitemapBlogPosts(),
   ]);
 
   const staticPages: MetadataRoute.Sitemap = [
@@ -84,5 +102,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticPages, ...cmsPages, ...eventPages];
+  const blogIndexByTenant = new Map<string, Date>();
+  for (const post of blogPosts) {
+    const updatedAt = post.updatedAt ? new Date(post.updatedAt) : STATIC_LAST_MODIFIED;
+    const current = blogIndexByTenant.get(post.tenantCode);
+    if (!current || updatedAt > current) {
+      blogIndexByTenant.set(post.tenantCode, updatedAt);
+    }
+  }
+
+  const blogIndexPages: MetadataRoute.Sitemap = Array.from(blogIndexByTenant.entries()).map(([tenantCode, lastModified]) => ({
+    url: `${SITE_URL}/clubs/${tenantCode}/blog`,
+    lastModified,
+    changeFrequency: 'weekly' as const,
+    priority: 0.65,
+  }));
+
+  const blogPostPages: MetadataRoute.Sitemap = blogPosts.map((post) => ({
+    url: `${SITE_URL}/clubs/${post.tenantCode}/blog/${post.slug}`,
+    lastModified: post.updatedAt ? new Date(post.updatedAt) : STATIC_LAST_MODIFIED,
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }));
+
+  return [...staticPages, ...cmsPages, ...blogIndexPages, ...blogPostPages, ...eventPages];
 }

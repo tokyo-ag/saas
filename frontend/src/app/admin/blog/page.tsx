@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, BlogPost, BlogPostInput } from '@/lib/api';
 import { API_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
+import { getToken } from '@/lib/auth';
 
 type TextBlock = { type: 'text'; content: string };
 type ImageBlock = { type: 'image'; url: string };
@@ -240,6 +241,7 @@ export default function AdminBlogPage() {
   const [imageUploading, setImageUploading] = useState(false);
   const [error, setError] = useState('');
   const [cropModal, setCropModal] = useState<{ blockIdx: number; url: string } | null>(null);
+  const [tenantCode, setTenantCode] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function load() {
@@ -247,7 +249,25 @@ export default function AdminBlogPage() {
     api.blog.list().then(setPosts).catch(() => {}).finally(() => setLoading(false));
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    api.tenant.get()
+      .then((tenant) => setTenantCode(tenant.code ?? tenant.id))
+      .catch(() => setTenantCode(''));
+  }, []);
+
+  async function revalidatePublishedBlog(post: BlogPost) {
+    if (!tenantCode || post.status !== 'published') return;
+    const token = getToken();
+    await fetch('/api/revalidate-public-page', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ tenantCode, blogSlug: post.slug }),
+    }).catch(() => null);
+  }
 
   function openNew() {
     setEditing(null);
@@ -291,11 +311,13 @@ export default function AdminBlogPage() {
     setSaving(true); setError('');
     try {
       const payload: BlogPostInput = { ...form, body, status: publish ? 'published' : 'draft' };
+      let savedPost: BlogPost;
       if (editing) {
-        await api.blog.update(editing.id, payload);
+        savedPost = await api.blog.update(editing.id, payload);
       } else {
-        await api.blog.create(payload);
+        savedPost = await api.blog.create(payload);
       }
+      await revalidatePublishedBlog(savedPost);
       load();
       setMode('list');
     } catch (err: unknown) {

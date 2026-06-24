@@ -8,17 +8,25 @@ import { imgUrl } from '@/lib/imgUrl';
 
 export const revalidate = 60;
 
-async function fetchPosts(tenantCode: string): Promise<{ posts: BlogPostSummary[]; tenantName: string } | null> {
+type BlogTenantInfo = {
+  name?: string | null;
+  lineDisplayName?: string | null;
+  pages?: Array<{ slug: string }>;
+};
+
+async function fetchPosts(tenantCode: string): Promise<{ posts: BlogPostSummary[]; tenantName: string; homeHref: string } | null> {
   try {
     const [postsRes, tenantRes] = await Promise.all([
       fetch(`${API_URL}/api/public/tenants/${tenantCode}/blog`, { next: { revalidate } }),
-      fetch(`${API_URL}/api/public/tenants/${tenantCode}/pages/home`, { next: { revalidate } }),
+      fetch(`${API_URL}/api/public/tenants/${tenantCode}`, { next: { revalidate } }),
     ]);
     if (!postsRes.ok) return null;
     const posts = await postsRes.json();
-    const tenantPage = tenantRes.ok ? await tenantRes.json() : null;
-    const tenantName = tenantPage?.tenant?.lineDisplayName ?? tenantPage?.tenant?.name ?? tenantCode;
-    return { posts, tenantName };
+    const tenant = tenantRes.ok ? ((await tenantRes.json()) as BlogTenantInfo) : null;
+    const tenantName = tenant?.lineDisplayName ?? tenant?.name ?? tenantCode;
+    const primarySlug = tenant?.pages?.[0]?.slug;
+    const homeHref = primarySlug ? `/clubs/${tenantCode}/${primarySlug}` : `/clubs/${tenantCode}`;
+    return { posts, tenantName, homeHref };
   } catch {
     return null;
   }
@@ -67,13 +75,13 @@ export default async function BlogListPage({
   const { tenantCode } = await params;
   const data = await fetchPosts(tenantCode);
   if (!data) notFound();
-  const { posts, tenantName } = data;
+  const { posts, tenantName, homeHref } = data;
 
   return (
     <main className="min-h-screen bg-[#F7F8FA]">
       <div className="mx-auto max-w-2xl px-4 py-10">
         <div className="mb-8 flex items-center gap-3">
-          <Link href={`/clubs/${tenantCode}/home`} className="text-sm text-[#06C755] hover:underline">
+          <Link href={homeHref} className="text-sm text-[#06C755] hover:underline">
             ← {tenantName}
           </Link>
         </div>

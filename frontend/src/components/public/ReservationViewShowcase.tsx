@@ -65,7 +65,7 @@ function readableAccent(color: string | null | undefined) {
 }
 
 function eventHref(event: ReservationShowcaseEvent, tenantCode?: string, fallbackHref?: string) {
-  return tenantCode ? `/clubs/${tenantCode}/events/${event.id}` : fallbackHref || '#';
+  return tenantCode ? `/e/${tenantCode}/${event.id}` : fallbackHref || '#';
 }
 
 function eventTime(event: ReservationShowcaseEvent) {
