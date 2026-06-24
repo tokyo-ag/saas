@@ -331,6 +331,9 @@ export default async function ClubCmsPage({
         reserveLead?: string;
         reserveTitleColor?: string;
         reserveLeadColor?: string;
+        reserveEventTitleColor?: string;
+        reserveEventDateColor?: string;
+        reserveEventMetaColor?: string;
         blogTitle?: string;
         blogLead?: string;
         blogTitleColor?: string;
@@ -347,6 +350,9 @@ export default async function ClubCmsPage({
   const reserveSectionLead = sectionCopy.reserveLead?.trim() || '募集中のイベントを表示します。';
   const reserveTitleColor = sectionCopy.reserveTitleColor?.trim() || textColor;
   const reserveLeadColor = sectionCopy.reserveLeadColor?.trim() || '#6B7280';
+  const reserveEventTitleColor = sectionCopy.reserveEventTitleColor?.trim() || '#111827';
+  const reserveEventDateColor = sectionCopy.reserveEventDateColor?.trim() || '#4B5563';
+  const reserveEventMetaColor = sectionCopy.reserveEventMetaColor?.trim() || '#6B7280';
   const blogSectionTitle = sectionCopy.blogTitle?.trim() || navLabels.blog;
   const blogSectionLead = sectionCopy.blogLead?.trim() || '活動日記やお知らせを表示するエリアです。';
   const blogTitleColor = sectionCopy.blogTitleColor?.trim() || textColor;
@@ -536,6 +542,9 @@ export default async function ClubCmsPage({
             viewStyle={page.reserveViewStyle}
             events={reserveEvents}
             tenantCode={page.tenant.code ?? tenantCode}
+            eventTitleColor={reserveEventTitleColor}
+            eventDateColor={reserveEventDateColor}
+            eventMetaColor={reserveEventMetaColor}
             className="mt-4"
           />
         </div>

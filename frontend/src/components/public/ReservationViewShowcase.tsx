@@ -27,6 +27,9 @@ type ReservationViewShowcaseProps = {
   viewStyle?: string | null;
   events?: ReservationShowcaseEvent[];
   tenantCode?: string;
+  eventTitleColor?: string;
+  eventDateColor?: string;
+  eventMetaColor?: string;
 };
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
@@ -116,11 +119,15 @@ function CalendarPreview({
   events,
   tenantCode,
   fallbackHref,
+  eventTitleColor,
+  eventDateColor,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
   tenantCode?: string;
   fallbackHref?: string;
+  eventTitleColor?: string;
+  eventDateColor?: string;
 }) {
   const visible = readableAccent(accentColor);
   const actualEvents = events ?? [];
@@ -189,8 +196,8 @@ function CalendarPreview({
                       className="mb-0.5 block rounded px-1 py-0.5"
                       style={{ backgroundColor: visible.accent }}
                     >
-                      <p className="truncate text-[8px] font-bold leading-tight" style={{ color: visible.text }}>{event.title}</p>
-                      <p className="text-[7px] leading-none opacity-75" style={{ color: visible.text }}>{eventTime(event)}</p>
+                      <p className="truncate text-[8px] font-bold leading-tight" style={{ color: eventTitleColor || visible.text }}>{event.title}</p>
+                      <p className="text-[7px] leading-none opacity-75" style={{ color: eventDateColor || visible.text }}>{eventTime(event)}</p>
                     </Link>
                   ))}
                   {hasDummyEvent && (
@@ -214,11 +221,17 @@ function CardMini({
   events,
   tenantCode,
   fallbackHref,
+  eventTitleColor,
+  eventDateColor,
+  eventMetaColor,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
   tenantCode?: string;
   fallbackHref?: string;
+  eventTitleColor?: string;
+  eventDateColor?: string;
+  eventMetaColor?: string;
 }) {
   const visible = readableAccent(accentColor);
   if (events) {
@@ -253,10 +266,10 @@ function CardMini({
                 </span>
               </div>
               <div className="space-y-2 p-4">
-                <p className="line-clamp-2 text-base font-bold leading-snug text-gray-900">{event.title}</p>
-                <p className="text-sm font-bold text-gray-600">{eventDate(event)} {eventTime(event)}</p>
-                {event.location && <p className="truncate text-sm text-gray-400">{event.location}</p>}
-                <p className="text-xs text-gray-500">
+                <p className="line-clamp-2 text-base font-bold leading-snug" style={{ color: eventTitleColor || '#111827' }}>{event.title}</p>
+                <p className="text-sm font-bold" style={{ color: eventDateColor || '#4B5563' }}>{eventDate(event)} {eventTime(event)}</p>
+                {event.location && <p className="truncate text-sm" style={{ color: eventMetaColor || '#9CA3AF' }}>{event.location}</p>}
+                <p className="text-xs" style={{ color: eventMetaColor || '#6B7280' }}>
                   {event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : `${event.reservedCount ?? 0}人予約`}
                   {price && ` / ${price}`}
                 </p>
@@ -297,11 +310,17 @@ function ThreadMini({
   events,
   tenantCode,
   fallbackHref,
+  eventTitleColor,
+  eventDateColor,
+  eventMetaColor,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
   tenantCode?: string;
   fallbackHref?: string;
+  eventTitleColor?: string;
+  eventDateColor?: string;
+  eventMetaColor?: string;
 }) {
   const visible = readableAccent(accentColor);
   if (events) {
@@ -333,10 +352,10 @@ function ThreadMini({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-gray-900">{event.title}</p>
-                        <p className="mt-1 text-xs text-gray-500">{eventDate(event)}</p>
-                        {event.location && <p className="truncate text-xs text-gray-400">{event.location}</p>}
-                        <p className="text-xs text-gray-500">
+                        <p className="text-sm font-bold" style={{ color: eventTitleColor || '#111827' }}>{event.title}</p>
+                        <p className="mt-1 text-xs" style={{ color: eventDateColor || '#6B7280' }}>{eventDate(event)}</p>
+                        {event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || '#9CA3AF' }}>{event.location}</p>}
+                        <p className="text-xs" style={{ color: eventMetaColor || '#6B7280' }}>
                           {event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : `${event.reservedCount ?? 0}人予約`}
                           {price && ` / ${price}`}
                         </p>
@@ -383,6 +402,9 @@ export function ReservationViewShowcase({
   viewStyle = 'calendar',
   events,
   tenantCode,
+  eventTitleColor,
+  eventDateColor,
+  eventMetaColor,
 }: ReservationViewShowcaseProps) {
   const visible = readableAccent(accentColor);
   const buttonClassName =
@@ -393,11 +415,11 @@ export function ReservationViewShowcase({
   return (
     <div className={`space-y-3 ${className}`}>
       {selectedView === 'calendar' ? (
-        <CalendarPreview accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} />
+        <CalendarPreview accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} />
       ) : (
         <div className="rounded-xl">
-          {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} />}
-          {selectedView === 'thread' && <ThreadMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} />}
+          {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} />}
+          {selectedView === 'thread' && <ThreadMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} />}
         </div>
       )}
       {selectedView !== 'card' && (href ? (

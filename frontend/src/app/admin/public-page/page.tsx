@@ -93,6 +93,9 @@ const emptyForm: PublicPageInput = {
   reserveLead: '',
   reserveTitleColor: '',
   reserveLeadColor: '',
+  reserveEventTitleColor: '',
+  reserveEventDateColor: '',
+  reserveEventMetaColor: '',
   blogTitle: '',
   blogLead: '',
   blogTitleColor: '',
@@ -427,6 +430,9 @@ export default function AdminPublicPage() {
   const reserveSectionLead = form.reserveLead?.trim() || '募集中のイベントを表示します。';
   const reserveTitleColor = form.reserveTitleColor?.trim() || textColor;
   const reserveLeadColor = form.reserveLeadColor?.trim() || '#6B7280';
+  const reserveEventTitleColor = form.reserveEventTitleColor?.trim() || '#111827';
+  const reserveEventDateColor = form.reserveEventDateColor?.trim() || '#4B5563';
+  const reserveEventMetaColor = form.reserveEventMetaColor?.trim() || '#6B7280';
   const blogSectionTitle = form.blogTitle?.trim() || navLabels.blog;
   const blogSectionLead = form.blogLead?.trim() || '活動日記やお知らせを表示するエリアです。';
   const blogTitleColor = form.blogTitleColor?.trim() || textColor;
@@ -568,6 +574,9 @@ export default function AdminPublicPage() {
                   reserveLead: fd.reserveLead ?? '',
                   reserveTitleColor: fd.reserveTitleColor ?? '',
                   reserveLeadColor: fd.reserveLeadColor ?? '',
+                  reserveEventTitleColor: fd.reserveEventTitleColor ?? '',
+                  reserveEventDateColor: fd.reserveEventDateColor ?? '',
+                  reserveEventMetaColor: fd.reserveEventMetaColor ?? '',
                   blogTitle: fd.blogTitle ?? '',
                   blogLead: fd.blogLead ?? '',
                   blogTitleColor: fd.blogTitleColor ?? '',
@@ -590,6 +599,9 @@ export default function AdminPublicPage() {
                   reserveLead: '',
                   reserveTitleColor: '',
                   reserveLeadColor: '',
+                  reserveEventTitleColor: '',
+                  reserveEventDateColor: '',
+                  reserveEventMetaColor: '',
                   blogTitle: '',
                   blogLead: '',
                   blogTitleColor: '',
@@ -824,6 +836,9 @@ export default function AdminPublicPage() {
         reserveLead: form.reserveLead?.trim() || '',
         reserveTitleColor: form.reserveTitleColor?.trim() || '',
         reserveLeadColor: form.reserveLeadColor?.trim() || '',
+        reserveEventTitleColor: form.reserveEventTitleColor?.trim() || '',
+        reserveEventDateColor: form.reserveEventDateColor?.trim() || '',
+        reserveEventMetaColor: form.reserveEventMetaColor?.trim() || '',
         blogTitle: form.blogTitle?.trim() || '',
         blogLead: form.blogLead?.trim() || '',
         blogTitleColor: form.blogTitleColor?.trim() || '',
@@ -1461,6 +1476,26 @@ export default function AdminPublicPage() {
             <div className="space-y-4 border-t border-gray-100 p-4">
               {renderCopyInput('タイトル', 'reserveTitle', 'reserveTitleColor', navLabels.reserve, textColor)}
               {renderCopyInput('説明', 'reserveLead', 'reserveLeadColor', '募集中のイベントを表示します。', '#6B7280', true)}
+              <div className="space-y-2 rounded-lg bg-gray-50 p-3">
+                <p className="text-[11px] font-bold text-gray-400">イベントカードの文字色</p>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {[
+                    { label: 'イベント名', field: 'reserveEventTitleColor' as const, fallback: reserveEventTitleColor },
+                    { label: '日時', field: 'reserveEventDateColor' as const, fallback: reserveEventDateColor },
+                    { label: '場所・料金', field: 'reserveEventMetaColor' as const, fallback: reserveEventMetaColor },
+                  ].map(({ label, field, fallback }) => (
+                    <label key={field} className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-2 py-2">
+                      <span className="text-[11px] font-bold text-gray-500">{label}</span>
+                      <input
+                        type="color"
+                        value={(form[field] as string | undefined)?.trim() || fallback}
+                        onChange={(e) => setForm((p) => ({ ...p, [field]: e.target.value }))}
+                        className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -1674,6 +1709,9 @@ export default function AdminPublicPage() {
                     viewStyle={form.reserveViewStyle}
                     events={reserveEvents}
                     tenantCode={tenantCode}
+                    eventTitleColor={reserveEventTitleColor}
+                    eventDateColor={reserveEventDateColor}
+                    eventMetaColor={reserveEventMetaColor}
                     className="mt-3"
                   />
                 </section>
