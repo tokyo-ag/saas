@@ -849,6 +849,8 @@ export interface PublicPageInput {
   reserveEventTitleColor?: string;
   reserveEventDateColor?: string;
   reserveEventMetaColor?: string;
+  reserveEventCardBg?: string;
+  blogPostCardBg?: string;
   blogTitle?: string;
   blogLead?: string;
   blogTitleColor?: string;

@@ -102,6 +102,8 @@ const emptyForm: PublicPageInput = {
   reserveEventTitleColor: '',
   reserveEventDateColor: '',
   reserveEventMetaColor: '',
+  reserveEventCardBg: '',
+  blogPostCardBg: '',
   blogTitle: '',
   blogLead: '',
   blogTitleColor: '',
@@ -440,6 +442,8 @@ export default function AdminPublicPage() {
   const reserveEventTitleColor = form.reserveEventTitleColor?.trim() || '#111827';
   const reserveEventDateColor = form.reserveEventDateColor?.trim() || '#4B5563';
   const reserveEventMetaColor = form.reserveEventMetaColor?.trim() || '#6B7280';
+  const reserveEventCardBg = form.reserveEventCardBg?.trim() || '#ffffff';
+  const blogPostCardBg = form.blogPostCardBg?.trim() || '#ffffff';
   const blogSectionTitle = form.blogTitle?.trim() || navLabels.blog;
   const blogSectionLead = form.blogLead?.trim() || '活動日記やお知らせを表示するエリアです。';
   const blogTitleColor = form.blogTitleColor?.trim() || textColor;
@@ -591,6 +595,8 @@ export default function AdminPublicPage() {
                   reserveEventTitleColor: fd.reserveEventTitleColor ?? '',
                   reserveEventDateColor: fd.reserveEventDateColor ?? '',
                   reserveEventMetaColor: fd.reserveEventMetaColor ?? '',
+                  reserveEventCardBg: fd.reserveEventCardBg ?? '',
+                  blogPostCardBg: fd.blogPostCardBg ?? '',
                   blogTitle: fd.blogTitle ?? '',
                   blogLead: fd.blogLead ?? '',
                   blogTitleColor: fd.blogTitleColor ?? '',
@@ -858,6 +864,8 @@ export default function AdminPublicPage() {
         reserveEventTitleColor: form.reserveEventTitleColor?.trim() || '',
         reserveEventDateColor: form.reserveEventDateColor?.trim() || '',
         reserveEventMetaColor: form.reserveEventMetaColor?.trim() || '',
+        reserveEventCardBg: form.reserveEventCardBg?.trim() || '',
+        blogPostCardBg: form.blogPostCardBg?.trim() || '',
         blogTitle: form.blogTitle?.trim() || '',
         blogLead: form.blogLead?.trim() || '',
         blogTitleColor: form.blogTitleColor?.trim() || '',
@@ -1496,7 +1504,16 @@ export default function AdminPublicPage() {
               {renderCopyInput('タイトル', 'reserveTitle', 'reserveTitleColor', navLabels.reserve, textColor)}
               {renderCopyInput('説明', 'reserveLead', 'reserveLeadColor', '募集中のイベントを表示します。', '#6B7280', true)}
               <div className="space-y-2 rounded-lg bg-gray-50 p-3">
-                <p className="text-[11px] font-bold text-gray-400">イベントカードの文字色</p>
+                <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-2 py-2">
+                  <span className="text-[11px] font-bold text-gray-500">カード背景色</span>
+                  <input
+                    type="color"
+                    value={form.reserveEventCardBg?.trim() || '#ffffff'}
+                    onChange={(e) => setForm((p) => ({ ...p, reserveEventCardBg: e.target.value }))}
+                    className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
+                  />
+                </label>
+                <p className="text-[11px] font-bold text-gray-400">文字色</p>
                 <div className="grid gap-2 sm:grid-cols-3">
                   {[
                     { label: 'イベント名', field: 'reserveEventTitleColor' as const, fallback: reserveEventTitleColor },
@@ -1530,6 +1547,15 @@ export default function AdminPublicPage() {
             <div className="space-y-4 border-t border-gray-100 p-4">
               {renderCopyInput('タイトル', 'blogTitle', 'blogTitleColor', navLabels.blog, textColor)}
               {renderCopyInput('説明', 'blogLead', 'blogLeadColor', '活動日記やお知らせを表示するエリアです。', '#6B7280', true)}
+              <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                <span className="text-[11px] font-bold text-gray-500">記事カードの背景色</span>
+                <input
+                  type="color"
+                  value={form.blogPostCardBg?.trim() || '#ffffff'}
+                  onChange={(e) => setForm((p) => ({ ...p, blogPostCardBg: e.target.value }))}
+                  className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
+                />
+              </label>
             </div>
           )}
         </div>
@@ -1731,6 +1757,7 @@ export default function AdminPublicPage() {
                     eventTitleColor={reserveEventTitleColor}
                     eventDateColor={reserveEventDateColor}
                     eventMetaColor={reserveEventMetaColor}
+                    eventCardBg={reserveEventCardBg}
                     className="mt-3"
                   />
                 </section>
@@ -1744,7 +1771,7 @@ export default function AdminPublicPage() {
                       {blogPosts.slice(0, 3).map((post) => {
                         const image = imgUrl(post.coverImageUrl ?? firstBlogImage(post.body), API_URL);
                         return (
-                          <div key={post.id} className="flex gap-2 rounded-lg bg-white/90 p-2 ring-1 ring-black/5">
+                          <div key={post.id} className="flex gap-2 rounded-lg p-2 ring-1 ring-black/5" style={{ backgroundColor: blogPostCardBg }}>
                             {image && <img src={image} alt="" className="h-12 w-16 shrink-0 rounded-md object-cover" />}
                             <div className="min-w-0">
                               <p className="truncate text-xs font-bold" style={{ color: textColor }}>{post.title}</p>

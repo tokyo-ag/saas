@@ -347,6 +347,8 @@ export default async function ClubCmsPage({
         reserveEventTitleColor?: string;
         reserveEventDateColor?: string;
         reserveEventMetaColor?: string;
+        reserveEventCardBg?: string;
+        blogPostCardBg?: string;
         blogTitle?: string;
         blogLead?: string;
         blogTitleColor?: string;
@@ -366,6 +368,8 @@ export default async function ClubCmsPage({
   const reserveEventTitleColor = sectionCopy.reserveEventTitleColor?.trim() || '#111827';
   const reserveEventDateColor = sectionCopy.reserveEventDateColor?.trim() || '#4B5563';
   const reserveEventMetaColor = sectionCopy.reserveEventMetaColor?.trim() || '#6B7280';
+  const reserveEventCardBg = sectionCopy.reserveEventCardBg?.trim() || '#ffffff';
+  const blogPostCardBg = sectionCopy.blogPostCardBg?.trim() || '#ffffff';
   const blogSectionTitle = sectionCopy.blogTitle?.trim() || navLabels.blog;
   const blogSectionLead = sectionCopy.blogLead?.trim() || '活動日記やお知らせを表示するエリアです。';
   const blogTitleColor = sectionCopy.blogTitleColor?.trim() || textColor;
@@ -558,6 +562,7 @@ export default async function ClubCmsPage({
             eventTitleColor={reserveEventTitleColor}
             eventDateColor={reserveEventDateColor}
             eventMetaColor={reserveEventMetaColor}
+            eventCardBg={reserveEventCardBg}
             className="mt-4"
           />
         </div>
@@ -573,7 +578,8 @@ export default async function ClubCmsPage({
                 const postImage = imgUrl(post.coverImageUrl, IMAGE_BASE_URL);
                 return (
                   <Link key={post.id} href={`/clubs/${page.tenant.code ?? tenantCode}/blog/${post.slug}`}
-                    className="flex gap-3 rounded-xl border border-gray-100 bg-white p-3 transition hover:bg-gray-50">
+                    className="flex gap-3 rounded-xl border border-gray-100 p-3 transition hover:opacity-90"
+                    style={{ backgroundColor: blogPostCardBg }}>
                     {postImage && <img src={postImage} alt="" className="h-16 w-20 shrink-0 rounded-lg object-cover" />}
                     <div className="min-w-0">
                       <p className="line-clamp-2 text-sm font-bold leading-5" style={{ color: textColor }}>{post.title}</p>

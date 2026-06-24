@@ -30,6 +30,7 @@ type ReservationViewShowcaseProps = {
   eventTitleColor?: string;
   eventDateColor?: string;
   eventMetaColor?: string;
+  eventCardBg?: string;
 };
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
@@ -224,6 +225,7 @@ function CardMini({
   eventTitleColor,
   eventDateColor,
   eventMetaColor,
+  cardBg,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
@@ -232,6 +234,7 @@ function CardMini({
   eventTitleColor?: string;
   eventDateColor?: string;
   eventMetaColor?: string;
+  cardBg?: string;
 }) {
   const visible = readableAccent(accentColor);
   if (events) {
@@ -248,7 +251,8 @@ function CardMini({
             <Link
               key={event.id}
               href={eventHref(event, tenantCode, fallbackHref)}
-              className="block min-w-[86%] snap-start overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md sm:min-w-[78%]"
+              className="block min-w-[86%] snap-start overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md sm:min-w-[78%]"
+              style={{ backgroundColor: cardBg || '#ffffff' }}
             >
               <div className="relative aspect-[16/9] bg-gray-100">
                 {image ? (
@@ -313,6 +317,7 @@ function ThreadMini({
   eventTitleColor,
   eventDateColor,
   eventMetaColor,
+  cardBg,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
@@ -321,6 +326,7 @@ function ThreadMini({
   eventTitleColor?: string;
   eventDateColor?: string;
   eventMetaColor?: string;
+  cardBg?: string;
 }) {
   const visible = readableAccent(accentColor);
   if (events) {
@@ -348,7 +354,8 @@ function ThreadMini({
                   <Link
                     key={event.id}
                     href={eventHref(event, tenantCode, fallbackHref)}
-                    className="block rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition hover:bg-gray-50"
+                    className="block rounded-xl border border-gray-200 px-4 py-3 shadow-sm transition hover:opacity-90"
+                    style={{ backgroundColor: cardBg || '#ffffff' }}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
@@ -405,6 +412,7 @@ export function ReservationViewShowcase({
   eventTitleColor,
   eventDateColor,
   eventMetaColor,
+  eventCardBg,
 }: ReservationViewShowcaseProps) {
   const visible = readableAccent(accentColor);
   const buttonClassName =
@@ -418,8 +426,8 @@ export function ReservationViewShowcase({
         <CalendarPreview accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} />
       ) : (
         <div className="rounded-xl">
-          {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} />}
-          {selectedView === 'thread' && <ThreadMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} />}
+          {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} />}
+          {selectedView === 'thread' && <ThreadMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} />}
         </div>
       )}
       {selectedView !== 'card' && (href ? (
