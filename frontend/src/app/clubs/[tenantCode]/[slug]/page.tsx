@@ -398,8 +398,15 @@ export default async function ClubCmsPage({
             <div className="absolute inset-0" style={{ backgroundImage: `url(${images[0]})`, backgroundSize: 'cover', backgroundPosition: page.heroImagePosition ?? 'center center' }} />
             <div className="absolute inset-0" style={{ backgroundColor: hexToRgba(heroOverlayColor, heroOverlayOpacity) }} />
             <div className="relative z-10" style={{ minHeight: 320 }}>
-              {/* テキストブロック - 位置可変 */}
-              <div className={`absolute left-6 right-6 md:left-8 md:right-8 ${page.heroTextPosition === 'top' ? 'top-5' : page.heroTextPosition === 'center' ? 'top-1/2 -translate-y-1/2' : 'bottom-5'}`}>
+              {/* テキストブロック - X/Y/Width で自由配置 */}
+              <div
+                className="absolute"
+                style={{
+                  left: `${page.heroTextX ?? 5}%`,
+                  top: `${page.heroTextY ?? 65}%`,
+                  width: `${page.heroTextWidth ?? 85}%`,
+                }}
+              >
                 <h1 className="font-bold drop-shadow" style={titleTextStyle}>{tenantName}</h1>
                 {page.subtitle && <p className="mt-2" style={subtitleTextStyle}>{page.subtitle}</p>}
                 {heroNavPosition === 'inside' && (

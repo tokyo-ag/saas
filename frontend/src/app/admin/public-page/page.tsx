@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, PublicPageInput, Tenant } from '@/lib/api';
 import { SITE_URL } from '@/lib/config';
 import { SaveToast } from '@/components/ui/SaveToast';
@@ -42,6 +42,9 @@ const emptyForm: PublicPageInput = {
   heroNavPosition: 'below',
   heroImagePosition: 'center center',
   heroTextPosition: 'bottom',
+  heroTextX: 5,
+  heroTextY: 65,
+  heroTextWidth: 85,
   heroOverlayOpacity: 0,
   heroOverlayColor: '#000000',
   reserveViewStyle: 'calendar',
@@ -312,6 +315,39 @@ export default function AdminPublicPage() {
   const heroOverlayColor = form.heroOverlayColor?.trim() || '#000000';
   const heroOverlayBg = hexToRgba(heroOverlayColor, heroOverlayOpacity);
 
+  const heroRef = useRef<HTMLDivElement>(null);
+
+  const handleTextDrag = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX, startY = e.clientY;
+    const startTX = form.heroTextX ?? 5, startTY = form.heroTextY ?? 65;
+    function onMove(ev: MouseEvent) {
+      if (!heroRef.current) return;
+      const rect = heroRef.current.getBoundingClientRect();
+      const nx = Math.max(0, Math.min(90, Math.round(startTX + ((ev.clientX - startX) / rect.width) * 100)));
+      const ny = Math.max(0, Math.min(90, Math.round(startTY + ((ev.clientY - startY) / rect.height) * 100)));
+      setForm(p => ({ ...p, heroTextX: nx, heroTextY: ny }));
+    }
+    function onUp() { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); }
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [form.heroTextX, form.heroTextY]);
+
+  const handleTextResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX, startW = form.heroTextWidth ?? 85;
+    function onMove(ev: MouseEvent) {
+      if (!heroRef.current) return;
+      const rect = heroRef.current.getBoundingClientRect();
+      const nw = Math.max(15, Math.min(100, Math.round(startW + ((ev.clientX - startX) / rect.width) * 100)));
+      setForm(p => ({ ...p, heroTextWidth: nw }));
+    }
+    function onUp() { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); }
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [form.heroTextWidth]);
+
   const titleFontFamily = (form.titleFont?.trim()
     ? fontOptions.find(f => f.value === form.titleFont)?.family
     : undefined) ?? fontFamily;
@@ -374,6 +410,9 @@ export default function AdminPublicPage() {
             heroNavPosition: first.heroNavPosition ?? 'below',
             heroImagePosition: first.heroImagePosition ?? 'center center',
             heroTextPosition: first.heroTextPosition ?? 'bottom',
+            heroTextX: first.heroTextX ?? 5,
+            heroTextY: first.heroTextY ?? 65,
+            heroTextWidth: first.heroTextWidth ?? 85,
             heroOverlayOpacity: first.heroOverlayOpacity ?? 0,
             heroOverlayColor: first.heroOverlayColor ?? '#000000',
             reserveViewStyle: first.reserveViewStyle ?? 'calendar',
@@ -813,20 +852,8 @@ export default function AdminPublicPage() {
                   <p className="mt-1 text-[10px] text-gray-400">{form.heroImagePosition ?? 'center center'}</p>
                 </div>
 
-                {/* テキスト位置 */}
-                <div>
-                  <p className="mb-2 text-[11px] font-bold text-gray-400">テキスト位置</p>
-                  <div className="flex gap-2">
-                    {[{ label: '上', value: 'top' }, { label: '中央', value: 'center' }, { label: '下', value: 'bottom' }].map((opt) => (
-                      <button key={opt.value} type="button"
-                        onClick={() => setForm((p) => ({ ...p, heroTextPosition: opt.value }))}
-                        className={`rounded-full border px-4 py-2 text-xs font-bold transition ${(form.heroTextPosition ?? 'bottom') === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                        style={(form.heroTextPosition ?? 'bottom') === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                {/* テキスト位置: 右プレビューでドラッグ */}
+                <p className="text-[11px] text-gray-400">テキスト位置は右のプレビューでドラッグして調整できます</p>
 
                 {/* ナビボタン位置 */}
                 <div>
@@ -1159,12 +1186,18 @@ export default function AdminPublicPage() {
               {heroImageMode === 'background' && imageUrls[0] ? (
                 /* 背景モード: 大きいヒーロー */
                 <>
-                  <div className="relative overflow-hidden" style={{ minHeight: 220 }}>
+                  <div ref={heroRef} className="relative overflow-hidden select-none" style={{ minHeight: 220 }}>
                     <div className="absolute inset-0" style={{ backgroundImage: `url(${imageUrls[0]})`, backgroundSize: 'cover', backgroundPosition: form.heroImagePosition ?? 'center center' }} />
                     <div className="absolute inset-0" style={{ backgroundColor: heroOverlayBg }} />
-                    <div className="relative z-10" style={{ minHeight: 220 }}>
-                      {/* テキストブロック - 位置可変 */}
-                      <div className={`absolute left-4 right-4 ${(form.heroTextPosition ?? 'bottom') === 'top' ? 'top-4' : (form.heroTextPosition ?? 'bottom') === 'center' ? 'top-1/2 -translate-y-1/2' : 'bottom-4'}`}>
+                    {/* ドラッグ可能テキストブロック */}
+                    <div
+                      className="absolute z-10 group"
+                      style={{ left: `${form.heroTextX ?? 5}%`, top: `${form.heroTextY ?? 65}%`, width: `${form.heroTextWidth ?? 85}%` }}
+                    >
+                      <div
+                        className="cursor-move rounded border-2 border-dashed border-transparent p-1 transition-colors group-hover:border-white/60"
+                        onMouseDown={handleTextDrag}
+                      >
                         <p className="font-bold drop-shadow" style={titleTextStyle}>{displayName}</p>
                         {form.subtitle?.trim() && (
                           <p className="mt-1" style={subtitleTextStyle}>{form.subtitle.trim()}</p>
@@ -1176,6 +1209,14 @@ export default function AdminPublicPage() {
                             ))}
                           </div>
                         )}
+                      </div>
+                      {/* リサイズハンドル（右端） */}
+                      <div
+                        className="absolute -right-2 top-1/2 -translate-y-1/2 z-20 flex h-8 w-4 cursor-ew-resize items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onMouseDown={handleTextResize}
+                      >
+                        <div className="h-5 w-1 rounded-full bg-white/90 shadow" />
+                        <div className="h-5 w-1 rounded-full bg-white/90 shadow" />
                       </div>
                     </div>
                   </div>

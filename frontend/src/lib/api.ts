@@ -747,6 +747,9 @@ export interface PublicPage {
   heroNavPosition?: string | null;
   heroImagePosition?: string | null;
   heroTextPosition?: string | null;
+  heroTextX?: number | null;
+  heroTextY?: number | null;
+  heroTextWidth?: number | null;
   buttonBgColor?: string | null;
   buttonBgOpacity?: number | null;
   buttonTextOpacity?: number | null;
@@ -800,6 +803,9 @@ export interface PublicPageInput {
   heroNavPosition?: string;
   heroImagePosition?: string;
   heroTextPosition?: string;
+  heroTextX?: number;
+  heroTextY?: number;
+  heroTextWidth?: number;
   buttonBgColor?: string;
   buttonBgOpacity?: number;
   buttonTextOpacity?: number;
@@ -878,6 +884,9 @@ export interface PublicCmsPage {
   heroNavPosition?: string | null;
   heroImagePosition?: string | null;
   heroTextPosition?: string | null;
+  heroTextX?: number | null;
+  heroTextY?: number | null;
+  heroTextWidth?: number | null;
   buttonBgColor?: string | null;
   buttonBgOpacity?: number | null;
   buttonTextOpacity?: number | null;
