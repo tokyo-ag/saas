@@ -224,7 +224,7 @@ function CardMini({
   if (events) {
     if (events.length === 0) return <EmptyEvents accentColor={accentColor} />;
     return (
-      <div className="-mx-1 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+      <div className="-mx-3 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex snap-x snap-mandatory gap-3">
         {events.map((event) => {
           const image = imgUrl(event.imageUrl, API_URL);
@@ -235,7 +235,7 @@ function CardMini({
             <Link
               key={event.id}
               href={eventHref(event, tenantCode, fallbackHref)}
-              className="block min-w-full snap-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
+              className="block min-w-[86%] snap-start overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md sm:min-w-[78%]"
             >
               <div className="relative aspect-[16/9] bg-gray-100">
                 {image ? (
@@ -395,12 +395,12 @@ export function ReservationViewShowcase({
       {selectedView === 'calendar' ? (
         <CalendarPreview accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} />
       ) : (
-        <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+        <div className="rounded-xl">
           {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} />}
           {selectedView === 'thread' && <ThreadMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} />}
         </div>
       )}
-      {href ? (
+      {selectedView !== 'card' && (href ? (
         <Link href={href} className={buttonClassName} style={buttonStyle}>
           {buttonLabel}
         </Link>
@@ -408,7 +408,7 @@ export function ReservationViewShowcase({
         <button type="button" className={buttonClassName} style={buttonStyle}>
           {buttonLabel}
         </button>
-      )}
+      ))}
     </div>
   );
 }
