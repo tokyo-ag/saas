@@ -270,12 +270,12 @@ export class UpsertPublicPageDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(300)
+  @MaxLength(8000)
   headerText?: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(300)
+  @MaxLength(8000)
   footerText?: string;
 
   @IsOptional()
