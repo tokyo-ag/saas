@@ -224,7 +224,8 @@ function CardMini({
   if (events) {
     if (events.length === 0) return <EmptyEvents accentColor={accentColor} />;
     return (
-      <div className="space-y-3">
+      <div className="-mx-1 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex snap-x snap-mandatory gap-3">
         {events.map((event) => {
           const image = imgUrl(event.imageUrl, API_URL);
           const status = eventStatus(event);
@@ -234,39 +235,43 @@ function CardMini({
             <Link
               key={event.id}
               href={eventHref(event, tenantCode, fallbackHref)}
-              className="block rounded-2xl bg-white p-3 shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
+              className="block min-w-full snap-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
             >
-              <div className="flex gap-3">
-                <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-xl bg-gray-100">
-                  {image ? (
-                    <img src={image} alt={event.title} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-lg font-bold" style={{ background: `linear-gradient(135deg, ${visible.accent}, #111827)`, color: visible.text }}>
-                      {new Date(event.heldAt).getDate()}
-                    </div>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="mb-1 flex items-start justify-between gap-2">
-                    <p className="line-clamp-2 text-sm font-bold leading-snug text-gray-900">{event.title}</p>
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${full ? 'bg-gray-100 text-gray-400' : ''}`}
-                      style={full ? undefined : { backgroundColor: visible.accent, color: visible.text }}
-                    >
-                      {status}
-                    </span>
+              <div className="relative aspect-[16/9] bg-gray-100">
+                {image ? (
+                  <img src={image} alt={event.title} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-4xl font-bold" style={{ background: `linear-gradient(135deg, ${visible.accent}, #111827)`, color: visible.text }}>
+                    {new Date(event.heldAt).getDate()}
                   </div>
-                  <p className="text-xs font-bold text-gray-600">{eventDate(event)} {eventTime(event)}</p>
-                  {event.location && <p className="mt-0.5 truncate text-xs text-gray-400">{event.location}</p>}
-                  <p className="mt-1 text-[11px] text-gray-500">
-                    {event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : `${event.reservedCount ?? 0}人予約`}
-                    {price && ` / ${price}`}
-                  </p>
-                </div>
+                )}
+                <span
+                  className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-bold shadow-sm ${full ? 'bg-white/90 text-gray-400' : ''}`}
+                  style={full ? undefined : { backgroundColor: visible.accent, color: visible.text }}
+                >
+                  {status}
+                </span>
+              </div>
+              <div className="space-y-2 p-4">
+                <p className="line-clamp-2 text-base font-bold leading-snug text-gray-900">{event.title}</p>
+                <p className="text-sm font-bold text-gray-600">{eventDate(event)} {eventTime(event)}</p>
+                {event.location && <p className="truncate text-sm text-gray-400">{event.location}</p>}
+                <p className="text-xs text-gray-500">
+                  {event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : `${event.reservedCount ?? 0}人予約`}
+                  {price && ` / ${price}`}
+                </p>
               </div>
             </Link>
           );
         })}
+        </div>
+        {events.length > 1 && (
+          <div className="mt-2 flex justify-center gap-1.5">
+            {events.slice(0, 6).map((event) => (
+              <span key={event.id} className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: visible.accent, opacity: 0.45 }} />
+            ))}
+          </div>
+        )}
       </div>
     );
   }
