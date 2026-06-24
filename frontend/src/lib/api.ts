@@ -835,6 +835,7 @@ export interface PublicPageInput {
   headerText?: string;
   footerText?: string;
   footerContact?: string;
+  footerContactColor?: string;
   footerLine?: string;
   footerInstagram?: string;
   footerX?: string;

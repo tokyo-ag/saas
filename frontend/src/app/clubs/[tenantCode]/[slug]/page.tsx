@@ -487,17 +487,24 @@ export default async function ClubCmsPage({
         <div id="contact" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
           <p className="text-lg font-bold text-gray-900">{navLabels.contact}</p>
           <p className="mt-2 text-sm leading-7 text-gray-500">ご質問・ご相談はこちらからお気軽にどうぞ。</p>
-          <Link href={contactHref}
-            className="mt-4 inline-block rounded-full px-6 py-3 text-sm font-bold text-white transition hover:opacity-80"
-            style={{ backgroundColor: accentColor, ...buttonOpacityStyle }}>
-            LINEで問い合わせる
-          </Link>
+          {(() => {
+            let cfd: { contactColor?: string } = {};
+            try { cfd = JSON.parse(page.footerText ?? '{}'); } catch {}
+            const contactBtnColor = cfd.contactColor || accentColor;
+            return (
+              <Link href={contactHref}
+                className="mt-4 inline-block rounded-full px-6 py-3 text-sm font-bold text-white transition hover:opacity-80"
+                style={{ backgroundColor: contactBtnColor, ...buttonOpacityStyle }}>
+                LINEで問い合わせる
+              </Link>
+            );
+          })()}
         </div>
       </article>
 
       {/* Footer */}
       {(() => {
-        let fd: { contact?: string; line?: string; instagram?: string; x?: string } = {};
+        let fd: { contact?: string; contactColor?: string; line?: string; instagram?: string; x?: string } = {};
         try { fd = JSON.parse(page.footerText ?? '{}'); } catch {}
         const hasContent = fd.contact || fd.line || fd.instagram || fd.x;
         return (

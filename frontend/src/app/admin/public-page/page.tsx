@@ -82,6 +82,7 @@ const emptyForm: PublicPageInput = {
   headerText: '',
   footerText: '',
   footerContact: '',
+  footerContactColor: '',
   footerLine: '',
   footerInstagram: '',
   footerX: '',
@@ -481,8 +482,8 @@ export default function AdminPublicPage() {
             ...(() => {
               try {
                 const fd = JSON.parse((first as any).footerText ?? '{}');
-                return { footerContact: fd.contact ?? '', footerLine: fd.line ?? '', footerInstagram: fd.instagram ?? '', footerX: fd.x ?? '' };
-              } catch { return { footerContact: (first as any).footerText ?? '', footerLine: '', footerInstagram: '', footerX: '' }; }
+                return { footerContact: fd.contact ?? '', footerContactColor: fd.contactColor ?? '', footerLine: fd.line ?? '', footerInstagram: fd.instagram ?? '', footerX: fd.x ?? '' };
+              } catch { return { footerContact: (first as any).footerText ?? '', footerContactColor: '', footerLine: '', footerInstagram: '', footerX: '' }; }
             })(),
             aboutLabel: first.aboutLabel ?? '団体詳細',
             reserveLabel: first.reserveLabel ?? '予約する',
@@ -695,7 +696,7 @@ export default function AdminPublicPage() {
       buttonBgOpacity: form.buttonBgOpacity ?? 100,
       buttonTextOpacity: form.buttonTextOpacity ?? 100,
       blocks: blocks.length > 0 ? blocks.map(({ id: _id, ...rest }) => rest) : undefined,
-      footerText: JSON.stringify({ contact: form.footerContact?.trim() || '', line: form.footerLine?.trim() || '', instagram: form.footerInstagram?.trim() || '', x: form.footerX?.trim() || '' }),
+      footerText: JSON.stringify({ contact: form.footerContact?.trim() || '', contactColor: form.footerContactColor?.trim() || '', line: form.footerLine?.trim() || '', instagram: form.footerInstagram?.trim() || '', x: form.footerX?.trim() || '' }),
       status: 'published',
       seoTitle: displayName,
       seoDescription: blocks.map(b => b.content).join(' ').replace(/\s+/g, ' ').trim().slice(0, 150) || form.body.replace(/[#>*_-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 150),
@@ -1311,12 +1312,20 @@ export default function AdminPublicPage() {
                 <p className="text-xs text-gray-500">Powered by <span className="font-bold">COMIU</span></p>
               </div>
               {/* 連絡先 */}
-              <div>
-                <p className="mb-1 text-[11px] font-bold text-gray-400">連絡先（メールまたは電話番号）</p>
-                <input type="text" value={form.footerContact ?? ''}
-                  onChange={(e) => setForm((p) => ({ ...p, footerContact: e.target.value }))}
-                  placeholder="info@example.com または 000-0000-0000"
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+              <div className="space-y-2">
+                <p className="text-[11px] font-bold text-gray-400">問い合わせボタン</p>
+                <div className="flex items-center gap-2">
+                  <label className="cursor-pointer">
+                    <input type="color" value={form.footerContactColor || accentColor}
+                      onChange={(e) => setForm((p) => ({ ...p, footerContactColor: e.target.value }))}
+                      className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+                  </label>
+                  <input type="text" value={form.footerContact ?? ''}
+                    onChange={(e) => setForm((p) => ({ ...p, footerContact: e.target.value }))}
+                    placeholder="info@example.com または 000-0000-0000"
+                    className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                </div>
+                <p className="text-[10px] text-gray-400">ボタン色・連絡先テキスト（メール or 電話番号）</p>
               </div>
               {/* 公式SNSリンク */}
               <div className="space-y-2">
