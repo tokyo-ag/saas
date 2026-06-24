@@ -251,8 +251,6 @@ export default async function ClubCmsPage({
   const bodyFontSize = resolvePxSize(page.bodySize, 16, 12, 24, BODY_SIZE_LEGACY);
   const bodySizeClass = bodyLeadingClass(bodyFontSize);
   const bodyTextStyle = { fontSize: bodyFontSize };
-  const titleAlign = (['left', 'center', 'right'].includes(page.titleAlign || '') ? page.titleAlign! : 'left') as 'left' | 'center' | 'right';
-  const layoutVariant = page.layoutVariant || 'static';
   const navLabels = {
     about: page.aboutLabel || '団体詳細',
     reserve: page.reserveLabel || '予約する',
@@ -419,7 +417,7 @@ export default async function ClubCmsPage({
                     <div key={i} className={`flex flex-col gap-4 sm:flex-row sm:items-start ${!isLeft ? 'sm:flex-row-reverse' : ''}`}>
                       {block.imageUrl && (
                         <div className="h-44 w-full shrink-0 overflow-hidden rounded-xl sm:h-36 sm:w-2/5">
-                          <img src={block.imageUrl} alt="" className="h-full w-full object-cover" />
+                          <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                         </div>
                       )}
                       <div className={`min-w-0 flex-1 space-y-1 ${blockBodyClass}`} style={{ color: textColor, ...blockTextStyle }}>
@@ -433,7 +431,7 @@ export default async function ClubCmsPage({
                     <div key={i} className="flex gap-4">
                       {block.imageUrl && (
                         <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full">
-                          <img src={block.imageUrl} alt="" className="h-full w-full object-cover" />
+                          <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                         </div>
                       )}
                       <div className={`min-w-0 space-y-1 ${blockBodyClass}`} style={{ color: textColor, ...blockTextStyle }}>
@@ -447,7 +445,7 @@ export default async function ClubCmsPage({
                     <div key={i} className="space-y-3">
                       {block.imageUrl && (
                         <div className="h-56 w-full overflow-hidden rounded-xl">
-                          <img src={block.imageUrl} alt="" className="h-full w-full object-cover" />
+                          <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                         </div>
                       )}
                       <div className={`space-y-1 ${blockBodyClass}`} style={{ color: textColor, ...blockTextStyle }}>

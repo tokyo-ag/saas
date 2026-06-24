@@ -13,6 +13,7 @@ interface Block {
   content: string;
   imageUrl?: string;
   imagePosition?: 'left' | 'right';
+  imageFocal?: string;
   fontSize?: string;
 }
 const BLOCK_LABELS: Record<BlockType, string> = {
@@ -516,7 +517,7 @@ export default function AdminPublicPage() {
               <div key={block.id} className={`flex items-start gap-3 ${imageRight ? 'flex-row-reverse' : ''}`}>
                 {block.imageUrl && (
                   <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl">
-                    <img src={block.imageUrl} alt="" className="h-full w-full object-cover" />
+                    <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">{renderPreviewText(content, blockFontSize)}</div>
@@ -529,7 +530,7 @@ export default function AdminPublicPage() {
               <div key={block.id} className="flex items-start gap-3">
                 {block.imageUrl && (
                   <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full">
-                    <img src={block.imageUrl} alt="" className="h-full w-full object-cover" />
+                    <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">{renderPreviewText(content, blockFontSize)}</div>
@@ -542,7 +543,7 @@ export default function AdminPublicPage() {
               <div key={block.id} className="space-y-3">
                 {block.imageUrl && (
                   <div className="h-48 w-full overflow-hidden rounded-xl">
-                    <img src={block.imageUrl} alt="" className="h-full w-full object-cover" />
+                    <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                   </div>
                 )}
                 {renderPreviewText(content, blockFontSize)}
@@ -1048,11 +1049,35 @@ export default function AdminPublicPage() {
                   {(block.type === 'media-text' || block.type === 'profile' || block.type === 'feature') && (
                     <div className="space-y-1.5">
                       {block.imageUrl ? (
-                        <div className="flex items-center gap-2">
-                          <img src={block.imageUrl} alt=""
-                            className={`object-cover ${block.type === 'profile' ? 'h-12 w-12 rounded-full' : 'h-14 w-20 rounded-lg'}`} />
-                          <button type="button" onClick={() => updateBlock(block.id, { imageUrl: undefined })}
-                            className="text-xs text-gray-400 hover:text-red-500">削除</button>
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <div className={`shrink-0 overflow-hidden ${block.type === 'profile' ? 'h-12 w-12 rounded-full' : 'h-14 w-20 rounded-lg'}`}>
+                              <img src={block.imageUrl} alt=""
+                                className="h-full w-full object-cover"
+                                style={{ objectPosition: block.imageFocal ?? 'center center' }} />
+                            </div>
+                            <button type="button" onClick={() => updateBlock(block.id, { imageUrl: undefined })}
+                              className="text-xs text-gray-400 hover:text-red-500">削除</button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-gray-400">切り取り位置</span>
+                            <div className="grid grid-cols-3 gap-0.5">
+                              {[
+                                ['left top','center top','right top'],
+                                ['left center','center center','right center'],
+                                ['left bottom','center bottom','right bottom'],
+                              ].map((row) => row.map((pos) => (
+                                <button key={pos} type="button"
+                                  onClick={() => updateBlock(block.id, { imageFocal: pos })}
+                                  className="flex h-4 w-4 items-center justify-center rounded-sm transition"
+                                  style={{ backgroundColor: (block.imageFocal ?? 'center center') === pos ? accentColor : '#E5E7EB' }}
+                                  title={pos}
+                                >
+                                  <span className="h-1 w-1 rounded-full bg-white" />
+                                </button>
+                              )))}
+                            </div>
+                          </div>
                         </div>
                       ) : (
                         <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-xs text-gray-500 hover:bg-gray-100">
