@@ -117,8 +117,8 @@ model PublicPage {
   buttonStyle    String?   @map("button_style") @db.VarChar(20)
   buttonLayout   String?   @map("button_layout") @db.VarChar(20)
   buttonOpacity  Int?      @map("button_opacity")
-  headerText     String?   @map("header_text") @db.VarChar(300)
-  footerText     String?   @map("footer_text") @db.VarChar(300)
+  headerText     String?   @map("header_text") @db.Text
+  footerText     String?   @map("footer_text") @db.Text
   seoTitle       String?   @map("seo_title") @db.VarChar(160)
   seoDescription String?   @map("seo_description") @db.VarChar(300)
   status         String    @default("published") @db.VarChar(20)
