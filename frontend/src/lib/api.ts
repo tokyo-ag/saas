@@ -834,6 +834,10 @@ export interface PublicPageInput {
   buttonSize?: number;
   headerText?: string;
   footerText?: string;
+  footerContact?: string;
+  footerLine?: string;
+  footerInstagram?: string;
+  footerX?: string;
   aboutLabel?: string;
   reserveLabel?: string;
   blogLabel?: string;
