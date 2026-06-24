@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { API_URL, SITE_URL } from '@/lib/config';
 import type { BlogPost } from '@/lib/api';
 
@@ -18,6 +19,23 @@ async function fetchPost(tenantCode: string, slug: string): Promise<BlogPost | n
   }
 }
 
+function firstImageFromBody(body: string): string | null {
+  const match = body.match(/!\[[^\]]*\]\(([^)]+)\)/);
+  return match?.[1] ?? null;
+}
+
+function cleanDescription(text: string): string {
+  return text
+    .replace(/!\[.*?\]\(.*?\)/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/#{1,6}\s*/g, '')
+    .replace(/[*_~`>|\\]/g, '')
+    .replace(/^[-*+]\s+/gm, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 150);
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -27,7 +45,8 @@ export async function generateMetadata({
   const post = await fetchPost(tenantCode, slug);
   if (!post) return {};
   const tenantName = post.tenant?.lineDisplayName ?? post.tenant?.name ?? tenantCode;
-  const description = post.excerpt ?? post.body.replace(/\n+/g, ' ').slice(0, 150);
+  const description = post.excerpt ?? cleanDescription(post.body);
+  const image = firstImageFromBody(post.body);
   return {
     title: `${post.title} | ${tenantName}`,
     description,
@@ -38,6 +57,14 @@ export async function generateMetadata({
       type: 'article',
       publishedTime: post.publishedAt ?? undefined,
       url: `${SITE_URL}/clubs/${tenantCode}/blog/${slug}`,
+      locale: 'ja_JP',
+      ...(image ? { images: [{ url: image, width: 1200, height: 630 }] } : {}),
+    },
+    twitter: {
+      card: image ? 'summary_large_image' : 'summary',
+      title: `${post.title} | ${tenantName}`,
+      description,
+      ...(image ? { images: [image] } : {}),
     },
     robots: { index: true, follow: true },
   };
@@ -58,12 +85,15 @@ function BodyRenderer({ body }: { body: string }) {
         const m = IMAGE_RE.exec(line.trim());
         if (m) {
           return (
-            <img
-              key={i}
-              src={m[2]}
-              alt={m[1]}
-              className="my-2 max-w-full rounded-lg"
-            />
+            <div key={i} className="relative my-2 w-full overflow-hidden rounded-lg" style={{ minHeight: 200 }}>
+              <Image
+                src={m[2]}
+                alt={m[1]}
+                fill
+                className="object-contain"
+                sizes="(max-width: 640px) 100vw, 640px"
+              />
+            </div>
           );
         }
         return line ? <p key={i}>{line}</p> : <br key={i} />;
@@ -82,12 +112,13 @@ export default async function BlogPostPage({
   if (!post) notFound();
 
   const tenantName = post.tenant?.lineDisplayName ?? post.tenant?.name ?? tenantCode;
+  const description = post.excerpt ?? cleanDescription(post.body);
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     headline: post.title,
-    description: post.excerpt ?? post.body.slice(0, 150),
+    description,
     datePublished: post.publishedAt,
     dateModified: post.updatedAt,
     author: { '@type': 'Organization', name: tenantName },

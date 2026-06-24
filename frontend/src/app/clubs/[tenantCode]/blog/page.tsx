@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { API_URL, IMAGE_BASE_URL, SITE_URL } from '@/lib/config';
 import type { BlogPostSummary } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
@@ -29,9 +30,26 @@ export async function generateMetadata({
   params: Promise<{ tenantCode: string }>;
 }): Promise<Metadata> {
   const { tenantCode } = await params;
+  const data = await fetchPosts(tenantCode);
+  const tenantName = data?.tenantName ?? tenantCode;
+  const title = `ブログ | ${tenantName}`;
+  const description = `${tenantName}の活動ブログ・お知らせ一覧`;
   return {
-    title: `ブログ | ${tenantCode}`,
+    title,
+    description,
     alternates: { canonical: `${SITE_URL}/clubs/${tenantCode}/blog` },
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      url: `${SITE_URL}/clubs/${tenantCode}/blog`,
+      locale: 'ja_JP',
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description,
+    },
     robots: { index: true, follow: true },
   };
 }
@@ -64,22 +82,27 @@ export default async function BlogListPage({
           <p className="text-sm text-gray-400">まだ記事がありません。</p>
         ) : (
           <div className="space-y-4">
-            {posts.map((post) => (
-              <Link
-                key={post.id}
-                href={`/clubs/${tenantCode}/blog/${post.slug}`}
-                className="flex gap-4 rounded-xl border border-gray-200 bg-white px-5 py-4 transition hover:shadow-md"
-              >
-                {imgUrl(post.coverImageUrl, IMAGE_BASE_URL) && (
-                  <img src={imgUrl(post.coverImageUrl, IMAGE_BASE_URL)!} alt="" className="h-20 w-24 shrink-0 rounded-lg object-cover" />
-                )}
-                <div className="min-w-0">
-                  <p className="mb-1 text-xs text-gray-400">{formatDate(post.publishedAt)}</p>
-                  <p className="text-base font-bold text-gray-900">{post.title}</p>
-                  {post.excerpt && <p className="mt-1 line-clamp-2 text-sm leading-6 text-gray-500">{post.excerpt}</p>}
-                </div>
-              </Link>
-            ))}
+            {posts.map((post) => {
+              const cover = imgUrl(post.coverImageUrl, IMAGE_BASE_URL);
+              return (
+                <Link
+                  key={post.id}
+                  href={`/clubs/${tenantCode}/blog/${post.slug}`}
+                  className="flex gap-4 rounded-xl border border-gray-200 bg-white px-5 py-4 transition hover:shadow-md"
+                >
+                  {cover && (
+                    <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg">
+                      <Image src={cover} alt="" fill className="object-cover" sizes="96px" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="mb-1 text-xs text-gray-400">{formatDate(post.publishedAt)}</p>
+                    <p className="text-base font-bold text-gray-900">{post.title}</p>
+                    {post.excerpt && <p className="mt-1 line-clamp-2 text-sm leading-6 text-gray-500">{post.excerpt}</p>}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
