@@ -70,7 +70,6 @@ export default function SuperadminPage() {
             <p className="text-xs sm:text-sm text-gray-500 mt-0.5">団体・ユーザーの管理</p>
           </div>
           <div className="flex items-center gap-3">
-          <a href="/superadmin/website" className="text-sm text-gray-500 hover:text-gray-700 shrink-0">公式WEBサイト</a>
           <a href="/superadmin/support" className="text-sm text-gray-500 hover:text-gray-700 shrink-0">COMIU サポート</a>
           {tab === 'tenants' ? (
             <button
