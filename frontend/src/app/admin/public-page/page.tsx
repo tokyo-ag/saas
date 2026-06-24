@@ -1113,6 +1113,24 @@ export default function AdminPublicPage() {
             <svg className={`h-4 w-4 text-gray-400 transition-transform ${openSections.structure ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
           </button>
           {openSections.structure && <div className="space-y-3 border-t border-gray-100 p-4">
+          {/* 予約表示スタイル */}
+          <div>
+            <p className="mb-2 text-[11px] font-bold text-gray-400">予約セクションの表示</p>
+            <div className="flex gap-2">
+              {[
+                { label: 'カレンダー', value: 'calendar' },
+                { label: 'カード', value: 'card' },
+                { label: 'スレッド', value: 'thread' },
+              ].map((opt) => (
+                <button key={opt.value} type="button"
+                  onClick={() => setForm((p) => ({ ...p, reserveViewStyle: opt.value }))}
+                  className={`rounded-full border px-4 py-2 text-xs font-bold transition ${(form.reserveViewStyle ?? 'calendar') === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                  style={(form.reserveViewStyle ?? 'calendar') === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div>
             <label className="block">
               <span className="mb-2 flex items-center justify-between text-xs text-gray-500">
