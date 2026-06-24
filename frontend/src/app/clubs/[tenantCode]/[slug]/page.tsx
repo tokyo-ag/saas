@@ -501,18 +501,25 @@ export default async function ClubCmsPage({
           <p className="mt-2 text-sm leading-7 text-gray-500">活動日記やお知らせを表示するエリアです。</p>
         </section>
 
-        <div id="contact" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
+        <div id="contact" className="mt-6 scroll-mt-6 rounded-xl bg-white px-4 py-4 shadow-sm ring-1 ring-gray-100">
           <p className="text-lg font-bold text-gray-900">{navLabels.contact}</p>
           <p className="mt-2 text-sm leading-7 text-gray-500">ご質問・ご相談はこちらからお気軽にどうぞ。</p>
           {(() => {
-            let cfd: { contactColor?: string } = {};
+            let cfd: { contact?: string; contactColor?: string } = {};
             try { cfd = JSON.parse(page.footerText ?? '{}'); } catch {}
-            const contactBtnColor = cfd.contactColor || accentColor;
+            const contactText = cfd.contact?.trim() || 'お問い合わせ　WEBサイト内でメッセージが可能です。';
+            const contactLink = cfd.contact
+              ? cfd.contact.includes('@')
+                ? `mailto:${cfd.contact}`
+                : /^\d/.test(cfd.contact)
+                  ? `tel:${cfd.contact.replace(/[^\d+]/g, '')}`
+                  : contactHref
+              : contactHref;
             return (
-              <Link href={contactHref}
-                className="mt-4 inline-block rounded-full px-6 py-3 text-sm font-bold text-white transition hover:opacity-80"
-                style={{ backgroundColor: contactBtnColor, ...buttonOpacityStyle }}>
-                LINEで問い合わせる
+              <Link href={contactLink}
+                className="mt-3 inline-flex text-xs font-bold transition hover:underline"
+                style={{ color: cfd.contactColor || accentColor }}>
+                {contactText}
               </Link>
             );
           })()}
@@ -524,18 +531,10 @@ export default async function ClubCmsPage({
         let fd: { contact?: string; contactColor?: string; line?: string; instagram?: string; x?: string } = {};
         try { fd = JSON.parse(page.footerText ?? '{}'); } catch {}
         const hasSocial = fd.line || fd.instagram || fd.x;
-        const contactNode = fd.contact
-          ? fd.contact.includes('@')
-            ? <a href={`mailto:${fd.contact}`} className="text-sm text-gray-500 hover:underline">{fd.contact}</a>
-            : /^\d/.test(fd.contact)
-              ? <a href={`tel:${fd.contact.replace(/[^\d+]/g, '')}`} className="text-sm text-gray-500 hover:underline">{fd.contact}</a>
-              : <a href={contactHref} className="text-sm text-gray-500 hover:underline">{fd.contact}</a>
-          : <a href={contactHref} className="text-sm text-gray-500 hover:underline">お問い合わせ　WEBサイト内でメッセージが可能です。</a>;
         return (
-          <footer className="mt-6 border-t border-gray-100 pb-10 pt-5 text-center">
-            <p>{contactNode}</p>
+          <footer className="mt-4 border-t border-gray-100 pb-6 pt-4 text-center">
             {hasSocial && (
-              <div className="mt-3 flex justify-center gap-5">
+              <div className="flex justify-center gap-5">
                 {fd.line && <a href={fd.line} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[#06C755] hover:underline">LINE公式</a>}
                 {fd.instagram && <a href={fd.instagram} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[#E1306C] hover:underline">Instagram</a>}
                 {fd.x && <a href={fd.x} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-gray-800 hover:underline">X</a>}

@@ -1511,9 +1511,12 @@ export default function AdminPublicPage() {
                   <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.blog}</p>
                   <p className="mt-1 text-xs text-gray-400">公開した記事が表示されます</p>
                 </section>
-                <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
+                <section className="rounded-lg p-3" style={{ backgroundColor: navBg }}>
                   <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.contact}</p>
-                  <p className="mt-1 text-xs text-gray-400">LINEでの問い合わせが表示されます</p>
+                  <p className="mt-1 text-xs text-gray-400">ご質問・ご相談はこちらからお気軽にどうぞ。</p>
+                  <p className="mt-2 text-xs font-bold" style={{ color: form.footerContactColor || accentColor }}>
+                    {form.footerContact?.trim() || 'お問い合わせ　WEBサイト内でメッセージが可能です。'}
+                  </p>
                 </section>
               </div>
             </>
