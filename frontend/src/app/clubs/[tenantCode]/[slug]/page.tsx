@@ -6,6 +6,7 @@ import type { PublicCmsPage } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
 import { ReservationViewShowcase } from '@/components/public/ReservationViewShowcase';
+import { SnsBlock } from '@/components/public/SnsBlock';
 
 export const revalidate = 60;
 
@@ -434,6 +435,19 @@ export default async function ClubCmsPage({
                         {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, blockBodyClass, blockTextStyle))}
                       </div>
                     </div>
+                  );
+                }
+                if (block.type === 'sns') {
+                  return (
+                    <SnsBlock key={i}
+                      instagramUrl={block.instagramUrl}
+                      xUrl={block.xUrl}
+                      threadsUrl={block.threadsUrl}
+                      xUsername={block.xUsername}
+                      instagramEmbedUrl={block.instagramEmbedUrl}
+                      threadsEmbedUrl={block.threadsEmbedUrl}
+                      accentColor={accentColor}
+                    />
                   );
                 }
                 // text

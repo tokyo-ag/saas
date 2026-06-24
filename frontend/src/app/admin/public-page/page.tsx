@@ -6,7 +6,7 @@ import { SITE_URL } from '@/lib/config';
 import { SaveToast } from '@/components/ui/SaveToast';
 import { ReservationViewShowcase } from '@/components/public/ReservationViewShowcase';
 
-type BlockType = 'text' | 'media-text' | 'profile' | 'feature';
+type BlockType = 'text' | 'media-text' | 'profile' | 'feature' | 'sns';
 interface Block {
   id: string;
   type: BlockType;
@@ -15,12 +15,20 @@ interface Block {
   imagePosition?: 'left' | 'right';
   imageFocal?: string;
   fontSize?: string;
+  // SNS block fields
+  instagramUrl?: string;
+  xUrl?: string;
+  threadsUrl?: string;
+  xUsername?: string;
+  instagramEmbedUrl?: string;
+  threadsEmbedUrl?: string;
 }
 const BLOCK_LABELS: Record<BlockType, string> = {
   'text': 'テキスト',
   'media-text': 'メディアテキスト',
   'profile': 'プロフィール',
   'feature': 'フィーチャー',
+  'sns': 'SNS',
 };
 function genId() { return Math.random().toString(36).slice(2); }
 
@@ -573,6 +581,42 @@ export default function AdminPublicPage() {
             );
           }
 
+          if (block.type === 'sns') {
+            const snsItems = [
+              { url: block.instagramUrl, label: 'Instagram', color: '#E1306C' },
+              { url: block.xUrl, label: 'X (Twitter)', color: '#000000' },
+              { url: block.threadsUrl, label: 'Threads', color: '#000000' },
+            ].filter(s => s.url);
+            return (
+              <div key={block.id} className="space-y-3">
+                {snsItems.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    {snsItems.map(({ label, color }) => (
+                      <span key={label} className="flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 text-sm font-bold" style={{ borderColor: color, color }}>
+                        {label} でフォロー
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {block.xUsername && (
+                  <div className="rounded-xl border border-gray-200 p-3 text-center text-xs text-gray-400">
+                    X タイムライン @{block.xUsername}
+                  </div>
+                )}
+                {block.instagramEmbedUrl && (
+                  <div className="rounded-xl border border-gray-200 p-3 text-center text-xs text-gray-400">
+                    Instagram 投稿 埋め込み
+                  </div>
+                )}
+                {block.threadsEmbedUrl && (
+                  <div className="rounded-xl border border-gray-200 p-3 text-center text-xs text-gray-400">
+                    Threads 投稿 埋め込み
+                  </div>
+                )}
+              </div>
+            );
+          }
+
           return <div key={block.id}>{renderPreviewText(content, blockFontSize)}</div>;
         })}
       </div>
@@ -1050,10 +1094,10 @@ export default function AdminPublicPage() {
 
           {/* ブロック追加ボタン */}
           <div>
-            <p className="mb-2 text-[11px] font-bold text-gray-400">ブロック追加（最大3つ）</p>
-            {blocks.length < 3 ? (
+            <p className="mb-2 text-[11px] font-bold text-gray-400">ブロック追加（最大4つ）</p>
+            {blocks.length < 4 ? (
               <div className="flex flex-wrap gap-2">
-                {(['text', 'media-text', 'profile', 'feature'] as BlockType[]).map((type) => (
+                {(['text', 'media-text', 'profile', 'feature', 'sns'] as BlockType[]).map((type) => (
                   <button key={type} type="button"
                     onClick={() => addBlock(type)}
                     className="rounded-full border border-dashed border-gray-300 px-3 py-1.5 text-xs text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition">
@@ -1155,13 +1199,55 @@ export default function AdminPublicPage() {
                       className="w-full accent-[#06C755]" />
                   </label>
 
-                  {/* テキスト */}
+                  {/* SNS フィールド */}
+                  {block.type === 'sns' ? (
+                    <div className="space-y-3">
+                      <p className="text-[11px] font-bold text-gray-400">リンクボタン（プロフィール URL）</p>
+                      {[
+                        { key: 'instagramUrl', label: 'Instagram URL', placeholder: 'https://www.instagram.com/yourname' },
+                        { key: 'xUrl', label: 'X (Twitter) URL', placeholder: 'https://x.com/yourname' },
+                        { key: 'threadsUrl', label: 'Threads URL', placeholder: 'https://www.threads.net/@yourname' },
+                      ].map(({ key, label, placeholder }) => (
+                        <label key={key} className="block">
+                          <span className="mb-1 block text-[11px] text-gray-500">{label}</span>
+                          <input type="url" value={(block as any)[key] ?? ''}
+                            onChange={(e) => updateBlock(block.id, { [key]: e.target.value })}
+                            placeholder={placeholder}
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                        </label>
+                      ))}
+                      <p className="text-[11px] font-bold text-gray-400">埋め込み（任意）</p>
+                      <label className="block">
+                        <span className="mb-1 block text-[11px] text-gray-500">X ユーザー名（タイムライン表示）</span>
+                        <input type="text" value={block.xUsername ?? ''}
+                          onChange={(e) => updateBlock(block.id, { xUsername: e.target.value.replace(/^@/, '') })}
+                          placeholder="yourname（@ なし）"
+                          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1 block text-[11px] text-gray-500">Instagram 投稿 URL（投稿を埋め込み）</span>
+                        <input type="url" value={block.instagramEmbedUrl ?? ''}
+                          onChange={(e) => updateBlock(block.id, { instagramEmbedUrl: e.target.value })}
+                          placeholder="https://www.instagram.com/p/..."
+                          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1 block text-[11px] text-gray-500">Threads 投稿 URL（投稿を埋め込み）</span>
+                        <input type="url" value={block.threadsEmbedUrl ?? ''}
+                          onChange={(e) => updateBlock(block.id, { threadsEmbedUrl: e.target.value })}
+                          placeholder="https://www.threads.net/@yourname/post/..."
+                          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                      </label>
+                    </div>
+                  ) : (
+                  /* テキスト */
                   <textarea value={block.content}
                     onChange={(e) => updateBlock(block.id, { content: e.target.value })}
                     rows={3}
                     placeholder={block.type === 'profile' ? '名前や紹介文' : block.type === 'feature' ? 'キャプションや説明文' : '内容を入力'}
                     className="w-full resize-y break-words rounded-lg border border-gray-200 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
                     style={{ fontSize: blockFontSize, lineHeight: 1.7, overflowWrap: 'anywhere' }} />
+                  )}
                 </div>
               );
             })}
