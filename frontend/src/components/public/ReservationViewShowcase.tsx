@@ -224,32 +224,45 @@ function CardMini({
   if (events) {
     if (events.length === 0) return <EmptyEvents accentColor={accentColor} />;
     return (
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="space-y-3">
         {events.map((event) => {
           const image = imgUrl(event.imageUrl, API_URL);
           const status = eventStatus(event);
           const full = status === '満席';
+          const price = eventPrice(event);
           return (
             <Link
               key={event.id}
               href={eventHref(event, tenantCode, fallbackHref)}
-              className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-100 transition hover:opacity-90"
+              className="block rounded-2xl bg-white p-3 shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
             >
-              <div className="relative aspect-[4/3]">
-                {image ? (
-                  <img src={image} alt={event.title} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="h-full w-full" style={{ background: `linear-gradient(135deg, ${visible.accent}, #111827)` }} />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
-                <p className="absolute bottom-2 left-2 right-2 line-clamp-2 text-xs font-bold leading-snug text-white">{event.title}</p>
-                <span className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold text-white ${full ? 'bg-gray-400' : ''}`} style={full ? undefined : { backgroundColor: visible.accent }}>
-                  {status}
-                </span>
-              </div>
-              <div className="space-y-1 px-3 py-2">
-                <p className="text-[11px] font-bold text-gray-600">{eventDate(event)}</p>
-                {event.location && <p className="truncate text-[10px] text-gray-400">{event.location}</p>}
+              <div className="flex gap-3">
+                <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-xl bg-gray-100">
+                  {image ? (
+                    <img src={image} alt={event.title} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-lg font-bold" style={{ background: `linear-gradient(135deg, ${visible.accent}, #111827)`, color: visible.text }}>
+                      {new Date(event.heldAt).getDate()}
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 flex items-start justify-between gap-2">
+                    <p className="line-clamp-2 text-sm font-bold leading-snug text-gray-900">{event.title}</p>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${full ? 'bg-gray-100 text-gray-400' : ''}`}
+                      style={full ? undefined : { backgroundColor: visible.accent, color: visible.text }}
+                    >
+                      {status}
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold text-gray-600">{eventDate(event)} {eventTime(event)}</p>
+                  {event.location && <p className="mt-0.5 truncate text-xs text-gray-400">{event.location}</p>}
+                  <p className="mt-1 text-[11px] text-gray-500">
+                    {event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : `${event.reservedCount ?? 0}人予約`}
+                    {price && ` / ${price}`}
+                  </p>
+                </div>
               </div>
             </Link>
           );
