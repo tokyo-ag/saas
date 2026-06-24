@@ -443,6 +443,9 @@ export default async function ClubCmsPage({
                       instagramUrl={block.instagramUrl}
                       xUrl={block.xUrl}
                       threadsUrl={block.threadsUrl}
+                      instagramLabel={block.instagramLabel}
+                      xLabel={block.xLabel}
+                      threadsLabel={block.threadsLabel}
                       xUsername={block.xUsername}
                       instagramEmbedUrl={block.instagramEmbedUrl}
                       threadsEmbedUrl={block.threadsEmbedUrl}

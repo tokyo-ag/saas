@@ -7,6 +7,9 @@ interface Props {
   instagramUrl?: string | null;
   xUrl?: string | null;
   threadsUrl?: string | null;
+  instagramLabel?: string | null;
+  xLabel?: string | null;
+  threadsLabel?: string | null;
   xUsername?: string | null;
   instagramEmbedUrl?: string | null;
   threadsEmbedUrl?: string | null;
@@ -19,7 +22,7 @@ const SNS_STYLES: Record<string, { bg: string; label: string }> = {
   threads:   { bg: '#000000', label: 'Threads' },
 };
 
-export function SnsBlock({ instagramUrl, xUrl, threadsUrl, xUsername, instagramEmbedUrl, threadsEmbedUrl, accentColor }: Props) {
+export function SnsBlock({ instagramUrl, xUrl, threadsUrl, instagramLabel, xLabel, threadsLabel, xUsername, instagramEmbedUrl, threadsEmbedUrl, accentColor }: Props) {
   const processedInstagram = useRef(false);
   const processedThreads = useRef(false);
 
@@ -42,9 +45,9 @@ export function SnsBlock({ instagramUrl, xUrl, threadsUrl, xUsername, instagramE
   }, [threadsEmbedUrl]);
 
   const linkButtons = [
-    { url: instagramUrl, key: 'instagram' },
-    { url: xUrl, key: 'x' },
-    { url: threadsUrl, key: 'threads' },
+    { url: instagramUrl, key: 'instagram', label: instagramLabel || 'Instagramでフォロー' },
+    { url: xUrl, key: 'x', label: xLabel || 'Xでフォロー' },
+    { url: threadsUrl, key: 'threads', label: threadsLabel || 'Threadsでフォロー' },
   ].filter(s => s.url);
 
   return (
@@ -52,11 +55,11 @@ export function SnsBlock({ instagramUrl, xUrl, threadsUrl, xUsername, instagramE
       {/* リンクボタン */}
       {linkButtons.length > 0 && (
         <div className="flex flex-col gap-2">
-          {linkButtons.map(({ url, key }) => (
+          {linkButtons.map(({ url, key, label }) => (
             <a key={key} href={url!} target="_blank" rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 rounded-xl border-2 py-3 text-sm font-bold transition hover:opacity-80"
               style={{ borderColor: SNS_STYLES[key].bg, color: SNS_STYLES[key].bg }}>
-              {SNS_STYLES[key].label} でフォロー →
+              {label}
             </a>
           ))}
         </div>

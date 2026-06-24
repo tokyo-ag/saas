@@ -19,6 +19,9 @@ interface Block {
   instagramUrl?: string;
   xUrl?: string;
   threadsUrl?: string;
+  instagramLabel?: string;
+  xLabel?: string;
+  threadsLabel?: string;
   xUsername?: string;
   instagramEmbedUrl?: string;
   threadsEmbedUrl?: string;
@@ -583,9 +586,9 @@ export default function AdminPublicPage() {
 
           if (block.type === 'sns') {
             const snsItems = [
-              { url: block.instagramUrl, label: 'Instagram', color: '#E1306C' },
-              { url: block.xUrl, label: 'X (Twitter)', color: '#000000' },
-              { url: block.threadsUrl, label: 'Threads', color: '#000000' },
+              { url: block.instagramUrl, label: block.instagramLabel || 'Instagramでフォロー', color: '#E1306C' },
+              { url: block.xUrl, label: block.xLabel || 'Xでフォロー', color: '#000000' },
+              { url: block.threadsUrl, label: block.threadsLabel || 'Threadsでフォロー', color: '#000000' },
             ].filter(s => s.url);
             return (
               <div key={block.id} className="space-y-3">
@@ -1075,6 +1078,24 @@ export default function AdminPublicPage() {
               ))}
             </div>
           </div>
+          {/* 予約表示スタイル */}
+          <div className="border-t border-gray-100 pt-4">
+            <p className="mb-2 text-[11px] font-bold text-gray-400">予約セクションの表示</p>
+            <div className="flex gap-2">
+              {[
+                { label: 'カレンダー', value: 'calendar' },
+                { label: 'カード', value: 'card' },
+                { label: 'スレッド', value: 'thread' },
+              ].map((opt) => (
+                <button key={opt.value} type="button"
+                  onClick={() => setForm((p) => ({ ...p, reserveViewStyle: opt.value }))}
+                  className={`rounded-full border px-4 py-2 text-xs font-bold transition ${(form.reserveViewStyle ?? 'calendar') === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                  style={(form.reserveViewStyle ?? 'calendar') === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* 団体詳細 */}
@@ -1189,32 +1210,38 @@ export default function AdminPublicPage() {
                     </div>
                   )}
 
-                  <label className="block">
-                    <span className="mb-1 flex items-center justify-between text-xs text-gray-500">
-                      <span className="font-bold text-gray-400">文字サイズ</span>
-                      <span className="font-bold">{blockFontSize}px</span>
-                    </span>
-                    <input type="range" min="10" max="28" step="1" value={blockFontSize}
-                      onChange={(e) => updateBlock(block.id, { fontSize: e.target.value })}
-                      className="w-full accent-[#06C755]" />
-                  </label>
+                  {block.type !== 'sns' && (
+                    <label className="block">
+                      <span className="mb-1 flex items-center justify-between text-xs text-gray-500">
+                        <span className="font-bold text-gray-400">文字サイズ</span>
+                        <span className="font-bold">{blockFontSize}px</span>
+                      </span>
+                      <input type="range" min="10" max="28" step="1" value={blockFontSize}
+                        onChange={(e) => updateBlock(block.id, { fontSize: e.target.value })}
+                        className="w-full accent-[#06C755]" />
+                    </label>
+                  )}
 
                   {/* SNS フィールド */}
                   {block.type === 'sns' ? (
                     <div className="space-y-3">
                       <p className="text-[11px] font-bold text-gray-400">リンクボタン（プロフィール URL）</p>
                       {[
-                        { key: 'instagramUrl', label: 'Instagram URL', placeholder: 'https://www.instagram.com/yourname' },
-                        { key: 'xUrl', label: 'X (Twitter) URL', placeholder: 'https://x.com/yourname' },
-                        { key: 'threadsUrl', label: 'Threads URL', placeholder: 'https://www.threads.net/@yourname' },
-                      ].map(({ key, label, placeholder }) => (
-                        <label key={key} className="block">
-                          <span className="mb-1 block text-[11px] text-gray-500">{label}</span>
-                          <input type="url" value={(block as any)[key] ?? ''}
-                            onChange={(e) => updateBlock(block.id, { [key]: e.target.value })}
-                            placeholder={placeholder}
+                        { urlKey: 'instagramUrl', labelKey: 'instagramLabel', name: 'Instagram', urlPlaceholder: 'https://www.instagram.com/yourname', labelPlaceholder: 'Instagramでフォロー' },
+                        { urlKey: 'xUrl', labelKey: 'xLabel', name: 'X (Twitter)', urlPlaceholder: 'https://x.com/yourname', labelPlaceholder: 'Xでフォロー' },
+                        { urlKey: 'threadsUrl', labelKey: 'threadsLabel', name: 'Threads', urlPlaceholder: 'https://www.threads.net/@yourname', labelPlaceholder: 'Threadsでフォロー' },
+                      ].map(({ urlKey, labelKey, name, urlPlaceholder, labelPlaceholder }) => (
+                        <div key={urlKey} className="space-y-1">
+                          <span className="block text-[11px] font-bold text-gray-500">{name}</span>
+                          <input type="url" value={(block as any)[urlKey] ?? ''}
+                            onChange={(e) => updateBlock(block.id, { [urlKey]: e.target.value })}
+                            placeholder={urlPlaceholder}
                             className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-                        </label>
+                          <input type="text" value={(block as any)[labelKey] ?? ''}
+                            onChange={(e) => updateBlock(block.id, { [labelKey]: e.target.value })}
+                            placeholder={labelPlaceholder}
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                        </div>
                       ))}
                       <p className="text-[11px] font-bold text-gray-400">埋め込み（任意）</p>
                       <label className="block">
