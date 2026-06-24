@@ -16,6 +16,11 @@ export class PublicController {
     private readonly blogService: BlogService,
   ) {}
 
+  private firstMarkdownImage(body: string | null | undefined) {
+    const match = body?.match(/!\[[^\]]*]\(([^)]+)\)/);
+    return match?.[1] ?? null;
+  }
+
   private publicEndAt(heldAt: Date, endAt: Date | null) {
     if (!endAt || endAt <= heldAt) return null;
     return endAt;
@@ -452,7 +457,7 @@ export class PublicController {
       buttonLayout: page.buttonLayout,
       buttonOpacity: page.buttonOpacity,
       buttonRadius: page.buttonRadius,
-      buttonSize: page.buttonSize,
+      buttonSize: (page as { buttonSize?: number | null }).buttonSize ?? null,
       subtitleMarginTop: page.subtitleMarginTop,
       headerText: page.headerText,
       footerText: page.footerText,
@@ -468,15 +473,19 @@ export class PublicController {
   }
 
   @Get('tenants/:tenantCode/blog')
-  listBlogPosts(@Param('tenantCode') tenantCode: string) {
-    return this.prisma.blogPost.findMany({
+  async listBlogPosts(@Param('tenantCode') tenantCode: string) {
+    const posts = await this.prisma.blogPost.findMany({
       where: {
         status: 'published',
         tenant: { code: tenantCode, deletedAt: null, bannedAt: null },
       },
       orderBy: { publishedAt: 'desc' },
-      select: { id: true, title: true, slug: true, excerpt: true, publishedAt: true, createdAt: true },
+      select: { id: true, title: true, slug: true, excerpt: true, body: true, publishedAt: true, createdAt: true },
     });
+    return posts.map(({ body, ...post }) => ({
+      ...post,
+      coverImageUrl: this.firstMarkdownImage(body),
+    }));
   }
 
   @Get('tenants/:tenantCode/blog/:slug')

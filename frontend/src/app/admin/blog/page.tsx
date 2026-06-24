@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { api, BlogPost, BlogPostInput } from '@/lib/api';
+import { API_URL } from '@/lib/config';
+import { imgUrl } from '@/lib/imgUrl';
 
 type TextBlock = { type: 'text'; content: string };
 type ImageBlock = { type: 'image'; url: string };
@@ -26,6 +28,11 @@ async function uploadImage(file: File): Promise<string> {
 }
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
+const ANY_IMAGE_RE = /!\[[^\]]*]\(([^)]+)\)/;
+
+function firstBlogImage(body: string | null | undefined) {
+  return body?.match(ANY_IMAGE_RE)?.[1] ?? null;
+}
 
 function bodyToBlocks(body: string): Block[] {
   const result: Block[] = [];
@@ -293,6 +300,16 @@ export default function AdminBlogPage() {
         <div className="space-y-2">
           {posts.map((post) => (
             <div key={post.id} className="flex items-start gap-3 rounded-xl border border-gray-200 bg-white px-4 py-4">
+              {(() => {
+                const image = imgUrl(post.coverImageUrl ?? firstBlogImage(post.body), API_URL);
+                return image ? (
+                  <img src={image} alt="" className="h-16 w-20 shrink-0 rounded-lg object-cover" />
+                ) : (
+                  <div className="flex h-16 w-20 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-[10px] font-bold text-gray-300">
+                    NO IMAGE
+                  </div>
+                );
+              })()}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${

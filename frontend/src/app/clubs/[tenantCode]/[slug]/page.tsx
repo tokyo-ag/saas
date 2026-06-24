@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
-import type { LiffEvent, PublicCmsPage } from '@/lib/api';
+import type { BlogPostSummary, LiffEvent, PublicCmsPage } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
 import { ReservationViewShowcase } from '@/components/public/ReservationViewShowcase';
@@ -25,6 +25,18 @@ async function fetchPage(tenantCode: string, slug: string): Promise<PublicCmsPag
 async function fetchReserveEvents(tenantCode: string): Promise<LiffEvent[]> {
   try {
     const res = await fetch(`${API_URL}/api/liff/${tenantCode}/events`, {
+      next: { revalidate },
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+async function fetchBlogPosts(tenantCode: string): Promise<BlogPostSummary[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/tenants/${tenantCode}/blog`, {
       next: { revalidate },
     });
     if (!res.ok) return [];
@@ -236,9 +248,10 @@ export default async function ClubCmsPage({
   params: Promise<{ tenantCode: string; slug: string }>;
 }) {
   const { tenantCode, slug } = await params;
-  const [page, reserveEvents] = await Promise.all([
+  const [page, reserveEvents, blogPosts] = await Promise.all([
     fetchPage(tenantCode, slug),
     fetchReserveEvents(tenantCode),
+    fetchBlogPosts(tenantCode),
   ]);
   if (!page) notFound();
 
@@ -553,6 +566,28 @@ export default async function ClubCmsPage({
           <p className="text-lg font-bold" style={{ color: blogTitleColor }}>{blogSectionTitle}</p>
           {blogSectionLead && (
             <p className="mt-2 text-sm leading-7" style={{ color: blogLeadColor }}>{blogSectionLead}</p>
+          )}
+          {blogPosts.length > 0 && (
+            <div className="mt-4 space-y-3">
+              {blogPosts.slice(0, 3).map((post) => {
+                const postImage = imgUrl(post.coverImageUrl, IMAGE_BASE_URL);
+                return (
+                  <Link key={post.id} href={`/clubs/${page.tenant.code ?? tenantCode}/blog/${post.slug}`}
+                    className="flex gap-3 rounded-xl border border-gray-100 bg-white p-3 transition hover:bg-gray-50">
+                    {postImage && <img src={postImage} alt="" className="h-16 w-20 shrink-0 rounded-lg object-cover" />}
+                    <div className="min-w-0">
+                      <p className="line-clamp-2 text-sm font-bold leading-5" style={{ color: textColor }}>{post.title}</p>
+                      {post.excerpt && <p className="mt-1 line-clamp-2 text-xs leading-5" style={{ color: blogLeadColor }}>{post.excerpt}</p>}
+                    </div>
+                  </Link>
+                );
+              })}
+              <Link href={`/clubs/${page.tenant.code ?? tenantCode}/blog`}
+                className="inline-flex text-xs font-bold transition hover:underline"
+                style={{ color: accentColor }}>
+                ブログ一覧を見る
+              </Link>
+            </div>
           )}
         </section>
 

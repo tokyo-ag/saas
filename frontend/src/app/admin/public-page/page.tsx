@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api, LiffEvent, PublicPageInput, Tenant } from '@/lib/api';
-import { SITE_URL } from '@/lib/config';
+import { api, BlogPost, LiffEvent, PublicPageInput, Tenant } from '@/lib/api';
+import { API_URL, SITE_URL } from '@/lib/config';
+import { imgUrl } from '@/lib/imgUrl';
 import { SaveToast } from '@/components/ui/SaveToast';
 import { ReservationViewShowcase } from '@/components/public/ReservationViewShowcase';
 
@@ -33,7 +34,12 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   'feature': 'フィーチャー',
   'sns': 'SNS',
 };
+const BLOG_IMAGE_RE = /!\[[^\]]*]\(([^)]+)\)/;
 function genId() { return Math.random().toString(36).slice(2); }
+
+function firstBlogImage(body: string | null | undefined) {
+  return body?.match(BLOG_IMAGE_RE)?.[1] ?? null;
+}
 
 const emptyForm: PublicPageInput = {
   title: '',
@@ -332,6 +338,7 @@ export default function AdminPublicPage() {
   const [form, setForm] = useState<PublicPageInput>(emptyForm);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [reserveEvents, setReserveEvents] = useState<LiffEvent[]>([]);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -500,6 +507,12 @@ export default function AdminPublicPage() {
     </div>
   );
 
+  const loadPublishedBlogPosts = useCallback(() => {
+    void api.blog.list()
+      .then((posts) => setBlogPosts(posts.filter((post) => post.status === 'published')))
+      .catch(() => setBlogPosts([]));
+  }, []);
+
   useEffect(() => {
     Promise.all([api.tenant.get(), api.publicPages.list()])
       .then(([tenantData, pageData]) => {
@@ -507,6 +520,7 @@ export default function AdminPublicPage() {
         void api.liff.events(tenantData.code ?? tenantData.id)
           .then(setReserveEvents)
           .catch(() => setReserveEvents([]));
+        loadPublishedBlogPosts();
         const tenantName = tenantData.lineDisplayName ?? tenantData.name;
         const tenantSlug = slugify(tenantName) || slugify(tenantData.code ?? tenantData.id) || 'home';
         const first = pageData[0];
@@ -634,7 +648,12 @@ export default function AdminPublicPage() {
       })
       .catch((err: any) => setError(err?.message ?? '読み込みに失敗しました'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [loadPublishedBlogPosts]);
+
+  useEffect(() => {
+    window.addEventListener('focus', loadPublishedBlogPosts);
+    return () => window.removeEventListener('focus', loadPublishedBlogPosts);
+  }, [loadPublishedBlogPosts]);
 
   function addBlock(type: BlockType) {
     setBlocks(prev => [...prev, { id: genId(), type, content: '', imagePosition: 'left' as const }]);
@@ -1719,6 +1738,22 @@ export default function AdminPublicPage() {
                   <p className="text-sm font-bold" style={{ color: blogTitleColor }}>{blogSectionTitle}</p>
                   {blogSectionLead && (
                     <p className="mt-1 text-xs leading-5" style={{ color: blogLeadColor }}>{blogSectionLead}</p>
+                  )}
+                  {blogPosts.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {blogPosts.slice(0, 3).map((post) => {
+                        const image = imgUrl(post.coverImageUrl ?? firstBlogImage(post.body), API_URL);
+                        return (
+                          <div key={post.id} className="flex gap-2 rounded-lg bg-white/90 p-2 ring-1 ring-black/5">
+                            {image && <img src={image} alt="" className="h-12 w-16 shrink-0 rounded-md object-cover" />}
+                            <div className="min-w-0">
+                              <p className="truncate text-xs font-bold" style={{ color: textColor }}>{post.title}</p>
+                              {post.excerpt && <p className="mt-0.5 line-clamp-2 text-[10px] leading-4" style={{ color: blogLeadColor }}>{post.excerpt}</p>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </section>
                 <section className="rounded-lg p-3" style={{ backgroundColor: navBg }}>

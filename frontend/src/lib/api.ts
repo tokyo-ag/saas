@@ -870,6 +870,7 @@ export interface BlogPostSummary {
   title: string;
   slug: string;
   excerpt?: string | null;
+  coverImageUrl?: string | null;
   publishedAt?: string | null;
   createdAt: string;
 }

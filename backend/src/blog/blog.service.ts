@@ -60,7 +60,7 @@ export class BlogService {
       where: { tenantId },
       orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
       select: {
-        id: true, title: true, slug: true, excerpt: true,
+        id: true, title: true, slug: true, excerpt: true, body: true,
         status: true, publishedAt: true, createdAt: true, updatedAt: true,
       },
     });

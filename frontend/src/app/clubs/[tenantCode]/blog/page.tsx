@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { API_URL, SITE_URL } from '@/lib/config';
+import { API_URL, IMAGE_BASE_URL, SITE_URL } from '@/lib/config';
 import type { BlogPostSummary } from '@/lib/api';
+import { imgUrl } from '@/lib/imgUrl';
 
 export const revalidate = 60;
 
@@ -14,7 +15,8 @@ async function fetchPosts(tenantCode: string): Promise<{ posts: BlogPostSummary[
     ]);
     if (!postsRes.ok) return null;
     const posts = await postsRes.json();
-    const tenantName = tenantRes.ok ? (await tenantRes.json())?.tenant?.lineDisplayName ?? (await tenantRes.json())?.tenant?.name ?? tenantCode : tenantCode;
+    const tenantPage = tenantRes.ok ? await tenantRes.json() : null;
+    const tenantName = tenantPage?.tenant?.lineDisplayName ?? tenantPage?.tenant?.name ?? tenantCode;
     return { posts, tenantName };
   } catch {
     return null;
@@ -66,11 +68,16 @@ export default async function BlogListPage({
               <Link
                 key={post.id}
                 href={`/clubs/${tenantCode}/blog/${post.slug}`}
-                className="block rounded-xl border border-gray-200 bg-white px-5 py-4 hover:shadow-md transition"
+                className="flex gap-4 rounded-xl border border-gray-200 bg-white px-5 py-4 transition hover:shadow-md"
               >
-                <p className="text-xs text-gray-400 mb-1">{formatDate(post.publishedAt)}</p>
-                <p className="text-base font-bold text-gray-900">{post.title}</p>
-                {post.excerpt && <p className="mt-1 text-sm leading-6 text-gray-500 line-clamp-2">{post.excerpt}</p>}
+                {imgUrl(post.coverImageUrl, IMAGE_BASE_URL) && (
+                  <img src={imgUrl(post.coverImageUrl, IMAGE_BASE_URL)!} alt="" className="h-20 w-24 shrink-0 rounded-lg object-cover" />
+                )}
+                <div className="min-w-0">
+                  <p className="mb-1 text-xs text-gray-400">{formatDate(post.publishedAt)}</p>
+                  <p className="text-base font-bold text-gray-900">{post.title}</p>
+                  {post.excerpt && <p className="mt-1 line-clamp-2 text-sm leading-6 text-gray-500">{post.excerpt}</p>}
+                </div>
               </Link>
             ))}
           </div>
