@@ -1322,10 +1322,10 @@ export default function AdminPublicPage() {
                   </label>
                   <input type="text" value={form.footerContact ?? ''}
                     onChange={(e) => setForm((p) => ({ ...p, footerContact: e.target.value }))}
-                    placeholder="info@example.com または 000-0000-0000"
+                    placeholder="メール・電話番号・カスタムテキスト（空欄=デフォルト）"
                     className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
                 </div>
-                <p className="text-[10px] text-gray-400">ボタン色・連絡先テキスト（メール or 電話番号）</p>
+                <p className="text-[10px] text-gray-400">空欄のとき「WEBサイト内でメッセージが可能です。」→メッセージ機能へ誘導</p>
               </div>
               {/* 公式SNSリンク */}
               <div className="space-y-2">

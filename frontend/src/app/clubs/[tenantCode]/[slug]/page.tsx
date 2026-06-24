@@ -506,19 +506,19 @@ export default async function ClubCmsPage({
       {(() => {
         let fd: { contact?: string; contactColor?: string; line?: string; instagram?: string; x?: string } = {};
         try { fd = JSON.parse(page.footerText ?? '{}'); } catch {}
-        const hasContent = fd.contact || fd.line || fd.instagram || fd.x;
+        const hasSocial = fd.line || fd.instagram || fd.x;
+        const contactNode = fd.contact
+          ? fd.contact.includes('@')
+            ? <a href={`mailto:${fd.contact}`} className="text-sm text-gray-500 hover:underline">{fd.contact}</a>
+            : /^\d/.test(fd.contact)
+              ? <a href={`tel:${fd.contact.replace(/[^\d+]/g, '')}`} className="text-sm text-gray-500 hover:underline">{fd.contact}</a>
+              : <a href={contactHref} className="text-sm text-gray-500 hover:underline">{fd.contact}</a>
+          : <a href={contactHref} className="text-sm text-gray-500 hover:underline">お問い合わせ　WEBサイト内でメッセージが可能です。</a>;
         return (
           <footer className="mt-6 border-t border-gray-100 pb-10 pt-5 text-center">
-            {fd.contact && (
-              <p className="text-sm text-gray-500">
-                {fd.contact.includes('@')
-                  ? <a href={`mailto:${fd.contact}`} className="hover:underline">{fd.contact}</a>
-                  : <a href={`tel:${fd.contact.replace(/[^\d+]/g, '')}`} className="hover:underline">{fd.contact}</a>
-                }
-              </p>
-            )}
-            {(fd.line || fd.instagram || fd.x) && (
-              <div className={`flex justify-center gap-5 ${hasContent ? 'mt-3' : ''}`}>
+            <p>{contactNode}</p>
+            {hasSocial && (
+              <div className="mt-3 flex justify-center gap-5">
                 {fd.line && <a href={fd.line} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[#06C755] hover:underline">LINE公式</a>}
                 {fd.instagram && <a href={fd.instagram} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[#E1306C] hover:underline">Instagram</a>}
                 {fd.x && <a href={fd.x} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-gray-800 hover:underline">X</a>}
