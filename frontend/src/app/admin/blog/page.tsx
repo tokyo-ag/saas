@@ -397,7 +397,7 @@ export default function AdminBlogPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-bold text-gray-700">タグ（任意）</label>
+            <label className="mb-1 block text-sm font-bold text-gray-700">タグ（1つまで）</label>
             <p className="mb-1.5 text-xs text-gray-400">カテゴリページに表示されます。例：バドミントン・交流会</p>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {(form.tags ?? []).map(tag => (
@@ -407,6 +407,7 @@ export default function AdminBlogPage() {
                 </span>
               ))}
             </div>
+            {(form.tags ?? []).length < 1 && (
             <div className="flex gap-2">
               <input
                 value={tagInput}
@@ -424,6 +425,7 @@ export default function AdminBlogPage() {
                 追加
               </button>
             </div>
+            )}
           </div>
 
           {/* Block editor */}
