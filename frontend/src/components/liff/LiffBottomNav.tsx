@@ -137,9 +137,13 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
       )}
 
       <nav
-        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex z-50"
+        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50"
         style={{ paddingBottom: `calc(env(safe-area-inset-bottom) + ${linePad}px)` }}
       >
+        <p className="text-center text-[9px] text-gray-300 pt-1 leading-none">
+          Powered by <a href="https://comiu.link" target="_blank" rel="noopener noreferrer" className="font-bold">COMIU</a>
+        </p>
+        <div className="flex">
         {items.map(({ href, label, Icon, active, badge }) => {
           const cls = `flex-1 flex flex-col items-center py-2 gap-0.5 ${active ? 'text-[#06C755]' : 'text-gray-400'}`;
           const labelEl = <span className="text-[10px] font-medium tracking-wide">{label}</span>;
@@ -168,6 +172,7 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
             </Link>
           );
         })}
+        </div>
       </nav>
     </>
   );
