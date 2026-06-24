@@ -107,6 +107,7 @@ model PublicPage {
   subtitleColor  String?   @map("subtitle_color") @db.VarChar(20)
   subtitleMarginTop Int?   @map("subtitle_margin_top")
   buttonRadius     Int?     @map("button_radius")
+  buttonSize       Int?     @map("button_size")
   bodySize       String?   @map("body_size") @db.VarChar(20)
   layoutVariant  String?   @map("layout_variant") @db.VarChar(40)
   aboutLabel     String?   @map("about_label") @db.VarChar(40)

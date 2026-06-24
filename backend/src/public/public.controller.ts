@@ -452,6 +452,7 @@ export class PublicController {
       buttonLayout: page.buttonLayout,
       buttonOpacity: page.buttonOpacity,
       buttonRadius: page.buttonRadius,
+      buttonSize: page.buttonSize,
       subtitleMarginTop: page.subtitleMarginTop,
       headerText: page.headerText,
       footerText: page.footerText,

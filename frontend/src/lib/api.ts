@@ -776,6 +776,7 @@ export interface PublicPage {
   buttonLayout?: string | null;
   buttonOpacity?: number | null;
   buttonRadius?: number | null;
+  buttonSize?: number | null;
   headerText?: string | null;
   footerText?: string | null;
   seoTitle?: string | null;
@@ -830,6 +831,7 @@ export interface PublicPageInput {
   buttonLayout?: string;
   buttonOpacity?: number;
   buttonRadius?: number;
+  buttonSize?: number;
   headerText?: string;
   footerText?: string;
   aboutLabel?: string;
@@ -919,6 +921,7 @@ export interface PublicCmsPage {
   buttonLayout?: string | null;
   buttonOpacity?: number | null;
   buttonRadius?: number | null;
+  buttonSize?: number | null;
   headerText?: string | null;
   footerText?: string | null;
   seoTitle?: string | null;

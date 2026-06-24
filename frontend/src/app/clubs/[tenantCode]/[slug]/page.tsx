@@ -79,6 +79,7 @@ function getBtnClass(style: string | null | undefined) {
   switch (style) {
     case 'pill': return 'rounded-full border-2';
     case 'square': return 'rounded-none border-2';
+    case 'double': return 'rounded-lg border-2';
     case 'stylish': return 'rounded-lg border border-dashed';
     case 'gorgeous': return 'rounded-xl border-4 border-double shadow-lg';
     default: return 'rounded-xl border-2';
@@ -259,8 +260,8 @@ export default async function ClubCmsPage({
   };
   const buttonStyle = page.buttonStyle ?? 'rounded';
   const rawButtonLayout = page.buttonLayout ?? 'grid2x2';
-  const buttonLayout = rawButtonLayout === 'row1x4' ? 'row1x4' : rawButtonLayout === 'circle4' ? 'circle4' : 'grid2x2';
-  const buttonLayoutClass = (buttonLayout === 'row1x4' || buttonLayout === 'circle4') ? 'grid grid-cols-4 gap-2' : 'grid grid-cols-2 gap-3';
+  const buttonLayout = rawButtonLayout === 'row1x4' ? 'row1x4' : 'grid2x2';
+  const buttonLayoutClass = buttonLayout === 'row1x4' ? 'grid grid-cols-4 gap-2' : 'grid grid-cols-2 gap-3';
   const buttonOpacity = clampPercent(page.buttonOpacity ?? 100);
   const buttonOpacityStyle = { opacity: buttonOpacity / 100 };
   const rawHeroImageMode = page.heroImageMode || 'fixed';
@@ -280,6 +281,9 @@ export default async function ClubCmsPage({
   const btnTextColor = hexToRgba(textColor, btnTextOpacity);
   const btnBgStyle = page.buttonBgColor ? { backgroundColor: hexToRgba(page.buttonBgColor, btnBgOpacity) } : {};
   const btnRadiusStyle = Number.isInteger(page.buttonRadius) ? { borderRadius: `${page.buttonRadius}px` } : {};
+  const btnSize = Number.isInteger(page.buttonSize) ? page.buttonSize! : 40;
+  const btnSizeStyle = { minHeight: btnSize, ...(buttonStyle === 'pill' ? { height: btnSize } : {}) };
+  const btnBoxShadow = buttonStyle === 'double' ? { boxShadow: `inset 0 0 0 3px ${btnBorderColor}` } : {};
   const subtitleGap = Number.isInteger(page.subtitleMarginTop) ? page.subtitleMarginTop! : 8;
 
   const jsonLd = {
@@ -335,21 +339,10 @@ export default async function ClubCmsPage({
                 {page.subtitle && <p style={{ marginTop: subtitleGap, ...subtitleTextStyle }}>{page.subtitle}</p>}
                 {heroNavPosition === 'inside' && (
                   <nav className={`mt-4 ${buttonLayoutClass}`}>
-                    {buttonLayout === 'circle4' ? (
-                      [{ href: '#about', label: navLabels.about }, { href: '#blog', label: navLabels.blog }, { href: reserveHref, label: navLabels.reserve }, { href: contactHref, label: navLabels.contact }].map(({ href, label }) => (
-                        <a key={href} href={href} className="flex flex-col items-center gap-1.5 py-1">
-                          <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 text-[11px] font-bold" style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle }}>{label.slice(0, 2)}</span>
-                          <span className="text-[10px] font-bold" style={{ color: btnTextColor }}>{label}</span>
-                        </a>
-                      ))
-                    ) : (
-                      <>
-                        <a href="#about" className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle }}>{navLabels.about}</a>
-                        <a href="#blog" className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle }}>{navLabels.blog}</a>
-                        <Link href={reserveHref} className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle }}>{navLabels.reserve}</Link>
-                        <Link href={contactHref} className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle }}>{navLabels.contact}</Link>
-                      </>
-                    )}
+                    <a href="#about" className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.about}</a>
+                    <a href="#blog" className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.blog}</a>
+                    <Link href={reserveHref} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.reserve}</Link>
+                    <Link href={contactHref} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.contact}</Link>
                   </nav>
                 )}
               </div>
@@ -357,21 +350,10 @@ export default async function ClubCmsPage({
           </div>
           {heroNavPosition === 'below' && (
             <nav className={`px-4 py-4 ${buttonLayoutClass}`}>
-              {buttonLayout === 'circle4' ? (
-                [{ href: '#about', label: navLabels.about }, { href: '#blog', label: navLabels.blog }, { href: reserveHref, label: navLabels.reserve }, { href: contactHref, label: navLabels.contact }].map(({ href, label }) => (
-                  <a key={href} href={href} className="flex flex-col items-center gap-1.5 py-2">
-                    <span className="flex h-14 w-14 items-center justify-center rounded-full border-2 text-xs font-bold" style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle }}>{label.slice(0, 2)}</span>
-                    <span className="text-[11px] font-bold" style={{ color: btnTextColor }}>{label}</span>
-                  </a>
-                ))
-              ) : (
-                <>
-                  <a href="#about" className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle }}>{navLabels.about}</a>
-                  <a href="#blog" className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle }}>{navLabels.blog}</a>
-                  <Link href={reserveHref} className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle }}>{navLabels.reserve}</Link>
-                  <Link href={contactHref} className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle }}>{navLabels.contact}</Link>
-                </>
-              )}
+              <a href="#about" className={`flex items-center justify-center px-4 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.about}</a>
+              <a href="#blog" className={`flex items-center justify-center px-4 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.blog}</a>
+              <Link href={reserveHref} className={`flex items-center justify-center px-4 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.reserve}</Link>
+              <Link href={contactHref} className={`flex items-center justify-center px-4 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.contact}</Link>
             </nav>
           )}
         </>

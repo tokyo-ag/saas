@@ -64,6 +64,7 @@ const emptyForm: PublicPageInput = {
   buttonLayout: 'grid2x2',
   buttonOpacity: 100,
   buttonRadius: 8,
+  buttonSize: 40,
   buttonBgColor: '',
   buttonBgOpacity: 100,
   buttonTextOpacity: 100,
@@ -136,7 +137,6 @@ const HERO_IMAGE_MODE_OPTIONS = [
 const BUTTON_LAYOUT_OPTIONS = [
   { label: '2×2', value: 'grid2x2' },
   { label: '1×4', value: 'row1x4' },
-  { label: '○○○○', value: 'circle4' },
 ];
 
 const TONE_COLORS = [
@@ -164,10 +164,16 @@ function getBtnShapeClass(style: string | null | undefined) {
   switch (style) {
     case 'pill': return 'rounded-full border-2';
     case 'square': return 'rounded-none border-2';
+    case 'double': return 'rounded-lg border-2';
     case 'stylish': return 'rounded-lg border border-dashed';
     case 'gorgeous': return 'rounded-xl border-4 border-double shadow-md';
     default: return 'rounded-xl border-2';
   }
+}
+
+function getBtnBoxShadow(style: string | null | undefined, borderColor: string): string | undefined {
+  if (style === 'double') return `inset 0 0 0 3px ${borderColor}`;
+  return undefined;
 }
 
 function slugify(value: string) {
@@ -371,7 +377,7 @@ export default function AdminPublicPage() {
     contact: form.contactLabel?.trim() || 'お問い合わせ',
   };
   const buttonStyle = form.buttonStyle ?? 'rounded';
-  const buttonLayout = form.buttonLayout === 'row1x4' ? 'row1x4' : form.buttonLayout === 'circle4' ? 'circle4' : 'grid2x2';
+  const buttonLayout = form.buttonLayout === 'row1x4' ? 'row1x4' : 'grid2x2';
   const buttonOpacity = clampPercent(form.buttonOpacity ?? 100);
   const buttonBgOpacity = clampPercent(form.buttonBgOpacity ?? 100);
   const buttonTextOpacity = clampPercent(form.buttonTextOpacity ?? 100);
@@ -380,10 +386,11 @@ export default function AdminPublicPage() {
   const btnFillColor = buttonBgColor ? hexToRgba(buttonBgColor, buttonBgOpacity) : undefined;
   const btnTextColor = hexToRgba(textColor, buttonTextOpacity);
   const buttonBgStyle = btnFillColor ? { backgroundColor: btnFillColor } : {};
-  const previewButtonLayoutClass = (buttonLayout === 'row1x4' || buttonLayout === 'circle4') ? 'grid grid-cols-4' : 'grid grid-cols-2';
-  const previewButtonSizeClass = (buttonLayout === 'row1x4' || buttonLayout === 'circle4')
-    ? 'h-12 px-2 text-xs leading-tight'
-    : 'h-14 px-3 text-sm leading-tight';
+  const btnBoxShadow = getBtnBoxShadow(buttonStyle, btnBorderColor);
+  const previewButtonLayoutClass = buttonLayout === 'row1x4' ? 'grid grid-cols-4' : 'grid grid-cols-2';
+  const btnSize = form.buttonSize ?? 40;
+  const btnIsPill = buttonStyle === 'pill';
+  const dragRef = useRef<{ startY: number; startSize: number } | null>(null);
 
   useEffect(() => {
     Promise.all([api.tenant.get(), api.publicPages.list()])
@@ -431,9 +438,10 @@ export default function AdminPublicPage() {
             bodySize: first.bodySize ?? 'base',
             layoutVariant: 'static',
             buttonStyle: (first as any).buttonStyle ?? 'rounded',
-            buttonLayout: first.buttonLayout ?? 'grid2x2',
+            buttonLayout: first.buttonLayout === 'circle4' ? 'row1x4' : (first.buttonLayout ?? 'grid2x2'),
             buttonOpacity: first.buttonOpacity ?? 100,
             buttonRadius: first.buttonRadius ?? 8,
+            buttonSize: first.buttonSize ?? 40,
             buttonBgColor: first.buttonBgColor ?? '',
             buttonBgOpacity: first.buttonBgOpacity ?? 100,
             buttonTextOpacity: first.buttonTextOpacity ?? 100,
@@ -609,6 +617,7 @@ export default function AdminPublicPage() {
       buttonLayout,
       buttonOpacity,
       buttonRadius: btnRadius,
+      buttonSize: btnSize,
       buttonBgColor: form.buttonBgColor?.trim() || undefined,
       buttonBgOpacity: form.buttonBgOpacity ?? 100,
       buttonTextOpacity: form.buttonTextOpacity ?? 100,
@@ -939,9 +948,9 @@ export default function AdminPublicPage() {
               </div>
             </div>
             <div>
-              <p className="mb-2 text-[11px] font-bold text-gray-400">ボタン角丸</p>
-              <div className="flex gap-2 mb-2">
-                {[{ label: '四角', r: 0 }, { label: '角丸', r: 8 }, { label: 'まる', r: 50 }].map((p) => (
+              <p className="mb-2 text-[11px] font-bold text-gray-400">枠スタイル</p>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {([{ label: '角丸', r: 8 }, { label: '四角', r: 0 }, { label: 'まる', r: 50 }] as const).map((p) => (
                   <button key={p.r} type="button"
                     onClick={() => setForm((prev) => ({ ...prev, buttonRadius: p.r }))}
                     className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${btnRadius === p.r ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
@@ -949,6 +958,12 @@ export default function AdminPublicPage() {
                     {p.label}
                   </button>
                 ))}
+                <button type="button"
+                  onClick={() => setForm((p) => ({ ...p, buttonStyle: buttonStyle === 'double' ? 'rounded' : 'double' }))}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${buttonStyle === 'double' ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                  style={buttonStyle === 'double' ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                  二重枠
+                </button>
               </div>
               <label className="block">
                 <span className="mb-1 flex items-center justify-between text-xs text-gray-500">
@@ -1182,17 +1197,18 @@ export default function AdminPublicPage() {
                           <p style={{ marginTop: subtitleGap, ...subtitleTextStyle }}>{form.subtitle.trim()}</p>
                         )}
                         {heroNavPosition === 'inside' && (
-                          <div className={`mt-3 gap-2 text-[11px] font-bold ${previewButtonLayoutClass}`}>
-                            {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) =>
-                              buttonLayout === 'circle4' ? (
-                                <div key={label} className="flex flex-col items-center gap-1 py-1">
-                                  <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 text-[9px] font-bold" style={{ borderColor: btnBorderColor, color: btnTextColor, ...buttonBgStyle }}>{label.slice(0, 2)}</div>
-                                  <span className="text-[8px] font-bold" style={{ color: btnTextColor }}>{label}</span>
-                                </div>
-                              ) : (
-                                <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderRadius: btnRadius, borderColor: btnBorderColor, color: btnTextColor, ...buttonBgStyle }}>{label}</span>
-                              )
-                            )}
+                          <div>
+                            <div className={`mt-3 gap-2 text-[10px] font-bold ${previewButtonLayoutClass}`}>
+                              {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
+                                <span key={label} className={`flex items-center justify-center truncate px-1 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{label}</span>
+                              ))}
+                            </div>
+                            <div className="mt-1 flex cursor-ns-resize select-none touch-none justify-center py-0.5"
+                              style={{ touchAction: 'none' }}
+                              onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); dragRef.current = { startY: e.clientY, startSize: btnSize }; }}
+                              onPointerMove={(e) => { if (!dragRef.current) return; const d = e.clientY - dragRef.current.startY; setForm(p => ({ ...p, buttonSize: Math.round(Math.min(80, Math.max(24, dragRef.current!.startSize + d))) })); }}
+                              onPointerUp={() => { dragRef.current = null; }}
+                            ><div className="h-0.5 w-6 rounded bg-white/50" /></div>
                           </div>
                         )}
                       </div>
@@ -1207,36 +1223,36 @@ export default function AdminPublicPage() {
                     </div>
                   </div>
                   {heroNavPosition === 'below' && (
-                    <div className={`gap-2 border-b border-gray-100 px-3 py-3 text-[11px] font-bold ${previewButtonLayoutClass}`}>
-                      {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) =>
-                        buttonLayout === 'circle4' ? (
-                          <div key={label} className="flex flex-col items-center gap-1 py-1">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 text-[9px] font-bold" style={{ borderColor: btnBorderColor, color: btnTextColor, ...buttonBgStyle }}>{label.slice(0, 2)}</div>
-                            <span className="text-[8px] font-bold" style={{ color: btnTextColor }}>{label}</span>
-                          </div>
-                        ) : (
-                          <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderRadius: btnRadius, borderColor: btnBorderColor, color: btnTextColor, ...buttonBgStyle }}>{label}</span>
-                        )
-                      )}
+                    <div className="border-b border-gray-100 px-3 pb-1 pt-3">
+                      <div className={`gap-2 text-[11px] font-bold ${previewButtonLayoutClass}`}>
+                        {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
+                          <span key={label} className={`flex items-center justify-center truncate px-2 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{label}</span>
+                        ))}
+                      </div>
+                      <div className="mt-1 flex cursor-ns-resize select-none touch-none justify-center py-1"
+                        style={{ touchAction: 'none' }}
+                        onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); dragRef.current = { startY: e.clientY, startSize: btnSize }; }}
+                        onPointerMove={(e) => { if (!dragRef.current) return; const d = e.clientY - dragRef.current.startY; setForm(p => ({ ...p, buttonSize: Math.round(Math.min(80, Math.max(24, dragRef.current!.startSize + d))) })); }}
+                        onPointerUp={() => { dragRef.current = null; }}
+                      ><div className="h-0.5 w-8 rounded bg-gray-300" /></div>
                     </div>
                   )}
                 </>
               ) : (
                 /* 通常モード: 薄いナビバー */
-                <div className="flex flex-col gap-2 border-b border-gray-100 px-4 py-3">
-                  <span className="text-sm font-bold leading-5" style={{ color: textColor }}>{displayName}</span>
+                <div className="border-b border-gray-100 px-4 pb-1 pt-3">
+                  <span className="mb-2 block text-sm font-bold leading-5" style={{ color: textColor }}>{displayName}</span>
                   <div className={`gap-2 text-[11px] font-bold ${previewButtonLayoutClass}`}>
-                    {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) =>
-                      buttonLayout === 'circle4' ? (
-                        <div key={label} className="flex flex-col items-center gap-1 py-1">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 text-[9px] font-bold" style={{ borderColor: btnBorderColor, color: btnTextColor, ...buttonBgStyle }}>{label.slice(0, 2)}</div>
-                          <span className="text-[8px] font-bold" style={{ color: btnTextColor }}>{label}</span>
-                        </div>
-                      ) : (
-                        <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderRadius: btnRadius, borderColor: btnBorderColor, color: btnTextColor, ...buttonBgStyle }}>{label}</span>
-                      )
-                    )}
+                    {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
+                      <span key={label} className={`flex items-center justify-center truncate px-2 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{label}</span>
+                    ))}
                   </div>
+                  <div className="mt-1 flex cursor-ns-resize select-none touch-none justify-center py-1"
+                    style={{ touchAction: 'none' }}
+                    onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); dragRef.current = { startY: e.clientY, startSize: btnSize }; }}
+                    onPointerMove={(e) => { if (!dragRef.current) return; const d = e.clientY - dragRef.current.startY; setForm(p => ({ ...p, buttonSize: Math.round(Math.min(80, Math.max(24, dragRef.current!.startSize + d))) })); }}
+                    onPointerUp={() => { dragRef.current = null; }}
+                  ><div className="h-0.5 w-8 rounded bg-gray-300" /></div>
                 </div>
               )}
               <div className="space-y-4 p-5">
