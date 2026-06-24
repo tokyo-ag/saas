@@ -356,7 +356,7 @@ export default async function ClubCmsPage({
   const contactSectionMessage = sectionCopy.contactMessage?.trim() || sectionCopy.contact?.trim() || 'お問い合わせ　WEBサイト内でメッセージが可能です。';
   const contactTitleColor = sectionCopy.contactTitleColor?.trim() || textColor;
   const contactLeadColor = sectionCopy.contactLeadColor?.trim() || '#6B7280';
-  const contactMessageColor = sectionCopy.contactMessageColor?.trim() || sectionCopy.contactColor?.trim() || accentColor;
+  const contactMessageColor = sectionCopy.contactMessageColor?.trim() || '#6B7280';
 
   return (
     <main className="min-h-screen sm:bg-gray-200" style={{ fontFamily, backgroundColor }}>

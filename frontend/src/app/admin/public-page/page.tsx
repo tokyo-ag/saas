@@ -436,7 +436,7 @@ export default function AdminPublicPage() {
   const contactSectionMessage = form.contactMessage?.trim() || form.footerContact?.trim() || 'お問い合わせ　WEBサイト内でメッセージが可能です。';
   const contactTitleColor = form.contactTitleColor?.trim() || textColor;
   const contactLeadColor = form.contactLeadColor?.trim() || '#6B7280';
-  const contactMessageColor = form.contactMessageColor?.trim() || form.footerContactColor?.trim() || accentColor;
+  const contactMessageColor = form.contactMessageColor?.trim() || '#6B7280';
   const buttonStyle = form.buttonStyle ?? 'rounded';
   const buttonLayout = form.buttonLayout === 'row1x4' ? 'row1x4' : 'grid2x2';
   const buttonOpacity = clampPercent(form.buttonOpacity ?? 100);
@@ -1498,7 +1498,7 @@ export default function AdminPublicPage() {
                 <p className="text-[11px] font-bold text-gray-400">お問い合わせ表示</p>
                 {renderCopyInput('タイトル', 'contactTitle', 'contactTitleColor', navLabels.contact, textColor)}
                 {renderCopyInput('説明', 'contactLead', 'contactLeadColor', 'ご質問・ご相談はこちらからお気軽にどうぞ。', '#6B7280', true)}
-                {renderCopyInput('リンク文言', 'contactMessage', 'contactMessageColor', 'お問い合わせ　WEBサイト内でメッセージが可能です。', accentColor, true)}
+                {renderCopyInput('リンク文言', 'contactMessage', 'contactMessageColor', 'お問い合わせ　WEBサイト内でメッセージが可能です。', '#6B7280', true)}
               </div>
               {/* 連絡先 */}
               <div className="space-y-2">
