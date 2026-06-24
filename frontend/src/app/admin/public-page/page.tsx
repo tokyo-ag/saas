@@ -1157,10 +1157,17 @@ export default function AdminPublicPage() {
                           <p style={{ marginTop: subtitleGap, ...subtitleTextStyle }}>{form.subtitle.trim()}</p>
                         )}
                         {heroNavPosition === 'inside' && (
-                          <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] font-bold">
-                            {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
-                              <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderRadius: btnRadius, borderColor: btnBorderColor, color: btnTextColor, ...buttonBgStyle }}>{label}</span>
-                            ))}
+                          <div className={`mt-3 gap-2 text-[11px] font-bold ${previewButtonLayoutClass}`}>
+                            {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) =>
+                              buttonLayout === 'circle4' ? (
+                                <div key={label} className="flex flex-col items-center gap-1 py-1">
+                                  <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 text-[9px] font-bold" style={{ borderColor: btnBorderColor, color: btnTextColor, ...buttonBgStyle }}>{label.slice(0, 2)}</div>
+                                  <span className="text-[8px] font-bold" style={{ color: btnTextColor }}>{label}</span>
+                                </div>
+                              ) : (
+                                <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderRadius: btnRadius, borderColor: btnBorderColor, color: btnTextColor, ...buttonBgStyle }}>{label}</span>
+                              )
+                            )}
                           </div>
                         )}
                       </div>
@@ -1175,27 +1182,41 @@ export default function AdminPublicPage() {
                     </div>
                   </div>
                   {heroNavPosition === 'below' && (
-                    <div className="grid grid-cols-2 gap-2 border-b border-gray-100 px-4 py-3 text-[11px] font-bold">
-                      {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
-                        <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...buttonBgStyle }}>{label}</span>
-                      ))}
+                    <div className={`gap-2 border-b border-gray-100 px-3 py-3 text-[11px] font-bold ${previewButtonLayoutClass}`}>
+                      {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) =>
+                        buttonLayout === 'circle4' ? (
+                          <div key={label} className="flex flex-col items-center gap-1 py-1">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 text-[9px] font-bold" style={{ borderColor: btnBorderColor, color: btnTextColor, ...buttonBgStyle }}>{label.slice(0, 2)}</div>
+                            <span className="text-[8px] font-bold" style={{ color: btnTextColor }}>{label}</span>
+                          </div>
+                        ) : (
+                          <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderRadius: btnRadius, borderColor: btnBorderColor, color: btnTextColor, ...buttonBgStyle }}>{label}</span>
+                        )
+                      )}
                     </div>
                   )}
                 </>
               ) : (
                 /* 通常モード: 薄いナビバー */
-                <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-3">
+                <div className="flex flex-col gap-2 border-b border-gray-100 px-4 py-3">
                   <span className="text-sm font-bold leading-5" style={{ color: textColor }}>{displayName}</span>
-                  <div className="grid grid-cols-2 gap-2 text-[11px] font-bold">
-                    {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
-                      <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...buttonBgStyle }}>{label}</span>
-                    ))}
+                  <div className={`gap-2 text-[11px] font-bold ${previewButtonLayoutClass}`}>
+                    {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) =>
+                      buttonLayout === 'circle4' ? (
+                        <div key={label} className="flex flex-col items-center gap-1 py-1">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 text-[9px] font-bold" style={{ borderColor: btnBorderColor, color: btnTextColor, ...buttonBgStyle }}>{label.slice(0, 2)}</div>
+                          <span className="text-[8px] font-bold" style={{ color: btnTextColor }}>{label}</span>
+                        </div>
+                      ) : (
+                        <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderRadius: btnRadius, borderColor: btnBorderColor, color: btnTextColor, ...buttonBgStyle }}>{label}</span>
+                      )
+                    )}
                   </div>
                 </div>
               )}
               <div className="space-y-4 p-5">
                 {form.subtitle?.trim() && heroImageMode !== 'background' && (
-                  <p className="font-bold opacity-75" style={{ ...subtitleTextStyle, textAlign: titleAlign }}>
+                  <p className="font-bold opacity-75" style={{ marginTop: subtitleGap, ...subtitleTextStyle, textAlign: titleAlign }}>
                     {form.subtitle.trim()}
                   </p>
                 )}
