@@ -154,6 +154,43 @@ model BlogPost {
   @@map("blog_posts")
 }
 
+model OfficialSiteSetting {
+  id                String   @id @default("default")
+  status            String   @default("published") @db.VarChar(20)
+  heroTitle         String   @default("サークル・イベント運営をLINEでかんたんに") @map("hero_title") @db.VarChar(160)
+  heroLead          String   @default("COMIUは、予約管理・参加者名簿・リマインド・問い合わせ対応をまとめて管理できる主催者向けWEBサービスです。") @map("hero_lead") @db.Text
+  primaryCtaLabel   String   @default("無料ではじめる") @map("primary_cta_label") @db.VarChar(60)
+  primaryCtaHref    String   @default("/register") @map("primary_cta_href") @db.VarChar(500)
+  secondaryCtaLabel String   @default("相談する") @map("secondary_cta_label") @db.VarChar(60)
+  secondaryCtaHref  String   @default("/contact") @map("secondary_cta_href") @db.VarChar(500)
+  seoTitle          String?  @map("seo_title") @db.VarChar(160)
+  seoDescription    String?  @map("seo_description") @db.VarChar(300)
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("official_site_settings")
+}
+
+model OfficialArticle {
+  id            String    @id @default(uuid())
+  title         String    @db.VarChar(160)
+  slug          String    @unique @db.VarChar(120)
+  excerpt       String?   @db.VarChar(300)
+  body          String    @db.Text
+  category      String?   @db.VarChar(60)
+  targetKeyword String?   @map("target_keyword") @db.VarChar(120)
+  ctaLabel      String?   @map("cta_label") @db.VarChar(80)
+  ctaHref       String?   @map("cta_href") @db.VarChar(500)
+  ogImageUrl    String?   @map("og_image_url") @db.Text
+  status        String    @default("draft") @db.VarChar(20)
+  publishedAt   DateTime? @map("published_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@index([status, publishedAt(sort: Desc)])
+  @@index([category])
+  @@map("official_articles")
+}
+
 model TenantLiffAccess {
   id         String   @id @default(uuid())
   tenantId   String   @map("tenant_id")

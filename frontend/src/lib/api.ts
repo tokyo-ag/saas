@@ -377,6 +377,25 @@ export const api = {
       }),
     errorLogs: () => request<ErrorLog[]>('/superadmin/errors'),
     clearErrorLogs: () => request<void>('/superadmin/errors', { method: 'DELETE' }),
+    officialSite: () => request<OfficialSiteSettings>('/superadmin/official-site'),
+    updateOfficialSite: (data: OfficialSiteInput) =>
+      request<OfficialSiteSettings>('/superadmin/official-site', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    officialArticles: () => request<OfficialArticle[]>('/superadmin/official-articles'),
+    createOfficialArticle: (data: OfficialArticleInput) =>
+      request<OfficialArticle>('/superadmin/official-articles', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    updateOfficialArticle: (id: string, data: OfficialArticleInput) =>
+      request<OfficialArticle>(`/superadmin/official-articles/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    deleteOfficialArticle: (id: string) =>
+      request<{ ok: boolean }>(`/superadmin/official-articles/${id}`, { method: 'DELETE' }),
   },
 };
 
@@ -504,6 +523,62 @@ export interface ErrorLog {
   message: string;
   stack?: string | null;
   createdAt: string;
+}
+
+export interface OfficialSiteSettings {
+  id?: string;
+  status: 'draft' | 'published';
+  heroTitle: string;
+  heroLead: string;
+  primaryCtaLabel: string;
+  primaryCtaHref: string;
+  secondaryCtaLabel: string;
+  secondaryCtaHref: string;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  updatedAt: string;
+}
+
+export interface OfficialSiteInput {
+  status?: 'draft' | 'published';
+  heroTitle?: string;
+  heroLead?: string;
+  primaryCtaLabel?: string;
+  primaryCtaHref?: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+}
+
+export interface OfficialArticle {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  body: string;
+  category?: string | null;
+  targetKeyword?: string | null;
+  ctaLabel?: string | null;
+  ctaHref?: string | null;
+  ogImageUrl?: string | null;
+  status: 'draft' | 'published';
+  publishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OfficialArticleInput {
+  title: string;
+  slug?: string;
+  excerpt?: string;
+  body: string;
+  category?: string;
+  targetKeyword?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+  ogImageUrl?: string;
+  status?: 'draft' | 'published';
 }
 
 export interface SupportThread {

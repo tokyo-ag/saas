@@ -5,10 +5,12 @@ import { SITE_URL, API_URL } from '@/lib/config';
 type SitemapEvent = { id: string; tenantCode: string; updatedAt: string };
 type SitemapPage = { tenantCode: string; slug: string; updatedAt: string };
 type SitemapBlogPost = { tenantCode: string; slug: string; updatedAt: string };
+type SitemapOfficialArticle = { slug: string; updatedAt: string };
 
 let lastSuccessfulEvents: SitemapEvent[] = [];
 let lastSuccessfulPages: SitemapPage[] = [];
 let lastSuccessfulBlogPosts: SitemapBlogPost[] = [];
+let lastSuccessfulOfficialArticles: SitemapOfficialArticle[] = [];
 
 function staticLastModified() {
   const value = process.env.NEXT_PUBLIC_SITE_LAST_MODIFIED;
@@ -63,11 +65,27 @@ async function fetchSitemapBlogPosts(): Promise<SitemapBlogPost[]> {
   }
 }
 
+async function fetchSitemapOfficialArticles(): Promise<SitemapOfficialArticle[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/sitemap-official-articles`, { next: { revalidate: 3600 } });
+    if (!res.ok) throw new Error(`sitemap-official-articles returned ${res.status}`);
+    const articles = (await res.json()) as SitemapOfficialArticle[];
+    lastSuccessfulOfficialArticles = articles;
+    return articles;
+  } catch (error) {
+    if (lastSuccessfulOfficialArticles.length > 0) {
+      console.warn('[sitemap] using cached official articles after API failure', error);
+    }
+    return lastSuccessfulOfficialArticles;
+  }
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [events, pages, blogPosts] = await Promise.all([
+  const [events, pages, blogPosts, officialArticles] = await Promise.all([
     fetchSitemapEvents(),
     fetchSitemapPages(),
     fetchSitemapBlogPosts(),
+    fetchSitemapOfficialArticles(),
   ]);
 
   const staticPages: MetadataRoute.Sitemap = [
@@ -82,6 +100,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/use-cases/basketball-tokyo`, changeFrequency: 'weekly', priority: 0.9, lastModified: STATIC_LAST_MODIFIED },
     { url: `${SITE_URL}/use-cases/futsal-tokyo`, changeFrequency: 'weekly', priority: 0.9, lastModified: STATIC_LAST_MODIFIED },
     { url: `${SITE_URL}/use-cases/volleyball-tokyo`, changeFrequency: 'weekly', priority: 0.9, lastModified: STATIC_LAST_MODIFIED },
+    { url: `${SITE_URL}/organizers`, changeFrequency: 'weekly', priority: 0.9, lastModified: STATIC_LAST_MODIFIED },
+    { url: `${SITE_URL}/guide`, changeFrequency: 'weekly', priority: 0.8, lastModified: STATIC_LAST_MODIFIED },
     { url: `${SITE_URL}/pricing`, changeFrequency: 'monthly', priority: 0.8, lastModified: STATIC_LAST_MODIFIED },
     { url: `${SITE_URL}/contact`, changeFrequency: 'yearly', priority: 0.5, lastModified: STATIC_LAST_MODIFIED },
     { url: `${SITE_URL}/terms`, changeFrequency: 'yearly', priority: 0.3, lastModified: STATIC_LAST_MODIFIED },
@@ -125,5 +145,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...cmsPages, ...blogIndexPages, ...blogPostPages, ...eventPages];
+  const officialArticlePages: MetadataRoute.Sitemap = officialArticles.map((article) => ({
+    url: `${SITE_URL}/guide/${article.slug}`,
+    lastModified: article.updatedAt ? new Date(article.updatedAt) : STATIC_LAST_MODIFIED,
+    changeFrequency: 'monthly' as const,
+    priority: 0.75,
+  }));
+
+  return [...staticPages, ...officialArticlePages, ...cmsPages, ...blogIndexPages, ...blogPostPages, ...eventPages];
 }

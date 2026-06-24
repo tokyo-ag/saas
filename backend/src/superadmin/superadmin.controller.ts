@@ -15,6 +15,8 @@ import {
   CreateTenantDto,
   UpdateTenantDto,
   BanUserDto,
+  UpdateOfficialSiteDto,
+  UpsertOfficialArticleDto,
 } from './superadmin.service';
 
 @UseGuards(SuperadminGuard)
@@ -103,5 +105,38 @@ export class SuperadminController {
     @Body('content') content: string,
   ) {
     return this.service.replySupportMessage(lineUserId, content);
+  }
+
+  @Get('official-site')
+  getOfficialSite() {
+    return this.service.getOfficialSite();
+  }
+
+  @Put('official-site')
+  updateOfficialSite(@Body() dto: UpdateOfficialSiteDto) {
+    return this.service.updateOfficialSite(dto);
+  }
+
+  @Get('official-articles')
+  listOfficialArticles() {
+    return this.service.listOfficialArticles();
+  }
+
+  @Post('official-articles')
+  createOfficialArticle(@Body() dto: UpsertOfficialArticleDto) {
+    return this.service.createOfficialArticle(dto);
+  }
+
+  @Put('official-articles/:id')
+  updateOfficialArticle(
+    @Param('id') id: string,
+    @Body() dto: UpsertOfficialArticleDto,
+  ) {
+    return this.service.updateOfficialArticle(id, dto);
+  }
+
+  @Delete('official-articles/:id')
+  deleteOfficialArticle(@Param('id') id: string) {
+    return this.service.deleteOfficialArticle(id);
   }
 }

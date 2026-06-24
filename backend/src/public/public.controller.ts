@@ -6,8 +6,39 @@ import {
   Query,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BlogService } from '../blog/blog.service';
+
+type OfficialSiteRow = {
+  status: string;
+  hero_title: string;
+  hero_lead: string;
+  primary_cta_label: string;
+  primary_cta_href: string;
+  secondary_cta_label: string;
+  secondary_cta_href: string;
+  seo_title: string | null;
+  seo_description: string | null;
+  updated_at: Date;
+};
+
+type OfficialArticleRow = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  body: string;
+  category: string | null;
+  target_keyword: string | null;
+  cta_label: string | null;
+  cta_href: string | null;
+  og_image_url: string | null;
+  status: string;
+  published_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+};
 
 @Controller('public')
 export class PublicController {
@@ -24,6 +55,59 @@ export class PublicController {
   private publicEndAt(heldAt: Date, endAt: Date | null) {
     if (!endAt || endAt <= heldAt) return null;
     return endAt;
+  }
+
+  private mapOfficialSite(row: OfficialSiteRow) {
+    return {
+      status: row.status,
+      heroTitle: row.hero_title,
+      heroLead: row.hero_lead,
+      primaryCtaLabel: row.primary_cta_label,
+      primaryCtaHref: row.primary_cta_href,
+      secondaryCtaLabel: row.secondary_cta_label,
+      secondaryCtaHref: row.secondary_cta_href,
+      seoTitle: row.seo_title,
+      seoDescription: row.seo_description,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  private mapOfficialArticle(row: OfficialArticleRow, includeBody = true) {
+    return {
+      id: row.id,
+      title: row.title,
+      slug: row.slug,
+      excerpt: row.excerpt,
+      ...(includeBody ? { body: row.body } : {}),
+      category: row.category,
+      targetKeyword: row.target_keyword,
+      ctaLabel: row.cta_label,
+      ctaHref: row.cta_href,
+      ogImageUrl: row.og_image_url,
+      publishedAt: row.published_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  private officialArticleSelect() {
+    return Prisma.sql`
+      SELECT
+        id,
+        title,
+        slug,
+        excerpt,
+        body,
+        category,
+        target_keyword,
+        cta_label,
+        cta_href,
+        og_image_url,
+        status,
+        published_at,
+        created_at,
+        updated_at
+      FROM official_articles
+    `;
   }
 
   @Get('events')
@@ -241,6 +325,64 @@ export class PublicController {
         slug: p.slug,
         updatedAt: p.updatedAt ?? p.publishedAt,
       }));
+  }
+
+  @Get('sitemap-official-articles')
+  async getSitemapOfficialArticles() {
+    const rows = await this.prisma.$queryRaw<OfficialArticleRow[]>(Prisma.sql`
+      ${this.officialArticleSelect()}
+      WHERE status = 'published'
+      ORDER BY COALESCE(published_at, updated_at) DESC
+    `);
+    return rows.map((row) => ({
+      slug: row.slug,
+      updatedAt: row.updated_at,
+    }));
+  }
+
+  @Get('official-site')
+  async getOfficialSite() {
+    const rows = await this.prisma.$queryRaw<OfficialSiteRow[]>(Prisma.sql`
+      SELECT
+        status,
+        hero_title,
+        hero_lead,
+        primary_cta_label,
+        primary_cta_href,
+        secondary_cta_label,
+        secondary_cta_href,
+        seo_title,
+        seo_description,
+        updated_at
+      FROM official_site_settings
+      WHERE id = 'default' AND status = 'published'
+      LIMIT 1
+    `);
+    if (!rows[0]) throw new NotFoundException('Official site not found');
+    return this.mapOfficialSite(rows[0]);
+  }
+
+  @Get('official-articles')
+  async listOfficialArticles(@Query('limit') limitParam?: string) {
+    const limit = Math.min(parseInt(limitParam ?? '20', 10) || 20, 50);
+    const rows = await this.prisma.$queryRaw<OfficialArticleRow[]>(Prisma.sql`
+      ${this.officialArticleSelect()}
+      WHERE status = 'published'
+      ORDER BY COALESCE(published_at, updated_at) DESC
+      LIMIT ${limit}
+    `);
+    return rows.map((row) => this.mapOfficialArticle(row, false));
+  }
+
+  @Get('official-articles/:slug')
+  async getOfficialArticle(@Param('slug') slug: string) {
+    const rows = await this.prisma.$queryRaw<OfficialArticleRow[]>(Prisma.sql`
+      ${this.officialArticleSelect()}
+      WHERE status = 'published' AND slug = ${slug}
+      LIMIT 1
+    `);
+    if (!rows[0]) throw new NotFoundException('Article not found');
+    return this.mapOfficialArticle(rows[0], true);
   }
 
   @Get('events/:eventId')
