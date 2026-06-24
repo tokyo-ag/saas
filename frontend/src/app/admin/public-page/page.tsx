@@ -318,6 +318,8 @@ export default function AdminPublicPage() {
   const heroFocalDragRef = useRef<{ startX: number; startY: number; startFocal: { x: number; y: number } } | null>(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ global: true, header: true, structure: true, footer: false });
+  const toggleSection = (key: string) => setOpenSections(p => ({ ...p, [key]: !p[key] }));
 
   const tenantCode = tenant?.code ?? tenant?.id ?? '';
   const displayName = tenant?.lineDisplayName ?? tenant?.name ?? '公開サイト';
@@ -731,9 +733,14 @@ export default function AdminPublicPage() {
       {/* Settings panel */}
       <section className="flex-1 space-y-3 overflow-y-auto py-4 pr-1">
 
-        {/* 全体 */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-4">
-          <p className="text-xs font-bold text-gray-500">全体</p>
+        {/* 全体の設定 */}
+        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+          <button type="button" onClick={() => toggleSection('global')}
+            className="flex w-full items-center justify-between px-4 py-3 hover:bg-gray-50 transition">
+            <p className="text-xs font-bold text-gray-700">全体の設定</p>
+            <svg className={`h-4 w-4 text-gray-400 transition-transform ${openSections.global ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          </button>
+          {openSections.global && <div className="space-y-4 border-t border-gray-100 p-4">
           {/* 背景色 */}
           <div className="grid gap-4 sm:grid-cols-[auto_1fr]">
             <div className="space-y-2">
@@ -767,15 +774,20 @@ export default function AdminPublicPage() {
               <span className="w-8 text-right text-xs text-gray-400">{navOpacity}%</span>
             </div>
           </div>
+          </div>}
         </div>
 
         {/* ヘッダー */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs font-bold text-gray-500">ヘッダー</p>
-            <span className="text-[11px] font-bold text-gray-400">{imageUrls.length}/3</span>
-          </div>
-
+        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+          <button type="button" onClick={() => toggleSection('header')}
+            className="flex w-full items-center justify-between px-4 py-3 hover:bg-gray-50 transition">
+            <p className="text-xs font-bold text-gray-700">ヘッダー</p>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-gray-400">{imageUrls.length}/3</span>
+              <svg className={`h-4 w-4 text-gray-400 transition-transform ${openSections.header ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            </div>
+          </button>
+          {openSections.header && <div className="space-y-4 border-t border-gray-100 p-4">
           {/* タイトル / サブタイトル */}
           <div className="space-y-5 rounded-lg bg-gray-50 p-3">
             <div className="space-y-2">
@@ -1078,29 +1090,17 @@ export default function AdminPublicPage() {
               ))}
             </div>
           </div>
-          {/* 予約表示スタイル */}
-          <div className="border-t border-gray-100 pt-4">
-            <p className="mb-2 text-[11px] font-bold text-gray-400">予約セクションの表示</p>
-            <div className="flex gap-2">
-              {[
-                { label: 'カレンダー', value: 'calendar' },
-                { label: 'カード', value: 'card' },
-                { label: 'スレッド', value: 'thread' },
-              ].map((opt) => (
-                <button key={opt.value} type="button"
-                  onClick={() => setForm((p) => ({ ...p, reserveViewStyle: opt.value }))}
-                  className={`rounded-full border px-4 py-2 text-xs font-bold transition ${(form.reserveViewStyle ?? 'calendar') === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                  style={(form.reserveViewStyle ?? 'calendar') === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          </div>}
         </div>
 
-        {/* 団体詳細 */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
-          <p className="text-xs font-bold text-gray-500">団体詳細</p>
+        {/* 構成 */}
+        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+          <button type="button" onClick={() => toggleSection('structure')}
+            className="flex w-full items-center justify-between px-4 py-3 hover:bg-gray-50 transition">
+            <p className="text-xs font-bold text-gray-700">構成</p>
+            <svg className={`h-4 w-4 text-gray-400 transition-transform ${openSections.structure ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          </button>
+          {openSections.structure && <div className="space-y-3 border-t border-gray-100 p-4">
           <div>
             <label className="block">
               <span className="mb-2 flex items-center justify-between text-xs text-gray-500">
@@ -1282,6 +1282,28 @@ export default function AdminPublicPage() {
               <p className="py-4 text-center text-xs text-gray-400">上のボタンからブロックを追加してください</p>
             )}
           </div>
+          </div>}
+        </div>
+
+        {/* フッター */}
+        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+          <button type="button" onClick={() => toggleSection('footer')}
+            className="flex w-full items-center justify-between px-4 py-3 hover:bg-gray-50 transition">
+            <p className="text-xs font-bold text-gray-700">フッター</p>
+            <svg className={`h-4 w-4 text-gray-400 transition-transform ${openSections.footer ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          </button>
+          {openSections.footer && (
+            <div className="space-y-3 border-t border-gray-100 p-4">
+              <div>
+                <p className="mb-1 text-[11px] font-bold text-gray-400">フッターテキスト</p>
+                <textarea value={form.footerText ?? ''}
+                  onChange={(e) => setForm((p) => ({ ...p, footerText: e.target.value }))}
+                  rows={3}
+                  placeholder="コピーライトやリンクなど"
+                  className="w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+              </div>
+            </div>
+          )}
         </div>
 
       </section>
