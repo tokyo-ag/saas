@@ -772,6 +772,10 @@ export interface PublicPage {
   reserveLabel?: string | null;
   blogLabel?: string | null;
   contactLabel?: string | null;
+  navAboutUrl?: string;
+  navReserveUrl?: string;
+  navBlogUrl?: string;
+  navContactUrl?: string;
   buttonStyle?: string | null;
   buttonLayout?: string | null;
   buttonOpacity?: number | null;
@@ -862,6 +866,10 @@ export interface PublicPageInput {
   reserveLabel?: string;
   blogLabel?: string;
   contactLabel?: string;
+  navAboutUrl?: string;
+  navReserveUrl?: string;
+  navBlogUrl?: string;
+  navContactUrl?: string;
   seoTitle?: string;
   seoDescription?: string;
   status?: 'draft' | 'published';

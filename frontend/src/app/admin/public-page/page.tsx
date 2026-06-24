@@ -115,6 +115,10 @@ const emptyForm: PublicPageInput = {
   reserveLabel: '予約する',
   blogLabel: 'ブログ',
   contactLabel: 'お問い合わせ',
+  navAboutUrl: '',
+  navReserveUrl: '',
+  navBlogUrl: '',
+  navContactUrl: '',
   seoTitle: '',
   seoDescription: '',
   status: 'published',
@@ -604,6 +608,10 @@ export default function AdminPublicPage() {
                   footerLine: fd.line ?? '',
                   footerInstagram: fd.instagram ?? '',
                   footerX: fd.x ?? '',
+                  navAboutUrl: fd.aboutUrl ?? '',
+                  navReserveUrl: fd.reserveUrl ?? '',
+                  navBlogUrl: fd.blogUrl ?? '',
+                  navContactUrl: fd.contactUrl ?? '',
                 };
               } catch {
                 return {
@@ -873,6 +881,10 @@ export default function AdminPublicPage() {
         line: form.footerLine?.trim() || '',
         instagram: form.footerInstagram?.trim() || '',
         x: form.footerX?.trim() || '',
+        aboutUrl: form.navAboutUrl?.trim() || '',
+        reserveUrl: form.navReserveUrl?.trim() || '',
+        blogUrl: form.navBlogUrl?.trim() || '',
+        contactUrl: form.navContactUrl?.trim() || '',
       }),
       status: 'published',
       seoTitle: displayName,
@@ -1264,18 +1276,24 @@ export default function AdminPublicPage() {
           </div>
           {/* ナビラベル */}
           <div className="border-t border-gray-100 pt-4">
-            <p className="mb-2 text-[11px] font-bold text-gray-400">ナビラベル</p>
-            <div className="grid gap-2 grid-cols-2">
+            <p className="mb-2 text-[11px] font-bold text-gray-400">ナビラベル・リンク先</p>
+            <div className="space-y-2">
               {[
-                { field: 'aboutLabel' as const, placeholder: '団体詳細' },
-                { field: 'reserveLabel' as const, placeholder: '予約する' },
-                { field: 'blogLabel' as const, placeholder: 'ブログ' },
-                { field: 'contactLabel' as const, placeholder: 'お問い合わせ' },
-              ].map(({ field, placeholder }) => (
-                <input key={field} value={(form[field] as string) ?? ''}
-                  onChange={(e) => setForm((p) => ({ ...p, [field]: e.target.value }))}
-                  placeholder={placeholder}
-                  className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                { labelField: 'aboutLabel' as const, urlField: 'navAboutUrl' as const, placeholder: '団体詳細', defaultUrl: '#about' },
+                { labelField: 'reserveLabel' as const, urlField: 'navReserveUrl' as const, placeholder: '予約する', defaultUrl: '#reserve' },
+                { labelField: 'blogLabel' as const, urlField: 'navBlogUrl' as const, placeholder: 'ブログ', defaultUrl: '#blog' },
+                { labelField: 'contactLabel' as const, urlField: 'navContactUrl' as const, placeholder: 'お問い合わせ', defaultUrl: '#contact' },
+              ].map(({ labelField, urlField, placeholder, defaultUrl }) => (
+                <div key={labelField} className="flex gap-1.5">
+                  <input value={(form[labelField] as string) ?? ''}
+                    onChange={(e) => setForm((p) => ({ ...p, [labelField]: e.target.value }))}
+                    placeholder={placeholder}
+                    className="w-24 shrink-0 rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                  <input value={(form[urlField] as string) ?? ''}
+                    onChange={(e) => setForm((p) => ({ ...p, [urlField]: e.target.value }))}
+                    placeholder={`リンク先 (空欄: ${defaultUrl})`}
+                    className="min-w-0 flex-1 rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                </div>
               ))}
             </div>
           </div>

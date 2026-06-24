@@ -356,6 +356,10 @@ export default async function ClubCmsPage({
         line?: string;
         instagram?: string;
         x?: string;
+        aboutUrl?: string;
+        reserveUrl?: string;
+        blogUrl?: string;
+        contactUrl?: string;
       };
     } catch {
       return {};
@@ -370,6 +374,10 @@ export default async function ClubCmsPage({
   const reserveEventMetaColor = sectionCopy.reserveEventMetaColor?.trim() || '#6B7280';
   const reserveEventCardBg = sectionCopy.reserveEventCardBg?.trim() || '#ffffff';
   const blogPostCardBg = sectionCopy.blogPostCardBg?.trim() || '#ffffff';
+  const navAboutUrl = sectionCopy.aboutUrl?.trim() || '#about';
+  const navReserveUrl = sectionCopy.reserveUrl?.trim() || reserveHref;
+  const navBlogUrl = sectionCopy.blogUrl?.trim() || '#blog';
+  const navContactUrl = sectionCopy.contactUrl?.trim() || contactHref;
   const blogSectionTitle = sectionCopy.blogTitle?.trim() || navLabels.blog;
   const blogSectionLead = sectionCopy.blogLead?.trim() || '活動日記やお知らせを表示するエリアです。';
   const blogTitleColor = sectionCopy.blogTitleColor?.trim() || textColor;
@@ -419,10 +427,10 @@ export default async function ClubCmsPage({
                 {page.subtitle && <p style={{ marginTop: subtitleGap, ...subtitleTextStyle }}>{page.subtitle}</p>}
                 {heroNavPosition === 'inside' && (
                   <nav className={`mt-4 ${buttonLayoutClass}`}>
-                    <a href="#about" className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.about}</a>
-                    <a href="#blog" className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.blog}</a>
-                    <Link href={reserveHref} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.reserve}</Link>
-                    <Link href={contactHref} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.contact}</Link>
+                    <Link href={navAboutUrl} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.about}</Link>
+                    <Link href={navBlogUrl} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.blog}</Link>
+                    <Link href={navReserveUrl} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.reserve}</Link>
+                    <Link href={navContactUrl} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.contact}</Link>
                   </nav>
                 )}
               </div>
@@ -430,10 +438,10 @@ export default async function ClubCmsPage({
           </div>
           {heroNavPosition === 'below' && (
             <nav className={`border-b border-black/5 px-3 pb-3 pt-3 ${buttonLayoutClass}`}>
-              <a href="#about" className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.about}</a>
-              <a href="#blog" className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.blog}</a>
-              <Link href={reserveHref} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.reserve}</Link>
-              <Link href={contactHref} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.contact}</Link>
+              <Link href={navAboutUrl} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.about}</Link>
+              <Link href={navBlogUrl} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.blog}</Link>
+              <Link href={navReserveUrl} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.reserve}</Link>
+              <Link href={navContactUrl} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.contact}</Link>
             </nav>
           )}
         </>
@@ -443,10 +451,10 @@ export default async function ClubCmsPage({
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
             <Link href={clubHref} className="text-sm font-bold" style={{ color: textColor }}>{tenantName}</Link>
             <div className="flex items-center gap-2 text-xs font-bold">
-              <a href="#about" className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.about}</a>
-              <a href="#blog" className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.blog}</a>
-              <a href="#contact" className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.contact}</a>
-              <Link href={reserveHref} className={`px-4 py-2 font-bold text-white ${btnClass}`} style={{ backgroundColor: accentColor, ...buttonOpacityStyle }}>
+              <Link href={navAboutUrl} className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.about}</Link>
+              <Link href={navBlogUrl} className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.blog}</Link>
+              <Link href={navContactUrl} className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.contact}</Link>
+              <Link href={navReserveUrl} className={`px-4 py-2 font-bold text-white ${btnClass}`} style={{ backgroundColor: accentColor, ...buttonOpacityStyle }}>
                 {navLabels.reserve}
               </Link>
             </div>
@@ -547,77 +555,86 @@ export default async function ClubCmsPage({
           )}
         </div>
 
-        <div id="reserve" className="mt-8 scroll-mt-6 rounded-xl px-5 py-6 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
-          <p className="text-lg font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
-          {reserveSectionLead && (
-            <p className="mt-2 text-sm leading-7" style={{ color: reserveLeadColor }}>{reserveSectionLead}</p>
-          )}
-          <ReservationViewShowcase
-            accentColor={accentColor}
-            buttonLabel={navLabels.reserve}
-            href={reserveHref}
-            viewStyle={page.reserveViewStyle}
-            events={reserveEvents}
-            tenantCode={page.tenant.code ?? tenantCode}
-            eventTitleColor={reserveEventTitleColor}
-            eventDateColor={reserveEventDateColor}
-            eventMetaColor={reserveEventMetaColor}
-            eventCardBg={reserveEventCardBg}
-            className="mt-4"
-          />
+        <div id="reserve" className="relative mt-8 scroll-mt-6 rounded-xl px-5 py-6 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
+          <Link href={navReserveUrl} className="absolute inset-0 rounded-xl" aria-label={navLabels.reserve} />
+          <div className="relative">
+            <p className="text-lg font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
+            {reserveSectionLead && (
+              <p className="mt-2 text-sm leading-7" style={{ color: reserveLeadColor }}>{reserveSectionLead}</p>
+            )}
+            <ReservationViewShowcase
+              accentColor={accentColor}
+              buttonLabel={navLabels.reserve}
+              href={navReserveUrl}
+              viewStyle={page.reserveViewStyle}
+              events={reserveEvents}
+              tenantCode={page.tenant.code ?? tenantCode}
+              eventTitleColor={reserveEventTitleColor}
+              eventDateColor={reserveEventDateColor}
+              eventMetaColor={reserveEventMetaColor}
+              eventCardBg={reserveEventCardBg}
+              className="mt-4"
+            />
+          </div>
         </div>
 
-        <section id="blog" className="mt-8 scroll-mt-6 rounded-xl px-5 py-6 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
-          <p className="text-lg font-bold" style={{ color: blogTitleColor }}>{blogSectionTitle}</p>
-          {blogSectionLead && (
-            <p className="mt-2 text-sm leading-7" style={{ color: blogLeadColor }}>{blogSectionLead}</p>
-          )}
-          {blogPosts.length > 0 && (
-            <div className="mt-4 space-y-3">
-              {blogPosts.slice(0, 3).map((post) => {
-                const postImage = imgUrl(post.coverImageUrl, IMAGE_BASE_URL);
-                return (
-                  <Link key={post.id} href={`/clubs/${page.tenant.code ?? tenantCode}/blog/${post.slug}`}
-                    className="flex gap-3 rounded-xl border border-gray-100 p-3 transition hover:opacity-90"
-                    style={{ backgroundColor: blogPostCardBg }}>
-                    {postImage && <img src={postImage} alt="" className="h-16 w-20 shrink-0 rounded-lg object-cover" />}
-                    <div className="min-w-0">
-                      <p className="line-clamp-2 text-sm font-bold leading-5" style={{ color: textColor }}>{post.title}</p>
-                      {post.excerpt && <p className="mt-1 line-clamp-2 text-xs leading-5" style={{ color: blogLeadColor }}>{post.excerpt}</p>}
-                    </div>
-                  </Link>
-                );
-              })}
-              <Link href={`/clubs/${page.tenant.code ?? tenantCode}/blog`}
-                className="inline-flex text-xs font-bold transition hover:underline"
-                style={{ color: accentColor }}>
-                ブログ一覧を見る
-              </Link>
-            </div>
-          )}
+        <section id="blog" className="relative mt-8 scroll-mt-6 rounded-xl px-5 py-6 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
+          <Link href={navBlogUrl} className="absolute inset-0 rounded-xl" aria-label={navLabels.blog} />
+          <div className="relative">
+            <p className="text-lg font-bold" style={{ color: blogTitleColor }}>{blogSectionTitle}</p>
+            {blogSectionLead && (
+              <p className="mt-2 text-sm leading-7" style={{ color: blogLeadColor }}>{blogSectionLead}</p>
+            )}
+            {blogPosts.length > 0 && (
+              <div className="mt-4 space-y-3">
+                {blogPosts.slice(0, 3).map((post) => {
+                  const postImage = imgUrl(post.coverImageUrl, IMAGE_BASE_URL);
+                  return (
+                    <Link key={post.id} href={`/clubs/${page.tenant.code ?? tenantCode}/blog/${post.slug}`}
+                      className="flex gap-3 rounded-xl border border-gray-100 p-3 transition hover:opacity-90"
+                      style={{ backgroundColor: blogPostCardBg }}>
+                      {postImage && <img src={postImage} alt="" className="h-16 w-20 shrink-0 rounded-lg object-cover" />}
+                      <div className="min-w-0">
+                        <p className="line-clamp-2 text-sm font-bold leading-5" style={{ color: textColor }}>{post.title}</p>
+                        {post.excerpt && <p className="mt-1 line-clamp-2 text-xs leading-5" style={{ color: blogLeadColor }}>{post.excerpt}</p>}
+                      </div>
+                    </Link>
+                  );
+                })}
+                <Link href={`/clubs/${page.tenant.code ?? tenantCode}/blog`}
+                  className="inline-flex text-xs font-bold transition hover:underline"
+                  style={{ color: accentColor }}>
+                  ブログ一覧を見る
+                </Link>
+              </div>
+            )}
+          </div>
         </section>
 
-        <div id="contact" className="mt-6 scroll-mt-6 rounded-xl px-4 py-4 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
-          <p className="text-lg font-bold" style={{ color: contactTitleColor }}>{contactSectionTitle}</p>
-          {contactSectionLead && (
-            <p className="mt-2 text-sm leading-7" style={{ color: contactLeadColor }}>{contactSectionLead}</p>
-          )}
-          {(() => {
-            const contactLink = sectionCopy.contact
-              ? sectionCopy.contact.includes('@')
-                ? `mailto:${sectionCopy.contact}`
-                : /^\d/.test(sectionCopy.contact)
-                  ? `tel:${sectionCopy.contact.replace(/[^\d+]/g, '')}`
-                  : contactHref
-              : contactHref;
-            return (
-              <Link href={contactLink}
-                className="mt-3 inline-flex text-xs font-bold leading-5 transition hover:underline"
-                style={{ color: contactMessageColor }}>
-                {contactSectionMessage}
-              </Link>
-            );
-          })()}
+        <div id="contact" className="relative mt-6 scroll-mt-6 rounded-xl px-4 py-4 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
+          <Link href={navContactUrl} className="absolute inset-0 rounded-xl" aria-label={navLabels.contact} />
+          <div className="relative">
+            <p className="text-lg font-bold" style={{ color: contactTitleColor }}>{contactSectionTitle}</p>
+            {contactSectionLead && (
+              <p className="mt-2 text-sm leading-7" style={{ color: contactLeadColor }}>{contactSectionLead}</p>
+            )}
+            {(() => {
+              const contactLink = sectionCopy.contact
+                ? sectionCopy.contact.includes('@')
+                  ? `mailto:${sectionCopy.contact}`
+                  : /^\d/.test(sectionCopy.contact)
+                    ? `tel:${sectionCopy.contact.replace(/[^\d+]/g, '')}`
+                    : contactHref
+                : contactHref;
+              return (
+                <Link href={contactLink}
+                  className="mt-3 inline-flex text-xs font-bold leading-5 transition hover:underline"
+                  style={{ color: contactMessageColor }}>
+                  {contactSectionMessage}
+                </Link>
+              );
+            })()}
+          </div>
         </div>
       </article>
 
