@@ -613,7 +613,7 @@ export default function AdminPublicPage() {
                   <div className="flex flex-col gap-2">
                     {snsItems.map(({ label, color }) => (
                       <span key={label} className="flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 text-sm font-bold" style={{ borderColor: color, color }}>
-                        {label} でフォロー
+                        {label}
                       </span>
                     ))}
                   </div>

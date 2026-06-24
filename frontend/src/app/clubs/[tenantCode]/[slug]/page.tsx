@@ -404,7 +404,7 @@ export default async function ClubCmsPage({
 
         <div className={`rounded-xl px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8 ${heroImageMode === 'background' ? '' : 'mt-8'}`} style={{ backgroundColor: navBg }}>
           {page.blocks?.length ? (
-            <div className="space-y-8">
+            <div className="space-y-5">
               {(page.blocks as any[]).map((block: any, i: number) => {
                 const blockFontSize = resolvePxSize(block.fontSize, bodyFontSize, 10, 28, BODY_SIZE_LEGACY);
                 const blockBodyClass = bodyLeadingClass(blockFontSize);
@@ -412,9 +412,9 @@ export default async function ClubCmsPage({
                 if (block.type === 'media-text') {
                   const isLeft = block.imagePosition !== 'right';
                   return (
-                    <div key={i} className={`flex flex-col gap-4 sm:flex-row sm:items-start ${!isLeft ? 'sm:flex-row-reverse' : ''}`}>
+                    <div key={i} className={`flex items-start gap-3 ${!isLeft ? 'flex-row-reverse' : ''}`}>
                       {block.imageUrl && (
-                        <div className="h-44 w-full shrink-0 overflow-hidden rounded-xl sm:h-36 sm:w-2/5">
+                        <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl">
                           <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                         </div>
                       )}

@@ -57,7 +57,7 @@ export function SnsBlock({ instagramUrl, xUrl, threadsUrl, instagramLabel, xLabe
         <div className="flex flex-col gap-2">
           {linkButtons.map(({ url, key, label }) => (
             <a key={key} href={url!} target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 rounded-xl border-2 py-3 text-sm font-bold transition hover:opacity-80"
+              className="flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 text-sm font-bold transition hover:opacity-80"
               style={{ borderColor: SNS_STYLES[key].bg, color: SNS_STYLES[key].bg }}>
               {label}
             </a>
