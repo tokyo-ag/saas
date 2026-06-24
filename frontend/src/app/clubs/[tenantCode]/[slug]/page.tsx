@@ -316,6 +316,47 @@ export default async function ClubCmsPage({
   };
 
   const contactHref = `/liff/${page.tenant.code ?? tenantCode}/admin-talk`;
+  const sectionCopy = (() => {
+    try {
+      return JSON.parse(page.footerText ?? '{}') as {
+        contact?: string;
+        contactColor?: string;
+        contactTitle?: string;
+        contactLead?: string;
+        contactMessage?: string;
+        contactTitleColor?: string;
+        contactLeadColor?: string;
+        contactMessageColor?: string;
+        reserveTitle?: string;
+        reserveLead?: string;
+        reserveTitleColor?: string;
+        reserveLeadColor?: string;
+        blogTitle?: string;
+        blogLead?: string;
+        blogTitleColor?: string;
+        blogLeadColor?: string;
+        line?: string;
+        instagram?: string;
+        x?: string;
+      };
+    } catch {
+      return {};
+    }
+  })();
+  const reserveSectionTitle = sectionCopy.reserveTitle?.trim() || navLabels.reserve;
+  const reserveSectionLead = sectionCopy.reserveLead?.trim() || '募集中のイベントを表示します。';
+  const reserveTitleColor = sectionCopy.reserveTitleColor?.trim() || textColor;
+  const reserveLeadColor = sectionCopy.reserveLeadColor?.trim() || '#6B7280';
+  const blogSectionTitle = sectionCopy.blogTitle?.trim() || navLabels.blog;
+  const blogSectionLead = sectionCopy.blogLead?.trim() || '活動日記やお知らせを表示するエリアです。';
+  const blogTitleColor = sectionCopy.blogTitleColor?.trim() || textColor;
+  const blogLeadColor = sectionCopy.blogLeadColor?.trim() || '#6B7280';
+  const contactSectionTitle = sectionCopy.contactTitle?.trim() || navLabels.contact;
+  const contactSectionLead = sectionCopy.contactLead?.trim() || 'ご質問・ご相談はこちらからお気軽にどうぞ。';
+  const contactSectionMessage = sectionCopy.contactMessage?.trim() || sectionCopy.contact?.trim() || 'お問い合わせ　WEBサイト内でメッセージが可能です。';
+  const contactTitleColor = sectionCopy.contactTitleColor?.trim() || textColor;
+  const contactLeadColor = sectionCopy.contactLeadColor?.trim() || '#6B7280';
+  const contactMessageColor = sectionCopy.contactMessageColor?.trim() || sectionCopy.contactColor?.trim() || accentColor;
 
   return (
     <main className="min-h-screen sm:bg-gray-200" style={{ fontFamily, backgroundColor }}>
@@ -484,7 +525,10 @@ export default async function ClubCmsPage({
         </div>
 
         <div id="reserve" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
-          <p className="text-lg font-bold text-gray-900">{navLabels.reserve}</p>
+          <p className="text-lg font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
+          {reserveSectionLead && (
+            <p className="mt-2 text-sm leading-7" style={{ color: reserveLeadColor }}>{reserveSectionLead}</p>
+          )}
           <ReservationViewShowcase
             accentColor={accentColor}
             buttonLabel={navLabels.reserve}
@@ -497,29 +541,30 @@ export default async function ClubCmsPage({
         </div>
 
         <section id="blog" className="mt-8 scroll-mt-6 rounded-xl bg-white px-5 py-6 shadow-sm ring-1 ring-gray-100">
-          <p className="text-lg font-bold text-gray-900">{navLabels.blog}</p>
-          <p className="mt-2 text-sm leading-7 text-gray-500">活動日記やお知らせを表示するエリアです。</p>
+          <p className="text-lg font-bold" style={{ color: blogTitleColor }}>{blogSectionTitle}</p>
+          {blogSectionLead && (
+            <p className="mt-2 text-sm leading-7" style={{ color: blogLeadColor }}>{blogSectionLead}</p>
+          )}
         </section>
 
         <div id="contact" className="mt-6 scroll-mt-6 rounded-xl bg-white px-4 py-4 shadow-sm ring-1 ring-gray-100">
-          <p className="text-lg font-bold text-gray-900">{navLabels.contact}</p>
-          <p className="mt-2 text-sm leading-7 text-gray-500">ご質問・ご相談はこちらからお気軽にどうぞ。</p>
+          <p className="text-lg font-bold" style={{ color: contactTitleColor }}>{contactSectionTitle}</p>
+          {contactSectionLead && (
+            <p className="mt-2 text-sm leading-7" style={{ color: contactLeadColor }}>{contactSectionLead}</p>
+          )}
           {(() => {
-            let cfd: { contact?: string; contactColor?: string } = {};
-            try { cfd = JSON.parse(page.footerText ?? '{}'); } catch {}
-            const contactText = cfd.contact?.trim() || 'お問い合わせ　WEBサイト内でメッセージが可能です。';
-            const contactLink = cfd.contact
-              ? cfd.contact.includes('@')
-                ? `mailto:${cfd.contact}`
-                : /^\d/.test(cfd.contact)
-                  ? `tel:${cfd.contact.replace(/[^\d+]/g, '')}`
+            const contactLink = sectionCopy.contact
+              ? sectionCopy.contact.includes('@')
+                ? `mailto:${sectionCopy.contact}`
+                : /^\d/.test(sectionCopy.contact)
+                  ? `tel:${sectionCopy.contact.replace(/[^\d+]/g, '')}`
                   : contactHref
               : contactHref;
             return (
               <Link href={contactLink}
-                className="mt-3 inline-flex text-xs font-bold transition hover:underline"
-                style={{ color: cfd.contactColor || accentColor }}>
-                {contactText}
+                className="mt-3 inline-flex text-xs font-bold leading-5 transition hover:underline"
+                style={{ color: contactMessageColor }}>
+                {contactSectionMessage}
               </Link>
             );
           })()}
@@ -528,16 +573,14 @@ export default async function ClubCmsPage({
 
       {/* Footer */}
       {(() => {
-        let fd: { contact?: string; contactColor?: string; line?: string; instagram?: string; x?: string } = {};
-        try { fd = JSON.parse(page.footerText ?? '{}'); } catch {}
-        const hasSocial = fd.line || fd.instagram || fd.x;
+        const hasSocial = sectionCopy.line || sectionCopy.instagram || sectionCopy.x;
         return (
           <footer className="mt-4 border-t border-gray-100 pb-6 pt-4 text-center">
             {hasSocial && (
               <div className="flex justify-center gap-5">
-                {fd.line && <a href={fd.line} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[#06C755] hover:underline">LINE公式</a>}
-                {fd.instagram && <a href={fd.instagram} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[#E1306C] hover:underline">Instagram</a>}
-                {fd.x && <a href={fd.x} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-gray-800 hover:underline">X</a>}
+                {sectionCopy.line && <a href={sectionCopy.line} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[#06C755] hover:underline">LINE公式</a>}
+                {sectionCopy.instagram && <a href={sectionCopy.instagram} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[#E1306C] hover:underline">Instagram</a>}
+                {sectionCopy.x && <a href={sectionCopy.x} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-gray-800 hover:underline">X</a>}
               </div>
             )}
             <p className="mt-4 text-[11px] text-gray-400">

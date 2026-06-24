@@ -83,6 +83,20 @@ const emptyForm: PublicPageInput = {
   footerText: '',
   footerContact: '',
   footerContactColor: '',
+  contactTitle: '',
+  contactLead: '',
+  contactMessage: '',
+  contactTitleColor: '',
+  contactLeadColor: '',
+  contactMessageColor: '',
+  reserveTitle: '',
+  reserveLead: '',
+  reserveTitleColor: '',
+  reserveLeadColor: '',
+  blogTitle: '',
+  blogLead: '',
+  blogTitleColor: '',
+  blogLeadColor: '',
   footerLine: '',
   footerInstagram: '',
   footerX: '',
@@ -324,7 +338,7 @@ export default function AdminPublicPage() {
   const heroFocalDragRef = useRef<{ startX: number; startY: number; startFocal: { x: number; y: number } } | null>(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ global: true, header: true, structure: true, footer: false });
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ global: true, header: true, structure: true, reserve: false, blog: false, footer: false });
   const toggleSection = (key: string) => setOpenSections(p => ({ ...p, [key]: !p[key] }));
 
   const tenantCode = tenant?.code ?? tenant?.id ?? '';
@@ -409,6 +423,20 @@ export default function AdminPublicPage() {
     blog: form.blogLabel?.trim() || 'ブログ',
     contact: form.contactLabel?.trim() || 'お問い合わせ',
   };
+  const reserveSectionTitle = form.reserveTitle?.trim() || navLabels.reserve;
+  const reserveSectionLead = form.reserveLead?.trim() || '募集中のイベントを表示します。';
+  const reserveTitleColor = form.reserveTitleColor?.trim() || textColor;
+  const reserveLeadColor = form.reserveLeadColor?.trim() || '#6B7280';
+  const blogSectionTitle = form.blogTitle?.trim() || navLabels.blog;
+  const blogSectionLead = form.blogLead?.trim() || '活動日記やお知らせを表示するエリアです。';
+  const blogTitleColor = form.blogTitleColor?.trim() || textColor;
+  const blogLeadColor = form.blogLeadColor?.trim() || '#6B7280';
+  const contactSectionTitle = form.contactTitle?.trim() || navLabels.contact;
+  const contactSectionLead = form.contactLead?.trim() || 'ご質問・ご相談はこちらからお気軽にどうぞ。';
+  const contactSectionMessage = form.contactMessage?.trim() || form.footerContact?.trim() || 'お問い合わせ　WEBサイト内でメッセージが可能です。';
+  const contactTitleColor = form.contactTitleColor?.trim() || textColor;
+  const contactLeadColor = form.contactLeadColor?.trim() || '#6B7280';
+  const contactMessageColor = form.contactMessageColor?.trim() || form.footerContactColor?.trim() || accentColor;
   const buttonStyle = form.buttonStyle ?? 'rounded';
   const buttonLayout = form.buttonLayout === 'row1x4' ? 'row1x4' : 'grid2x2';
   const buttonOpacity = clampPercent(form.buttonOpacity ?? 100);
@@ -424,6 +452,47 @@ export default function AdminPublicPage() {
   const btnSize = form.buttonSize ?? 40;
   const btnIsPill = buttonStyle === 'pill';
   const dragRef = useRef<{ startY: number; startSize: number } | null>(null);
+
+  const renderCopyInput = (
+    label: string,
+    field: keyof PublicPageInput,
+    colorField: keyof PublicPageInput,
+    placeholder: string,
+    fallbackColor: string,
+    multiline = false,
+  ) => (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-bold text-gray-400">{label}</span>
+        <label className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400">
+          色
+          <input
+            type="color"
+            value={((form[colorField] as string | undefined)?.trim() || fallbackColor)}
+            onChange={(e) => setForm((p) => ({ ...p, [colorField]: e.target.value }))}
+            className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
+          />
+        </label>
+      </div>
+      {multiline ? (
+        <textarea
+          value={(form[field] as string | undefined) ?? ''}
+          onChange={(e) => setForm((p) => ({ ...p, [field]: e.target.value }))}
+          placeholder={placeholder}
+          rows={3}
+          className="w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+        />
+      ) : (
+        <input
+          type="text"
+          value={(form[field] as string | undefined) ?? ''}
+          onChange={(e) => setForm((p) => ({ ...p, [field]: e.target.value }))}
+          placeholder={placeholder}
+          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+        />
+      )}
+    </div>
+  );
 
   useEffect(() => {
     Promise.all([api.tenant.get(), api.publicPages.list()])
@@ -486,8 +555,50 @@ export default function AdminPublicPage() {
             ...(() => {
               try {
                 const fd = JSON.parse((first as any).footerText ?? '{}');
-                return { footerContact: fd.contact ?? '', footerContactColor: fd.contactColor ?? '', footerLine: fd.line ?? '', footerInstagram: fd.instagram ?? '', footerX: fd.x ?? '' };
-              } catch { return { footerContact: (first as any).footerText ?? '', footerContactColor: '', footerLine: '', footerInstagram: '', footerX: '' }; }
+                return {
+                  footerContact: fd.contact ?? '',
+                  footerContactColor: fd.contactColor ?? '',
+                  contactTitle: fd.contactTitle ?? '',
+                  contactLead: fd.contactLead ?? '',
+                  contactMessage: fd.contactMessage ?? '',
+                  contactTitleColor: fd.contactTitleColor ?? '',
+                  contactLeadColor: fd.contactLeadColor ?? '',
+                  contactMessageColor: fd.contactMessageColor ?? '',
+                  reserveTitle: fd.reserveTitle ?? '',
+                  reserveLead: fd.reserveLead ?? '',
+                  reserveTitleColor: fd.reserveTitleColor ?? '',
+                  reserveLeadColor: fd.reserveLeadColor ?? '',
+                  blogTitle: fd.blogTitle ?? '',
+                  blogLead: fd.blogLead ?? '',
+                  blogTitleColor: fd.blogTitleColor ?? '',
+                  blogLeadColor: fd.blogLeadColor ?? '',
+                  footerLine: fd.line ?? '',
+                  footerInstagram: fd.instagram ?? '',
+                  footerX: fd.x ?? '',
+                };
+              } catch {
+                return {
+                  footerContact: (first as any).footerText ?? '',
+                  footerContactColor: '',
+                  contactTitle: '',
+                  contactLead: '',
+                  contactMessage: '',
+                  contactTitleColor: '',
+                  contactLeadColor: '',
+                  contactMessageColor: '',
+                  reserveTitle: '',
+                  reserveLead: '',
+                  reserveTitleColor: '',
+                  reserveLeadColor: '',
+                  blogTitle: '',
+                  blogLead: '',
+                  blogTitleColor: '',
+                  blogLeadColor: '',
+                  footerLine: '',
+                  footerInstagram: '',
+                  footerX: '',
+                };
+              }
             })(),
             aboutLabel: first.aboutLabel ?? '団体詳細',
             reserveLabel: first.reserveLabel ?? '予約する',
@@ -700,7 +811,27 @@ export default function AdminPublicPage() {
       buttonBgOpacity: form.buttonBgOpacity ?? 100,
       buttonTextOpacity: form.buttonTextOpacity ?? 100,
       blocks: blocks.length > 0 ? blocks.map(({ id: _id, ...rest }) => rest) : undefined,
-      footerText: JSON.stringify({ contact: form.footerContact?.trim() || '', contactColor: form.footerContactColor?.trim() || '', line: form.footerLine?.trim() || '', instagram: form.footerInstagram?.trim() || '', x: form.footerX?.trim() || '' }),
+      footerText: JSON.stringify({
+        contact: form.footerContact?.trim() || '',
+        contactColor: form.footerContactColor?.trim() || '',
+        contactTitle: form.contactTitle?.trim() || '',
+        contactLead: form.contactLead?.trim() || '',
+        contactMessage: form.contactMessage?.trim() || '',
+        contactTitleColor: form.contactTitleColor?.trim() || '',
+        contactLeadColor: form.contactLeadColor?.trim() || '',
+        contactMessageColor: form.contactMessageColor?.trim() || '',
+        reserveTitle: form.reserveTitle?.trim() || '',
+        reserveLead: form.reserveLead?.trim() || '',
+        reserveTitleColor: form.reserveTitleColor?.trim() || '',
+        reserveLeadColor: form.reserveLeadColor?.trim() || '',
+        blogTitle: form.blogTitle?.trim() || '',
+        blogLead: form.blogLead?.trim() || '',
+        blogTitleColor: form.blogTitleColor?.trim() || '',
+        blogLeadColor: form.blogLeadColor?.trim() || '',
+        line: form.footerLine?.trim() || '',
+        instagram: form.footerInstagram?.trim() || '',
+        x: form.footerX?.trim() || '',
+      }),
       status: 'published',
       seoTitle: displayName,
       seoDescription: blocks.map(b => b.content).join(' ').replace(/\s+/g, ' ').trim().slice(0, 150) || form.body.replace(/[#>*_-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 150),
@@ -1319,6 +1450,36 @@ export default function AdminPublicPage() {
           </div>}
         </div>
 
+        {/* 予約管理 */}
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <button type="button" onClick={() => toggleSection('reserve')}
+            className="flex w-full items-center justify-between px-4 py-3 transition hover:bg-gray-50">
+            <p className="text-xs font-bold text-gray-700">予約管理</p>
+            <svg className={`h-4 w-4 text-gray-400 transition-transform ${openSections.reserve ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          </button>
+          {openSections.reserve && (
+            <div className="space-y-4 border-t border-gray-100 p-4">
+              {renderCopyInput('タイトル', 'reserveTitle', 'reserveTitleColor', navLabels.reserve, textColor)}
+              {renderCopyInput('説明', 'reserveLead', 'reserveLeadColor', '募集中のイベントを表示します。', '#6B7280', true)}
+            </div>
+          )}
+        </div>
+
+        {/* 活動ブログ */}
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <button type="button" onClick={() => toggleSection('blog')}
+            className="flex w-full items-center justify-between px-4 py-3 transition hover:bg-gray-50">
+            <p className="text-xs font-bold text-gray-700">活動ブログ</p>
+            <svg className={`h-4 w-4 text-gray-400 transition-transform ${openSections.blog ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          </button>
+          {openSections.blog && (
+            <div className="space-y-4 border-t border-gray-100 p-4">
+              {renderCopyInput('タイトル', 'blogTitle', 'blogTitleColor', navLabels.blog, textColor)}
+              {renderCopyInput('説明', 'blogLead', 'blogLeadColor', '活動日記やお知らせを表示するエリアです。', '#6B7280', true)}
+            </div>
+          )}
+        </div>
+
         {/* フッター */}
         <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
           <button type="button" onClick={() => toggleSection('footer')}
@@ -1332,6 +1493,12 @@ export default function AdminPublicPage() {
               <div className="rounded-lg bg-gray-50 px-3 py-2">
                 <p className="text-[11px] font-bold text-gray-400 mb-1">COMIUメッセージ（固定）</p>
                 <p className="text-xs text-gray-500">Powered by <span className="font-bold">COMIU</span></p>
+              </div>
+              <div className="space-y-3 rounded-lg bg-gray-50 p-3">
+                <p className="text-[11px] font-bold text-gray-400">お問い合わせ表示</p>
+                {renderCopyInput('タイトル', 'contactTitle', 'contactTitleColor', navLabels.contact, textColor)}
+                {renderCopyInput('説明', 'contactLead', 'contactLeadColor', 'ご質問・ご相談はこちらからお気軽にどうぞ。', '#6B7280', true)}
+                {renderCopyInput('リンク文言', 'contactMessage', 'contactMessageColor', 'お問い合わせ　WEBサイト内でメッセージが可能です。', accentColor, true)}
               </div>
               {/* 連絡先 */}
               <div className="space-y-2">
@@ -1497,7 +1664,10 @@ export default function AdminPublicPage() {
                   {renderPreviewBlocks()}
                 </div>
                 <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
-                  <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.reserve}</p>
+                  <p className="text-sm font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
+                  {reserveSectionLead && (
+                    <p className="mt-1 text-xs leading-5" style={{ color: reserveLeadColor }}>{reserveSectionLead}</p>
+                  )}
                   <ReservationViewShowcase
                     accentColor={accentColor}
                     buttonLabel={navLabels.reserve}
@@ -1508,14 +1678,18 @@ export default function AdminPublicPage() {
                   />
                 </section>
                 <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
-                  <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.blog}</p>
-                  <p className="mt-1 text-xs text-gray-400">公開した記事が表示されます</p>
+                  <p className="text-sm font-bold" style={{ color: blogTitleColor }}>{blogSectionTitle}</p>
+                  {blogSectionLead && (
+                    <p className="mt-1 text-xs leading-5" style={{ color: blogLeadColor }}>{blogSectionLead}</p>
+                  )}
                 </section>
                 <section className="rounded-lg p-3" style={{ backgroundColor: navBg }}>
-                  <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.contact}</p>
-                  <p className="mt-1 text-xs text-gray-400">ご質問・ご相談はこちらからお気軽にどうぞ。</p>
-                  <p className="mt-2 text-xs font-bold" style={{ color: form.footerContactColor || accentColor }}>
-                    {form.footerContact?.trim() || 'お問い合わせ　WEBサイト内でメッセージが可能です。'}
+                  <p className="text-sm font-bold" style={{ color: contactTitleColor }}>{contactSectionTitle}</p>
+                  {contactSectionLead && (
+                    <p className="mt-1 text-xs leading-5" style={{ color: contactLeadColor }}>{contactSectionLead}</p>
+                  )}
+                  <p className="mt-2 text-xs font-bold leading-5" style={{ color: contactMessageColor }}>
+                    {contactSectionMessage}
                   </p>
                 </section>
               </div>
