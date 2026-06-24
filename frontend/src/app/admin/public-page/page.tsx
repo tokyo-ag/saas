@@ -304,6 +304,7 @@ export default function AdminPublicPage() {
   const [copied, setCopied] = useState(false);
   const blockUploadRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const blockFocalDragRef = useRef<{ startX: number; startY: number; startFocal: { x: number; y: number } } | null>(null);
+  const heroFocalDragRef = useRef<{ startX: number; startY: number; startFocal: { x: number; y: number } } | null>(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
@@ -856,25 +857,36 @@ export default function AdminPublicPage() {
             </div>
             {heroImageMode === 'background' && (
               <div className="mt-3 space-y-4">
-                {/* 画像の焦点位置 */}
-                <div>
-                  <p className="mb-2 text-[11px] font-bold text-gray-400">画像の位置</p>
-                  <div className="grid grid-cols-3 gap-1.5 w-fit">
-                    {[
-                      ['left top', 'center top', 'right top'],
-                      ['left center', 'center center', 'right center'],
-                      ['left bottom', 'center bottom', 'right bottom'],
-                    ].map((row, ri) => row.map((pos) => (
-                      <button key={pos} type="button"
-                        onClick={() => setForm((p) => ({ ...p, heroImagePosition: pos }))}
-                        title={pos}
-                        className={`h-7 w-7 rounded-md border-2 transition ${(form.heroImagePosition ?? 'center center') === pos ? 'border-2' : 'border-gray-200 bg-gray-100 hover:bg-gray-200'}`}
-                        style={(form.heroImagePosition ?? 'center center') === pos ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}
-                      />
-                    )))}
+                {/* 画像の焦点位置: ドラッグで調整 */}
+                {imageUrls[0] && (
+                  <div>
+                    <p className="mb-1.5 text-[11px] font-bold text-gray-400">画像の位置</p>
+                    <div
+                      className="relative h-36 w-full overflow-hidden rounded-xl cursor-grab active:cursor-grabbing select-none"
+                      style={{ touchAction: 'none' }}
+                      onPointerDown={(e) => {
+                        e.currentTarget.setPointerCapture(e.pointerId);
+                        heroFocalDragRef.current = { startX: e.clientX, startY: e.clientY, startFocal: parseFocal(form.heroImagePosition) };
+                      }}
+                      onPointerMove={(e) => {
+                        if (!heroFocalDragRef.current) return;
+                        const dx = e.clientX - heroFocalDragRef.current.startX;
+                        const dy = e.clientY - heroFocalDragRef.current.startY;
+                        const x = Math.round(Math.min(100, Math.max(0, heroFocalDragRef.current.startFocal.x - dx * 0.5)));
+                        const y = Math.round(Math.min(100, Math.max(0, heroFocalDragRef.current.startFocal.y - dy * 0.5)));
+                        setForm(p => ({ ...p, heroImagePosition: `${x}% ${y}%` }));
+                      }}
+                      onPointerUp={() => { heroFocalDragRef.current = null; }}
+                    >
+                      <img src={imageUrls[0]} alt="" draggable={false}
+                        className="pointer-events-none h-full w-full object-cover"
+                        style={{ objectPosition: form.heroImagePosition ?? '50% 50%' }} />
+                      <div className="absolute inset-0 flex items-end justify-end p-2 opacity-0 hover:opacity-100 transition-opacity">
+                        <div className="rounded-full bg-black/40 px-2 py-1 text-[10px] text-white">ドラッグで調整</div>
+                      </div>
+                    </div>
                   </div>
-                  <p className="mt-1 text-[10px] text-gray-400">{form.heroImagePosition ?? 'center center'}</p>
-                </div>
+                )}
 
                 {/* テキスト位置: 右プレビューでドラッグ */}
                 <p className="text-[11px] text-gray-400">テキスト位置は右のプレビューでドラッグして調整できます</p>
