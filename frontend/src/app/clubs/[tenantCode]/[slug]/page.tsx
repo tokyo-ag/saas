@@ -398,12 +398,6 @@ export default async function ClubCmsPage({
             <div className="absolute inset-0" style={{ backgroundImage: `url(${images[0]})`, backgroundSize: 'cover', backgroundPosition: page.heroImagePosition ?? 'center center' }} />
             <div className="absolute inset-0" style={{ backgroundColor: hexToRgba(heroOverlayColor, heroOverlayOpacity) }} />
             <div className="relative z-10" style={{ minHeight: 320 }}>
-              {/* reserve CTA - 常に右上 */}
-              <div className="absolute top-5 right-6 md:right-8">
-                <Link href={reserveHref} className={`px-4 py-2 text-sm font-bold text-white ${btnClass}`} style={{ backgroundColor: accentColor, ...buttonOpacityStyle }}>
-                  {navLabels.reserve}
-                </Link>
-              </div>
               {/* テキストブロック - 位置可変 */}
               <div className={`absolute left-6 right-6 md:left-8 md:right-8 ${page.heroTextPosition === 'top' ? 'top-5' : page.heroTextPosition === 'center' ? 'top-1/2 -translate-y-1/2' : 'bottom-5'}`}>
                 <h1 className="font-bold drop-shadow" style={titleTextStyle}>{tenantName}</h1>

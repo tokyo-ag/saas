@@ -1157,12 +1157,6 @@ export default function AdminPublicPage() {
                     <div className="absolute inset-0" style={{ backgroundImage: `url(${imageUrls[0]})`, backgroundSize: 'cover', backgroundPosition: form.heroImagePosition ?? 'center center' }} />
                     <div className="absolute inset-0" style={{ backgroundColor: heroOverlayBg }} />
                     <div className="relative z-10" style={{ minHeight: 220 }}>
-                      {/* reserve CTA - 常に右上 */}
-                      <div className="absolute top-4 right-4">
-                        <span className={`px-3 py-1 text-[11px] font-bold text-white ${getBtnShapeClass(buttonStyle)}`} style={{ backgroundColor: accentColor }}>
-                          {navLabels.reserve}
-                        </span>
-                      </div>
                       {/* テキストブロック - 位置可変 */}
                       <div className={`absolute left-4 right-4 ${(form.heroTextPosition ?? 'bottom') === 'top' ? 'top-4' : (form.heroTextPosition ?? 'bottom') === 'center' ? 'top-1/2 -translate-y-1/2' : 'bottom-4'}`}>
                         <p className="font-bold drop-shadow" style={titleTextStyle}>{displayName}</p>
