@@ -765,6 +765,7 @@ export interface PublicPage {
   subtitleFont?: string | null;
   subtitleSize?: string | null;
   subtitleColor?: string | null;
+  subtitleMarginTop?: number | null;
   bodySize?: string | null;
   layoutVariant?: string | null;
   aboutLabel?: string | null;
@@ -774,6 +775,7 @@ export interface PublicPage {
   buttonStyle?: string | null;
   buttonLayout?: string | null;
   buttonOpacity?: number | null;
+  buttonRadius?: number | null;
   headerText?: string | null;
   footerText?: string | null;
   seoTitle?: string | null;
@@ -821,11 +823,13 @@ export interface PublicPageInput {
   subtitleFont?: string;
   subtitleSize?: string;
   subtitleColor?: string;
+  subtitleMarginTop?: number;
   bodySize?: string;
   layoutVariant?: string;
   buttonStyle?: string;
   buttonLayout?: string;
   buttonOpacity?: number;
+  buttonRadius?: number;
   headerText?: string;
   footerText?: string;
   aboutLabel?: string;
@@ -901,6 +905,7 @@ export interface PublicCmsPage {
   subtitleFont?: string | null;
   subtitleSize?: string | null;
   subtitleColor?: string | null;
+  subtitleMarginTop?: number | null;
   bodySize?: string | null;
   layoutVariant?: string | null;
   aboutLabel?: string | null;
@@ -913,6 +918,7 @@ export interface PublicCmsPage {
   buttonStyle?: string | null;
   buttonLayout?: string | null;
   buttonOpacity?: number | null;
+  buttonRadius?: number | null;
   headerText?: string | null;
   footerText?: string | null;
   seoTitle?: string | null;

@@ -56,11 +56,13 @@ const emptyForm: PublicPageInput = {
   subtitleFont: '',
   subtitleSize: 'base',
   subtitleColor: '',
+  subtitleMarginTop: 8,
   bodySize: 'base',
   layoutVariant: 'static',
   buttonStyle: 'rounded',
   buttonLayout: 'grid2x2',
   buttonOpacity: 100,
+  buttonRadius: 8,
   buttonBgColor: '',
   buttonBgOpacity: 100,
   buttonTextOpacity: 100,
@@ -121,8 +123,6 @@ const BTN_SHAPE_OPTIONS = [
   { label: 'まる枠', value: 'pill' },
   { label: '四角', value: 'square' },
   { label: '角丸', value: 'rounded' },
-  { label: 'お洒落', value: 'stylish' },
-  { label: 'ゴージャス', value: 'gorgeous' },
 ];
 
 const HERO_IMAGE_MODE_OPTIONS = [
@@ -135,6 +135,7 @@ const HERO_IMAGE_MODE_OPTIONS = [
 const BUTTON_LAYOUT_OPTIONS = [
   { label: '2×2', value: 'grid2x2' },
   { label: '1×4', value: 'row1x4' },
+  { label: '○○○○', value: 'circle4' },
 ];
 
 const TONE_COLORS = [
@@ -301,7 +302,8 @@ export default function AdminPublicPage() {
   const bodyFontSize = resolvePxSize(form.bodySize, 16, 12, 24, BODY_SIZE_LEGACY);
   const bodySizeClass = bodyLeadingClass(bodyFontSize);
   const titleAlign = (['left', 'center', 'right'].includes(form.titleAlign || '') ? form.titleAlign! : 'left') as 'left' | 'center' | 'right';
-  const isCategory = form.layoutVariant === 'category';
+  const subtitleGap = form.subtitleMarginTop ?? 8;
+  const btnRadius = form.buttonRadius ?? 8;
   const previewBody = form.body.trim() || tenant?.description || '';
   const imageUrls = (form.imageUrls?.length ? form.imageUrls : form.coverImageUrl ? [form.coverImageUrl] : []).filter(Boolean).slice(0, 3);
   const imageCaptions = imageUrls.map((_, i) => (form.imageCaptions?.[i] ?? '').slice(0, 80));
@@ -368,7 +370,7 @@ export default function AdminPublicPage() {
     contact: form.contactLabel?.trim() || 'お問い合わせ',
   };
   const buttonStyle = form.buttonStyle ?? 'rounded';
-  const buttonLayout = form.buttonLayout === 'row1x4' ? 'row1x4' : 'grid2x2';
+  const buttonLayout = form.buttonLayout === 'row1x4' ? 'row1x4' : form.buttonLayout === 'circle4' ? 'circle4' : 'grid2x2';
   const buttonOpacity = clampPercent(form.buttonOpacity ?? 100);
   const buttonBgOpacity = clampPercent(form.buttonBgOpacity ?? 100);
   const buttonTextOpacity = clampPercent(form.buttonTextOpacity ?? 100);
@@ -377,8 +379,8 @@ export default function AdminPublicPage() {
   const btnFillColor = buttonBgColor ? hexToRgba(buttonBgColor, buttonBgOpacity) : undefined;
   const btnTextColor = hexToRgba(textColor, buttonTextOpacity);
   const buttonBgStyle = btnFillColor ? { backgroundColor: btnFillColor } : {};
-  const previewButtonLayoutClass = buttonLayout === 'row1x4' ? 'grid grid-cols-4' : 'grid grid-cols-2';
-  const previewButtonSizeClass = buttonLayout === 'row1x4'
+  const previewButtonLayoutClass = (buttonLayout === 'row1x4' || buttonLayout === 'circle4') ? 'grid grid-cols-4' : 'grid grid-cols-2';
+  const previewButtonSizeClass = (buttonLayout === 'row1x4' || buttonLayout === 'circle4')
     ? 'h-12 px-2 text-xs leading-tight'
     : 'h-14 px-3 text-sm leading-tight';
 
@@ -424,11 +426,13 @@ export default function AdminPublicPage() {
             subtitleFont: first.subtitleFont ?? '',
             subtitleSize: first.subtitleSize ?? 'base',
             subtitleColor: first.subtitleColor ?? '',
+            subtitleMarginTop: first.subtitleMarginTop ?? 8,
             bodySize: first.bodySize ?? 'base',
-            layoutVariant: variant === 'category' ? 'category' : 'static',
+            layoutVariant: 'static',
             buttonStyle: (first as any).buttonStyle ?? 'rounded',
             buttonLayout: first.buttonLayout ?? 'grid2x2',
             buttonOpacity: first.buttonOpacity ?? 100,
+            buttonRadius: first.buttonRadius ?? 8,
             buttonBgColor: first.buttonBgColor ?? '',
             buttonBgOpacity: first.buttonBgOpacity ?? 100,
             buttonTextOpacity: first.buttonTextOpacity ?? 100,
@@ -593,8 +597,9 @@ export default function AdminPublicPage() {
       subtitleFont: form.subtitleFont?.trim() || undefined,
       subtitleSize: String(subtitleFontSize),
       subtitleColor: form.subtitleColor?.trim() || undefined,
+      subtitleMarginTop: subtitleGap,
       bodySize: String(bodyFontSize),
-      layoutVariant: isCategory ? 'category' : 'static',
+      layoutVariant: 'static',
       aboutLabel: navLabels.about,
       reserveLabel: navLabels.reserve,
       blogLabel: navLabels.blog,
@@ -602,6 +607,7 @@ export default function AdminPublicPage() {
       buttonStyle,
       buttonLayout,
       buttonOpacity,
+      buttonRadius: btnRadius,
       buttonBgColor: form.buttonBgColor?.trim() || undefined,
       buttonBgOpacity: form.buttonBgOpacity ?? 100,
       buttonTextOpacity: form.buttonTextOpacity ?? 100,
@@ -633,20 +639,6 @@ export default function AdminPublicPage() {
       {/* Top bar */}
       <div className="sticky top-0 z-20 flex items-center gap-2 border-b border-gray-200 bg-white px-4 py-3">
         <h1 className="text-base font-bold text-gray-900">公開サイト</h1>
-        <div className="flex rounded-lg border border-gray-200 p-0.5">
-          <button type="button"
-            onClick={() => setForm((p) => ({ ...p, layoutVariant: 'category' }))}
-            className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${isCategory ? 'text-white' : 'text-gray-500 hover:bg-gray-50'}`}
-            style={isCategory ? { backgroundColor: accentColor } : undefined}>
-            カテゴリー型
-          </button>
-          <button type="button"
-            onClick={() => setForm((p) => ({ ...p, layoutVariant: 'static' }))}
-            className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${!isCategory ? 'text-white' : 'text-gray-500 hover:bg-gray-50'}`}
-            style={!isCategory ? { backgroundColor: accentColor } : undefined}>
-            静止サイト型
-          </button>
-        </div>
         <div className="ml-auto flex items-center gap-2">
           {previewUrl && (
             <button type="button"
@@ -779,6 +771,15 @@ export default function AdminPublicPage() {
                   onChange={(e) => setForm((p) => ({ ...p, subtitleColor: e.target.value }))}
                   className="h-8 w-10 cursor-pointer rounded border border-gray-200 bg-white p-0.5" />
               </div>
+              <label className="block">
+                <span className="mb-1 flex items-center justify-between text-xs text-gray-500">
+                  <span>タイトルとの間隔</span>
+                  <span className="font-bold">{subtitleGap}px</span>
+                </span>
+                <input type="range" min="0" max="48" step="2" value={subtitleGap}
+                  onChange={(e) => setForm((p) => ({ ...p, subtitleMarginTop: Number(e.target.value) }))}
+                  className="w-full accent-[#06C755]" />
+              </label>
             </div>
           </div>
 
@@ -937,36 +938,40 @@ export default function AdminPublicPage() {
               </div>
             </div>
             <div>
-              <p className="mb-2 text-[11px] font-bold text-gray-400">ボタン形状</p>
+              <p className="mb-2 text-[11px] font-bold text-gray-400">ボタン角丸</p>
+              <div className="flex gap-2 mb-2">
+                {[{ label: '四角', r: 0 }, { label: '角丸', r: 8 }, { label: 'まる', r: 50 }].map((p) => (
+                  <button key={p.r} type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, buttonRadius: p.r }))}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${btnRadius === p.r ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                    style={btnRadius === p.r ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+              <label className="block">
+                <span className="mb-1 flex items-center justify-between text-xs text-gray-500">
+                  <span>角丸の大きさ</span>
+                  <span className="font-bold">{btnRadius}px</span>
+                </span>
+                <input type="range" min="0" max="50" step="1" value={btnRadius}
+                  onChange={(e) => setForm((p) => ({ ...p, buttonRadius: Number(e.target.value) }))}
+                  className="w-full accent-[#06C755]" />
+              </label>
+            </div>
+            <div>
+              <p className="mb-2 text-[11px] font-bold text-gray-400">ボタン配置</p>
               <div className="flex flex-wrap gap-2">
-                {BTN_SHAPE_OPTIONS.map((opt) => {
-                  const selected = buttonStyle === opt.value;
-                  return (
-                    <button key={opt.value} type="button"
-                      onClick={() => setForm((p) => ({ ...p, buttonStyle: opt.value }))}
-                      className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${selected ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                      style={selected ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
-                      {opt.label}
-                    </button>
-                  );
-                })}
+                {BUTTON_LAYOUT_OPTIONS.map((opt) => (
+                  <button key={opt.value} type="button"
+                    onClick={() => setForm((p) => ({ ...p, buttonLayout: opt.value }))}
+                    className={`rounded-full border px-4 py-2 text-xs font-bold transition ${buttonLayout === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                    style={buttonLayout === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                    {opt.label}
+                  </button>
+                ))}
               </div>
             </div>
-            {isCategory && (
-              <div>
-                <p className="mb-2 text-[11px] font-bold text-gray-400">ボタン配置</p>
-                <div className="flex flex-wrap gap-2">
-                  {BUTTON_LAYOUT_OPTIONS.map((opt) => (
-                    <button key={opt.value} type="button"
-                      onClick={() => setForm((p) => ({ ...p, buttonLayout: opt.value }))}
-                      className={`rounded-full border px-4 py-2 text-xs font-bold transition ${buttonLayout === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                      style={buttonLayout === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
           {/* ナビラベル */}
           <div className="border-t border-gray-100 pt-4">
@@ -1124,65 +1129,14 @@ export default function AdminPublicPage() {
         <div className="mb-2 flex items-center justify-between">
           <p className="text-xs font-bold text-gray-500">反映後の画面</p>
           <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-gray-400 ring-1 ring-gray-200">
-            {isCategory ? 'カテゴリー型' : '静止サイト型'}
+            静止サイト型
           </span>
         </div>
         <div className="overflow-x-hidden rounded-2xl bg-gray-100 p-2 shadow-inner">
         <div className="mx-auto min-w-0 max-w-[390px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm" style={{ fontFamily, backgroundColor }}>
 
-          {/* カテゴリー型 preview */}
-          {isCategory && (
-            <div className="flex flex-col items-center space-y-7 px-5 py-9">
-
-              {/* アイコン＋名前 */}
-              <div className="flex flex-col items-center gap-2">
-                {tenantIcon ? (
-                  <img src={tenantIcon} alt={displayName} className="h-20 w-20 rounded-full object-cover" />
-                ) : (
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold text-white" style={{ backgroundColor: accentColor }}>
-                    {displayName.slice(0, 1)}
-                  </div>
-                )}
-                <p className="font-bold" style={titleTextStyle}>{displayName}</p>
-                {form.subtitle?.trim() && (
-                  <p style={subtitleTextStyle}>{form.subtitle.trim()}</p>
-                )}
-              </div>
-
-              <div className="w-full max-w-sm">
-                <HeaderImagePreview
-                  images={imageUrls}
-                  captions={imageCaptions}
-                  mode={heroImageMode}
-                  overlayColor={heroOverlayColor}
-                  overlayOpacity={heroOverlayOpacity}
-                  className="h-40"
-                />
-              </div>
-
-              <div className={`w-full gap-2 ${previewButtonLayoutClass}`}>
-                {[navLabels.about, navLabels.reserve, navLabels.blog, navLabels.contact].map((label) => (
-                  <div key={label}
-                    className={`flex min-w-0 items-center justify-center truncate whitespace-nowrap text-center font-bold ${getBtnShapeClass(buttonStyle)} ${previewButtonSizeClass}`}
-                    style={{ borderColor: btnBorderColor, color: btnTextColor, ...buttonBgStyle }}>
-                    {label}
-                  </div>
-                ))}
-              </div>
-
-              <div className="w-full max-w-sm">
-                <div className="rounded-xl px-5 py-4 shadow-sm ring-1 ring-gray-100" style={{ backgroundColor: navBg }}>
-                  <p className="mb-2 text-xs font-bold text-gray-400">{navLabels.about}</p>
-                  {renderPreviewBlocks()}
-                </div>
-              </div>
-
-            </div>
-          )}
-
           {/* 静止サイト型 preview */}
-          {!isCategory && (
-            <>
+          <>
               {heroImageMode === 'background' && imageUrls[0] ? (
                 /* 背景モード: 大きいヒーロー */
                 <>
@@ -1200,12 +1154,12 @@ export default function AdminPublicPage() {
                       >
                         <p className="font-bold drop-shadow" style={titleTextStyle}>{displayName}</p>
                         {form.subtitle?.trim() && (
-                          <p className="mt-1" style={subtitleTextStyle}>{form.subtitle.trim()}</p>
+                          <p style={{ marginTop: subtitleGap, ...subtitleTextStyle }}>{form.subtitle.trim()}</p>
                         )}
                         {heroNavPosition === 'inside' && (
                           <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] font-bold">
                             {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
-                              <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...buttonBgStyle }}>{label}</span>
+                              <span key={label} className={`truncate whitespace-nowrap px-3 py-1.5 text-center leading-4 ${getBtnShapeClass(buttonStyle)}`} style={{ borderRadius: btnRadius, borderColor: btnBorderColor, color: btnTextColor, ...buttonBgStyle }}>{label}</span>
                             ))}
                           </div>
                         )}
@@ -1276,7 +1230,6 @@ export default function AdminPublicPage() {
                 </section>
               </div>
             </>
-          )}
         </div>
         </div>
       </aside>

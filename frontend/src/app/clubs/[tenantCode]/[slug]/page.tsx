@@ -260,8 +260,9 @@ export default async function ClubCmsPage({
     contact: page.contactLabel || 'お問い合わせ',
   };
   const buttonStyle = page.buttonStyle ?? 'rounded';
-  const buttonLayout = page.buttonLayout === 'row1x4' ? 'row1x4' : 'grid2x2';
-  const buttonLayoutClass = buttonLayout === 'row1x4' ? 'grid grid-cols-2 sm:grid-cols-4' : 'grid grid-cols-2';
+  const rawButtonLayout = page.buttonLayout ?? 'grid2x2';
+  const buttonLayout = rawButtonLayout === 'row1x4' ? 'row1x4' : rawButtonLayout === 'circle4' ? 'circle4' : 'grid2x2';
+  const buttonLayoutClass = (buttonLayout === 'row1x4' || buttonLayout === 'circle4') ? 'grid grid-cols-4 gap-2' : 'grid grid-cols-2 gap-3';
   const buttonOpacity = clampPercent(page.buttonOpacity ?? 100);
   const buttonOpacityStyle = { opacity: buttonOpacity / 100 };
   const rawHeroImageMode = page.heroImageMode || 'fixed';
@@ -272,8 +273,7 @@ export default async function ClubCmsPage({
       : 'fixed';
   const heroOverlayOpacity = clampPercent(page.heroOverlayOpacity);
   const heroOverlayColor = page.heroOverlayColor || '#000000';
-  const gorgeousColor = '#b8860b';
-  const btnBorderHex = buttonStyle === 'gorgeous' ? gorgeousColor : accentColor;
+  const btnBorderHex = accentColor;
   const btnClass = getBtnClass(buttonStyle);
   const heroNavPosition = page.heroNavPosition === 'inside' ? 'inside' : 'below';
   const btnBgOpacity = clampPercent(page.buttonBgOpacity ?? 100);
@@ -281,6 +281,8 @@ export default async function ClubCmsPage({
   const btnBorderColor = hexToRgba(btnBorderHex, buttonOpacity);
   const btnTextColor = hexToRgba(textColor, btnTextOpacity);
   const btnBgStyle = page.buttonBgColor ? { backgroundColor: hexToRgba(page.buttonBgColor, btnBgOpacity) } : {};
+  const btnRadiusStyle = Number.isInteger(page.buttonRadius) ? { borderRadius: `${page.buttonRadius}px` } : {};
+  const subtitleGap = Number.isInteger(page.subtitleMarginTop) ? page.subtitleMarginTop! : 8;
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -297,85 +299,9 @@ export default async function ClubCmsPage({
 
   const contactHref = `/liff/${page.tenant.code ?? tenantCode}/admin-talk`;
 
-  // カテゴリー型
-  if (layoutVariant === 'category') {
-    const tenantIcon = imgUrl(page.tenant.iconUrl ?? page.tenant.linePictureUrl, IMAGE_BASE_URL);
-    return (
-      <main className="min-h-screen" style={{ fontFamily, backgroundColor }}>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
-        <style>{`
-          @keyframes public-site-slide-2 {
-            0%, 42% { transform: translateX(0); }
-            50%, 92% { transform: translateX(-50%); }
-            100% { transform: translateX(0); }
-          }
-          @keyframes public-site-slide-3 {
-            0%, 30% { transform: translateX(0); }
-            36%, 64% { transform: translateX(-33.333%); }
-            70%, 98% { transform: translateX(-66.666%); }
-            100% { transform: translateX(0); }
-          }
-        `}</style>
-        <div className="flex min-h-screen flex-col items-center px-6 py-16">
-          {tenantIcon ? (
-            <img src={tenantIcon} alt={tenantName} className="h-20 w-20 rounded-full object-cover" />
-          ) : (
-            <div className="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold text-white" style={{ backgroundColor: accentColor }}>
-              {tenantName.slice(0, 1)}
-            </div>
-          )}
-          <h1 className="mt-4 font-bold" style={titleTextStyle}>{tenantName}</h1>
-          {page.subtitle && <p className="mt-1" style={subtitleTextStyle}>{page.subtitle}</p>}
-
-          <div className="w-full max-w-sm">
-            <HeroImageBlock
-              images={images}
-              captions={imageCaptions}
-              mode={heroImageMode}
-              overlayColor={heroOverlayColor}
-              overlayOpacity={heroOverlayOpacity}
-              alt={page.title}
-              className="mt-6 aspect-[16/9]"
-            />
-          </div>
-
-          <nav className={`mt-10 w-full max-w-lg gap-3 ${buttonLayoutClass}`}>
-            <a href="#about" className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
-              style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle }}>
-              {navLabels.about}
-            </a>
-            <Link href={reserveHref} className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
-              style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle }}>
-              {navLabels.reserve}
-            </Link>
-            <Link href={`/clubs/${page.tenant.code ?? tenantCode}/blog`}
-              className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
-              style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle }}>
-              {navLabels.blog}
-            </Link>
-            <Link href={contactHref}
-              className={`px-5 py-4 text-center text-base font-bold transition hover:opacity-80 ${btnClass}`}
-              style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle }}>
-              {navLabels.contact}
-            </Link>
-          </nav>
-
-          {page.body && (
-            <div id="about" className="mt-14 w-full max-w-sm scroll-mt-6 rounded-xl px-6 py-5 shadow-sm" style={{ backgroundColor: navBg }}>
-              <p className="mb-3 text-sm font-bold" style={{ color: textColor }}>{navLabels.about}</p>
-              <div className={bodySizeClass} style={{ color: textColor, ...bodyTextStyle }}>
-                {page.body.split('\n').map((line, i) => renderLine(line, i, textColor, bodySizeClass, bodyTextStyle))}
-              </div>
-            </div>
-          )}
-        </div>
-      </main>
-    );
-  }
-
-  // 静止サイト型 (default)
   return (
-    <main className="min-h-screen text-gray-900" style={{ fontFamily, backgroundColor }}>
+    <main className="min-h-screen" style={{ fontFamily, backgroundColor }}>
+      <div className="mx-auto w-full max-w-[480px] sm:my-6 sm:overflow-hidden sm:rounded-3xl sm:shadow-2xl">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       <style>{`
         @keyframes public-site-slide-2 {
@@ -394,10 +320,10 @@ export default async function ClubCmsPage({
       {heroImageMode === 'background' && images[0] ? (
         /* 背景モード: 大きいヒーローエリア */
         <>
-          <div className="relative overflow-hidden" style={{ minHeight: 320 }}>
+          <div className="relative overflow-hidden" style={{ minHeight: 280, maxHeight: 480 }}>
             <div className="absolute inset-0" style={{ backgroundImage: `url(${images[0]})`, backgroundSize: 'cover', backgroundPosition: page.heroImagePosition ?? 'center center' }} />
             <div className="absolute inset-0" style={{ backgroundColor: hexToRgba(heroOverlayColor, heroOverlayOpacity) }} />
-            <div className="relative z-10" style={{ minHeight: 320 }}>
+            <div className="relative z-10" style={{ minHeight: 280 }}>
               {/* テキストブロック - X/Y/Width で自由配置 */}
               <div
                 className="absolute"
@@ -408,24 +334,46 @@ export default async function ClubCmsPage({
                 }}
               >
                 <h1 className="font-bold drop-shadow" style={titleTextStyle}>{tenantName}</h1>
-                {page.subtitle && <p className="mt-2" style={subtitleTextStyle}>{page.subtitle}</p>}
+                {page.subtitle && <p style={{ marginTop: subtitleGap, ...subtitleTextStyle }}>{page.subtitle}</p>}
                 {heroNavPosition === 'inside' && (
-                  <nav className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    <a href="#about" className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle }}>{navLabels.about}</a>
-                    <a href="#blog" className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle }}>{navLabels.blog}</a>
-                    <Link href={reserveHref} className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle }}>{navLabels.reserve}</Link>
-                    <Link href={contactHref} className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle }}>{navLabels.contact}</Link>
+                  <nav className={`mt-4 ${buttonLayoutClass}`}>
+                    {buttonLayout === 'circle4' ? (
+                      [{ href: '#about', label: navLabels.about }, { href: '#blog', label: navLabels.blog }, { href: reserveHref, label: navLabels.reserve }, { href: contactHref, label: navLabels.contact }].map(({ href, label }) => (
+                        <a key={href} href={href} className="flex flex-col items-center gap-1.5 py-1">
+                          <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 text-[11px] font-bold" style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle }}>{label.slice(0, 2)}</span>
+                          <span className="text-[10px] font-bold" style={{ color: btnTextColor }}>{label}</span>
+                        </a>
+                      ))
+                    ) : (
+                      <>
+                        <a href="#about" className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle }}>{navLabels.about}</a>
+                        <a href="#blog" className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle }}>{navLabels.blog}</a>
+                        <Link href={reserveHref} className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle }}>{navLabels.reserve}</Link>
+                        <Link href={contactHref} className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle }}>{navLabels.contact}</Link>
+                      </>
+                    )}
                   </nav>
                 )}
               </div>
             </div>
           </div>
           {heroNavPosition === 'below' && (
-            <nav className="mx-auto grid max-w-3xl grid-cols-2 gap-3 px-4 py-4 sm:grid-cols-4">
-              <a href="#about" className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle }}>{navLabels.about}</a>
-              <a href="#blog" className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle }}>{navLabels.blog}</a>
-              <Link href={reserveHref} className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle }}>{navLabels.reserve}</Link>
-              <Link href={contactHref} className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle }}>{navLabels.contact}</Link>
+            <nav className={`px-4 py-4 ${buttonLayoutClass}`}>
+              {buttonLayout === 'circle4' ? (
+                [{ href: '#about', label: navLabels.about }, { href: '#blog', label: navLabels.blog }, { href: reserveHref, label: navLabels.reserve }, { href: contactHref, label: navLabels.contact }].map(({ href, label }) => (
+                  <a key={href} href={href} className="flex flex-col items-center gap-1.5 py-2">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-full border-2 text-xs font-bold" style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle }}>{label.slice(0, 2)}</span>
+                    <span className="text-[11px] font-bold" style={{ color: btnTextColor }}>{label}</span>
+                  </a>
+                ))
+              ) : (
+                <>
+                  <a href="#about" className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle }}>{navLabels.about}</a>
+                  <a href="#blog" className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle }}>{navLabels.blog}</a>
+                  <Link href={reserveHref} className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle }}>{navLabels.reserve}</Link>
+                  <Link href={contactHref} className={`px-4 py-3 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle }}>{navLabels.contact}</Link>
+                </>
+              )}
             </nav>
           )}
         </>
@@ -446,7 +394,7 @@ export default async function ClubCmsPage({
         </header>
       )}
 
-      <article id="about" className="mx-auto max-w-3xl px-4 py-8 md:py-12">
+      <article id="about" className="px-4 py-8">
         {heroImageMode !== 'background' && (
           <HeroImageBlock
             images={images}
@@ -549,7 +497,7 @@ export default async function ClubCmsPage({
           </Link>
         </div>
       </article>
-
+      </div>
     </main>
   );
 }

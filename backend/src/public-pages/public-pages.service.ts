@@ -185,6 +185,18 @@ export class UpsertPublicPageDto {
   subtitleColor?: string;
 
   @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(120)
+  subtitleMarginTop?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(200)
+  buttonRadius?: number;
+
+  @IsOptional()
   @IsString()
   @MaxLength(20)
   titleSize?: string;
@@ -347,6 +359,8 @@ export class PublicPagesService {
       subtitleFont: dto.subtitleFont?.trim() || null,
       subtitleSize: dto.subtitleSize?.trim() || null,
       subtitleColor: dto.subtitleColor?.trim() || null,
+      subtitleMarginTop: Number.isInteger(dto.subtitleMarginTop) ? dto.subtitleMarginTop : null,
+      buttonRadius: Number.isInteger(dto.buttonRadius) ? dto.buttonRadius : null,
       titleSize: dto.titleSize?.trim() || null,
       titleAlign: dto.titleAlign?.trim() || null,
       bodySize: dto.bodySize?.trim() || null,
