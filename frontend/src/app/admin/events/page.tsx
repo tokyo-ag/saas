@@ -156,6 +156,7 @@ export default function EventsPage() {
   const [tenantId, setTenantId] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [publicPageId, setPublicPageId] = useState<string | null>(null);
+  const [publicPageData, setPublicPageData] = useState<import('@/lib/api').PublicPage | null>(null);
   const [reserveViewStyle, setReserveViewStyle] = useState<string>('calendar');
   const [savingStyle, setSavingStyle] = useState(false);
 
@@ -174,6 +175,7 @@ export default function EventsPage() {
       const first = pages[0];
       if (first) {
         setPublicPageId(first.id);
+        setPublicPageData(first);
         setReserveViewStyle(first.reserveViewStyle ?? 'calendar');
       }
     }).catch(() => {});
@@ -181,10 +183,10 @@ export default function EventsPage() {
 
   async function saveReserveViewStyle(style: string) {
     setReserveViewStyle(style);
-    if (!publicPageId) return;
+    if (!publicPageId || !publicPageData) return;
     setSavingStyle(true);
     try {
-      await api.publicPages.update(publicPageId, { reserveViewStyle: style } as any);
+      await api.publicPages.update(publicPageId, { ...publicPageData, reserveViewStyle: style } as any);
     } catch { /* silent */ } finally {
       setSavingStyle(false);
     }
