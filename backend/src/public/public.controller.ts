@@ -499,17 +499,18 @@ export class PublicController {
 
   @Get('tenants/:tenantCode/blog')
   async listBlogPosts(@Param('tenantCode') tenantCode: string) {
-    const posts = await this.prisma.blogPost.findMany({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const posts = await (this.prisma.blogPost as any).findMany({
       where: {
         status: 'published',
         tenant: { code: tenantCode, deletedAt: null, bannedAt: null },
       },
       orderBy: { publishedAt: 'desc' },
-      select: { id: true, title: true, slug: true, excerpt: true, body: true, publishedAt: true, createdAt: true },
-    });
+      select: { id: true, title: true, slug: true, excerpt: true, body: true, tags: true, publishedAt: true, createdAt: true },
+    }) as Array<{ body: string; [k: string]: unknown }>;
     return posts.map(({ body, ...post }) => ({
       ...post,
-      coverImageUrl: this.firstMarkdownImage(body),
+      coverImageUrl: this.firstMarkdownImage(body as string),
     }));
   }
 
@@ -519,5 +520,13 @@ export class PublicController {
     @Param('slug') slug: string,
   ) {
     return this.blogService.getPublic(tenantCode, slug);
+  }
+
+  @Get('blog')
+  async listBlogByTags(@Query('tags') tagsParam: string, @Query('limit') limitParam?: string) {
+    const tags = tagsParam ? tagsParam.split(',').map(t => t.trim()).filter(Boolean) : [];
+    if (tags.length === 0) return [];
+    const limit = Math.min(parseInt(limitParam ?? '10', 10) || 10, 30);
+    return this.blogService.listByTags(tags, limit);
   }
 }

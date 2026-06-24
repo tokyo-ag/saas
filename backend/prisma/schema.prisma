@@ -141,6 +141,7 @@ model BlogPost {
   slug        String    @db.VarChar(120)
   body        String    @db.Text
   excerpt     String?   @db.VarChar(300)
+  tags        String[]  @default([])
   status      String    @default("draft") @db.VarChar(20)
   publishedAt DateTime? @map("published_at")
   createdAt   DateTime  @default(now()) @map("created_at")

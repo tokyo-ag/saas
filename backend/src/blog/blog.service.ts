@@ -1,9 +1,8 @@
 import {
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsArray, IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 
 const POST_STATUS = ['draft', 'published'] as const;
@@ -23,9 +22,18 @@ export class UpsertBlogPostDto {
   excerpt?: string;
 
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @MaxLength(30, { each: true })
+  tags?: string[];
+
+  @IsOptional()
   @IsIn(POST_STATUS)
   status?: PostStatus;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = (p: PrismaService) => p.blogPost as any;
 
 @Injectable()
 export class BlogService {
@@ -56,12 +64,12 @@ export class BlogService {
   }
 
   async list(tenantId: string) {
-    return this.prisma.blogPost.findMany({
+    return db(this.prisma).findMany({
       where: { tenantId },
       orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
       select: {
         id: true, title: true, slug: true, excerpt: true, body: true,
-        status: true, publishedAt: true, createdAt: true, updatedAt: true,
+        tags: true, status: true, publishedAt: true, createdAt: true, updatedAt: true,
       },
     });
   }
@@ -76,11 +84,12 @@ export class BlogService {
     const baseSlug = this.slugify(dto.title);
     const slug = await this.uniqueSlug(tenantId, baseSlug);
     const status = dto.status ?? 'draft';
-    return this.prisma.blogPost.create({
+    return db(this.prisma).create({
       data: {
         tenantId, title: dto.title.trim(), slug,
         body: dto.body,
         excerpt: dto.excerpt?.trim() || null,
+        tags: dto.tags?.map((t: string) => t.trim()).filter(Boolean) ?? [],
         status,
         publishedAt: status === 'published' ? new Date() : null,
       },
@@ -92,12 +101,13 @@ export class BlogService {
     if (!existing) throw new NotFoundException('Post not found');
     const status = dto.status ?? existing.status;
     const isPublishing = status === 'published' && existing.status !== 'published';
-    return this.prisma.blogPost.update({
+    return db(this.prisma).update({
       where: { id },
       data: {
         title: dto.title.trim(),
         body: dto.body,
         excerpt: dto.excerpt?.trim() || null,
+        tags: dto.tags?.map((t: string) => t.trim()).filter(Boolean) ?? [],
         status,
         ...(isPublishing ? { publishedAt: new Date() } : {}),
         ...(status === 'draft' ? { publishedAt: null } : {}),
@@ -112,12 +122,12 @@ export class BlogService {
   }
 
   async listPublic(tenantId: string) {
-    return this.prisma.blogPost.findMany({
+    return db(this.prisma).findMany({
       where: { tenantId, status: 'published' },
       orderBy: { publishedAt: 'desc' },
       select: {
         id: true, title: true, slug: true, excerpt: true,
-        publishedAt: true, createdAt: true,
+        tags: true, publishedAt: true, createdAt: true,
       },
     });
   }
@@ -137,5 +147,26 @@ export class BlogService {
     });
     if (!post) throw new NotFoundException('Post not found');
     return post;
+  }
+
+  async listByTags(tags: string[], limit = 10) {
+    const posts = await db(this.prisma).findMany({
+      where: {
+        status: 'published',
+        tags: { hasSome: tags },
+        tenant: { deletedAt: null, bannedAt: null, code: { not: null } },
+      },
+      orderBy: { publishedAt: 'desc' },
+      take: limit,
+      select: {
+        id: true, title: true, slug: true, excerpt: true, body: true,
+        tags: true, publishedAt: true,
+        tenant: { select: { code: true, name: true, lineDisplayName: true, linePictureUrl: true, iconUrl: true } },
+      },
+    });
+    return (posts as Array<{ body: string; [k: string]: unknown }>).map(({ body, ...post }) => ({
+      ...post,
+      coverImageUrl: (body as string).match(/!\[[^\]]*]\(([^)]+)\)/)?.[1] ?? null,
+    }));
   }
 }

@@ -280,6 +280,8 @@ export const api = {
       request<BlogPostSummary[]>(`/public/tenants/${tenantCode}/blog`),
     blogPost: (tenantCode: string, slug: string) =>
       request<BlogPost>(`/public/tenants/${tenantCode}/blog/${slug}`),
+    blogByTags: (tags: string[], limit = 10) =>
+      request<PortalBlogPost[]>(`/public/blog?tags=${encodeURIComponent(tags.join(','))}&limit=${limit}`),
   },
   blog: {
     list: () => request<BlogPost[]>('/admin/blog'),
@@ -882,6 +884,7 @@ export interface BlogPostSummary {
   title: string;
   slug: string;
   excerpt?: string | null;
+  tags?: string[];
   coverImageUrl?: string | null;
   publishedAt?: string | null;
   createdAt: string;
@@ -901,10 +904,28 @@ export interface BlogPost extends BlogPostSummary {
   };
 }
 
+export interface PortalBlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  tags: string[];
+  coverImageUrl?: string | null;
+  publishedAt?: string | null;
+  tenant: {
+    code?: string | null;
+    name: string;
+    lineDisplayName?: string | null;
+    linePictureUrl?: string | null;
+    iconUrl?: string | null;
+  };
+}
+
 export interface BlogPostInput {
   title: string;
   body: string;
   excerpt?: string;
+  tags?: string[];
   status?: 'draft' | 'published';
 }
 

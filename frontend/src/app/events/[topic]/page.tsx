@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { PublicEvent } from '@/lib/api';
+import type { PublicEvent, PortalBlogPost } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import PublicFooter from '@/components/public/PublicFooter';
 import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
@@ -99,6 +99,21 @@ export async function generateMetadata({
   };
 }
 
+async function fetchBlogPosts(meta: TopicMeta): Promise<PortalBlogPost[]> {
+  const tags = [meta.label, ...(meta.tag ? [meta.tag] : [])].filter(Boolean);
+  if (tags.length === 0) return [];
+  try {
+    const res = await fetch(
+      `${API_URL}/api/public/blog?tags=${encodeURIComponent(tags.join(','))}&limit=5`,
+      { next: { revalidate } },
+    );
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
 async function fetchEvents(meta: TopicMeta): Promise<PublicEvent[]> {
   const queries = [
     meta.category ? new URLSearchParams({ category: meta.category }) : null,
@@ -173,7 +188,10 @@ export default async function EventTopicPage({
   const meta = TOPIC_META[topic];
   if (!meta) notFound();
 
-  const events = await fetchEvents(meta);
+  const [events, blogPosts] = await Promise.all([
+    fetchEvents(meta),
+    fetchBlogPosts(meta),
+  ]);
   const listedEvents = events.filter((ev) => ev.tenantCode).slice(0, 10);
 
   const jsonLd = {
@@ -356,6 +374,44 @@ export default async function EventTopicPage({
             ))}
           </div>
         </section>
+
+        {blogPosts.length > 0 && (
+          <section className="mt-4 rounded-2xl bg-white border border-gray-100 px-4 py-5 shadow-sm">
+            <h2 className="text-base font-bold text-gray-900 mb-3">{meta.label}関連ブログ</h2>
+            <div className="space-y-3">
+              {blogPosts.map((post) => {
+                const tenantCode = post.tenant.code;
+                if (!tenantCode) return null;
+                const cover = post.coverImageUrl ? imgUrl(post.coverImageUrl, IMAGE_BASE_URL) : null;
+                const tenantName = post.tenant.lineDisplayName ?? post.tenant.name;
+                return (
+                  <Link
+                    key={post.id}
+                    href={`/clubs/${tenantCode}/blog/${post.slug}`}
+                    className="flex gap-3 rounded-xl border border-gray-100 p-3 hover:bg-gray-50 transition-colors"
+                  >
+                    {cover && (
+                      <div className="relative w-16 h-16 rounded-lg overflow-hidden shrink-0">
+                        <Image src={cover} alt="" fill sizes="64px" className="object-cover" />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[12px] font-semibold text-gray-900 line-clamp-2 leading-snug">{post.title}</p>
+                      <p className="mt-1 text-[10px] text-gray-400">{tenantName}</p>
+                      {post.tags.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {post.tags.slice(0, 3).map(tag => (
+                            <span key={tag} className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500">{tag}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
       </div>
 
       <PublicFooter />

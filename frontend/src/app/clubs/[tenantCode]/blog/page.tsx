@@ -99,6 +99,13 @@ export default async function BlogListPage({
                     <p className="mb-1 text-xs text-gray-400">{formatDate(post.publishedAt)}</p>
                     <p className="text-base font-bold text-gray-900">{post.title}</p>
                     {post.excerpt && <p className="mt-1 line-clamp-2 text-sm leading-6 text-gray-500">{post.excerpt}</p>}
+                    {post.tags && post.tags.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {post.tags.map(tag => (
+                          <span key={tag} className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-500">{tag}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </Link>
               );

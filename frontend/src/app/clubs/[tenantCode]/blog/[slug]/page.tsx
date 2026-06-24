@@ -138,7 +138,14 @@ export default async function BlogPostPage({
           </div>
           <article className="rounded-xl border border-gray-200 bg-white px-6 py-8">
             <p className="mb-2 text-xs text-gray-400">{formatDate(post.publishedAt)}</p>
-            <h1 className="mb-6 text-2xl font-bold leading-tight text-gray-900">{post.title}</h1>
+            <h1 className="mb-3 text-2xl font-bold leading-tight text-gray-900">{post.title}</h1>
+            {post.tags && post.tags.length > 0 && (
+              <div className="mb-6 flex flex-wrap gap-1.5">
+                {post.tags.map(tag => (
+                  <span key={tag} className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-500">{tag}</span>
+                ))}
+              </div>
+            )}
             <BodyRenderer body={post.body} />
           </article>
           <div className="mt-8 text-center">
