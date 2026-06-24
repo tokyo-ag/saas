@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { api, AdminMessage, LiffTenant } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded } from '@/lib/liff';
 import { ChatBubble, ChatInput } from '@/components/ui/ChatBubble';
+import { useLiffTheme } from '@/components/liff/LiffThemeProvider';
 
 function formatTime(dateStr: string) {
   return new Date(dateStr).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
@@ -14,6 +15,7 @@ function formatTime(dateStr: string) {
 export default function AdminTalkPage() {
   const { tenantId } = useParams<{ tenantId: string }>();
   const router = useRouter();
+  const theme = useLiffTheme();
   const [tenant, setTenant] = useState<LiffTenant | null>(null);
   const [messages, setMessages] = useState<AdminMessage[]>([]);
   const [lineUserId, setLineUserId] = useState('');
@@ -77,19 +79,19 @@ export default function AdminTalkPage() {
   const organizerAvatar = organizerPicture ? (
     <Image src={organizerPicture} width={32} height={32} className="w-8 h-8 rounded-full object-cover" alt="" unoptimized />
   ) : (
-    <div className="w-8 h-8 rounded-full bg-[#06C755]/10 flex items-center justify-center text-xs font-bold text-[#06C755]">
+    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: `${theme.accentColor}18`, color: theme.accentColor }}>
       {organizerName.slice(0, 1)}
     </div>
   );
 
   return (
-    <div className="flex flex-col h-screen bg-[#F5F5F5]">
-      <div className="bg-white border-b border-gray-100 px-4 flex items-center gap-3 shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 16px)', paddingBottom: '12px' }}>
+    <div className="flex flex-col h-screen" style={{ backgroundColor: theme.backgroundColor }}>
+      <div className="border-b border-gray-100 px-4 flex items-center gap-3 shrink-0" style={{ backgroundColor: theme.navBg, paddingTop: 'env(safe-area-inset-top, 16px)', paddingBottom: '12px' }}>
         <button onClick={() => router.back()} className="text-gray-600 text-xl leading-none p-1">‹</button>
         {organizerPicture ? (
           <Image src={organizerPicture} width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0" alt="" unoptimized />
         ) : (
-          <div className="w-9 h-9 rounded-full bg-[#06C755]/20 flex items-center justify-center shrink-0 text-sm font-bold text-[#06C755]">
+          <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-sm font-bold" style={{ backgroundColor: `${theme.accentColor}30`, color: theme.accentColor }}>
             {organizerName.slice(0, 1)}
           </div>
         )}
@@ -105,7 +107,7 @@ export default function AdminTalkPage() {
             {organizerPicture ? (
               <Image src={organizerPicture} width={64} height={64} className="w-16 h-16 rounded-full object-cover mb-4" alt="" unoptimized />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-[#06C755]/10 flex items-center justify-center mb-4 text-lg font-bold text-[#06C755]">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 text-lg font-bold" style={{ backgroundColor: `${theme.accentColor}18`, color: theme.accentColor }}>
                 {organizerName.slice(0, 1)}
               </div>
             )}
@@ -122,13 +124,14 @@ export default function AdminTalkPage() {
             time={formatTime(msg.createdAt)}
             isMine={!msg.fromAdmin}
             avatar={organizerAvatar}
+            accentColor={theme.accentColor}
           />
         ))}
         <div ref={bottomRef} />
       </div>
 
       <div style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
-        <ChatInput value={input} onChange={setInput} onSubmit={handleSend} sending={sending} className="shrink-0" />
+        <ChatInput value={input} onChange={setInput} onSubmit={handleSend} sending={sending} className="shrink-0" accentColor={theme.accentColor} />
       </div>
     </div>
   );

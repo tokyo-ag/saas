@@ -10,6 +10,7 @@ import { useCalendarMonth } from '@/lib/useCalendarMonth';
 import { initLiff, getLiffProfile } from '@/lib/liff';
 import LiffBottomNav from '@/components/liff/LiffBottomNav';
 import { EventCardSkeleton } from '@/components/liff/EventCardSkeleton';
+import { useLiffTheme } from '@/components/liff/LiffThemeProvider';
 
 const SHOW_FEATURED_TENANTS = false;
 
@@ -32,27 +33,27 @@ function AvatarRow({ count, friends }: { count: number; friends?: { id: string; 
         )}
       </div>
       {friendCount > 0 && (
-        <span className="text-[10px] text-[#06C755] font-medium">友達{friendCount}人</span>
+        <span className="text-[10px] font-medium text-green-600">友達{friendCount}人</span>
       )}
     </div>
   );
 }
 
-function EventCard({ event, tenantId }: { event: LiffEvent; tenantId: string }) {
+function EventCard({ event, tenantId, accentColor, cardBg }: { event: LiffEvent; tenantId: string; accentColor: string; cardBg: string }) {
   const img = imgUrl(event.imageUrl, API_URL);
   const remaining = event.capacity != null ? event.capacity - event.reservedCount : null;
 
   return (
     <Link
       href={`/liff/${tenantId}/events/${event.id}`}
-      className="block rounded-xl overflow-hidden bg-white/85 active:opacity-70"
-      style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
+      className="block rounded-xl overflow-hidden active:opacity-70"
+      style={{ backgroundColor: cardBg, boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
     >
       <div className="relative" style={{ aspectRatio: '4/5' }}>
         {img ? (
           <Image src={img} alt={event.title} fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" unoptimized />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-[#06C755] to-[#05a847]" />
+          <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${accentColor}, #111827)` }} />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-2.5">
@@ -81,7 +82,7 @@ function EventCard({ event, tenantId }: { event: LiffEvent; tenantId: string }) 
               <span className="text-[9px] text-pink-500 bg-pink-50 px-1.5 py-0.5 rounded-full">女¥{event.priceFemale.toLocaleString()}</span>
             </>
           ) : event.price === 0 ? (
-            <span className="text-[9px] text-[#06C755] bg-green-50 px-1.5 py-0.5 rounded-full font-medium">無料</span>
+            <span className="text-[9px] bg-green-50 px-1.5 py-0.5 rounded-full font-medium" style={{ color: accentColor }}>無料</span>
           ) : (
             <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">¥{event.price.toLocaleString()}</span>
           )}
@@ -136,7 +137,7 @@ function threadStatusLabel(event: LiffEvent) {
   return '募集中';
 }
 
-function LiffThreadView({ events, tenantId }: { events: LiffEvent[]; tenantId: string }) {
+function LiffThreadView({ events, tenantId, accentColor, cardBg }: { events: LiffEvent[]; tenantId: string; accentColor: string; cardBg: string }) {
   const groups = events.reduce<Record<string, LiffEvent[]>>((acc, event) => {
     const key = threadMonthLabel(event.heldAt);
     (acc[key] ??= []).push(event);
@@ -148,7 +149,7 @@ function LiffThreadView({ events, tenantId }: { events: LiffEvent[]; tenantId: s
       {Object.entries(groups).map(([month, monthEvents]) => (
         <section key={month}>
           <div className="mb-2 flex items-center gap-2 px-1">
-            <span className="h-4 w-1 rounded-full bg-[#06C755]" />
+            <span className="h-4 w-1 rounded-full" style={{ backgroundColor: accentColor }} />
             <h2 className="text-[15px] font-bold text-gray-800">{month}のスケジュール</h2>
           </div>
           <div className="space-y-2">
@@ -159,7 +160,8 @@ function LiffThreadView({ events, tenantId }: { events: LiffEvent[]; tenantId: s
                 <Link
                   key={event.id}
                   href={`/liff/${tenantId}/events/${event.id}`}
-                  className="block rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm active:bg-gray-50"
+                  className="block rounded-xl border border-gray-200 px-4 py-3 shadow-sm active:opacity-80"
+                  style={{ backgroundColor: cardBg }}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -177,9 +179,8 @@ function LiffThreadView({ events, tenantId }: { events: LiffEvent[]; tenantId: s
                         <p className="mt-2 line-clamp-2 text-[12px] leading-5 text-gray-400">{event.description}</p>
                       )}
                     </div>
-                    <span className={`shrink-0 rounded-md px-2.5 py-1 text-[11px] font-bold ${
-                      isFull ? 'bg-gray-100 text-gray-400' : 'bg-[#06C755] text-white'
-                    }`}>
+                    <span className={`shrink-0 rounded-md px-2.5 py-1 text-[11px] font-bold ${isFull ? 'bg-gray-100 text-gray-400' : 'text-white'}`}
+                      style={isFull ? undefined : { backgroundColor: accentColor }}>
                       {status}
                     </span>
                   </div>
@@ -220,7 +221,7 @@ function TenantCard({ tenant }: { tenant: PublicTenant }) {
 
 const WEEKDAYS_SHORT = ['日', '月', '火', '水', '木', '金', '土'];
 
-function LiffCalendarView({ events, tenantId }: { events: LiffEvent[]; tenantId: string }) {
+function LiffCalendarView({ events, tenantId, accentColor, cardBg }: { events: LiffEvent[]; tenantId: string; accentColor: string; cardBg: string }) {
   const { year, month, prevMonth, nextMonth, cells, isToday } = useCalendarMonth();
 
   const eventsByDate: Record<string, LiffEvent[]> = {};
@@ -235,7 +236,7 @@ function LiffCalendarView({ events, tenantId }: { events: LiffEvent[]; tenantId:
   return (
     <div className="rounded-2xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.10)' }}>
       {/* 月ナビ */}
-      <div className="flex items-center justify-between px-4 py-3" style={{ background: 'linear-gradient(135deg, #06C755 0%, #047a35 100%)' }}>
+      <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: accentColor }}>
         <button onClick={prevMonth} className="w-7 h-7 flex items-center justify-center rounded-full bg-white/20 active:bg-white/30">
           <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
@@ -259,7 +260,7 @@ function LiffCalendarView({ events, tenantId }: { events: LiffEvent[]; tenantId:
       </div>
 
       {/* 日付グリッド */}
-      <div className="grid grid-cols-7 bg-white">
+      <div className="grid grid-cols-7" style={{ backgroundColor: cardBg }}>
         {cells.map((day, i) => {
           const col = i % 7;
           const dayEvents = day ? (eventsByDate[day.toString()] ?? []) : [];
@@ -268,19 +269,18 @@ function LiffCalendarView({ events, tenantId }: { events: LiffEvent[]; tenantId:
           return (
             <div
               key={i}
-              className={`border-b border-r border-gray-100 p-1 align-top min-h-[80px] ${
-                !day ? 'bg-gray-50/60' : todayCell ? 'bg-[#06C755]/5' : ''
-              }`}
+              className={`border-b border-r border-gray-100 p-1 align-top min-h-[80px] ${!day ? 'bg-black/[0.03]' : ''}`}
+              style={todayCell ? { backgroundColor: `${accentColor}18` } : undefined}
             >
               {day && (
                 <>
                   <span className={`flex w-6 h-6 items-center justify-center rounded-full text-[11px] font-semibold mx-auto mb-1 ${
-                    todayCell
-                      ? 'bg-[#06C755] text-white shadow-sm'
+                    todayCell ? 'text-white shadow-sm'
                       : col === 0 ? 'text-red-400'
                       : col === 6 ? 'text-blue-400'
                       : 'text-gray-600'
-                  }`}>
+                  }`}
+                    style={todayCell ? { backgroundColor: accentColor } : undefined}>
                     {day}
                   </span>
                   <div className="space-y-1">
@@ -290,7 +290,8 @@ function LiffCalendarView({ events, tenantId }: { events: LiffEvent[]; tenantId:
                         <Link
                           key={ev.id}
                           href={`/liff/${tenantId}/events/${ev.id}`}
-                          className="block rounded-md bg-[#06C755] px-1 py-0.5 active:opacity-70"
+                          className="block rounded-md px-1 py-0.5 active:opacity-70"
+                          style={{ backgroundColor: accentColor }}
                         >
                           <p className="text-[8px] font-bold text-white truncate leading-tight">{ev.title}</p>
                           <p className="text-[8px] text-white/80 leading-none mt-0.5">{startTime}</p>
@@ -310,6 +311,7 @@ function LiffCalendarView({ events, tenantId }: { events: LiffEvent[]; tenantId:
 
 export default function LiffTopPage() {
   const { tenantId } = useParams<{ tenantId: string }>();
+  const theme = useLiffTheme();
   const [tenant, setTenant] = useState<LiffTenant | null>(null);
   const [events, setEvents] = useState<LiffEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -392,14 +394,14 @@ export default function LiffTopPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-[#F5F5F5] animate-page-in pb-24">
+      <div className="min-h-screen animate-page-in pb-24" style={{ backgroundColor: theme.backgroundColor }}>
         {/* header */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
+        <div className="sticky top-0 z-10 border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
           <div className="flex items-center gap-2.5 px-4 pt-12 pb-3 sm:pt-4 max-w-4xl mx-auto">
             {(tenant?.linePictureUrl ?? tenant?.iconUrl) ? (
               <Image src={(tenant?.linePictureUrl ?? tenant?.iconUrl)!} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" alt="" unoptimized />
             ) : (
-              <div className="w-7 h-7 rounded-full bg-[#06C755]/20 flex items-center justify-center shrink-0 text-sm">🎉</div>
+              <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-sm" style={{ backgroundColor: `${theme.accentColor}30` }}>🎉</div>
             )}
             <h1 className="text-[18px] font-bold text-gray-900 tracking-tight truncate">
               {tenant?.lineDisplayName ?? tenant?.name ?? 'Home'}
@@ -420,7 +422,7 @@ export default function LiffTopPage() {
             </div>
           ) : events.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 px-8 text-center">
-              <div className="w-16 h-16 rounded-full bg-[#06C755]/8 flex items-center justify-center mb-4">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${theme.accentColor}14` }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity="0.5">
                   <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
@@ -429,19 +431,19 @@ export default function LiffTopPage() {
               <p className="text-gray-400 text-xs">新しいイベントをお待ちください</p>
             </div>
           ) : tenant?.liffEventView === 'calendar' ? (
-            <LiffCalendarView events={events} tenantId={tenantId} />
+            <LiffCalendarView events={events} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} />
           ) : tenant?.liffEventView === 'thread' ? (
-            <LiffThreadView events={events} tenantId={tenantId} />
+            <LiffThreadView events={events} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} />
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-              {events.map((ev) => <EventCard key={ev.id} event={ev} tenantId={tenantId} />)}
+              {events.map((ev) => <EventCard key={ev.id} event={ev} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} />)}
             </div>
           )}
           {/* 最近見た団体 */}
           {visitedOthers.length > 0 && (
             <div className="mt-6">
               <div className="flex items-center gap-2 px-1 mb-3">
-                <span className="w-1 h-4 rounded-full bg-[#06C755] shrink-0" />
+                <span className="w-1 h-4 rounded-full shrink-0" style={{ backgroundColor: theme.accentColor }} />
                 <p className="text-[13px] font-bold text-gray-800">最近見た団体</p>
               </div>
               <div className="flex gap-4 overflow-x-auto pb-1 scrollbar-none">
@@ -455,7 +457,7 @@ export default function LiffTopPage() {
                     {v.iconUrl ? (
                       <Image src={v.iconUrl} alt={v.name} width={48} height={48} className="w-12 h-12 rounded-full object-cover border border-gray-100" unoptimized />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-[#06C755]/15 flex items-center justify-center text-lg font-bold text-[#06C755]">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold" style={{ backgroundColor: `${theme.accentColor}25`, color: theme.accentColor }}>
                         {v.name[0]}
                       </div>
                     )}
@@ -470,7 +472,7 @@ export default function LiffTopPage() {
           {SHOW_FEATURED_TENANTS && otherTenants.length > 0 && (
             <div className="mt-6">
               <div className="flex items-center gap-2 px-1 mb-3">
-                <span className="w-1 h-4 rounded-full bg-[#06C755] shrink-0" />
+                <span className="w-1 h-4 rounded-full shrink-0" style={{ backgroundColor: theme.accentColor }} />
                 <p className="text-[13px] font-bold text-gray-800">COMIU注目の団体！</p>
               </div>
               <div className="flex flex-col gap-2">
