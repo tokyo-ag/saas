@@ -472,7 +472,9 @@ export default function AdminPublicPage() {
             return (
               <div key={block.id} className={`flex items-start gap-3 ${imageRight ? 'flex-row-reverse' : ''}`}>
                 {block.imageUrl && (
-                  <img src={block.imageUrl} alt="" className="h-24 w-28 shrink-0 rounded-xl object-cover" />
+                  <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl">
+                    <img src={block.imageUrl} alt="" className="h-full w-full object-cover" />
+                  </div>
                 )}
                 <div className="min-w-0 flex-1">{renderPreviewText(content, blockFontSize)}</div>
               </div>
@@ -483,7 +485,9 @@ export default function AdminPublicPage() {
             return (
               <div key={block.id} className="flex items-start gap-3">
                 {block.imageUrl && (
-                  <img src={block.imageUrl} alt="" className="h-16 w-16 shrink-0 rounded-full object-cover" />
+                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full">
+                    <img src={block.imageUrl} alt="" className="h-full w-full object-cover" />
+                  </div>
                 )}
                 <div className="min-w-0 flex-1">{renderPreviewText(content, blockFontSize)}</div>
               </div>
@@ -494,7 +498,9 @@ export default function AdminPublicPage() {
             return (
               <div key={block.id} className="space-y-3">
                 {block.imageUrl && (
-                  <img src={block.imageUrl} alt="" className="max-h-52 w-full rounded-xl object-cover" />
+                  <div className="h-48 w-full overflow-hidden rounded-xl">
+                    <img src={block.imageUrl} alt="" className="h-full w-full object-cover" />
+                  </div>
                 )}
                 {renderPreviewText(content, blockFontSize)}
               </div>

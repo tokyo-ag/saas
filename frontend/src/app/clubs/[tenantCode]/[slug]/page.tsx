@@ -461,9 +461,11 @@ export default async function ClubCmsPage({
                 if (block.type === 'media-text') {
                   const isLeft = block.imagePosition !== 'right';
                   return (
-                    <div key={i} className={`flex flex-col gap-4 sm:flex-row ${!isLeft ? 'sm:flex-row-reverse' : ''}`}>
+                    <div key={i} className={`flex flex-col gap-4 sm:flex-row sm:items-start ${!isLeft ? 'sm:flex-row-reverse' : ''}`}>
                       {block.imageUrl && (
-                        <img src={block.imageUrl} alt="" className="h-40 w-full rounded-xl object-cover sm:h-auto sm:w-2/5" />
+                        <div className="h-44 w-full shrink-0 overflow-hidden rounded-xl sm:h-36 sm:w-2/5">
+                          <img src={block.imageUrl} alt="" className="h-full w-full object-cover" />
+                        </div>
                       )}
                       <div className={`min-w-0 flex-1 space-y-1 ${blockBodyClass}`} style={{ color: textColor, ...blockTextStyle }}>
                         {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, blockBodyClass, blockTextStyle))}
@@ -475,7 +477,9 @@ export default async function ClubCmsPage({
                   return (
                     <div key={i} className="flex gap-4">
                       {block.imageUrl && (
-                        <img src={block.imageUrl} alt="" className="h-16 w-16 shrink-0 rounded-full object-cover" />
+                        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full">
+                          <img src={block.imageUrl} alt="" className="h-full w-full object-cover" />
+                        </div>
                       )}
                       <div className={`min-w-0 space-y-1 ${blockBodyClass}`} style={{ color: textColor, ...blockTextStyle }}>
                         {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, blockBodyClass, blockTextStyle))}
@@ -487,7 +491,9 @@ export default async function ClubCmsPage({
                   return (
                     <div key={i} className="space-y-3">
                       {block.imageUrl && (
-                        <img src={block.imageUrl} alt="" className="w-full rounded-xl object-cover" />
+                        <div className="h-56 w-full overflow-hidden rounded-xl">
+                          <img src={block.imageUrl} alt="" className="h-full w-full object-cover" />
+                        </div>
                       )}
                       <div className={`space-y-1 ${blockBodyClass}`} style={{ color: textColor, ...blockTextStyle }}>
                         {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, blockBodyClass, blockTextStyle))}
