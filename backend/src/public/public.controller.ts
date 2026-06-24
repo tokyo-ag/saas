@@ -133,11 +133,13 @@ export class PublicController {
         },
       },
     });
-    const page = tenant?.publicPages?.[0] ?? null;
+    type PageWithBgOpacity = { accentColor: string | null; backgroundColor: string | null; navColor: string | null; navOpacity: number | null; footerText: string | null; backgroundOpacity?: number | null };
+    const page = (tenant?.publicPages?.[0] ?? null) as PageWithBgOpacity | null;
     return {
       themeColor: tenant?.themeColor ?? 'green',
       accentColor: page?.accentColor ?? null,
       backgroundColor: page?.backgroundColor ?? null,
+      backgroundOpacity: page?.backgroundOpacity ?? null,
       navColor: page?.navColor ?? null,
       navOpacity: page?.navOpacity ?? null,
       footerText: page?.footerText ?? null,
@@ -444,6 +446,7 @@ export class PublicController {
       textColor: page.textColor,
       accentColor: page.accentColor,
       backgroundColor: page.backgroundColor,
+      backgroundOpacity: (page as { backgroundOpacity?: number | null }).backgroundOpacity ?? null,
       navColor: page.navColor,
       navOpacity: page.navOpacity,
       imageLayout: page.imageLayout,

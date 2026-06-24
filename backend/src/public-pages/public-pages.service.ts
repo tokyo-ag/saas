@@ -75,6 +75,12 @@ export class UpsertPublicPageDto {
   navOpacity?: number;
 
   @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  backgroundOpacity?: number;
+
+  @IsOptional()
   @IsString()
   @MaxLength(20)
   imageLayout?: string;
@@ -344,6 +350,7 @@ export class PublicPagesService {
       backgroundColor: dto.backgroundColor?.trim() || null,
       navColor: dto.navColor?.trim() || null,
       navOpacity: Number.isInteger(dto.navOpacity) ? dto.navOpacity : null,
+      backgroundOpacity: Number.isInteger(dto.backgroundOpacity) ? dto.backgroundOpacity : null,
       imageLayout: dto.imageLayout?.trim() || null,
       heroImageMode: dto.heroImageMode?.trim() || null,
       heroNavPosition: dto.heroNavPosition?.trim() || null,

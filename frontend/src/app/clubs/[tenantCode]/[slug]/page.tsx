@@ -271,6 +271,8 @@ export default async function ClubCmsPage({
   const textColor = page.textColor || '#111827';
   const accentColor = page.accentColor || '#06C755';
   const backgroundColor = page.backgroundColor || '#F7F8FA';
+  const backgroundOpacity = clampPercent(page.backgroundOpacity ?? 100);
+  const bgColor = hexToRgba(backgroundColor, backgroundOpacity);
   const navColor = page.navColor || '#F3F4F6';
   const navOpacity = clampPercent(page.navOpacity ?? 100);
   const navBg = hexToRgba(navColor, navOpacity);
@@ -391,8 +393,8 @@ export default async function ClubCmsPage({
   const contactMessageColor = sectionCopy.contactMessageColor?.trim() || '#6B7280';
 
   return (
-    <main className="min-h-screen sm:bg-gray-200" style={{ fontFamily, backgroundColor }}>
-      <div className="mx-auto w-full max-w-[480px] sm:my-8 sm:overflow-hidden sm:rounded-3xl sm:shadow-2xl" style={{ backgroundColor, minHeight: '100dvh' }}>
+    <main className="min-h-screen sm:bg-gray-200" style={{ fontFamily, backgroundColor: bgColor }}>
+      <div className="mx-auto w-full max-w-[480px] sm:my-8 sm:overflow-hidden sm:rounded-3xl sm:shadow-2xl" style={{ backgroundColor: bgColor, minHeight: '100dvh' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       <style>{`
         @keyframes public-site-slide-2 {

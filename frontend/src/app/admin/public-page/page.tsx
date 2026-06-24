@@ -53,6 +53,7 @@ const emptyForm: PublicPageInput = {
   textColor: '#111827',
   accentColor: '#06C755',
   backgroundColor: '#F7F8FA',
+  backgroundOpacity: 100,
   navColor: '#F3F4F6',
   navOpacity: 100,
   imageLayout: 'slider',
@@ -365,6 +366,8 @@ export default function AdminPublicPage() {
   const textColor = form.textColor?.trim() || '#111827';
   const accentColor = form.accentColor?.trim() || '#06C755';
   const backgroundColor = form.backgroundColor?.trim() || '#F7F8FA';
+  const backgroundOpacity = clampPercent(form.backgroundOpacity ?? 100);
+  const bgColor = hexToRgba(backgroundColor, backgroundOpacity);
   const navColor = form.navColor?.trim() || '#F3F4F6';
   const navOpacity = clampPercent(form.navOpacity ?? 100);
   const navBg = hexToRgba(navColor, navOpacity);
@@ -546,6 +549,7 @@ export default function AdminPublicPage() {
             textColor: first.textColor ?? '#111827',
             accentColor: first.accentColor ?? '#06C755',
             backgroundColor: first.backgroundColor ?? '#F7F8FA',
+            backgroundOpacity: first.backgroundOpacity ?? 100,
             navColor: first.navColor ?? '#F3F4F6',
             navOpacity: first.navOpacity ?? 100,
             imageLayout: first.imageLayout ?? 'slider',
@@ -826,7 +830,7 @@ export default function AdminPublicPage() {
       imageUrls,
       imageCaptions: imageCaptions.map((caption) => caption.trim()).slice(0, imageUrls.length),
       dividerText: '',
-      textColor, accentColor, backgroundColor, navColor, navOpacity,
+      textColor, accentColor, backgroundColor, backgroundOpacity: clampPercent(form.backgroundOpacity ?? 100), navColor, navOpacity,
       imageLayout: form.imageLayout || 'slider',
       heroImageMode,
       heroNavPosition,
@@ -961,6 +965,14 @@ export default function AdminPublicPage() {
                   style={{ backgroundColor: c.value, boxShadow: '0 0 0 1px #e5e7eb' }} />
               ))}
             </div>
+          </div>
+          {/* 背景透明度 */}
+          <div className="flex items-center gap-3">
+            <span className="w-16 shrink-0 text-xs font-bold text-gray-500">透明度</span>
+            <input type="range" min="10" max="100" step="5" value={backgroundOpacity}
+              onChange={(e) => setForm((p) => ({ ...p, backgroundOpacity: Number(e.target.value) }))}
+              className="flex-1 accent-[#06C755]" />
+            <span className="w-8 text-right text-xs text-gray-400">{backgroundOpacity}%</span>
           </div>
           {/* ナビ背景 */}
           <div className="space-y-2">
@@ -1644,7 +1656,7 @@ export default function AdminPublicPage() {
           </span>
         </div>
         <div className="overflow-x-hidden rounded-2xl bg-gray-100 p-2 shadow-inner">
-        <div className="mx-auto min-w-0 max-w-[390px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm" style={{ fontFamily, backgroundColor }}>
+        <div className="mx-auto min-w-0 max-w-[390px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm" style={{ fontFamily, backgroundColor: bgColor }}>
 
           {/* 静止サイト型 preview */}
           <>

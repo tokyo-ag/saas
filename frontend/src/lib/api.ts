@@ -740,6 +740,7 @@ export interface PublicPage {
   textColor?: string | null;
   accentColor?: string | null;
   backgroundColor?: string | null;
+  backgroundOpacity?: number | null;
   navColor?: string | null;
   navOpacity?: number | null;
   imageLayout?: string | null;
@@ -803,6 +804,7 @@ export interface PublicPageInput {
   textColor?: string;
   accentColor?: string;
   backgroundColor?: string;
+  backgroundOpacity?: number;
   navColor?: string;
   navOpacity?: number;
   imageLayout?: string;
@@ -949,6 +951,7 @@ export interface PublicCmsPage {
   contactLabel?: string | null;
   navColor?: string | null;
   navOpacity?: number | null;
+  backgroundOpacity?: number | null;
   reserveViewStyle?: string | null;
   buttonStyle?: string | null;
   buttonLayout?: string | null;
