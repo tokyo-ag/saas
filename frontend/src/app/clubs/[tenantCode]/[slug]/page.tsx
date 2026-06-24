@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import type { CSSProperties } from 'react';
 import type { PublicCmsPage } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
@@ -40,24 +41,38 @@ const fontFamilyMap: Record<string, string> = {
   serif: '"Yu Mincho", "Hiragino Mincho ProN", serif',
 };
 
-const titleSizeMap: Record<string, string> = {
-  small: 'text-2xl md:text-3xl',
-  large: 'text-3xl md:text-4xl',
-  xlarge: 'text-4xl md:text-5xl',
-};
+const TITLE_SIZE_LEGACY: Record<string, number> = { small: 22, base: 26, large: 30, xl: 36, xlarge: 36 };
+const SUBTITLE_SIZE_LEGACY: Record<string, number> = { small: 12, base: 14, large: 16 };
+const BODY_SIZE_LEGACY: Record<string, number> = { small: 14, base: 16, large: 18 };
 
-const bodySizeMap: Record<string, string> = {
-  small: 'text-sm leading-7',
-  base: 'text-base leading-8',
-  large: 'text-lg leading-9',
-};
+function resolvePxSize(
+  value: string | number | null | undefined,
+  fallback: number,
+  min: number,
+  max: number,
+  legacy: Record<string, number>,
+) {
+  const raw = typeof value === 'string' ? value.trim() : value;
+  const mapped = typeof raw === 'string' ? legacy[raw] : undefined;
+  const parsed = mapped ?? Number(raw);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(parsed)));
+}
 
-function renderLine(line: string, index: number, textColor: string, bodyClassName: string) {
+function bodyLeadingClass(size: number) {
+  if (size <= 14) return 'leading-7';
+  if (size >= 19) return 'leading-10';
+  if (size >= 17) return 'leading-9';
+  return 'leading-8';
+}
+
+function renderLine(line: string, index: number, textColor: string, bodyClassName: string, textStyle: CSSProperties = {}) {
+  const style: CSSProperties = { color: textColor, overflowWrap: 'anywhere', ...textStyle };
   if (line.startsWith('### ')) return <h3 key={index} className="mt-7 text-xl font-bold" style={{ color: textColor }}>{line.slice(4)}</h3>;
   if (line.startsWith('## ') || line.startsWith('# ')) return <h2 key={index} className="mt-9 text-2xl font-bold" style={{ color: textColor }}>{line.replace(/^#{1,3}\s/, '')}</h2>;
-  if (line.startsWith('- ')) return <li key={index} className="ml-5 list-disc" style={{ color: textColor }}>{line.slice(2)}</li>;
+  if (line.startsWith('- ')) return <li key={index} className="ml-5 list-disc break-words" style={style}>{line.slice(2)}</li>;
   if (!line.trim()) return <div key={index} className="h-3" />;
-  return <p key={index} className={bodyClassName} style={{ color: textColor }}>{line}</p>;
+  return <p key={index} className={`${bodyClassName} break-words`} style={style}>{line}</p>;
 }
 
 function getBtnClass(style: string | null | undefined) {
@@ -227,11 +242,15 @@ export default async function ClubCmsPage({
   const fontFamily = fontFamilyMap[page.fontFamily || 'mincho'] ?? fontFamilyMap.mincho;
   const titleFontFamily = page.titleFont ? (fontFamilyMap[page.titleFont] ?? fontFamily) : fontFamily;
   const titleTextColor = page.titleColor || textColor;
-  const titleSizeClass = titleSizeMap[page.titleSize || 'large'] ?? titleSizeMap.large;
+  const titleFontSize = resolvePxSize(page.titleSize, 30, 18, 48, TITLE_SIZE_LEGACY);
+  const titleTextStyle = { color: titleTextColor, fontFamily: titleFontFamily, fontSize: titleFontSize, lineHeight: 1.25 };
   const subtitleFontFamily = page.subtitleFont ? (fontFamilyMap[page.subtitleFont] ?? fontFamily) : fontFamily;
   const subtitleTextColor = page.subtitleColor || textColor;
-  const subtitleSizeClass = page.subtitleSize === 'small' ? 'text-xs' : page.subtitleSize === 'large' ? 'text-base' : 'text-sm';
-  const bodySizeClass = bodySizeMap[page.bodySize || 'base'] ?? bodySizeMap.base;
+  const subtitleFontSize = resolvePxSize(page.subtitleSize, 14, 11, 28, SUBTITLE_SIZE_LEGACY);
+  const subtitleTextStyle = { color: subtitleTextColor, fontFamily: subtitleFontFamily, fontSize: subtitleFontSize, lineHeight: 1.6 };
+  const bodyFontSize = resolvePxSize(page.bodySize, 16, 12, 24, BODY_SIZE_LEGACY);
+  const bodySizeClass = bodyLeadingClass(bodyFontSize);
+  const bodyTextStyle = { fontSize: bodyFontSize };
   const titleAlign = (['left', 'center', 'right'].includes(page.titleAlign || '') ? page.titleAlign! : 'left') as 'left' | 'center' | 'right';
   const layoutVariant = page.layoutVariant || 'static';
   const navLabels = {
@@ -305,8 +324,8 @@ export default async function ClubCmsPage({
               {tenantName.slice(0, 1)}
             </div>
           )}
-          <h1 className={`mt-4 ${titleSizeClass} font-bold`} style={{ color: titleTextColor, fontFamily: titleFontFamily }}>{tenantName}</h1>
-          {page.subtitle && <p className={`mt-1 ${subtitleSizeClass}`} style={{ color: subtitleTextColor, fontFamily: subtitleFontFamily }}>{page.subtitle}</p>}
+          <h1 className="mt-4 font-bold" style={titleTextStyle}>{tenantName}</h1>
+          {page.subtitle && <p className="mt-1" style={subtitleTextStyle}>{page.subtitle}</p>}
 
           <div className="w-full max-w-sm">
             <HeroImageBlock
@@ -344,8 +363,8 @@ export default async function ClubCmsPage({
           {page.body && (
             <div id="about" className="mt-14 w-full max-w-sm scroll-mt-6 rounded-xl px-6 py-5 shadow-sm" style={{ backgroundColor: navBg }}>
               <p className="mb-3 text-sm font-bold" style={{ color: textColor }}>{navLabels.about}</p>
-              <div className="text-sm leading-7" style={{ color: textColor }}>
-                {page.body.split('\n').map((line, i) => renderLine(line, i, textColor, 'text-sm leading-7'))}
+              <div className={bodySizeClass} style={{ color: textColor, ...bodyTextStyle }}>
+                {page.body.split('\n').map((line, i) => renderLine(line, i, textColor, bodySizeClass, bodyTextStyle))}
               </div>
             </div>
           )}
@@ -385,8 +404,8 @@ export default async function ClubCmsPage({
                 </Link>
               </div>
               <div>
-                <h1 className={`${titleSizeClass} font-bold drop-shadow`} style={{ color: titleTextColor, fontFamily: titleFontFamily }}>{tenantName}</h1>
-                {page.subtitle && <p className={`mt-2 ${subtitleSizeClass}`} style={{ color: subtitleTextColor, fontFamily: subtitleFontFamily }}>{page.subtitle}</p>}
+                <h1 className="font-bold drop-shadow" style={titleTextStyle}>{tenantName}</h1>
+                {page.subtitle && <p className="mt-2" style={subtitleTextStyle}>{page.subtitle}</p>}
                 {heroNavPosition === 'inside' && (
                   <nav className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                     <a href="#about" className={`px-4 py-2.5 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle }}>{navLabels.about}</a>
@@ -440,6 +459,9 @@ export default async function ClubCmsPage({
           {page.blocks?.length ? (
             <div className="space-y-8">
               {(page.blocks as any[]).map((block: any, i: number) => {
+                const blockFontSize = resolvePxSize(block.fontSize, bodyFontSize, 10, 28, BODY_SIZE_LEGACY);
+                const blockBodyClass = bodyLeadingClass(blockFontSize);
+                const blockTextStyle = { fontSize: blockFontSize };
                 if (block.type === 'media-text') {
                   const isLeft = block.imagePosition !== 'right';
                   return (
@@ -447,8 +469,8 @@ export default async function ClubCmsPage({
                       {block.imageUrl && (
                         <img src={block.imageUrl} alt="" className="h-40 w-full rounded-xl object-cover sm:h-auto sm:w-2/5" />
                       )}
-                      <div className={`flex-1 space-y-1 ${bodySizeClass}`} style={{ color: textColor }}>
-                        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, bodySizeClass))}
+                      <div className={`min-w-0 flex-1 space-y-1 ${blockBodyClass}`} style={{ color: textColor, ...blockTextStyle }}>
+                        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, blockBodyClass, blockTextStyle))}
                       </div>
                     </div>
                   );
@@ -459,8 +481,8 @@ export default async function ClubCmsPage({
                       {block.imageUrl && (
                         <img src={block.imageUrl} alt="" className="h-16 w-16 shrink-0 rounded-full object-cover" />
                       )}
-                      <div className={`space-y-1 ${bodySizeClass}`} style={{ color: textColor }}>
-                        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, bodySizeClass))}
+                      <div className={`min-w-0 space-y-1 ${blockBodyClass}`} style={{ color: textColor, ...blockTextStyle }}>
+                        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, blockBodyClass, blockTextStyle))}
                       </div>
                     </div>
                   );
@@ -471,23 +493,23 @@ export default async function ClubCmsPage({
                       {block.imageUrl && (
                         <img src={block.imageUrl} alt="" className="w-full rounded-xl object-cover" />
                       )}
-                      <div className={`space-y-1 ${bodySizeClass}`} style={{ color: textColor }}>
-                        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, bodySizeClass))}
+                      <div className={`space-y-1 ${blockBodyClass}`} style={{ color: textColor, ...blockTextStyle }}>
+                        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, blockBodyClass, blockTextStyle))}
                       </div>
                     </div>
                   );
                 }
                 // text
                 return (
-                  <div key={i} className={`space-y-1 ${bodySizeClass}`} style={{ color: textColor }}>
-                    {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, bodySizeClass))}
+                  <div key={i} className={`space-y-1 ${blockBodyClass}`} style={{ color: textColor, ...blockTextStyle }}>
+                    {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, blockBodyClass, blockTextStyle))}
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className={`space-y-2 ${bodySizeClass}`}>
-              {page.body.split('\n').map((line, index) => renderLine(line, index, textColor, bodySizeClass))}
+            <div className={`space-y-2 ${bodySizeClass}`} style={bodyTextStyle}>
+              {page.body.split('\n').map((line, index) => renderLine(line, index, textColor, bodySizeClass, bodyTextStyle))}
             </div>
           )}
         </div>

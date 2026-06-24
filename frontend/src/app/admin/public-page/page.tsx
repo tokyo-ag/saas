@@ -13,6 +13,7 @@ interface Block {
   content: string;
   imageUrl?: string;
   imagePosition?: 'left' | 'right';
+  fontSize?: string;
 }
 const BLOCK_LABELS: Record<BlockType, string> = {
   'text': 'テキスト',
@@ -75,11 +76,30 @@ const fontOptions = [
   { label: '強調', value: 'marker', family: '"Arial Rounded MT Bold", "Arial Black", "Yu Gothic", sans-serif' },
 ];
 
-const bodySizeOptions = [
-  { label: '小', value: 'small', className: 'text-sm leading-7' },
-  { label: '標準', value: 'base', className: 'text-base leading-8' },
-  { label: '大', value: 'large', className: 'text-lg leading-9' },
-];
+const TITLE_SIZE_LEGACY: Record<string, number> = { small: 22, base: 26, large: 30, xl: 36, xlarge: 36 };
+const SUBTITLE_SIZE_LEGACY: Record<string, number> = { small: 12, base: 14, large: 16 };
+const BODY_SIZE_LEGACY: Record<string, number> = { small: 14, base: 16, large: 18 };
+
+function resolvePxSize(
+  value: string | number | null | undefined,
+  fallback: number,
+  min: number,
+  max: number,
+  legacy: Record<string, number>,
+) {
+  const raw = typeof value === 'string' ? value.trim() : value;
+  const mapped = typeof raw === 'string' ? legacy[raw] : undefined;
+  const parsed = mapped ?? Number(raw);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(parsed)));
+}
+
+function bodyLeadingClass(size: number) {
+  if (size <= 14) return 'leading-7';
+  if (size >= 19) return 'leading-10';
+  if (size >= 17) return 'leading-9';
+  return 'leading-8';
+}
 
 const PASTEL_COLORS = [
   { label: 'ライト', value: '#F7F8FA' },
@@ -273,7 +293,8 @@ export default function AdminPublicPage() {
   const navOpacity = clampPercent(form.navOpacity ?? 100);
   const navBg = hexToRgba(navColor, navOpacity);
   const fontFamily = fontOptions.find((o) => o.value === form.fontFamily)?.family ?? fontOptions[0].family;
-  const bodySizeClass = bodySizeOptions.find((o) => o.value === form.bodySize)?.className ?? bodySizeOptions[1].className;
+  const bodyFontSize = resolvePxSize(form.bodySize, 16, 12, 24, BODY_SIZE_LEGACY);
+  const bodySizeClass = bodyLeadingClass(bodyFontSize);
   const titleAlign = (['left', 'center', 'right'].includes(form.titleAlign || '') ? form.titleAlign! : 'left') as 'left' | 'center' | 'right';
   const isCategory = form.layoutVariant === 'category';
   const previewBody = form.body.trim() || tenant?.description || '';
@@ -293,25 +314,14 @@ export default function AdminPublicPage() {
     ? fontOptions.find(f => f.value === form.titleFont)?.family
     : undefined) ?? fontFamily;
   const titleColor = form.titleColor?.trim() || textColor;
-  const titleSizeClass = (() => {
-    switch (form.titleSize) {
-      case 'small': return 'text-base';
-      case 'large': return 'text-2xl';
-      case 'xl': return 'text-3xl';
-      default: return 'text-xl';
-    }
-  })();
+  const titleFontSize = resolvePxSize(form.titleSize, 30, 18, 48, TITLE_SIZE_LEGACY);
+  const titleTextStyle = { color: titleColor, fontFamily: titleFontFamily, fontSize: titleFontSize, lineHeight: 1.25 };
   const subtitleFontFamily = (form.subtitleFont?.trim()
     ? fontOptions.find(f => f.value === form.subtitleFont)?.family
     : undefined) ?? fontFamily;
   const subtitleColor = form.subtitleColor?.trim() || textColor;
-  const subtitleSizeClass = (() => {
-    switch (form.subtitleSize) {
-      case 'small': return 'text-xs';
-      case 'large': return 'text-base';
-      default: return 'text-sm';
-    }
-  })();
+  const subtitleFontSize = resolvePxSize(form.subtitleSize, 14, 11, 28, SUBTITLE_SIZE_LEGACY);
+  const subtitleTextStyle = { color: subtitleColor, fontFamily: subtitleFontFamily, fontSize: subtitleFontSize, lineHeight: 1.6 };
   const heroNavPosition = form.heroNavPosition === 'inside' ? 'inside' : 'below';
   const navLabels = {
     about: form.aboutLabel?.trim() || '団体詳細',
@@ -434,9 +444,11 @@ export default function AdminPublicPage() {
     }
   }
 
-  function renderPreviewText(content: string) {
+  function renderPreviewText(content: string, fontSize = bodyFontSize) {
     return (
-      <p className={`${bodySizeClass} whitespace-pre-wrap opacity-90`} style={{ color: textColor, fontFamily }}>
+      <p
+        className={`${bodyLeadingClass(fontSize)} whitespace-pre-wrap break-words opacity-90`}
+        style={{ color: textColor, fontFamily, fontSize, overflowWrap: 'anywhere' }}>
         {content || '団体説明'}
       </p>
     );
@@ -449,6 +461,7 @@ export default function AdminPublicPage() {
       <div className="space-y-5">
         {blocks.map((block) => {
           const content = block.content?.trim() || '';
+          const blockFontSize = resolvePxSize(block.fontSize, bodyFontSize, 10, 28, BODY_SIZE_LEGACY);
 
           if (block.type === 'media-text') {
             const imageRight = block.imagePosition === 'right';
@@ -457,7 +470,7 @@ export default function AdminPublicPage() {
                 {block.imageUrl && (
                   <img src={block.imageUrl} alt="" className="h-24 w-28 shrink-0 rounded-xl object-cover" />
                 )}
-                <div className="min-w-0 flex-1">{renderPreviewText(content)}</div>
+                <div className="min-w-0 flex-1">{renderPreviewText(content, blockFontSize)}</div>
               </div>
             );
           }
@@ -468,7 +481,7 @@ export default function AdminPublicPage() {
                 {block.imageUrl && (
                   <img src={block.imageUrl} alt="" className="h-16 w-16 shrink-0 rounded-full object-cover" />
                 )}
-                <div className="min-w-0 flex-1">{renderPreviewText(content)}</div>
+                <div className="min-w-0 flex-1">{renderPreviewText(content, blockFontSize)}</div>
               </div>
             );
           }
@@ -479,12 +492,12 @@ export default function AdminPublicPage() {
                 {block.imageUrl && (
                   <img src={block.imageUrl} alt="" className="max-h-52 w-full rounded-xl object-cover" />
                 )}
-                {renderPreviewText(content)}
+                {renderPreviewText(content, blockFontSize)}
               </div>
             );
           }
 
-          return <div key={block.id}>{renderPreviewText(content)}</div>;
+          return <div key={block.id}>{renderPreviewText(content, blockFontSize)}</div>;
         })}
       </div>
     );
@@ -526,12 +539,12 @@ export default function AdminPublicPage() {
       fontFamily: form.fontFamily,
       titleFont: form.titleFont?.trim() || undefined,
       titleColor: form.titleColor?.trim() || undefined,
-      titleSize: form.titleSize,
+      titleSize: String(titleFontSize),
       titleAlign,
       subtitleFont: form.subtitleFont?.trim() || undefined,
-      subtitleSize: form.subtitleSize,
+      subtitleSize: String(subtitleFontSize),
       subtitleColor: form.subtitleColor?.trim() || undefined,
-      bodySize: form.bodySize,
+      bodySize: String(bodyFontSize),
       layoutVariant: isCategory ? 'category' : 'static',
       aboutLabel: navLabels.about,
       reserveLabel: navLabels.reserve,
@@ -650,6 +663,76 @@ export default function AdminPublicPage() {
             <p className="text-xs font-bold text-gray-500">ヘッダー</p>
             <span className="text-[11px] font-bold text-gray-400">{imageUrls.length}/3</span>
           </div>
+
+          {/* タイトル / サブタイトル */}
+          <div className="space-y-5 rounded-lg bg-gray-50 p-3">
+            <div className="space-y-2">
+              <p className="text-[11px] font-bold text-gray-400">タイトル（団体名）</p>
+              <input value={displayName} readOnly
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-bold text-gray-500" />
+              <div className="flex flex-wrap gap-1.5">
+                {fontOptions.map((opt) => (
+                  <button key={opt.value} type="button"
+                    onClick={() => setForm((p) => ({ ...p, titleFont: opt.value }))}
+                    className={`rounded-full border px-3 py-1 text-xs font-bold transition ${(form.titleFont || form.fontFamily) === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                    style={(form.titleFont || form.fontFamily) === opt.value ? { backgroundColor: accentColor, borderColor: accentColor, fontFamily: opt.family } : { fontFamily: opt.family }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <label className="block">
+                <span className="mb-1 flex items-center justify-between text-xs text-gray-500">
+                  <span>文字サイズ</span>
+                  <span className="font-bold">{titleFontSize}px</span>
+                </span>
+                <input type="range" min="18" max="48" step="1" value={titleFontSize}
+                  onChange={(e) => setForm((p) => ({ ...p, titleSize: e.target.value }))}
+                  className="w-full accent-[#06C755]" />
+              </label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">色</span>
+                <input type="color" value={form.titleColor || textColor}
+                  onChange={(e) => setForm((p) => ({ ...p, titleColor: e.target.value }))}
+                  className="h-8 w-10 cursor-pointer rounded border border-gray-200 bg-white p-0.5" />
+              </div>
+            </div>
+
+            <div className="border-t border-gray-200 pt-4 space-y-2">
+              <label className="block">
+                <span className="mb-1 block text-[11px] font-bold text-gray-400">サブタイトル</span>
+                <input value={form.subtitle ?? ''}
+                  onChange={(e) => setForm((p) => ({ ...p, subtitle: e.target.value }))}
+                  placeholder="例：初心者歓迎の社会人サークル"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {fontOptions.map((opt) => (
+                  <button key={opt.value} type="button"
+                    onClick={() => setForm((p) => ({ ...p, subtitleFont: opt.value }))}
+                    className={`rounded-full border px-3 py-1 text-xs font-bold transition ${(form.subtitleFont || form.fontFamily) === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                    style={(form.subtitleFont || form.fontFamily) === opt.value ? { backgroundColor: accentColor, borderColor: accentColor, fontFamily: opt.family } : { fontFamily: opt.family }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <label className="block">
+                <span className="mb-1 flex items-center justify-between text-xs text-gray-500">
+                  <span>文字サイズ</span>
+                  <span className="font-bold">{subtitleFontSize}px</span>
+                </span>
+                <input type="range" min="11" max="28" step="1" value={subtitleFontSize}
+                  onChange={(e) => setForm((p) => ({ ...p, subtitleSize: e.target.value }))}
+                  className="w-full accent-[#06C755]" />
+              </label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">色</span>
+                <input type="color" value={form.subtitleColor || textColor}
+                  onChange={(e) => setForm((p) => ({ ...p, subtitleColor: e.target.value }))}
+                  className="h-8 w-10 cursor-pointer rounded border border-gray-200 bg-white p-0.5" />
+              </div>
+            </div>
+          </div>
+
           {/* 画像 */}
           <div>
             <div className="mb-3 flex flex-wrap gap-2">
@@ -827,98 +910,21 @@ export default function AdminPublicPage() {
               ))}
             </div>
           </div>
-          {/* サブタイトル */}
-          <div className="border-t border-gray-100 pt-4">
-            <label className="block">
-              <span className="mb-1 block text-[11px] font-bold text-gray-400">サブタイトル</span>
-              <input value={form.subtitle ?? ''}
-                onChange={(e) => setForm((p) => ({ ...p, subtitle: e.target.value }))}
-                placeholder="例：初心者歓迎の社会人サークル"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-            </label>
-          </div>
-
-          {/* タイトル / サブタイトル スタイル */}
-          <div className="border-t border-gray-100 pt-4 space-y-4">
-            {/* タイトル */}
-            <div className="space-y-2">
-              <p className="text-[11px] font-bold text-gray-400">タイトル（団体名）</p>
-              <div className="flex flex-wrap gap-1.5">
-                {fontOptions.map((opt) => (
-                  <button key={opt.value} type="button"
-                    onClick={() => setForm((p) => ({ ...p, titleFont: opt.value }))}
-                    className={`rounded-full border px-3 py-1 text-xs font-bold transition ${(form.titleFont || form.fontFamily) === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                    style={(form.titleFont || form.fontFamily) === opt.value ? { backgroundColor: accentColor, borderColor: accentColor, fontFamily: opt.family } : { fontFamily: opt.family }}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              <div className="flex gap-1.5">
-                {[{ label: '小', value: 'small' }, { label: '標準', value: 'base' }, { label: '大', value: 'large' }, { label: '特大', value: 'xl' }].map((opt) => (
-                  <button key={opt.value} type="button"
-                    onClick={() => setForm((p) => ({ ...p, titleSize: opt.value }))}
-                    className={`rounded-full border px-3 py-1 text-xs font-bold transition ${form.titleSize === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                    style={form.titleSize === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">色</span>
-                <input type="color" value={form.titleColor || textColor}
-                  onChange={(e) => setForm((p) => ({ ...p, titleColor: e.target.value }))}
-                  className="h-8 w-10 cursor-pointer rounded border border-gray-200 bg-white p-0.5" />
-              </div>
-            </div>
-
-            {/* サブタイトル スタイル */}
-            <div className="space-y-2">
-              <p className="text-[11px] font-bold text-gray-400">サブタイトル スタイル</p>
-              <div className="flex flex-wrap gap-1.5">
-                {fontOptions.map((opt) => (
-                  <button key={opt.value} type="button"
-                    onClick={() => setForm((p) => ({ ...p, subtitleFont: opt.value }))}
-                    className={`rounded-full border px-3 py-1 text-xs font-bold transition ${(form.subtitleFont || form.fontFamily) === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                    style={(form.subtitleFont || form.fontFamily) === opt.value ? { backgroundColor: accentColor, borderColor: accentColor, fontFamily: opt.family } : { fontFamily: opt.family }}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              <div className="flex gap-1.5">
-                {[{ label: '小', value: 'small' }, { label: '標準', value: 'base' }, { label: '大', value: 'large' }].map((opt) => (
-                  <button key={opt.value} type="button"
-                    onClick={() => setForm((p) => ({ ...p, subtitleSize: opt.value }))}
-                    className={`rounded-full border px-3 py-1 text-xs font-bold transition ${form.subtitleSize === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                    style={form.subtitleSize === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">色</span>
-                <input type="color" value={form.subtitleColor || textColor}
-                  onChange={(e) => setForm((p) => ({ ...p, subtitleColor: e.target.value }))}
-                  className="h-8 w-10 cursor-pointer rounded border border-gray-200 bg-white p-0.5" />
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* 団体詳細 */}
         <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
           <p className="text-xs font-bold text-gray-500">団体詳細</p>
           <div>
-            <p className="mb-2 text-[11px] font-bold text-gray-400">文字サイズ</p>
-            <div className="flex flex-wrap gap-2">
-              {bodySizeOptions.map((opt) => (
-                <button key={opt.value} type="button"
-                  onClick={() => setForm((p) => ({ ...p, bodySize: opt.value }))}
-                  className={`rounded-full border px-4 py-2 text-xs font-bold transition ${form.bodySize === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                  style={form.bodySize === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+            <label className="block">
+              <span className="mb-2 flex items-center justify-between text-xs text-gray-500">
+                <span className="font-bold text-gray-400">文字サイズ</span>
+                <span className="font-bold">{bodyFontSize}px</span>
+              </span>
+              <input type="range" min="12" max="24" step="1" value={bodyFontSize}
+                onChange={(e) => setForm((p) => ({ ...p, bodySize: e.target.value }))}
+                className="w-full accent-[#06C755]" />
+            </label>
           </div>
 
           {/* ブロック追加ボタン */}
@@ -941,66 +947,80 @@ export default function AdminPublicPage() {
 
           {/* ブロックリスト */}
           <div className="space-y-2">
-            {blocks.map((block, index) => (
-              <div key={block.id} className="rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-2">
-                {/* ヘッダー行 */}
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-gray-400">{BLOCK_LABELS[block.type]}</span>
-                  <div className="flex gap-1">
-                    <button type="button" onClick={() => moveBlock(block.id, -1)} disabled={index === 0}
-                      className="flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-gray-200 disabled:opacity-30">↑</button>
-                    <button type="button" onClick={() => moveBlock(block.id, 1)} disabled={index === blocks.length - 1}
-                      className="flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-gray-200 disabled:opacity-30">↓</button>
-                    <button type="button" onClick={() => deleteBlock(block.id)}
-                      className="flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-red-100 hover:text-red-500">×</button>
+            {blocks.map((block, index) => {
+              const blockFontSize = resolvePxSize(block.fontSize, bodyFontSize, 10, 28, BODY_SIZE_LEGACY);
+              return (
+                <div key={block.id} className="rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-2">
+                  {/* ヘッダー行 */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-gray-400">{BLOCK_LABELS[block.type]}</span>
+                    <div className="flex gap-1">
+                      <button type="button" onClick={() => moveBlock(block.id, -1)} disabled={index === 0}
+                        className="flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-gray-200 disabled:opacity-30">↑</button>
+                      <button type="button" onClick={() => moveBlock(block.id, 1)} disabled={index === blocks.length - 1}
+                        className="flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-gray-200 disabled:opacity-30">↓</button>
+                      <button type="button" onClick={() => deleteBlock(block.id)}
+                        className="flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-red-100 hover:text-red-500">×</button>
+                    </div>
                   </div>
+
+                  {/* 画像フィールド (media-text / profile / feature) */}
+                  {(block.type === 'media-text' || block.type === 'profile' || block.type === 'feature') && (
+                    <div className="space-y-1.5">
+                      {block.imageUrl ? (
+                        <div className="flex items-center gap-2">
+                          <img src={block.imageUrl} alt=""
+                            className={`object-cover ${block.type === 'profile' ? 'h-12 w-12 rounded-full' : 'h-14 w-20 rounded-lg'}`} />
+                          <button type="button" onClick={() => updateBlock(block.id, { imageUrl: undefined })}
+                            className="text-xs text-gray-400 hover:text-red-500">削除</button>
+                        </div>
+                      ) : (
+                        <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-xs text-gray-500 hover:bg-gray-100">
+                          + 画像追加
+                          <input type="file" accept="image/*" className="hidden"
+                            ref={el => { blockUploadRefs.current[block.id] = el; }}
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) await handleBlockImage(block.id, file);
+                              e.target.value = '';
+                            }} />
+                        </label>
+                      )}
+                      {block.type === 'media-text' && (
+                        <div className="flex gap-2">
+                          {(['left', 'right'] as const).map(pos => (
+                            <button key={pos} type="button"
+                              onClick={() => updateBlock(block.id, { imagePosition: pos })}
+                              className={`rounded-full border px-3 py-1 text-[11px] font-bold transition ${block.imagePosition === pos ? 'text-white' : 'border-gray-200 text-gray-500'}`}
+                              style={block.imagePosition === pos ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                              {pos === 'left' ? '画像を左' : '画像を右'}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <label className="block">
+                    <span className="mb-1 flex items-center justify-between text-xs text-gray-500">
+                      <span className="font-bold text-gray-400">文字サイズ</span>
+                      <span className="font-bold">{blockFontSize}px</span>
+                    </span>
+                    <input type="range" min="10" max="28" step="1" value={blockFontSize}
+                      onChange={(e) => updateBlock(block.id, { fontSize: e.target.value })}
+                      className="w-full accent-[#06C755]" />
+                  </label>
+
+                  {/* テキスト */}
+                  <textarea value={block.content}
+                    onChange={(e) => updateBlock(block.id, { content: e.target.value })}
+                    rows={3}
+                    placeholder={block.type === 'profile' ? '名前や紹介文' : block.type === 'feature' ? 'キャプションや説明文' : '内容を入力'}
+                    className="w-full resize-y break-words rounded-lg border border-gray-200 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                    style={{ fontSize: blockFontSize, lineHeight: 1.7, overflowWrap: 'anywhere' }} />
                 </div>
-
-                {/* 画像フィールド (media-text / profile / feature) */}
-                {(block.type === 'media-text' || block.type === 'profile' || block.type === 'feature') && (
-                  <div className="space-y-1.5">
-                    {block.imageUrl ? (
-                      <div className="flex items-center gap-2">
-                        <img src={block.imageUrl} alt=""
-                          className={`object-cover ${block.type === 'profile' ? 'h-12 w-12 rounded-full' : 'h-14 w-20 rounded-lg'}`} />
-                        <button type="button" onClick={() => updateBlock(block.id, { imageUrl: undefined })}
-                          className="text-xs text-gray-400 hover:text-red-500">削除</button>
-                      </div>
-                    ) : (
-                      <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-xs text-gray-500 hover:bg-gray-100">
-                        + 画像追加
-                        <input type="file" accept="image/*" className="hidden"
-                          ref={el => { blockUploadRefs.current[block.id] = el; }}
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (file) await handleBlockImage(block.id, file);
-                            e.target.value = '';
-                          }} />
-                      </label>
-                    )}
-                    {block.type === 'media-text' && (
-                      <div className="flex gap-2">
-                        {(['left', 'right'] as const).map(pos => (
-                          <button key={pos} type="button"
-                            onClick={() => updateBlock(block.id, { imagePosition: pos })}
-                            className={`rounded-full border px-3 py-1 text-[11px] font-bold transition ${block.imagePosition === pos ? 'text-white' : 'border-gray-200 text-gray-500'}`}
-                            style={block.imagePosition === pos ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
-                            {pos === 'left' ? '画像を左' : '画像を右'}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* テキスト */}
-                <textarea value={block.content}
-                  onChange={(e) => updateBlock(block.id, { content: e.target.value })}
-                  rows={3}
-                  placeholder={block.type === 'profile' ? '名前や紹介文' : block.type === 'feature' ? 'キャプションや説明文' : '内容を入力'}
-                  className="w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm leading-7 focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-              </div>
-            ))}
+              );
+            })}
             {blocks.length === 0 && (
               <p className="py-4 text-center text-xs text-gray-400">上のボタンからブロックを追加してください</p>
             )}
@@ -1048,9 +1068,9 @@ export default function AdminPublicPage() {
                     {displayName.slice(0, 1)}
                   </div>
                 )}
-                <p className={`${titleSizeClass} font-bold`} style={{ color: titleColor, fontFamily: titleFontFamily }}>{displayName}</p>
+                <p className="font-bold" style={titleTextStyle}>{displayName}</p>
                 {form.subtitle?.trim() && (
-                  <p className={subtitleSizeClass} style={{ color: subtitleColor, fontFamily: subtitleFontFamily }}>{form.subtitle.trim()}</p>
+                  <p style={subtitleTextStyle}>{form.subtitle.trim()}</p>
                 )}
               </div>
 
@@ -1101,9 +1121,9 @@ export default function AdminPublicPage() {
                         </span>
                       </div>
                       <div>
-                        <p className={`${titleSizeClass} font-bold drop-shadow`} style={{ color: titleColor, fontFamily: titleFontFamily }}>{displayName}</p>
+                        <p className="font-bold drop-shadow" style={titleTextStyle}>{displayName}</p>
                         {form.subtitle?.trim() && (
-                          <p className={`mt-1 ${subtitleSizeClass}`} style={{ color: subtitleColor, fontFamily: subtitleFontFamily }}>{form.subtitle.trim()}</p>
+                          <p className="mt-1" style={subtitleTextStyle}>{form.subtitle.trim()}</p>
                         )}
                         {heroNavPosition === 'inside' && (
                           <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] font-bold">
@@ -1136,7 +1156,7 @@ export default function AdminPublicPage() {
               )}
               <div className="space-y-4 p-5">
                 {form.subtitle?.trim() && heroImageMode !== 'background' && (
-                  <p className="text-sm font-bold leading-6 opacity-75" style={{ color: textColor, textAlign: titleAlign }}>
+                  <p className="font-bold opacity-75" style={{ ...subtitleTextStyle, textAlign: titleAlign }}>
                     {form.subtitle.trim()}
                   </p>
                 )}
