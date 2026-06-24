@@ -395,15 +395,17 @@ export default async function ClubCmsPage({
         /* 背景モード: 大きいヒーローエリア */
         <>
           <div className="relative overflow-hidden" style={{ minHeight: 320 }}>
-            <div className="absolute inset-0" style={{ backgroundImage: `url(${images[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+            <div className="absolute inset-0" style={{ backgroundImage: `url(${images[0]})`, backgroundSize: 'cover', backgroundPosition: page.heroImagePosition ?? 'center center' }} />
             <div className="absolute inset-0" style={{ backgroundColor: hexToRgba(heroOverlayColor, heroOverlayOpacity) }} />
-            <div className="relative z-10 flex flex-col justify-between px-6 py-5 md:px-8" style={{ minHeight: 320 }}>
-              <div className="flex items-center justify-end">
+            <div className="relative z-10" style={{ minHeight: 320 }}>
+              {/* reserve CTA - 常に右上 */}
+              <div className="absolute top-5 right-6 md:right-8">
                 <Link href={reserveHref} className={`px-4 py-2 text-sm font-bold text-white ${btnClass}`} style={{ backgroundColor: accentColor, ...buttonOpacityStyle }}>
                   {navLabels.reserve}
                 </Link>
               </div>
-              <div>
+              {/* テキストブロック - 位置可変 */}
+              <div className={`absolute left-6 right-6 md:left-8 md:right-8 ${page.heroTextPosition === 'top' ? 'top-5' : page.heroTextPosition === 'center' ? 'top-1/2 -translate-y-1/2' : 'bottom-5'}`}>
                 <h1 className="font-bold drop-shadow" style={titleTextStyle}>{tenantName}</h1>
                 {page.subtitle && <p className="mt-2" style={subtitleTextStyle}>{page.subtitle}</p>}
                 {heroNavPosition === 'inside' && (

@@ -40,6 +40,8 @@ const emptyForm: PublicPageInput = {
   imageLayout: 'slider',
   heroImageMode: 'fixed',
   heroNavPosition: 'below',
+  heroImagePosition: 'center center',
+  heroTextPosition: 'bottom',
   heroOverlayOpacity: 0,
   heroOverlayColor: '#000000',
   reserveViewStyle: 'calendar',
@@ -370,6 +372,8 @@ export default function AdminPublicPage() {
             imageLayout: first.imageLayout ?? 'slider',
             heroImageMode: first.heroImageMode === 'auto' ? 'fixed' : first.heroImageMode ?? 'fixed',
             heroNavPosition: first.heroNavPosition ?? 'below',
+            heroImagePosition: first.heroImagePosition ?? 'center center',
+            heroTextPosition: first.heroTextPosition ?? 'bottom',
             heroOverlayOpacity: first.heroOverlayOpacity ?? 0,
             heroOverlayColor: first.heroOverlayColor ?? '#000000',
             reserveViewStyle: first.reserveViewStyle ?? 'calendar',
@@ -782,17 +786,55 @@ export default function AdminPublicPage() {
               )}
             </div>
             {heroImageMode === 'background' && (
-              <div className="mt-3">
-                <p className="mb-2 text-[11px] font-bold text-gray-400">ナビボタン位置</p>
-                <div className="flex gap-2">
-                  {[{ label: '背景の中', value: 'inside' }, { label: '背景の下', value: 'below' }].map((opt) => (
-                    <button key={opt.value} type="button"
-                      onClick={() => setForm((p) => ({ ...p, heroNavPosition: opt.value }))}
-                      className={`rounded-full border px-4 py-2 text-xs font-bold transition ${heroNavPosition === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                      style={heroNavPosition === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
-                      {opt.label}
-                    </button>
-                  ))}
+              <div className="mt-3 space-y-4">
+                {/* 画像の焦点位置 */}
+                <div>
+                  <p className="mb-2 text-[11px] font-bold text-gray-400">画像の位置</p>
+                  <div className="grid grid-cols-3 gap-1.5 w-fit">
+                    {[
+                      ['left top', 'center top', 'right top'],
+                      ['left center', 'center center', 'right center'],
+                      ['left bottom', 'center bottom', 'right bottom'],
+                    ].map((row, ri) => row.map((pos) => (
+                      <button key={pos} type="button"
+                        onClick={() => setForm((p) => ({ ...p, heroImagePosition: pos }))}
+                        title={pos}
+                        className={`h-7 w-7 rounded-md border-2 transition ${(form.heroImagePosition ?? 'center center') === pos ? 'border-2' : 'border-gray-200 bg-gray-100 hover:bg-gray-200'}`}
+                        style={(form.heroImagePosition ?? 'center center') === pos ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}
+                      />
+                    )))}
+                  </div>
+                  <p className="mt-1 text-[10px] text-gray-400">{form.heroImagePosition ?? 'center center'}</p>
+                </div>
+
+                {/* テキスト位置 */}
+                <div>
+                  <p className="mb-2 text-[11px] font-bold text-gray-400">テキスト位置</p>
+                  <div className="flex gap-2">
+                    {[{ label: '上', value: 'top' }, { label: '中央', value: 'center' }, { label: '下', value: 'bottom' }].map((opt) => (
+                      <button key={opt.value} type="button"
+                        onClick={() => setForm((p) => ({ ...p, heroTextPosition: opt.value }))}
+                        className={`rounded-full border px-4 py-2 text-xs font-bold transition ${(form.heroTextPosition ?? 'bottom') === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                        style={(form.heroTextPosition ?? 'bottom') === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ナビボタン位置 */}
+                <div>
+                  <p className="mb-2 text-[11px] font-bold text-gray-400">ナビボタン位置</p>
+                  <div className="flex gap-2">
+                    {[{ label: '背景の中', value: 'inside' }, { label: '背景の下', value: 'below' }].map((opt) => (
+                      <button key={opt.value} type="button"
+                        onClick={() => setForm((p) => ({ ...p, heroNavPosition: opt.value }))}
+                        className={`rounded-full border px-4 py-2 text-xs font-bold transition ${heroNavPosition === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                        style={heroNavPosition === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -1112,15 +1154,17 @@ export default function AdminPublicPage() {
                 /* 背景モード: 大きいヒーロー */
                 <>
                   <div className="relative overflow-hidden" style={{ minHeight: 220 }}>
-                    <div className="absolute inset-0" style={{ backgroundImage: `url(${imageUrls[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                    <div className="absolute inset-0" style={{ backgroundImage: `url(${imageUrls[0]})`, backgroundSize: 'cover', backgroundPosition: form.heroImagePosition ?? 'center center' }} />
                     <div className="absolute inset-0" style={{ backgroundColor: heroOverlayBg }} />
-                    <div className="relative z-10 flex flex-col justify-between px-4 py-4" style={{ minHeight: 220 }}>
-                      <div className="flex items-center justify-end">
+                    <div className="relative z-10" style={{ minHeight: 220 }}>
+                      {/* reserve CTA - 常に右上 */}
+                      <div className="absolute top-4 right-4">
                         <span className={`px-3 py-1 text-[11px] font-bold text-white ${getBtnShapeClass(buttonStyle)}`} style={{ backgroundColor: accentColor }}>
                           {navLabels.reserve}
                         </span>
                       </div>
-                      <div>
+                      {/* テキストブロック - 位置可変 */}
+                      <div className={`absolute left-4 right-4 ${(form.heroTextPosition ?? 'bottom') === 'top' ? 'top-4' : (form.heroTextPosition ?? 'bottom') === 'center' ? 'top-1/2 -translate-y-1/2' : 'bottom-4'}`}>
                         <p className="font-bold drop-shadow" style={titleTextStyle}>{displayName}</p>
                         {form.subtitle?.trim() && (
                           <p className="mt-1" style={subtitleTextStyle}>{form.subtitle.trim()}</p>
