@@ -176,6 +176,18 @@ function getBtnBoxShadow(style: string | null | undefined, borderColor: string):
   return undefined;
 }
 
+function parseFocal(focal: string | undefined): { x: number; y: number } {
+  if (!focal) return { x: 50, y: 50 };
+  const parts = focal.trim().split(/\s+/);
+  const parse = (s: string) => {
+    if (s.endsWith('%')) return parseFloat(s);
+    if (s === 'left' || s === 'top') return 0;
+    if (s === 'right' || s === 'bottom') return 100;
+    return 50;
+  };
+  return { x: parse(parts[0] ?? '50%'), y: parse(parts[1] ?? '50%') };
+}
+
 function slugify(value: string) {
   return value
     .trim()
@@ -291,6 +303,7 @@ export default function AdminPublicPage() {
   const [uploading, setUploading] = useState(false);
   const [copied, setCopied] = useState(false);
   const blockUploadRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const blockFocalDragRef = useRef<{ startX: number; startY: number; startFocal: { x: number; y: number } } | null>(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
@@ -1064,35 +1077,34 @@ export default function AdminPublicPage() {
                   {(block.type === 'media-text' || block.type === 'profile' || block.type === 'feature') && (
                     <div className="space-y-1.5">
                       {block.imageUrl ? (
-                        <div className="space-y-1.5">
-                          <div className="flex items-center gap-2">
-                            <div className={`shrink-0 overflow-hidden ${block.type === 'profile' ? 'h-12 w-12 rounded-full' : 'h-14 w-20 rounded-lg'}`}>
-                              <img src={block.imageUrl} alt=""
-                                className="h-full w-full object-cover"
-                                style={{ objectPosition: block.imageFocal ?? 'center center' }} />
-                            </div>
-                            <button type="button" onClick={() => updateBlock(block.id, { imageUrl: undefined })}
-                              className="text-xs text-gray-400 hover:text-red-500">削除</button>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-gray-400">切り取り位置</span>
-                            <div className="grid grid-cols-3 gap-0.5">
-                              {[
-                                ['left top','center top','right top'],
-                                ['left center','center center','right center'],
-                                ['left bottom','center bottom','right bottom'],
-                              ].map((row) => row.map((pos) => (
-                                <button key={pos} type="button"
-                                  onClick={() => updateBlock(block.id, { imageFocal: pos })}
-                                  className="flex h-4 w-4 items-center justify-center rounded-sm transition"
-                                  style={{ backgroundColor: (block.imageFocal ?? 'center center') === pos ? accentColor : '#E5E7EB' }}
-                                  title={pos}
-                                >
-                                  <span className="h-1 w-1 rounded-full bg-white" />
-                                </button>
-                              )))}
+                        <div className="space-y-1">
+                          {/* ドラッグで切り取り位置を調整 */}
+                          <div
+                            className={`relative overflow-hidden cursor-grab active:cursor-grabbing select-none ${block.type === 'profile' ? 'h-24 w-24 rounded-full' : 'h-32 w-full rounded-xl'}`}
+                            style={{ touchAction: 'none' }}
+                            onPointerDown={(e) => {
+                              e.currentTarget.setPointerCapture(e.pointerId);
+                              blockFocalDragRef.current = { startX: e.clientX, startY: e.clientY, startFocal: parseFocal(block.imageFocal) };
+                            }}
+                            onPointerMove={(e) => {
+                              if (!blockFocalDragRef.current) return;
+                              const dx = e.clientX - blockFocalDragRef.current.startX;
+                              const dy = e.clientY - blockFocalDragRef.current.startY;
+                              const x = Math.round(Math.min(100, Math.max(0, blockFocalDragRef.current.startFocal.x - dx * 0.5)));
+                              const y = Math.round(Math.min(100, Math.max(0, blockFocalDragRef.current.startFocal.y - dy * 0.5)));
+                              updateBlock(block.id, { imageFocal: `${x}% ${y}%` });
+                            }}
+                            onPointerUp={() => { blockFocalDragRef.current = null; }}
+                          >
+                            <img src={block.imageUrl} alt="" draggable={false}
+                              className="pointer-events-none h-full w-full object-cover"
+                              style={{ objectPosition: block.imageFocal ?? '50% 50%' }} />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                              <div className="rounded-full bg-black/40 px-2 py-1 text-[10px] text-white">ドラッグで調整</div>
                             </div>
                           </div>
+                          <button type="button" onClick={() => updateBlock(block.id, { imageUrl: undefined })}
+                            className="text-xs text-gray-400 hover:text-red-500">削除</button>
                         </div>
                       ) : (
                         <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-xs text-gray-500 hover:bg-gray-100">
