@@ -323,10 +323,10 @@ export default async function ClubCmsPage({
       {heroImageMode === 'background' && images[0] ? (
         /* 背景モード: 大きいヒーローエリア */
         <>
-          <div className="relative overflow-hidden" style={{ minHeight: 280, maxHeight: 480 }}>
+          <div className="relative overflow-hidden" style={{ minHeight: 220 }}>
             <div className="absolute inset-0" style={{ backgroundImage: `url(${images[0]})`, backgroundSize: 'cover', backgroundPosition: page.heroImagePosition ?? 'center center' }} />
             <div className="absolute inset-0" style={{ backgroundColor: hexToRgba(heroOverlayColor, heroOverlayOpacity) }} />
-            <div className="relative z-10" style={{ minHeight: 280 }}>
+            <div className="relative z-10" style={{ minHeight: 220 }}>
               {/* テキストブロック - X/Y/Width で自由配置 */}
               <div
                 className="absolute"
@@ -350,11 +350,11 @@ export default async function ClubCmsPage({
             </div>
           </div>
           {heroNavPosition === 'below' && (
-            <nav className={`px-4 py-4 ${buttonLayoutClass}`}>
-              <a href="#about" className={`flex items-center justify-center px-4 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.about}</a>
-              <a href="#blog" className={`flex items-center justify-center px-4 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.blog}</a>
-              <Link href={reserveHref} className={`flex items-center justify-center px-4 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.reserve}</Link>
-              <Link href={contactHref} className={`flex items-center justify-center px-4 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.contact}</Link>
+            <nav className={`border-b border-black/5 px-3 pb-3 pt-3 ${buttonLayoutClass}`}>
+              <a href="#about" className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.about}</a>
+              <a href="#blog" className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.blog}</a>
+              <Link href={reserveHref} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.reserve}</Link>
+              <Link href={contactHref} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.contact}</Link>
             </nav>
           )}
         </>
@@ -375,7 +375,7 @@ export default async function ClubCmsPage({
         </header>
       )}
 
-      <article id="about" className="px-4 py-8">
+      <article id="about" className={`px-4 ${heroImageMode === 'background' ? 'pt-4 pb-8' : 'py-8'}`}>
         {heroImageMode !== 'background' && (
           <HeroImageBlock
             images={images}
@@ -387,7 +387,7 @@ export default async function ClubCmsPage({
           />
         )}
 
-        <div className="mt-8 rounded-xl px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8" style={{ backgroundColor: navBg }}>
+        <div className={`rounded-xl px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8 ${heroImageMode === 'background' ? '' : 'mt-8'}`} style={{ backgroundColor: navBg }}>
           {page.blocks?.length ? (
             <div className="space-y-8">
               {(page.blocks as any[]).map((block: any, i: number) => {
