@@ -1217,7 +1217,6 @@ export default function AdminPublicPage() {
                   {renderPreviewBlocks()}
                 </div>
                 <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
-                  <p className="text-xs font-bold text-gray-400 mb-1">必須 — 予約セクション</p>
                   <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.reserve}</p>
                   <ReservationViewShowcase
                     accentColor={accentColor}
@@ -1227,12 +1226,10 @@ export default function AdminPublicPage() {
                   />
                 </section>
                 <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
-                  <p className="text-xs font-bold text-gray-400 mb-1">必須 — ブログセクション</p>
                   <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.blog}</p>
                   <p className="mt-1 text-xs text-gray-400">公開した記事が表示されます</p>
                 </section>
                 <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
-                  <p className="text-xs font-bold text-gray-400 mb-1">必須 — お問い合わせセクション</p>
                   <p className="text-sm font-bold" style={{ color: textColor }}>{navLabels.contact}</p>
                   <p className="mt-1 text-xs text-gray-400">LINEでの問い合わせが表示されます</p>
                 </section>
