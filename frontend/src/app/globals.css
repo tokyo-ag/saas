@@ -251,10 +251,7 @@ body {
 
 .warp-page {
   position: relative;
-  background:
-    radial-gradient(circle at 64% 44%, rgba(131, 243, 164, 0.14), transparent 18rem),
-    radial-gradient(circle at 40% 48%, rgba(56, 189, 248, 0.11), transparent 18rem),
-    linear-gradient(180deg, #030612 0%, #071021 48%, #030612 100%);
+  background: #010208;
 }
 
 .warp-page > section {
@@ -268,49 +265,60 @@ body {
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  background:
-    radial-gradient(circle at 63% 43%, rgba(255, 255, 255, 0.78) 0 0.18rem, transparent 0.34rem),
-    radial-gradient(circle at 63% 43%, rgba(131, 243, 164, 0.44) 0 6rem, transparent 24rem),
-    radial-gradient(circle at 63% 43%, rgba(37, 99, 235, 0.36) 0 12rem, transparent 34rem),
-    linear-gradient(rgba(255, 255, 255, 0.026) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.026) 1px, transparent 1px);
-  background-size: auto, auto, auto, 86px 86px, 86px 86px;
-}
-
-.warp-field::before,
-.warp-field::after {
-  position: absolute;
-  inset: -18%;
-  content: "";
-  border-radius: 999px;
-  pointer-events: none;
+  background: #010208;
 }
 
 .warp-field::before {
+  position: absolute;
+  inset: -40%;
+  content: "";
   background:
-    conic-gradient(from 120deg at 63% 43%, transparent 0deg, rgba(131, 243, 164, 0.08) 18deg, transparent 44deg, rgba(56, 189, 248, 0.1) 72deg, transparent 110deg, rgba(236, 72, 153, 0.08) 148deg, transparent 220deg, rgba(131, 243, 164, 0.1) 286deg, transparent 360deg);
-  filter: blur(16px);
-  animation: warp-twist 7s linear infinite;
+    repeating-conic-gradient(from 0deg at 62% 46%,
+      rgba(130, 210, 255, 0.055) 0deg 1.4deg,
+      transparent 1.4deg 11deg
+    );
+  animation: warp-ray-spin 60s linear infinite;
 }
 
 .warp-field::after {
-  background: radial-gradient(circle at 63% 43%, transparent 0 10rem, rgba(3, 6, 18, 0.14) 16rem, rgba(3, 6, 18, 0.92) 62rem);
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    radial-gradient(circle at 62% 46%,
+      rgba(255, 255, 255, 0.92) 0 0.22%,
+      rgba(120, 220, 255, 0.85) 0.3% 1.2%,
+      rgba(30, 140, 255, 0.55) 1.8% 6%,
+      rgba(50, 20, 200, 0.25) 8% 18%,
+      rgba(80, 10, 150, 0.12) 22% 36%,
+      transparent 42%
+    ),
+    radial-gradient(ellipse at 62% 46%,
+      transparent 0 28%,
+      rgba(1, 2, 8, 0.6) 50%,
+      rgba(1, 2, 8, 0.96) 72%
+    );
 }
 
 .warp-vortex {
   position: absolute;
-  top: 43%;
-  left: 63%;
-  width: min(72vw, 720px);
+  top: 46%;
+  left: 62%;
+  width: min(56vw, 560px);
   aspect-ratio: 1;
   border-radius: 999px;
-  background:
-    radial-gradient(circle, rgba(255, 255, 255, 0.94) 0 0.8%, rgba(131, 243, 164, 0.78) 1.4% 5.8%, rgba(37, 99, 235, 0.28) 8%, transparent 36%),
-    repeating-conic-gradient(from 0deg, rgba(131, 243, 164, 0.16) 0 4deg, transparent 4deg 13deg);
   transform: translate(-50%, -50%);
-  filter: blur(0.3px);
-  opacity: 0.88;
-  animation: warp-vortex-breathe 2.6s ease-in-out infinite;
+  background: radial-gradient(circle at 50% 50%,
+    rgba(255, 255, 255, 0.9) 0 1.5%,
+    rgba(140, 230, 255, 0.7) 2% 6%,
+    rgba(30, 120, 255, 0.4) 8% 18%,
+    rgba(60, 10, 180, 0.18) 22% 40%,
+    transparent 48%
+  );
+  box-shadow:
+    0 0 80px 20px rgba(60, 160, 255, 0.28),
+    0 0 180px 60px rgba(20, 60, 200, 0.14);
+  animation: warp-core-pulse 3.2s ease-in-out infinite;
 }
 
 .warp-paths {
@@ -323,34 +331,35 @@ body {
 
 .warp-paths path {
   fill: none;
-  stroke: rgba(131, 243, 164, 0.42);
-  stroke-width: 2.2;
+  stroke: rgba(100, 190, 255, 0.38);
+  stroke-width: 1.8;
   stroke-linecap: round;
-  stroke-dasharray: 18 280;
-  filter: drop-shadow(0 0 9px rgba(131, 243, 164, 0.78));
-  animation: warp-line-rush 1.5s cubic-bezier(0.2, 0.78, 0.18, 1) infinite;
+  stroke-dasharray: 14 300;
+  filter: drop-shadow(0 0 8px rgba(80, 170, 255, 0.7));
+  animation: warp-line-rush 1.6s cubic-bezier(0.2, 0.78, 0.18, 1) infinite;
 }
 
 .warp-paths path:nth-child(2n) {
-  stroke: rgba(96, 165, 250, 0.42);
-  stroke-width: 1.6;
-  stroke-dasharray: 10 260;
-  filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.74));
+  stroke: rgba(180, 130, 255, 0.32);
+  stroke-width: 1.4;
+  stroke-dasharray: 8 280;
+  filter: drop-shadow(0 0 10px rgba(160, 100, 255, 0.6));
 }
 
 .warp-paths path:nth-child(3n) {
-  stroke: rgba(232, 121, 249, 0.3);
+  stroke: rgba(220, 240, 255, 0.25);
+  stroke-dasharray: 6 340;
 }
 
 .warp-spark {
   position: absolute;
-  width: 2px;
-  height: 2px;
+  width: 1.5px;
+  height: 1.5px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.92);
   box-shadow:
-    0 0 14px rgba(131, 243, 164, 0.9),
-    0 0 28px rgba(56, 189, 248, 0.5);
+    0 0 10px rgba(100, 200, 255, 0.9),
+    0 0 22px rgba(60, 140, 255, 0.5);
   animation: warp-spark-rush 1.4s linear infinite;
 }
 
@@ -366,43 +375,49 @@ body {
   content: "";
   border-radius: 8px;
   background:
-    radial-gradient(circle at 30% 18%, rgba(131, 243, 164, 0.17), transparent 14rem),
-    linear-gradient(130deg, rgba(3, 6, 18, 0.74), rgba(3, 6, 18, 0.2));
-  box-shadow: 0 0 80px rgba(3, 6, 18, 0.45);
+    radial-gradient(circle at 30% 18%, rgba(60, 140, 255, 0.12), transparent 14rem),
+    linear-gradient(130deg, rgba(1, 2, 8, 0.82), rgba(1, 2, 8, 0.28));
+  box-shadow: 0 0 80px rgba(1, 2, 8, 0.5);
   backdrop-filter: blur(8px);
 }
 
 .warp-core-stage {
   position: relative;
   min-height: min(76vw, 660px);
-  perspective: 900px;
+  perspective: 1200px;
 }
 
 .warp-core-rings {
   position: absolute;
   inset: 0;
-  transform-style: preserve-3d;
 }
 
 .warp-core-rings span {
   position: absolute;
   top: 50%;
-  left: 50%;
-  width: min(78vw, 720px);
-  aspect-ratio: 1;
-  border: 1px solid rgba(131, 243, 164, 0.22);
+  left: 52%;
   border-radius: 999px;
+  border: 1px solid rgba(80, 170, 255, 0.3);
   box-shadow:
-    inset 0 0 34px rgba(131, 243, 164, 0.1),
-    0 0 40px rgba(37, 99, 235, 0.1);
-  transform: translate(-50%, -50%) rotateX(70deg) scale(1.4);
-  animation: warp-ring-accelerate 2.2s cubic-bezier(0.18, 0.76, 0.18, 1) infinite;
+    0 0 24px rgba(60, 140, 255, 0.18),
+    inset 0 0 24px rgba(60, 140, 255, 0.08);
+  transform: translate(-50%, -50%);
+  animation: warp-tunnel-rush 3.6s cubic-bezier(0.18, 0.76, 0.18, 1) infinite;
 }
+
+.warp-core-rings span:nth-child(1) { width: min(84vw, 740px); aspect-ratio: 1; animation-delay: 0s; border-color: rgba(80, 160, 255, 0.14); }
+.warp-core-rings span:nth-child(2) { width: min(70vw, 620px); aspect-ratio: 1; animation-delay: -0.45s; }
+.warp-core-rings span:nth-child(3) { width: min(57vw, 500px); aspect-ratio: 1; animation-delay: -0.9s; }
+.warp-core-rings span:nth-child(4) { width: min(44vw, 390px); aspect-ratio: 1; animation-delay: -1.35s; border-color: rgba(120, 160, 255, 0.36); }
+.warp-core-rings span:nth-child(5) { width: min(33vw, 290px); aspect-ratio: 1; animation-delay: -1.8s; border-color: rgba(140, 160, 255, 0.38); }
+.warp-core-rings span:nth-child(6) { width: min(22vw, 200px); aspect-ratio: 1; animation-delay: -2.25s; border-color: rgba(160, 170, 255, 0.42); }
+.warp-core-rings span:nth-child(7) { width: min(13vw, 120px); aspect-ratio: 1; animation-delay: -2.7s; border-color: rgba(200, 210, 255, 0.5); }
+.warp-core-rings span:nth-child(8) { width: min(6vw, 60px); aspect-ratio: 1; animation-delay: -3.15s; border-color: rgba(220, 230, 255, 0.6); }
 
 .warp-gate {
   position: absolute;
   top: 50%;
-  left: 53%;
+  left: 52%;
   width: min(57vw, 500px);
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
@@ -413,42 +428,53 @@ body {
   inset: 7%;
   content: "";
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   background:
-    radial-gradient(circle, rgba(3, 6, 18, 0) 0 24%, rgba(131, 243, 164, 0.24) 26%, transparent 34%),
-    conic-gradient(from 20deg, rgba(131, 243, 164, 0.04), rgba(56, 189, 248, 0.28), rgba(232, 121, 249, 0.12), rgba(131, 243, 164, 0.04));
-  filter: blur(0.2px);
-  animation: warp-gate-spin 4.8s linear infinite;
+    conic-gradient(from 20deg,
+      rgba(60, 140, 255, 0.06),
+      rgba(100, 180, 255, 0.22),
+      rgba(160, 100, 255, 0.1),
+      rgba(60, 140, 255, 0.06)
+    );
+  filter: blur(0.3px);
+  animation: warp-gate-spin 6s linear infinite;
 }
 
 .warp-gate-hole {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 36%;
+  width: 32%;
   aspect-ratio: 1;
   border-radius: 999px;
   background:
-    radial-gradient(circle, #fff 0 3%, #83f3a4 4% 11%, #0f172a 15% 42%, transparent 62%);
+    radial-gradient(circle,
+      #fff 0 4%,
+      rgba(140, 220, 255, 0.9) 5% 14%,
+      rgba(20, 80, 200, 0.5) 16% 36%,
+      rgba(10, 20, 80, 0.8) 40% 62%,
+      transparent 68%
+    );
   transform: translate(-50%, -50%);
   box-shadow:
-    0 0 45px rgba(131, 243, 164, 0.72),
-    0 0 120px rgba(56, 189, 248, 0.36);
-  animation: warp-hole-pulse 1.6s ease-in-out infinite;
+    0 0 50px rgba(80, 160, 255, 0.8),
+    0 0 130px rgba(40, 100, 255, 0.4),
+    0 0 240px rgba(60, 60, 200, 0.2);
+  animation: warp-hole-pulse 2s ease-in-out infinite;
 }
 
 .warp-chip {
   position: absolute;
   min-width: 118px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(80, 160, 255, 0.28);
   border-radius: 999px;
-  background: rgba(3, 6, 18, 0.74);
+  background: rgba(1, 4, 20, 0.8);
   padding: 10px 14px;
-  color: #dfffee;
+  color: #c0e0ff;
   font-size: 12px;
   font-weight: 800;
   text-align: center;
-  box-shadow: 0 0 28px rgba(6, 199, 85, 0.18);
+  box-shadow: 0 0 24px rgba(40, 100, 255, 0.16);
   backdrop-filter: blur(12px);
   animation: warp-chip-float 3.4s ease-in-out infinite;
 }
@@ -463,7 +489,7 @@ body {
 }
 
 .warp-section-title p {
-  color: #83f3a4;
+  color: #7dd3fc;
   font-size: 13px;
   font-weight: 800;
 }
@@ -479,14 +505,14 @@ body {
   position: relative;
   overflow: hidden;
   min-height: 180px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(80, 160, 255, 0.16);
   border-radius: 8px;
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
-    rgba(3, 6, 18, 0.68);
+    linear-gradient(135deg, rgba(60, 120, 255, 0.1), rgba(255, 255, 255, 0.03)),
+    rgba(1, 4, 20, 0.72);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 18px 70px rgba(0, 0, 0, 0.24);
+    inset 0 1px 0 rgba(100, 180, 255, 0.14),
+    0 18px 70px rgba(0, 0, 0, 0.36);
   backdrop-filter: blur(18px);
 }
 
@@ -494,9 +520,9 @@ body {
   position: absolute;
   inset: 0;
   content: "";
-  background: linear-gradient(105deg, transparent 0%, rgba(131, 243, 164, 0.12) 46%, transparent 68%);
+  background: linear-gradient(105deg, transparent 0%, rgba(80, 160, 255, 0.1) 46%, transparent 68%);
   transform: translateX(-90%);
-  animation: warp-panel-scan 2.2s ease-in-out infinite;
+  animation: warp-panel-scan 2.4s ease-in-out infinite;
 }
 
 .warp-flow {
@@ -512,7 +538,7 @@ body {
   right: 6%;
   height: 2px;
   content: "";
-  background: linear-gradient(90deg, transparent, rgba(131, 243, 164, 0.72), rgba(56, 189, 248, 0.42), transparent);
+  background: linear-gradient(90deg, transparent, rgba(80, 160, 255, 0.7), rgba(140, 100, 255, 0.5), transparent);
   transform: translateY(-50%);
 }
 
@@ -521,11 +547,11 @@ body {
   display: flex;
   align-items: center;
   gap: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(80, 160, 255, 0.16);
   border-radius: 8px;
-  background: rgba(3, 6, 18, 0.72);
+  background: rgba(1, 4, 20, 0.78);
   padding: 18px;
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(16px);
 }
 
@@ -535,8 +561,8 @@ body {
   height: 38px;
   place-items: center;
   border-radius: 999px;
-  background: rgba(131, 243, 164, 0.12);
-  color: #83f3a4;
+  background: rgba(60, 140, 255, 0.14);
+  color: #7dd3fc;
   font-size: 12px;
   font-weight: 800;
 }
@@ -547,42 +573,49 @@ body {
 
 .warp-calendar {
   min-height: 190px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(80, 160, 255, 0.14);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.055);
+  background: rgba(255, 255, 255, 0.04);
   padding: 14px;
 }
 
-@keyframes warp-twist {
-  from {
-    transform: rotate(0deg) scale(1);
-  }
-  to {
-    transform: rotate(360deg) scale(1.04);
-  }
+@keyframes warp-ray-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-@keyframes warp-vortex-breathe {
-  0%, 100% {
-    opacity: 0.68;
-    transform: translate(-50%, -50%) scale(0.9) rotate(0deg);
+@keyframes warp-core-pulse {
+  0%, 100% { opacity: 0.72; transform: translate(-50%, -50%) scale(0.92); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+}
+
+@keyframes warp-tunnel-rush {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.06);
   }
-  50% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.08) rotate(8deg);
+  15% {
+    opacity: 0.9;
+  }
+  85% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.6);
   }
 }
 
 @keyframes warp-line-rush {
   from {
-    stroke-dashoffset: 320;
+    stroke-dashoffset: 360;
     opacity: 0;
   }
-  20% {
+  18% {
     opacity: 1;
   }
   to {
-    stroke-dashoffset: -260;
+    stroke-dashoffset: -280;
     opacity: 0;
   }
 }
@@ -592,63 +625,33 @@ body {
     opacity: 0;
     transform: translate3d(0, 0, 0) scale(0.4);
   }
-  18% {
+  16% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: translate3d(18vw, -12vh, 0) scale(0.08);
-  }
-}
-
-@keyframes warp-ring-accelerate {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) rotateX(70deg) scale(1.55);
-  }
-  22% {
-    opacity: 0.82;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) rotateX(70deg) scale(0.08);
+    transform: translate3d(18vw, -12vh, 0) scale(0.06);
   }
 }
 
 @keyframes warp-gate-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes warp-hole-pulse {
-  0%, 100% {
-    transform: translate(-50%, -50%) scale(0.92);
-  }
-  50% {
-    transform: translate(-50%, -50%) scale(1.08);
-  }
+  0%, 100% { transform: translate(-50%, -50%) scale(0.94); }
+  50% { transform: translate(-50%, -50%) scale(1.06); }
 }
 
 @keyframes warp-chip-float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-12px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
 }
 
 @keyframes warp-panel-scan {
-  0%, 36% {
-    transform: translateX(-90%);
-  }
-  100% {
-    transform: translateX(90%);
-  }
+  0%, 36% { transform: translateX(-90%); }
+  100% { transform: translateX(90%); }
 }
 
 @media (min-width: 768px) {

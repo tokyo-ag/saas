@@ -69,12 +69,12 @@ export default function OrganizersPage() {
         <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl items-center gap-10 py-12 lg:grid-cols-[0.88fr_1.12fr]">
           <div className="relative z-10">
             <div className="warp-copy max-w-3xl">
-              <p className="w-fit rounded-full border border-[#83F3A4]/44 bg-[#83F3A4]/10 px-3 py-1.5 text-xs font-bold text-[#83F3A4]">
+              <p className="w-fit rounded-full border border-[#7DD3FC]/44 bg-[#7DD3FC]/10 px-3 py-1.5 text-xs font-bold text-[#7DD3FC]">
                 次世代型のソーシャルメディア
               </p>
               <h1 className="mt-6 text-5xl font-bold leading-[1.03] sm:text-7xl">
                 団体運営を、
-                <span className="block text-[#83F3A4]">次の速度へ。</span>
+                <span className="block text-[#7DD3FC]">次の速度へ。</span>
               </h1>
               <p className="mt-6 text-lg font-bold leading-8 text-white/75">
                 WEBサイト、集客、予約、LINE連絡まで。
