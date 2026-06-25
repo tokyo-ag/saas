@@ -1,8 +1,10 @@
+import type { CSSProperties } from 'react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 
 import { API_URL, SITE_URL } from '@/lib/config';
+import CosmicCursor from './CosmicCursor';
 
 export const revalidate = 60;
 
@@ -17,9 +19,6 @@ type OfficialArticle = {
 const title = '団体・サークルのWEBサイトを無料作成 | COMIU';
 const description =
   'COMIUは、団体やサークルのSEOに強いWEBサイト作成、ポータル掲載、予約カレンダー、公式LINE APIのリマインド連絡をまとめて使える主催者向けサービスです。';
-
-const heroImageUrl =
-  'https://pc2eyeqk22ch6su6.public.blob.vercel-storage.com/events/1779183518172.jpg';
 
 const strengths = [
   {
@@ -106,7 +105,8 @@ export default async function OrganizersPage() {
   const articles = await fetchArticles();
 
   return (
-    <main className="min-h-screen bg-[#F6F8F7] text-gray-950">
+    <main className="cosmic-page cosmic-cursor-area min-h-screen text-gray-950">
+      <CosmicCursor />
       <header className="fixed inset-x-0 top-0 z-30 border-b border-white/20 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-5 py-3">
           <Link href="/" className="flex items-center gap-2 font-bold">
@@ -124,35 +124,66 @@ export default async function OrganizersPage() {
         </div>
       </header>
 
-      <section className="relative min-h-[88vh] overflow-hidden bg-gray-950 pt-16 text-white">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${heroImageUrl})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-950/65 via-gray-950/42 to-gray-950/88" />
-        <div className="relative mx-auto flex min-h-[calc(88vh-4rem)] max-w-6xl flex-col justify-end px-5 pb-10 pt-20">
-          <p className="text-sm font-bold text-[#83F3A4]">団体・サークル運営者向け</p>
-          <h1 className="mt-4 max-w-4xl text-4xl font-bold leading-tight sm:text-6xl">
-            団体やサークルのWEBサイトを無料で作成。
-            <span className="block">募集から予約までCOMIUで。</span>
-          </h1>
-          <p className="mt-5 max-w-2xl text-base leading-8 text-white/80 sm:text-lg">
-            SEOに強い公開ページ、リアルタイムのポータル掲載、選べる予約カレンダー、公式LINE APIのリマインドまで。代表者の募集と運営をひとつにまとめます。
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/register" className="rounded-lg bg-[#06C755] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#06C755]/20 hover:bg-[#05a847]">
-              無料でWEBサイトを作る
-            </Link>
-            <Link href="/clubs/18285255/gakuori" className="rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-sm font-bold text-white backdrop-blur hover:bg-white/20">
-              公開サイトを見る
-            </Link>
-          </div>
-          <div className="mt-10 grid gap-3 sm:grid-cols-3">
-            {['WEBサイト無料', 'ポータル掲載', 'LINE予約管理'].map((item) => (
-              <div key={item} className="rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-sm font-bold backdrop-blur">
-                {item}
-              </div>
-            ))}
+      <section className="relative min-h-[92vh] overflow-hidden bg-[#02040D] pt-16 text-white">
+        <div className="cosmic-space absolute inset-0">
+          <div className="cosmic-grid" />
+          <div className="warp-core" />
+          <div className="warp-ring" />
+          <div className="warp-ring" />
+          <div className="warp-ring" />
+          <div className="warp-ring" />
+          {Array.from({ length: 84 }).map((_, index) => {
+            const x = (index * 37) % 100;
+            const y = (index * 61) % 100;
+            return (
+              <span
+                key={index}
+                className="cosmic-star"
+                style={{
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  animationDelay: `${(index % 18) * -0.18}s`,
+                  animationDuration: `${2.1 + (index % 7) * 0.23}s`,
+                  '--star-x': `${x}vw`,
+                  '--star-y': `${y}vh`,
+                } as CSSProperties}
+              />
+            );
+          })}
+        </div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_52%,transparent_0,rgba(2,4,13,0.18)_18rem,rgba(2,4,13,0.92)_72%)]" />
+        <div className="relative mx-auto flex min-h-[calc(92vh-4rem)] max-w-6xl flex-col justify-end px-5 pb-10 pt-20">
+          <div className="hero-copy-warp max-w-4xl">
+            <div className="flex flex-wrap gap-2">
+              <span className="warp-badge rounded-full border border-[#83F3A4]/45 bg-[#83F3A4]/10 px-3 py-1.5 text-xs font-bold text-[#83F3A4]">
+                次世代型のソーシャルメディア
+              </span>
+              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/80">
+                団体・サークル運営者向け
+              </span>
+            </div>
+            <h1 className="mt-5 text-4xl font-bold leading-tight tracking-normal sm:text-6xl">
+              団体やサークルのWEBサイトを無料で作成。
+              <span className="block text-[#83F3A4]">募集から予約までCOMIUで。</span>
+            </h1>
+            <p className="mt-5 max-w-2xl text-base leading-8 text-white/80 sm:text-lg">
+              SEOに強い公開ページ、リアルタイムのポータル掲載、選べる予約カレンダー、公式LINE APIのリマインドまで。代表者の募集と運営をひとつにまとめます。
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/register" className="rounded-lg bg-[#06C755] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#06C755]/20 hover:bg-[#05a847]">
+                無料でWEBサイトを作る
+              </Link>
+              <Link href="/clubs/18285255/gakuori" className="rounded-lg border border-white/40 bg-white/10 px-5 py-3 text-sm font-bold text-white backdrop-blur hover:bg-white/20">
+                公開サイトを見る
+              </Link>
+            </div>
+            <div className="mt-10 grid gap-3 sm:grid-cols-3">
+              {['WEBサイト無料', 'ポータル掲載', 'LINE予約管理'].map((item) => (
+                <div key={item} className="rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-sm font-bold backdrop-blur">
+                  {item}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
