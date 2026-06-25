@@ -23,9 +23,23 @@ const metricCards = [
 ];
 
 const defaultTargets: LpTarget[] = [
+  { id: 'home', scope: 'internal', name: 'トップページ', path: '/' },
   { id: 'organizers', scope: 'internal', name: '主催者向けページ', path: '/organizers' },
-  { id: 'guide', scope: 'internal', name: '公式ガイド記事', path: '/guide/...' },
-  { id: 'use-cases', scope: 'internal', name: '用途別ページ', path: '/use-cases/...' },
+  { id: 'guide', scope: 'internal', name: '公式ガイド一覧', path: '/guide' },
+  { id: 'pricing', scope: 'internal', name: '料金ページ', path: '/pricing' },
+  { id: 'contact', scope: 'internal', name: 'お問い合わせページ', path: '/contact' },
+  { id: 'register', scope: 'internal', name: '無料登録ページ', path: '/register' },
+  { id: 'events-meetup', scope: 'internal', name: '交流会イベント一覧', path: '/events/meetup' },
+  { id: 'sports-badminton', scope: 'internal', name: 'バドミントンイベント一覧', path: '/sports/badminton' },
+  { id: 'sports-basketball', scope: 'internal', name: 'バスケイベント一覧', path: '/sports/basketball' },
+  { id: 'sports-futsal', scope: 'internal', name: 'フットサルイベント一覧', path: '/sports/futsal' },
+  { id: 'sports-volleyball', scope: 'internal', name: 'バレーイベント一覧', path: '/sports/volleyball' },
+  { id: 'use-cases', scope: 'internal', name: '用途別ページ一覧', path: '/use-cases' },
+  { id: 'use-cases-badminton', scope: 'internal', name: 'バドミントン主催者向け', path: '/use-cases/badminton-tokyo' },
+  { id: 'use-cases-basketball', scope: 'internal', name: 'バスケ主催者向け', path: '/use-cases/basketball-tokyo' },
+  { id: 'use-cases-futsal', scope: 'internal', name: 'フットサル主催者向け', path: '/use-cases/futsal-tokyo' },
+  { id: 'use-cases-volleyball', scope: 'internal', name: 'バレー主催者向け', path: '/use-cases/volleyball-tokyo' },
+  { id: 'guide-detail', scope: 'internal', name: '公式ガイド記事詳細', path: '/guide/...' },
   { id: 'external-production', scope: 'external', name: '外部制作LP', path: '公開URLを登録' },
   { id: 'external-ad', scope: 'external', name: '広告用WEBサイト', path: '公開URLを登録' },
   { id: 'external-test', scope: 'external', name: '検証用ページ', path: '公開URLを登録' },
@@ -150,7 +164,12 @@ export default function LpAnalyticsClient() {
           <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-sm font-bold text-gray-900">分析するLP</h2>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-sm font-bold text-gray-900">分析するLP</h2>
+                  {scope === 'internal' && (
+                    <span className="rounded-full bg-[#06C755]/10 px-2 py-1 text-[11px] font-bold text-[#06C755]">自動投入済み</span>
+                  )}
+                </div>
                 <p className="mt-1 text-xs text-gray-500">
                   {scope === 'internal' ? 'COMIU配下のページを計測対象にします。' : '外部で公開したLPを計測対象にします。'}
                 </p>
