@@ -180,7 +180,7 @@ export default function LpAnalyticsClient() {
             <p className="text-xs text-gray-500">公開したLPの効果を確認する場所です。</p>
           </div>
           <div className="ml-auto hidden rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-500 sm:block">
-            未計測
+            {scope === 'internal' ? '内部は自動読込' : '外部は未接続'}
           </div>
         </div>
       </div>
@@ -204,7 +204,9 @@ export default function LpAnalyticsClient() {
               ))}
             </div>
             <p className="text-xs leading-relaxed text-gray-500">
-              実データを接続するまで、数値は表示しません。
+              {scope === 'internal'
+                ? '公開中のCOMIU内ページは自動で読み込みます。PVなどの数値計測は次の接続対象です。'
+                : '外部LPは計測タグを用意するまで数値は表示しません。'}
             </p>
           </div>
         </section>
@@ -257,7 +259,18 @@ export default function LpAnalyticsClient() {
                     {target.publicPage && (
                       <span className="rounded-full bg-[#06C755]/10 px-2 py-1 text-[11px] font-bold text-[#06C755]">公開サイト</span>
                     )}
-                    <span className="rounded-full bg-gray-100 px-2 py-1 text-[11px] font-bold text-gray-400">計測未接続</span>
+                    <span className={`rounded-full px-2 py-1 text-[11px] font-bold ${target.scope === 'internal' ? 'bg-[#06C755]/10 text-[#06C755]' : 'bg-gray-100 text-gray-400'}`}>
+                      {target.scope === 'internal' ? '自動読込済み' : '計測未接続'}
+                    </span>
+                    {target.scope === 'internal' && !target.path.includes('...') && (
+                      <Link
+                        href={target.path}
+                        target="_blank"
+                        className="rounded-full border border-gray-200 px-2 py-1 text-[11px] font-bold text-gray-500 hover:border-[#06C755] hover:text-[#06C755]"
+                      >
+                        開く
+                      </Link>
+                    )}
                     {target.custom && (
                       <button
                         type="button"
