@@ -1,9 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 
 type Scope = 'internal' | 'external';
+
+type LpTarget = {
+  id: string;
+  scope: Scope;
+  name: string;
+  path: string;
+  custom?: boolean;
+};
+
+const STORAGE_KEY = 'comiu:superadmin:lp-analytics-targets:v1';
 
 const metricCards = [
   { title: 'アクセス', body: 'PV、UU、流入元を見る' },
@@ -12,21 +22,81 @@ const metricCards = [
   { title: '成果', body: 'CV、改善メモを見る' },
 ];
 
-const internalTargets = [
-  { name: '主催者向けページ', path: '/organizers' },
-  { name: '公式ガイド記事', path: '/guide/...' },
-  { name: '用途別ページ', path: '/use-cases/...' },
+const defaultTargets: LpTarget[] = [
+  { id: 'organizers', scope: 'internal', name: '主催者向けページ', path: '/organizers' },
+  { id: 'guide', scope: 'internal', name: '公式ガイド記事', path: '/guide/...' },
+  { id: 'use-cases', scope: 'internal', name: '用途別ページ', path: '/use-cases/...' },
+  { id: 'external-production', scope: 'external', name: '外部制作LP', path: '公開URLを登録' },
+  { id: 'external-ad', scope: 'external', name: '広告用WEBサイト', path: '公開URLを登録' },
+  { id: 'external-test', scope: 'external', name: '検証用ページ', path: '公開URLを登録' },
 ];
 
-const externalTargets = [
-  { name: '外部制作LP', path: '公開URLを登録' },
-  { name: '広告用WEBサイト', path: '公開URLを登録' },
-  { name: '検証用ページ', path: '公開URLを登録' },
-];
+function loadTargets(): LpTarget[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item) => item?.id && item?.name && item?.path && (item?.scope === 'internal' || item?.scope === 'external'));
+  } catch {
+    return [];
+  }
+}
+
+function saveTargets(targets: LpTarget[]) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(targets));
+}
 
 export default function LpAnalyticsClient() {
   const [scope, setScope] = useState<Scope>('internal');
-  const targets = scope === 'internal' ? internalTargets : externalTargets;
+  const [customTargets, setCustomTargets] = useState<LpTarget[]>([]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [name, setName] = useState('');
+  const [path, setPath] = useState('');
+
+  useEffect(() => {
+    setCustomTargets(loadTargets());
+  }, []);
+
+  const targets = useMemo(
+    () => [...defaultTargets, ...customTargets].filter((target) => target.scope === scope),
+    [customTargets, scope],
+  );
+
+  function resetForm() {
+    setName('');
+    setPath('');
+  }
+
+  function handleAddTarget(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmedName = name.trim();
+    const trimmedPath = path.trim();
+    if (!trimmedName || !trimmedPath) return;
+
+    const next = [
+      ...customTargets,
+      {
+        id: `lp-${Date.now()}`,
+        scope,
+        name: trimmedName,
+        path: trimmedPath,
+        custom: true,
+      },
+    ];
+    setCustomTargets(next);
+    saveTargets(next);
+    resetForm();
+    setShowAdd(false);
+  }
+
+  function handleRemoveTarget(id: string) {
+    const next = customTargets.filter((target) => target.id !== id);
+    setCustomTargets(next);
+    saveTargets(next);
+  }
 
   return (
     <main className="min-h-screen bg-[#F7F8FA] text-gray-900">
@@ -85,18 +155,36 @@ export default function LpAnalyticsClient() {
                   {scope === 'internal' ? 'COMIU配下のページを計測対象にします。' : '外部で公開したLPを計測対象にします。'}
                 </p>
               </div>
-              <button type="button" className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-500">
-                追加予定
+              <button
+                type="button"
+                onClick={() => {
+                  resetForm();
+                  setShowAdd(true);
+                }}
+                className="rounded-lg bg-[#06C755] px-3 py-2 text-xs font-bold text-white hover:bg-[#05a847]"
+              >
+                LP追加
               </button>
             </div>
             <div className="mt-4 divide-y divide-gray-100 rounded-xl border border-gray-100">
               {targets.map((target) => (
-                <div key={target.name} className="flex items-center justify-between gap-3 px-4 py-3">
-                  <div>
-                    <p className="text-sm font-bold text-gray-900">{target.name}</p>
-                    <p className="mt-1 text-xs text-gray-400">{target.path}</p>
+                <div key={target.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-gray-900">{target.name}</p>
+                    <p className="mt-1 truncate text-xs text-gray-400">{target.path}</p>
                   </div>
-                  <span className="rounded-full bg-gray-100 px-2 py-1 text-[11px] font-bold text-gray-400">未接続</span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="rounded-full bg-gray-100 px-2 py-1 text-[11px] font-bold text-gray-400">未接続</span>
+                    {target.custom && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTarget(target.id)}
+                        className="text-xs font-bold text-red-400 hover:text-red-500"
+                      >
+                        削除
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -120,6 +208,56 @@ export default function LpAnalyticsClient() {
           </section>
         </div>
       </div>
+
+      {showAdd && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center" onClick={() => setShowAdd(false)}>
+          <form
+            onSubmit={handleAddTarget}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl"
+          >
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-bold text-gray-900">LPを追加</h2>
+                <p className="mt-1 text-xs text-gray-500">{scope === 'internal' ? 'COMIU内のURLを登録します。' : '外部で公開したURLを登録します。'}</p>
+              </div>
+              <button type="button" onClick={() => setShowAdd(false)} className="text-sm font-bold text-gray-400 hover:text-gray-600">
+                閉じる
+              </button>
+            </div>
+            <div className="space-y-4">
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-bold text-gray-500">LP名</span>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={80}
+                  className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm outline-none focus:border-[#06C755] focus:ring-4 focus:ring-[#06C755]/10"
+                  placeholder={scope === 'internal' ? '例：主催者向けページ' : '例：新歓募集LP'}
+                  autoFocus
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-bold text-gray-500">URL</span>
+                <input
+                  value={path}
+                  onChange={(e) => setPath(e.target.value)}
+                  maxLength={240}
+                  className="w-full rounded-xl border border-gray-300 px-3 py-3 text-sm outline-none focus:border-[#06C755] focus:ring-4 focus:ring-[#06C755]/10"
+                  placeholder={scope === 'internal' ? '/organizers' : 'https://example.com/lp'}
+                />
+              </label>
+            </div>
+            <button
+              type="submit"
+              disabled={!name.trim() || !path.trim()}
+              className="mt-5 w-full rounded-xl bg-[#06C755] py-3 text-sm font-bold text-white hover:bg-[#05a847] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              追加する
+            </button>
+          </form>
+        </div>
+      )}
     </main>
   );
 }
