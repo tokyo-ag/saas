@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { api, type PublicTenant } from '@/lib/api';
 
@@ -70,61 +70,58 @@ export default function LpAnalyticsClient() {
   const [customTargets, setCustomTargets] = useState<LpTarget[]>([]);
   const [publicPageTargets, setPublicPageTargets] = useState<LpTarget[]>([]);
   const [loadingPublicPages, setLoadingPublicPages] = useState(false);
+  const [publicPagesError, setPublicPagesError] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [name, setName] = useState('');
   const [path, setPath] = useState('');
+
+  const refreshPublicPages = useCallback(async () => {
+    setLoadingPublicPages(true);
+    setPublicPagesError('');
+    try {
+      const pages = await api.public.sitemapPages();
+      const tenantCodes = Array.from(new Set(pages.map((page) => page.tenantCode))).filter(Boolean);
+      const tenantResults = await Promise.all(
+        tenantCodes.map(async (tenantCode) => {
+          try {
+            return [tenantCode, await api.public.tenant(tenantCode)] as const;
+          } catch {
+            return [tenantCode, null] as const;
+          }
+        }),
+      );
+
+      const tenants = new Map<string, PublicTenant | null>(tenantResults);
+      setPublicPageTargets(
+        pages.map((page) => {
+          const tenant = tenants.get(page.tenantCode);
+          const pageSummary = tenant?.pages?.find((item) => item.slug === page.slug);
+          const tenantName = tenant?.lineDisplayName || tenant?.name || page.tenantCode;
+          const pageName = pageSummary?.title || page.slug;
+          return {
+            id: `public-page-${page.tenantCode}-${page.slug}`,
+            scope: 'internal',
+            name: `${tenantName} / ${pageName}`,
+            path: `/clubs/${page.tenantCode}/${page.slug}`,
+            publicPage: true,
+          };
+        }),
+      );
+    } catch {
+      setPublicPageTargets([]);
+      setPublicPagesError('公開サイトを読み込めませんでした。');
+    } finally {
+      setLoadingPublicPages(false);
+    }
+  }, []);
 
   useEffect(() => {
     setCustomTargets(loadTargets());
   }, []);
 
   useEffect(() => {
-    let active = true;
-
-    async function loadPublicPages() {
-      setLoadingPublicPages(true);
-      try {
-        const pages = await api.public.sitemapPages();
-        const tenantCodes = Array.from(new Set(pages.map((page) => page.tenantCode))).filter(Boolean);
-        const tenantResults = await Promise.all(
-          tenantCodes.map(async (tenantCode) => {
-            try {
-              return [tenantCode, await api.public.tenant(tenantCode)] as const;
-            } catch {
-              return [tenantCode, null] as const;
-            }
-          }),
-        );
-        if (!active) return;
-
-        const tenants = new Map<string, PublicTenant | null>(tenantResults);
-        setPublicPageTargets(
-          pages.map((page) => {
-            const tenant = tenants.get(page.tenantCode);
-            const pageSummary = tenant?.pages?.find((item) => item.slug === page.slug);
-            const tenantName = tenant?.lineDisplayName || tenant?.name || page.tenantCode;
-            const pageName = pageSummary?.title || page.slug;
-            return {
-              id: `public-page-${page.tenantCode}-${page.slug}`,
-              scope: 'internal',
-              name: `${tenantName} / ${pageName}`,
-              path: `/clubs/${page.tenantCode}/${page.slug}`,
-              publicPage: true,
-            };
-          }),
-        );
-      } catch {
-        if (active) setPublicPageTargets([]);
-      } finally {
-        if (active) setLoadingPublicPages(false);
-      }
-    }
-
-    loadPublicPages();
-    return () => {
-      active = false;
-    };
-  }, []);
+    refreshPublicPages();
+  }, [refreshPublicPages]);
 
   const targets = useMemo(
     () => {
@@ -231,23 +228,38 @@ export default function LpAnalyticsClient() {
                   )}
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
-                  {scope === 'internal' ? 'COMIU配下のページを計測対象にします。' : '外部で公開したLPを計測対象にします。'}
+                  {scope === 'internal' ? 'COMIU配下のページを計測対象にします。' : 'AIや別サーバーで作ったCOMIU外のWEBサイトを登録します。'}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  resetForm();
-                  setShowAdd(true);
-                }}
-                className="rounded-lg bg-[#06C755] px-3 py-2 text-xs font-bold text-white hover:bg-[#05a847]"
-              >
-                LP追加
-              </button>
+              <div className="flex shrink-0 items-center gap-2">
+                {scope === 'internal' && (
+                  <button
+                    type="button"
+                    onClick={refreshPublicPages}
+                    disabled={loadingPublicPages}
+                    className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-600 hover:border-[#06C755] hover:text-[#06C755] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {loadingPublicPages ? '更新中' : '更新'}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetForm();
+                    setShowAdd(true);
+                  }}
+                  className="rounded-lg bg-[#06C755] px-3 py-2 text-xs font-bold text-white hover:bg-[#05a847]"
+                >
+                  LP追加
+                </button>
+              </div>
             </div>
             <div className="mt-4 divide-y divide-gray-100 rounded-xl border border-gray-100">
               {loadingPublicPages && scope === 'internal' && (
                 <div className="px-4 py-3 text-xs font-bold text-gray-400">団体公開サイトを読み込み中...</div>
+              )}
+              {publicPagesError && scope === 'internal' && (
+                <div className="px-4 py-3 text-xs font-bold text-red-400">{publicPagesError}</div>
               )}
               {targets.map((target) => (
                 <div key={target.id} className="flex items-center justify-between gap-3 px-4 py-3">
