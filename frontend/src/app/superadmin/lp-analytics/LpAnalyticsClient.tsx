@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { api, type PublicTenant } from '@/lib/api';
 
 type Scope = 'internal' | 'external';
 
@@ -11,6 +12,7 @@ type LpTarget = {
   name: string;
   path: string;
   custom?: boolean;
+  publicPage?: boolean;
 };
 
 const STORAGE_KEY = 'comiu:superadmin:lp-analytics-targets:v1';
@@ -66,6 +68,8 @@ function saveTargets(targets: LpTarget[]) {
 export default function LpAnalyticsClient() {
   const [scope, setScope] = useState<Scope>('internal');
   const [customTargets, setCustomTargets] = useState<LpTarget[]>([]);
+  const [publicPageTargets, setPublicPageTargets] = useState<LpTarget[]>([]);
+  const [loadingPublicPages, setLoadingPublicPages] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [name, setName] = useState('');
   const [path, setPath] = useState('');
@@ -74,9 +78,63 @@ export default function LpAnalyticsClient() {
     setCustomTargets(loadTargets());
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadPublicPages() {
+      setLoadingPublicPages(true);
+      try {
+        const pages = await api.public.sitemapPages();
+        const tenantCodes = Array.from(new Set(pages.map((page) => page.tenantCode))).filter(Boolean);
+        const tenantResults = await Promise.all(
+          tenantCodes.map(async (tenantCode) => {
+            try {
+              return [tenantCode, await api.public.tenant(tenantCode)] as const;
+            } catch {
+              return [tenantCode, null] as const;
+            }
+          }),
+        );
+        if (!active) return;
+
+        const tenants = new Map<string, PublicTenant | null>(tenantResults);
+        setPublicPageTargets(
+          pages.map((page) => {
+            const tenant = tenants.get(page.tenantCode);
+            const pageSummary = tenant?.pages?.find((item) => item.slug === page.slug);
+            const tenantName = tenant?.lineDisplayName || tenant?.name || page.tenantCode;
+            const pageName = pageSummary?.title || page.slug;
+            return {
+              id: `public-page-${page.tenantCode}-${page.slug}`,
+              scope: 'internal',
+              name: `${tenantName} / ${pageName}`,
+              path: `/clubs/${page.tenantCode}/${page.slug}`,
+              publicPage: true,
+            };
+          }),
+        );
+      } catch {
+        if (active) setPublicPageTargets([]);
+      } finally {
+        if (active) setLoadingPublicPages(false);
+      }
+    }
+
+    loadPublicPages();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const targets = useMemo(
-    () => [...defaultTargets, ...customTargets].filter((target) => target.scope === scope),
-    [customTargets, scope],
+    () => {
+      const merged = new Map<string, LpTarget>();
+      [...defaultTargets, ...publicPageTargets, ...customTargets].forEach((target) => {
+        merged.set(target.id, target);
+      });
+      return Array.from(merged.values()).filter((target) => target.scope === scope);
+    },
+    [customTargets, publicPageTargets, scope],
   );
 
   function resetForm() {
@@ -186,6 +244,9 @@ export default function LpAnalyticsClient() {
               </button>
             </div>
             <div className="mt-4 divide-y divide-gray-100 rounded-xl border border-gray-100">
+              {loadingPublicPages && scope === 'internal' && (
+                <div className="px-4 py-3 text-xs font-bold text-gray-400">団体公開サイトを読み込み中...</div>
+              )}
               {targets.map((target) => (
                 <div key={target.id} className="flex items-center justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">
@@ -193,7 +254,10 @@ export default function LpAnalyticsClient() {
                     <p className="mt-1 truncate text-xs text-gray-400">{target.path}</p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    <span className="rounded-full bg-gray-100 px-2 py-1 text-[11px] font-bold text-gray-400">未接続</span>
+                    {target.publicPage && (
+                      <span className="rounded-full bg-[#06C755]/10 px-2 py-1 text-[11px] font-bold text-[#06C755]">公開サイト</span>
+                    )}
+                    <span className="rounded-full bg-gray-100 px-2 py-1 text-[11px] font-bold text-gray-400">計測未接続</span>
                     {target.custom && (
                       <button
                         type="button"

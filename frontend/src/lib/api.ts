@@ -272,6 +272,8 @@ export const api = {
       return request<PublicEvent[]>(`/public/events${qs ? `?${qs}` : ''}`);
     },
     tenants: () => request<PublicTenant[]>('/public/tenants'),
+    tenant: (tenantCode: string) => request<PublicTenant>(`/public/tenants/${tenantCode}`),
+    sitemapPages: () => request<PublicSitemapPage[]>('/public/sitemap-pages'),
     tenantPage: (tenantCode: string, slug: string) =>
       request<PublicCmsPage>(`/public/tenants/${tenantCode}/pages/${slug}`),
     recordView: (eventId: string) =>
@@ -800,6 +802,12 @@ export interface PublicPageSummary {
   title: string;
   slug: string;
   seoDescription?: string | null;
+  updatedAt: string;
+}
+
+export interface PublicSitemapPage {
+  tenantCode: string;
+  slug: string;
   updatedAt: string;
 }
 
