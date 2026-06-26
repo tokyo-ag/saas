@@ -158,6 +158,10 @@ export default function EventsPage() {
   const [publicPageId, setPublicPageId] = useState<string | null>(null);
   const [publicPageData, setPublicPageData] = useState<import('@/lib/api').PublicPage | null>(null);
   const [reserveViewStyle, setReserveViewStyle] = useState<string>('calendar');
+  const [eventCardBg, setEventCardBg] = useState('#ffffff');
+  const [eventTitleColor, setEventTitleColor] = useState('#111827');
+  const [eventDateColor, setEventDateColor] = useState('#4B5563');
+  const [eventMetaColor, setEventMetaColor] = useState('#6B7280');
   const [savingStyle, setSavingStyle] = useState(false);
   const [reflected, setReflected] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
@@ -180,9 +184,22 @@ export default function EventsPage() {
         const style = first.reserveViewStyle ?? 'calendar';
         setReserveViewStyle(style);
         setViewMode(style === 'thread' ? 'thread' : style === 'card' ? 'card' : 'calendar');
+        if (first.reserveEventCardBg) setEventCardBg(first.reserveEventCardBg);
+        if (first.reserveEventTitleColor) setEventTitleColor(first.reserveEventTitleColor);
+        if (first.reserveEventDateColor) setEventDateColor(first.reserveEventDateColor);
+        if (first.reserveEventMetaColor) setEventMetaColor(first.reserveEventMetaColor);
       }
     }).catch(() => {});
   }, [load]);
+
+  function colorPayload() {
+    return {
+      reserveEventCardBg: eventCardBg,
+      reserveEventTitleColor: eventTitleColor,
+      reserveEventDateColor: eventDateColor,
+      reserveEventMetaColor: eventMetaColor,
+    };
+  }
 
   async function saveReserveViewStyle(style: string) {
     setReserveViewStyle(style);
@@ -191,7 +208,7 @@ export default function EventsPage() {
     try {
       await api.tenant.update({ liffEventView: style });
       if (publicPageId && publicPageData) {
-        await api.publicPages.update(publicPageId, { ...publicPageData, reserveViewStyle: style } as any);
+        await api.publicPages.update(publicPageId, { ...publicPageData, reserveViewStyle: style, ...colorPayload() } as any);
       }
     } catch { /* silent */ } finally {
       setSavingStyle(false);
@@ -205,7 +222,7 @@ export default function EventsPage() {
     try {
       await Promise.all([
         api.tenant.update({ liffEventView: reserveViewStyle }),
-        api.publicPages.update(publicPageId, { ...publicPageData, reserveViewStyle: reserveViewStyle } as any),
+        api.publicPages.update(publicPageId, { ...publicPageData, reserveViewStyle, ...colorPayload() } as any),
       ]);
       const tenantCode = tenantId;
       const slug = publicPageData.slug;
@@ -299,46 +316,15 @@ export default function EventsPage() {
     <>
     <div className="px-4 py-4 md:px-6 md:py-6 max-w-5xl">
 
+      {/* ヘッダー */}
       <div className="mb-5 flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">予約管理</h1>
-        </div>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">予約管理</h1>
         <Link href="/admin/events/new" className="shrink-0 rounded-lg bg-[#06C755] px-4 py-2 text-sm font-bold text-white hover:bg-[#05a847]">
           新規作成
         </Link>
       </div>
 
-      {/* Public reservation view style */}
-      <div className="mb-5 rounded-xl border border-gray-200 bg-white">
-        <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-          <span className="text-xs font-bold text-gray-500">公開サイトの表示スタイル</span>
-          <div className="flex gap-1 rounded-lg border border-gray-200 p-0.5">
-            {reserveViewOptions.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => saveReserveViewStyle(opt.value)}
-                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
-                  reserveViewStyle === opt.value
-                    ? 'bg-[#06C755] text-white'
-                    : 'text-gray-500 hover:bg-gray-50'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={saveAndReflect}
-            disabled={savingStyle}
-            className="rounded-lg bg-[#06C755] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#05a847] disabled:opacity-50"
-          >
-            {savingStyle ? '処理中...' : reflected ? '反映済み ✓' : '保存・反映'}
-          </button>
-        </div>
-      </div>
-
+      {/* タブ */}
       <div className="mb-5 flex gap-1 overflow-x-auto border-b border-gray-200">
         {tabs.map((item) => (
           <button
@@ -353,71 +339,136 @@ export default function EventsPage() {
         ))}
       </div>
 
+      {/* イベント一覧 */}
       {loading ? (
         <p className="text-gray-500">読み込み中...</p>
+      ) : viewMode === 'calendar' ? (
+        <CalendarView events={filtered} onDuplicate={handleDuplicate} />
+      ) : filtered.length === 0 ? (
+        <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-400">イベントがありません</div>
       ) : (
-        <div className="flex gap-4 items-start">
-          {/* 左：管理アクション */}
-          <div className="min-w-0 flex-1">
-            {viewMode === 'calendar' ? (
-              <CalendarView events={filtered} onDuplicate={handleDuplicate} />
-            ) : filtered.length === 0 ? (
-              <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-400">イベントがありません</div>
-            ) : (
-              <div className="space-y-2">
-                {filtered.map((event) => (
-                  <div key={event.id} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <EventStatusBadge status={event.status} />
-                        <Link href={`/admin/events/${event.id}`} className="text-sm font-bold text-gray-900 hover:text-[#06C755] truncate">
-                          {event.title}
-                        </Link>
-                      </div>
-                      <p className="mt-0.5 text-xs text-gray-400">{formatDate(event.heldAt)}</p>
-                    </div>
-                    <div className="flex shrink-0 gap-1.5">
-                      <Link href={`/admin/events/${event.id}`} className="rounded-lg bg-[#06C755]/10 px-2.5 py-1.5 text-xs font-bold text-[#06C755]">詳細</Link>
-                      <Link href={`/admin/events/${event.id}/edit`} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">編集</Link>
-                      <button onClick={() => handleDuplicate(event.id)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">複製</button>
-                      <button onClick={() => handleDelete(event.id)} className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-bold text-red-500">削除</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* 右：モバイルプレビュー */}
-          {scheduleUrl && (
-            <div className="shrink-0 hidden lg:block">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="text-[11px] font-bold text-gray-400">👤 ユーザーにはこう見えます</p>
-                <button
-                  type="button"
-                  onClick={() => setIframeKey((k) => k + 1)}
-                  className="text-[10px] text-gray-400 hover:text-gray-600 underline"
-                >
-                  再読込
-                </button>
-              </div>
-              <div className="overflow-hidden rounded-[2.5rem] border-[6px] border-gray-800 bg-white shadow-2xl" style={{ width: '220px' }}>
-                <div className="flex items-center justify-center gap-2 bg-gray-800 py-2">
-                  <div className="h-1.5 w-12 rounded-full bg-gray-600" />
+        <div className="space-y-2">
+          {filtered.map((event) => (
+            <div key={event.id} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <EventStatusBadge status={event.status} />
+                  <Link href={`/admin/events/${event.id}`} className="text-sm font-bold text-gray-900 hover:text-[#06C755] truncate">
+                    {event.title}
+                  </Link>
                 </div>
-                <iframe
-                  key={iframeKey}
-                  src={scheduleUrl}
-                  width="375"
-                  height="667"
-                  style={{ zoom: 0.587, border: 'none', display: 'block' }}
-                  title="モバイルプレビュー"
-                />
+                <p className="mt-0.5 text-xs text-gray-400">{formatDate(event.heldAt)}</p>
+              </div>
+              <div className="flex shrink-0 gap-1.5">
+                <Link href={`/admin/events/${event.id}`} className="rounded-lg bg-[#06C755]/10 px-2.5 py-1.5 text-xs font-bold text-[#06C755]">詳細</Link>
+                <Link href={`/admin/events/${event.id}/edit`} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">編集</Link>
+                <button onClick={() => handleDuplicate(event.id)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">複製</button>
+                <button onClick={() => handleDelete(event.id)} className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-bold text-red-500">削除</button>
               </div>
             </div>
-          )}
+          ))}
         </div>
       )}
+
+      {/* 表示スタイル設定 + プレビュー */}
+      <div className="mt-6 flex gap-6 items-start">
+        {/* 左：設定パネル */}
+        <div className="min-w-0 flex-1 space-y-3">
+          {/* 表示スタイル */}
+          <div className="rounded-xl border border-gray-200 bg-white">
+            <div className="flex flex-wrap items-center gap-3 px-4 py-3">
+              <span className="text-xs font-bold text-gray-500">公開サイトの表示スタイル</span>
+              <div className="flex gap-1 rounded-lg border border-gray-200 p-0.5">
+                {reserveViewOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => saveReserveViewStyle(opt.value)}
+                    className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
+                      reserveViewStyle === opt.value
+                        ? 'bg-[#06C755] text-white'
+                        : 'text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={saveAndReflect}
+                disabled={savingStyle}
+                className="rounded-lg bg-[#06C755] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#05a847] disabled:opacity-50"
+              >
+                {savingStyle ? '処理中...' : reflected ? '反映済み ✓' : '保存・反映'}
+              </button>
+            </div>
+          </div>
+
+          {/* カードの色設定 */}
+          <div className="rounded-xl border border-gray-200 bg-white p-4">
+            <p className="mb-3 text-xs font-bold text-gray-500">カードの色設定</p>
+            <div className="space-y-2">
+              <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                <span className="text-[11px] font-bold text-gray-500">カード背景色</span>
+                <input
+                  type="color"
+                  value={eventCardBg}
+                  onChange={(e) => setEventCardBg(e.target.value)}
+                  className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
+                />
+              </label>
+              <p className="text-[11px] font-bold text-gray-400 px-1">文字色</p>
+              <div className="grid gap-2 grid-cols-3">
+                {[
+                  { label: 'イベント名', value: eventTitleColor, setter: setEventTitleColor },
+                  { label: '日時', value: eventDateColor, setter: setEventDateColor },
+                  { label: '場所・料金', value: eventMetaColor, setter: setEventMetaColor },
+                ].map(({ label, value, setter }) => (
+                  <label key={label} className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-2 py-2">
+                    <span className="text-[11px] font-bold text-gray-500">{label}</span>
+                    <input
+                      type="color"
+                      value={value}
+                      onChange={(e) => setter(e.target.value)}
+                      className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 右：モバイルプレビュー */}
+        {scheduleUrl && (
+          <div className="shrink-0 hidden lg:block">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-[11px] font-bold text-gray-400">👤 ユーザーにはこう見えます</p>
+              <button
+                type="button"
+                onClick={() => setIframeKey((k) => k + 1)}
+                className="text-[10px] text-gray-400 hover:text-gray-600 underline"
+              >
+                再読込
+              </button>
+            </div>
+            <div className="overflow-hidden rounded-[2.5rem] border-[6px] border-gray-800 bg-white shadow-2xl" style={{ width: '220px' }}>
+              <div className="flex items-center justify-center gap-2 bg-gray-800 py-2">
+                <div className="h-1.5 w-12 rounded-full bg-gray-600" />
+              </div>
+              <iframe
+                key={iframeKey}
+                src={scheduleUrl}
+                width="375"
+                height="667"
+                style={{ zoom: 0.587, border: 'none', display: 'block' }}
+                title="モバイルプレビュー"
+              />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
 
     {scheduleUrl && (

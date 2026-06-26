@@ -843,6 +843,10 @@ export interface PublicPage {
   heroOverlayOpacity?: number | null;
   heroOverlayColor?: string | null;
   reserveViewStyle?: string | null;
+  reserveEventCardBg?: string | null;
+  reserveEventTitleColor?: string | null;
+  reserveEventDateColor?: string | null;
+  reserveEventMetaColor?: string | null;
   fontFamily?: string | null;
   titleFont?: string | null;
   titleColor?: string | null;
