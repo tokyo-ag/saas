@@ -357,22 +357,24 @@ export default function EventsPage() {
           {/* 公開サイトと同じプレビュー */}
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-gray-400">公開サイトのプレビュー</p>
-            <ReservationViewShowcase
-              accentColor={publicPageData?.accentColor ?? '#06C755'}
-              buttonLabel={publicPageData?.reserveLabel ?? '予約する'}
-              viewStyle={reserveViewStyle}
-              tenantCode={tenantId}
-              events={filtered.map((e) => ({
-                id: e.id,
-                title: e.title,
-                heldAt: e.heldAt,
-                endAt: e.endAt,
-                location: e.location,
-                capacity: e.capacity,
-                reservedCount: e.reservedCount,
-                imageUrl: e.imageUrl,
-              }))}
-            />
+            <div className="max-w-xs overflow-hidden">
+              <ReservationViewShowcase
+                accentColor={publicPageData?.accentColor ?? '#06C755'}
+                buttonLabel={publicPageData?.reserveLabel ?? '予約する'}
+                viewStyle={reserveViewStyle}
+                tenantCode={tenantId}
+                events={filtered.map((e) => ({
+                  id: e.id,
+                  title: e.title,
+                  heldAt: e.heldAt,
+                  endAt: e.endAt,
+                  location: e.location,
+                  capacity: e.capacity,
+                  reservedCount: e.reservedCount,
+                  imageUrl: e.imageUrl,
+                }))}
+              />
+            </div>
           </div>
           {/* 管理アクション */}
           <div className="space-y-2">
