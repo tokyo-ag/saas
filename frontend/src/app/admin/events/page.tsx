@@ -370,7 +370,7 @@ export default function EventsPage() {
                     key={iframeKey}
                     src={scheduleUrl}
                     width="375"
-                    height="812"
+                    height="667"
                     style={{ zoom: 0.776, border: 'none', display: 'block' }}
                     title="モバイルプレビュー"
                   />
