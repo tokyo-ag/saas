@@ -44,6 +44,12 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        source: "/liff/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+        ],
+      },
     ];
   },
   async redirects() {
