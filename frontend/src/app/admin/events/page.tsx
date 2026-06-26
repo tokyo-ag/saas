@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, formatDate } from '@/lib/api';
-import { ReservationViewShowcase } from '@/components/public/ReservationViewShowcase';
 import { getToken } from '@/lib/auth';
 import { SITE_URL } from '@/lib/config';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
@@ -161,6 +160,7 @@ export default function EventsPage() {
   const [reserveViewStyle, setReserveViewStyle] = useState<string>('calendar');
   const [savingStyle, setSavingStyle] = useState(false);
   const [reflected, setReflected] = useState(false);
+  const [iframeKey, setIframeKey] = useState(0);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -195,6 +195,7 @@ export default function EventsPage() {
       }
     } catch { /* silent */ } finally {
       setSavingStyle(false);
+      setIframeKey((k) => k + 1);
     }
   }
 
@@ -220,6 +221,7 @@ export default function EventsPage() {
         }).catch(() => null);
       }
       setReflected(true);
+      setIframeKey((k) => k + 1);
       setTimeout(() => setReflected(false), 2500);
     } catch { /* silent */ } finally {
       setSavingStyle(false);
@@ -360,34 +362,26 @@ export default function EventsPage() {
       ) : (
         <div className="space-y-4">
           {/* モバイルプレビュー */}
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-gray-400">モバイルプレビュー</p>
-            <div className="flex justify-center">
-              <div className="overflow-hidden rounded-[2.5rem] border-[6px] border-gray-800 bg-white shadow-2xl" style={{ width: '291px' }}>
-                <div className="flex justify-center bg-gray-800 py-2.5">
-                  <div className="h-1.5 w-16 rounded-full bg-gray-600" />
-                </div>
-                <div style={{ width: '375px', zoom: 0.776, height: '812px', overflowY: 'auto', overflowX: 'hidden' }}>
-                  <ReservationViewShowcase
-                    accentColor={publicPageData?.accentColor ?? '#06C755'}
-                    buttonLabel={publicPageData?.reserveLabel ?? '予約する'}
-                    viewStyle={reserveViewStyle}
-                    tenantCode={tenantId}
-                    events={filtered.map((e) => ({
-                      id: e.id,
-                      title: e.title,
-                      heldAt: e.heldAt,
-                      endAt: e.endAt,
-                      location: e.location,
-                      capacity: e.capacity,
-                      reservedCount: e.reservedCount,
-                      imageUrl: e.imageUrl,
-                    }))}
+          {scheduleUrl && (
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-gray-400">モバイルプレビュー</p>
+              <div className="flex justify-center">
+                <div className="overflow-hidden rounded-[2.5rem] border-[6px] border-gray-800 bg-white shadow-2xl" style={{ width: '291px' }}>
+                  <div className="flex justify-center bg-gray-800 py-2.5">
+                    <div className="h-1.5 w-16 rounded-full bg-gray-600" />
+                  </div>
+                  <iframe
+                    key={iframeKey}
+                    src={scheduleUrl}
+                    width="375"
+                    height="812"
+                    style={{ zoom: 0.776, border: 'none', display: 'block' }}
+                    title="モバイルプレビュー"
                   />
                 </div>
               </div>
             </div>
-          </div>
+          )}
           {/* 管理アクション */}
           <div className="space-y-2">
             {filtered.map((event) => (
