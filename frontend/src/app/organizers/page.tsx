@@ -10,9 +10,41 @@ import BottomCTA from './BottomCTA';
 
 export const revalidate = 60;
 
-const title = 'COMIU（コミュー） | 主催者向け次世代型ポータルサイト';
+const title = 'COMIU（コミュー） | サークルの募集・予約・LINE連絡をひとつに';
 const description =
-  '知識ゼロでもSEO専任担当が初回LPを無料作成。公式LINE自動リマインド、Googleフォーム不要のユーザー管理までこれ一つで。';
+  'COMIUは、学生サークル・社会人サークル向けに、無料WEBサイト作成、SEO、ポータル自動掲載、ワンタップ予約、公式LINE API連携をまとめて提供します。';
+
+const strengths = [
+  {
+    label: '無料WEBサイト',
+    title: 'サークルの募集ページを無料で作成',
+    text: '団体紹介、活動ブログ、イベント一覧、問い合わせまで。SNSだけでは流れてしまう情報を、検索に残る公開ページとして持てます。',
+  },
+  {
+    label: 'SEO・ポータル掲載',
+    title: '検索とCOMIUポータルの両方で見つかる',
+    text: 'SEOを意識した公開ページに加えて、作成したイベントや活動記事をCOMIUポータルへ自動反映。更新の手間を増やさず露出を作ります。',
+  },
+  {
+    label: 'ワンタップ予約',
+    title: '参加者は日程を選んでそのまま予約',
+    text: '日程カレンダー、カード、スレッドから活動に合う予約画面を選択。GoogleフォームやDMに分散しがちな予約をひとつにまとめます。',
+  },
+  {
+    label: '公式LINE API連携',
+    title: '予約後の連絡とリマインドをLINEで',
+    text: '公式LINE APIとつなげて、予約確認、前日リマインド、問い合わせ対応まで。参加者が普段使うLINEで自然に運営できます。',
+  },
+];
+
+const problems = [
+  'Instagram投稿だけだと、募集情報がすぐ流れてしまう',
+  'DM、Googleフォーム、スプレッドシートで予約管理が分散する',
+  'イベント前の案内やリマインドを毎回手作業で送っている',
+  '新歓・体験会のたびに、同じ説明を何度も繰り返している',
+];
+
+const flow = ['募集ページ公開', 'ポータル自動掲載', 'ワンタップ予約', 'LINEリマインド'];
 
 export const metadata: Metadata = {
   title,
@@ -43,50 +75,59 @@ function BrandLogo() {
 
 export default function OrganizersPage() {
   return (
-    <div className="bg-[#f8fafc] font-sans tracking-tight text-slate-900 antialiased pb-20 md:pb-0">
+    <div className="bg-[#f8fafc] pb-20 font-sans tracking-tight text-slate-900 antialiased md:pb-0">
       <CosmicCursor />
       <ScrollReveal />
       <BottomCTA />
 
-      {/* ヘッダー */}
-      <header className="sticky top-0 z-50 border-b border-slate-200/50 bg-white/70 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-slate-200/50 bg-white/78 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-          <BrandLogo />
-          <a
-            href="#cta"
-            className="rounded-full bg-slate-900 px-5 py-2 text-xs font-medium tracking-wide text-white shadow-sm transition-all hover:bg-slate-800"
+          <Link href="/" aria-label="COMIUトップへ">
+            <BrandLogo />
+          </Link>
+          <Link
+            href="/register"
+            className="rounded-full bg-slate-950 px-5 py-2 text-xs font-bold tracking-wide text-white shadow-sm transition-all hover:bg-slate-800"
           >
-            無料で試す
-          </a>
+            無料で始める
+          </Link>
         </div>
       </header>
 
       <main>
-        {/* ヒーロー */}
-        <section className="relative overflow-hidden bg-[radial-gradient(100%_100%_at_50%_0%,rgba(167,243,208,0.15)_0%,rgba(251,207,232,0.1)_50%,rgba(248,250,252,0)_100%)] py-20 lg:py-28">
+        <section className="relative overflow-hidden bg-[radial-gradient(100%_100%_at_55%_0%,rgba(16,185,129,0.14)_0%,rgba(236,72,153,0.09)_42%,rgba(248,250,252,0)_74%)] py-20 lg:py-28">
           <div className="relative z-10 mx-auto max-w-6xl px-6">
-            <div className="flex flex-col items-center gap-12 lg:flex-row lg:items-center lg:gap-16">
-              {/* テキスト */}
+            <div className="flex flex-col items-center gap-12 lg:flex-row lg:gap-16">
               <div className="flex-1 text-center lg:text-left">
-                <span className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-slate-900/10 bg-slate-900/5 px-3.5 py-1 text-[11px] font-medium uppercase tracking-wider text-slate-800">
-                  Organizer Portal Platform
+                <span className="mb-6 inline-flex items-center rounded-full border border-slate-900/10 bg-white/72 px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-700 shadow-sm">
+                  Circle Recruiting Platform
                 </span>
-                <h1 className="mb-6 text-3xl font-black leading-[1.15] tracking-tighter text-slate-950 lg:text-5xl">
-                  無料で、自動で、強いWEB集客。<br className="hidden sm:block" />
-                  <span className="brand-text-gradient">洗練された団体管理</span>をこれ一つで。
+                <h1 className="mb-6 text-4xl font-black leading-[1.12] tracking-tighter text-slate-950 lg:text-6xl">
+                  サークルの募集ページを、
+                  <span className="block">無料で公開。</span>
+                  <span className="brand-text-gradient block">予約もLINE連絡も、</span>
+                  <span className="block">そのままCOMIUで。</span>
                 </h1>
-                <p className="mb-10 max-w-xl text-sm font-light leading-relaxed text-slate-500 lg:text-lg">
-                  SEO特化のサイト自動生成から、公式LINE自動リマインド、安全な決済管理まで。
-                  コミュニティ運営に必要なすべてをスマートに統合。
+                <p className="mb-9 max-w-2xl text-sm leading-8 text-slate-600 lg:text-base">
+                  SEOに強い公開ページ、COMIUポータルへの自動掲載、ワンタップ予約、公式LINE API連携まで。
+                  学生サークル・社会人サークルの募集と運営をまとめます。
                 </p>
-                <a
-                  href="#cta"
-                  className="inline-block transform rounded-full bg-slate-950 px-10 py-4 text-center text-sm font-bold tracking-wide text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-xl"
-                >
-                  今すぐ無料で始める
-                </a>
+                <div className="flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+                  <Link
+                    href="/register"
+                    className="rounded-full bg-slate-950 px-8 py-4 text-center text-sm font-bold tracking-wide text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-xl"
+                  >
+                    無料で募集ページを作る
+                  </Link>
+                  <Link
+                    href="/clubs/18285255/gakuori"
+                    className="rounded-full border border-slate-200 bg-white px-8 py-4 text-center text-sm font-bold tracking-wide text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
+                  >
+                    公開サイトを見る
+                  </Link>
+                </div>
               </div>
-              {/* モックアップ画像 */}
+
               <div className="w-full max-w-xs shrink-0 lg:max-w-sm xl:max-w-md">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -99,70 +140,103 @@ export default function OrganizersPage() {
           </div>
         </section>
 
-        {/* FEATURE 01 */}
-        <section className="fade-in mx-auto max-w-6xl px-6 py-20">
-          <div className="mb-14 text-center">
+        <section className="fade-in mx-auto max-w-6xl px-6 py-16 lg:py-20">
+          <div className="mb-10 max-w-3xl">
             <span className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-emerald-600">
-              01 / Automatic Marketing
+              What COMIU Does
             </span>
-            <h2 className="text-2xl font-black tracking-tight text-slate-950 lg:text-4xl">無料で自動で強いWEB集客</h2>
-            <p className="mt-2 text-xs font-light text-slate-400 lg:text-sm">自動で働き続ける「資産型」の強力なSEOシステム。</p>
+            <h2 className="text-3xl font-black tracking-tight text-slate-950 lg:text-5xl">
+              SNS募集の次に必要なものを、ひとつに。
+            </h2>
           </div>
-          <div className="grid gap-6 lg:grid-cols-3">
-            <article className="rounded-2xl border border-slate-200/60 bg-white p-7 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all duration-300 hover:border-slate-300 hover:shadow-[0_12px_24px_rgba(0,0,0,0.04)]">
-              <div className="mb-5 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 font-mono text-xs font-bold text-emerald-600">01</div>
-              <h3 className="mb-3 text-base font-bold leading-snug text-slate-950">
-                知識ゼロでも安心。SEO専任担当による「初回LP無料作成＆定期巡回サポート」
-              </h3>
-              <p className="text-xs font-light leading-relaxed text-slate-500">
-                検索エンジンに最適化された団体専用ページが、登録後すぐに自動生成。専門知識がなくても、Google検索で見つけられやすい強いWebサイトが無料で手に入ります。
-                <br /><br />
-                さらに各団体に専任の担当者を配置し、定期巡回から回数無制限のチャットサポートまで手厚く伴走。希望に応じて初回のヒアリングLP作成代行も無料で行います。
-              </p>
-            </article>
-            <article className="rounded-2xl border border-slate-200/60 bg-white p-7 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all duration-300 hover:border-slate-300 hover:shadow-[0_12px_24px_rgba(0,0,0,0.04)]">
-              <div className="mb-5 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 font-mono text-xs font-bold text-emerald-600">02</div>
-              <h3 className="mb-3 text-base font-bold leading-snug text-slate-950">
-                イベント作成や活動ブログがポータルサイトへ自動反映
-              </h3>
-              <p className="text-xs font-light leading-relaxed text-slate-500">
-                あなたがCOMIU内でイベントを作ったりブログを書くだけで、次世代型ポータルサイトへ自動的に掲載。2重で更新する手間の完全ゼロ化と、Web上の露出アップを同時に叶えます。
-              </p>
-            </article>
-            <article className="rounded-2xl border border-slate-200/60 bg-white p-7 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all duration-300 hover:border-slate-300 hover:shadow-[0_12px_24px_rgba(0,0,0,0.04)]">
-              <div className="mb-5 flex h-8 w-8 items-center justify-center rounded-lg bg-pink-500/10 font-mono text-xs font-bold text-pink-500">03</div>
-              <h3 className="mb-3 text-base font-bold leading-snug text-slate-950">
-                他社と圧倒的な差がつく「蓄積型」の最強集客コンテンツ
-              </h3>
-              <p className="text-xs font-light leading-relaxed text-slate-500">
-                一時的なSNS広告とは異なり、日々の活動記録がすべて「検索に強いWeb資産」として蓄積されます。運営を続ければ続けるほど、Google等から自動で集客力が育つ仕組みです。
-              </p>
-            </article>
+          <div className="grid gap-5 md:grid-cols-2">
+            {strengths.map((item, index) => (
+              <article
+                key={item.label}
+                className="rounded-2xl border border-slate-200/70 bg-white p-7 shadow-[0_2px_8px_rgba(15,23,42,0.03)] transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_rgba(15,23,42,0.06)]"
+              >
+                <div className="mb-5 flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 font-mono text-xs font-bold text-emerald-600">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <p className="text-xs font-bold text-emerald-600">{item.label}</p>
+                </div>
+                <h3 className="mb-3 text-xl font-black leading-snug text-slate-950">{item.title}</h3>
+                <p className="text-sm leading-7 text-slate-500">{item.text}</p>
+              </article>
+            ))}
           </div>
         </section>
 
-        {/* FEATURE 02 */}
+        <section className="border-y border-slate-200/70 bg-white py-16 lg:py-20">
+          <div className="mx-auto grid max-w-6xl gap-10 px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+            <div>
+              <span className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-pink-500">
+                Before COMIU
+              </span>
+              <h2 className="text-3xl font-black tracking-tight text-slate-950 lg:text-5xl">
+                募集はできている。<br />
+                でも運営が散らばる。
+              </h2>
+              <p className="mt-5 text-sm leading-8 text-slate-500">
+                COMIUは、SNSで興味を持った参加者を公開ページへ誘導し、そのまま予約、名簿、LINE連絡までつなげます。
+              </p>
+            </div>
+            <div className="grid gap-3">
+              {problems.map((problem) => (
+                <div key={problem} className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm font-bold leading-7 text-slate-700">
+                  {problem}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="fade-in mx-auto max-w-6xl px-6 py-16 lg:py-20">
+          <div className="mb-10 text-center">
+            <span className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-emerald-600">
+              Simple Flow
+            </span>
+            <h2 className="text-3xl font-black tracking-tight text-slate-950 lg:text-5xl">
+              ページ公開からリマインドまで。
+            </h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-4">
+            {flow.map((step, index) => (
+              <div key={step} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p className="font-mono text-xs font-bold text-slate-400">STEP {index + 1}</p>
+                <p className="mt-5 text-lg font-black text-slate-950">{step}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section className="rounded-t-[32px] bg-[#0b0f19] py-20 text-slate-100">
           <div className="mx-auto max-w-4xl px-6">
             <div className="mb-10 text-center">
               <span className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-pink-400">
-                02 / Smart Management
+                Management
               </span>
-              <h2 className="text-2xl font-black tracking-tight text-white lg:text-4xl">COMIUの洗練された団体管理</h2>
-              <p className="mt-2 text-xs font-light text-slate-500">タップして各機能のコアテクノロジーをチェック</p>
+              <h2 className="text-3xl font-black tracking-tight text-white lg:text-5xl">
+                予約・LINE・参加者管理まで。
+              </h2>
+              <p className="mt-3 text-sm text-slate-400">
+                分かる人には伝わる機能も、主催者が使いやすい形で。
+              </p>
             </div>
             <ManagementTabs />
           </div>
         </section>
 
-        {/* CTA */}
         <section id="cta" className="bg-gradient-to-b from-[#0b0f19] to-[#f8fafc] py-24 text-center">
           <div className="fade-in mx-auto max-w-md rounded-3xl border border-slate-100 bg-white p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)]">
             <Image src="/icon.png" alt="COMIU" width={36} height={36} className="mx-auto mb-4 rounded-full shadow-sm" />
             <h2 className="mb-2 text-xl font-black tracking-tight text-slate-950">
-              さあ、一歩進んだ団体運営を始めましょう
+              まずは募集ページを公開しよう。
             </h2>
-            <p className="mb-8 text-xs font-light text-slate-400">初期費用・月額固定費は一切かかりません。</p>
+            <p className="mb-8 text-sm leading-7 text-slate-500">
+              学生サークルも、社会人サークルも。無料で始められます。
+            </p>
             <Link
               href="/register"
               className="block w-full rounded-full bg-slate-950 py-4 text-sm font-bold tracking-wide text-white shadow-md transition-all hover:bg-slate-900 hover:shadow-xl"
@@ -173,7 +247,6 @@ export default function OrganizersPage() {
         </section>
       </main>
 
-      {/* フッター */}
       <footer className="border-t border-slate-100 bg-white py-10 text-center text-[10px] uppercase tracking-widest text-slate-400">
         <p>&copy; 2026 COMIU. All Rights Reserved.</p>
       </footer>

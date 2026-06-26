@@ -19,9 +19,9 @@ export default function BottomCTA() {
         visible ? 'translate-y-0' : 'translate-y-full'
       }`}
     >
-      <span className="text-xs font-bold tracking-tight text-slate-900">次世代の団体運営を。</span>
+      <span className="text-xs font-bold tracking-tight text-slate-900">募集ページを無料で公開</span>
       <a href="#cta" className="rounded-full bg-slate-950 px-6 py-2.5 text-xs font-bold text-white shadow-sm">
-        今すぐ無料登録
+        無料で始める
       </a>
     </div>
   );
