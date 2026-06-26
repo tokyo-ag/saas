@@ -95,6 +95,7 @@ export default function OrganizersPage() {
                   height={480}
                   className="w-full drop-shadow-2xl"
                   priority
+                  unoptimized
                 />
               </div>
             </div>

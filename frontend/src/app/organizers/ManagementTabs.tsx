@@ -89,6 +89,7 @@ export default function ManagementTabs() {
                 width={288}
                 height={200}
                 className="w-full rounded-xl"
+                unoptimized
               />
             </div>
           )}
