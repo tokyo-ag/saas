@@ -351,35 +351,65 @@ export default function EventsPage() {
         <CalendarView events={filtered} onDuplicate={handleDuplicate} />
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-400">イベントがありません</div>
-      ) : (
-        <div className="space-y-3">
+      ) : viewMode === 'card' ? (
+        <div className="grid gap-4 sm:grid-cols-2">
           {filtered.map((event) => (
-            <article key={event.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div className="min-w-0 flex-1">
-                  <div className="mb-2 flex flex-wrap items-center gap-2">
-                    {event.iconUrl && (
-                      <Image src={`${API_URL}${event.iconUrl}`} width={32} height={32} className="w-8 h-8 rounded-full object-cover shrink-0" alt="" unoptimized />
-                    )}
-                    <EventStatusBadge status={event.status} />
-                    <Link href={`/admin/events/${event.id}`} className="font-bold text-gray-900 hover:text-[#06C755] break-words">
-                      {event.title}
-                    </Link>
-                  </div>
-                  <p className="text-sm text-gray-500 leading-relaxed">{formatDate(event.heldAt)} ・ {event.location}</p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    予約: {event.reservedCount ?? 0}{event.capacity ? ` / ${event.capacity}人` : '人'}
-                    {(event.waitlistedCount ?? 0) > 0 && (
-                      <span className="ml-2 text-yellow-600">キャンセル待ち {event.waitlistedCount}人</span>
-                    )}
-                  </p>
+            <article key={event.id} className="flex flex-col rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+              {event.imageUrl ? (
+                <Image src={`${API_URL}${event.imageUrl}`} width={400} height={180} className="h-36 w-full object-cover" alt="" unoptimized />
+              ) : (
+                <div className="h-36 w-full bg-gray-50 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="1.5"/><path d="M3 9l4-4 4 4 4-6 4 6" strokeWidth="1.5"/></svg>
                 </div>
-                <div className="grid grid-cols-2 gap-2 md:flex md:shrink-0">
-                  <Link href={`/admin/events/${event.id}`} className="rounded-lg bg-[#06C755]/10 px-3 py-2 text-center text-xs font-bold text-[#06C755]">詳細</Link>
-                  <Link href={`/admin/events/${event.id}/edit`} className="rounded-lg border border-gray-200 px-3 py-2 text-center text-xs font-bold text-gray-600">編集</Link>
-                  <button onClick={() => handleDuplicate(event.id)} className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold text-gray-600">複製</button>
-                  <button onClick={() => handleDelete(event.id)} className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-500">削除</button>
+              )}
+              <div className="flex flex-1 flex-col p-4">
+                <div className="mb-1 flex flex-wrap items-center gap-1.5">
+                  <EventStatusBadge status={event.status} />
                 </div>
+                <Link href={`/admin/events/${event.id}`} className="font-bold text-gray-900 hover:text-[#06C755] leading-snug">
+                  {event.title}
+                </Link>
+                <p className="mt-1 text-xs text-gray-500">{formatDate(event.heldAt)}</p>
+                {event.location && <p className="text-xs text-gray-400 truncate">{event.location}</p>}
+                <p className="mt-1 text-xs text-gray-600">
+                  予約: {event.reservedCount ?? 0}{event.capacity ? ` / ${event.capacity}人` : '人'}
+                </p>
+                <div className="mt-3 flex gap-2 border-t border-gray-100 pt-3">
+                  <Link href={`/admin/events/${event.id}`} className="flex-1 rounded-lg bg-[#06C755]/10 px-2 py-1.5 text-center text-xs font-bold text-[#06C755]">詳細</Link>
+                  <Link href={`/admin/events/${event.id}/edit`} className="flex-1 rounded-lg border border-gray-200 px-2 py-1.5 text-center text-xs font-bold text-gray-600">編集</Link>
+                  <button onClick={() => handleDuplicate(event.id)} className="flex-1 rounded-lg border border-gray-200 px-2 py-1.5 text-xs font-bold text-gray-600">複製</button>
+                  <button onClick={() => handleDelete(event.id)} className="flex-1 rounded-lg bg-red-50 px-2 py-1.5 text-xs font-bold text-red-500">削除</button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-1">
+          {filtered.map((event) => (
+            <article key={event.id} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+              <div className="flex w-14 shrink-0 flex-col items-center rounded-lg bg-gray-50 py-1.5 text-center">
+                <span className="text-[10px] font-bold text-gray-400 uppercase">
+                  {new Date(event.heldAt).toLocaleDateString('ja-JP', { month: 'short' })}
+                </span>
+                <span className="text-lg font-black text-gray-800 leading-none">
+                  {new Date(event.heldAt).getDate()}
+                </span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
+                  <EventStatusBadge status={event.status} />
+                  <Link href={`/admin/events/${event.id}`} className="font-bold text-gray-900 hover:text-[#06C755] truncate text-sm">
+                    {event.title}
+                  </Link>
+                </div>
+                <p className="text-xs text-gray-400 truncate">
+                  {event.location && `${event.location} ・ `}予約 {event.reservedCount ?? 0}{event.capacity ? `/${event.capacity}人` : '人'}
+                </p>
+              </div>
+              <div className="flex shrink-0 gap-1.5">
+                <Link href={`/admin/events/${event.id}/edit`} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">編集</Link>
+                <button onClick={() => handleDelete(event.id)} className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-bold text-red-500">削除</button>
               </div>
             </article>
           ))}
