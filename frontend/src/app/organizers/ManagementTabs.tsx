@@ -96,8 +96,10 @@ export default function ManagementTabs() {
                   { src: '/shuttles-schedule-cards.svg', label: 'スレッド' },
                 ].map(({ src, label }) => (
                   <div key={label} className="flex flex-col items-center gap-1.5">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={src} alt={label} className="h-56 w-auto rounded-lg object-contain lg:h-64" />
+                    <div style={{ width: '110px', height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={src} alt={label} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} className="rounded-lg" />
+                    </div>
                     <span className="text-[10px] font-medium text-slate-400">{label}</span>
                   </div>
                 ))}
