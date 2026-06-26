@@ -288,9 +288,9 @@ export default function HomeClient({
                 </p>
               </div>
             ) : (
-              <div className="flex gap-3 flex-wrap">
+              <div className="flex gap-2 flex-wrap">
                 {searchResults.map((ev) => (
-                  <EventCard key={ev.id} event={ev} />
+                  <EventCard key={ev.id} event={ev} compact />
                 ))}
               </div>
             )}
