@@ -113,18 +113,12 @@ export default function OrganizersPage() {
                   <span className="block">ワンタップ予約、公式LINE API連携まで。</span>
                   <span className="block">学生サークル・社会人サークルの募集と運営をまとめます。</span>
                 </p>
-                <div className="flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+                <div className="flex justify-center lg:justify-start">
                   <Link
                     href="/register"
                     className="rounded-full bg-slate-950 px-8 py-4 text-center text-sm font-bold tracking-wide text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-xl"
                   >
                     無料で募集ページを作る
-                  </Link>
-                  <Link
-                    href="/clubs/18285255/gakuori"
-                    className="rounded-full border border-slate-200 bg-white px-8 py-4 text-center text-sm font-bold tracking-wide text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
-                  >
-                    公開サイトを見る
                   </Link>
                 </div>
               </div>
