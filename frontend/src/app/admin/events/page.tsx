@@ -187,10 +187,12 @@ export default function EventsPage() {
   async function saveReserveViewStyle(style: string) {
     setReserveViewStyle(style);
     setViewMode(style === 'calendar' ? 'calendar' : style === 'thread' ? 'thread' : 'card');
-    if (!publicPageId || !publicPageData) return;
     setSavingStyle(true);
     try {
-      await api.publicPages.update(publicPageId, { ...publicPageData, reserveViewStyle: style } as any);
+      await api.tenant.update({ liffEventView: style });
+      if (publicPageId && publicPageData) {
+        await api.publicPages.update(publicPageId, { ...publicPageData, reserveViewStyle: style } as any);
+      }
     } catch { /* silent */ } finally {
       setSavingStyle(false);
     }
@@ -200,7 +202,10 @@ export default function EventsPage() {
     if (!publicPageId || !publicPageData) return;
     setSavingStyle(true);
     try {
-      await api.publicPages.update(publicPageId, { ...publicPageData, reserveViewStyle: reserveViewStyle } as any);
+      await Promise.all([
+        api.tenant.update({ liffEventView: reserveViewStyle }),
+        api.publicPages.update(publicPageId, { ...publicPageData, reserveViewStyle: reserveViewStyle } as any),
+      ]);
       const tenantCode = tenantId;
       const slug = publicPageData.slug;
       if (tenantCode && slug) {
