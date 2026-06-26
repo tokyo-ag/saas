@@ -354,7 +354,7 @@ export default function HomeClient({
           ) : (
             <HScroll gap="gap-1">
               {hotEvents.map((ev) => (
-                <EventCard key={ev.id} event={ev} showViews />
+                <EventCard key={ev.id} event={ev} showViews compact />
               ))}
             </HScroll>
           )}
