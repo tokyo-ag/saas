@@ -14,7 +14,7 @@ export default function ScrollReveal() {
           }
         });
       },
-      { threshold: 0.1 },
+      { threshold: 0.08 },
     );
     els.forEach(el => observer.observe(el));
     return () => observer.disconnect();

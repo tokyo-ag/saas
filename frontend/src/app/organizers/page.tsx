@@ -9,7 +9,7 @@ export const revalidate = 60;
 
 const title = 'COMIU（コミュー） | 主催者向け次世代型ポータルサイト';
 const description =
-  '無料で自動で強いWEB集客と、公式LINE連携による洗練された団体管理。次世代型ポータルサイトCOMIU（コミュー）。';
+  '知識ゼロでもSEO専任担当が初回LPを無料作成。公式LINE自動リマインド、Googleフォーム不要のユーザー管理までこれ一つで。';
 
 export const metadata: Metadata = {
   title,
@@ -26,19 +26,33 @@ export const metadata: Metadata = {
   twitter: { card: 'summary', title, description },
 };
 
+function BrandLogo() {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="brand-gradient flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm">
+        CO
+      </div>
+      <div className="text-xl font-black tracking-wider text-slate-800">
+        <span className="text-emerald-500">COM</span>
+        <span className="text-pink-400">IU</span>
+      </div>
+    </div>
+  );
+}
+
 export default function OrganizersPage() {
   return (
-    <div className="bg-slate-50 font-sans text-slate-800 antialiased">
+    <div className="bg-slate-50/50 font-sans text-slate-800 antialiased">
       <CosmicCursor />
       <ScrollReveal />
 
       {/* ヘッダー */}
-      <header className="sticky top-0 z-50 border-b border-slate-100 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <div className="text-2xl font-black tracking-wider text-indigo-600">COMIU</div>
+      <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5">
+          <BrandLogo />
           <a
             href="#cta"
-            className="rounded-full bg-indigo-600 px-5 py-2 text-sm font-bold text-white shadow-md transition-all hover:bg-indigo-700"
+            className="rounded-full bg-gradient-to-r from-emerald-500 to-pink-400 px-6 py-2 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90"
           >
             無料で試す
           </a>
@@ -47,24 +61,23 @@ export default function OrganizersPage() {
 
       <main>
         {/* ヒーロー */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-indigo-900 via-indigo-800 to-slate-900 py-20 text-white lg:py-32">
+        <section className="relative overflow-hidden bg-gradient-to-b from-emerald-50/60 via-pink-50/40 to-slate-50 py-20 lg:py-28">
           <div className="relative z-10 mx-auto max-w-4xl px-4 text-center">
-            <span className="mb-6 inline-block rounded-full border border-indigo-400/20 bg-indigo-500/30 px-4 py-1.5 text-xs font-bold tracking-wide text-indigo-300 lg:text-sm">
+            <span className="mb-6 inline-block rounded-full border border-emerald-100 bg-white px-4 py-1.5 text-xs font-bold tracking-wide text-emerald-600 shadow-xs lg:text-sm">
               主催者向け・次世代型ポータルサイト
             </span>
-            <h1 className="mb-6 text-3xl font-black leading-tight tracking-tight lg:text-6xl">
-              無料で、自動で、強いWEB集客。<br />
-              <span className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
-                洗練された団体管理
-              </span>をこれ一つで。
+            <h1 className="mb-6 text-3xl font-black leading-snug tracking-tight text-slate-900 lg:text-5xl">
+              無料で、自動で、強いWEB集客。<br className="hidden sm:block" />
+              <span className="brand-text-gradient">洗練された団体管理</span>をこれ一つで。
             </h1>
-            <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-indigo-100 lg:text-xl">
-              「COMIU（コミュー）」は、SEO特化のサイト作成から、公式LINE自動リマインド、決済まで一気通貫で自動化するシステムです。
+            <p className="mx-auto mb-10 max-w-2xl text-base leading-relaxed text-slate-600 lg:text-lg">
+              SEO特化のサイト自動生成から、公式LINE自動リマインド、安全な決済管理まで。<br className="hidden sm:block" />
+              コミュニティ・イベント運営に必要なすべてを自動化するシステム「COMIU（コミュー）」
             </p>
-            <div className="flex flex-col justify-center gap-4 sm:flex-row">
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
               <a
                 href="#cta"
-                className="transform rounded-xl bg-amber-500 px-10 py-4 text-lg font-black text-slate-900 shadow-lg transition-all hover:-translate-y-0.5 hover:bg-amber-400"
+                className="w-full transform rounded-xl bg-slate-950 px-10 py-4 text-center text-base font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-slate-800 sm:w-auto"
               >
                 今すぐ無料でアカウント作成
               </a>
@@ -72,83 +85,116 @@ export default function OrganizersPage() {
           </div>
         </section>
 
-        {/* FEATURE 01 集客 */}
-        <section className="fade-in mx-auto max-w-6xl px-4 py-20 lg:py-28">
+        {/* ペインポイントバナー */}
+        <section className="mx-auto max-w-4xl px-4 py-12">
+          <div className="flex flex-col items-center justify-between gap-6 rounded-2xl border border-slate-100 bg-white p-6 shadow-xs md:flex-row lg:p-8">
+            <div>
+              <h4 className="text-lg font-bold text-slate-900">今のツール運営、バラバラで疲れていませんか？</h4>
+              <p className="mt-1 text-sm text-slate-500">
+                集客、LINE連絡、予約表、Googleフォーム、決済。COMIUならすべて1つの画面で完結します。
+              </p>
+            </div>
+            <a href="#feature" className="flex items-center gap-1 whitespace-nowrap text-sm font-bold text-emerald-600 hover:text-emerald-700">
+              解決する機能を見る ↓
+            </a>
+          </div>
+        </section>
+
+        {/* FEATURE 01 */}
+        <section id="feature" className="fade-in mx-auto max-w-6xl px-4 py-20">
           <div className="mb-16 text-center">
-            <span className="mb-2 block text-sm font-bold uppercase tracking-wider text-indigo-600">FEATURE 01</span>
-            <h2 className="text-3xl font-black tracking-tight lg:text-4xl">無料で自動で強いWEB集客</h2>
-            <p className="mt-4 text-slate-500">作って終わりじゃない。自動で働き続ける「蓄積型」のSEOシステム。</p>
+            <span className="mb-2 block text-sm font-bold tracking-wider text-emerald-500">FEATURE 01</span>
+            <h2 className="text-2xl font-black tracking-tight lg:text-4xl">無料で自動で強いWEB集客</h2>
+            <p className="mt-3 text-sm text-slate-500 lg:text-base">作って終わりじゃない。自動で働き続ける「資産型」のSEOシステム。</p>
           </div>
           <div className="grid gap-8 lg:grid-cols-3">
-            <article className="rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all hover:shadow-md">
-              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <h3 className="mb-3 text-xl font-bold">SEO特化のWEBサイトを無料作成</h3>
+            <article className="rounded-2xl border border-slate-100 bg-white p-8 shadow-xs transition-all hover:border-emerald-200">
+              <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 font-bold text-emerald-500">01</div>
+              <h3 className="mb-3 text-lg font-bold text-slate-900">
+                知識ゼロでも安心。SEO専任担当による「初回LP無料作成＆定期巡回サポート」
+              </h3>
               <p className="text-sm leading-relaxed text-slate-600">
-                専門知識は一切不要。検索エンジンに最適化された美しい団体専用ページが、登録したその瞬間に無料で生成されます。
+                検索エンジンに最適化された団体専用ページが、登録後すぐに自動生成。専門知識がなくても、Google検索で見つけられやすい強いWebサイトが無料で手に入ります。
+                <br className="mb-2 block" />
+                さらに、各団体に専任の担当者を配置。定期的なページ巡回から、回数無制限のチャットサポートまで手厚く伴走します。希望に応じて完全任意で初回のヒアリングLP作成代行も無料で行います。
               </p>
             </article>
-            <article className="rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all hover:shadow-md">
-              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.213 6H16" />
-                </svg>
-              </div>
-              <h3 className="mb-3 text-xl font-bold">イベントやブログが自動反映</h3>
+            <article className="rounded-2xl border border-slate-100 bg-white p-8 shadow-xs transition-all hover:border-emerald-200">
+              <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 font-bold text-emerald-500">02</div>
+              <h3 className="mb-3 text-lg font-bold text-slate-900">
+                イベント作成や活動ブログがポータルサイトへ自動反映
+              </h3>
               <p className="text-sm leading-relaxed text-slate-600">
-                あなたが普段通りイベントを作成したり、活動ブログを書くだけで、COMIUのポータルサイトへ自動的に掲載・更新されます。
+                あなたがCOMIU内でイベントを作ったりブログを書くだけで、次世代型ポータルサイトへ自動的に掲載。2重で更新する手間の完全ゼロ化と、Web上の露出アップを同時に叶えます。
               </p>
             </article>
-            <article className="rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all hover:shadow-md">
-              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-              </div>
-              <h3 className="mb-3 text-xl font-bold">他社と差別化された最強コンテンツ</h3>
+            <article className="rounded-2xl border border-slate-100 bg-white p-8 shadow-xs transition-all hover:border-pink-200">
+              <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-xl bg-pink-50 font-bold text-pink-400">03</div>
+              <h3 className="mb-3 text-lg font-bold text-slate-900">
+                他社と圧倒的な差がつく「蓄積型」の最強集客コンテンツ
+              </h3>
               <p className="text-sm leading-relaxed text-slate-600">
-                一時的な広告とは異なり、日々の活動情報がすべて「検索に強い資産（蓄積型コンテンツ）」として残り、長期的な集客力を生み出します。
+                一時的なSNS広告とは異なり、日々の活動記録がすべて「検索に強いWeb資産」として蓄積されます。運営を続ければ続けるほど、Google等から自動で集客力が育つ仕組みです。
               </p>
             </article>
           </div>
         </section>
 
-        {/* FEATURE 02 管理 */}
-        <section className="overflow-hidden bg-slate-900 py-20 text-white lg:py-28">
+        {/* FEATURE 02 */}
+        <section className="rounded-t-3xl bg-slate-900 py-20 text-white lg:rounded-t-[40px]">
           <div className="fade-in mx-auto max-w-6xl px-4">
             <div className="mb-16 text-center">
-              <span className="mb-2 block text-sm font-bold uppercase tracking-wider text-amber-400">FEATURE 02</span>
-              <h2 className="text-3xl font-black tracking-tight lg:text-4xl">COMIUの洗練された団体管理</h2>
-              <p className="mt-4 text-slate-400">バラバラだったツールを一つに。スマートで無駄のない運営基盤。</p>
+              <span className="mb-2 block text-sm font-bold tracking-wider text-pink-400">FEATURE 02</span>
+              <h2 className="text-2xl font-black tracking-tight lg:text-4xl">COMIUの洗練された団体管理</h2>
+              <p className="mt-3 text-sm text-slate-400 lg:text-base">手作業の無駄を排除。スマートで無駄のない運営基盤を構築。</p>
             </div>
             <div className="grid gap-8 md:grid-cols-2">
               {[
                 {
-                  title: '公式LINEによる自動リマインドサービス',
-                  body: 'ドタキャンや連絡漏れを防ぐ。イベント直前のリマインドメッセージを、使い慣れた公式LINEからユーザーへ自動配信します。',
+                  color: 'text-emerald-400',
+                  title: '公式LINEによるドタキャン防止の「自動リマインド」',
+                  body: (
+                    <>
+                      イベント直前のリマインドメッセージを、ユーザーが普段使い慣れている公式LINEへ自動配信。連絡漏れによる不参加や直前キャンセルを劇的に減らします。配信時間や文章の内容は、団体の特色に合わせて自由なカスタマイズが可能です。
+                      <br className="mb-2 block" />
+                      個人でLステップのようにAPI連携やデータベース（DB）管理を行おうとすると、膨大な学習時間とコストを要しますが、COMIUなら誰でも簡単に連携可能。設定に不安がある場合は、オンラインでの適切な導入案内サポートもご用意しています。
+                    </>
+                  ),
                 },
                 {
-                  title: '選べるカレンダーからボタン一つで簡単予約',
-                  body: '視覚的で使い分けることができるカレンダーUIを採用。ユーザーは迷うことなく、ワンタップでスムーズに予約を完了できます。',
+                  color: 'text-emerald-400',
+                  title: '目的に合わせて選べるカレンダーからボタン一つで簡単予約',
+                  body: (
+                    <>
+                      団体の特性やイベント形態に合わせて、最適な表示に切り替えられるカレンダーUIを採用。
+                      <br className="mb-2 block" />
+                      さらに、公式LINEのチャット画面、リッチメニュー、カード、ボタンなどに予約URLリンクを直接埋め込むことで、ユーザーを迷わせない「直感的かつワンタップで完了する予約導線」を構築できます。
+                    </>
+                  ),
                 },
                 {
-                  title: 'Googleフォームいらずのユーザー管理',
-                  body: '予約データと顧客情報が自動で紐づくため、もう複雑なスプレッドシートや複数のフォームを行き来して管理する必要はありません。',
+                  color: 'text-pink-400',
+                  title: 'Googleフォームやスプレッドシートいらずのユーザー管理',
+                  body: (
+                    <>
+                      予約データと顧客情報（ユーザー属性）が自動でシステム内に紐づきます。バラバラのフォームや手動の顧客名簿を行き来して突合する無駄な業務はもう不要です。
+                      <br className="mb-2 block" />
+                      また、無断キャンセルや悪質なユーザーに対してはブロック機能による対策が可能。対象ユーザーに警告ラベルを付与して可視化することで、COMIUプラットフォーム全体で健全かつ質の高いコミュニティ環境を担保します。
+                    </>
+                  ),
                 },
                 {
-                  title: '専門業者による安全な決済管理システム連携',
-                  body: '集金トラブルや未入金をゼロに。強固なセキュリティを備えた専門の決済システムと標準連携し、安全にお金を管理します。',
+                  color: 'text-pink-400',
+                  title: '専門業者との安心連携による安全なオンライン決済管理',
+                  body: '面倒な参加費の集金や未入金トラブルを未然に防ぐため、強固なセキュリティを持つ決済システムと標準連携。安全かつスマートなお金の管理を実現します。',
                 },
               ].map((f) => (
-                <div key={f.title} className="flex gap-4 rounded-xl border border-slate-800 bg-slate-800/50 p-6">
-                  <div className="text-2xl font-bold text-emerald-400">✔</div>
-                  <div>
-                    <h3 className="mb-2 text-lg font-bold">{f.title}</h3>
-                    <p className="text-sm leading-relaxed text-slate-400">{f.body}</p>
+                <div key={f.title} className="rounded-2xl border border-slate-800 bg-slate-800/60 p-6 transition-all hover:border-slate-700">
+                  <div className="mb-3 flex items-center gap-3">
+                    <span className={`text-lg ${f.color}`}>●</span>
+                    <h3 className="text-lg font-bold">{f.title}</h3>
                   </div>
+                  <p className="text-sm leading-relaxed text-slate-400">{f.body}</p>
                 </div>
               ))}
             </div>
@@ -156,29 +202,32 @@ export default function OrganizersPage() {
         </section>
 
         {/* CTA */}
-        <section id="cta" className="relative overflow-hidden bg-indigo-50 py-20 text-center lg:py-32">
-          <div className="fade-in relative z-10 mx-auto max-w-3xl px-4">
-            <h2 className="mb-6 text-3xl font-black tracking-tight text-slate-950 lg:text-5xl">
-              さあ、一歩進んだ<br className="sm:hidden" />団体運営を始めましょう
+        <section id="cta" className="relative overflow-hidden bg-gradient-to-b from-slate-900 to-white py-24 text-center">
+          <div className="fade-in relative z-10 mx-auto max-w-3xl rounded-3xl border border-slate-100 bg-white p-8 shadow-xl lg:p-12">
+            <div className="brand-gradient mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold text-white shadow-xs">
+              CO
+            </div>
+            <h2 className="mb-4 text-2xl font-black tracking-tight text-slate-950 lg:text-4xl">
+              さあ、一歩進んだ団体運営を始めましょう
             </h2>
-            <p className="mx-auto mb-10 max-w-xl text-base leading-relaxed text-slate-600 lg:text-lg">
-              自動集客と洗練された管理システム。COMIUは、主催者のあなたを煩雑な作業から解放し、コミュニティの価値を高めます。
+            <p className="mx-auto mb-8 max-w-md text-sm text-slate-500 lg:text-base">
+              自動集客と洗練された管理システム。COMIUは、主催者を煩雑な作業から解放し、コミュニティの価値を高めます。
             </p>
-            <div className="inline-block w-full max-w-md rounded-2xl border border-indigo-100 bg-white p-2 shadow-xl">
+            <div className="mx-auto max-w-sm">
               <Link
                 href="/register"
-                className="block w-full rounded-xl bg-indigo-600 px-8 py-4 text-lg font-black tracking-wide text-white transition-all hover:bg-indigo-700"
+                className="block w-full rounded-xl bg-gradient-to-r from-emerald-500 to-pink-400 px-8 py-4 text-base font-black tracking-wide text-white shadow-md transition-all hover:opacity-95"
               >
                 無料でCOMIUを始める
               </Link>
+              <p className="mt-3 text-[11px] text-slate-400">※初期費用・月額固定費は一切かかりません。</p>
             </div>
-            <p className="mt-4 text-xs text-slate-400">※初期費用・月額固定費は一切かかりません。</p>
           </div>
         </section>
       </main>
 
       {/* フッター */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-8 text-center text-xs text-slate-500">
+      <footer className="border-t border-slate-100 bg-white py-8 text-center text-xs text-slate-400">
         <p>&copy; 2026 COMIU All Rights Reserved.</p>
       </footer>
     </div>
