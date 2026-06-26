@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { SITE_URL } from '@/lib/config';
@@ -31,9 +32,7 @@ export const metadata: Metadata = {
 function BrandLogo() {
   return (
     <div className="flex items-center gap-2.5">
-      <div className="brand-gradient flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-sm">
-        CO
-      </div>
+      <Image src="/icon.png" alt="COMIU" width={28} height={28} className="rounded-full shadow-sm" />
       <div className="text-lg font-black tracking-widest text-slate-900">
         <span className="text-emerald-600">COM</span>
         <span className="text-pink-500">IU</span>
@@ -147,9 +146,7 @@ export default function OrganizersPage() {
         {/* CTA */}
         <section id="cta" className="bg-gradient-to-b from-[#0b0f19] to-[#f8fafc] py-24 text-center">
           <div className="fade-in mx-auto max-w-md rounded-3xl border border-slate-100 bg-white p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)]">
-            <div className="brand-gradient mx-auto mb-4 flex h-9 w-9 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-sm">
-              CO
-            </div>
+            <Image src="/icon.png" alt="COMIU" width={36} height={36} className="mx-auto mb-4 rounded-full shadow-sm" />
             <h2 className="mb-2 text-xl font-black tracking-tight text-slate-950">
               さあ、一歩進んだ団体運営を始めましょう
             </h2>
