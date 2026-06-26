@@ -354,26 +354,35 @@ export default function EventsPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-400">イベントがありません</div>
       ) : (
         <div className="space-y-4">
-          {/* 公開サイトと同じプレビュー */}
+          {/* モバイルプレビュー */}
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-gray-400">公開サイトのプレビュー</p>
-            <div className="max-w-xs overflow-hidden">
-              <ReservationViewShowcase
-                accentColor={publicPageData?.accentColor ?? '#06C755'}
-                buttonLabel={publicPageData?.reserveLabel ?? '予約する'}
-                viewStyle={reserveViewStyle}
-                tenantCode={tenantId}
-                events={filtered.map((e) => ({
-                  id: e.id,
-                  title: e.title,
-                  heldAt: e.heldAt,
-                  endAt: e.endAt,
-                  location: e.location,
-                  capacity: e.capacity,
-                  reservedCount: e.reservedCount,
-                  imageUrl: e.imageUrl,
-                }))}
-              />
+            <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-gray-400">モバイルプレビュー</p>
+            <div className="flex justify-center">
+              <div className="overflow-hidden rounded-[2rem] border-[5px] border-gray-800 shadow-2xl bg-white" style={{ width: '291px' }}>
+                <div className="flex justify-center bg-gray-800 py-2">
+                  <div className="h-1.5 w-16 rounded-full bg-gray-600" />
+                </div>
+                <div className="overflow-hidden" style={{ zoom: 0.776 }}>
+                  <div style={{ width: '375px' }}>
+                    <ReservationViewShowcase
+                      accentColor={publicPageData?.accentColor ?? '#06C755'}
+                      buttonLabel={publicPageData?.reserveLabel ?? '予約する'}
+                      viewStyle={reserveViewStyle}
+                      tenantCode={tenantId}
+                      events={filtered.map((e) => ({
+                        id: e.id,
+                        title: e.title,
+                        heldAt: e.heldAt,
+                        endAt: e.endAt,
+                        location: e.location,
+                        capacity: e.capacity,
+                        reservedCount: e.reservedCount,
+                        imageUrl: e.imageUrl,
+                      }))}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           {/* 管理アクション */}
