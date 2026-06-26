@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, formatDate, API_URL } from '@/lib/api';
+import { getToken } from '@/lib/auth';
 import { SITE_URL } from '@/lib/config';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
 import { EventStatusBadge } from '@/components/ui/StatusBadge';
@@ -159,6 +160,7 @@ export default function EventsPage() {
   const [publicPageData, setPublicPageData] = useState<import('@/lib/api').PublicPage | null>(null);
   const [reserveViewStyle, setReserveViewStyle] = useState<string>('calendar');
   const [savingStyle, setSavingStyle] = useState(false);
+  const [reflected, setReflected] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -187,6 +189,31 @@ export default function EventsPage() {
     setSavingStyle(true);
     try {
       await api.publicPages.update(publicPageId, { ...publicPageData, reserveViewStyle: style } as any);
+    } catch { /* silent */ } finally {
+      setSavingStyle(false);
+    }
+  }
+
+  async function saveAndReflect() {
+    if (!publicPageId || !publicPageData) return;
+    setSavingStyle(true);
+    try {
+      await api.publicPages.update(publicPageId, { ...publicPageData, reserveViewStyle: reserveViewStyle } as any);
+      const tenantCode = tenantId;
+      const slug = publicPageData.slug;
+      if (tenantCode && slug) {
+        const token = getToken();
+        await fetch('/api/revalidate-public-page', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ tenantCode, slug }),
+        }).catch(() => null);
+      }
+      setReflected(true);
+      setTimeout(() => setReflected(false), 2500);
     } catch { /* silent */ } finally {
       setSavingStyle(false);
     }
@@ -275,7 +302,7 @@ export default function EventsPage() {
       {/* Public reservation view style */}
       <div className="mb-5 rounded-xl border border-gray-200 bg-white">
         <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-          <span className="text-xs font-bold text-gray-500">公開サイトの表示スタイル{savingStyle ? ' 保存中...' : ''}</span>
+          <span className="text-xs font-bold text-gray-500">公開サイトの表示スタイル</span>
           <div className="flex gap-1 rounded-lg border border-gray-200 p-0.5">
             {reserveViewOptions.map((opt) => (
               <button
@@ -292,6 +319,14 @@ export default function EventsPage() {
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            onClick={saveAndReflect}
+            disabled={savingStyle}
+            className="rounded-lg bg-[#06C755] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#05a847] disabled:opacity-50"
+          >
+            {savingStyle ? '処理中...' : reflected ? '反映済み ✓' : '保存・反映'}
+          </button>
         </div>
         {scheduleUrl && (
           <div className="border-t border-gray-100 px-4 pb-4 pt-3">
