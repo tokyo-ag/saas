@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { api, formatDate } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { SITE_URL } from '@/lib/config';
-import { useCalendarMonth } from '@/lib/useCalendarMonth';
 import { EventStatusBadge } from '@/components/ui/StatusBadge';
 import type { Event } from '@/lib/api';
 
@@ -18,7 +17,6 @@ const reserveViewOptions = [
 
 
 type Tab = 'upcoming' | 'past' | 'draft';
-type ViewMode = 'card' | 'calendar' | 'thread';
 
 const tabs: { key: Tab; label: string }[] = [
   { key: 'upcoming', label: '予定' },
@@ -26,133 +24,12 @@ const tabs: { key: Tab; label: string }[] = [
   { key: 'draft', label: '下書き' },
 ];
 
-const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
-
-function CalendarView({ events, onDuplicate }: { events: Event[]; onDuplicate: (id: string) => void }) {
-  const { year, month, prevMonth, nextMonth, cells, isToday } = useCalendarMonth();
-  const [popoverId, setPopoverId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!popoverId) return;
-    const close = () => setPopoverId(null);
-    document.addEventListener('click', close);
-    return () => document.removeEventListener('click', close);
-  }, [popoverId]);
-
-  const eventsByDate: Record<string, Event[]> = {};
-  for (const ev of events) {
-    const d = new Date(ev.heldAt);
-    if (d.getFullYear() === year && d.getMonth() === month) {
-      const key = d.getDate().toString();
-      (eventsByDate[key] ??= []).push(ev);
-    }
-  }
-
-  return (
-    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-        <button onClick={prevMonth} className="p-1 rounded hover:bg-gray-100 text-gray-500">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <span className="font-bold text-gray-900">{year}年 {month + 1}月</span>
-        <button onClick={nextMonth} className="p-1 rounded hover:bg-gray-100 text-gray-500">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
-
-      <div className="grid grid-cols-7 border-b border-gray-100">
-        {WEEKDAYS.map((w, i) => (
-          <div key={w} className={`py-2 text-center text-xs font-medium ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-gray-400'}`}>
-            {w}
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-7">
-        {cells.map((day, i) => {
-          const evs = day ? (eventsByDate[day.toString()] ?? []) : [];
-          const col = i % 7;
-          return (
-            <div
-              key={i}
-              className={`min-h-[80px] p-1 border-b border-r border-gray-100 last:border-r-0 ${
-                col === 0 ? 'border-l-0' : ''
-              } ${!day ? 'bg-gray-50/50' : ''}`}
-            >
-              {day && (
-                <>
-                  <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium mb-1 ${
-                    isToday(day)
-                      ? 'bg-[#06C755] text-white'
-                      : col === 0
-                      ? 'text-red-400'
-                      : col === 6
-                      ? 'text-blue-400'
-                      : 'text-gray-600'
-                  }`}>
-                    {day}
-                  </span>
-                  <div className="space-y-0.5">
-                    {evs.slice(0, 3).map((ev) => (
-                      <div key={ev.id} className="relative">
-                        <div className="flex items-center overflow-hidden rounded bg-[#06C755]/10 text-[#06C755] hover:bg-[#06C755]/20">
-                          <Link
-                            href={`/admin/events/${ev.id}`}
-                            className="min-w-0 flex-1 truncate px-1 py-0.5 text-left text-[10px] font-medium"
-                            title={ev.title}
-                          >
-                            {ev.title}
-                          </Link>
-                          <button
-                            type="button"
-                            aria-label="イベント操作メニュー"
-                            onClick={(e) => { e.stopPropagation(); setPopoverId(popoverId === ev.id ? null : ev.id); }}
-                            className="flex h-5 w-5 shrink-0 items-center justify-center text-[#06C755] hover:bg-[#06C755]/15"
-                          >
-                            <span className="text-[13px] leading-none">⋯</span>
-                          </button>
-                        </div>
-                        {popoverId === ev.id && (
-                          <div
-                            className={`absolute z-50 mt-0.5 w-28 rounded-lg border border-gray-200 bg-white shadow-lg py-1 ${col >= 5 ? 'right-0' : 'left-0'}`}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Link href={`/admin/events/${ev.id}`} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">詳細</Link>
-                            <Link href={`/admin/events/${ev.id}/edit`} className="block px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">編集</Link>
-                            <button
-                              onClick={() => { onDuplicate(ev.id); setPopoverId(null); }}
-                              className="block w-full px-3 py-1.5 text-xs text-left text-gray-700 hover:bg-gray-50"
-                            >
-                              複製
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    {evs.length > 3 && (
-                      <span className="block text-[10px] text-gray-400 px-1">+{evs.length - 3}件</span>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 export default function EventsPage() {
   const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('upcoming');
-  const [viewMode, setViewMode] = useState<ViewMode>('card');
+
   const [tenantId, setTenantId] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [publicPageId, setPublicPageId] = useState<string | null>(null);
@@ -183,7 +60,6 @@ export default function EventsPage() {
         setPublicPageData(first);
         const style = first.reserveViewStyle ?? 'calendar';
         setReserveViewStyle(style);
-        setViewMode(style === 'thread' ? 'thread' : style === 'card' ? 'card' : 'calendar');
         if (first.reserveEventCardBg) setEventCardBg(first.reserveEventCardBg);
         if (first.reserveEventTitleColor) setEventTitleColor(first.reserveEventTitleColor);
         if (first.reserveEventDateColor) setEventDateColor(first.reserveEventDateColor);
@@ -203,7 +79,6 @@ export default function EventsPage() {
 
   async function saveReserveViewStyle(style: string) {
     setReserveViewStyle(style);
-    setViewMode(style === 'calendar' ? 'calendar' : style === 'thread' ? 'thread' : 'card');
     setSavingStyle(true);
     try {
       await api.tenant.update({ liffEventView: style });
@@ -342,8 +217,6 @@ export default function EventsPage() {
       {/* イベント一覧 */}
       {loading ? (
         <p className="text-gray-500">読み込み中...</p>
-      ) : viewMode === 'calendar' ? (
-        <CalendarView events={filtered} onDuplicate={handleDuplicate} />
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-400">イベントがありません</div>
       ) : (
