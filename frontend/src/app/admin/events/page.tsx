@@ -356,54 +356,64 @@ export default function EventsPage() {
       {loading ? (
         <p className="text-gray-500">読み込み中...</p>
       ) : (
-        <div className="space-y-4">
-          {/* モバイルプレビュー */}
-          {scheduleUrl && (
-            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-              <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-gray-400">モバイルプレビュー</p>
-              <div className="flex justify-center">
-                <div className="overflow-hidden rounded-[2.5rem] border-[6px] border-gray-800 bg-white shadow-2xl" style={{ width: '291px' }}>
-                  <div className="flex justify-center bg-gray-800 py-2.5">
-                    <div className="h-1.5 w-16 rounded-full bg-gray-600" />
-                  </div>
-                  <iframe
-                    key={iframeKey}
-                    src={scheduleUrl}
-                    width="375"
-                    height="667"
-                    style={{ zoom: 0.776, border: 'none', display: 'block' }}
-                    title="モバイルプレビュー"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-          {/* 管理アクション */}
-          {viewMode === 'calendar' ? (
-            <CalendarView events={filtered} onDuplicate={handleDuplicate} />
-          ) : filtered.length === 0 ? (
-            <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-400">イベントがありません</div>
-          ) : (
-            <div className="space-y-2">
-              {filtered.map((event) => (
-                <div key={event.id} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <EventStatusBadge status={event.status} />
-                      <Link href={`/admin/events/${event.id}`} className="text-sm font-bold text-gray-900 hover:text-[#06C755] truncate">
-                        {event.title}
-                      </Link>
+        <div className="flex gap-4 items-start">
+          {/* 左：管理アクション */}
+          <div className="min-w-0 flex-1">
+            {viewMode === 'calendar' ? (
+              <CalendarView events={filtered} onDuplicate={handleDuplicate} />
+            ) : filtered.length === 0 ? (
+              <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-400">イベントがありません</div>
+            ) : (
+              <div className="space-y-2">
+                {filtered.map((event) => (
+                  <div key={event.id} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <EventStatusBadge status={event.status} />
+                        <Link href={`/admin/events/${event.id}`} className="text-sm font-bold text-gray-900 hover:text-[#06C755] truncate">
+                          {event.title}
+                        </Link>
+                      </div>
+                      <p className="mt-0.5 text-xs text-gray-400">{formatDate(event.heldAt)}</p>
                     </div>
-                    <p className="mt-0.5 text-xs text-gray-400">{formatDate(event.heldAt)}</p>
+                    <div className="flex shrink-0 gap-1.5">
+                      <Link href={`/admin/events/${event.id}`} className="rounded-lg bg-[#06C755]/10 px-2.5 py-1.5 text-xs font-bold text-[#06C755]">詳細</Link>
+                      <Link href={`/admin/events/${event.id}/edit`} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">編集</Link>
+                      <button onClick={() => handleDuplicate(event.id)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">複製</button>
+                      <button onClick={() => handleDelete(event.id)} className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-bold text-red-500">削除</button>
+                    </div>
                   </div>
-                  <div className="flex shrink-0 gap-1.5">
-                    <Link href={`/admin/events/${event.id}`} className="rounded-lg bg-[#06C755]/10 px-2.5 py-1.5 text-xs font-bold text-[#06C755]">詳細</Link>
-                    <Link href={`/admin/events/${event.id}/edit`} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">編集</Link>
-                    <button onClick={() => handleDuplicate(event.id)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">複製</button>
-                    <button onClick={() => handleDelete(event.id)} className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-bold text-red-500">削除</button>
-                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 右：モバイルプレビュー */}
+          {scheduleUrl && (
+            <div className="shrink-0 hidden lg:block">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-[11px] font-bold text-gray-400">👤 ユーザーにはこう見えます</p>
+                <button
+                  type="button"
+                  onClick={() => setIframeKey((k) => k + 1)}
+                  className="text-[10px] text-gray-400 hover:text-gray-600 underline"
+                >
+                  再読込
+                </button>
+              </div>
+              <div className="overflow-hidden rounded-[2.5rem] border-[6px] border-gray-800 bg-white shadow-2xl" style={{ width: '220px' }}>
+                <div className="flex items-center justify-center gap-2 bg-gray-800 py-2">
+                  <div className="h-1.5 w-12 rounded-full bg-gray-600" />
                 </div>
-              ))}
+                <iframe
+                  key={iframeKey}
+                  src={scheduleUrl}
+                  width="375"
+                  height="667"
+                  style={{ zoom: 0.587, border: 'none', display: 'block' }}
+                  title="モバイルプレビュー"
+                />
+              </div>
             </div>
           )}
         </div>
