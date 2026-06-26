@@ -242,8 +242,7 @@ function CardMini({
   if (events) {
     if (events.length === 0) return <EmptyEvents accentColor={accentColor} />;
     return (
-      <div className="-mx-3 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex snap-x snap-mandatory gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {events.map((event) => {
           const image = imgUrl(event.imageUrl, API_URL);
           const status = eventStatus(event);
@@ -253,10 +252,10 @@ function CardMini({
             <Link
               key={event.id}
               href={eventHref(event, tenantCode, fallbackHref)}
-              className="block min-w-[86%] snap-start overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md sm:min-w-[78%]"
+              className="block overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
               style={{ backgroundColor: cardBg || '#ffffff' }}
             >
-              <div className="relative aspect-[16/9] bg-gray-100">
+              <div className="relative aspect-[3/4] bg-gray-100">
                 {image ? (
                   <img src={image} alt={event.title} className="h-full w-full object-cover" />
                 ) : (
@@ -265,16 +264,16 @@ function CardMini({
                   </div>
                 )}
                 <span
-                  className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-bold shadow-sm ${full ? 'bg-white/90 text-gray-400' : ''}`}
+                  className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-bold shadow-sm ${full ? 'bg-white/90 text-gray-400' : ''}`}
                   style={full ? undefined : { backgroundColor: visible.accent, color: visible.text }}
                 >
                   {status}
                 </span>
               </div>
-              <div className="space-y-2 p-4">
-                <p className="line-clamp-2 text-base font-bold leading-snug" style={{ color: eventTitleColor || '#111827' }}>{event.title}</p>
-                <p className="text-sm font-bold" style={{ color: eventDateColor || '#4B5563' }}>{eventDate(event)} {eventTime(event)}</p>
-                {event.location && <p className="truncate text-sm" style={{ color: eventMetaColor || '#9CA3AF' }}>{event.location}</p>}
+              <div className="space-y-1 p-3">
+                <p className="line-clamp-2 text-sm font-bold leading-snug" style={{ color: eventTitleColor || '#111827' }}>{event.title}</p>
+                <p className="text-xs font-medium" style={{ color: eventDateColor || '#4B5563' }}>{eventDate(event)} {eventTime(event)}</p>
+                {event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || '#9CA3AF' }}>{event.location}</p>}
                 <p className="text-xs" style={{ color: eventMetaColor || '#6B7280' }}>
                   {event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : `${event.reservedCount ?? 0}人予約`}
                   {price && ` / ${price}`}
@@ -283,30 +282,21 @@ function CardMini({
             </Link>
           );
         })}
-        </div>
-        {events.length > 1 && (
-          <div className="mt-2 flex justify-center gap-1.5">
-            {events.slice(0, 6).map((event) => (
-              <span key={event.id} className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: visible.accent, opacity: 0.45 }} />
-            ))}
-          </div>
-        )}
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm">
-      <div className="h-12" style={{ background: `linear-gradient(135deg, ${visible.accent}, #111827)` }} />
-      <div className="space-y-1.5 p-2">
-        <div className="h-2 w-5/6 rounded-full bg-gray-800" />
-        <div className="h-1.5 w-2/3 rounded-full bg-gray-200" />
-        <div className="flex gap-1">
-          <span className="h-4 w-4 rounded-full bg-green-100" />
-          <span className="h-4 w-4 rounded-full bg-blue-100" />
-          <span className="h-4 w-4 rounded-full bg-pink-100" />
+    <div className="grid grid-cols-2 gap-3">
+      {[0, 1].map((i) => (
+        <div key={i} className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+          <div className="aspect-[3/4]" style={{ background: `linear-gradient(135deg, ${visible.accent}, #111827)` }} />
+          <div className="space-y-1.5 p-3">
+            <div className="h-2 w-5/6 rounded-full bg-gray-200" />
+            <div className="h-1.5 w-2/3 rounded-full bg-gray-100" />
+          </div>
         </div>
-      </div>
+      ))}
     </div>
   );
 }
