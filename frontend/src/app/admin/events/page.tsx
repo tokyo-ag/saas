@@ -328,24 +328,6 @@ export default function EventsPage() {
             {savingStyle ? '処理中...' : reflected ? '反映済み ✓' : '保存・反映'}
           </button>
         </div>
-        {scheduleUrl && (
-          <div className="border-t border-gray-100 px-4 pb-4 pt-3">
-            <p className="mb-2 text-[11px] font-bold text-gray-400">LIFFページ</p>
-            <a
-              href={scheduleUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 active:bg-gray-200 transition-colors"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
-              LIFFを開く
-            </a>
-          </div>
-        )}
       </div>
 
       <div className="mb-5 flex gap-1 overflow-x-auto border-b border-gray-200">
