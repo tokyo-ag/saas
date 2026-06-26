@@ -73,7 +73,7 @@ export default function ManagementTabs() {
 
       {/* コンテンツ */}
       <div className="min-h-[240px] rounded-2xl border border-slate-800 bg-gradient-to-b from-slate-900/90 to-slate-900/40 p-6 shadow-2xl lg:p-8">
-        <div className={`flex gap-8 ${active === 0 ? 'flex-col lg:flex-row lg:items-center' : ''}`}>
+        <div className={`flex gap-8 ${active === 0 || active === 1 ? 'flex-col lg:flex-row lg:items-center' : ''}`}>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-3">
               <span className={`h-1.5 w-1.5 rounded-full ${tab.dot}`} />
@@ -84,11 +84,24 @@ export default function ManagementTabs() {
           {active === 0 && (
             <div className="shrink-0 lg:w-64 xl:w-72">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/comiu-line-reminder.svg"
-                alt="LINE自動リマインド"
-                className="w-full rounded-xl"
-              />
+              <img src="/comiu-line-reminder.svg" alt="LINE自動リマインド" className="w-full rounded-xl" />
+            </div>
+          )}
+          {active === 1 && (
+            <div className="shrink-0 lg:w-80 xl:w-96">
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { src: '/shuttles-calendar.svg', label: 'カレンダー' },
+                  { src: '/shuttles-event-cards.svg', label: 'カード' },
+                  { src: '/shuttles-schedule-cards.svg', label: 'スレッド' },
+                ].map(({ src, label }) => (
+                  <div key={label} className="flex flex-col items-center gap-1.5">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt={label} className="w-full rounded-lg" />
+                    <span className="text-[10px] font-medium text-slate-400">{label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
