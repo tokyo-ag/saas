@@ -1,14 +1,14 @@
 'use client';
 
-import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { api, formatDate, API_URL } from '@/lib/api';
+import { api, formatDate } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { SITE_URL } from '@/lib/config';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
 import { EventStatusBadge } from '@/components/ui/StatusBadge';
+import { ReservationViewShowcase } from '@/components/public/ReservationViewShowcase';
 import type { Event } from '@/lib/api';
 
 const reserveViewOptions = [
@@ -352,37 +352,49 @@ export default function EventsPage() {
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-400">イベントがありません</div>
       ) : (
-        <div className="space-y-3">
-          {filtered.map((event) => (
-            <article key={event.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="space-y-4">
+          {/* 公開サイトと同じプレビュー */}
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-gray-400">公開サイトのプレビュー</p>
+            <ReservationViewShowcase
+              accentColor={publicPageData?.accentColor ?? '#06C755'}
+              buttonLabel={publicPageData?.reserveLabel ?? '予約する'}
+              viewStyle={reserveViewStyle}
+              tenantCode={tenantId}
+              events={filtered.map((e) => ({
+                id: e.id,
+                title: e.title,
+                heldAt: e.heldAt,
+                endAt: e.endAt,
+                location: e.location,
+                capacity: e.capacity,
+                reservedCount: e.reservedCount,
+                imageUrl: e.imageUrl,
+              }))}
+            />
+          </div>
+          {/* 管理アクション */}
+          <div className="space-y-2">
+            {filtered.map((event) => (
+              <div key={event.id} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
                 <div className="min-w-0 flex-1">
-                  <div className="mb-2 flex flex-wrap items-center gap-2">
-                    {event.iconUrl && (
-                      <Image src={`${API_URL}${event.iconUrl}`} width={32} height={32} className="w-8 h-8 rounded-full object-cover shrink-0" alt="" unoptimized />
-                    )}
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <EventStatusBadge status={event.status} />
-                    <Link href={`/admin/events/${event.id}`} className="font-bold text-gray-900 hover:text-[#06C755] break-words">
+                    <Link href={`/admin/events/${event.id}`} className="text-sm font-bold text-gray-900 hover:text-[#06C755] truncate">
                       {event.title}
                     </Link>
                   </div>
-                  <p className="text-sm text-gray-500 leading-relaxed">{formatDate(event.heldAt)} ・ {event.location}</p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    予約: {event.reservedCount ?? 0}{event.capacity ? ` / ${event.capacity}人` : '人'}
-                    {(event.waitlistedCount ?? 0) > 0 && (
-                      <span className="ml-2 text-yellow-600">キャンセル待ち {event.waitlistedCount}人</span>
-                    )}
-                  </p>
+                  <p className="mt-0.5 text-xs text-gray-400">{formatDate(event.heldAt)}</p>
                 </div>
-                <div className="grid grid-cols-2 gap-2 md:flex md:shrink-0">
-                  <Link href={`/admin/events/${event.id}`} className="rounded-lg bg-[#06C755]/10 px-3 py-2 text-center text-xs font-bold text-[#06C755]">詳細</Link>
-                  <Link href={`/admin/events/${event.id}/edit`} className="rounded-lg border border-gray-200 px-3 py-2 text-center text-xs font-bold text-gray-600">編集</Link>
-                  <button onClick={() => handleDuplicate(event.id)} className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold text-gray-600">複製</button>
-                  <button onClick={() => handleDelete(event.id)} className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-500">削除</button>
+                <div className="flex shrink-0 gap-1.5">
+                  <Link href={`/admin/events/${event.id}`} className="rounded-lg bg-[#06C755]/10 px-2.5 py-1.5 text-xs font-bold text-[#06C755]">詳細</Link>
+                  <Link href={`/admin/events/${event.id}/edit`} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">編集</Link>
+                  <button onClick={() => handleDuplicate(event.id)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">複製</button>
+                  <button onClick={() => handleDelete(event.id)} className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-bold text-red-500">削除</button>
                 </div>
               </div>
-            </article>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>
