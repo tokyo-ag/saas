@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 
 const tabs = [
   {
@@ -72,11 +73,26 @@ export default function ManagementTabs() {
 
       {/* コンテンツ */}
       <div className="min-h-[240px] rounded-2xl border border-slate-800 bg-gradient-to-b from-slate-900/90 to-slate-900/40 p-6 shadow-2xl lg:p-8">
-        <div className="flex items-center gap-2 mb-3">
-          <span className={`h-1.5 w-1.5 rounded-full ${tab.dot}`} />
-          <h3 className="text-base font-bold tracking-wide text-white">{tab.title}</h3>
+        <div className={`flex gap-8 ${active === 0 ? 'flex-col lg:flex-row lg:items-center' : ''}`}>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-3">
+              <span className={`h-1.5 w-1.5 rounded-full ${tab.dot}`} />
+              <h3 className="text-base font-bold tracking-wide text-white">{tab.title}</h3>
+            </div>
+            <p className="text-xs font-light leading-relaxed text-slate-400">{tab.body}</p>
+          </div>
+          {active === 0 && (
+            <div className="shrink-0 lg:w-64 xl:w-72">
+              <Image
+                src="/comiu-line-reminder.svg"
+                alt="LINE自動リマインド"
+                width={288}
+                height={200}
+                className="w-full rounded-xl"
+              />
+            </div>
+          )}
         </div>
-        <p className="text-xs font-light leading-relaxed text-slate-400">{tab.body}</p>
       </div>
     </>
   );

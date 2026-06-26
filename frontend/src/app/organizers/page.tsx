@@ -63,26 +63,40 @@ export default function OrganizersPage() {
 
       <main>
         {/* ヒーロー */}
-        <section className="relative overflow-hidden bg-[radial-gradient(100%_100%_at_50%_0%,rgba(167,243,208,0.15)_0%,rgba(251,207,232,0.1)_50%,rgba(248,250,252,0)_100%)] py-20 lg:py-32">
-          <div className="relative z-10 mx-auto max-w-4xl px-6 text-center">
-            <span className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-slate-900/10 bg-slate-900/5 px-3.5 py-1 text-[11px] font-medium uppercase tracking-wider text-slate-800">
-              Organizer Portal Platform
-            </span>
-            <h1 className="mb-6 text-3xl font-black leading-[1.15] tracking-tighter text-slate-950 lg:text-6xl">
-              無料で、自動で、強いWEB集客。<br className="hidden sm:block" />
-              <span className="brand-text-gradient">洗練された団体管理</span>をこれ一つで。
-            </h1>
-            <p className="mx-auto mb-10 max-w-xl text-sm font-light leading-relaxed text-slate-500 lg:text-lg">
-              SEO特化のサイト自動生成から、公式LINE自動リマインド、安全な決済管理まで。
-              コミュニティ運営に必要なすべてをスマートに統合。
-            </p>
-            <div className="px-2">
-              <a
-                href="#cta"
-                className="inline-block w-full transform rounded-full bg-slate-950 px-10 py-4 text-center text-sm font-bold tracking-wide text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-xl sm:w-auto"
-              >
-                今すぐ無料で始める
-              </a>
+        <section className="relative overflow-hidden bg-[radial-gradient(100%_100%_at_50%_0%,rgba(167,243,208,0.15)_0%,rgba(251,207,232,0.1)_50%,rgba(248,250,252,0)_100%)] py-20 lg:py-28">
+          <div className="relative z-10 mx-auto max-w-6xl px-6">
+            <div className="flex flex-col items-center gap-12 lg:flex-row lg:items-center lg:gap-16">
+              {/* テキスト */}
+              <div className="flex-1 text-center lg:text-left">
+                <span className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-slate-900/10 bg-slate-900/5 px-3.5 py-1 text-[11px] font-medium uppercase tracking-wider text-slate-800">
+                  Organizer Portal Platform
+                </span>
+                <h1 className="mb-6 text-3xl font-black leading-[1.15] tracking-tighter text-slate-950 lg:text-5xl">
+                  無料で、自動で、強いWEB集客。<br className="hidden sm:block" />
+                  <span className="brand-text-gradient">洗練された団体管理</span>をこれ一つで。
+                </h1>
+                <p className="mb-10 max-w-xl text-sm font-light leading-relaxed text-slate-500 lg:text-lg">
+                  SEO特化のサイト自動生成から、公式LINE自動リマインド、安全な決済管理まで。
+                  コミュニティ運営に必要なすべてをスマートに統合。
+                </p>
+                <a
+                  href="#cta"
+                  className="inline-block transform rounded-full bg-slate-950 px-10 py-4 text-center text-sm font-bold tracking-wide text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-xl"
+                >
+                  今すぐ無料で始める
+                </a>
+              </div>
+              {/* モックアップ画像 */}
+              <div className="w-full max-w-xs shrink-0 lg:max-w-sm xl:max-w-md">
+                <Image
+                  src="/comiu_portal_mockup.svg"
+                  alt="COMIUポータル画面"
+                  width={480}
+                  height={480}
+                  className="w-full drop-shadow-2xl"
+                  priority
+                />
+              </div>
             </div>
           </div>
         </section>
