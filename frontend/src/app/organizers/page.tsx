@@ -88,14 +88,11 @@ export default function OrganizersPage() {
               </div>
               {/* モックアップ画像 */}
               <div className="w-full max-w-xs shrink-0 lg:max-w-sm xl:max-w-md">
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src="/comiu_portal_mockup.svg"
                   alt="COMIUポータル画面"
-                  width={480}
-                  height={480}
                   className="w-full drop-shadow-2xl"
-                  priority
-                  unoptimized
                 />
               </div>
             </div>

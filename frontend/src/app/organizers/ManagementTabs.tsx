@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
+
 
 const tabs = [
   {
@@ -83,13 +83,11 @@ export default function ManagementTabs() {
           </div>
           {active === 0 && (
             <div className="shrink-0 lg:w-64 xl:w-72">
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src="/comiu-line-reminder.svg"
                 alt="LINE自動リマインド"
-                width={288}
-                height={200}
                 className="w-full rounded-xl"
-                unoptimized
               />
             </div>
           )}
