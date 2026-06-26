@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+.fade-in {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+.fade-in.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 :root {
   --line-green: #06C755;
   --line-green-dark: #05a847;
