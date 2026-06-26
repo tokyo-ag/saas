@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 /* ─────────────────────────────────────────────
@@ -82,111 +82,11 @@ function useWarpCTA() {
 }
 
 /* ─────────────────────────────────────────────
-   ⑤ COMIU サウンド — Web Audio API 宇宙アンビエント
-───────────────────────────────────────────── */
-function useComiuSound() {
-  const ctxRef = useRef<AudioContext | null>(null);
-  const rafRef = useRef(0);
-  const [on, setOn] = useState(false);
-
-  function start() {
-    const ctx = new AudioContext();
-    ctxRef.current = ctx;
-
-    // ─ 低音ドローン
-    const drone = ctx.createOscillator();
-    drone.type = 'sine';
-    drone.frequency.value = 48;
-    const droneGain = ctx.createGain();
-    droneGain.gain.value = 0.055;
-
-    // ─ 高調波
-    const harm = ctx.createOscillator();
-    harm.type = 'sine';
-    harm.frequency.value = 96;
-    const harmGain = ctx.createGain();
-    harmGain.gain.value = 0.028;
-
-    // ─ パッドシンセ（揺らぎ）
-    const pad = ctx.createOscillator();
-    pad.type = 'triangle';
-    pad.frequency.value = 192;
-    const padGain = ctx.createGain();
-    padGain.gain.value = 0.018;
-
-    // ─ LFO でドローンを揺らす
-    const lfo = ctx.createOscillator();
-    lfo.frequency.value = 0.09;
-    const lfoGain = ctx.createGain();
-    lfoGain.gain.value = 6;
-    lfo.connect(lfoGain).connect(drone.frequency);
-    lfo.start();
-
-    // ─ analyser
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 32;
-    const master = ctx.createGain();
-    master.gain.value = 0;
-    master.gain.linearRampToValueAtTime(1, ctx.currentTime + 2.5);
-
-    drone.connect(droneGain);
-    harm.connect(harmGain);
-    pad.connect(padGain);
-    [droneGain, harmGain, padGain].forEach(g => g.connect(analyser).connect(master));
-    master.connect(ctx.destination);
-    drone.start(); harm.start(); pad.start();
-
-    const data = new Uint8Array(analyser.frequencyBinCount);
-    function tick() {
-      analyser.getByteFrequencyData(data);
-      const avg = data.reduce((a, b) => a + b, 0) / data.length;
-      const pulse = (avg / 255).toFixed(3);
-      document.documentElement.style.setProperty('--sp', pulse);
-      rafRef.current = requestAnimationFrame(tick);
-    }
-    tick();
-  }
-
-  function stop() {
-    cancelAnimationFrame(rafRef.current);
-    if (ctxRef.current) {
-      const master = ctxRef.current.createGain();
-      master.gain.linearRampToValueAtTime(0, ctxRef.current.currentTime + 1.2);
-      ctxRef.current.close();
-      ctxRef.current = null;
-    }
-    document.documentElement.style.setProperty('--sp', '0');
-  }
-
-  const toggle = useCallback(() => {
-    setOn(v => {
-      if (v) stop(); else start();
-      return !v;
-    });
-  }, []);
-
-  return { on, toggle };
-}
-
-/* ─────────────────────────────────────────────
    メインコンポーネント
 ───────────────────────────────────────────── */
 export default function WarpGimmicks() {
   useMouseTracking();
   useTextScramble();
   useWarpCTA();
-  const { on, toggle } = useComiuSound();
-
-  return (
-    <button
-      onClick={toggle}
-      className={`warp-sound-btn ${on ? 'is-on' : ''}`}
-      aria-label="COMIU ambient sound"
-    >
-      <span className="warp-sound-bars">
-        {[1, 2, 3, 4].map(i => <span key={i} style={{ animationDelay: `${i * 0.12}s` }} />)}
-      </span>
-      {on ? 'SOUND ON' : 'SOUND'}
-    </button>
-  );
+  return null;
 }
