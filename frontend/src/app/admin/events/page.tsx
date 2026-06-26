@@ -12,7 +12,7 @@ import { ReservationViewShowcase } from '@/components/public/ReservationViewShow
 import type { Event } from '@/lib/api';
 
 const reserveViewOptions = [
-  { label: '日程カレンダー', value: 'calendar' },
+  { label: 'カレンダー', value: 'calendar' },
   { label: 'カード', value: 'card' },
   { label: 'スレッド', value: 'thread' },
 ];
@@ -170,7 +170,6 @@ export default function EventsPage() {
   useEffect(() => {
     load();
     api.tenant.get().then((t) => {
-      setViewMode(t.liffEventView === 'calendar' || t.liffEventView === 'thread' ? t.liffEventView : 'card');
       setTenantId(t.code ?? t.id);
     }).catch(() => {});
     api.publicPages.list().then((pages) => {
@@ -178,7 +177,9 @@ export default function EventsPage() {
       if (first) {
         setPublicPageId(first.id);
         setPublicPageData(first);
-        setReserveViewStyle(first.reserveViewStyle ?? 'calendar');
+        const style = first.reserveViewStyle ?? 'calendar';
+        setReserveViewStyle(style);
+        setViewMode(style === 'thread' ? 'thread' : style === 'card' ? 'card' : 'calendar');
       }
     }).catch(() => {});
   }, [load]);
