@@ -185,6 +185,7 @@ export default function EventsPage() {
 
   async function saveReserveViewStyle(style: string) {
     setReserveViewStyle(style);
+    setViewMode(style === 'calendar' ? 'calendar' : style === 'thread' ? 'thread' : 'card');
     if (!publicPageId || !publicPageData) return;
     setSavingStyle(true);
     try {
