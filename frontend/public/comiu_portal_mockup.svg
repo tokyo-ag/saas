@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="1500" viewBox="0 0 1200 1500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgBubble" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ECFFF5"/>
+      <stop offset="1" stop-color="#DFF7FF"/>
+    </linearGradient>
+    <linearGradient id="phoneFrame" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#182333"/>
+      <stop offset="0.48" stop-color="#66758A"/>
+      <stop offset="1" stop-color="#111923"/>
+    </linearGradient>
+    <linearGradient id="screenBg" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#FBFCFF"/>
+    </linearGradient>
+    <linearGradient id="greenCard" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#62D69B"/>
+      <stop offset="1" stop-color="#16AB67"/>
+    </linearGradient>
+    <linearGradient id="pinkCard" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFC8D3"/>
+      <stop offset="1" stop-color="#FF7294"/>
+    </linearGradient>
+    <linearGradient id="blueCard" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#BCE7FF"/>
+      <stop offset="1" stop-color="#5CA8FF"/>
+    </linearGradient>
+    <linearGradient id="orangeCard" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFE4B9"/>
+      <stop offset="1" stop-color="#F7A947"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="20" stdDeviation="22" flood-color="#304B5C" flood-opacity=".18"/>
+    </filter>
+    <filter id="smallShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#304B5C" flood-opacity=".12"/>
+    </filter>
+    <clipPath id="screenClip">
+      <rect x="348" y="112" width="504" height="1276" rx="55"/>
+    </clipPath>
+    <style>
+      .jp { font-family: "Noto Sans JP","Hiragino Sans","Yu Gothic",Arial,sans-serif; fill:#1D2A42; }
+      .logo { font-family: "Arial Rounded MT Bold","Trebuchet MS",Arial,sans-serif; font-weight:800; letter-spacing:2px; }
+      .section { font-size:23px; font-weight:800; }
+      .body { font-size:15px; font-weight:700; }
+      .small { font-size:12px; font-weight:600; }
+      .tiny { font-size:10px; font-weight:600; }
+      .eventTitle { font-size:15px; font-weight:800; }
+    </style>
+  </defs>
+
+  <!-- transparent surrounding decoration -->
+  <ellipse cx="600" cy="1432" rx="390" ry="34" fill="#CDEFE4" opacity=".70"/>
+  <circle cx="156" cy="395" r="68" fill="#FFD4DE" opacity=".58"/>
+  <circle cx="1043" cy="870" r="76" fill="#DBF2FF" opacity=".9"/>
+  <circle cx="1013" cy="1076" r="99" fill="url(#bgBubble)" opacity=".85"/>
+  <circle cx="165" cy="1098" r="118" fill="#FFF4E8"/>
+  <path d="M105 1172c45-30 91-17 103 27-39 12-74 1-103-27Z" fill="#93DBAF" opacity=".9"/>
+  <path d="M1022 1152c40-28 84-18 95 18-37 13-70 7-95-18Z" fill="#8FD6B5"/>
+  <path d="M1030 1193c38-26 79-17 90 17-36 11-66 5-90-17Z" fill="#B1E9CF"/>
+  <g opacity=".95">
+    <path d="M154 204l10 21 23 4-17 16 4 24-20-11-21 11 4-24-17-16 23-4 11-21Z" fill="#FFD46D"/>
+    <path d="M1034 262l10 21 23 4-17 16 4 24-20-11-21 11 4-24-17-16 23-4 11-21Z" fill="#FF9AB4"/>
+    <circle cx="211" cy="286" r="10" fill="#FFB4C5"/>
+    <circle cx="1004" cy="490" r="11" fill="#9EDBFF"/>
+    <circle cx="208" cy="1280" r="9" fill="#A4E5C9"/>
+    <circle cx="250" cy="1340" r="8" fill="#A5D7FF"/>
+  </g>
+  <g filter="url(#smallShadow)">
+    <path d="M105 530c0-34 31-59 69-59s69 25 69 59-31 59-69 59c-9 0-18-2-26-5l-34 18 7-34c-11-10-16-23-16-38Z" fill="#AEE7C7"/>
+    <circle cx="143" cy="530" r="7" fill="white"/><circle cx="173" cy="530" r="7" fill="white"/><circle cx="203" cy="530" r="7" fill="white"/>
+    <path d="M1029 634c0-36 32-63 70-63s70 27 70 63-32 63-70 63c-10 0-20-2-29-6l-36 19 7-36c-8-11-12-24-12-40Z" fill="#BCE4FF"/>
+    <path d="M1087 620c14-17 40-5 28 14-12 18-28 33-28 33s-16-15-28-33c-12-19 14-31 28-14Z" fill="white"/>
+  </g>
+
+  <!-- Phone -->
+  <rect x="309" y="59" width="582" height="1378" rx="92" fill="url(#phoneFrame)" filter="url(#shadow)"/>
+  <rect x="322" y="72" width="556" height="1352" rx="80" fill="#0B111A"/>
+  <rect x="348" y="112" width="504" height="1276" rx="55" fill="url(#screenBg)"/>
+  <rect x="506" y="77" width="188" height="50" rx="25" fill="#05090E"/>
+  <circle cx="662" cy="102" r="5.5" fill="#2788E8"/>
+  <rect x="296" y="334" width="8" height="91" rx="4" fill="#2B3B50"/>
+  <rect x="296" y="455" width="8" height="91" rx="4" fill="#2B3B50"/>
+  <rect x="896" y="399" width="8" height="138" rx="4" fill="#2B3B50"/>
+  <g clip-path="url(#screenClip)">
+
+    <!-- status -->
+    <text x="382" y="152" class="jp body" font-size="16">9:41</text>
+    <rect x="773" y="140" width="13" height="13" rx="2" fill="#1D2A42"/><rect x="790" y="136" width="4" height="17" rx="2" fill="#1D2A42"/>
+    <path d="M734 150c8-8 21-8 29 0" stroke="#1D2A42" stroke-width="3" stroke-linecap="round"/>
+    <path d="M740 155c5-5 13-5 18 0" stroke="#1D2A42" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="749" cy="160" r="2" fill="#1D2A42"/>
+
+    <!-- heading -->
+    <text x="382" y="215" class="logo" font-size="48" fill="#22B977">COMIU</text>
+    <circle cx="575" cy="192" r="6" fill="#FC9BB0"/>
+    <path d="M588 191l9 7-9 7-5-7 5-7Z" fill="#FFCF62"/>
+    <text x="382" y="247" class="jp" font-size="18" font-weight="800">次世代型のコミュニティポータルサイト</text>
+    <g filter="url(#smallShadow)">
+      <circle cx="795" cy="200" r="28" fill="#F7FFFB" stroke="#BEEFD7" stroke-width="2"/>
+      <path d="M795 185c-6 0-10 5-10 11v8l-4 5h28l-4-5v-8c0-6-4-11-10-11Z" stroke="#20AF6B" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M791 214c1 5 7 5 8 0" stroke="#20AF6B" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+
+    <!-- categories -->
+    <g class="jp body">
+      <rect x="376" y="277" width="115" height="47" rx="23.5" fill="#FFF8FB" stroke="#FF9BAD" stroke-width="2"/>
+      <circle cx="400" cy="300" r="10" fill="none" stroke="#FF5B77" stroke-width="2"/>
+      <path d="M387 315c1-9 24-9 26 0" fill="none" stroke="#FF5B77" stroke-width="2"/>
+      <text x="422" y="306">交流会</text>
+      <rect x="501" y="277" width="140" height="47" rx="23.5" fill="#F8FFFB" stroke="#89DAB2" stroke-width="2"/>
+      <path d="M527 291l12 12-10 11-12-12 10-11Z" fill="none" stroke="#21AF6B" stroke-width="2"/>
+      <path d="M521 314l-6 6m20-22l6-6" stroke="#21AF6B" stroke-width="2" stroke-linecap="round"/>
+      <text x="549" y="306">バドミントン</text>
+      <rect x="650" y="277" width="110" height="47" rx="23.5" fill="#F9FCFF" stroke="#91C6FF" stroke-width="2"/>
+      <circle cx="675" cy="300" r="11" fill="#5FA9FF"/><path d="M668 300h14m-7-7v14" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      <text x="693" y="306">フットサル</text>
+      <rect x="770" y="277" width="76" height="47" rx="23.5" fill="#FFFDF8" stroke="#FFC676" stroke-width="2"/>
+      <circle cx="795" cy="300" r="11" fill="none" stroke="#F9A44B" stroke-width="2"/><path d="M795 289v22m-11-11h22" stroke="#F9A44B" stroke-width="2"/>
+      <text x="813" y="306">バスケ</text>
+    </g>
+
+    <!-- section 1 -->
+    <path d="M382 357l7 14 15 2-11 11 3 15-14-8-14 8 3-15-11-11 15-2 7-14Z" fill="#52CA88"/>
+    <text x="411" y="380" class="jp section">人気のイベント</text>
+    <text x="814" y="379" class="jp" font-size="31" font-weight="400">›</text>
+
+    <!-- event cards -->
+    <g filter="url(#smallShadow)">
+      <rect x="376" y="400" width="142" height="278" rx="20" fill="#FFF6F8" stroke="#FFB7C7"/>
+      <rect x="530" y="400" width="142" height="278" rx="20" fill="#F8FFFB" stroke="#A6E3C1"/>
+      <rect x="684" y="400" width="142" height="278" rx="20" fill="#F8FBFF" stroke="#A8D7FF"/>
+    </g>
+
+    <!-- event img 1 -->
+    <rect x="376" y="400" width="142" height="147" rx="20" fill="url(#pinkCard)"/>
+    <circle cx="396" cy="421" r="11" fill="#FFF7DB"/><circle cx="414" cy="417" r="13" fill="#FFF7DB"/>
+    <path d="M377 438c42-27 93-25 141 0v26H377v-26Z" fill="#98DCB9"/>
+    <path d="M385 444l17-20 13 21 19-27 22 26 20-20 32 25" stroke="white" stroke-width="3" fill="none" opacity=".9"/>
+    <circle cx="408" cy="482" r="17" fill="#FAD6C6"/><path d="M392 478c8-20 31-22 34 0" fill="#60433B"/>
+    <circle cx="451" cy="486" r="18" fill="#F7D3BF"/><path d="M433 481c10-17 35-18 37 2" fill="#2F4663"/>
+    <circle cx="484" cy="481" r="16" fill="#F9DAC3"/><path d="M469 476c10-17 31-17 33 1" fill="#EAC562"/>
+    <rect x="389" y="555" width="55" height="22" rx="11" fill="#FE6685"/>
+    <text x="401" y="570" class="jp" font-size="11" font-weight="800" fill="white">交流会</text>
+    <text x="389" y="600" class="jp eventTitle">はじめまして交流会</text>
+    <text x="389" y="622" class="jp small">7/12（土）15:00〜</text><text x="389" y="642" class="jp small">池袋カフェスペース</text>
+    <text x="389" y="663" class="jp tiny" fill="#FF6C86">👥 28人が参加予定</text>
+
+    <!-- event img 2 -->
+    <rect x="530" y="400" width="142" height="147" rx="20" fill="url(#greenCard)"/>
+    <path d="M530 491c32-33 82-39 142-1v57H530v-56Z" fill="#A7E7C2"/>
+    <path d="M530 503h142" stroke="white" stroke-width="4" opacity=".85"/>
+    <path d="M587 421c19 10 20 36 6 47-13 10-34 2-34-15 0-14 13-25 28-32Z" fill="white" opacity=".78"/>
+    <ellipse cx="608" cy="459" rx="21" ry="18" fill="#1E864F"/>
+    <circle cx="606" cy="450" r="16" fill="#F3D5C4"/><path d="M590 449c6-19 31-18 33 0" fill="#394A58"/>
+    <path d="M613 472l22 21-6 8-27-21 11-8Z" fill="#F7D7C1"/><circle cx="636" cy="497" r="8" fill="#F7D7C1"/>
+    <rect x="544" y="555" width="77" height="22" rx="11" fill="#20B771"/>
+    <text x="554" y="570" class="jp" font-size="11" font-weight="800" fill="white">バドミントン</text>
+    <text x="544" y="600" class="jp eventTitle">初心者歓迎！</text><text x="544" y="620" class="jp eventTitle">バドミントン会</text>
+    <text x="544" y="642" class="jp small">7/18（金）19:00〜</text><text x="544" y="662" class="jp small">代々木体育館</text>
+    <text x="544" y="663" class="jp tiny" fill="#2CAA6B">👥 16人が参加予定</text>
+
+    <!-- event img 3 -->
+    <rect x="684" y="400" width="142" height="147" rx="20" fill="url(#blueCard)"/>
+    <path d="M684 496h142v51H684z" fill="#92D2ED"/><path d="M700 411c8 7 11 18 9 29m16-30c9 8 13 18 11 30m61-29c-8 8-12 20-10 30" stroke="white" stroke-width="3" opacity=".75"/>
+    <path d="M684 502h142m-71-6v51" stroke="white" stroke-width="2"/>
+    <circle cx="733" cy="480" r="14" fill="#F8D8C1"/><path d="M720 476c3-13 22-15 27 0" fill="#34496B"/><path d="M735 494l19 16-8 7-20-13" stroke="#354C74" stroke-width="11" stroke-linecap="round"/>
+    <circle cx="782" cy="482" r="14" fill="#F8D8C1"/><path d="M770 476c7-13 22-14 27 0" fill="#273848"/><path d="M784 496l-17 19 8 7 21-17" stroke="#203B5D" stroke-width="11" stroke-linecap="round"/>
+    <circle cx="758" cy="515" r="9" fill="white"/><path d="M752 512l6-5 6 5-2 7h-8l-2-7Z" fill="#516984"/>
+    <rect x="698" y="555" width="66" height="22" rx="11" fill="#4E9AEF"/>
+    <text x="708" y="570" class="jp" font-size="11" font-weight="800" fill="white">フットサル</text>
+    <text x="698" y="600" class="jp eventTitle">エンジョイ！</text><text x="698" y="620" class="jp eventTitle">フットサル大会</text>
+    <text x="698" y="642" class="jp small">7/20（日）17:00〜</text><text x="698" y="662" class="jp small">墨田フットサルコート</text>
+    <text x="698" y="663" class="jp tiny" fill="#4E9AEF">👥 24人が参加予定</text>
+
+    <!-- section 2 -->
+    <rect x="381" y="714" width="10" height="26" rx="5" fill="#50CC88"/>
+    <text x="410" y="736" class="jp section">直近で開催予定のイベント</text>
+    <text x="814" y="735" class="jp" font-size="31" font-weight="400">›</text>
+
+    <!-- small event row -->
+    <g filter="url(#smallShadow)">
+      <rect x="376" y="757" width="105" height="155" rx="16" fill="#FFF8FA" stroke="#FFD2DC"/>
+      <rect x="491" y="757" width="105" height="155" rx="16" fill="#F8FFFB" stroke="#D6F1E0"/>
+      <rect x="606" y="757" width="105" height="155" rx="16" fill="#FFFAF3" stroke="#FFE0B5"/>
+      <rect x="721" y="757" width="105" height="155" rx="16" fill="#FAF9FF" stroke="#E2D8FF"/>
+    </g>
+    <g class="jp">
+      <rect x="376" y="757" width="105" height="61" rx="16" fill="#FFD0D9"/><rect x="382" y="764" width="42" height="28" rx="7" fill="#FF5D7E"/>
+      <text x="389" y="776" font-size="11" font-weight="800" fill="white">7/14</text><text x="393" y="788" font-size="9" font-weight="800" fill="white">（月）</text>
+      <circle cx="444" cy="789" r="12" fill="#FEF1C6"/><path d="M420 810c11-21 34-20 52 0" stroke="white" stroke-width="3" fill="none"/>
+      <text x="385" y="842" class="small">ゆるっとカフェ会</text><text x="385" y="863" class="tiny">19:30〜 / 恵比寿</text><text x="385" y="888" class="tiny" fill="#FF6C86">👥 12人</text>
+
+      <rect x="491" y="757" width="105" height="61" rx="16" fill="#C7F0D9"/><rect x="497" y="764" width="42" height="28" rx="7" fill="#1FAF6A"/>
+      <text x="504" y="776" font-size="11" font-weight="800" fill="white">7/16</text><text x="508" y="788" font-size="9" font-weight="800" fill="white">（木）</text>
+      <path d="M491 814c29-30 68-26 105-2v6H491v-4Z" fill="#9EDEB7"/><path d="M525 800l13 10-5 7-15-9 7-8Z" fill="white"/>
+      <text x="500" y="842" class="small">朝活ランニング</text><text x="500" y="863" class="tiny">7:00〜 / 朝霞公園</text><text x="500" y="888" class="tiny" fill="#20AF6B">👥 8人</text>
+
+      <rect x="606" y="757" width="105" height="61" rx="16" fill="#FFE0B5"/><rect x="612" y="764" width="42" height="28" rx="7" fill="#FF9049"/>
+      <text x="619" y="776" font-size="11" font-weight="800" fill="white">7/17</text><text x="623" y="788" font-size="9" font-weight="800" fill="white">（木）</text>
+      <circle cx="658" cy="811" r="23" fill="#F79649"/><path d="M636 811h44m-22-22v44" stroke="#FFECCB" stroke-width="2"/>
+      <text x="615" y="842" class="small">バスケ練習会</text><text x="615" y="863" class="tiny">18:30〜 / 中野体育館</text><text x="615" y="888" class="tiny" fill="#F29746">👥 10人</text>
+
+      <rect x="721" y="757" width="105" height="61" rx="16" fill="#DED5FF"/><rect x="727" y="764" width="42" height="28" rx="7" fill="#6C77ED"/>
+      <text x="734" y="776" font-size="11" font-weight="800" fill="white">7/19</text><text x="738" y="788" font-size="9" font-weight="800" fill="white">（土）</text>
+      <rect x="750" y="796" width="25" height="22" rx="4" fill="#F5E99C" transform="rotate(12 750 796)"/><circle cx="790" cy="804" r="14" fill="#FFB4BD"/>
+      <text x="730" y="842" class="small">ボードゲーム会</text><text x="730" y="863" class="tiny">13:00〜 / 池袋</text><text x="730" y="888" class="tiny" fill="#7F74D7">👥 14人</text>
+    </g>
+
+    <!-- section 3 -->
+    <circle cx="386" cy="963" r="13" fill="#4FCA88"/><path d="M379 963h14m-7-7v14" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    <text x="410" y="970" class="jp section">注目の団体</text>
+    <text x="814" y="969" class="jp" font-size="31" font-weight="400">›</text>
+    <g filter="url(#smallShadow)">
+      <rect x="376" y="991" width="142" height="177" rx="18" fill="white" stroke="#D9E1EC"/>
+      <rect x="530" y="991" width="142" height="177" rx="18" fill="white" stroke="#D9E1EC"/>
+      <rect x="684" y="991" width="142" height="177" rx="18" fill="white" stroke="#D9E1EC"/>
+    </g>
+
+    <g class="jp">
+      <circle cx="447" cy="1043" r="41" fill="#FF9DB1"/><circle cx="447" cy="1043" r="32" fill="#FFF6F8"/>
+      <path d="M433 1043c0-9 8-16 18-10 10-6 18 1 18 10 0 10-18 22-18 22s-18-12-18-22Z" fill="#FF6F8B"/>
+      <circle cx="428" cy="1066" r="8" fill="#FFE1C9"/><circle cx="447" cy="1069" r="8" fill="#FFE1C9"/><circle cx="465" cy="1066" r="8" fill="#FFE1C9"/>
+      <text x="404" y="1111" class="body">つながるLab.</text><text x="413" y="1132" class="small" fill="#5B6A7E">交流・つながり</text><text x="419" y="1152" class="tiny" fill="#78869A">👥 128人</text>
+
+      <circle cx="601" cy="1043" r="41" fill="#46C782"/><path d="M579 1021l11 0 11 16 11-16h11l-17 28v18h-10v-18l-17-28Z" fill="white"/>
+      <ellipse cx="601" cy="1059" rx="29" ry="10" fill="#2BAA68" opacity=".38"/>
+      <text x="564" y="1111" class="body">シャトルズ</text><text x="571" y="1132" class="small" fill="#5B6A7E">バドミントン</text><text x="573" y="1152" class="tiny" fill="#78869A">👥 86人</text>
+
+      <circle cx="755" cy="1043" r="41" fill="#A8D6FF"/><circle cx="755" cy="1043" r="27" fill="white"/><path d="M755 1016l13 11-5 16h-16l-5-16 13-11Zm-26 32 15-5 10 13-10 14-15-6v-16Zm52 0v16l-15 6-10-14 10-13 15 5Z" fill="#304C70"/>
+      <path d="M742 1027l13 11 13-11" stroke="#304C70" stroke-width="4" fill="none"/>
+      <path d="M741 1062l14-8 14 8" stroke="#304C70" stroke-width="4" fill="none"/>
+      <path d="M783 1048l-15 7m-26-7 15 7" stroke="#304C70" stroke-width="4"/>
+      <path d="M796 997l6 12 13 2-10 9 2 13-11-6-11 6 2-13-10-9 13-2 6-12Z" fill="#FFCC55"/>
+      <text x="707" y="1111" class="body">フットサル同好会</text><text x="719" y="1132" class="small" fill="#5B6A7E">スポーツ</text><text x="727" y="1152" class="tiny" fill="#78869A">👥 142人</text>
+    </g>
+
+    <!-- navigation -->
+    <rect x="348" y="1200" width="504" height="188" fill="white"/>
+    <path d="M348 1200h504" stroke="#EDF1F5"/>
+    <g class="jp">
+      <path d="M397 1243l22-18 22 18v22h-15v-14h-14v14h-15v-22Z" fill="#28B974"/>
+      <text x="396" y="1288" class="small" fill="#21AF6B">ホーム</text>
+      <rect x="504" y="1233" width="30" height="30" rx="5" stroke="#78869A" stroke-width="3"/><path d="M510 1228v10m18-10v10m-18 10h18" stroke="#78869A" stroke-width="3" stroke-linecap="round"/>
+      <text x="499" y="1288" class="small" fill="#78869A">イベント</text>
+      <path d="M633 1234c13-11 35-2 35 15 0 11-9 20-22 20l-11 9 2-11c-6-4-9-10-9-17 0-6 2-12 5-16Z" stroke="#78869A" stroke-width="3" fill="none"/>
+      <text x="612" y="1288" class="small" fill="#78869A">メッセージ</text>
+      <circle cx="760" cy="1243" r="10" stroke="#78869A" stroke-width="3"/><path d="M740 1270c3-14 37-14 40 0" stroke="#78869A" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <text x="731" y="1288" class="small" fill="#78869A">マイページ</text>
+    </g>
+  </g>
+  <rect x="493" y="1356" width="214" height="8" rx="4" fill="#111923"/>
+</svg>
