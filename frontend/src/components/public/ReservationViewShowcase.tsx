@@ -242,54 +242,56 @@ function CardMini({
   if (events) {
     if (events.length === 0) return <EmptyEvents accentColor={accentColor} />;
     return (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {events.map((event) => {
-          const image = imgUrl(event.imageUrl, API_URL);
-          const status = eventStatus(event);
-          const full = status === '満席';
-          const price = eventPrice(event);
-          return (
-            <Link
-              key={event.id}
-              href={eventHref(event, tenantCode, fallbackHref)}
-              className="block overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
-              style={{ backgroundColor: cardBg || '#ffffff' }}
-            >
-              <div className="relative aspect-[3/4] bg-gray-100">
-                {image ? (
-                  <img src={image} alt={event.title} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-4xl font-bold" style={{ background: `linear-gradient(135deg, ${visible.accent}, #111827)`, color: visible.text }}>
-                    {new Date(event.heldAt).getDate()}
-                  </div>
-                )}
-                <span
-                  className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-bold shadow-sm ${full ? 'bg-white/90 text-gray-400' : ''}`}
-                  style={full ? undefined : { backgroundColor: visible.accent, color: visible.text }}
-                >
-                  {status}
-                </span>
-              </div>
-              <div className="space-y-1 p-3">
-                <p className="line-clamp-2 text-sm font-bold leading-snug" style={{ color: eventTitleColor || '#111827' }}>{event.title}</p>
-                <p className="text-xs font-medium" style={{ color: eventDateColor || '#4B5563' }}>{eventDate(event)} {eventTime(event)}</p>
-                {event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || '#9CA3AF' }}>{event.location}</p>}
-                <p className="text-xs" style={{ color: eventMetaColor || '#6B7280' }}>
-                  {event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : `${event.reservedCount ?? 0}人予約`}
-                  {price && ` / ${price}`}
-                </p>
-              </div>
-            </Link>
-          );
-        })}
+      <div className="-mx-1 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex snap-x snap-mandatory gap-3">
+          {events.map((event) => {
+            const image = imgUrl(event.imageUrl, API_URL);
+            const status = eventStatus(event);
+            const full = status === '満席';
+            const price = eventPrice(event);
+            return (
+              <Link
+                key={event.id}
+                href={eventHref(event, tenantCode, fallbackHref)}
+                className="block shrink-0 snap-start overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
+                style={{ backgroundColor: cardBg || '#ffffff', width: 'calc(50% - 6px)' }}
+              >
+                <div className="relative aspect-[3/4] bg-gray-100">
+                  {image ? (
+                    <img src={image} alt={event.title} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-4xl font-bold" style={{ background: `linear-gradient(135deg, ${visible.accent}, #111827)`, color: visible.text }}>
+                      {new Date(event.heldAt).getDate()}
+                    </div>
+                  )}
+                  <span
+                    className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-bold shadow-sm ${full ? 'bg-white/90 text-gray-400' : ''}`}
+                    style={full ? undefined : { backgroundColor: visible.accent, color: visible.text }}
+                  >
+                    {status}
+                  </span>
+                </div>
+                <div className="space-y-1 p-3">
+                  <p className="line-clamp-2 text-sm font-bold leading-snug" style={{ color: eventTitleColor || '#111827' }}>{event.title}</p>
+                  <p className="text-xs font-medium" style={{ color: eventDateColor || '#4B5563' }}>{eventDate(event)} {eventTime(event)}</p>
+                  {event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || '#9CA3AF' }}>{event.location}</p>}
+                  <p className="text-xs" style={{ color: eventMetaColor || '#6B7280' }}>
+                    {event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : `${event.reservedCount ?? 0}人予約`}
+                    {price && ` / ${price}`}
+                  </p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="flex gap-3 overflow-hidden">
       {[0, 1].map((i) => (
-        <div key={i} className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+        <div key={i} className="shrink-0 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm" style={{ width: 'calc(50% - 6px)' }}>
           <div className="aspect-[3/4]" style={{ background: `linear-gradient(135deg, ${visible.accent}, #111827)` }} />
           <div className="space-y-1.5 p-3">
             <div className="h-2 w-5/6 rounded-full bg-gray-200" />
