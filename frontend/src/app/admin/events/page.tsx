@@ -355,10 +355,6 @@ export default function EventsPage() {
 
       {loading ? (
         <p className="text-gray-500">読み込み中...</p>
-      ) : viewMode === 'calendar' ? (
-        <CalendarView events={filtered} onDuplicate={handleDuplicate} />
-      ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-400">イベントがありません</div>
       ) : (
         <div className="space-y-4">
           {/* モバイルプレビュー */}
@@ -383,27 +379,33 @@ export default function EventsPage() {
             </div>
           )}
           {/* 管理アクション */}
-          <div className="space-y-2">
-            {filtered.map((event) => (
-              <div key={event.id} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <EventStatusBadge status={event.status} />
-                    <Link href={`/admin/events/${event.id}`} className="text-sm font-bold text-gray-900 hover:text-[#06C755] truncate">
-                      {event.title}
-                    </Link>
+          {viewMode === 'calendar' ? (
+            <CalendarView events={filtered} onDuplicate={handleDuplicate} />
+          ) : filtered.length === 0 ? (
+            <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-400">イベントがありません</div>
+          ) : (
+            <div className="space-y-2">
+              {filtered.map((event) => (
+                <div key={event.id} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <EventStatusBadge status={event.status} />
+                      <Link href={`/admin/events/${event.id}`} className="text-sm font-bold text-gray-900 hover:text-[#06C755] truncate">
+                        {event.title}
+                      </Link>
+                    </div>
+                    <p className="mt-0.5 text-xs text-gray-400">{formatDate(event.heldAt)}</p>
                   </div>
-                  <p className="mt-0.5 text-xs text-gray-400">{formatDate(event.heldAt)}</p>
+                  <div className="flex shrink-0 gap-1.5">
+                    <Link href={`/admin/events/${event.id}`} className="rounded-lg bg-[#06C755]/10 px-2.5 py-1.5 text-xs font-bold text-[#06C755]">詳細</Link>
+                    <Link href={`/admin/events/${event.id}/edit`} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">編集</Link>
+                    <button onClick={() => handleDuplicate(event.id)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">複製</button>
+                    <button onClick={() => handleDelete(event.id)} className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-bold text-red-500">削除</button>
+                  </div>
                 </div>
-                <div className="flex shrink-0 gap-1.5">
-                  <Link href={`/admin/events/${event.id}`} className="rounded-lg bg-[#06C755]/10 px-2.5 py-1.5 text-xs font-bold text-[#06C755]">詳細</Link>
-                  <Link href={`/admin/events/${event.id}/edit`} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">編集</Link>
-                  <button onClick={() => handleDuplicate(event.id)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">複製</button>
-                  <button onClick={() => handleDelete(event.id)} className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-bold text-red-500">削除</button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
