@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 import { SITE_URL } from '@/lib/config';
 import CosmicCursor from './CosmicCursor';
+import WarpGimmicks from './WarpGimmicks';
 
 export const revalidate = 60;
 
@@ -46,9 +47,10 @@ export default function OrganizersPage() {
   return (
     <main className="warp-page cosmic-cursor-area min-h-screen overflow-hidden text-white">
       <CosmicCursor />
+      <WarpGimmicks />
       <WarpField />
 
-      <header className="fixed inset-x-0 top-0 z-30 border-b border-white/10 bg-[#030612]/68 backdrop-blur-xl">
+      <header className="fixed inset-x-0 top-0 z-30 border-b border-white/10 bg-[#010208]/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-5 py-3">
           <Link href="/" className="flex items-center gap-2 font-bold text-white">
             <Image src="/icon.png" alt="" width={32} height={32} className="rounded-lg" />
@@ -58,9 +60,9 @@ export default function OrganizersPage() {
             <Link href="/guide" className="hover:text-white">記事</Link>
             <Link href="/pricing" className="hover:text-white">料金</Link>
             <Link href="/login" className="hidden hover:text-white sm:inline">ログイン</Link>
-            <Link href="/register" className="rounded-full bg-[#06C755] px-4 py-2 text-white shadow-[0_0_28px_rgba(6,199,85,0.36)] hover:bg-[#05a847]">
+            <WarpCTAButton href="/register" className="rounded-full bg-[#06C755] px-4 py-2 text-white shadow-[0_0_28px_rgba(6,199,85,0.36)] hover:bg-[#05a847]">
               無料作成
-            </Link>
+            </WarpCTAButton>
           </nav>
         </div>
       </header>
@@ -72,7 +74,7 @@ export default function OrganizersPage() {
               <p className="w-fit rounded-full border border-[#7DD3FC]/44 bg-[#7DD3FC]/10 px-3 py-1.5 text-xs font-bold text-[#7DD3FC]">
                 次世代型のソーシャルメディア
               </p>
-              <h1 className="mt-6 text-5xl font-bold leading-[1.03] sm:text-7xl">
+              <h1 className="mt-6 text-5xl font-bold leading-[1.03] sm:text-7xl" data-warp-headline>
                 団体運営を、
                 <span className="block text-[#7DD3FC]">次の速度へ。</span>
               </h1>
@@ -80,9 +82,9 @@ export default function OrganizersPage() {
                 WEBサイト、集客、予約、LINE連絡まで。
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link href="/register" className="rounded-lg bg-[#06C755] px-5 py-3 text-sm font-bold text-white shadow-[0_0_42px_rgba(6,199,85,0.42)] hover:bg-[#05a847]">
+                <WarpCTAButton href="/register" className="rounded-lg bg-[#06C755] px-5 py-3 text-sm font-bold text-white shadow-[0_0_42px_rgba(6,199,85,0.42)] hover:bg-[#05a847]">
                   無料でWEBサイトを作る
-                </Link>
+                </WarpCTAButton>
                 <Link href="/clubs/18285255/gakuori" className="rounded-lg border border-white/24 bg-white/8 px-5 py-3 text-sm font-bold text-white backdrop-blur hover:bg-white/14">
                   公開サイトを見る
                 </Link>
@@ -103,7 +105,7 @@ export default function OrganizersPage() {
           <div className="mt-8 grid gap-4 md:grid-cols-4">
             {warpLabels.map((label, index) => (
               <article key={label} className="warp-panel p-5" style={{ animationDelay: `${index * 0.08}s` }}>
-                <span className="text-xs font-bold text-[#83F3A4]">0{index + 1}</span>
+                <span className="text-xs font-bold text-[#7DD3FC]">0{index + 1}</span>
                 <h3 className="mt-10 text-xl font-bold">{label}</h3>
               </article>
             ))}
@@ -147,18 +149,27 @@ export default function OrganizersPage() {
 
       <section className="relative px-5 pb-20 pt-16">
         <div className="mx-auto max-w-5xl text-center">
-          <p className="text-sm font-bold text-[#83F3A4]">READY</p>
+          <p className="text-sm font-bold text-[#7DD3FC]">READY</p>
           <h2 className="mx-auto mt-3 max-w-3xl text-4xl font-bold leading-tight sm:text-6xl">
             はじめた瞬間、運営は加速する。
           </h2>
           <div className="mt-8 flex justify-center">
-            <Link href="/register" className="rounded-lg bg-[#06C755] px-6 py-4 text-sm font-bold text-white shadow-[0_0_46px_rgba(6,199,85,0.45)] hover:bg-[#05a847]">
+            <WarpCTAButton href="/register" className="rounded-lg bg-[#06C755] px-6 py-4 text-sm font-bold text-white shadow-[0_0_46px_rgba(6,199,85,0.45)] hover:bg-[#05a847]">
               無料ではじめる
-            </Link>
+            </WarpCTAButton>
           </div>
         </div>
       </section>
     </main>
+  );
+}
+
+// ② ワープ速度CTA ボタン（client component として分離）
+function WarpCTAButton({ href, className, children }: { href: string; className: string; children: React.ReactNode }) {
+  return (
+    <a href={href} data-warp-cta="1" className={className}>
+      {children}
+    </a>
   );
 }
 
@@ -173,7 +184,7 @@ function WarpField() {
             d={path}
             style={{
               animationDelay: `${index * -0.22}s`,
-              animationDuration: `${1.4 + index * 0.08}s`,
+              animationDuration: `${1.6 + index * 0.09}s`,
             }}
           />
         ))}
@@ -199,7 +210,7 @@ function WarpCore() {
     <div className="warp-core-stage" aria-hidden="true">
       <div className="warp-core-rings">
         {Array.from({ length: 8 }).map((_, index) => (
-          <span key={index} style={{ animationDelay: `${index * -0.28}s` } as CSSProperties} />
+          <span key={index} style={{ animationDelay: `${index * -0.45}s` } as CSSProperties} />
         ))}
       </div>
       <div className="warp-gate">
@@ -220,11 +231,11 @@ function CalendarPreview({ name }: { name: string }) {
       <div className="warp-calendar">
         <div className="mb-3 flex items-center justify-between text-xs font-bold text-white/60">
           <span>JULY</span>
-          <span className="h-2 w-10 rounded-full bg-[#83F3A4]" />
+          <span className="h-2 w-10 rounded-full bg-[#7DD3FC]" />
         </div>
         <div className="grid grid-cols-7 gap-1">
           {Array.from({ length: 14 }).map((_, index) => (
-            <span key={index} className={`grid aspect-square place-items-center rounded-md text-xs font-bold ${index === 6 || index === 11 ? 'bg-[#06C755] text-white' : 'bg-white/8 text-white/45'}`}>
+            <span key={index} className={`grid aspect-square place-items-center rounded-md text-xs font-bold ${index === 6 || index === 11 ? 'bg-[#3B82F6] text-white' : 'bg-white/8 text-white/45'}`}>
               {index + 1}
             </span>
           ))}
@@ -236,14 +247,14 @@ function CalendarPreview({ name }: { name: string }) {
   if (name === 'カード') {
     return (
       <div className="warp-calendar overflow-hidden p-0">
-        <div className="h-24 bg-[radial-gradient(circle_at_30%_20%,rgba(131,243,164,0.86),transparent_30%),linear-gradient(120deg,#111827,#0E7490_52%,#06C755)]" />
+        <div className="h-24 bg-[radial-gradient(circle_at_30%_20%,rgba(125,211,252,0.8),transparent_30%),linear-gradient(120deg,#0c1836,#1e3a8a_52%,#1d4ed8)]" />
         <div className="space-y-2 p-4">
           <div className="h-3 w-4/5 rounded-full bg-white/80" />
           <div className="h-2 w-3/5 rounded-full bg-white/22" />
           <div className="flex gap-2 pt-1">
-            <span className="h-5 w-5 rounded-full bg-[#83F3A4]/70" />
+            <span className="h-5 w-5 rounded-full bg-[#7DD3FC]/70" />
+            <span className="h-5 w-5 rounded-full bg-violet-300/70" />
             <span className="h-5 w-5 rounded-full bg-sky-300/70" />
-            <span className="h-5 w-5 rounded-full bg-fuchsia-300/70" />
           </div>
         </div>
       </div>
@@ -259,7 +270,7 @@ function CalendarPreview({ name }: { name: string }) {
             <div className="h-2 w-4/5 rounded-full bg-white/32" />
             <div className="mt-2 h-2 w-2/5 rounded-full bg-white/16" />
           </div>
-          <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${index === 2 ? 'bg-white/16 text-white/55' : 'bg-[#06C755] text-white'}`}>
+          <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${index === 2 ? 'bg-white/16 text-white/55' : 'bg-[#3B82F6] text-white'}`}>
             {index === 2 ? '満席' : '受付中'}
           </span>
         </div>

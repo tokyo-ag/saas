@@ -579,6 +579,104 @@ body {
   padding: 14px;
 }
 
+/* ④ Parallax layers */
+.warp-field {
+  transform: translate(calc(var(--px, 0) * -16px), calc(var(--py, 0) * -12px));
+  will-change: transform;
+}
+.warp-core-stage {
+  transform: translate(calc(var(--px, 0) * 32px), calc(var(--py, 0) * 26px));
+  will-change: transform;
+}
+.warp-copy {
+  transform: translate(calc(var(--px, 0) * -14px), calc(var(--py, 0) * -10px));
+  will-change: transform;
+}
+
+/* ① Gravity lens — vortex がカーソルに引き寄せられる */
+.warp-vortex {
+  left: calc(62% + var(--lx, 0) * 1px);
+  top: calc(46% + var(--ly, 0) * 1px);
+}
+
+/* ② Warp speed CTA */
+.is-warping .warp-core-rings span {
+  animation-duration: 0.12s !important;
+  border-color: rgba(200, 230, 255, 0.9) !important;
+  box-shadow: 0 0 40px rgba(100, 200, 255, 0.6) !important;
+}
+.warp-speed-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: radial-gradient(circle at 52% 46%, #fff 0%, #a0c8ff 40%, #010208 100%);
+  animation: warp-flash 1s ease-in forwards;
+}
+@keyframes warp-flash {
+  0%, 48% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* ⑤ COMIU Sound button */
+.warp-sound-btn {
+  position: fixed;
+  bottom: 28px;
+  right: 20px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(80, 160, 255, 0.32);
+  border-radius: 999px;
+  background: rgba(1, 4, 20, 0.8);
+  padding: 8px 16px;
+  color: rgba(180, 220, 255, 0.7);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.warp-sound-btn.is-on {
+  border-color: rgba(100, 180, 255, 0.7);
+  color: #7dd3fc;
+  box-shadow: 0 0 20px rgba(60, 140, 255, 0.25);
+}
+.warp-sound-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+.warp-sound-bars span {
+  display: block;
+  width: 2.5px;
+  border-radius: 2px;
+  background: currentColor;
+  height: 4px;
+}
+.is-on .warp-sound-bars span {
+  animation: warp-bar-dance 0.6s ease-in-out infinite alternate;
+}
+.is-on .warp-sound-bars span:nth-child(1) { animation-delay: 0s; }
+.is-on .warp-sound-bars span:nth-child(2) { animation-delay: 0.15s; }
+.is-on .warp-sound-bars span:nth-child(3) { animation-delay: 0.08s; }
+.is-on .warp-sound-bars span:nth-child(4) { animation-delay: 0.22s; }
+@keyframes warp-bar-dance {
+  from { height: 3px; }
+  to { height: 14px; }
+}
+
+/* ⑤ Sound pulse — リングに反映 */
+.warp-core-rings span {
+  border-color: rgba(80, 170, 255, calc(0.3 + var(--sp, 0) * 0.5));
+  box-shadow:
+    0 0 calc(24px + var(--sp, 0) * 30px) rgba(60, 140, 255, calc(0.18 + var(--sp, 0) * 0.3)),
+    inset 0 0 calc(24px + var(--sp, 0) * 20px) rgba(60, 140, 255, calc(0.08 + var(--sp, 0) * 0.2));
+}
+
 @keyframes warp-ray-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
