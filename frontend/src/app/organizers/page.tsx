@@ -102,15 +102,16 @@ export default function OrganizersPage() {
                 <span className="mb-6 inline-flex items-center rounded-full border border-slate-900/10 bg-white/72 px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-700 shadow-sm">
                   Circle Recruiting Platform
                 </span>
-                <h1 className="mb-6 text-4xl font-black leading-[1.12] tracking-tighter text-slate-950 lg:text-6xl">
-                  サークルの募集ページを、
+                <h1 className="mb-6 text-[40px] font-black leading-[1.08] tracking-tighter text-slate-950 md:text-5xl lg:text-[56px]">
+                  <span className="block">サークルの募集ページを</span>
                   <span className="block">無料で公開。</span>
-                  <span className="brand-text-gradient block">予約もLINE連絡も、</span>
-                  <span className="block">そのままCOMIUで。</span>
+                  <span className="brand-text-gradient block">予約もLINE連絡も</span>
+                  <span className="block">COMIUで完結。</span>
                 </h1>
                 <p className="mb-9 max-w-2xl text-sm leading-8 text-slate-600 lg:text-base">
-                  SEOに強い公開ページ、COMIUポータルへの自動掲載、ワンタップ予約、公式LINE API連携まで。
-                  学生サークル・社会人サークルの募集と運営をまとめます。
+                  <span className="block">SEOに強い公開ページ、COMIUポータルへの自動掲載、</span>
+                  <span className="block">ワンタップ予約、公式LINE API連携まで。</span>
+                  <span className="block">学生サークル・社会人サークルの募集と運営をまとめます。</span>
                 </p>
                 <div className="flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
                   <Link
