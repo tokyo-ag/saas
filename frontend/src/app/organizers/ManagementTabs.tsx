@@ -88,18 +88,22 @@ export default function ManagementTabs() {
             </div>
           )}
           {active === 1 && (
-            <div className="shrink-0 lg:w-80 xl:w-96">
-              <div className="grid grid-cols-3 gap-2">
+            <div className="shrink-0">
+              <div className="flex items-end gap-3">
                 {[
                   { src: '/shuttles-calendar.svg', label: 'カレンダー' },
                   { src: '/shuttles-event-cards.svg', label: 'カード' },
                   { src: '/shuttles-schedule-cards.svg', label: 'スレッド' },
                 ].map(({ src, label }) => (
                   <div key={label} className="flex flex-col items-center gap-1.5">
-                    <div style={{ width: '110px', height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={src} alt={label} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} className="rounded-lg" />
-                    </div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={src}
+                      alt={label}
+                      height={220}
+                      style={{ height: '220px', width: 'auto', display: 'block' }}
+                      className="rounded-lg"
+                    />
                     <span className="text-[10px] font-medium text-slate-400">{label}</span>
                   </div>
                 ))}
