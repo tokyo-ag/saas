@@ -122,6 +122,8 @@ export default function ComiuLandingPage() {
 
         html {
           scroll-behavior: smooth;
+          scroll-padding-top: 86px;
+          scroll-snap-type: y proximity;
         }
 
         body {
@@ -317,11 +319,17 @@ export default function ComiuLandingPage() {
           flex-direction: column;
           justify-content: center;
           overflow: visible;
+          min-height: 100svh;
           padding-top: 142px;
           padding-bottom: 80px;
+          scroll-snap-align: start;
+          scroll-snap-stop: always;
+          isolation: isolate;
         }
 
         .hero-copy {
+          position: relative;
+          z-index: 5;
           max-width: 860px;
         }
 
@@ -1711,6 +1719,7 @@ export default function ComiuLandingPage() {
           width: min(1180px, calc(100% - var(--page-x) * 2));
           margin: 0 auto var(--section-y);
           padding: clamp(44px, 7vw, 84px) clamp(22px, 6vw, 80px);
+          scroll-snap-align: start;
           overflow: hidden;
           background:
             radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.34), transparent 22%),
@@ -1835,10 +1844,16 @@ export default function ComiuLandingPage() {
           .hero {
             gap: 32px;
             padding-top: 116px;
+            padding-bottom: 120px;
           }
 
           .hero-basket {
-            display: none;
+            top: auto;
+            right: clamp(20px, 7vw, 52px);
+            bottom: clamp(32px, 7vw, 72px);
+            display: block;
+            width: clamp(128px, 20vw, 188px);
+            height: clamp(96px, 16vw, 138px);
           }
 
           .hero-copy {
@@ -1931,12 +1946,33 @@ export default function ComiuLandingPage() {
 
           .hero {
             gap: 26px;
+            min-height: 100svh;
             padding-top: 104px;
-            padding-bottom: 56px;
+            padding-bottom: 148px;
             background:
               radial-gradient(circle at 80% 20%, rgba(198, 94, 255, 0.22), transparent 38%),
               radial-gradient(circle at 10% 80%, rgba(91, 148, 255, 0.2), transparent 40%);
             border-radius: 0 0 40px 40px;
+          }
+
+          .hero-basket {
+            right: 16px;
+            bottom: 24px;
+            width: 120px;
+            height: 94px;
+            opacity: 0.9;
+          }
+
+          .hero-basket-target {
+            inset: 22px 4px 0;
+          }
+
+          .hero-basket-rim {
+            border-width: 3px;
+          }
+
+          .hero-basket-label {
+            font-size: 9px;
           }
 
           .hero h1 {
@@ -2246,6 +2282,7 @@ export default function ComiuLandingPage() {
           display: flex;
           align-items: center;
           background: rgba(255, 255, 255, 0.72);
+          scroll-snap-align: start;
         }
 
         .scrub-text {
@@ -2302,6 +2339,7 @@ export default function ComiuLandingPage() {
           align-items: center;
           justify-content: center;
           overflow: hidden;
+          scroll-snap-align: start;
         }
 
         .h-panel-inner {
@@ -2470,7 +2508,7 @@ export default function ComiuLandingPage() {
           </a>
         </nav>
 
-        <section className="lp-section hero">
+        <section className="lp-section hero hero-slide">
           <div className="hero-copy">
             <h1>
               <span className="hero-line-wrap"><span className="title-line">イベント・サークルの集客なら<wbr /><span className="accent">COMIU</span></span></span>

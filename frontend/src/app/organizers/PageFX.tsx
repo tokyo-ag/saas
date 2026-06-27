@@ -38,11 +38,22 @@ export default function PageFX() {
 
     // ── Shared input state ────────────────────────────
     let mx = -999, my = -999;
+    let inputActiveUntil = 0;
     let gyroX = 0, gyroY = 0.22;
     let scrollFrac = 0;
 
-    const onMove = (e: MouseEvent) => { mx = e.clientX; my = e.clientY; };
+    const onMove = (e: MouseEvent) => {
+      mx = e.clientX;
+      my = e.clientY;
+      inputActiveUntil = performance.now() + 260;
+    };
     if (canHover) window.addEventListener('mousemove', onMove, { passive: true });
+
+    const setTouchInput = (touch: Touch) => {
+      mx = touch.clientX;
+      my = touch.clientY;
+      inputActiveUntil = performance.now() + 760;
+    };
 
     const onGyro = (e: DeviceOrientationEvent) => {
       gyroX = ((e.gamma ?? 0) / 90) * 0.45;
@@ -90,11 +101,18 @@ export default function PageFX() {
     };
     const onClickR  = (e: MouseEvent) => addRipple(e.clientX, e.clientY);
     const onTouchR  = (e: TouchEvent) => {
-      for (let i = 0; i < e.changedTouches.length; i++)
-        addRipple(e.changedTouches[i].clientX, e.changedTouches[i].clientY);
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        setTouchInput(touch);
+        addRipple(touch.clientX, touch.clientY);
+      }
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) setTouchInput(e.touches[0]);
     };
     window.addEventListener('click', onClickR);
     window.addEventListener('touchstart', onTouchR, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
 
     // ── F: ball canvas (no mix-blend-mode) ───────────
     const bc = document.createElement('canvas');
@@ -113,8 +131,9 @@ export default function PageFX() {
     }));
 
     const basketEl = document.querySelector<HTMLElement>('.hero-basket-target');
+    const heroEl = document.querySelector<HTMLElement>('.hero-slide');
     const getBasket = (): Basket | null => {
-      if (!canHover || !basketEl) return null;
+      if (!basketEl) return null;
       const rect = basketEl.getBoundingClientRect();
       if (rect.width < 20 || rect.height < 20 || rect.bottom < -40 || rect.top > vH + 40) return null;
       return {
@@ -174,12 +193,23 @@ export default function PageFX() {
 
       // ─ F: balls ───────────────────────────────────
       bctx.clearRect(0, 0, vW, vH);
-      const basket = getBasket();
-      for (let i = 0; i < balls.length; i++) {
+      const heroRect = heroEl?.getBoundingClientRect();
+      const heroActive =
+        !!heroRect &&
+        heroRect.bottom > 24 &&
+        heroRect.top < vH - 24 &&
+        heroRect.height > 160;
+      const playTop = heroRect ? Math.max(0, heroRect.top) : 0;
+      const playBottom = heroRect ? Math.min(vH, heroRect.bottom) : vH;
+      const playTallEnough = playBottom - playTop > 140;
+      const basket = heroActive ? getBasket() : null;
+
+      if (heroActive && playTallEnough) for (let i = 0; i < balls.length; i++) {
         const b = balls[i];
         b.vx += gyroX;
         b.vy += gyroY;
-        if (canHover && mx > 0) {
+        const inputActive = canHover ? mx > 0 : performance.now() < inputActiveUntil;
+        if (inputActive && mx > 0) {
           const dx = b.x - mx, dy = b.y - my;
           const d  = Math.hypot(dx, dy);
           if (d < 100 && d > 0.01) {
@@ -194,8 +224,8 @@ export default function PageFX() {
         b.x += b.vx; b.y += b.vy;
         if (b.x < b.r)       { b.x = b.r;       b.vx =  Math.abs(b.vx) * 0.6; }
         if (b.x > vW - b.r)  { b.x = vW - b.r;  b.vx = -Math.abs(b.vx) * 0.6; }
-        if (b.y < b.r)       { b.y = b.r;       b.vy =  Math.abs(b.vy) * 0.6; }
-        if (b.y > vH - b.r)  { b.y = vH - b.r;  b.vy = -Math.abs(b.vy) * 0.6; }
+        if (b.y < playTop + b.r)    { b.y = playTop + b.r;    b.vy =  Math.abs(b.vy) * 0.6; }
+        if (b.y > playBottom - b.r) { b.y = playBottom - b.r; b.vy = -Math.abs(b.vy) * 0.6; }
         if (basket) {
           const innerLeft = basket.x + basket.w * 0.13 + b.r;
           const innerRight = basket.x + basket.w * 0.87 - b.r;
@@ -353,6 +383,7 @@ export default function PageFX() {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('click', onClickR);
       window.removeEventListener('touchstart', onTouchR);
+      window.removeEventListener('touchmove', onTouchMove);
       rc.remove();
       bc.remove();
       fc?.remove();
