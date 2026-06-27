@@ -48,9 +48,38 @@ export default function ComiuLandingPage() {
       revealObserver.observe(element);
     });
 
+    // A: text scrub
+    const scrubWords = Array.from(document.querySelectorAll<HTMLElement>('.scrub-word'));
+    const updateScrub = () => {
+      const vh = window.innerHeight;
+      scrubWords.forEach((w) => {
+        const r = w.getBoundingClientRect();
+        w.classList.toggle('lit', r.top + r.height / 2 < vh * 0.6);
+      });
+    };
+
+    // B: horizontal scroll (desktop only)
+    const hOuter = document.querySelector<HTMLElement>('.h-scroll-outer');
+    const hTrack = document.querySelector<HTMLElement>('.h-scroll-track');
+    const hDotEls = Array.from(document.querySelectorAll<HTMLElement>('.h-dot'));
+    const updateHScroll = () => {
+      if (!hOuter || !hTrack) return;
+      if (window.innerWidth <= 768) { hTrack.style.transform = ''; return; }
+      const rect = hOuter.getBoundingClientRect();
+      const scrolled = -rect.top;
+      const total = rect.height - window.innerHeight;
+      if (total <= 0) return;
+      const p = Math.max(0, Math.min(1, scrolled / total));
+      hTrack.style.transform = `translateX(-${p * 300}vw)`;
+      const active = Math.round(p * 3);
+      hDotEls.forEach((d, i) => d.classList.toggle('active', i === active));
+    };
+
     // Keep the header readable after scrolling.
     const handleScroll = () => {
       header?.classList.toggle("is-scrolled", window.scrollY > 12);
+      updateScrub();
+      updateHScroll();
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -2161,6 +2190,135 @@ export default function ComiuLandingPage() {
           color: rgba(255, 255, 255, 0.76);
         }
 
+        /* A: Text scrub */
+        .scrub-section {
+          padding: clamp(80px, 14vw, 180px) var(--page-x);
+          display: flex;
+          align-items: center;
+        }
+
+        .scrub-text {
+          max-width: 900px;
+          font-size: clamp(28px, 5vw, 66px);
+          font-weight: 950;
+          letter-spacing: -0.06em;
+          line-height: 1.22;
+        }
+
+        .scrub-word {
+          color: rgba(7, 16, 51, 0.14);
+          transition: color 0.35s ease;
+        }
+
+        .scrub-word.lit {
+          color: rgba(7, 16, 51, 0.92);
+        }
+
+        .scrub-accent.lit {
+          color: transparent;
+          background: linear-gradient(95deg, var(--blue), var(--purple));
+          background-clip: text;
+          -webkit-background-clip: text;
+        }
+
+        /* B: Horizontal scroll */
+        .h-scroll-outer {
+          height: 400vh;
+        }
+
+        .h-scroll-sticky {
+          position: sticky;
+          top: 0;
+          height: 100vh;
+          overflow: hidden;
+        }
+
+        .h-scroll-track {
+          display: flex;
+          width: 400vw;
+          height: 100%;
+          will-change: transform;
+          transition: transform 0.08s cubic-bezier(0.25, 0, 0, 1);
+        }
+
+        .h-panel {
+          position: relative;
+          width: 100vw;
+          height: 100%;
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+
+        .h-panel-inner {
+          width: 100%;
+          max-width: 1180px;
+          padding: 0 var(--page-x);
+        }
+
+        /* D: panel backgrounds */
+        .h-panel:nth-child(1) { background: linear-gradient(135deg, #eef2ff 0%, #f5f0ff 100%); }
+        .h-panel:nth-child(2) { background: linear-gradient(135deg, #f5f0ff 0%, #ffeef8 100%); }
+        .h-panel:nth-child(3) { background: linear-gradient(135deg, #eefff8 0%, #eef4ff 100%); }
+        .h-panel:nth-child(4) {
+          background:
+            radial-gradient(circle at 15% 18%, rgba(114, 141, 255, 0.45), transparent 28%),
+            linear-gradient(135deg, #081037, #17215a 54%, #3d2b8c);
+        }
+
+        .h-panel:nth-child(4) .seo-card {
+          background: transparent;
+          box-shadow: none;
+          border-radius: 0;
+        }
+
+        /* Progress dots */
+        .h-dots {
+          position: absolute;
+          bottom: 28px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 8px;
+          z-index: 10;
+          pointer-events: none;
+        }
+
+        .h-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: rgba(7, 16, 51, 0.18);
+          transition: background 0.3s, transform 0.3s;
+        }
+
+        .h-dot.active {
+          background: var(--blue);
+          transform: scale(1.4);
+        }
+
+        .h-panel:nth-child(4) ~ * .h-dot,
+        .h-panel-dark .h-dot { background: rgba(255,255,255,0.3); }
+        .h-panel-dark .h-dot.active { background: #fff; }
+
+        /* Mobile: stack vertically */
+        @media (max-width: 768px) {
+          .h-scroll-outer { height: auto; }
+          .h-scroll-sticky { position: static; height: auto; overflow: visible; }
+          .h-scroll-track { flex-direction: column; width: 100%; transition: none; }
+          .h-panel { width: 100%; height: auto; min-height: 0; padding: var(--section-y) 0; }
+          .h-dots { display: none; }
+          .h-panel:nth-child(4) .seo-card {
+            background:
+              radial-gradient(circle at 15% 18%, rgba(114,141,255,0.45), transparent 28%),
+              linear-gradient(135deg, #081037, #17215a 54%, #3d2b8c);
+            box-shadow: 0 26px 80px rgba(12,18,58,0.22);
+            border-radius: 40px;
+          }
+        }
+
         /* ⑥ Feature pair */
         .feature-pair {
           display: grid;
@@ -2288,85 +2446,121 @@ export default function ComiuLandingPage() {
           </div>
         </section>
 
-        {/* ② 公式LINEからワンタップ予約 */}
-        <section className="lp-section" aria-labelledby="booking-title">
-          <div className="booking-head reveal">
-            <h2 className="section-title" id="booking-title">
-              <span className="lr-wrap"><span className="lr">公式LINEからワンタップで予約</span></span>
-            </h2>
-            <p className="section-desc" style={{ maxWidth: 640, margin: "0 auto" }}>
-              <span className="lr-wrap"><span className="lr">公式LINEのリッチメニューや予約URLから直接予約。</span></span>
-              <span className="lr-wrap"><span className="lr">３タイプから、活動スタイルに合わせて選べる日程表！</span></span>
-            </p>
-          </div>
-          <div className="phones-grid reveal">
-            {[
-              { src: "/shuttles-calendar.svg", label: "カレンダー", desc: "同じ活動が重なる時や回数が多い主催向け" },
-              { src: "/shuttles-event-cards.svg", label: "カード", desc: "画像でイメージをしっかり伝えたい主催向け" },
-              { src: "/shuttles-schedule-cards.svg", label: "スレッド", desc: "詳細をしっかり見せたい主催向け" },
-            ].map(({ src, label, desc }) => (
-              <div key={label} className="phone-type-card">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt={label} className="phone-type-img" />
-                <div className="phone-type-info">
-                  <b>{label}</b>
-                  <small>{desc}</small>
+        {/* A: テキストスクラブ */}
+        <div className="scrub-section">
+          <p className="scrub-text">
+            <span className="scrub-word">集客して、</span>
+            <span className="scrub-word">予約を受けて、</span>
+            <span className="scrub-word">LINEで通知して、</span>
+            <span className="scrub-word">ブログを書いて、</span>
+            <span className="scrub-word">実績を積んで、</span>
+            <span className="scrub-word">また集客する。</span>
+            {" "}
+            <span className="scrub-word scrub-accent">それが、ひとつになる。</span>
+          </p>
+        </div>
+
+        {/* B: 横スクロール — ②③④⑤ */}
+        <div className="h-scroll-outer">
+          <div className="h-scroll-sticky">
+            <div className="h-dots" aria-hidden="true">
+              {[0, 1, 2, 3].map((i) => (
+                <span key={i} className={`h-dot${i === 0 ? " active" : ""}`} />
+              ))}
+            </div>
+            <div className="h-scroll-track">
+
+              {/* Panel ②: 公式LINEからワンタップ予約 */}
+              <section className="h-panel" aria-labelledby="booking-title">
+                <div className="h-panel-inner">
+                  <div className="booking-head">
+                    <h2 className="section-title" id="booking-title">
+                      公式LINEからワンタップで予約
+                    </h2>
+                    <p className="section-desc" style={{ maxWidth: 640, margin: "0 auto" }}>
+                      公式LINEのリッチメニューや予約URLから直接予約。<br />
+                      ３タイプから、活動スタイルに合わせて選べる日程表！
+                    </p>
+                  </div>
+                  <div className="phones-grid">
+                    {[
+                      { src: "/shuttles-calendar.svg", label: "カレンダー", desc: "同じ活動が重なる時や回数が多い主催向け" },
+                      { src: "/shuttles-event-cards.svg", label: "カード", desc: "画像でイメージをしっかり伝えたい主催向け" },
+                      { src: "/shuttles-schedule-cards.svg", label: "スレッド", desc: "詳細をしっかり見せたい主催向け" },
+                    ].map(({ src, label, desc }) => (
+                      <div key={label} className="phone-type-card">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={src} alt={label} className="phone-type-img" />
+                        <div className="phone-type-info">
+                          <b>{label}</b>
+                          <small>{desc}</small>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              </section>
 
-        {/* ③ 活動実績・ブログ → ポータルサイト */}
-        <section className="lp-section portal-section" aria-labelledby="portal-title">
-          <div className="portal-grid">
-            <div className="reveal">
-              <SectionLabel>PORTAL & BLOG</SectionLabel>
-              <h2 className="section-title" id="portal-title">
-                活動実績やブログが、直接ポータルサイトに反映。
-              </h2>
-              <p className="section-desc">
-                コツコツ活動するほど、集客力や認知拡大につながります。SNS投稿は流れていく。でも、COMIUに積み上がった実績は残り続ける。
-              </p>
-            </div>
-            <div className="reveal">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/comiu_portal_mockup.svg" alt="COMIUポータルサイト" className="portal-img" />
-            </div>
-          </div>
-        </section>
+              {/* Panel ③: ポータル */}
+              <section className="h-panel" aria-labelledby="portal-title">
+                <div className="h-panel-inner">
+                  <div className="portal-grid">
+                    <div>
+                      <SectionLabel>PORTAL & BLOG</SectionLabel>
+                      <h2 className="section-title" id="portal-title">
+                        活動実績やブログが、直接ポータルサイトに反映。
+                      </h2>
+                      <p className="section-desc">
+                        コツコツ活動するほど、集客力や認知拡大につながります。SNS投稿は流れていく。でも、COMIUに積み上がった実績は残り続ける。
+                      </p>
+                    </div>
+                    <div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/comiu_portal_mockup.svg" alt="COMIUポータルサイト" className="portal-img" />
+                    </div>
+                  </div>
+                </div>
+              </section>
 
-        {/* ④ 公式LINEリマインド */}
-        <section className="lp-section remind-section" aria-labelledby="remind-title">
-          <div className="remind-grid">
-            <div className="reveal">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/comiu-line-reminder.svg" alt="LINE自動リマインド" className="remind-img" />
-            </div>
-            <div className="reveal">
-              <SectionLabel>LINE REMIND</SectionLabel>
-              <h2 className="section-title" id="remind-title">
-                公式LINEのリマインドサービス
-              </h2>
-              <p className="section-desc">
-                予約完了後の案内から、イベント前日のリマインドまで公式LINEで自動送信。参加者の不安を減らし、直前キャンセルも防げます。
-              </p>
-            </div>
-          </div>
-        </section>
+              {/* Panel ④: LINEリマインド */}
+              <section className="h-panel" aria-labelledby="remind-title">
+                <div className="h-panel-inner">
+                  <div className="remind-grid">
+                    <div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/comiu-line-reminder.svg" alt="LINE自動リマインド" className="remind-img" />
+                    </div>
+                    <div>
+                      <SectionLabel>LINE REMIND</SectionLabel>
+                      <h2 className="section-title" id="remind-title">
+                        公式LINEのリマインドサービス
+                      </h2>
+                      <p className="section-desc">
+                        予約完了後の案内から、イベント前日のリマインドまで公式LINEで自動送信。参加者の不安を減らし、直前キャンセルも防げます。
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </section>
 
-        {/* ⑤ SEO・初回無料サポート */}
-        <section className="lp-section" aria-labelledby="seo-title">
-          <div className="seo-card reveal">
-            <SectionLabel>FREE SUPPORT</SectionLabel>
-            <h2 className="section-title" id="seo-title">
-              初めての主催でも、安心してスタート。
-            </h2>
-            <p className="section-desc">
-              SEO専任担当者による丁寧なカウンセリングと、初回Webサイト構築を無料でサポート。イベントやサークルの主催が初めての方でも、すぐに始められます。
-            </p>
+              {/* Panel ⑤: サポート (dark) */}
+              <section className="h-panel" aria-labelledby="seo-title">
+                <div className="h-panel-inner">
+                  <div className="seo-card">
+                    <SectionLabel>FREE SUPPORT</SectionLabel>
+                    <h2 className="section-title" id="seo-title">
+                      初めての主催でも、安心してスタート。
+                    </h2>
+                    <p className="section-desc">
+                      SEO専任担当者による丁寧なカウンセリングと、初回Webサイト構築を無料でサポート。イベントやサークルの主催が初めての方でも、すぐに始められます。
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+            </div>
           </div>
-        </section>
+        </div>
 
         {/* ⑥ 予約管理・事前決済 + LINE認証 */}
         <section className="lp-section" id="features" aria-labelledby="features-title">
