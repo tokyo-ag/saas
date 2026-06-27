@@ -1,65 +1,93 @@
 "use client";
 
-const toolCards = [
-  ["📸", "Instagram 告知", "告知"],
-  ["📝", "Googleフォーム", "申込み受付"],
-  ["💬", "LINEグループ", "連絡・共有"],
-  ["🟩", "スプレッドシート", "名簿管理"],
-  ["🅿️", "PayPay", "支払い確認"],
-  ["🗒️", "メモ帳", "タスク・メモ"],
+import { useEffect, useState } from "react";
+
+const scatteredTools = [
+  { icon: "IG", title: "Instagram告知", text: "投稿・DM確認" },
+  { icon: "GF", title: "Googleフォーム", text: "申込み受付" },
+  { icon: "LN", title: "LINEグループ", text: "連絡・共有" },
+  { icon: "SS", title: "スプレッドシート", text: "名簿管理" },
+  { icon: "PY", title: "PayPay確認", text: "支払い確認" },
+  { icon: "MM", title: "メモ帳", text: "やること管理" },
 ];
 
-const eventRows = [
-  ["新歓スポーツ大会", "2025.05.24 (土)", "128 / 200", "88%"],
-  ["春のボランティア活動", "2025.05.31 (土)", "86 / 150", "68%"],
-  ["BBQパーティー", "2025.06.14 (土)", "42 / 80", "52%"],
-];
-
-const memberRows = [
-  ["山田 太郎", "経済学部 3年", "参加確定"],
-  ["佐藤 花子", "文学部 2年", "参加確定"],
-  ["鈴木 健", "工学部 1年", "キャンセル待ち"],
-  ["田中 美咲", "法学部 2年", "未対応"],
-];
-
-const featureCards = [
+const features = [
   {
-    no: "1",
     title: "団体ページを無料で作成",
-    text: "団体の紹介・ビジョン・SNS・実績などをひとつのページで発信できます。",
-    mock: "profile",
+    text: "団体紹介、活動写真、イベント予定、よくある質問、実績。初めて見た人にも、活動の雰囲気と信頼感が伝わるページを作成。",
+    type: "site",
   },
   {
-    no: "2",
     title: "イベント募集をまとめる",
-    text: "複数のイベントを一覧で掲載。参加者はカンタンに申し込み可能です。",
-    mock: "event",
+    text: "募集人数、参加費、場所、持ち物をひとつの募集ページに。毎回の告知を、参加につながる導線へ。",
+    type: "event",
   },
   {
-    no: "3",
+    title: "COMIUポータルへ掲載",
+    text: "イベントを登録すると、COMIU内のポータルにも掲載。新しい参加者に団体を見つけてもらえる機会を増やす。",
+    type: "portal",
+  },
+  {
+    title: "予約を管理する",
+    text: "参加人数、定員、キャンセル、参加者名簿をまとめて管理。フォームとスプレッドシートを行き来しない運営へ。",
+    type: "reserve",
+  },
+  {
     title: "公式LINEで自動リマインド",
-    text: "イベント前に自動でお知らせ。参加率アップとドタキャン防止に。",
-    mock: "line",
+    text: "予約完了後の案内や、イベント前日のリマインドを公式LINEで送信。問い合わせと連絡漏れを減らす。",
+    type: "line",
   },
   {
-    no: "4",
-    title: "事前決済と予約管理",
-    text: "参加費の事前決済でスムーズに運営。申込者の管理も一画面で完結します。",
-    mock: "payment",
+    title: "事前決済に対応",
+    text: "申込みから支払いまでをスムーズに。当日の受付、集金、未払い確認を減らして、イベントに集中できる。",
+    type: "pay",
   },
+  {
+    title: "活動ブログと実績を残す",
+    text: "イベントレポートや活動写真を残して、団体の魅力を積み上げる。開催するほど、初参加者に選ばれやすくなる。",
+    type: "blog",
+  },
+];
+
+const calendarEvents = [
+  { date: "7/13", name: "バドミントン", status: "残り8名", tone: "blue" },
+  { date: "7/17", name: "新歓交流会", status: "予約受付中", tone: "green" },
+  { date: "7/19", name: "BBQ", status: "女性枠あと3名", tone: "pink" },
+  { date: "7/24", name: "フットサル", status: "満員", tone: "gray" },
+];
+
+const timeline = [
+  { month: "4月", title: "新歓交流会", text: "初参加者 96名" },
+  { month: "5月", title: "バドミントン", text: "リピート参加が増加" },
+  { month: "6月", title: "スポーツ交流会", text: "活動レポート公開" },
+  { month: "7月", title: "BBQ", text: "参加者レビュー蓄積" },
+];
+
+const lineBubbles = [
+  "ご予約ありがとうございます",
+  "7/17 新歓交流会の詳細です",
+  "会場：池袋駅東口 徒歩5分",
+  "集合時間：18:45",
+  "明日はお気をつけてお越しください",
+  "参加できなくなった場合は、こちらからキャンセルできます",
 ];
 
 function Logo() {
-  return <span className="logo-word">COMIU</span>;
-}
-
-function PageBadge({ page }: { page: string }) {
-  return <span className="page-badge">{page} / 5</span>;
-}
-
-function EventThumb({ tone = "blue" }: { tone?: "blue" | "green" | "orange" | "pink" }) {
   return (
-    <span className={`event-thumb ${tone}`} aria-hidden="true">
+    <a className="logo" href="#top" aria-label="COMIU トップへ">
+      <span aria-hidden="true">C</span>
+      <strong>COMIU</strong>
+    </a>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return <p className="section-label">{children}</p>;
+}
+
+function MiniPhoto({ tone = "blue" }: { tone?: string }) {
+  return (
+    <span className={`mini-photo ${tone}`} aria-hidden="true">
       <i />
       <i />
       <i />
@@ -67,271 +95,261 @@ function EventThumb({ tone = "blue" }: { tone?: "blue" | "green" | "orange" | "p
   );
 }
 
-function DashboardMock() {
+function DashboardMock({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="dashboard-mock">
-      <div className="mock-head">
-        <Logo />
+    <div className={`dashboard-mock ${compact ? "compact" : ""}`} data-cursor="EXPLORE">
+      <div className="mock-top">
+        <span className="mock-logo">COMIU</span>
         <b>ダッシュボード</b>
-        <span>🔔</span>
-        <span>☰</span>
+        <span className="mock-dot" />
       </div>
 
-      <div className="mock-panel event-panel">
-        <div className="panel-title">
+      <div className="mock-card mock-events">
+        <div className="mock-card-head">
           <b>イベント一覧</b>
           <a>一覧を見る</a>
         </div>
-        {eventRows.map((event, index) => (
-          <div className="event-row" key={event[0]}>
-            <EventThumb tone={index === 2 ? "orange" : "blue"} />
+        {[
+          ["新歓スポーツ大会", "参加人数 38 / 50", "78"],
+          ["春の交流会", "参加人数 22 / 30", "64"],
+          ["BBQイベント", "参加人数 17 / 40", "46"],
+        ].map((row, index) => (
+          <div className="mock-event-row" key={row[0]}>
+            <MiniPhoto tone={index === 2 ? "orange" : "blue"} />
             <div>
-              <b>{event[0]}</b>
-              <small>{event[1]}</small>
+              <b>{row[0]}</b>
+              <small>{row[1]}</small>
             </div>
-            <span>申込数</span>
-            <strong>{event[2]}</strong>
-            <em style={{ width: event[3] }} />
+            <span style={{ "--bar": `${row[2]}%` } as React.CSSProperties} />
           </div>
         ))}
       </div>
 
       <div className="mock-grid">
-        <div className="mock-panel stat-chart">
-          <div className="panel-title">
-            <b>予約・申込の状況</b>
-            <a>一覧を見る</a>
-          </div>
-          <span>今日の申込</span>
-          <strong>28件</strong>
-          <small>+12件（前日比）</small>
-          <div className="spark">
-            <i />
-            <i />
-            <i />
-            <i />
-            <i />
-          </div>
+        <div className="mock-card mock-stat">
+          <small>新規予約</small>
+          <strong>12件</strong>
+          <em>今週 +4</em>
         </div>
-
-        <div className="mock-panel notice-list">
-          <div className="panel-title">
-            <b>お知らせ</b>
-            <a>一覧を見る</a>
-          </div>
-          {["新着メンバー募集！", "持ち物について", "会場アクセス", "雨天時の対応"].map((item, index) => (
-            <p key={item}>
-              <span>▣</span>
-              <b>{item}</b>
-              <small>05.{10 - index}</small>
-            </p>
-          ))}
+        <div className="mock-card mock-line">
+          <small>LINEリマインド</small>
+          <strong>送信済み</strong>
+          <em>38人へ配信</em>
+        </div>
+        <div className="mock-card mock-stat">
+          <small>今月のページ閲覧数</small>
+          <strong>2,842</strong>
+          <em>先月 +284</em>
+        </div>
+        <div className="mock-card mock-roster">
+          <small>参加者名簿</small>
+          <p>
+            <i />
+            <i />
+            <i />
+            <b>38名</b>
+          </p>
         </div>
       </div>
-    </div>
-  );
-}
 
-function MemberListCard() {
-  return (
-    <div className="float-card members-card">
-      <div className="panel-title">
-        <b>参加者リスト</b>
-        <a>一覧を見る</a>
+      <div className="mock-card next-event">
+        <small>次回イベント</small>
+        <b>7/17 新歓交流会</b>
+        <span>残り枠 8名</span>
       </div>
-      {memberRows.map((member, index) => (
-        <p key={member[0]}>
-          <span className={`face face-${index + 1}`} />
-          <b>{member[0]}</b>
-          <small>{member[1]}</small>
-          <em>{member[2]}</em>
-        </p>
-      ))}
-      <strong>+ 284 人を見る</strong>
-    </div>
-  );
-}
-
-function NoticeCard() {
-  return (
-    <div className="float-card notice-card">
-      <div className="panel-title">
-        <b>お知らせ</b>
-        <a>一覧を見る</a>
-      </div>
-      {["新着メンバー募集！", "持ち物について", "会場アクセス", "雨天時の対応"].map((item, index) => (
-        <p key={item}>
-          <span>▣</span>
-          <b>{item}</b>
-          <small>05.{10 - index}</small>
-        </p>
-      ))}
-      <strong>すべてのお知らせを見る</strong>
     </div>
   );
 }
 
 function FeatureMock({ type }: { type: string }) {
-  if (type === "profile") {
-    return (
-      <div className="feature-profile">
-        <EventThumb tone="green" />
-        <div>
-          <b>NEXUS 大学生団体</b>
-          <small>つながる、動き出す、未来をつくる。</small>
-          <p>
-            <span>メンバー 128人</span>
-            <span>イベント 24件</span>
-            <span>フォロワー 342人</span>
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (type === "event") {
-    return (
-      <div className="feature-event">
-        <EventThumb tone="green" />
-        <div>
-          <em>募集中</em>
-          <b>海岸清掃ボランティア</b>
-          <small>6/22（日）9:00 - 12:00</small>
-          <p>参加予定 46人</p>
-        </div>
-        <button>詳しく見る</button>
-      </div>
-    );
-  }
-
   if (type === "line") {
     return (
-      <div className="feature-line">
-        <i>LINE</i>
-        <p>こんにちは！NEXUSです 🌱</p>
-        <p>
-          海岸清掃ボランティア
-          <br />
-          開催まであと2日です！
-        </p>
-        <button>詳細を確認する</button>
+      <div className="feature-mock line-mini">
+        <span>LINE</span>
+        <p>明日は新歓交流会です</p>
+        <p>会場：池袋駅東口 徒歩5分</p>
+      </div>
+    );
+  }
+
+  if (type === "pay") {
+    return (
+      <div className="feature-mock pay-mini">
+        <small>事前決済</small>
+        <strong>¥1,500</strong>
+        <span>決済完了</span>
+      </div>
+    );
+  }
+
+  if (type === "reserve") {
+    return (
+      <div className="feature-mock roster-mini">
+        {["山田 太郎", "佐藤 花子", "鈴木 健"].map((name) => (
+          <p key={name}>
+            <i />
+            <b>{name}</b>
+            <span>予約済み</span>
+          </p>
+        ))}
+      </div>
+    );
+  }
+
+  if (type === "blog") {
+    return (
+      <div className="feature-mock blog-mini">
+        <MiniPhoto tone="orange" />
+        <div>
+          <b>BBQイベントを開催しました</b>
+          <small>活動ブログ更新</small>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="feature-payment">
+    <div className="feature-mock card-mini">
+      <MiniPhoto tone={type === "event" ? "green" : "blue"} />
       <div>
-        <span>参加費</span>
-        <b>¥2,000</b>
-        <small>税込</small>
-        <button>支払って申し込む</button>
+        <b>{type === "portal" ? "人気のイベントに掲載" : type === "event" ? "7/17 新歓交流会" : "団体ページ公開"}</b>
+        <small>{type === "portal" ? "閲覧数 +284" : type === "event" ? "残り8名・予約受付中" : "活動写真・FAQ・実績"}</small>
       </div>
-      <div>
-        <span>申込者一覧（46人）</span>
-        {memberRows.slice(0, 4).map((member, index) => (
-          <p key={member[0]}>
-            <span className={`face face-${index + 1}`} />
-            <b>{member[0]}</b>
-          </p>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function CalendarMock() {
-  const days = ["日", "月", "火", "水", "木", "金", "土"];
-  const dates = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 1, 2];
-  return (
-    <div className="calendar-card">
-      <div className="calendar-head">
-        <button>‹</button>
-        <b>2025年7月</b>
-        <button>›</button>
-        <em>月表示⌄</em>
-      </div>
-      <div className="calendar-grid days">
-        {days.map((day) => (
-          <span key={day}>{day}</span>
-        ))}
-      </div>
-      <div className="calendar-grid">
-        {dates.map((date, index) => (
-          <span className={date === 16 ? "selected" : index % 5 === 0 ? "with-dot" : ""} key={`${date}-${index}`}>
-            {date}
-          </span>
-        ))}
-      </div>
-      <div className="calendar-events">
-        {[
-          ["7/13", "バドミントン", "残り8名", "blue"],
-          ["7/17", "新歓交流会", "予約受付中", "green"],
-          ["7/19", "BBQ", "女性枠あと3名", "pink"],
-        ].map((event, index) => (
-          <p key={event[1]}>
-            <EventThumb tone={index === 2 ? "orange" : "blue"} />
-            <b>{event[0]}　{event[1]}</b>
-            <em className={`pill-${event[3]}`}>{event[2]}</em>
-            <span>›</span>
-          </p>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ProfilePhone() {
-  return (
-    <div className="profile-phone">
-      <div className="phone-topbar">
-        <span>9:41</span>
-        <i />
-      </div>
-      <Logo />
-      <div className="profile-cover">
-        <i />
-        <i />
-        <i />
-        <i />
-      </div>
-      <div className="profile-body">
-        <span className="profile-logo">COMIU</span>
-        <h3>青空スポーツクラブ</h3>
-        <p>スポーツを通じて、地域のつながりと笑顔をつくるコミュニティです。</p>
-        <div className="profile-stats">
-          <span>メンバー<br /><b>132名</b></span>
-          <span>イベント<br /><b>24件</b></span>
-          <span>フォロワー<br /><b>256人</b></span>
-        </div>
-        <button>フォローする</button>
-        <div className="next-event">
-          <EventThumb tone="green" />
-          <div>
-            <b>春の交流フットサル大会</b>
-            <small>2025/06/15（日）9:00-12:00</small>
-          </div>
-        </div>
-      </div>
+      <button type="button">{type === "site" ? "見る" : "予約"}</button>
     </div>
   );
 }
 
 export default function ComiuLandingPage() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    const header = document.querySelector<HTMLElement>(".site-header");
+    const cursor = document.querySelector<HTMLElement>(".custom-cursor");
+    const cursorText = document.querySelector<HTMLElement>(".custom-cursor span");
+    const fixedCta = document.querySelector<HTMLElement>(".fixed-mobile-cta");
+    const footer = document.querySelector<HTMLElement>(".site-footer");
+    const finalCta = document.querySelector<HTMLElement>(".final-cta");
+
+    // Reveal sections and staged UI pieces as they enter the viewport.
+    const revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.16, rootMargin: "0px 0px -6% 0px" }
+    );
+
+    document.querySelectorAll<HTMLElement>(".reveal, .flow-stage, .line-phone").forEach((element) => {
+      revealObserver.observe(element);
+    });
+
+    // Keep the header readable after scrolling.
+    const handleScroll = () => {
+      header?.classList.toggle("is-scrolled", window.scrollY > 12);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    // Hide the mobile fixed CTA near the final CTA/footer so it does not cover content.
+    const ctaObserver = new IntersectionObserver(
+      (entries) => {
+        const shouldHide = entries.some((entry) => entry.isIntersecting);
+        fixedCta?.classList.toggle("is-hidden", shouldHide);
+      },
+      { threshold: 0.1 }
+    );
+
+    if (footer) ctaObserver.observe(footer);
+    if (finalCta) ctaObserver.observe(finalCta);
+
+    // Lightweight custom cursor for desktop only.
+    const moveCursor = (event: MouseEvent) => {
+      if (!canHover || !cursor) return;
+      cursor.style.setProperty("--x", `${event.clientX}px`);
+      cursor.style.setProperty("--y", `${event.clientY}px`);
+    };
+
+    const setCursorText = (text = "") => {
+      if (!cursor || !cursorText) return;
+      cursorText.textContent = text;
+      cursor.classList.toggle("has-label", Boolean(text));
+    };
+
+    if (canHover && cursor) {
+      window.addEventListener("mousemove", moveCursor, { passive: true });
+      document.querySelectorAll<HTMLElement>("[data-cursor]").forEach((element) => {
+        element.addEventListener("mouseenter", () => setCursorText(element.dataset.cursor));
+        element.addEventListener("mouseleave", () => setCursorText(""));
+      });
+    }
+
+    // Subtle dashboard parallax for desktop. It is disabled for reduced motion.
+    const heroVisual = document.querySelector<HTMLElement>(".hero-visual");
+    const handleHeroMove = (event: MouseEvent) => {
+      if (!canHover || reduceMotion || !heroVisual) return;
+      const rect = heroVisual.getBoundingClientRect();
+      const x = (event.clientX - rect.left) / rect.width - 0.5;
+      const y = (event.clientY - rect.top) / rect.height - 0.5;
+      heroVisual.style.setProperty("--tilt-x", `${y * -6}deg`);
+      heroVisual.style.setProperty("--tilt-y", `${x * 8}deg`);
+      heroVisual.style.setProperty("--float-x", `${x * 16}px`);
+      heroVisual.style.setProperty("--float-y", `${y * 16}px`);
+    };
+
+    const resetHeroMove = () => {
+      heroVisual?.style.setProperty("--tilt-x", "0deg");
+      heroVisual?.style.setProperty("--tilt-y", "0deg");
+      heroVisual?.style.setProperty("--float-x", "0px");
+      heroVisual?.style.setProperty("--float-y", "0px");
+    };
+
+    heroVisual?.addEventListener("mousemove", handleHeroMove);
+    heroVisual?.addEventListener("mouseleave", resetHeroMove);
+
+    return () => {
+      revealObserver.disconnect();
+      ctaObserver.disconnect();
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("mousemove", moveCursor);
+      heroVisual?.removeEventListener("mousemove", handleHeroMove);
+      heroVisual?.removeEventListener("mouseleave", resetHeroMove);
+    };
+  }, []);
+
+  const closeMenu = () => setMenuOpen(false);
+
   return (
     <>
       <style jsx global>{`
         :root {
-          --ink: #070d2f;
-          --muted: #5f6985;
-          --blue: #1557ff;
-          --blue2: #3655ff;
-          --purple: #9946ff;
-          --violet: #7554ff;
-          --green: #08c35e;
-          --soft-blue: #edf5ff;
-          --line: #dfe7fb;
-          --shadow: 0 22px 58px rgba(39, 68, 159, 0.16);
+          --ink: #071033;
+          --navy: #0b143d;
+          --muted: #66708f;
+          --blue: #1559ff;
+          --blue-2: #3f63ff;
+          --purple: #8d55ff;
+          --lime: #dfff4f;
+          --yellow: #fff23e;
+          --green: #13c86a;
+          --pink: #ff6db3;
+          --sky: #ebf5ff;
+          --surface: #ffffff;
+          --soft: #f5f8ff;
+          --line: #e3e9f8;
+          --radius-lg: 30px;
+          --radius-md: 22px;
+          --shadow: 0 22px 58px rgba(35, 61, 145, 0.14);
+          --shadow-soft: 0 12px 30px rgba(35, 61, 145, 0.09);
+          --page-x: clamp(18px, 5vw, 76px);
+          --section-y: clamp(82px, 11vw, 150px);
         }
 
         * {
@@ -344,683 +362,750 @@ export default function ComiuLandingPage() {
 
         body {
           margin: 0;
+          overflow-x: hidden;
+          background: #fbfdff;
           color: var(--ink);
-          background: #f6f9ff;
           font-family: Inter, "Noto Sans JP", system-ui, sans-serif;
           -webkit-font-smoothing: antialiased;
+          text-rendering: optimizeLegibility;
         }
 
-        button,
-        input,
-        textarea {
-          font: inherit;
+        body:has(.comiu-lp) {
+          background: #fbfdff;
         }
 
         a {
           color: inherit;
         }
 
-        .story-page {
-          overflow: hidden;
-          background:
-            radial-gradient(circle at 22% 6%, rgba(98, 149, 255, 0.2), transparent 32%),
-            radial-gradient(circle at 82% 16%, rgba(162, 76, 255, 0.13), transparent 28%),
-            #f8fbff;
+        button {
+          font: inherit;
         }
 
-        .story-slide {
+        .comiu-lp {
           position: relative;
           min-height: 100vh;
-          padding: 38px clamp(24px, 4vw, 56px) 48px;
           overflow: hidden;
           background:
-            radial-gradient(circle at 50% 0%, rgba(221, 237, 255, 0.95), transparent 36%),
-            linear-gradient(135deg, #ffffff 0%, #f8fbff 48%, #f3edff 100%);
-          border-bottom: 1px solid rgba(213, 224, 255, 0.7);
+            radial-gradient(circle at 18% 8%, rgba(71, 128, 255, 0.18), transparent 28%),
+            radial-gradient(circle at 92% 8%, rgba(150, 84, 255, 0.16), transparent 30%),
+            #fbfdff;
         }
 
-        .story-slide::before,
-        .story-slide::after {
-          position: absolute;
-          content: "";
+        .comiu-lp::before {
+          position: fixed;
+          inset: 0;
+          z-index: 0;
           pointer-events: none;
+          content: "";
+          opacity: 0.44;
+          background-image: radial-gradient(circle, rgba(36, 93, 255, 0.14) 1px, transparent 1.8px);
+          background-size: 22px 22px;
+          mask-image: linear-gradient(120deg, transparent 0%, #000 16%, transparent 58%);
         }
 
-        .story-slide::before {
-          right: 64px;
-          top: 18px;
-          width: 220px;
-          height: 180px;
-          opacity: 0.34;
-          background-image: radial-gradient(circle, #bf86ff 2px, transparent 2.5px);
-          background-size: 18px 18px;
-        }
-
-        .story-slide::after {
-          left: -90px;
-          bottom: -130px;
-          width: 118%;
-          height: 300px;
-          background:
-            radial-gradient(circle at 14% 58%, rgba(65, 123, 255, 0.26), transparent 22%),
-            linear-gradient(165deg, rgba(36, 102, 255, 0.2), rgba(160, 86, 255, 0.17) 60%, transparent 61%);
-          transform: rotate(4deg);
-        }
-
-        .slide-inner {
+        .lp-section {
           position: relative;
-          z-index: 2;
-          width: min(1180px, 100%);
-          min-height: calc(100vh - 86px);
+          z-index: 1;
+          width: min(1180px, calc(100% - var(--page-x) * 2));
           margin: 0 auto;
+          padding: var(--section-y) 0;
         }
 
-        .logo-word {
-          display: inline-block;
+        .site-header {
+          position: fixed;
+          top: 12px;
+          left: 50%;
+          z-index: 50;
+          display: flex;
+          width: min(1180px, calc(100% - 24px));
+          min-height: 64px;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 10px 12px 10px 18px;
+          border: 1px solid transparent;
+          border-radius: 22px;
+          transform: translateX(-50%);
+          transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .site-header.is-scrolled {
+          border-color: rgba(220, 226, 245, 0.86);
+          background: rgba(255, 255, 255, 0.78);
+          box-shadow: 0 14px 34px rgba(25, 42, 110, 0.1);
+          backdrop-filter: blur(18px);
+        }
+
+        .logo {
+          display: inline-flex;
+          min-height: 44px;
+          align-items: center;
+          gap: 10px;
+          color: var(--ink);
+          text-decoration: none;
+        }
+
+        .logo span {
+          display: grid;
+          width: 36px;
+          height: 36px;
+          place-items: center;
+          color: #fff;
+          background: linear-gradient(135deg, var(--blue), var(--purple));
+          border-radius: 12px;
+          font-size: 18px;
+          font-weight: 950;
+          box-shadow: 0 10px 24px rgba(46, 92, 255, 0.24);
+        }
+
+        .logo strong,
+        .mock-logo {
           color: transparent;
-          background: linear-gradient(90deg, #0959ff 4%, #2350ff 48%, #ac3eff 100%);
+          background: linear-gradient(90deg, #0c58ff, #9b47ff);
           background-clip: text;
           -webkit-background-clip: text;
-          font-size: clamp(34px, 4.1vw, 54px);
+          font-size: 23px;
           font-weight: 950;
-          letter-spacing: -0.08em;
-          line-height: 1;
+          letter-spacing: -0.07em;
         }
 
-        .page-badge {
-          position: absolute;
-          top: 0;
-          right: 0;
-          z-index: 5;
-          min-width: 106px;
-          padding: 14px 22px;
-          color: var(--ink);
-          background: rgba(255, 255, 255, 0.86);
-          border: 1px solid #dfe6fb;
-          border-radius: 22px;
-          box-shadow: 0 10px 28px rgba(59, 84, 159, 0.1);
-          font-size: 25px;
-          font-weight: 950;
-          text-align: center;
+        .desktop-nav {
+          display: flex;
+          align-items: center;
+          gap: 18px;
         }
 
-        .page-badge::first-letter {
-          color: var(--blue);
+        .desktop-nav a,
+        .mobile-nav a {
+          min-height: 44px;
+          align-items: center;
+          justify-content: center;
+          color: #202b4f;
+          text-decoration: none;
+          font-size: 14px;
+          font-weight: 850;
         }
 
-        .page-badge.gradient {
+        .desktop-nav a {
+          display: inline-flex;
+          padding: 0 8px;
+        }
+
+        .desktop-nav .nav-cta,
+        .mobile-nav .nav-cta {
+          padding: 0 18px;
           color: #fff;
-          background: linear-gradient(100deg, #1259ff, #a442ff);
-          border-color: transparent;
+          background: var(--ink);
+          border-radius: 999px;
+          box-shadow: 0 12px 26px rgba(7, 16, 51, 0.18);
         }
 
-        .hero-one .slide-inner {
+        .menu-button {
+          display: none;
+          width: 48px;
+          height: 48px;
+          border: 0;
+          background: #fff;
+          border-radius: 16px;
+          box-shadow: 0 10px 24px rgba(25, 42, 110, 0.1);
+        }
+
+        .menu-button span {
+          display: block;
+          width: 20px;
+          height: 2px;
+          margin: 5px auto;
+          background: var(--ink);
+          border-radius: 999px;
+        }
+
+        .mobile-nav {
+          position: fixed;
+          top: 84px;
+          left: 12px;
+          right: 12px;
+          z-index: 49;
           display: grid;
-          grid-template-columns: minmax(430px, 0.92fr) minmax(470px, 1fr);
-          gap: 30px;
-          align-items: start;
+          gap: 8px;
+          padding: 14px;
+          background: rgba(255, 255, 255, 0.92);
+          border: 1px solid var(--line);
+          border-radius: 20px;
+          box-shadow: var(--shadow);
+          backdrop-filter: blur(18px);
+          transform: translateY(-12px);
+          opacity: 0;
+          pointer-events: none;
+          transition: 0.2s ease;
+        }
+
+        .mobile-nav.is-open {
+          transform: translateY(0);
+          opacity: 1;
+          pointer-events: auto;
+        }
+
+        .mobile-nav a {
+          display: flex;
+          border-radius: 14px;
+        }
+
+        .hero {
+          display: grid;
+          min-height: 100svh;
+          grid-template-columns: minmax(420px, 0.9fr) minmax(480px, 1.1fr);
+          gap: clamp(28px, 6vw, 76px);
+          align-items: center;
+          padding-top: 142px;
         }
 
         .hero-copy {
-          position: relative;
-          padding-top: 110px;
+          max-width: 620px;
         }
 
-        .hero-one .hero-copy > .logo-word {
-          position: absolute;
-          top: 0;
-          left: 0;
-        }
-
-        .hero-title {
-          margin: 0 0 28px;
-          font-size: clamp(52px, 6.5vw, 88px);
-          line-height: 1.18;
+        .section-label {
+          display: inline-flex;
+          min-height: 34px;
+          align-items: center;
+          gap: 9px;
+          margin: 0 0 20px;
+          padding: 0 14px;
+          color: #2652b8;
+          background: rgba(255, 255, 255, 0.78);
+          border: 1px solid #dce7ff;
+          border-radius: 999px;
+          box-shadow: 0 8px 22px rgba(53, 94, 180, 0.09);
+          font-size: 12px;
           font-weight: 950;
+          letter-spacing: 0.08em;
+        }
+
+        .section-label::before {
+          width: 8px;
+          height: 8px;
+          content: "";
+          background: var(--lime);
+          border-radius: 50%;
+          box-shadow: 0 0 0 4px rgba(223, 255, 79, 0.24);
+        }
+
+        h1,
+        h2,
+        h3,
+        p {
+          margin-top: 0;
+        }
+
+        .hero h1,
+        .section-title,
+        .statement h2,
+        .final h2 {
           letter-spacing: -0.08em;
         }
 
-        .hero-title strong,
-        .section-title strong,
-        .blue-gradient {
+        .hero h1 {
+          margin-bottom: 22px;
+          font-size: clamp(45px, 7vw, 86px);
+          line-height: 1.1;
+          font-weight: 950;
+        }
+
+        .hero h1 span,
+        .gradient-text {
           color: transparent;
-          background: linear-gradient(90deg, #1557ff, #9c45ff);
+          background: linear-gradient(95deg, var(--blue) 0%, var(--purple) 88%);
           background-clip: text;
           -webkit-background-clip: text;
         }
 
-        .hero-title .comiu-big {
-          display: block;
-          margin-top: 4px;
-          font-size: clamp(95px, 11vw, 152px);
-          line-height: 0.94;
-          letter-spacing: -0.06em;
-        }
-
         .hero-lead {
-          display: grid;
-          grid-template-columns: 6px 1fr;
-          gap: 22px;
-          align-items: center;
-          margin: 0 0 30px;
-          font-size: clamp(24px, 2.6vw, 36px);
-          line-height: 1.35;
+          margin-bottom: 18px;
+          padding-left: 18px;
+          border-left: 5px solid var(--blue);
+          font-size: clamp(24px, 3vw, 36px);
+          line-height: 1.42;
           font-weight: 950;
           letter-spacing: -0.06em;
-        }
-
-        .hero-lead::before {
-          width: 6px;
-          height: 86px;
-          content: "";
-          background: var(--blue);
-          border-radius: 999px;
         }
 
         .hero-lead strong {
           color: var(--blue);
         }
 
-        .hero-desc {
-          max-width: 520px;
-          margin: 0 0 28px;
-          color: #17213f;
-          font-size: 23px;
-          line-height: 1.75;
-          font-weight: 850;
-          letter-spacing: -0.05em;
+        .hero-sub {
+          margin-bottom: 18px;
+          color: #1a2445;
+          font-size: clamp(18px, 2vw, 24px);
+          line-height: 1.7;
+          font-weight: 820;
+          letter-spacing: -0.04em;
         }
 
-        .big-cta {
+        .hero-desc,
+        .section-desc {
+          color: var(--muted);
+          font-size: clamp(15px, 1.55vw, 18px);
+          line-height: 2;
+          font-weight: 650;
+        }
+
+        .hero-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-top: 30px;
+        }
+
+        .button {
           display: inline-flex;
-          min-height: 86px;
+          min-height: 52px;
           align-items: center;
           justify-content: center;
-          gap: 32px;
-          padding: 0 46px;
-          color: #fff;
-          background: linear-gradient(95deg, #075cff, #a63dff);
-          border: 7px solid rgba(255, 255, 255, 0.94);
+          gap: 12px;
+          padding: 0 22px;
+          border: 1px solid transparent;
           border-radius: 999px;
-          box-shadow: 0 18px 42px rgba(55, 77, 235, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.28);
           text-decoration: none;
-          font-size: clamp(21px, 2.5vw, 34px);
+          font-size: 15px;
           font-weight: 950;
-          letter-spacing: -0.05em;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .hero-one .big-cta {
-          position: absolute;
-          bottom: 96px;
-          left: 50%;
-          z-index: 7;
-          width: min(820px, calc(100% - 160px));
-          transform: translateX(-50%);
+        .button:active {
+          transform: scale(0.98);
         }
 
-        .big-cta span:first-child {
-          display: grid;
-          width: 58px;
-          height: 58px;
-          place-items: center;
-          border: 5px solid rgba(255, 255, 255, 0.88);
-          border-radius: 16px;
-          font-size: 28px;
+        .button-primary {
+          color: #fff;
+          background: linear-gradient(100deg, var(--blue), var(--purple));
+          box-shadow: 0 18px 38px rgba(39, 80, 255, 0.25);
+        }
+
+        .button-secondary {
+          color: var(--ink);
+          background: #fff;
+          border-color: var(--line);
+          box-shadow: 0 10px 26px rgba(30, 52, 130, 0.08);
         }
 
         .hero-visual {
+          --tilt-x: 0deg;
+          --tilt-y: 0deg;
+          --float-x: 0px;
+          --float-y: 0px;
           position: relative;
-          min-height: 1020px;
-          padding-top: 110px;
+          min-height: 640px;
+          perspective: 1100px;
         }
 
-        .phone-shell {
+        .hero-device {
           position: absolute;
-          right: 12px;
-          top: 86px;
-          width: 470px;
-          height: 930px;
-          padding: 22px;
-          background: linear-gradient(180deg, #ffffff, #f7f9ff);
-          border: 10px solid rgba(238, 243, 255, 0.94);
-          border-radius: 70px;
-          box-shadow: 0 30px 70px rgba(44, 66, 151, 0.23);
-        }
-
-        .phone-shell::before {
-          position: absolute;
-          top: 16px;
+          top: 30px;
           left: 50%;
-          width: 126px;
-          height: 28px;
-          content: "";
-          background: #0b102c;
-          border-radius: 0 0 20px 20px;
-          transform: translateX(-50%);
+          width: min(520px, 92%);
+          padding: 20px;
+          background: rgba(255, 255, 255, 0.78);
+          border: 1px solid rgba(255, 255, 255, 0.96);
+          border-radius: 38px;
+          box-shadow: 0 34px 80px rgba(43, 69, 154, 0.18);
+          backdrop-filter: blur(18px);
+          transform: translateX(-50%) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+          transform-style: preserve-3d;
+          transition: transform 0.18s ease;
         }
 
-        .phone-screen {
-          height: 100%;
-          padding: 52px 24px 24px;
-          overflow: hidden;
-          background: #fff;
-          border-radius: 50px;
-        }
-
-        .float-side {
+        .floating-card {
           position: absolute;
-          right: -8px;
-          top: 430px;
           z-index: 4;
           display: grid;
-          gap: 22px;
-        }
-
-        .side-stat {
-          display: grid;
-          width: 122px;
-          min-height: 126px;
-          place-items: center;
-          padding: 16px 12px;
-          color: var(--green);
+          min-width: 150px;
+          gap: 4px;
+          padding: 16px 18px;
           background: rgba(255, 255, 255, 0.92);
-          border: 2px solid #baffd5;
-          border-radius: 20px;
-          box-shadow: 0 18px 38px rgba(18, 194, 104, 0.18);
-          text-align: center;
-          font-size: 18px;
-          font-weight: 950;
+          border: 1px solid rgba(218, 228, 255, 0.9);
+          border-radius: 18px;
+          box-shadow: var(--shadow-soft);
+          transform: translate3d(calc(var(--float-x) * var(--fx, 1)), calc(var(--float-y) * var(--fy, 1)), 40px);
+          transition: transform 0.18s ease;
         }
 
-        .side-stat b {
-          color: var(--ink);
-          font-size: 29px;
+        .floating-card small {
+          color: var(--muted);
+          font-size: 12px;
+          font-weight: 850;
         }
 
-        .side-stat small {
+        .floating-card b {
+          font-size: 23px;
+          letter-spacing: -0.04em;
+        }
+
+        .floating-card.green b {
           color: var(--green);
-          font-size: 16px;
         }
 
-        .float-card {
-          position: absolute;
-          z-index: 5;
-          padding: 20px;
-          background: rgba(255, 255, 255, 0.95);
-          border: 1px solid #e3eaff;
-          border-radius: 22px;
-          box-shadow: var(--shadow);
+        .floating-card.blue b {
+          color: var(--blue);
         }
 
-        .members-card {
-          left: -410px;
-          bottom: 126px;
-          width: 360px;
+        .floating-card.purple b {
+          color: var(--purple);
         }
 
-        .notice-card {
-          left: -30px;
-          bottom: 154px;
-          width: 360px;
+        .floating-card.one {
+          top: 0;
+          left: 2%;
+          --fx: -0.7;
+          --fy: 0.8;
         }
 
-        .panel-title {
+        .floating-card.two {
+          top: 150px;
+          right: 0;
+          --fx: 1.1;
+          --fy: -0.5;
+        }
+
+        .floating-card.three {
+          left: 4%;
+          bottom: 72px;
+          --fx: -1.2;
+          --fy: 0.6;
+        }
+
+        .floating-card.four {
+          right: 3%;
+          bottom: 8px;
+          --fx: 1.2;
+          --fy: 0.8;
+        }
+
+        .dashboard-mock {
+          overflow: hidden;
+          padding: 22px;
+          color: var(--ink);
+          background: #fff;
+          border: 1px solid var(--line);
+          border-radius: 28px;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        }
+
+        .dashboard-mock.compact {
+          box-shadow: var(--shadow-soft);
+        }
+
+        .mock-top {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 18px;
+        }
+
+        .mock-top b {
+          flex: 1;
+          font-size: 15px;
+          letter-spacing: -0.04em;
+        }
+
+        .mock-logo {
+          font-size: 22px;
+        }
+
+        .mock-dot {
+          width: 36px;
+          height: 36px;
+          background: radial-gradient(circle at 70% 25%, #ff496c 0 4px, transparent 4px), #f6f8ff;
+          border: 1px solid #e5ebfb;
+          border-radius: 50%;
+        }
+
+        .mock-card {
+          background: #fff;
+          border: 1px solid #e5ebfb;
+          border-radius: 18px;
+          box-shadow: 0 10px 24px rgba(35, 61, 145, 0.07);
+        }
+
+        .mock-card-head {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 18px;
-          margin-bottom: 18px;
-          font-size: 16px;
-          font-weight: 950;
+          margin-bottom: 12px;
         }
 
-        .panel-title a {
+        .mock-card-head a {
           color: var(--blue);
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 950;
           text-decoration: none;
         }
 
-        .members-card p,
-        .notice-card p {
+        .mock-events {
+          padding: 18px;
+        }
+
+        .mock-event-row {
+          position: relative;
           display: grid;
-          grid-template-columns: 45px 1fr auto;
-          gap: 10px 12px;
+          grid-template-columns: 54px 1fr;
+          gap: 12px;
           align-items: center;
-          margin: 0;
-          padding: 10px 0;
-          border-bottom: 1px solid #edf1fb;
+          padding: 12px 0;
+          border-top: 1px solid #eef2fb;
         }
 
-        .notice-card p {
-          grid-template-columns: 24px 1fr auto;
+        .mock-event-row:first-of-type {
+          border-top: 0;
         }
 
-        .members-card small {
-          grid-column: 2;
+        .mock-event-row b {
+          display: block;
+          font-size: 14px;
+        }
+
+        .mock-event-row small {
           color: var(--muted);
-          font-weight: 750;
+          font-size: 12px;
+          font-weight: 760;
         }
 
-        .members-card em {
-          grid-row: 1 / span 2;
-          grid-column: 3;
-          padding: 5px 9px;
-          color: #0cbf64;
-          background: #e9fff2;
-          border-radius: 8px;
+        .mock-event-row span {
+          position: absolute;
+          right: 0;
+          bottom: 13px;
+          width: min(112px, 32%);
+          height: 7px;
+          background: #e7edff;
+          border-radius: 999px;
+        }
+
+        .mock-event-row span::before {
+          display: block;
+          width: var(--bar);
+          height: 100%;
+          content: "";
+          background: linear-gradient(90deg, var(--blue), #94b5ff);
+          border-radius: inherit;
+        }
+
+        .mini-photo {
+          position: relative;
+          display: block;
+          width: 54px;
+          height: 44px;
+          overflow: hidden;
+          background: linear-gradient(135deg, #94c7ff, #6257ff);
+          border-radius: 12px;
+        }
+
+        .mini-photo.green {
+          background: linear-gradient(135deg, #44d985, #a8e1ff);
+        }
+
+        .mini-photo.orange {
+          background: linear-gradient(135deg, #ff9b61, #ffd56c);
+        }
+
+        .mini-photo i {
+          position: absolute;
+          bottom: 7px;
+          width: 13px;
+          height: 25px;
+          background: rgba(255, 255, 255, 0.7);
+          border-radius: 999px 999px 5px 5px;
+        }
+
+        .mini-photo i:nth-child(1) {
+          left: 9px;
+          height: 18px;
+        }
+
+        .mini-photo i:nth-child(2) {
+          left: 22px;
+          height: 28px;
+        }
+
+        .mini-photo i:nth-child(3) {
+          right: 8px;
+          height: 21px;
+        }
+
+        .mock-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+          margin-top: 12px;
+        }
+
+        .mock-stat,
+        .mock-line,
+        .mock-roster {
+          min-height: 112px;
+          padding: 15px;
+        }
+
+        .mock-card small {
+          color: var(--muted);
+          font-size: 12px;
+          font-weight: 850;
+        }
+
+        .mock-card strong {
+          display: block;
+          margin: 8px 0 4px;
+          font-size: 29px;
+          letter-spacing: -0.05em;
+        }
+
+        .mock-card em {
+          color: var(--green);
           font-size: 12px;
           font-style: normal;
           font-weight: 900;
         }
 
-        .members-card > strong,
-        .notice-card > strong {
-          display: block;
-          margin-top: 14px;
-          color: var(--blue);
-          text-align: center;
-          font-size: 17px;
+        .mock-line strong {
+          color: var(--green);
+          font-size: 22px;
         }
 
-        .face,
-        .event-thumb {
-          display: block;
-          overflow: hidden;
-          background: linear-gradient(135deg, #9cc8ff, #f7a6d7);
-          border-radius: 12px;
+        .mock-roster p {
+          display: flex;
+          align-items: center;
+          margin: 12px 0 0;
         }
 
-        .face {
-          width: 42px;
-          height: 42px;
-        }
-
-        .face-2 {
-          background: linear-gradient(135deg, #ffe3a0, #9dcaff);
-        }
-
-        .face-3 {
-          background: linear-gradient(135deg, #b9f1d2, #7b8cff);
-        }
-
-        .face-4 {
-          background: linear-gradient(135deg, #ffb0b0, #ffe099);
-        }
-
-        .event-thumb {
-          position: relative;
-          width: 62px;
-          height: 48px;
-          flex: 0 0 auto;
-        }
-
-        .event-thumb i {
-          position: absolute;
+        .mock-roster i {
+          width: 28px;
+          height: 28px;
+          margin-right: -8px;
+          background: linear-gradient(135deg, #96caff, #ff9ed0);
+          border: 2px solid #fff;
           border-radius: 50%;
-          background: rgba(255, 255, 255, 0.72);
         }
 
-        .event-thumb i:nth-child(1) {
-          left: 8px;
-          top: 10px;
-          width: 14px;
-          height: 14px;
+        .mock-roster b {
+          margin-left: 15px;
         }
 
-        .event-thumb i:nth-child(2) {
-          left: 27px;
-          top: 16px;
-          width: 19px;
-          height: 19px;
-        }
-
-        .event-thumb i:nth-child(3) {
-          right: 7px;
-          bottom: 8px;
-          width: 24px;
-          height: 8px;
-          border-radius: 999px;
-        }
-
-        .event-thumb.green {
-          background: linear-gradient(135deg, #31d681, #8bd3ff);
-        }
-
-        .event-thumb.orange {
-          background: linear-gradient(135deg, #f09446, #ffd76f);
-        }
-
-        .event-thumb.pink {
-          background: linear-gradient(135deg, #fd84c4, #8d91ff);
-        }
-
-        .dashboard-mock {
-          color: var(--ink);
-        }
-
-        .mock-head {
+        .next-event {
           display: flex;
           align-items: center;
-          gap: 14px;
-          margin-bottom: 24px;
+          gap: 10px;
+          margin-top: 12px;
+          padding: 14px 16px;
         }
 
-        .mock-head .logo-word {
-          font-size: 24px;
-        }
-
-        .mock-head b {
+        .next-event b {
           flex: 1;
-          font-size: 17px;
-          letter-spacing: -0.04em;
         }
 
-        .mock-panel {
-          background: #fff;
-          border: 1px solid #e4eafd;
-          border-radius: 18px;
-          box-shadow: 0 12px 25px rgba(46, 68, 150, 0.08);
+        .next-event span {
+          padding: 7px 10px;
+          color: var(--blue);
+          background: #eef3ff;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 950;
         }
 
-        .event-panel {
-          padding: 20px;
+        .reveal {
+          opacity: 0;
+          transform: translateY(28px);
+          transition: opacity 0.7s ease, transform 0.7s ease;
         }
 
-        .event-row {
+        .reveal.is-visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        .problem {
+          padding-top: clamp(92px, 12vw, 160px);
+        }
+
+        .problem-head {
+          max-width: 780px;
+          margin-bottom: 44px;
+        }
+
+        .section-title {
+          margin-bottom: 20px;
+          font-size: clamp(36px, 5.5vw, 70px);
+          line-height: 1.14;
+          font-weight: 950;
+        }
+
+        .flow-stage {
           position: relative;
           display: grid;
-          grid-template-columns: 62px 1fr auto auto;
-          gap: 12px;
-          align-items: center;
-          padding: 13px 0;
-          border-top: 1px solid #edf1fb;
-          font-size: 13px;
-        }
-
-        .event-row:first-of-type {
-          border-top: 0;
-        }
-
-        .event-row small,
-        .event-row span {
-          color: var(--muted);
-          font-weight: 800;
-        }
-
-        .event-row strong {
-          font-weight: 950;
-        }
-
-        .event-row em {
-          position: absolute;
-          right: 0;
-          bottom: 8px;
-          height: 7px;
-          max-width: 115px;
-          background: linear-gradient(90deg, #0f5cff, #97b9ff);
-          border-radius: 999px;
-        }
-
-        .mock-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 18px;
-          margin-top: 26px;
-        }
-
-        .stat-chart,
-        .notice-list {
-          min-height: 200px;
-          padding: 18px;
-        }
-
-        .stat-chart > span {
-          color: var(--muted);
-          font-weight: 800;
-        }
-
-        .stat-chart > strong {
-          display: block;
-          margin: 10px 0 0;
-          font-size: 46px;
-          letter-spacing: -0.06em;
-        }
-
-        .stat-chart > small {
-          color: var(--blue);
-          font-size: 16px;
-          font-weight: 950;
-        }
-
-        .spark {
-          display: flex;
-          height: 48px;
-          align-items: end;
-          gap: 8px;
-          margin-top: 22px;
-        }
-
-        .spark i {
-          flex: 1;
-          height: 22px;
-          background: linear-gradient(180deg, #7f5fff, #115cff);
-          border-radius: 999px 999px 4px 4px;
-        }
-
-        .spark i:nth-child(2) {
-          height: 31px;
-        }
-
-        .spark i:nth-child(3) {
-          height: 27px;
-        }
-
-        .spark i:nth-child(4) {
-          height: 42px;
-        }
-
-        .spark i:nth-child(5) {
-          height: 35px;
-        }
-
-        .notice-list p {
-          display: grid;
-          grid-template-columns: 28px 1fr auto;
-          gap: 10px;
-          align-items: center;
-          margin: 0;
-          padding: 11px 0;
-          border-top: 1px solid #edf1fb;
-          font-size: 14px;
-        }
-
-        .notice-list small {
-          color: var(--muted);
-        }
-
-        .bottom-count {
-          position: absolute;
-          left: 50%;
-          bottom: 0;
-          z-index: 5;
-          min-width: 160px;
-          padding: 16px 26px;
-          background: #fff;
-          border: 1px solid #e0e7fb;
-          border-radius: 20px;
-          box-shadow: var(--shadow);
-          transform: translateX(-50%);
-          text-align: center;
-          font-size: 35px;
-          font-weight: 950;
-        }
-
-        .bottom-count span:first-child {
-          color: var(--blue);
-        }
-
-        .sparkle {
-          position: absolute;
-          color: #9fc5ff;
-          font-size: 80px;
-          filter: drop-shadow(0 10px 28px rgba(61, 121, 255, 0.3));
-        }
-
-        .sparkle.one {
-          left: 68px;
-          bottom: 365px;
-        }
-
-        .slide-two .slide-inner {
-          display: grid;
-          grid-template-rows: auto 1fr auto;
-          gap: 34px;
-        }
-
-        .problem-title {
-          margin: 86px 0 0;
-          max-width: 920px;
-          font-size: clamp(42px, 5.4vw, 70px);
-          line-height: 1.35;
-          letter-spacing: -0.07em;
-        }
-
-        .problem-sub {
-          margin: 0;
-          font-size: clamp(22px, 2.4vw, 32px);
-          line-height: 1.75;
-          font-weight: 900;
-          letter-spacing: -0.04em;
-        }
-
-        .before-after {
-          display: grid;
-          grid-template-columns: minmax(380px, 0.9fr) 150px minmax(460px, 1.2fr);
+          grid-template-columns: minmax(360px, 0.86fr) 120px minmax(360px, 1fr);
           gap: 24px;
           align-items: center;
+          min-height: 440px;
         }
 
-        .tool-cloud {
+        .tool-stack {
           position: relative;
-          min-height: 300px;
+          min-height: 390px;
         }
 
         .tool-card {
           position: absolute;
           display: grid;
           grid-template-columns: 46px 1fr;
-          gap: 14px;
+          gap: 12px;
           align-items: center;
-          width: 240px;
-          min-height: 88px;
-          padding: 16px;
-          background: rgba(255, 255, 255, 0.92);
-          border: 1px solid #e1e8fb;
-          border-radius: 16px;
-          box-shadow: var(--shadow);
-          font-weight: 950;
+          width: 226px;
+          min-height: 84px;
+          padding: 15px;
+          background: rgba(255, 255, 255, 0.94);
+          border: 1px solid var(--line);
+          border-radius: 18px;
+          box-shadow: var(--shadow-soft);
+          transition: transform 0.78s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.78s ease;
+        }
+
+        .tool-card:nth-child(1) {
+          top: 0;
+          left: 0;
+          transform: rotate(-5deg);
+        }
+
+        .tool-card:nth-child(2) {
+          top: 22px;
+          right: 8px;
+          transform: rotate(3deg);
+        }
+
+        .tool-card:nth-child(3) {
+          top: 128px;
+          left: 40px;
+          transform: rotate(4deg);
+        }
+
+        .tool-card:nth-child(4) {
+          top: 154px;
+          right: 34px;
           transform: rotate(-4deg);
+        }
+
+        .tool-card:nth-child(5) {
+          bottom: 40px;
+          left: 16px;
+          transform: rotate(-2deg);
+        }
+
+        .tool-card:nth-child(6) {
+          right: 0;
+          bottom: 0;
+          transform: rotate(5deg);
+        }
+
+        .flow-stage.is-visible .tool-card {
+          transform: translateX(clamp(42px, 9vw, 120px)) scale(0.92);
+          opacity: 0.72;
         }
 
         .tool-card span {
@@ -1028,265 +1113,203 @@ export default function ComiuLandingPage() {
           width: 44px;
           height: 44px;
           place-items: center;
-          font-size: 29px;
+          color: #fff;
+          background: linear-gradient(135deg, var(--blue), var(--purple));
+          border-radius: 14px;
+          font-size: 13px;
+          font-weight: 950;
+        }
+
+        .tool-card b {
+          font-size: 15px;
         }
 
         .tool-card small {
           display: block;
           margin-top: 4px;
           color: var(--muted);
-          font-size: 13px;
-          font-weight: 800;
+          font-size: 12px;
+          font-weight: 750;
         }
 
-        .tool-card:nth-child(1) {
-          left: 0;
-          top: 0;
+        .flow-arrow {
+          position: relative;
+          height: 150px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, rgba(21, 89, 255, 0.08), rgba(141, 85, 255, 0.34));
+          clip-path: polygon(0 34%, 60% 34%, 60% 8%, 100% 50%, 60% 92%, 60% 66%, 0 66%);
         }
 
-        .tool-card:nth-child(2) {
-          left: 270px;
-          top: 0;
-          transform: rotate(0deg);
+        .flow-result {
+          transform: scale(0.96);
+          transition: transform 0.7s ease;
         }
 
-        .tool-card:nth-child(3) {
-          right: 0;
-          top: 24px;
-          transform: rotate(5deg);
+        .flow-stage.is-visible .flow-result {
+          transform: scale(1);
         }
 
-        .tool-card:nth-child(4) {
-          left: 20px;
-          top: 130px;
-          transform: rotate(-5deg);
-        }
-
-        .tool-card:nth-child(5) {
-          left: 320px;
-          top: 142px;
-          transform: rotate(3deg);
-        }
-
-        .tool-card:nth-child(6) {
-          right: 20px;
-          top: 154px;
-          transform: rotate(7deg);
-        }
-
-        .arrow-flow {
-          width: 145px;
-          height: 245px;
-          background: linear-gradient(90deg, rgba(94, 83, 255, 0.14), rgba(132, 69, 255, 0.56));
-          clip-path: polygon(0 27%, 61% 27%, 61% 0, 100% 50%, 61% 100%, 61% 73%, 0 73%);
-          filter: drop-shadow(0 18px 35px rgba(93, 73, 255, 0.24));
-        }
-
-        .unified-title {
-          align-self: end;
+        .flow-copy {
+          position: relative;
+          z-index: 2;
+          margin-top: 34px;
           color: transparent;
-          background: linear-gradient(100deg, var(--blue), var(--purple));
+          background: linear-gradient(90deg, var(--blue), var(--purple));
           background-clip: text;
           -webkit-background-clip: text;
-          font-size: clamp(38px, 4.5vw, 60px);
+          font-size: clamp(28px, 4vw, 50px);
           font-weight: 950;
-          line-height: 1.35;
           letter-spacing: -0.07em;
+          text-align: center;
         }
 
-        .full-dashboard {
-          padding: 28px;
-          background: rgba(255, 255, 255, 0.96);
-          border: 1px solid #e4eafd;
-          border-radius: 30px;
-          box-shadow: var(--shadow);
-        }
-
-        .wide-band {
+        .statement {
           position: relative;
-          z-index: 3;
-          margin: 20px auto 0;
-          padding: 24px 36px;
+          z-index: 1;
+          width: min(100%, 1240px);
+          margin-inline: auto;
+          padding: clamp(88px, 12vw, 160px) var(--page-x);
+          overflow: hidden;
           color: #fff;
-          background: linear-gradient(95deg, var(--blue), #a64bff);
-          border-radius: 999px;
-          text-align: center;
-          font-size: clamp(24px, 2.8vw, 38px);
-          font-weight: 950;
-          letter-spacing: 0.08em;
+          background:
+            radial-gradient(circle at 15% 18%, rgba(114, 141, 255, 0.45), transparent 28%),
+            radial-gradient(circle at 85% 24%, rgba(223, 255, 79, 0.16), transparent 28%),
+            linear-gradient(135deg, #081037, #17215a 54%, #3d2b8c);
+          border-radius: 46px;
+          box-shadow: 0 26px 80px rgba(12, 18, 58, 0.22);
         }
 
-        .slide-three .slide-inner,
-        .slide-four .slide-inner,
-        .slide-five .slide-inner {
-          padding-top: 32px;
-        }
-
-        .section-title {
-          margin: 64px 0 14px;
-          text-align: center;
-          font-size: clamp(52px, 6.4vw, 88px);
-          line-height: 1.1;
-          font-weight: 950;
-          letter-spacing: -0.08em;
-        }
-
-        .section-title.left {
-          text-align: left;
-        }
-
-        .section-subtitle {
-          margin: 0 0 52px;
-          color: #49536d;
-          text-align: center;
-          font-size: clamp(25px, 2.6vw, 36px);
-          font-weight: 900;
-          letter-spacing: 0.06em;
-        }
-
-        .features-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 28px;
-        }
-
-        .feature-card {
-          min-height: 445px;
-          padding: 38px 38px 32px;
-          background: rgba(255, 255, 255, 0.92);
-          border: 1px solid #e4eafd;
-          border-radius: 28px;
-          box-shadow: var(--shadow);
-        }
-
-        .feature-heading {
-          display: flex;
-          align-items: center;
-          gap: 18px;
-          margin-bottom: 30px;
-        }
-
-        .feature-heading span {
-          display: grid;
-          width: 54px;
-          height: 54px;
-          place-items: center;
-          color: #fff;
-          background: linear-gradient(135deg, var(--blue), var(--purple));
+        .statement::before {
+          position: absolute;
+          top: -160px;
+          left: 50%;
+          width: 780px;
+          height: 780px;
+          content: "";
+          background: conic-gradient(from 90deg, transparent, rgba(255, 255, 255, 0.17), transparent, rgba(223, 255, 79, 0.14), transparent);
           border-radius: 50%;
-          box-shadow: 0 12px 28px rgba(72, 73, 255, 0.24);
-          font-size: 29px;
+          filter: blur(24px);
+          transform: translateX(-50%);
+          animation: glow-spin 18s linear infinite;
+        }
+
+        .statement-inner {
+          position: relative;
+          z-index: 1;
+          width: min(930px, 100%);
+          margin: 0 auto;
+          text-align: center;
+        }
+
+        .statement h2 {
+          margin-bottom: 28px;
+          font-size: clamp(42px, 6vw, 78px);
+          line-height: 1.14;
           font-weight: 950;
         }
 
-        .feature-heading h3 {
-          margin: 0;
-          font-size: clamp(25px, 2.4vw, 35px);
-          letter-spacing: -0.06em;
+        .statement h2 span {
+          color: var(--lime);
         }
 
-        .feature-heading strong {
-          color: var(--blue);
+        .statement p {
+          color: rgba(255, 255, 255, 0.78);
+          font-size: clamp(16px, 2vw, 22px);
+          line-height: 2;
+          font-weight: 700;
         }
 
-        .feature-card > p {
-          margin: 26px 0 0;
-          color: #1f2948;
-          font-size: clamp(19px, 1.9vw, 25px);
-          line-height: 1.6;
-          text-align: center;
-          font-weight: 850;
-        }
-
-        .feature-profile,
-        .feature-event,
-        .feature-line,
-        .feature-payment {
-          min-height: 190px;
-          padding: 24px;
-          background: #fff;
-          border: 1px solid #e4eafd;
-          border-radius: 22px;
-          box-shadow: 0 14px 32px rgba(60, 82, 160, 0.11);
-        }
-
-        .feature-profile {
+        .statement-list {
           display: grid;
-          grid-template-columns: 148px 1fr;
-          gap: 22px;
-          align-items: center;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 10px;
+          margin: 34px 0;
         }
 
-        .feature-profile .event-thumb {
-          width: 148px;
-          height: 128px;
-          border-radius: 16px;
-        }
-
-        .feature-profile b {
-          display: block;
-          font-size: 25px;
-        }
-
-        .feature-profile small {
-          color: var(--muted);
-          font-weight: 850;
-        }
-
-        .feature-profile p {
-          display: flex;
-          gap: 22px;
-          margin: 18px 0 0;
-          color: #314169;
+        .statement-list span {
+          display: grid;
+          min-height: 84px;
+          place-items: center;
+          padding: 12px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          border-radius: 18px;
           font-size: 14px;
           font-weight: 900;
         }
 
-        .feature-event {
+        .features-section .section-head {
           display: grid;
-          grid-template-columns: 160px 1fr;
-          gap: 22px;
+          grid-template-columns: 0.8fr 1fr;
+          gap: 26px;
+          align-items: end;
+          margin-bottom: 30px;
+        }
+
+        .feature-track {
+          display: grid;
+          grid-auto-columns: minmax(290px, 380px);
+          grid-auto-flow: column;
+          gap: 18px;
+          overflow-x: auto;
+          overscroll-behavior-inline: contain;
+          padding: 6px 2px 24px;
+          scrollbar-width: thin;
+          scroll-snap-type: x mandatory;
+        }
+
+        .feature-card {
+          display: grid;
+          min-height: 420px;
+          align-content: space-between;
+          padding: 24px;
+          background: rgba(255, 255, 255, 0.92);
+          border: 1px solid var(--line);
+          border-radius: 26px;
+          box-shadow: var(--shadow-soft);
+          scroll-snap-align: start;
+          transition: transform 0.22s ease, box-shadow 0.22s ease;
+        }
+
+        .feature-card:active {
+          transform: scale(0.985);
+        }
+
+        .feature-card h3 {
+          margin-bottom: 12px;
+          font-size: 23px;
+          line-height: 1.35;
+          letter-spacing: -0.05em;
+        }
+
+        .feature-card p {
+          color: var(--muted);
+          font-size: 14px;
+          line-height: 1.85;
+          font-weight: 650;
+        }
+
+        .feature-mock {
+          min-height: 154px;
+          margin: 18px 0;
+          padding: 16px;
+          background: #fff;
+          border: 1px solid #e5ebfb;
+          border-radius: 20px;
+          box-shadow: 0 14px 28px rgba(35, 61, 145, 0.08);
+        }
+
+        .card-mini,
+        .blog-mini {
+          display: grid;
+          grid-template-columns: 62px 1fr;
+          gap: 13px;
           align-items: center;
-          position: relative;
         }
 
-        .feature-event .event-thumb {
-          width: 160px;
-          height: 138px;
-          border-radius: 16px;
-        }
-
-        .feature-event em {
-          display: inline-block;
-          margin-bottom: 8px;
-          padding: 7px 16px;
-          color: var(--blue);
-          background: #eaf0ff;
-          border-radius: 999px;
-          font-style: normal;
-          font-weight: 950;
-        }
-
-        .feature-event b {
-          display: block;
-          font-size: 24px;
-        }
-
-        .feature-event small {
-          display: block;
-          margin: 9px 0;
-          color: #293653;
-          font-weight: 850;
-        }
-
-        .feature-event p {
-          margin: 0;
-          color: var(--blue);
-          font-weight: 950;
-        }
-
-        .feature-event button,
-        .feature-payment button {
+        .card-mini button {
+          grid-column: 1 / -1;
+          min-height: 44px;
           border: 0;
           color: #fff;
           background: var(--blue);
@@ -1294,1293 +1317,1260 @@ export default function ComiuLandingPage() {
           font-weight: 950;
         }
 
-        .feature-event button {
-          position: absolute;
-          right: 22px;
-          bottom: 22px;
-          padding: 12px 22px;
+        .feature-mock b {
+          display: block;
+          font-size: 15px;
+          line-height: 1.5;
         }
 
-        .feature-line {
-          position: relative;
-          display: grid;
-          gap: 12px;
-          background: linear-gradient(135deg, #cfe1ff, #87b3ff);
+        .feature-mock small {
+          color: var(--muted);
+          font-weight: 760;
         }
 
-        .feature-line i {
-          position: absolute;
-          left: -40px;
-          top: 64px;
+        .line-mini {
           display: grid;
-          width: 76px;
-          height: 76px;
+          gap: 10px;
+          background: linear-gradient(135deg, #eafff2, #eef5ff);
+        }
+
+        .line-mini span {
+          display: grid;
+          width: 52px;
+          height: 52px;
           place-items: center;
           color: #fff;
-          background: #13c45c;
-          border-radius: 50%;
-          box-shadow: 0 14px 30px rgba(19, 196, 92, 0.26);
-          font-style: normal;
-          font-size: 17px;
+          background: var(--green);
+          border-radius: 16px;
           font-weight: 950;
         }
 
-        .feature-line p {
+        .line-mini p {
           width: fit-content;
-          max-width: 82%;
           margin: 0;
-          padding: 14px 18px;
+          padding: 10px 12px;
+          color: var(--ink);
           background: #fff;
-          border-radius: 16px;
-          font-size: 18px;
-          font-weight: 850;
+          border-radius: 14px;
+          font-size: 13px;
+          font-weight: 780;
         }
 
-        .feature-line button {
-          width: fit-content;
-          margin-top: 2px;
-          padding: 13px 46px;
-          border: 1px solid #dbe5ff;
-          color: var(--blue);
-          background: #fff;
-          border-radius: 12px;
+        .pay-mini {
+          display: grid;
+          align-content: center;
+          justify-items: center;
+          gap: 8px;
+        }
+
+        .pay-mini strong {
+          font-size: 42px;
+        }
+
+        .pay-mini span {
+          padding: 8px 14px;
+          color: var(--green);
+          background: #eafff2;
+          border-radius: 999px;
           font-weight: 950;
         }
 
-        .feature-payment {
+        .roster-mini {
           display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 18px;
+          gap: 8px;
         }
 
-        .feature-payment > div {
-          padding: 18px;
-          background: #fff;
-          border: 1px solid #e8eefb;
-          border-radius: 16px;
+        .roster-mini p {
+          display: grid;
+          grid-template-columns: 32px 1fr auto;
+          gap: 10px;
+          align-items: center;
+          margin: 0;
+          padding: 10px;
+          background: #f8faff;
+          border-radius: 12px;
         }
 
-        .feature-payment span {
-          color: #293653;
+        .roster-mini i {
+          width: 32px;
+          height: 32px;
+          background: linear-gradient(135deg, #95c6ff, #ffa8d6);
+          border-radius: 50%;
+        }
+
+        .roster-mini span {
+          color: var(--green);
+          font-size: 12px;
           font-weight: 900;
         }
 
-        .feature-payment b {
-          display: block;
-          margin: 10px 0;
-          font-size: 34px;
-        }
-
-        .feature-payment small {
-          color: var(--muted);
-        }
-
-        .feature-payment button {
-          width: 100%;
-          margin-top: 20px;
-          padding: 14px;
-        }
-
-        .feature-payment p {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin: 10px 0;
-          font-size: 14px;
-        }
-
-        .feature-payment .face {
-          width: 34px;
-          height: 34px;
-        }
-
-        .note-line {
-          position: relative;
-          z-index: 4;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 26px;
-          margin: 50px auto 0;
-          color: var(--blue);
-          font-size: clamp(24px, 2.4vw, 34px);
-          font-weight: 950;
-          letter-spacing: -0.04em;
-        }
-
-        .note-line span {
+        .calendar-section {
           display: grid;
-          width: 74px;
-          height: 74px;
-          place-items: center;
-          background: #fff;
-          border: 1px solid #e2e9fb;
-          border-radius: 50%;
-          box-shadow: var(--shadow);
-        }
-
-        .note-line strong {
-          color: transparent;
-          background: linear-gradient(90deg, #1557ff, #9c45ff);
-          background-clip: text;
-          -webkit-background-clip: text;
-        }
-
-        .slide-four .section-title {
-          margin-top: 54px;
-        }
-
-        .operation-card {
-          display: grid;
-          grid-template-columns: 0.85fr 1.15fr;
-          gap: 32px;
+          grid-template-columns: minmax(320px, 0.82fr) minmax(340px, 1fr);
+          gap: clamp(26px, 5vw, 68px);
           align-items: center;
-          margin-top: 40px;
-          padding: 40px;
-          background: rgba(255, 255, 255, 0.9);
-          border: 1px solid #e4eafd;
-          border-radius: 30px;
-          box-shadow: var(--shadow);
         }
 
-        .operation-copy {
-          padding: 20px 0;
-        }
-
-        .number-orb {
-          display: grid;
-          width: 88px;
-          height: 88px;
-          place-items: center;
-          color: #fff;
-          background: linear-gradient(135deg, var(--blue), var(--purple));
-          border-radius: 50%;
-          box-shadow: 0 18px 38px rgba(80, 73, 255, 0.28);
-          font-size: 38px;
-          font-weight: 950;
-        }
-
-        .operation-copy h3 {
-          margin: 40px 0 22px;
-          font-size: clamp(38px, 4.5vw, 62px);
-          line-height: 1.28;
-          letter-spacing: -0.08em;
-        }
-
-        .operation-copy h3 strong {
-          color: var(--blue);
-        }
-
-        .operation-copy p {
-          color: #1d2948;
-          font-size: clamp(20px, 2vw, 28px);
-          line-height: 1.8;
-          font-weight: 800;
-          letter-spacing: -0.03em;
-        }
-
-        .line-remind {
-          display: flex;
-          max-width: 430px;
-          align-items: center;
-          justify-content: space-between;
-          gap: 20px;
-          margin-top: 50px;
-          padding: 20px 26px;
-          background: #fff;
-          border: 1px solid #e4eafd;
-          border-radius: 18px;
-          box-shadow: 0 15px 32px rgba(58, 78, 160, 0.12);
-          font-size: 22px;
-          font-weight: 950;
-        }
-
-        .line-remind i {
-          display: grid;
-          width: 58px;
-          height: 58px;
-          place-items: center;
-          color: #fff;
-          background: #12c45d;
-          border-radius: 16px;
-          font-style: normal;
-          font-size: 15px;
-        }
-
-        .line-remind span {
-          color: #9b84ff;
-          font-size: 28px;
+        .calendar-copy {
+          max-width: 520px;
         }
 
         .calendar-card {
-          padding: 30px;
-          background: rgba(255, 255, 255, 0.98);
-          border: 1px solid #e4eafd;
-          border-radius: 28px;
+          padding: clamp(18px, 3vw, 32px);
+          background: rgba(255, 255, 255, 0.94);
+          border: 1px solid var(--line);
+          border-radius: 30px;
           box-shadow: var(--shadow);
         }
 
         .calendar-head {
           display: flex;
           align-items: center;
-          gap: 22px;
-          margin-bottom: 28px;
-          font-size: 26px;
-          font-weight: 950;
-        }
-
-        .calendar-head button {
-          display: grid;
-          width: 42px;
-          height: 42px;
-          place-items: center;
-          border: 0;
-          background: #fff;
-          border-radius: 50%;
-          box-shadow: 0 8px 20px rgba(44, 68, 145, 0.1);
-          font-size: 28px;
+          justify-content: space-between;
+          margin-bottom: 18px;
         }
 
         .calendar-head b {
-          flex: 1;
+          font-size: 22px;
         }
 
-        .calendar-head em {
-          padding: 10px 18px;
+        .calendar-head span {
+          padding: 8px 12px;
           color: #fff;
           background: var(--blue);
           border-radius: 999px;
-          font-size: 18px;
-          font-style: normal;
+          font-size: 12px;
+          font-weight: 950;
         }
 
         .calendar-grid {
           display: grid;
           grid-template-columns: repeat(7, 1fr);
-          gap: 8px;
+          gap: 6px;
+          margin-bottom: 18px;
           text-align: center;
         }
 
-        .calendar-grid.days {
-          margin-bottom: 12px;
-          font-weight: 950;
-        }
-
         .calendar-grid span {
-          position: relative;
           display: grid;
-          min-height: 46px;
+          min-height: 38px;
           place-items: center;
           border-radius: 50%;
-          font-size: 20px;
-          font-weight: 850;
+          color: #283452;
+          font-weight: 780;
         }
 
-        .calendar-grid .selected {
+        .calendar-grid .day {
+          color: var(--muted);
+          font-size: 12px;
+        }
+
+        .calendar-grid .active {
           color: var(--blue);
-          background: #efe9ff;
-          outline: 3px solid #9f83ff;
+          background: #efeaff;
+          outline: 2px solid #a98cff;
         }
 
-        .calendar-grid .with-dot::after {
-          position: absolute;
-          bottom: 2px;
-          width: 7px;
-          height: 7px;
-          content: "";
-          background: var(--green);
-          border-radius: 50%;
-        }
-
-        .calendar-events {
-          margin-top: 24px;
-        }
-
-        .calendar-events p {
+        .calendar-list {
           display: grid;
-          grid-template-columns: 76px 1fr auto 20px;
-          gap: 16px;
+          gap: 10px;
+        }
+
+        .calendar-list article {
+          display: grid;
+          grid-template-columns: auto 1fr auto;
+          gap: 12px;
           align-items: center;
-          margin: 12px 0;
-          padding: 12px 18px;
+          padding: 12px;
           background: #fff;
-          border: 1px solid #e6ecfb;
+          border: 1px solid #e7edfb;
           border-radius: 18px;
-          box-shadow: 0 10px 22px rgba(58, 78, 160, 0.08);
+          box-shadow: 0 10px 22px rgba(35, 61, 145, 0.07);
         }
 
-        .calendar-events .event-thumb {
-          width: 72px;
-          height: 58px;
-        }
-
-        .calendar-events b {
-          font-size: 24px;
-        }
-
-        .calendar-events em {
-          padding: 10px 18px;
-          border-radius: 999px;
-          font-size: 17px;
-          font-style: normal;
+        .calendar-list time {
+          color: var(--blue);
           font-weight: 950;
         }
 
-        .pill-blue {
+        .calendar-list b {
+          display: block;
+        }
+
+        .calendar-list small {
+          color: var(--muted);
+          font-weight: 750;
+        }
+
+        .event-status {
+          padding: 8px 10px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 950;
+          white-space: nowrap;
+        }
+
+        .event-status.blue {
           color: var(--blue);
           background: #eef3ff;
         }
 
-        .pill-green {
-          color: #0fa856;
-          background: #eafff1;
+        .event-status.green {
+          color: var(--green);
+          background: #eafff3;
         }
 
-        .pill-pink {
-          color: #ff3d94;
+        .event-status.pink {
+          color: var(--pink);
           background: #fff0f8;
         }
 
-        .timeline-list {
-          display: grid;
-          gap: 15px;
+        .event-status.gray {
+          color: #788198;
+          background: #f0f3f8;
         }
 
-        .timeline-row {
-          display: grid;
-          grid-template-columns: 70px 16px 108px 1fr auto;
-          gap: 16px;
-          align-items: center;
-        }
-
-        .timeline-row time {
-          display: grid;
-          width: 60px;
-          height: 60px;
-          place-items: center;
-          color: var(--blue);
-          background: #fff;
-          border: 1px solid #e4eafd;
-          border-radius: 50%;
-          font-size: 21px;
-          font-weight: 950;
-          box-shadow: 0 10px 22px rgba(58, 78, 160, 0.08);
-        }
-
-        .timeline-row .dot {
-          width: 12px;
-          height: 12px;
-          background: var(--blue);
-          border-radius: 50%;
-          box-shadow: 0 0 0 5px #e8efff;
-        }
-
-        .timeline-row .event-thumb {
-          width: 100px;
-          height: 64px;
-        }
-
-        .timeline-row p {
-          margin: 0;
-          font-size: 20px;
-          font-weight: 950;
-        }
-
-        .timeline-row small {
-          display: block;
-          margin-top: 5px;
-          color: var(--muted);
-          font-size: 13px;
-          font-weight: 850;
-        }
-
-        .timeline-row em {
-          color: #293653;
-          font-style: normal;
-          font-weight: 950;
-        }
-
-        .stats-row {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 16px;
-          margin-top: 30px;
-        }
-
-        .stats-row div {
-          padding: 22px;
-          background: #fff;
-          border: 1px solid #e4eafd;
-          border-radius: 18px;
-          box-shadow: 0 10px 22px rgba(58, 78, 160, 0.08);
-          text-align: center;
-          font-size: 18px;
-          font-weight: 950;
-        }
-
-        .stats-row strong {
-          display: block;
-          margin-top: 8px;
-          color: var(--blue);
-          font-size: 42px;
-          letter-spacing: -0.04em;
-        }
-
-        .slide-dots {
+        .calendar-cta {
           display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin-top: 16px;
+        }
+
+        .calendar-cta .button {
+          flex: 1 1 180px;
+        }
+
+        .line-label {
+          display: inline-flex;
+          min-height: 46px;
+          align-items: center;
           justify-content: center;
-          gap: 12px;
-          margin-top: 28px;
-        }
-
-        .slide-dots i {
-          width: 16px;
-          height: 16px;
-          background: linear-gradient(135deg, #81a9ff, #a64bff);
-          border-radius: 50%;
-        }
-
-        .final-layout {
-          display: grid;
-          grid-template-columns: minmax(500px, 1fr) minmax(420px, 0.88fr);
-          gap: 44px;
-          align-items: center;
-          margin-top: 80px;
-        }
-
-        .final-copy h1 {
-          margin: 0;
-          font-size: clamp(54px, 6.1vw, 82px);
-          line-height: 1.45;
-          letter-spacing: -0.08em;
-        }
-
-        .final-copy h1 strong {
-          color: transparent;
-          background: linear-gradient(90deg, #8e40ff, #175cff);
-          background-clip: text;
-          -webkit-background-clip: text;
-        }
-
-        .final-copy p {
-          margin: 38px 0 0;
-          font-size: clamp(26px, 2.5vw, 36px);
-          line-height: 1.82;
-          font-weight: 900;
-          letter-spacing: -0.04em;
-        }
-
-        .final-copy p strong {
-          color: var(--blue);
-        }
-
-        .phone-stage {
-          position: relative;
-          min-height: 650px;
-        }
-
-        .profile-phone {
-          position: absolute;
-          right: 74px;
-          top: 0;
-          width: 350px;
-          min-height: 625px;
-          padding: 16px;
-          background: #101831;
-          border-radius: 42px;
-          box-shadow: 0 26px 60px rgba(35, 61, 145, 0.25);
-          transform: rotate(9deg);
-        }
-
-        .profile-phone::before {
-          position: absolute;
-          top: 13px;
-          left: 50%;
-          width: 110px;
-          height: 30px;
-          content: "";
-          background: #070a17;
-          border-radius: 0 0 18px 18px;
-          transform: translateX(-50%);
-        }
-
-        .profile-phone > .logo-word,
-        .phone-topbar,
-        .profile-cover,
-        .profile-body {
-          position: relative;
-          z-index: 1;
-        }
-
-        .phone-topbar {
-          display: flex;
-          justify-content: space-between;
-          padding: 8px 16px 14px;
-          color: #fff;
-          font-size: 12px;
-          font-weight: 900;
-        }
-
-        .phone-topbar i {
-          width: 48px;
-          height: 12px;
-          background: #fff;
-          border-radius: 999px;
-        }
-
-        .profile-phone > .logo-word {
-          margin: 8px 0 12px 16px;
-          font-size: 26px;
-        }
-
-        .profile-cover {
-          height: 165px;
-          overflow: hidden;
-          background: linear-gradient(135deg, #7cc4ff, #b7f1b1);
-          border-radius: 24px 24px 0 0;
-        }
-
-        .profile-cover i {
-          position: absolute;
-          bottom: 22px;
-          width: 30px;
-          height: 54px;
-          background: rgba(255, 255, 255, 0.75);
-          border-radius: 999px 999px 8px 8px;
-        }
-
-        .profile-cover i:nth-child(1) {
-          left: 62px;
-          height: 70px;
-        }
-
-        .profile-cover i:nth-child(2) {
-          left: 122px;
-          height: 88px;
-        }
-
-        .profile-cover i:nth-child(3) {
-          left: 182px;
-          height: 66px;
-        }
-
-        .profile-cover i:nth-child(4) {
-          left: 242px;
-          height: 82px;
-        }
-
-        .profile-body {
-          min-height: 390px;
-          padding: 18px;
-          background: #fff;
-          border-radius: 0 0 28px 28px;
-        }
-
-        .profile-logo {
-          display: grid;
-          width: 70px;
-          height: 70px;
-          place-items: center;
-          margin-top: -54px;
-          color: var(--blue);
-          background: #fff;
-          border: 3px solid #edf3ff;
-          border-radius: 50%;
-          font-size: 15px;
-          font-weight: 950;
-        }
-
-        .profile-body h3 {
-          margin: 12px 0 8px;
-          font-size: 22px;
-        }
-
-        .profile-body p {
-          color: #303b5d;
-          font-size: 13px;
-          font-weight: 850;
-          line-height: 1.55;
-        }
-
-        .profile-stats {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
           gap: 8px;
-          margin: 16px 0;
-          color: #5d6680;
-          font-size: 12px;
-          font-weight: 850;
-        }
-
-        .profile-stats b {
-          color: var(--ink);
-          font-size: 15px;
-        }
-
-        .profile-body button {
-          width: 100%;
-          padding: 15px;
-          border: 0;
-          color: #fff;
-          background: linear-gradient(90deg, #115cff, #1aa1ff);
+          padding: 0 16px;
+          color: var(--green);
+          background: #eafff3;
           border-radius: 999px;
+          font-size: 13px;
           font-weight: 950;
         }
 
-        .next-event {
+        .asset-section {
+          padding-top: 0;
+        }
+
+        .asset-grid {
           display: grid;
-          grid-template-columns: 76px 1fr;
-          gap: 12px;
-          align-items: center;
-          margin-top: 18px;
-          padding: 12px;
-          border: 1px solid #e6ecfb;
-          border-radius: 14px;
+          grid-template-columns: minmax(320px, 0.8fr) minmax(360px, 1fr);
+          gap: clamp(28px, 5vw, 70px);
+          align-items: start;
         }
 
-        .next-event .event-thumb {
-          width: 76px;
-          height: 54px;
+        .timeline {
+          position: relative;
+          display: grid;
+          gap: 16px;
+          padding-left: 28px;
         }
 
-        .next-event small {
-          color: var(--muted);
-          font-weight: 800;
-        }
-
-        .floating-chip {
+        .timeline::before {
           position: absolute;
-          display: grid;
-          place-items: center;
-          width: 94px;
-          height: 94px;
-          color: #7f68ff;
-          background: rgba(255, 255, 255, 0.72);
-          border: 1px solid rgba(255, 255, 255, 0.9);
-          border-radius: 22px;
-          box-shadow: 0 18px 42px rgba(60, 84, 165, 0.14);
-          font-size: 42px;
-          transform: rotate(-10deg);
-        }
-
-        .chip-line {
+          top: 16px;
+          bottom: 76px;
           left: 8px;
-          top: 300px;
-          color: #0fc45d;
-        }
-
-        .chip-calendar {
-          right: 0;
-          top: 270px;
-          transform: rotate(11deg);
-        }
-
-        .chip-member {
-          right: 40px;
-          bottom: 128px;
-          transform: rotate(-4deg);
-        }
-
-        .final-message {
-          position: relative;
-          z-index: 5;
-          width: min(900px, 100%);
-          margin: 8px auto 26px;
-          padding: 26px 34px;
-          background: rgba(255, 255, 255, 0.86);
-          border: 1px solid rgba(255, 255, 255, 0.96);
-          border-radius: 18px;
-          box-shadow: var(--shadow);
-          text-align: center;
-          font-size: clamp(21px, 2.2vw, 30px);
-          line-height: 1.65;
-          font-weight: 950;
-        }
-
-        .final-message strong {
-          color: var(--blue);
-        }
-
-        .final-cta-panel {
-          position: relative;
-          z-index: 4;
-          width: min(1120px, 100%);
-          margin: 0 auto;
-          padding: 30px 58px 34px;
-          overflow: hidden;
-          background:
-            radial-gradient(circle at 12% 20%, rgba(255, 255, 255, 0.35), transparent 18%),
-            linear-gradient(105deg, #115cff, #9d3fff);
-          border-radius: 32px;
-          box-shadow: 0 26px 64px rgba(67, 79, 220, 0.28);
-        }
-
-        .yellow-cta {
-          display: flex;
-          width: min(720px, 100%);
-          min-height: 88px;
-          align-items: center;
-          justify-content: center;
-          gap: 34px;
-          margin: 0 auto 28px;
-          color: var(--ink);
-          background: linear-gradient(180deg, #ffff3c, #ffe914);
+          width: 3px;
+          content: "";
+          background: linear-gradient(var(--blue), var(--purple));
           border-radius: 999px;
-          box-shadow: 0 12px 30px rgba(255, 232, 22, 0.34);
-          text-decoration: none;
-          font-size: clamp(26px, 2.8vw, 39px);
+        }
+
+        .timeline-card {
+          position: relative;
+          display: grid;
+          grid-template-columns: auto 1fr;
+          gap: 14px;
+          align-items: center;
+          padding: 16px;
+          background: #fff;
+          border: 1px solid var(--line);
+          border-radius: 18px;
+          box-shadow: var(--shadow-soft);
+          transition-delay: calc(var(--i) * 90ms);
+        }
+
+        .timeline-card::before {
+          position: absolute;
+          left: -27px;
+          width: 14px;
+          height: 14px;
+          content: "";
+          background: var(--blue);
+          border: 4px solid #eaf1ff;
+          border-radius: 50%;
+        }
+
+        .timeline-card time {
+          display: grid;
+          width: 58px;
+          height: 58px;
+          place-items: center;
+          color: var(--blue);
+          background: #eff4ff;
+          border-radius: 50%;
           font-weight: 950;
+        }
+
+        .timeline-card b {
+          display: block;
+          margin-bottom: 4px;
+        }
+
+        .timeline-card small {
+          color: var(--muted);
+          font-weight: 760;
+        }
+
+        .trust-metrics {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 12px;
+          margin-top: 18px;
+        }
+
+        .trust-metrics div {
+          padding: 18px 12px;
+          background: #fff;
+          border: 1px solid var(--line);
+          border-radius: 18px;
+          box-shadow: var(--shadow-soft);
+          text-align: center;
+        }
+
+        .trust-metrics b {
+          display: block;
+          margin-top: 6px;
+          color: var(--blue);
+          font-size: 30px;
           letter-spacing: -0.05em;
         }
 
-        .final-badges {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 28px;
+        .trust-message {
+          margin-top: 26px;
+          padding: 22px;
+          color: #fff;
+          background: linear-gradient(100deg, var(--blue), var(--purple));
+          border-radius: 22px;
+          font-size: clamp(20px, 2vw, 28px);
+          font-weight: 950;
+          text-align: center;
+          box-shadow: var(--shadow);
         }
 
-        .final-badges span {
-          display: flex;
-          min-height: 84px;
+        .line-section {
+          display: grid;
+          grid-template-columns: minmax(320px, 0.82fr) minmax(320px, 1fr);
+          gap: clamp(28px, 5vw, 70px);
           align-items: center;
-          justify-content: center;
-          gap: 18px;
-          color: var(--ink);
-          background: rgba(255, 255, 255, 0.86);
-          border-radius: 22px;
-          font-size: clamp(22px, 2.2vw, 30px);
+        }
+
+        .line-phone {
+          max-width: 390px;
+          margin: 0 auto;
+          padding: 18px;
+          background: #101932;
+          border-radius: 42px;
+          box-shadow: 0 28px 70px rgba(18, 28, 70, 0.22);
+        }
+
+        .line-screen {
+          min-height: 610px;
+          padding: 22px 16px 18px;
+          background: linear-gradient(180deg, #eaf4ff, #f8fbff);
+          border-radius: 30px;
+        }
+
+        .line-screen h3 {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          margin-bottom: 18px;
+          font-size: 17px;
+        }
+
+        .line-screen h3 span {
+          display: grid;
+          width: 36px;
+          height: 36px;
+          place-items: center;
+          color: #fff;
+          background: var(--green);
+          border-radius: 12px;
+          font-size: 12px;
+        }
+
+        .bubble {
+          width: fit-content;
+          max-width: 88%;
+          margin: 10px 0;
+          padding: 13px 15px;
+          background: #fff;
+          border-radius: 17px 17px 17px 5px;
+          box-shadow: 0 8px 18px rgba(28, 64, 130, 0.08);
+          font-size: 14px;
+          font-weight: 750;
+          line-height: 1.65;
+          opacity: 0;
+          transform: translateY(12px);
+          transition: opacity 0.45s ease, transform 0.45s ease;
+          transition-delay: calc(var(--i) * 120ms);
+        }
+
+        .line-phone.is-visible .bubble {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        .benefit-list {
+          display: grid;
+          gap: 12px;
+          margin-top: 24px;
+        }
+
+        .benefit-list p {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin: 0;
+          padding: 16px;
+          background: #fff;
+          border: 1px solid var(--line);
+          border-radius: 16px;
+          box-shadow: var(--shadow-soft);
+          font-weight: 900;
+        }
+
+        .benefit-list span {
+          display: grid;
+          width: 32px;
+          height: 32px;
+          place-items: center;
+          color: #fff;
+          background: linear-gradient(135deg, var(--blue), var(--purple));
+          border-radius: 50%;
+          font-size: 13px;
+        }
+
+        .future-steps {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 16px;
+          margin-top: 36px;
+        }
+
+        .future-card {
+          padding: 24px;
+          background: #fff;
+          border: 1px solid var(--line);
+          border-radius: 24px;
+          box-shadow: var(--shadow-soft);
+        }
+
+        .future-card span {
+          display: grid;
+          width: 48px;
+          height: 48px;
+          place-items: center;
+          color: #fff;
+          background: linear-gradient(135deg, var(--blue), var(--purple));
+          border-radius: 50%;
           font-weight: 950;
         }
 
-        @media (max-width: 1100px) {
-          .story-slide {
-            padding-inline: 22px;
+        .future-card h3 {
+          margin: 20px 0 10px;
+          font-size: 24px;
+          letter-spacing: -0.05em;
+        }
+
+        .future-card p {
+          margin: 0;
+          color: var(--muted);
+          line-height: 1.8;
+          font-weight: 650;
+        }
+
+        .future-message {
+          margin: 34px 0 0;
+          padding: clamp(24px, 4vw, 42px);
+          background: linear-gradient(135deg, #081037, #1c2b71);
+          border-radius: 30px;
+          color: #fff;
+          text-align: center;
+          font-size: clamp(20px, 2.4vw, 32px);
+          line-height: 1.7;
+          font-weight: 950;
+        }
+
+        .future-message strong {
+          color: var(--lime);
+        }
+
+        .final {
+          width: min(1180px, calc(100% - var(--page-x) * 2));
+          margin: 0 auto var(--section-y);
+          padding: clamp(44px, 7vw, 84px) clamp(22px, 6vw, 80px);
+          overflow: hidden;
+          background:
+            radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.34), transparent 22%),
+            radial-gradient(circle at 84% 30%, rgba(223, 255, 79, 0.28), transparent 28%),
+            linear-gradient(120deg, #125bff, #8f4dff);
+          border-radius: 38px;
+          color: #fff;
+          text-align: center;
+          box-shadow: 0 34px 84px rgba(66, 85, 235, 0.28);
+        }
+
+        .final h2 {
+          margin-bottom: 20px;
+          font-size: clamp(38px, 6vw, 72px);
+          line-height: 1.18;
+          font-weight: 950;
+        }
+
+        .final p {
+          width: min(680px, 100%);
+          margin: 0 auto 28px;
+          color: rgba(255, 255, 255, 0.84);
+          font-size: clamp(16px, 2vw, 22px);
+          line-height: 1.9;
+          font-weight: 750;
+        }
+
+        .final .button-primary {
+          min-height: 66px;
+          padding-inline: 34px;
+          color: var(--ink);
+          background: var(--yellow);
+          box-shadow: 0 18px 38px rgba(255, 242, 62, 0.28);
+        }
+
+        .free-tags {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 10px;
+          margin-top: 24px;
+        }
+
+        .free-tags span {
+          min-height: 44px;
+          padding: 12px 18px;
+          color: #fff;
+          background: rgba(255, 255, 255, 0.14);
+          border: 1px solid rgba(255, 255, 255, 0.22);
+          border-radius: 999px;
+          font-weight: 900;
+        }
+
+        .site-footer {
+          position: relative;
+          z-index: 1;
+          width: min(1180px, calc(100% - var(--page-x) * 2));
+          margin: 0 auto;
+          padding: 28px 0 42px;
+          color: var(--muted);
+          border-top: 1px solid var(--line);
+        }
+
+        .fixed-mobile-cta {
+          position: fixed;
+          right: 14px;
+          bottom: 14px;
+          left: 14px;
+          z-index: 60;
+          display: none;
+          min-height: 56px;
+          align-items: center;
+          justify-content: center;
+          color: #fff;
+          background: linear-gradient(95deg, var(--blue), var(--purple));
+          border-radius: 999px;
+          box-shadow: 0 18px 36px rgba(52, 86, 235, 0.3);
+          text-decoration: none;
+          font-weight: 950;
+          transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .fixed-mobile-cta.is-hidden {
+          opacity: 0;
+          pointer-events: none;
+          transform: translateY(12px);
+        }
+
+        .custom-cursor {
+          position: fixed;
+          top: 0;
+          left: 0;
+          z-index: 200;
+          display: grid;
+          width: 16px;
+          height: 16px;
+          place-items: center;
+          pointer-events: none;
+          border: 1px solid rgba(21, 89, 255, 0.9);
+          border-radius: 50%;
+          opacity: 0;
+          transform: translate(calc(var(--x, -100px) - 50%), calc(var(--y, -100px) - 50%));
+          transition: width 0.18s ease, height 0.18s ease, background 0.18s ease, opacity 0.18s ease;
+          mix-blend-mode: multiply;
+        }
+
+        .custom-cursor span {
+          color: #fff;
+          font-size: 10px;
+          font-weight: 950;
+          opacity: 0;
+        }
+
+        .custom-cursor.has-label {
+          width: 78px;
+          height: 78px;
+          background: rgba(21, 89, 255, 0.84);
+          border-color: transparent;
+          mix-blend-mode: normal;
+        }
+
+        .custom-cursor.has-label span {
+          opacity: 1;
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+          .custom-cursor {
+            opacity: 1;
           }
 
-          .hero-one .slide-inner,
-          .before-after,
-          .operation-card,
-          .final-layout {
-            grid-template-columns: 1fr;
-          }
-
-          .hero-copy {
-            padding-top: 70px;
-          }
-
-          .hero-visual {
-            min-height: 980px;
-          }
-
-          .phone-shell {
-            right: 50%;
-            transform: translateX(50%);
-          }
-
-          .members-card {
-            left: 4%;
-          }
-
-          .notice-card {
-            left: auto;
-            right: 4%;
-          }
-
-          .arrow-flow {
-            width: 100%;
-            height: 110px;
-            transform: rotate(90deg) scale(0.7);
-            justify-self: center;
-          }
-
-          .tool-cloud {
-            min-height: 380px;
+          .button:hover,
+          .feature-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
           }
         }
 
-        @media (max-width: 820px) {
-          .story-slide {
-            min-height: auto;
-            padding: 24px 16px 42px;
+        @keyframes glow-spin {
+          to {
+            transform: translateX(-50%) rotate(360deg);
+          }
+        }
+
+        @media (max-width: 980px) {
+          .desktop-nav {
+            display: none;
           }
 
-          .slide-inner {
-            min-height: auto;
+          .menu-button {
+            display: block;
           }
 
-          .story-slide::before {
-            right: -20px;
-            width: 160px;
+          .hero,
+          .flow-stage,
+          .calendar-section,
+          .asset-grid,
+          .line-section {
+            grid-template-columns: 1fr;
           }
 
-          .logo-word {
-            font-size: 34px;
+          .hero {
+            gap: 32px;
+            padding-top: 116px;
           }
 
-          .page-badge {
-            min-width: 82px;
-            padding: 10px 14px;
-            font-size: 18px;
+          .hero-visual {
+            min-height: 560px;
           }
 
-          .hero-title {
-            font-size: 46px;
+          .hero-device {
+            top: 36px;
           }
 
-          .hero-title .comiu-big {
-            font-size: 76px;
+          .floating-card.one {
+            left: 0;
+          }
+
+          .floating-card.two {
+            right: -4px;
+          }
+
+          .floating-card.three {
+            left: 2%;
+          }
+
+          .floating-card.four {
+            right: 4%;
+          }
+
+          .flow-stage {
+            gap: 12px;
+          }
+
+          .flow-arrow {
+            width: min(260px, 72vw);
+            height: 90px;
+            margin: 0 auto;
+            transform: rotate(90deg);
+          }
+
+          .statement-list {
+            grid-template-columns: 1fr;
+          }
+
+          .features-section .section-head {
+            grid-template-columns: 1fr;
+          }
+
+          .future-steps {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 640px) {
+          :root {
+            --page-x: 16px;
+            --section-y: 86px;
+          }
+
+          .site-header {
+            top: 8px;
+            width: calc(100% - 16px);
+            min-height: 60px;
+            padding-left: 12px;
+            border-radius: 18px;
+          }
+
+          .logo span {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+          }
+
+          .logo strong {
+            font-size: 20px;
+          }
+
+          .hero h1 {
+            font-size: clamp(42px, 13vw, 58px);
           }
 
           .hero-lead {
-            font-size: 23px;
+            font-size: 24px;
           }
 
-          .hero-desc {
-            font-size: 17px;
-          }
-
-          .big-cta {
+          .hero-actions .button {
             width: 100%;
-            min-height: 68px;
-            gap: 16px;
-            padding: 0 22px;
-            font-size: 21px;
           }
 
-          .hero-one .big-cta {
+          .hero-visual {
+            min-height: 650px;
+          }
+
+          .hero-device {
+            top: 86px;
+            width: 100%;
+            padding: 10px;
+            border-radius: 28px;
+          }
+
+          .dashboard-mock {
+            padding: 14px;
+            border-radius: 22px;
+          }
+
+          .mock-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .mock-event-row span {
+            width: 82px;
+          }
+
+          .floating-card {
+            min-width: 124px;
+            padding: 12px 14px;
+            border-radius: 16px;
+          }
+
+          .floating-card b {
+            font-size: 18px;
+          }
+
+          .floating-card.one {
+            top: 10px;
+          }
+
+          .floating-card.two {
+            top: 30px;
+          }
+
+          .floating-card.three {
+            bottom: 18px;
+          }
+
+          .floating-card.four {
+            bottom: 70px;
+          }
+
+          .section-title {
+            font-size: clamp(34px, 11vw, 48px);
+          }
+
+          .section-desc,
+          .hero-desc {
+            font-size: 15px;
+          }
+
+          .tool-stack {
+            display: grid;
+            min-height: auto;
+            gap: 10px;
+          }
+
+          .tool-card,
+          .tool-card:nth-child(n) {
             position: relative;
-            bottom: auto;
-            left: auto;
+            inset: auto;
             width: 100%;
             transform: none;
           }
 
-          .big-cta span:first-child {
-            width: 44px;
-            height: 44px;
-            font-size: 20px;
+          .flow-stage.is-visible .tool-card {
+            transform: translateY(0);
+            opacity: 1;
           }
 
-          .hero-visual {
-            min-height: 800px;
-            transform: scale(0.78);
-            transform-origin: top center;
-            margin-bottom: -160px;
+          .flow-copy {
+            text-align: left;
           }
 
-          .phone-shell {
-            width: 430px;
+          .statement {
+            border-radius: 30px;
           }
 
-          .float-side {
-            right: -32px;
-          }
-
-          .members-card,
-          .notice-card {
-            width: 310px;
-          }
-
-          .bottom-count {
-            bottom: 18px;
-          }
-
-          .problem-title,
-          .section-title,
-          .final-copy h1 {
-            font-size: 42px;
-          }
-
-          .problem-sub {
-            font-size: 19px;
-          }
-
-          .tool-cloud {
-            min-height: 560px;
-          }
-
-          .tool-card {
-            position: relative;
-            left: auto !important;
-            right: auto !important;
-            top: auto !important;
-            width: 100%;
-            margin-bottom: 12px;
-            transform: none !important;
-          }
-
-          .full-dashboard {
-            padding: 16px;
-            overflow: hidden;
-          }
-
-          .mock-grid,
-          .features-grid,
-          .feature-payment,
-          .stats-row,
-          .final-badges {
-            grid-template-columns: 1fr;
+          .feature-track {
+            grid-auto-columns: minmax(282px, 86vw);
+            margin-inline: calc(var(--page-x) * -1);
+            padding-inline: var(--page-x);
           }
 
           .feature-card {
-            min-height: auto;
-            padding: 24px;
+            min-height: 438px;
           }
 
-          .feature-profile,
-          .feature-event {
+          .calendar-list article {
             grid-template-columns: 1fr;
           }
 
-          .feature-profile .event-thumb,
-          .feature-event .event-thumb {
+          .calendar-list time {
+            color: var(--muted);
+          }
+
+          .event-status {
+            width: fit-content;
+          }
+
+          .trust-metrics {
+            grid-template-columns: 1fr;
+          }
+
+          .line-phone {
             width: 100%;
+            padding: 10px;
+            border-radius: 32px;
           }
 
-          .operation-card {
-            padding: 24px;
-          }
-
-          .calendar-events p {
-            grid-template-columns: 62px 1fr;
-          }
-
-          .calendar-events em,
-          .calendar-events span {
-            grid-column: 2;
-          }
-
-          .timeline-row {
-            grid-template-columns: 56px 12px 80px 1fr;
-          }
-
-          .timeline-row em {
-            grid-column: 4;
-          }
-
-          .profile-phone {
-            right: 50%;
-            transform: translateX(50%) rotate(4deg) scale(0.86);
-          }
-
-          .phone-stage {
+          .line-screen {
             min-height: 560px;
+            border-radius: 24px;
           }
 
-          .floating-chip {
-            transform: scale(0.8);
+          .fixed-mobile-cta {
+            display: flex;
           }
 
-          .final-copy p {
-            font-size: 21px;
+          .site-footer {
+            padding-bottom: 90px;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          *,
+          *::before,
+          *::after {
+            scroll-behavior: auto !important;
+            animation-duration: 0.001ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.001ms !important;
           }
 
-          .final-cta-panel {
-            padding: 24px 18px;
-          }
-
-          .yellow-cta {
-            min-height: 70px;
-            font-size: 23px;
+          .reveal,
+          .bubble {
+            opacity: 1 !important;
+            transform: none !important;
           }
         }
       `}</style>
 
-      <main className="story-page">
-        <section className="story-slide hero-one" id="top">
-          <div className="slide-inner">
-            <div className="hero-copy">
-              <Logo />
-              <h1 className="hero-title">
-                イベント・サークルの
-                <br />
-                集客なら
-                <strong className="comiu-big">COMIU</strong>
-              </h1>
-              <p className="hero-lead">
-                <span>
-                  団体に合わせた<strong>Webサイト</strong>を
-                  <br />
-                  <strong>無料</strong>で作成
-                </span>
-              </p>
-              <p className="hero-desc">
-                掲載用のホームページなら、もういらない。
-                <br />
-                Webサイトを、育てるWebアプリケーションへ。
-              </p>
-            </div>
+      <main className="comiu-lp" id="top">
+        <div className="custom-cursor" aria-hidden="true">
+          <span />
+        </div>
 
-            <div className="hero-visual" aria-hidden="true">
-              <div className="phone-shell">
-                <div className="phone-screen">
-                  <DashboardMock />
-                </div>
-                <MemberListCard />
-                <NoticeCard />
-              </div>
-              <div className="float-side">
-                <div className="side-stat">
-                  <small>LINE</small>
-                  <span>リマインド</span>
-                </div>
-                <div className="side-stat">
-                  <small>ページ閲覧数</small>
-                  <b>2,842</b>
-                </div>
-                <div className="side-stat">
-                  <small>申込数</small>
-                  <b>+12</b>
-                </div>
-              </div>
-            </div>
-
-            <span className="sparkle one">✦</span>
-            <a className="big-cta" href="/register">
-              <span>↗</span>
-              無料で団体ページを作る
-              <span>›</span>
+        <header className="site-header">
+          <Logo />
+          <nav className="desktop-nav" aria-label="主要ナビゲーション">
+            <a href="#features">できること</a>
+            <a href="#future">導入メリット</a>
+            <a className="nav-cta" href="/register" data-cursor="CREATE">
+              無料で作成する
             </a>
-            <div className="bottom-count">
-              <span>1</span> / 5
+          </nav>
+          <button
+            className="menu-button"
+            type="button"
+            aria-label="メニューを開閉"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((value) => !value)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+        </header>
+
+        <nav className={`mobile-nav ${menuOpen ? "is-open" : ""}`} aria-label="モバイルナビゲーション">
+          <a href="#features" onClick={closeMenu}>
+            できること
+          </a>
+          <a href="#future" onClick={closeMenu}>
+            導入メリット
+          </a>
+          <a className="nav-cta" href="/register" onClick={closeMenu}>
+            無料で団体ページを作る
+          </a>
+        </nav>
+
+        <section className="lp-section hero">
+          <div className="hero-copy reveal">
+            <SectionLabel>EVENT & CIRCLE OPERATING APP</SectionLabel>
+            <h1>
+              イベント・サークルの
+              <br />
+              集客なら<span>COMIU</span>
+            </h1>
+            <p className="hero-lead">
+              団体に合わせたWebサイトを
+              <br />
+              <strong>無料</strong>で作成
+            </p>
+            <p className="hero-sub">
+              掲載用のホームページなら、もういらない。
+              <br />
+              Webサイトを、育てるWebアプリケーションへ。
+            </p>
+            <p className="hero-desc">
+              団体ページ、イベント募集、予約管理、活動ブログ、LINE連携。
+              運営をまとめて、参加者が集まる仕組みをつくる。
+            </p>
+            <div className="hero-actions">
+              <a className="button button-primary" href="/register" data-cursor="CREATE">
+                無料で団体ページを作る
+              </a>
+              <a className="button button-secondary" href="#features">
+                COMIUでできることを見る
+              </a>
+            </div>
+          </div>
+
+          <div className="hero-visual reveal" aria-label="COMIU管理画面のイメージ">
+            <div className="hero-device">
+              <DashboardMock />
+            </div>
+            <div className="floating-card one blue">
+              <small>新規予約</small>
+              <b>+12</b>
+            </div>
+            <div className="floating-card two green">
+              <small>LINE通知</small>
+              <b>送信済み</b>
+            </div>
+            <div className="floating-card three purple">
+              <small>残り枠</small>
+              <b>8名</b>
+            </div>
+            <div className="floating-card four blue">
+              <small>ページ閲覧数</small>
+              <b>+284</b>
             </div>
           </div>
         </section>
 
-        <section className="story-slide slide-two">
-          <div className="slide-inner">
-            <Logo />
-            <PageBadge page="2" />
-            <div>
-              <h2 className="problem-title">毎回、ゼロから運営していませんか？</h2>
-              <p className="problem-sub">
-                告知、申込み、連絡、名簿管理がバラバラだと、
-                <br />
-                運営が大きくなるほど大変になる。
-              </p>
-            </div>
-
-            <div className="before-after">
-              <div className="tool-cloud">
-                {toolCards.map((tool) => (
-                  <div className="tool-card" key={tool[1]}>
-                    <span>{tool[0]}</span>
-                    <b>
-                      {tool[1]}
-                      <small>{tool[2]}</small>
-                    </b>
-                  </div>
-                ))}
-              </div>
-              <div className="arrow-flow" aria-hidden="true" />
-              <div className="full-dashboard">
-                <DashboardMock />
-              </div>
-            </div>
-
-            <div className="unified-title">
-              バラバラだった
-              <br />
-              運営を、
-              <br />
-              ひとつの流れへ。
-            </div>
-            <div className="wide-band">すべてをつなげて、迷わず進める運営へ。</div>
-          </div>
-        </section>
-
-        <section className="story-slide slide-three" id="features">
-          <div className="slide-inner">
-            <Logo />
-            <PageBadge page="3" />
-            <h2 className="section-title">
-              <strong>COMIU</strong> にできること
+        <section className="lp-section problem" aria-labelledby="problem-title">
+          <div className="problem-head reveal">
+            <SectionLabel>BEFORE COMIU</SectionLabel>
+            <h2 className="section-title" id="problem-title">
+              毎回、ゼロから運営していませんか？
             </h2>
-            <p className="section-subtitle">募集する。つながる。積み上がる。</p>
+            <p className="section-desc">
+              イベントを開催するたびに、Instagramで告知して、Googleフォームを作って、LINEで連絡して、スプレッドシートで名簿を確認する。
+              それぞれは便利でも、運営が大きくなるほど、連絡漏れや確認作業が増えていく。
+            </p>
+          </div>
 
-            <div className="features-grid">
-              {featureCards.map((feature) => (
-                <article className="feature-card" key={feature.no}>
-                  <div className="feature-heading">
-                    <span>{feature.no}</span>
-                    <h3>
-                      {feature.title.split("無料").length > 1 ? (
-                        <>
-                          団体ページを<strong>無料</strong>で作成
-                        </>
-                      ) : feature.title.split("自動").length > 1 ? (
-                        <>
-                          公式LINEで<strong>自動リマインド</strong>
-                        </>
-                      ) : feature.title.split("決済").length > 1 ? (
-                        <>
-                          事前<strong>決済</strong>と予約管理
-                        </>
-                      ) : (
-                        <>
-                          イベント募集を<strong>まとめる</strong>
-                        </>
-                      )}
-                    </h3>
-                  </div>
-                  <FeatureMock type={feature.mock} />
+          <div className="flow-stage" aria-label="バラバラな運営がCOMIUにまとまる流れ">
+            <div className="tool-stack">
+              {scatteredTools.map((tool) => (
+                <div className="tool-card" key={tool.title}>
+                  <span>{tool.icon}</span>
+                  <b>
+                    {tool.title}
+                    <small>{tool.text}</small>
+                  </b>
+                </div>
+              ))}
+            </div>
+            <div className="flow-arrow" aria-hidden="true" />
+            <div className="flow-result">
+              <DashboardMock compact />
+            </div>
+          </div>
+          <p className="flow-copy reveal">バラバラだった運営を、ひとつの流れへ。</p>
+        </section>
+
+        <section className="statement reveal" aria-labelledby="statement-title">
+          <div className="statement-inner">
+            <SectionLabel>WHY COMIU</SectionLabel>
+            <h2 id="statement-title">
+              運営が楽になって、
+              <br />
+              <span>団体が大きくなる。</span>
+            </h2>
+            <p>
+              COMIUは、ただ予約を受け付けるだけのサービスではありません。
+              活動の魅力を見せる。イベントを見つけてもらう。参加しやすくする。
+              連絡を自動化する。開催するほど、団体の実績が残る。
+            </p>
+            <div className="statement-list" aria-label="COMIUで起きる変化">
+              <span>魅力を見せる</span>
+              <span>見つけてもらう</span>
+              <span>参加しやすく</span>
+              <span>連絡を自動化</span>
+              <span>実績が残る</span>
+            </div>
+            <p>
+              イベントを繰り返すたびに、次の参加者に選ばれやすい団体へ。
+            </p>
+          </div>
+        </section>
+
+        <section className="lp-section features-section" id="features" aria-labelledby="features-title">
+          <div className="section-head reveal">
+            <div>
+              <SectionLabel>FEATURES</SectionLabel>
+              <h2 className="section-title" id="features-title">
+                COMIUにできること
+              </h2>
+            </div>
+            <p className="section-desc">
+              募集する。つながる。積み上がる。
+              団体運営に必要な仕組みを、ひとつに。
+            </p>
+          </div>
+
+          <div className="feature-track" data-cursor="DRAG" aria-label="COMIUの機能カード">
+            {features.map((feature) => (
+              <article className="feature-card" data-cursor="VIEW" key={feature.title}>
+                <div>
+                  <h3>{feature.title}</h3>
                   <p>{feature.text}</p>
+                </div>
+                <FeatureMock type={feature.type} />
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="lp-section calendar-section" aria-labelledby="calendar-title">
+          <div className="calendar-copy reveal">
+            <SectionLabel>EVENT DISCOVERY</SectionLabel>
+            <h2 className="section-title" id="calendar-title">
+              次のイベントを、迷わず見つけられる。
+            </h2>
+            <p className="section-desc">
+              「次はいつある？」をなくす。活動予定、残り枠、予約状況を、参加者にわかりやすく届ける。
+              予約まで迷わないから、問い合わせも減っていく。
+            </p>
+          </div>
+          <div className="calendar-card reveal" data-cursor="EXPLORE">
+            <div className="calendar-head">
+              <b>2026年7月</b>
+              <span>月表示</span>
+            </div>
+            <div className="calendar-grid" aria-hidden="true">
+              {["日", "月", "火", "水", "木", "金", "土", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19"].map((item, index) => (
+                <span className={index < 7 ? "day" : item === "17" ? "active" : ""} key={`${item}-${index}`}>
+                  {item}
+                </span>
+              ))}
+            </div>
+            <div className="calendar-list">
+              {calendarEvents.map((event) => (
+                <article key={event.name}>
+                  <time>{event.date}</time>
+                  <div>
+                    <b>{event.name}</b>
+                    <small>詳細・場所・参加費をまとめて表示</small>
+                  </div>
+                  <span className={`event-status ${event.tone}`}>{event.status}</span>
                 </article>
               ))}
             </div>
-
-            <div className="note-line">
-              <span>▣</span>
-              活動ブログや実績も蓄積できます。
-            </div>
-          </div>
-        </section>
-
-        <section className="story-slide slide-four">
-          <div className="slide-inner">
-            <Logo />
-            <PageBadge page="4" />
-            <h2 className="section-title">
-              運営が楽になって、<strong>団体が大きくなる。</strong>
-            </h2>
-
-            <div className="operation-card">
-              <div className="operation-copy">
-                <div className="number-orb">1</div>
-                <h3>
-                  次のイベントを、
-                  <br />
-                  <strong>迷わず</strong>見つけられる。
-                </h3>
-                <p>
-                  カレンダーとリストで、予定がひと目でわかる。
-                  <br />
-                  募集も残り枠もすぐに確認できるから、
-                  <br />
-                  参加のきっかけを逃さない。
-                </p>
-                <div className="line-remind">
-                  <i>LINE</i>
-                  LINEで前日通知が届きます
-                  <span>🔔</span>
-                </div>
-              </div>
-              <CalendarMock />
-            </div>
-
-            <div className="operation-card">
-              <div className="operation-copy">
-                <div className="number-orb">2</div>
-                <h3>
-                  開催するたび、
-                  <br />
-                  団体の<strong>信頼</strong>が残る。
-                </h3>
-                <p>
-                  開催履歴やレポートが自動で積み上がる。
-                  <br />
-                  活動の見える化が、メンバーの安心や
-                  <br />
-                  新しい仲間の参加につながる。
-                </p>
-              </div>
-              <div>
-                <div className="timeline-list">
-                  {[
-                    ["4月", "新歓交流会", "参加者 96名"],
-                    ["5月", "バドミントン", "参加者 42名"],
-                    ["6月", "スポーツ交流会", "参加者 85名"],
-                    ["7月", "BBQ", "参加者 71名"],
-                  ].map((item, index) => (
-                    <div className="timeline-row" key={item[0]}>
-                      <time>{item[0]}</time>
-                      <span className="dot" />
-                      <EventThumb tone={index === 3 ? "orange" : "blue"} />
-                      <p>
-                        {item[1]}
-                        <small>開催レポートが残りました</small>
-                      </p>
-                      <em>{item[2]}</em>
-                    </div>
-                  ))}
-                </div>
-                <div className="stats-row">
-                  <div>
-                    活動ブログ更新
-                    <strong>18件</strong>
-                  </div>
-                  <div>
-                    参加者レビュー
-                    <strong>4.8</strong>
-                  </div>
-                  <div>
-                    累計参加者数
-                    <strong>532名</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="note-line">
-              イベントを開くたび、<strong>次が楽になる。</strong>
-            </div>
-            <div className="slide-dots">
-              <i />
-              <i />
-              <i />
-            </div>
-          </div>
-        </section>
-
-        <section className="story-slide slide-five">
-          <div className="slide-inner">
-            <Logo />
-            <PageBadge page="5" />
-            <div className="final-layout">
-              <div className="final-copy">
-                <h1>
-                  あなたの団体を、
-                  <br />
-                  次の参加者に
-                  <br />
-                  <strong>選ばれる場所へ。</strong>
-                </h1>
-                <p>
-                  団体ページ、イベント募集、
-                  <br />
-                  予約管理、LINE連携。
-                  <br />
-                  まずは<strong>無料</strong>で、あなたの団体に
-                  <br />
-                  合ったページを作成しましょう。
-                </p>
-              </div>
-              <div className="phone-stage">
-                <ProfilePhone />
-                <span className="floating-chip chip-line">LINE</span>
-                <span className="floating-chip chip-calendar">📅</span>
-                <span className="floating-chip chip-member">👥</span>
-              </div>
-            </div>
-
-            <div className="final-message">
-              <strong>COMIU</strong>は、イベントを一回成功させるためのツールではない。
-              <br />
-              団体を、続いていく<strong>コミュニティ</strong>へ育てるための仕組み。
-            </div>
-
-            <div className="final-cta-panel">
-              <a className="yellow-cta" href="/register">
-                無料で団体ページを作る <span>›</span>
+            <div className="calendar-cta">
+              <a className="button button-primary" href="/register" data-cursor="CREATE">
+                予約する
               </a>
-              <div className="final-badges">
-                <span>¥ 登録無料</span>
-                <span>▣ 初期費用なし</span>
-                <span>◆ 専門知識不要</span>
-              </div>
+              <span className="line-label">LINEで前日通知が届きます</span>
             </div>
           </div>
         </section>
+
+        <section className="lp-section asset-section" aria-labelledby="asset-title">
+          <div className="asset-grid">
+            <div className="reveal">
+              <SectionLabel>ASSET</SectionLabel>
+              <h2 className="section-title" id="asset-title">
+                開催するたび、団体の信頼が残る。
+              </h2>
+              <p className="section-desc">
+                SNS投稿は流れていく。でも、活動レポート、イベント実績、参加者の声は、団体ページに残り続ける。
+                開催するほど、初めての人にも「ちゃんと活動している団体」と伝わっていく。
+              </p>
+            </div>
+            <div>
+              <div className="timeline" aria-label="活動実績のタイムライン">
+                {timeline.map((item, index) => (
+                  <article className="timeline-card reveal" style={{ "--i": index } as React.CSSProperties} key={item.month}>
+                    <time>{item.month}</time>
+                    <div>
+                      <b>{item.title}</b>
+                      <small>{item.text}</small>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <div className="trust-metrics reveal">
+                <div>
+                  活動ブログ更新
+                  <b>18件</b>
+                </div>
+                <div>
+                  参加者レビュー
+                  <b>4.8</b>
+                </div>
+                <div>
+                  累計参加者数
+                  <b>532名</b>
+                </div>
+              </div>
+              <p className="trust-message reveal">団体の信頼が、次の参加者へつながる。</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="lp-section line-section" aria-labelledby="line-title">
+          <div className="line-phone" data-cursor="EXPLORE" aria-label="LINE自動リマインドの画面イメージ">
+            <div className="line-screen">
+              <h3>
+                <span>LINE</span>
+                COMIU公式LINE
+              </h3>
+              {lineBubbles.map((bubble, index) => (
+                <p className="bubble" style={{ "--i": index } as React.CSSProperties} key={bubble}>
+                  {bubble}
+                </p>
+              ))}
+            </div>
+          </div>
+          <div className="reveal">
+            <SectionLabel>LINE REMIND</SectionLabel>
+            <h2 className="section-title" id="line-title">
+              連絡を頑張る運営から、参加しやすい仕組みをつくる運営へ。
+            </h2>
+            <p className="section-desc">
+              予約後の案内やイベント前日の通知を、公式LINEで自動化。参加者の不安を減らし、主催者の確認作業も軽くする。
+            </p>
+            <div className="benefit-list">
+              {["案内漏れを減らす", "前日の参加確認を自動化", "当日の問い合わせを減らす", "無断キャンセル対策につながる"].map((item, index) => (
+                <p key={item}>
+                  <span>{index + 1}</span>
+                  {item}
+                </p>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="lp-section" id="future" aria-labelledby="future-title">
+          <div className="reveal">
+            <SectionLabel>AFTER COMIU</SectionLabel>
+            <h2 className="section-title" id="future-title">
+              イベントを開くたび、次が楽になる。
+            </h2>
+            <p className="section-desc">
+              募集、予約、連絡、実績がひとつにつながると、毎回ゼロから作り直す運営ではなくなる。
+            </p>
+          </div>
+          <div className="future-steps">
+            {[
+              ["01", "見つけてもらえる", "団体ページとポータル掲載で、新しい参加者に届く。"],
+              ["02", "参加しやすくなる", "イベント情報、残り枠、予約、決済、LINE案内がつながる。"],
+              ["03", "団体が積み上がる", "活動実績と参加者とのつながりが残り、次の集客につながる。"],
+            ].map((step) => (
+              <article className="future-card reveal" key={step[0]}>
+                <span>{step[0]}</span>
+                <h3>{step[1]}</h3>
+                <p>{step[2]}</p>
+              </article>
+            ))}
+          </div>
+          <p className="future-message reveal">
+            COMIUは、イベントを一回成功させるためのツールではない。
+            <br />
+            <strong>団体を、続いていくコミュニティへ育てるための仕組み。</strong>
+          </p>
+        </section>
+
+        <section className="final final-cta reveal" aria-labelledby="final-title">
+          <h2 id="final-title">あなたの団体を、次の参加者に選ばれる場所へ。</h2>
+          <p>
+            団体ページ、イベント募集、予約管理、LINE連携。
+            まずは無料で、あなたの団体に合ったページを作成しましょう。
+          </p>
+          <a className="button button-primary" href="/register" data-cursor="CREATE">
+            無料で団体ページを作る
+          </a>
+          <div className="free-tags" aria-label="無料で始めやすい理由">
+            <span>登録無料</span>
+            <span>初期費用なし</span>
+            <span>専門知識不要</span>
+          </div>
+        </section>
+
+        <footer className="site-footer">
+          <Logo />
+          <p>© 2026 COMIU. 団体運営を、続いていくコミュニティへ。</p>
+        </footer>
+
+        <a className="fixed-mobile-cta" href="/register">
+          無料で団体ページを作る
+        </a>
       </main>
     </>
   );
