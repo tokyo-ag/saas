@@ -58,28 +58,10 @@ export default function ComiuLandingPage() {
       });
     };
 
-    // B: horizontal scroll (desktop only)
-    const hOuter = document.querySelector<HTMLElement>('.h-scroll-outer');
-    const hTrack = document.querySelector<HTMLElement>('.h-scroll-track');
-    const hDotEls = Array.from(document.querySelectorAll<HTMLElement>('.h-dot'));
-    const updateHScroll = () => {
-      if (!hOuter || !hTrack) return;
-      if (window.innerWidth <= 768) { hTrack.style.transform = ''; return; }
-      const rect = hOuter.getBoundingClientRect();
-      const scrolled = -rect.top;
-      const total = rect.height - window.innerHeight;
-      if (total <= 0) return;
-      const p = Math.max(0, Math.min(1, scrolled / total));
-      hTrack.style.transform = `translateX(-${p * 300}vw)`;
-      const active = Math.round(p * 3);
-      hDotEls.forEach((d, i) => d.classList.toggle('active', i === active));
-    };
-
     // Keep the header readable after scrolling.
     const handleScroll = () => {
       header?.classList.toggle("is-scrolled", window.scrollY > 12);
       updateScrub();
-      updateHScroll();
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -2221,31 +2203,32 @@ export default function ComiuLandingPage() {
           -webkit-background-clip: text;
         }
 
-        /* B: Horizontal scroll */
+        /* B: Feature story sections */
         .h-scroll-outer {
-          height: 400vh;
+          position: relative;
+          z-index: 1;
+          height: auto;
         }
 
         .h-scroll-sticky {
-          position: sticky;
-          top: 0;
-          height: 100vh;
-          overflow: hidden;
+          position: relative;
+          height: auto;
+          overflow: visible;
         }
 
         .h-scroll-track {
-          display: flex;
-          width: 400vw;
-          height: 100%;
-          will-change: transform;
-          transition: transform 0.08s cubic-bezier(0.25, 0, 0, 1);
+          display: grid;
+          width: 100%;
+          height: auto;
+          transform: none !important;
+          transition: none;
         }
 
         .h-panel {
           position: relative;
-          width: 100vw;
-          height: 100%;
-          flex-shrink: 0;
+          width: 100%;
+          min-height: auto;
+          padding: var(--section-y) 0;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -2276,14 +2259,7 @@ export default function ComiuLandingPage() {
 
         /* Progress dots */
         .h-dots {
-          position: absolute;
-          bottom: 28px;
-          left: 50%;
-          transform: translateX(-50%);
-          display: flex;
-          gap: 8px;
-          z-index: 10;
-          pointer-events: none;
+          display: none;
         }
 
         .h-dot {
@@ -2307,7 +2283,7 @@ export default function ComiuLandingPage() {
         @media (max-width: 768px) {
           .h-scroll-outer { height: auto; }
           .h-scroll-sticky { position: static; height: auto; overflow: visible; }
-          .h-scroll-track { flex-direction: column; width: 100%; transition: none; }
+          .h-scroll-track { display: grid; width: 100%; transition: none; }
           .h-panel { width: 100%; height: auto; min-height: 0; padding: var(--section-y) 0; }
           .h-dots { display: none; }
           .h-panel:nth-child(4) .seo-card {
@@ -2461,7 +2437,7 @@ export default function ComiuLandingPage() {
         </div>
 
         {/* B: 横スクロール — ②③④⑤ */}
-        <div className="h-scroll-outer">
+        <div className="h-scroll-outer" id="future">
           <div className="h-scroll-sticky">
             <div className="h-dots" aria-hidden="true">
               {[0, 1, 2, 3].map((i) => (
