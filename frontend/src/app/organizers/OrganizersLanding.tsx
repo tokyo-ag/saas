@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import GoldfishCursor from "./GoldfishCursor";
-import PageGimmicks from "./PageGimmicks";
+import PageFX from "./PageFX";
 
 
 function Logo() {
@@ -2236,8 +2235,7 @@ export default function ComiuLandingPage() {
       `}</style>
 
       <main className="comiu-lp" id="top">
-        <GoldfishCursor />
-        <PageGimmicks />
+        <PageFX />
 
         <header className="site-header">
           <Logo />
