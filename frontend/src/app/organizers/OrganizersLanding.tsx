@@ -2291,10 +2291,8 @@ export default function ComiuLandingPage() {
         {/* ② 公式LINEからワンタップ予約 */}
         <section className="lp-section" aria-labelledby="booking-title">
           <div className="booking-head reveal">
-            <SectionLabel>ONE-TAP BOOKING</SectionLabel>
             <h2 className="section-title" id="booking-title">
-              <span className="lr-wrap"><span className="lr">公式LINEから、</span></span>
-              <span className="lr-wrap"><span className="lr">ワンタップで予約</span></span>
+              <span className="lr-wrap"><span className="lr">公式LINEからワンタップで予約</span></span>
             </h2>
             <p className="section-desc" style={{ maxWidth: 640, margin: "0 auto" }}>
               <span className="lr-wrap"><span className="lr">公式LINEのリッチメニューや予約URLから直接予約。</span></span>
