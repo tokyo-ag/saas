@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import PageFX from "./PageFX";
 
@@ -7,7 +8,7 @@ import PageFX from "./PageFX";
 function Logo() {
   return (
     <a className="logo" href="#top" aria-label="COMIU トップへ">
-      <span aria-hidden="true">C</span>
+      <Image src="/icon.png" alt="" width={36} height={36} className="logo-icon" priority />
       <strong>COMIU</strong>
     </a>
   );
@@ -200,17 +201,11 @@ export default function ComiuLandingPage() {
           text-decoration: none;
         }
 
-        .logo span {
-          display: grid;
+        .logo-icon {
           width: 36px;
           height: 36px;
-          place-items: center;
-          color: #fff;
-          background: linear-gradient(135deg, var(--blue), var(--purple));
-          border-radius: 12px;
-          font-size: 18px;
-          font-weight: 950;
-          box-shadow: 0 10px 24px rgba(46, 92, 255, 0.24);
+          border-radius: 10px;
+          object-fit: contain;
         }
 
         .logo strong,
