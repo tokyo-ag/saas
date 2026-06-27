@@ -327,13 +327,14 @@ export default function ComiuLandingPage() {
 
         .hero-basket {
           position: absolute;
-          right: clamp(24px, 6vw, 92px);
-          bottom: clamp(28px, 7vw, 88px);
-          z-index: 2;
+          top: clamp(250px, 29vw, 340px);
+          right: clamp(18px, 5vw, 76px);
+          z-index: 6;
+          display: block;
           width: clamp(158px, 15vw, 226px);
           height: clamp(118px, 11vw, 162px);
           pointer-events: none;
-          opacity: 0.9;
+          opacity: 0.96;
           filter: drop-shadow(0 24px 38px rgba(91, 85, 255, 0.18));
         }
 
@@ -2488,7 +2489,7 @@ export default function ComiuLandingPage() {
               </a>
             </div>
           </div>
-          <div className="hero-basket hero-fade" aria-hidden="true" style={{ "--fd": "1.35s" } as React.CSSProperties}>
+          <div className="hero-basket" aria-hidden="true">
             <span className="hero-basket-glow" />
             <span className="hero-basket-label">GOAL</span>
             <span className="hero-basket-target">
