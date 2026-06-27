@@ -331,7 +331,6 @@ export default function ComiuLandingPage() {
 
         .hero-line-wrap:nth-child(1) .title-line { animation-delay: 0.06s; }
         .hero-line-wrap:nth-child(2) .title-line { animation-delay: 0.32s; }
-        .hero-line-wrap:nth-child(3) .title-line { animation-delay: 0.56s; }
 
         @keyframes line-up {
           from { transform: translateY(108%); }
@@ -437,8 +436,7 @@ export default function ComiuLandingPage() {
         }
 
         .hero h1 .accent {
-          font-size: 1.12em;
-          line-height: 0.96;
+          font-style: normal;
         }
 
         .hero-lead {
@@ -2276,8 +2274,7 @@ export default function ComiuLandingPage() {
             <SectionLabel>EVENT & CIRCLE OPERATING APP</SectionLabel>
             <h1>
               <span className="hero-line-wrap"><span className="title-line">イベント・サークルに</span></span>
-              <span className="hero-line-wrap"><span className="title-line">集客なら</span></span>
-              <span className="hero-line-wrap"><span className="title-line accent">COMIU</span></span>
+              <span className="hero-line-wrap"><span className="title-line">集客なら<span className="accent">COMIU</span></span></span>
             </h1>
             <p className="hero-sub hero-fade" style={{ "--fd": "0.8s" } as React.CSSProperties}>
               掲載用のホームページなら、もういらない。<br />
