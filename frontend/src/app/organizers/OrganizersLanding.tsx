@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import PageGimmicks from "./PageGimmicks";
 
 
 function Logo() {
@@ -165,10 +166,10 @@ export default function ComiuLandingPage() {
           min-height: 100vh;
           overflow: hidden;
           background:
-            radial-gradient(circle at 12% 5%,  rgba(91, 148, 255, 0.32), transparent 26%),
-            radial-gradient(circle at 90% 8%,  rgba(198, 94, 255, 0.26), transparent 28%),
-            radial-gradient(circle at 52% 95%, rgba(255, 110, 190, 0.18), transparent 32%),
-            radial-gradient(circle at 8%  68%, rgba(19, 200, 106, 0.12), transparent 24%),
+            radial-gradient(circle at var(--g1x, 12%) var(--g1y, 5%),  rgba(91, 148, 255, 0.32), transparent 26%),
+            radial-gradient(circle at var(--g2x, 90%) var(--g2y, 8%),  rgba(198, 94, 255, 0.26), transparent 28%),
+            radial-gradient(circle at var(--g3x, 52%) var(--g3y, 95%), rgba(255, 110, 190, 0.18), transparent 32%),
+            radial-gradient(circle at var(--g4x, 8%)  var(--g4y, 68%), rgba(19, 200, 106, 0.12), transparent 24%),
             #f8f9ff;
         }
 
@@ -2292,6 +2293,7 @@ export default function ComiuLandingPage() {
       `}</style>
 
       <main className="comiu-lp" id="top">
+        <PageGimmicks />
         <div className="cursor-dot" aria-hidden="true" />
         <div className="cursor-ring" aria-hidden="true" />
 
