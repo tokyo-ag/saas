@@ -123,12 +123,12 @@ export default function OrganizersPage() {
                 </div>
               </div>
 
-              <div className="w-full max-w-[260px] shrink-0 sm:max-w-[300px] lg:max-w-[320px] xl:max-w-[340px]">
+              <div className="w-full max-w-[230px] shrink-0 sm:max-w-[260px] lg:max-w-[280px] xl:max-w-[300px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/comiu_portal_mockup.svg"
                   alt="COMIUポータル画面"
-                  className="mx-auto h-auto max-h-[430px] w-full object-contain drop-shadow-2xl"
+                  className="mx-auto h-auto max-h-[380px] w-full scale-x-[1.08] object-contain drop-shadow-2xl"
                 />
               </div>
             </div>
