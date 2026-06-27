@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 export default function ScrollReveal() {
   useEffect(() => {
-    const els = document.querySelectorAll('.fade-in');
+    const els = document.querySelectorAll('.fade-in, [data-reveal]');
     const observer = new IntersectionObserver(
       (entries, obs) => {
         entries.forEach(entry => {

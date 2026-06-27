@@ -56,6 +56,144 @@ body {
   animation: page-fade-in 0.22s ease-out both;
 }
 
+.organizer-lp {
+  --lp-bg: #f8fafc;
+  --lp-navy: #071126;
+  --lp-blue: #3b82f6;
+  --lp-lime: #bef264;
+  --lp-purple: #e9d5ff;
+}
+
+@media (pointer: fine) {
+  .organizer-lp [data-cursor] {
+    cursor: none;
+  }
+}
+
+.lp-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 80;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  pointer-events: none;
+  opacity: 0;
+  border: 1px solid rgba(15, 23, 42, 0.55);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.24);
+  box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.08);
+  transition:
+    width 0.18s ease,
+    height 0.18s ease,
+    margin 0.18s ease,
+    opacity 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.lp-cursor.is-active {
+  opacity: 1;
+}
+
+.lp-cursor.has-label {
+  width: 78px;
+  height: 32px;
+  margin: -16px 0 0 -39px;
+  border-color: rgba(6, 78, 59, 0.18);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+}
+
+.lp-cursor span {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 900;
+  color: #020617;
+}
+
+.lp-tilt-card {
+  transform:
+    perspective(900px)
+    rotateX(var(--tilt-x, 0deg))
+    rotateY(var(--tilt-y, 0deg))
+    translate3d(var(--tilt-shift-x, 0), var(--tilt-shift-y, 0), 0);
+  transition: transform 0.18s ease;
+  transform-style: preserve-3d;
+}
+
+.ops-card {
+  transition:
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ops-system.is-visible .ops-card-0 { transform: translate(36px, 22px) scale(0.96); opacity: 0.72; }
+.ops-system.is-visible .ops-card-1 { transform: translate(54px, 10px) scale(0.94); opacity: 0.72; }
+.ops-system.is-visible .ops-card-2 { transform: translate(46px, -10px) scale(0.96); opacity: 0.74; }
+.ops-system.is-visible .ops-card-3 { transform: translate(30px, -22px) scale(0.95); opacity: 0.72; }
+.ops-system.is-visible .ops-card-4 { transform: translate(66px, -6px) scale(0.94); opacity: 0.7; }
+.ops-system.is-visible .ops-card-5 { transform: translate(42px, 18px) scale(0.96); opacity: 0.72; }
+
+.timeline-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .timeline-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    align-items: stretch;
+  }
+}
+
+.timeline-card {
+  opacity: 0;
+  transform: translateY(18px) scale(0.97);
+  transition:
+    opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.timeline-grid.is-visible .timeline-card {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in,
+  .timeline-card,
+  .ops-card,
+  .lp-tilt-card {
+    transition: none !important;
+    transform: none !important;
+  }
+
+  .fade-in,
+  .timeline-card {
+    opacity: 1 !important;
+  }
+}
+
+@media (pointer: coarse), (max-width: 767px) {
+  .lp-cursor {
+    display: none;
+  }
+
+  .lp-tilt-card {
+    transform: none !important;
+  }
+
+  .ops-system.is-visible .ops-card {
+    transform: none;
+    opacity: 1;
+  }
+}
+
 .cosmic-page {
   background:
     radial-gradient(circle at 50% 0%, rgba(6, 199, 85, 0.14), transparent 28rem),
