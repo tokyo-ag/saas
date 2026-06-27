@@ -605,13 +605,18 @@ export default function ComiuLandingPage() {
         }
 
         .hero h1 {
+          max-width: 680px;
           margin-bottom: 22px;
-          font-size: clamp(45px, 7vw, 86px);
-          line-height: 1.1;
+          font-size: clamp(42px, 6vw, 78px);
+          line-height: 1.08;
           font-weight: 950;
         }
 
-        .hero h1 span,
+        .hero h1 .title-line {
+          display: block;
+        }
+
+        .hero h1 .accent,
         .gradient-text {
           color: transparent;
           background: linear-gradient(95deg, var(--blue) 0%, var(--purple) 88%);
@@ -619,7 +624,13 @@ export default function ComiuLandingPage() {
           -webkit-background-clip: text;
         }
 
+        .hero h1 .accent {
+          font-size: 1.12em;
+          line-height: 0.96;
+        }
+
         .hero-lead {
+          max-width: 560px;
           margin-bottom: 18px;
           padding-left: 18px;
           border-left: 5px solid var(--blue);
@@ -634,6 +645,7 @@ export default function ComiuLandingPage() {
         }
 
         .hero-sub {
+          max-width: 580px;
           margin-bottom: 18px;
           color: #1a2445;
           font-size: clamp(18px, 2vw, 24px);
@@ -644,6 +656,7 @@ export default function ComiuLandingPage() {
 
         .hero-desc,
         .section-desc {
+          max-width: 640px;
           color: var(--muted);
           font-size: clamp(15px, 1.55vw, 18px);
           line-height: 2;
@@ -1962,7 +1975,7 @@ export default function ComiuLandingPage() {
           }
         }
 
-        @media (max-width: 980px) {
+        @media (max-width: 1180px) {
           .desktop-nav {
             display: none;
           }
@@ -1982,6 +1995,17 @@ export default function ComiuLandingPage() {
           .hero {
             gap: 32px;
             padding-top: 116px;
+          }
+
+          .hero-copy {
+            max-width: 760px;
+          }
+
+          .hero h1,
+          .hero-lead,
+          .hero-sub,
+          .hero-desc {
+            max-width: 720px;
           }
 
           .hero-visual {
@@ -2056,12 +2080,28 @@ export default function ComiuLandingPage() {
             font-size: 20px;
           }
 
+          .hero {
+            gap: 26px;
+            padding-top: 104px;
+          }
+
           .hero h1 {
-            font-size: clamp(42px, 13vw, 58px);
+            max-width: 100%;
+            font-size: clamp(38px, 11.8vw, 52px);
+            line-height: 1.14;
+            letter-spacing: -0.075em;
           }
 
           .hero-lead {
-            font-size: 24px;
+            padding-left: 14px;
+            font-size: clamp(21px, 6.2vw, 26px);
+            line-height: 1.5;
+            letter-spacing: -0.055em;
+          }
+
+          .hero-sub {
+            font-size: 16px;
+            line-height: 1.8;
           }
 
           .hero-actions .button {
@@ -2069,14 +2109,22 @@ export default function ComiuLandingPage() {
           }
 
           .hero-visual {
-            min-height: 650px;
+            display: grid;
+            min-height: auto;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            perspective: none;
           }
 
           .hero-device {
-            top: 86px;
+            position: relative;
+            top: auto;
+            left: auto;
+            grid-column: 1 / -1;
             width: 100%;
             padding: 10px;
             border-radius: 28px;
+            transform: none;
           }
 
           .dashboard-mock {
@@ -2093,33 +2141,31 @@ export default function ComiuLandingPage() {
           }
 
           .floating-card {
-            min-width: 124px;
+            position: relative;
+            inset: auto !important;
+            min-width: 0;
             padding: 12px 14px;
             border-radius: 16px;
+            transform: none;
           }
 
           .floating-card b {
             font-size: 18px;
           }
 
-          .floating-card.one {
-            top: 10px;
-          }
-
-          .floating-card.two {
-            top: 30px;
-          }
-
-          .floating-card.three {
-            bottom: 18px;
-          }
-
-          .floating-card.four {
-            bottom: 70px;
-          }
-
           .section-title {
             font-size: clamp(34px, 11vw, 48px);
+            line-height: 1.18;
+            letter-spacing: -0.075em;
+          }
+
+          .statement-inner,
+          .final {
+            text-align: left;
+          }
+
+          .final .button-primary {
+            width: 100%;
           }
 
           .section-desc,
@@ -2261,9 +2307,9 @@ export default function ComiuLandingPage() {
           <div className="hero-copy reveal">
             <SectionLabel>EVENT & CIRCLE OPERATING APP</SectionLabel>
             <h1>
-              イベント・サークルの
-              <br />
-              集客なら<span>COMIU</span>
+              <span className="title-line">イベント・サークルの</span>
+              <span className="title-line">集客なら</span>
+              <span className="title-line accent">COMIU</span>
             </h1>
             <p className="hero-lead">
               団体に合わせたWebサイトを
