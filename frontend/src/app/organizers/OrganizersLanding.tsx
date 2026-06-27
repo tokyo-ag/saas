@@ -333,9 +333,8 @@ export default function ComiuLandingPage() {
           display: flex;
           flex-direction: column;
           justify-content: center;
-          min-height: 100svh;
           padding-top: 142px;
-          padding-bottom: 60px;
+          padding-bottom: 80px;
         }
 
         .hero-copy {
@@ -2192,9 +2191,10 @@ export default function ComiuLandingPage() {
 
         /* A: Text scrub */
         .scrub-section {
-          padding: clamp(80px, 14vw, 180px) var(--page-x);
+          padding: clamp(64px, 10vw, 130px) var(--page-x);
           display: flex;
           align-items: center;
+          background: rgba(255, 255, 255, 0.72);
         }
 
         .scrub-text {
@@ -2206,7 +2206,7 @@ export default function ComiuLandingPage() {
         }
 
         .scrub-word {
-          color: rgba(7, 16, 51, 0.14);
+          color: rgba(7, 16, 51, 0.22);
           transition: color 0.35s ease;
         }
 
