@@ -10,9 +10,9 @@ import BottomCTA from './BottomCTA';
 
 export const revalidate = 60;
 
-const title = 'COMIU（コミュー） | サークルの募集・予約・LINE連絡をひとつに';
+const title = 'COMIU（コミュー） | イベント・サークルの集客ならCOMIU';
 const description =
-  'COMIUは、学生サークル・社会人サークル向けに、無料WEBサイト作成、SEO、ポータル自動掲載、ワンタップ予約、公式LINE API連携をまとめて提供します。';
+  '団体に合わせたWebサイトを無料で作成。掲載用のホームページではなく、集客・予約・LINE連絡まで育てるWebアプリケーションへ。';
 
 const strengths = [
   {
@@ -103,22 +103,21 @@ export default function OrganizersPage() {
                   Circle Recruiting Platform
                 </span>
                 <h1 className="mb-6 text-[40px] font-black leading-[1.08] tracking-tighter text-slate-950 md:text-5xl lg:text-[56px]">
-                  <span className="block">サークルの募集ページを</span>
-                  <span className="block">無料で公開。</span>
-                  <span className="brand-text-gradient block">予約もLINE連絡も</span>
-                  <span className="block">COMIUで完結。</span>
+                  <span className="block">イベント・サークルの</span>
+                  <span className="brand-text-gradient block">集客ならCOMIU。</span>
+                  <span className="mt-3 block text-[0.84em] leading-[1.14]">団体に合わせたWebサイトを</span>
+                  <span className="block text-[0.84em] leading-[1.14]">無料で作成。</span>
                 </h1>
                 <p className="mb-9 max-w-2xl text-sm leading-8 text-slate-600 lg:text-base">
-                  <span className="block">SEOに強い公開ページ、COMIUポータルへの自動掲載、</span>
-                  <span className="block">ワンタップ予約、公式LINE API連携まで。</span>
-                  <span className="block">学生サークル・社会人サークルの募集と運営をまとめます。</span>
+                  <span className="block font-bold text-slate-900">掲載用のホームページなら、もういらない。</span>
+                  <span className="block">Webサイトを、育てるWebアプリケーションへ。</span>
                 </p>
                 <div className="flex justify-center lg:justify-start">
                   <Link
                     href="/register"
                     className="rounded-full bg-slate-950 px-8 py-4 text-center text-sm font-bold tracking-wide text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-xl"
                   >
-                    無料で募集ページを作る
+                    無料でWebサイトを作る
                   </Link>
                 </div>
               </div>
