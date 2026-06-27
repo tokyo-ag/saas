@@ -2269,7 +2269,6 @@ export default function ComiuLandingPage() {
 
         <section className="lp-section hero">
           <div className="hero-copy">
-            <SectionLabel>EVENT & CIRCLE OPERATING APP</SectionLabel>
             <h1>
               <span className="hero-line-wrap"><span className="title-line">イベント・サークルの集客なら<wbr /><span className="accent">COMIU</span></span></span>
             </h1>
