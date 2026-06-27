@@ -364,6 +364,30 @@ export default function ComiuLandingPage() {
           to   { transform: translateY(0); }
         }
 
+        /* Scroll-triggered line reveal (reusable for all sections) */
+        .lr-wrap {
+          display: block;
+          overflow: hidden;
+        }
+
+        .lr {
+          display: block;
+          white-space: nowrap;
+          transform: translateY(110%);
+          transition: transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .is-visible .lr { transform: translateY(0); }
+
+        .lr-wrap:nth-child(1) .lr { transition-delay: 0.02s; }
+        .lr-wrap:nth-child(2) .lr { transition-delay: 0.20s; }
+        .lr-wrap:nth-child(3) .lr { transition-delay: 0.38s; }
+        .lr-wrap:nth-child(4) .lr { transition-delay: 0.54s; }
+
+        /* desc lines start after heading lines */
+        .section-desc .lr-wrap:nth-child(1) .lr { transition-delay: 0.30s; }
+        .section-desc .lr-wrap:nth-child(2) .lr { transition-delay: 0.48s; }
+
         .hero-fade {
           animation: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
           animation-delay: var(--fd, 0s);
@@ -2257,10 +2281,12 @@ export default function ComiuLandingPage() {
           .reveal,
           .bubble,
           .title-line,
-          .hero-fade {
+          .hero-fade,
+          .lr {
             opacity: 1 !important;
             transform: none !important;
             animation: none !important;
+            transition: none !important;
           }
         }
       `}</style>
@@ -2332,10 +2358,12 @@ export default function ComiuLandingPage() {
           <div className="booking-head reveal">
             <SectionLabel>ONE-TAP BOOKING</SectionLabel>
             <h2 className="section-title" id="booking-title">
-              公式LINEから、ワンタップで予約
+              <span className="lr-wrap"><span className="lr">公式LINEから、</span></span>
+              <span className="lr-wrap"><span className="lr">ワンタップで予約</span></span>
             </h2>
             <p className="section-desc" style={{ maxWidth: 640, margin: "0 auto" }}>
-              公式LINEのリッチメニューや予約URLから直接予約。カレンダー・カード・スレッドの3タイプから、活動スタイルに合わせて選べます。
+              <span className="lr-wrap"><span className="lr">公式LINEのリッチメニューや予約URLから直接予約。</span></span>
+              <span className="lr-wrap"><span className="lr">３タイプから、活動スタイルに合わせて選べる日程表！</span></span>
             </p>
           </div>
           <div className="phones-grid reveal">
