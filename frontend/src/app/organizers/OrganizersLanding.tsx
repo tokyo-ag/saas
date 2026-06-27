@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import GoldfishCursor from "./GoldfishCursor";
 import PageGimmicks from "./PageGimmicks";
 
 
@@ -69,37 +70,10 @@ export default function ComiuLandingPage() {
     if (footer) ctaObserver.observe(footer);
     if (finalCta) ctaObserver.observe(finalCta);
 
-    // Dot + spring-ring cursor (desktop only).
-    const cursorDot  = document.querySelector<HTMLElement>(".cursor-dot");
-    const cursorRing = document.querySelector<HTMLElement>(".cursor-ring");
-    let rx = -200, ry = -200, mx = -200, my = -200, cursorRaf = 0;
-
-    const moveCursor = (e: MouseEvent) => {
-      mx = e.clientX; my = e.clientY;
-      cursorDot?.style.setProperty("--x", `${mx}px`);
-      cursorDot?.style.setProperty("--y", `${my}px`);
-    };
-
-    function animRing() {
-      rx += (mx - rx) * 0.11;
-      ry += (my - ry) * 0.11;
-      cursorRing?.style.setProperty("--x", `${rx}px`);
-      cursorRing?.style.setProperty("--y", `${ry}px`);
-      cursorRaf = requestAnimationFrame(animRing);
-    }
-
-    if (canHover) {
-      window.addEventListener("mousemove", moveCursor, { passive: true });
-      animRing();
-    }
-
-
     return () => {
       revealObserver.disconnect();
       ctaObserver.disconnect();
       window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("mousemove", moveCursor);
-      cancelAnimationFrame(cursorRaf);
     };
   }, []);
 
@@ -1759,39 +1733,8 @@ export default function ComiuLandingPage() {
           transform: translateY(12px);
         }
 
-        .cursor-dot,
-        .cursor-ring {
-          position: fixed;
-          top: 0;
-          left: 0;
-          z-index: 9999;
-          pointer-events: none;
-          border-radius: 50%;
-          opacity: 0;
-          transform: translate(calc(var(--x, -200px) - 50%), calc(var(--y, -200px) - 50%));
-          mix-blend-mode: difference;
-        }
-
-        .cursor-dot {
-          width: 7px;
-          height: 7px;
-          background: #fff;
-        }
-
-        .cursor-ring {
-          width: 30px;
-          height: 30px;
-          border: 1.5px solid #fff;
-          transition: width 0.18s ease, height 0.18s ease;
-        }
-
         @media (hover: hover) and (pointer: fine) {
           body { cursor: none; }
-
-          .cursor-dot,
-          .cursor-ring {
-            opacity: 1;
-          }
 
           .button:hover,
           .feature-card:hover {
@@ -2293,9 +2236,8 @@ export default function ComiuLandingPage() {
       `}</style>
 
       <main className="comiu-lp" id="top">
+        <GoldfishCursor />
         <PageGimmicks />
-        <div className="cursor-dot" aria-hidden="true" />
-        <div className="cursor-ring" aria-hidden="true" />
 
         <header className="site-header">
           <Logo />
