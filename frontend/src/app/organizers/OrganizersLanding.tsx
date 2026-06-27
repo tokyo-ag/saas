@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import HeroGimmick from "./HeroGimmick";
 
 
 function Logo() {
@@ -93,28 +92,6 @@ export default function ComiuLandingPage() {
       animRing();
     }
 
-    // Subtle dashboard parallax for desktop. It is disabled for reduced motion.
-    const heroVisual = document.querySelector<HTMLElement>(".hero-visual");
-    const handleHeroMove = (event: MouseEvent) => {
-      if (!canHover || reduceMotion || !heroVisual) return;
-      const rect = heroVisual.getBoundingClientRect();
-      const x = (event.clientX - rect.left) / rect.width - 0.5;
-      const y = (event.clientY - rect.top) / rect.height - 0.5;
-      heroVisual.style.setProperty("--tilt-x", `${y * -6}deg`);
-      heroVisual.style.setProperty("--tilt-y", `${x * 8}deg`);
-      heroVisual.style.setProperty("--float-x", `${x * 16}px`);
-      heroVisual.style.setProperty("--float-y", `${y * 16}px`);
-    };
-
-    const resetHeroMove = () => {
-      heroVisual?.style.setProperty("--tilt-x", "0deg");
-      heroVisual?.style.setProperty("--tilt-y", "0deg");
-      heroVisual?.style.setProperty("--float-x", "0px");
-      heroVisual?.style.setProperty("--float-y", "0px");
-    };
-
-    heroVisual?.addEventListener("mousemove", handleHeroMove);
-    heroVisual?.addEventListener("mouseleave", resetHeroMove);
 
     return () => {
       revealObserver.disconnect();
@@ -122,8 +99,6 @@ export default function ComiuLandingPage() {
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("mousemove", moveCursor);
       cancelAnimationFrame(cursorRaf);
-      heroVisual?.removeEventListener("mousemove", handleHeroMove);
-      heroVisual?.removeEventListener("mouseleave", resetHeroMove);
     };
   }, []);
 
@@ -357,16 +332,46 @@ export default function ComiuLandingPage() {
         }
 
         .hero {
-          display: grid;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
           min-height: 100svh;
-          grid-template-columns: minmax(420px, 0.9fr) minmax(480px, 1.1fr);
-          gap: clamp(28px, 6vw, 76px);
-          align-items: center;
           padding-top: 142px;
+          padding-bottom: 60px;
         }
 
         .hero-copy {
-          max-width: 620px;
+          max-width: 860px;
+        }
+
+        /* Line-by-line reveal */
+        .hero-line-wrap {
+          display: block;
+          overflow: hidden;
+        }
+
+        .title-line {
+          display: block;
+          animation: line-up 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .hero-line-wrap:nth-child(1) .title-line { animation-delay: 0.06s; }
+        .hero-line-wrap:nth-child(2) .title-line { animation-delay: 0.32s; }
+        .hero-line-wrap:nth-child(3) .title-line { animation-delay: 0.56s; }
+
+        @keyframes line-up {
+          from { transform: translateY(108%); }
+          to   { transform: translateY(0); }
+        }
+
+        .hero-fade {
+          animation: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+          animation-delay: var(--fd, 0s);
+        }
+
+        @keyframes fade-up {
+          from { transform: translateY(18px); opacity: 0; }
+          to   { transform: translateY(0);    opacity: 1; }
         }
 
         .section-label {
@@ -410,10 +415,10 @@ export default function ComiuLandingPage() {
         }
 
         .hero h1 {
-          max-width: 680px;
-          margin-bottom: 22px;
-          font-size: clamp(42px, 6vw, 78px);
-          line-height: 1.08;
+          max-width: 860px;
+          margin-bottom: 28px;
+          font-size: clamp(44px, 7.2vw, 96px);
+          line-height: 1.1;
           font-weight: 950;
         }
 
@@ -1894,8 +1899,8 @@ export default function ComiuLandingPage() {
 
           .hero h1 {
             max-width: 100%;
-            font-size: clamp(30px, 9vw, 42px);
-            line-height: 1.18;
+            font-size: clamp(36px, 11vw, 56px);
+            line-height: 1.12;
             letter-spacing: -0.055em;
           }
 
@@ -1916,9 +1921,6 @@ export default function ComiuLandingPage() {
             width: 100%;
           }
 
-          .hero-visual {
-            display: none;
-          }
 
           .hero-device {
             position: relative;
@@ -2249,9 +2251,12 @@ export default function ComiuLandingPage() {
           }
 
           .reveal,
-          .bubble {
+          .bubble,
+          .title-line,
+          .hero-fade {
             opacity: 1 !important;
             transform: none !important;
+            animation: none !important;
           }
         }
       `}</style>
@@ -2295,39 +2300,30 @@ export default function ComiuLandingPage() {
         </nav>
 
         <section className="lp-section hero">
-          <div className="hero-copy reveal">
+          <div className="hero-copy">
             <SectionLabel>EVENT & CIRCLE OPERATING APP</SectionLabel>
             <h1>
-              <span className="title-line">イベント・サークルの</span>
-              <span className="title-line">集客なら</span>
-              <span className="title-line accent">COMIU</span>
+              <span className="hero-line-wrap"><span className="title-line">イベント・サークルの</span></span>
+              <span className="hero-line-wrap"><span className="title-line">集客なら</span></span>
+              <span className="hero-line-wrap"><span className="title-line accent">COMIU</span></span>
             </h1>
-            <p className="hero-lead">
-              団体に合わせたWebサイトを
-              <br />
-              <strong>無料</strong>で作成
-            </p>
-            <p className="hero-sub">
+            <p className="hero-lead hero-fade" style={{ "--fd": "0.8s" } as React.CSSProperties}>
               掲載用のホームページなら、もういらない。
               <br />
-              Webサイトを、育てるWebアプリケーションへ。
+              Webサイトを、<strong>育てるWebアプリケーション</strong>へ。
             </p>
-            <p className="hero-desc">
+            <p className="hero-desc hero-fade" style={{ "--fd": "1.0s" } as React.CSSProperties}>
               団体ページ、イベント募集、予約管理、活動ブログ、LINE連携。
               運営をまとめて、参加者が集まる仕組みをつくる。
             </p>
-            <div className="hero-actions">
-              <a className="button button-primary" href="/register" data-cursor="CREATE">
+            <div className="hero-actions hero-fade" style={{ "--fd": "1.2s" } as React.CSSProperties}>
+              <a className="button button-primary" href="/register">
                 無料で団体ページを作る
               </a>
               <a className="button button-secondary" href="#features">
                 COMIUでできることを見る
               </a>
             </div>
-          </div>
-
-          <div className="hero-visual reveal">
-            <HeroGimmick />
           </div>
         </section>
 
