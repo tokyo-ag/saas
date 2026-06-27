@@ -112,88 +112,18 @@ export default function PageFX() {
       rgba: BALL_RGBA[i],
     }));
 
+    const basketEl = document.querySelector<HTMLElement>('.hero-basket-target');
     const getBasket = (): Basket | null => {
-      if (!canHover || vW < 900) return null;
-      const w = Math.min(210, Math.max(152, vW * 0.13));
-      const h = w * 0.62;
-      const right = Math.min(150, Math.max(76, vW * 0.075));
+      if (!canHover || !basketEl) return null;
+      const rect = basketEl.getBoundingClientRect();
+      if (rect.width < 20 || rect.height < 20 || rect.bottom < -40 || rect.top > vH + 40) return null;
       return {
-        x: vW - w - right,
-        y: Math.max(192, Math.min(vH - h - 82, vH * 0.45)),
-        w,
-        h,
-        rim: Math.max(14, w * 0.075),
+        x: rect.left,
+        y: rect.top,
+        w: rect.width,
+        h: rect.height,
+        rim: Math.max(12, rect.height * 0.18),
       };
-    };
-
-    const drawBasket = (ctx: CanvasRenderingContext2D, basket: Basket, front = false) => {
-      const { x, y, w, h, rim } = basket;
-      const bottomInset = w * 0.15;
-      const bottomY = y + h;
-      const topY = y + rim;
-      ctx.save();
-
-      if (!front) {
-        const glow = ctx.createRadialGradient(x + w * 0.52, y + h * 0.52, 0, x + w * 0.52, y + h * 0.52, w * 0.8);
-        glow.addColorStop(0, 'rgba(141,85,255,0.22)');
-        glow.addColorStop(1, 'rgba(21,89,255,0)');
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.ellipse(x + w * 0.52, y + h * 0.54, w * 0.78, h * 0.74, -0.1, 0, Math.PI * 2);
-        ctx.fill();
-
-        const body = ctx.createLinearGradient(x, y, x, bottomY);
-        body.addColorStop(0, 'rgba(255,255,255,0.78)');
-        body.addColorStop(1, 'rgba(229,236,255,0.42)');
-        ctx.beginPath();
-        ctx.moveTo(x + 4, topY);
-        ctx.lineTo(x + w - 4, topY);
-        ctx.lineTo(x + w - bottomInset, bottomY);
-        ctx.lineTo(x + bottomInset, bottomY);
-        ctx.closePath();
-        ctx.fillStyle = body;
-        ctx.fill();
-
-        ctx.strokeStyle = 'rgba(21,89,255,0.26)';
-        ctx.lineWidth = 1.35;
-        for (let i = 1; i <= 5; i++) {
-          const t = i / 6;
-          ctx.beginPath();
-          ctx.moveTo(x + w * t, topY + 6);
-          ctx.lineTo(x + bottomInset + (w - bottomInset * 2) * t, bottomY - 7);
-          ctx.stroke();
-        }
-        for (let i = 1; i <= 3; i++) {
-          const yy = topY + (h - rim) * (i / 4);
-          const inset = bottomInset * ((yy - topY) / (h - rim));
-          ctx.beginPath();
-          ctx.moveTo(x + inset + 4, yy);
-          ctx.lineTo(x + w - inset - 4, yy);
-          ctx.stroke();
-        }
-      }
-
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.strokeStyle = front ? 'rgba(21,89,255,0.78)' : 'rgba(141,85,255,0.54)';
-      ctx.lineWidth = front ? 5 : 3;
-      ctx.beginPath();
-      ctx.ellipse(x + w / 2, y + rim, w / 2, rim, 0, 0, Math.PI * 2);
-      ctx.stroke();
-
-      if (front) {
-        ctx.strokeStyle = 'rgba(7,16,51,0.2)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(x + bottomInset, bottomY);
-        ctx.lineTo(x + w - bottomInset, bottomY);
-        ctx.stroke();
-
-        ctx.fillStyle = 'rgba(21,89,255,0.72)';
-        ctx.font = '800 11px Inter, system-ui, sans-serif';
-        ctx.fillText('GOAL', x + w * 0.38, y - 10);
-      }
-      ctx.restore();
     };
 
     // ── Fish canvas (desktop only) ────────────────────
@@ -245,7 +175,6 @@ export default function PageFX() {
       // ─ F: balls ───────────────────────────────────
       bctx.clearRect(0, 0, vW, vH);
       const basket = getBasket();
-      if (basket) drawBasket(bctx, basket);
       for (let i = 0; i < balls.length; i++) {
         const b = balls[i];
         b.vx += gyroX;
@@ -312,7 +241,6 @@ export default function PageFX() {
         bctx.fillStyle = b.rgba;
         bctx.fill();
       }
-      if (basket) drawBasket(bctx, basket, true);
 
       // ─ Fish (desktop) ──────────────────────────────
       if (canHover && fctx && fc) {

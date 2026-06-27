@@ -312,15 +312,79 @@ export default function ComiuLandingPage() {
         }
 
         .hero {
+          position: relative;
           display: flex;
           flex-direction: column;
           justify-content: center;
+          overflow: visible;
           padding-top: 142px;
           padding-bottom: 80px;
         }
 
         .hero-copy {
           max-width: 860px;
+        }
+
+        .hero-basket {
+          position: absolute;
+          right: clamp(24px, 6vw, 92px);
+          bottom: clamp(28px, 7vw, 88px);
+          z-index: 2;
+          width: clamp(158px, 15vw, 226px);
+          height: clamp(118px, 11vw, 162px);
+          pointer-events: none;
+          opacity: 0.9;
+          filter: drop-shadow(0 24px 38px rgba(91, 85, 255, 0.18));
+        }
+
+        .hero-basket-glow {
+          position: absolute;
+          inset: 12% -18% -12%;
+          background: radial-gradient(ellipse at center, rgba(141, 85, 255, 0.2), rgba(21, 89, 255, 0));
+          border-radius: 50%;
+        }
+
+        .hero-basket-label {
+          position: absolute;
+          top: 0;
+          left: 50%;
+          color: rgba(21, 89, 255, 0.72);
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          transform: translateX(-50%);
+        }
+
+        .hero-basket-target {
+          position: absolute;
+          inset: 28px 8px 0;
+        }
+
+        .hero-basket-rim {
+          position: absolute;
+          top: 0;
+          left: 0;
+          z-index: 2;
+          width: 100%;
+          height: 28%;
+          border: 5px solid rgba(21, 89, 255, 0.78);
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.28);
+          box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.48);
+        }
+
+        .hero-basket-body {
+          position: absolute;
+          top: 15%;
+          right: 8%;
+          bottom: 2%;
+          left: 8%;
+          clip-path: polygon(0 0, 100% 0, 84% 100%, 16% 100%);
+          background:
+            repeating-linear-gradient(90deg, transparent 0 17%, rgba(21, 89, 255, 0.26) 17% 18.5%, transparent 18.5% 33%),
+            repeating-linear-gradient(0deg, transparent 0 27%, rgba(21, 89, 255, 0.22) 27% 29%, transparent 29% 42%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(229, 236, 255, 0.42));
+          border-bottom: 2px solid rgba(7, 16, 51, 0.2);
         }
 
         /* Line-by-line reveal */
@@ -1772,6 +1836,10 @@ export default function ComiuLandingPage() {
             padding-top: 116px;
           }
 
+          .hero-basket {
+            display: none;
+          }
+
           .hero-copy {
             max-width: 760px;
           }
@@ -2419,6 +2487,14 @@ export default function ComiuLandingPage() {
                 無料でCOMIUを始める
               </a>
             </div>
+          </div>
+          <div className="hero-basket hero-fade" aria-hidden="true" style={{ "--fd": "1.35s" } as React.CSSProperties}>
+            <span className="hero-basket-glow" />
+            <span className="hero-basket-label">GOAL</span>
+            <span className="hero-basket-target">
+              <span className="hero-basket-body" />
+              <span className="hero-basket-rim" />
+            </span>
           </div>
         </section>
 
