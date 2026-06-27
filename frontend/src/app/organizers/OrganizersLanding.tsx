@@ -26,8 +26,6 @@ export default function ComiuLandingPage() {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     const header = document.querySelector<HTMLElement>(".site-header");
-    const cursor = document.querySelector<HTMLElement>(".custom-cursor");
-    const cursorText = document.querySelector<HTMLElement>(".custom-cursor span");
     const fixedCta = document.querySelector<HTMLElement>(".fixed-mobile-cta");
     const footer = document.querySelector<HTMLElement>(".site-footer");
     const finalCta = document.querySelector<HTMLElement>(".final-cta");
@@ -69,25 +67,28 @@ export default function ComiuLandingPage() {
     if (footer) ctaObserver.observe(footer);
     if (finalCta) ctaObserver.observe(finalCta);
 
-    // Lightweight custom cursor for desktop only.
-    const moveCursor = (event: MouseEvent) => {
-      if (!canHover || !cursor) return;
-      cursor.style.setProperty("--x", `${event.clientX}px`);
-      cursor.style.setProperty("--y", `${event.clientY}px`);
+    // Dot + spring-ring cursor (desktop only).
+    const cursorDot  = document.querySelector<HTMLElement>(".cursor-dot");
+    const cursorRing = document.querySelector<HTMLElement>(".cursor-ring");
+    let rx = -200, ry = -200, mx = -200, my = -200, cursorRaf = 0;
+
+    const moveCursor = (e: MouseEvent) => {
+      mx = e.clientX; my = e.clientY;
+      cursorDot?.style.setProperty("--x", `${mx}px`);
+      cursorDot?.style.setProperty("--y", `${my}px`);
     };
 
-    const setCursorText = (text = "") => {
-      if (!cursor || !cursorText) return;
-      cursorText.textContent = text;
-      cursor.classList.toggle("has-label", Boolean(text));
-    };
+    function animRing() {
+      rx += (mx - rx) * 0.11;
+      ry += (my - ry) * 0.11;
+      cursorRing?.style.setProperty("--x", `${rx}px`);
+      cursorRing?.style.setProperty("--y", `${ry}px`);
+      cursorRaf = requestAnimationFrame(animRing);
+    }
 
-    if (canHover && cursor) {
+    if (canHover) {
       window.addEventListener("mousemove", moveCursor, { passive: true });
-      document.querySelectorAll<HTMLElement>("[data-cursor]").forEach((element) => {
-        element.addEventListener("mouseenter", () => setCursorText(element.dataset.cursor));
-        element.addEventListener("mouseleave", () => setCursorText(""));
-      });
+      animRing();
     }
 
     // Subtle dashboard parallax for desktop. It is disabled for reduced motion.
@@ -118,6 +119,7 @@ export default function ComiuLandingPage() {
       ctaObserver.disconnect();
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("mousemove", moveCursor);
+      cancelAnimationFrame(cursorRaf);
       heroVisual?.removeEventListener("mousemove", handleHeroMove);
       heroVisual?.removeEventListener("mouseleave", resetHeroMove);
     };
@@ -1719,45 +1721,37 @@ export default function ComiuLandingPage() {
           transform: translateY(12px);
         }
 
-        .custom-cursor {
+        .cursor-dot,
+        .cursor-ring {
           position: fixed;
           top: 0;
           left: 0;
-          z-index: 200;
-          display: grid;
-          width: 16px;
-          height: 16px;
-          place-items: center;
+          z-index: 9999;
           pointer-events: none;
-          border: 1px solid rgba(21, 89, 255, 0.9);
           border-radius: 50%;
           opacity: 0;
-          transform: translate(calc(var(--x, -100px) - 50%), calc(var(--y, -100px) - 50%));
-          transition: width 0.18s ease, height 0.18s ease, background 0.18s ease, opacity 0.18s ease;
-          mix-blend-mode: multiply;
+          transform: translate(calc(var(--x, -200px) - 50%), calc(var(--y, -200px) - 50%));
+          mix-blend-mode: difference;
         }
 
-        .custom-cursor span {
-          color: #fff;
-          font-size: 10px;
-          font-weight: 950;
-          opacity: 0;
+        .cursor-dot {
+          width: 7px;
+          height: 7px;
+          background: #fff;
         }
 
-        .custom-cursor.has-label {
-          width: 78px;
-          height: 78px;
-          background: rgba(21, 89, 255, 0.84);
-          border-color: transparent;
-          mix-blend-mode: normal;
-        }
-
-        .custom-cursor.has-label span {
-          opacity: 1;
+        .cursor-ring {
+          width: 30px;
+          height: 30px;
+          border: 1.5px solid #fff;
+          transition: width 0.18s ease, height 0.18s ease;
         }
 
         @media (hover: hover) and (pointer: fine) {
-          .custom-cursor {
+          body { cursor: none; }
+
+          .cursor-dot,
+          .cursor-ring {
             opacity: 1;
           }
 
@@ -2257,9 +2251,8 @@ export default function ComiuLandingPage() {
       `}</style>
 
       <main className="comiu-lp" id="top">
-        <div className="custom-cursor" aria-hidden="true">
-          <span />
-        </div>
+        <div className="cursor-dot" aria-hidden="true" />
+        <div className="cursor-ring" aria-hidden="true" />
 
         <header className="site-header">
           <Logo />
