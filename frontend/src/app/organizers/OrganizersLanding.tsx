@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import HeroGimmick from "./HeroGimmick";
 
 
 function Logo() {
@@ -16,81 +17,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="section-label">{children}</p>;
 }
 
-function MiniPhoto({ tone = "blue" }: { tone?: string }) {
-  return (
-    <span className={`mini-photo ${tone}`} aria-hidden="true">
-      <i />
-      <i />
-      <i />
-    </span>
-  );
-}
-
-function DashboardMock({ compact = false }: { compact?: boolean }) {
-  return (
-    <div className={`dashboard-mock ${compact ? "compact" : ""}`} data-cursor="EXPLORE">
-      <div className="mock-top">
-        <span className="mock-logo">COMIU</span>
-        <b>ダッシュボード</b>
-        <span className="mock-dot" />
-      </div>
-
-      <div className="mock-card mock-events">
-        <div className="mock-card-head">
-          <b>イベント一覧</b>
-          <a>一覧を見る</a>
-        </div>
-        {[
-          ["新歓スポーツ大会", "参加人数 38 / 50", "78"],
-          ["春の交流会", "参加人数 22 / 30", "64"],
-          ["BBQイベント", "参加人数 17 / 40", "46"],
-        ].map((row, index) => (
-          <div className="mock-event-row" key={row[0]}>
-            <MiniPhoto tone={index === 2 ? "orange" : "blue"} />
-            <div>
-              <b>{row[0]}</b>
-              <small>{row[1]}</small>
-            </div>
-            <span style={{ "--bar": `${row[2]}%` } as React.CSSProperties} />
-          </div>
-        ))}
-      </div>
-
-      <div className="mock-grid">
-        <div className="mock-card mock-stat">
-          <small>新規予約</small>
-          <strong>12件</strong>
-          <em>今週 +4</em>
-        </div>
-        <div className="mock-card mock-line">
-          <small>LINEリマインド</small>
-          <strong>送信済み</strong>
-          <em>38人へ配信</em>
-        </div>
-        <div className="mock-card mock-stat">
-          <small>今月のページ閲覧数</small>
-          <strong>2,842</strong>
-          <em>先月 +284</em>
-        </div>
-        <div className="mock-card mock-roster">
-          <small>参加者名簿</small>
-          <p>
-            <i />
-            <i />
-            <i />
-            <b>38名</b>
-          </p>
-        </div>
-      </div>
-
-      <div className="mock-card next-event">
-        <small>次回イベント</small>
-        <b>7/17 新歓交流会</b>
-        <span>残り枠 8名</span>
-      </div>
-    </div>
-  );
-}
 
 
 export default function ComiuLandingPage() {
@@ -2401,26 +2327,8 @@ export default function ComiuLandingPage() {
             </div>
           </div>
 
-          <div className="hero-visual reveal" aria-label="COMIU管理画面のイメージ">
-            <div className="hero-device">
-              <DashboardMock />
-            </div>
-            <div className="floating-card one blue">
-              <small>新規予約</small>
-              <b>+12</b>
-            </div>
-            <div className="floating-card two green">
-              <small>LINE通知</small>
-              <b>送信済み</b>
-            </div>
-            <div className="floating-card three purple">
-              <small>残り枠</small>
-              <b>8名</b>
-            </div>
-            <div className="floating-card four blue">
-              <small>ページ閲覧数</small>
-              <b>+284</b>
-            </div>
+          <div className="hero-visual reveal">
+            <HeroGimmick />
           </div>
         </section>
 
