@@ -2239,7 +2239,7 @@ export default function ComiuLandingPage() {
             <a href="#features">できること</a>
             <a href="#future">導入メリット</a>
             <a className="nav-cta" href="/register" data-cursor="CREATE">
-              無料で作成する
+              無料でCOMIUを始める
             </a>
           </nav>
           <button
