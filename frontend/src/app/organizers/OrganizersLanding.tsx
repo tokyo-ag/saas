@@ -2277,8 +2277,8 @@ export default function ComiuLandingPage() {
               Webサイトを、<strong>育てるWebアプリケーション</strong>へ。
             </p>
             <p className="hero-desc hero-fade" style={{ "--fd": "1.0s" } as React.CSSProperties}>
-              団体ページ、イベント募集、予約管理、活動ブログ、LINE連携。
-              運営をまとめて、参加者が集まる仕組みをつくる。
+              サークル活動、ボタンティア団体、スポーツ、新入生歓迎会、ビジネス交流会、パーティー、クラブイベント。<br />
+              学生団体からイベント主催者まで、集客と運営をひとつの仕組みに。
             </p>
             <div className="hero-actions hero-fade" style={{ "--fd": "1.2s" } as React.CSSProperties}>
               <a className="button button-primary" href="/register">
