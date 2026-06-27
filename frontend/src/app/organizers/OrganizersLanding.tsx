@@ -64,6 +64,8 @@ export default function ComiuLandingPage() {
       { threshold: 0.1 }
     );
 
+    const heroActions = document.querySelector<HTMLElement>(".hero-actions");
+    if (heroActions) ctaObserver.observe(heroActions);
     if (footer) ctaObserver.observe(footer);
     if (finalCta) ctaObserver.observe(finalCta);
 
@@ -188,9 +190,11 @@ export default function ComiuLandingPage() {
           min-height: 100vh;
           overflow: hidden;
           background:
-            radial-gradient(circle at 18% 8%, rgba(71, 128, 255, 0.18), transparent 28%),
-            radial-gradient(circle at 92% 8%, rgba(150, 84, 255, 0.16), transparent 30%),
-            #fbfdff;
+            radial-gradient(circle at 12% 5%,  rgba(91, 148, 255, 0.32), transparent 26%),
+            radial-gradient(circle at 90% 8%,  rgba(198, 94, 255, 0.26), transparent 28%),
+            radial-gradient(circle at 52% 95%, rgba(255, 110, 190, 0.18), transparent 32%),
+            radial-gradient(circle at 8%  68%, rgba(19, 200, 106, 0.12), transparent 24%),
+            #f8f9ff;
         }
 
         .comiu-lp::before {
@@ -199,10 +203,10 @@ export default function ComiuLandingPage() {
           z-index: 0;
           pointer-events: none;
           content: "";
-          opacity: 0.44;
-          background-image: radial-gradient(circle, rgba(36, 93, 255, 0.14) 1px, transparent 1.8px);
+          opacity: 0.28;
+          background-image: radial-gradient(circle, rgba(36, 93, 255, 0.22) 1px, transparent 1.8px);
           background-size: 22px 22px;
-          mask-image: linear-gradient(120deg, transparent 0%, #000 16%, transparent 58%);
+          mask-image: linear-gradient(120deg, transparent 0%, #000 18%, transparent 62%);
         }
 
         .lp-section {
@@ -373,10 +377,10 @@ export default function ComiuLandingPage() {
           margin: 0 0 20px;
           padding: 0 14px;
           color: #2652b8;
-          background: rgba(255, 255, 255, 0.78);
-          border: 1px solid #dce7ff;
+          background: rgba(255, 255, 255, 0.88);
+          border: 1.5px solid #c8d8ff;
           border-radius: 999px;
-          box-shadow: 0 8px 22px rgba(53, 94, 180, 0.09);
+          box-shadow: 0 6px 18px rgba(53, 94, 180, 0.12);
           font-size: 12px;
           font-weight: 950;
           letter-spacing: 0.08em;
@@ -386,9 +390,9 @@ export default function ComiuLandingPage() {
           width: 8px;
           height: 8px;
           content: "";
-          background: var(--lime);
+          background: linear-gradient(135deg, #ff6db3, var(--lime));
           border-radius: 50%;
-          box-shadow: 0 0 0 4px rgba(223, 255, 79, 0.24);
+          box-shadow: 0 0 0 3px rgba(255, 109, 179, 0.22);
         }
 
         h1,
@@ -492,8 +496,8 @@ export default function ComiuLandingPage() {
 
         .button-primary {
           color: #fff;
-          background: linear-gradient(100deg, var(--blue), var(--purple));
-          box-shadow: 0 18px 38px rgba(39, 80, 255, 0.25);
+          background: linear-gradient(110deg, #1559ff 0%, #8d55ff 55%, #d44fff 100%);
+          box-shadow: 0 16px 36px rgba(100, 60, 255, 0.3);
         }
 
         .button-secondary {
@@ -1881,20 +1885,26 @@ export default function ComiuLandingPage() {
           .hero {
             gap: 26px;
             padding-top: 104px;
+            padding-bottom: 56px;
+            background:
+              radial-gradient(circle at 80% 20%, rgba(198, 94, 255, 0.22), transparent 38%),
+              radial-gradient(circle at 10% 80%, rgba(91, 148, 255, 0.2), transparent 40%);
+            border-radius: 0 0 40px 40px;
           }
 
           .hero h1 {
             max-width: 100%;
-            font-size: clamp(38px, 11.8vw, 52px);
-            line-height: 1.14;
-            letter-spacing: -0.075em;
+            font-size: clamp(30px, 9vw, 42px);
+            line-height: 1.18;
+            letter-spacing: -0.055em;
           }
 
           .hero-lead {
             padding-left: 14px;
-            font-size: clamp(21px, 6.2vw, 26px);
+            font-size: clamp(20px, 5.8vw, 26px);
             line-height: 1.5;
             letter-spacing: -0.055em;
+            border-left-color: var(--purple);
           }
 
           .hero-sub {
@@ -1907,11 +1917,7 @@ export default function ComiuLandingPage() {
           }
 
           .hero-visual {
-            display: grid;
-            min-height: auto;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
-            perspective: none;
+            display: none;
           }
 
           .hero-device {
