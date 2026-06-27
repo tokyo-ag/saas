@@ -417,9 +417,13 @@ export default function ComiuLandingPage() {
         .hero h1 {
           max-width: 860px;
           margin-bottom: 28px;
-          font-size: clamp(44px, 7.2vw, 96px);
-          line-height: 1.1;
+          font-size: clamp(38px, 5.4vw, 76px);
+          line-height: 1.12;
           font-weight: 950;
+        }
+
+        .title-line {
+          white-space: nowrap;
         }
 
         .hero h1 .title-line {
@@ -455,13 +459,13 @@ export default function ComiuLandingPage() {
         }
 
         .hero-sub {
-          max-width: 580px;
+          max-width: 800px;
           margin-bottom: 18px;
           color: #1a2445;
-          font-size: clamp(18px, 2vw, 24px);
+          font-size: clamp(16px, 2vw, 22px);
           line-height: 1.7;
-          font-weight: 820;
-          letter-spacing: -0.04em;
+          font-weight: 700;
+          letter-spacing: -0.03em;
         }
 
         .hero-desc,
@@ -1899,7 +1903,7 @@ export default function ComiuLandingPage() {
 
           .hero h1 {
             max-width: 100%;
-            font-size: clamp(36px, 11vw, 56px);
+            font-size: clamp(28px, 9.2vw, 42px);
             line-height: 1.12;
             letter-spacing: -0.055em;
           }
@@ -2307,9 +2311,8 @@ export default function ComiuLandingPage() {
               <span className="hero-line-wrap"><span className="title-line">集客なら</span></span>
               <span className="hero-line-wrap"><span className="title-line accent">COMIU</span></span>
             </h1>
-            <p className="hero-lead hero-fade" style={{ "--fd": "0.8s" } as React.CSSProperties}>
-              掲載用のホームページなら、もういらない。
-              <br />
+            <p className="hero-sub hero-fade" style={{ "--fd": "0.8s" } as React.CSSProperties}>
+              掲載用のホームページなら、もういらない。<br />
               Webサイトを、<strong>育てるWebアプリケーション</strong>へ。
             </p>
             <p className="hero-desc hero-fade" style={{ "--fd": "1.0s" } as React.CSSProperties}>
