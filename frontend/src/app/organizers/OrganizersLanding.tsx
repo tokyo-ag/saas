@@ -2307,7 +2307,7 @@ export default function ComiuLandingPage() {
           <div className="hero-copy">
             <SectionLabel>EVENT & CIRCLE OPERATING APP</SectionLabel>
             <h1>
-              <span className="hero-line-wrap"><span className="title-line">イベント・サークルの</span></span>
+              <span className="hero-line-wrap"><span className="title-line">イベント・サークルに</span></span>
               <span className="hero-line-wrap"><span className="title-line">集客なら</span></span>
               <span className="hero-line-wrap"><span className="title-line accent">COMIU</span></span>
             </h1>
@@ -2321,10 +2321,7 @@ export default function ComiuLandingPage() {
             </p>
             <div className="hero-actions hero-fade" style={{ "--fd": "1.2s" } as React.CSSProperties}>
               <a className="button button-primary" href="/register">
-                無料で団体ページを作る
-              </a>
-              <a className="button button-secondary" href="#features">
-                COMIUでできることを見る
+                無料でCOMIUを始める
               </a>
             </div>
           </div>
