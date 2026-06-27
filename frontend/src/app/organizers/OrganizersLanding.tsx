@@ -1,75 +1,189 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState } from "react";
+const toolCards = [
+  ["📸", "Instagram 告知", "告知"],
+  ["📝", "Googleフォーム", "申込み受付"],
+  ["💬", "LINEグループ", "連絡・共有"],
+  ["🟩", "スプレッドシート", "名簿管理"],
+  ["🅿️", "PayPay", "支払い確認"],
+  ["🗒️", "メモ帳", "タスク・メモ"],
+];
 
-const features = [
+const eventRows = [
+  ["新歓スポーツ大会", "2025.05.24 (土)", "128 / 200", "88%"],
+  ["春のボランティア活動", "2025.05.31 (土)", "86 / 150", "68%"],
+  ["BBQパーティー", "2025.06.14 (土)", "42 / 80", "52%"],
+];
+
+const memberRows = [
+  ["山田 太郎", "経済学部 3年", "参加確定"],
+  ["佐藤 花子", "文学部 2年", "参加確定"],
+  ["鈴木 健", "工学部 1年", "キャンセル待ち"],
+  ["田中 美咲", "法学部 2年", "未対応"],
+];
+
+const featureCards = [
   {
-    no: "01",
-    title: "団体ページを\n無料で作成",
-    text: "活動写真、イベント予定、よくある質問、実績。初めての人にも、雰囲気と信頼感が伝わる場所を。",
-    type: "site",
-    color: "blue",
+    no: "1",
+    title: "団体ページを無料で作成",
+    text: "団体の紹介・ビジョン・SNS・実績などをひとつのページで発信できます。",
+    mock: "profile",
   },
   {
-    no: "02",
-    title: "イベント募集を\nまとめる",
-    text: "募集人数、参加費、場所、持ち物をひとつのページに。毎回の告知を、参加につながる導線へ。",
-    type: "event",
-    color: "lime",
+    no: "2",
+    title: "イベント募集をまとめる",
+    text: "複数のイベントを一覧で掲載。参加者はカンタンに申し込み可能です。",
+    mock: "event",
   },
   {
-    no: "03",
-    title: "ポータルで\n見つけてもらう",
-    text: "イベントを登録すると、COMIU内のポータルにも掲載。新しい参加者に届く機会を増やします。",
-    type: "portal",
-    color: "purple",
+    no: "3",
+    title: "公式LINEで自動リマインド",
+    text: "イベント前に自動でお知らせ。参加率アップとドタキャン防止に。",
+    mock: "line",
   },
   {
-    no: "04",
-    title: "予約を\n管理する",
-    text: "参加人数、定員、キャンセル、参加者名簿をまとめて管理。フォームと表を行き来しない運営へ。",
-    type: "list",
-    color: "orange",
-  },
-  {
-    no: "05",
-    title: "公式LINEで\n自動リマインド",
-    text: "予約後の案内やイベント前日の通知を自動化。問い合わせと連絡漏れを減らします。",
-    type: "line",
-    color: "green",
-  },
-  {
-    no: "06",
-    title: "事前決済に\n対応",
-    text: "申込みから支払いまでスムーズに。当日の集金・未払い確認を減らして、イベントに集中。",
-    type: "payment",
-    color: "pink",
+    no: "4",
+    title: "事前決済と予約管理",
+    text: "参加費の事前決済でスムーズに運営。申込者の管理も一画面で完結します。",
+    mock: "payment",
   },
 ];
 
 function Logo() {
+  return <span className="logo-word">COMIU</span>;
+}
+
+function PageBadge({ page }: { page: string }) {
+  return <span className="page-badge">{page} / 5</span>;
+}
+
+function EventThumb({ tone = "blue" }: { tone?: "blue" | "green" | "orange" | "pink" }) {
   return (
-    <span className="brand">
-      <span className="brand-mark">
-        <i />
-        <i />
-        <i />
-      </span>
-      <strong>COMIU</strong>
+    <span className={`event-thumb ${tone}`} aria-hidden="true">
+      <i />
+      <i />
+      <i />
     </span>
   );
 }
 
-function MiniMock({ type }: { type: string }) {
-  if (type === "site") {
+function DashboardMock() {
+  return (
+    <div className="dashboard-mock">
+      <div className="mock-head">
+        <Logo />
+        <b>ダッシュボード</b>
+        <span>🔔</span>
+        <span>☰</span>
+      </div>
+
+      <div className="mock-panel event-panel">
+        <div className="panel-title">
+          <b>イベント一覧</b>
+          <a>一覧を見る</a>
+        </div>
+        {eventRows.map((event, index) => (
+          <div className="event-row" key={event[0]}>
+            <EventThumb tone={index === 2 ? "orange" : "blue"} />
+            <div>
+              <b>{event[0]}</b>
+              <small>{event[1]}</small>
+            </div>
+            <span>申込数</span>
+            <strong>{event[2]}</strong>
+            <em style={{ width: event[3] }} />
+          </div>
+        ))}
+      </div>
+
+      <div className="mock-grid">
+        <div className="mock-panel stat-chart">
+          <div className="panel-title">
+            <b>予約・申込の状況</b>
+            <a>一覧を見る</a>
+          </div>
+          <span>今日の申込</span>
+          <strong>28件</strong>
+          <small>+12件（前日比）</small>
+          <div className="spark">
+            <i />
+            <i />
+            <i />
+            <i />
+            <i />
+          </div>
+        </div>
+
+        <div className="mock-panel notice-list">
+          <div className="panel-title">
+            <b>お知らせ</b>
+            <a>一覧を見る</a>
+          </div>
+          {["新着メンバー募集！", "持ち物について", "会場アクセス", "雨天時の対応"].map((item, index) => (
+            <p key={item}>
+              <span>▣</span>
+              <b>{item}</b>
+              <small>05.{10 - index}</small>
+            </p>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MemberListCard() {
+  return (
+    <div className="float-card members-card">
+      <div className="panel-title">
+        <b>参加者リスト</b>
+        <a>一覧を見る</a>
+      </div>
+      {memberRows.map((member, index) => (
+        <p key={member[0]}>
+          <span className={`face face-${index + 1}`} />
+          <b>{member[0]}</b>
+          <small>{member[1]}</small>
+          <em>{member[2]}</em>
+        </p>
+      ))}
+      <strong>+ 284 人を見る</strong>
+    </div>
+  );
+}
+
+function NoticeCard() {
+  return (
+    <div className="float-card notice-card">
+      <div className="panel-title">
+        <b>お知らせ</b>
+        <a>一覧を見る</a>
+      </div>
+      {["新着メンバー募集！", "持ち物について", "会場アクセス", "雨天時の対応"].map((item, index) => (
+        <p key={item}>
+          <span>▣</span>
+          <b>{item}</b>
+          <small>05.{10 - index}</small>
+        </p>
+      ))}
+      <strong>すべてのお知らせを見る</strong>
+    </div>
+  );
+}
+
+function FeatureMock({ type }: { type: string }) {
+  if (type === "profile") {
     return (
-      <div className="mini-mock mini-site">
-        <div className="mini-cover" />
-        <b>インカレサークル BELL</b>
-        <span>活動中のイベント　3件</span>
-        <div className="mini-tags">
-          <em>バドミントン</em>
-          <em>交流会</em>
+      <div className="feature-profile">
+        <EventThumb tone="green" />
+        <div>
+          <b>NEXUS 大学生団体</b>
+          <small>つながる、動き出す、未来をつくる。</small>
+          <p>
+            <span>メンバー 128人</span>
+            <span>イベント 24件</span>
+            <span>フォロワー 342人</span>
+          </p>
         </div>
       </div>
     );
@@ -77,165 +191,147 @@ function MiniMock({ type }: { type: string }) {
 
   if (type === "event") {
     return (
-      <div className="mini-mock mini-event">
-        <small>7 / 13 SUN</small>
-        <b>バドミントン交流会</b>
-        <span>残り8名</span>
-        <button>予約する →</button>
-      </div>
-    );
-  }
-
-  if (type === "portal") {
-    return (
-      <div className="mini-mock mini-portal">
-        <small>人気のイベント</small>
-        <b>週末のスポーツ交流会</b>
-        <span>初心者歓迎　池袋</span>
-        <div className="portal-avatars">
-          <i />
-          <i />
-          <i />
-          <i />
+      <div className="feature-event">
+        <EventThumb tone="green" />
+        <div>
+          <em>募集中</em>
+          <b>海岸清掃ボランティア</b>
+          <small>6/22（日）9:00 - 12:00</small>
+          <p>参加予定 46人</p>
         </div>
-      </div>
-    );
-  }
-
-  if (type === "list") {
-    return (
-      <div className="mini-mock mini-list">
-        <span>
-          <i /> 佐藤 みなみ <b>初参加</b>
-        </span>
-        <span>
-          <i /> 田中 こうた <b>予約済み</b>
-        </span>
-        <span>
-          <i /> 鈴木 りお <b>決済済み</b>
-        </span>
+        <button>詳しく見る</button>
       </div>
     );
   }
 
   if (type === "line") {
     return (
-      <div className="mini-mock mini-line">
-        <small>COMIU公式LINE</small>
-        <b>明日はバドミントン交流会です！</b>
-        <span>会場：池袋駅東口 徒歩5分</span>
-        <em>既読 38　18:02</em>
+      <div className="feature-line">
+        <i>LINE</i>
+        <p>こんにちは！NEXUSです 🌱</p>
+        <p>
+          海岸清掃ボランティア
+          <br />
+          開催まであと2日です！
+        </p>
+        <button>詳細を確認する</button>
       </div>
     );
   }
 
   return (
-    <div className="mini-mock mini-payment">
-      <small>お支払い完了</small>
-      <b>¥ 1,500</b>
-      <span>✓</span>
-      <em>カード決済済み</em>
+    <div className="feature-payment">
+      <div>
+        <span>参加費</span>
+        <b>¥2,000</b>
+        <small>税込</small>
+        <button>支払って申し込む</button>
+      </div>
+      <div>
+        <span>申込者一覧（46人）</span>
+        {memberRows.slice(0, 4).map((member, index) => (
+          <p key={member[0]}>
+            <span className={`face face-${index + 1}`} />
+            <b>{member[0]}</b>
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CalendarMock() {
+  const days = ["日", "月", "火", "水", "木", "金", "土"];
+  const dates = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 1, 2];
+  return (
+    <div className="calendar-card">
+      <div className="calendar-head">
+        <button>‹</button>
+        <b>2025年7月</b>
+        <button>›</button>
+        <em>月表示⌄</em>
+      </div>
+      <div className="calendar-grid days">
+        {days.map((day) => (
+          <span key={day}>{day}</span>
+        ))}
+      </div>
+      <div className="calendar-grid">
+        {dates.map((date, index) => (
+          <span className={date === 16 ? "selected" : index % 5 === 0 ? "with-dot" : ""} key={`${date}-${index}`}>
+            {date}
+          </span>
+        ))}
+      </div>
+      <div className="calendar-events">
+        {[
+          ["7/13", "バドミントン", "残り8名", "blue"],
+          ["7/17", "新歓交流会", "予約受付中", "green"],
+          ["7/19", "BBQ", "女性枠あと3名", "pink"],
+        ].map((event, index) => (
+          <p key={event[1]}>
+            <EventThumb tone={index === 2 ? "orange" : "blue"} />
+            <b>{event[0]}　{event[1]}</b>
+            <em className={`pill-${event[3]}`}>{event[2]}</em>
+            <span>›</span>
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProfilePhone() {
+  return (
+    <div className="profile-phone">
+      <div className="phone-topbar">
+        <span>9:41</span>
+        <i />
+      </div>
+      <Logo />
+      <div className="profile-cover">
+        <i />
+        <i />
+        <i />
+        <i />
+      </div>
+      <div className="profile-body">
+        <span className="profile-logo">COMIU</span>
+        <h3>青空スポーツクラブ</h3>
+        <p>スポーツを通じて、地域のつながりと笑顔をつくるコミュニティです。</p>
+        <div className="profile-stats">
+          <span>メンバー<br /><b>132名</b></span>
+          <span>イベント<br /><b>24件</b></span>
+          <span>フォロワー<br /><b>256人</b></span>
+        </div>
+        <button>フォローする</button>
+        <div className="next-event">
+          <EventThumb tone="green" />
+          <div>
+            <b>春の交流フットサル大会</b>
+            <small>2025/06/15（日）9:00-12:00</small>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function ComiuLandingPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const header = document.querySelector<HTMLElement>(".site-header");
-    const fixedCta = document.querySelector<HTMLElement>(".mobile-fixed-cta");
-    const cta = document.querySelector<HTMLElement>("#cta");
-    const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-
-    const onScroll = () => {
-      header?.classList.toggle("scrolled", window.scrollY > 10);
-    };
-
-    const revealObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("in-view");
-            revealObserver.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.12 }
-    );
-
-    document.querySelectorAll<HTMLElement>(".reveal").forEach((element) => {
-      revealObserver.observe(element);
-    });
-
-    const ctaObserver = new IntersectionObserver(
-      (entries) => {
-        fixedCta?.classList.toggle("hide", entries[0].isIntersecting);
-      },
-      { threshold: 0.15 }
-    );
-
-    if (cta) ctaObserver.observe(cta);
-
-    const stage = document.querySelector<HTMLElement>(".hero-stage");
-    const dashboard = document.querySelector<HTMLElement>(".dashboard-card");
-
-    const moveDashboard = (event: MouseEvent) => {
-      if (!stage || !dashboard || !canHover) return;
-
-      const rect = stage.getBoundingClientRect();
-      const x = (event.clientX - rect.left) / rect.width - 0.5;
-      const y = (event.clientY - rect.top) / rect.height - 0.5;
-
-      dashboard.style.transform = `
-        translateX(-50%)
-        rotateY(${x * 8}deg)
-        rotateX(${y * -7}deg)
-        translateZ(8px)
-      `;
-    };
-
-    const resetDashboard = () => {
-      if (dashboard) {
-        dashboard.style.transform =
-          "translateX(-50%) rotateY(0deg) rotateX(0deg) translateZ(0)";
-      }
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-
-    if (canHover && stage) {
-      stage.addEventListener("mousemove", moveDashboard);
-      stage.addEventListener("mouseleave", resetDashboard);
-    }
-
-    onScroll();
-
-    return () => {
-      revealObserver.disconnect();
-      ctaObserver.disconnect();
-      window.removeEventListener("scroll", onScroll);
-      stage?.removeEventListener("mousemove", moveDashboard);
-      stage?.removeEventListener("mouseleave", resetDashboard);
-    };
-  }, []);
-
   return (
     <>
       <style jsx global>{`
         :root {
-          --ink: #111a3b;
-          --muted: #68728f;
-          --blue: #4263ff;
-          --purple: #7f68ff;
-          --lime: #d7ff55;
-          --orange: #ff9b60;
-          --pink: #ff76b6;
-          --green: #29c76f;
-          --line: #e7eaf8;
-          --surface: #f7f8ff;
-          --shadow: 0 22px 60px rgba(42, 56, 130, 0.14);
-          --radius: 28px;
+          --ink: #070d2f;
+          --muted: #5f6985;
+          --blue: #1557ff;
+          --blue2: #3655ff;
+          --purple: #9946ff;
+          --violet: #7554ff;
+          --green: #08c35e;
+          --soft-blue: #edf5ff;
+          --line: #dfe7fb;
+          --shadow: 0 22px 58px rgba(39, 68, 159, 0.16);
         }
 
         * {
@@ -248,2755 +344,2244 @@ export default function ComiuLandingPage() {
 
         body {
           margin: 0;
-          background: #fff;
           color: var(--ink);
+          background: #f6f9ff;
           font-family: Inter, "Noto Sans JP", system-ui, sans-serif;
-          overflow-x: hidden;
           -webkit-font-smoothing: antialiased;
+        }
+
+        button,
+        input,
+        textarea {
+          font: inherit;
         }
 
         a {
           color: inherit;
         }
 
-        button {
-          font: inherit;
+        .story-page {
+          overflow: hidden;
+          background:
+            radial-gradient(circle at 22% 6%, rgba(98, 149, 255, 0.2), transparent 32%),
+            radial-gradient(circle at 82% 16%, rgba(162, 76, 255, 0.13), transparent 28%),
+            #f8fbff;
         }
 
-        .page-noise {
-          position: fixed;
-          inset: 0;
-          z-index: 100;
+        .story-slide {
+          position: relative;
+          min-height: 100vh;
+          padding: 38px clamp(24px, 4vw, 56px) 48px;
+          overflow: hidden;
+          background:
+            radial-gradient(circle at 50% 0%, rgba(221, 237, 255, 0.95), transparent 36%),
+            linear-gradient(135deg, #ffffff 0%, #f8fbff 48%, #f3edff 100%);
+          border-bottom: 1px solid rgba(213, 224, 255, 0.7);
+        }
+
+        .story-slide::before,
+        .story-slide::after {
+          position: absolute;
+          content: "";
           pointer-events: none;
-          opacity: 0.028;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         }
 
-        .shell {
-          width: min(1160px, calc(100% - 48px));
+        .story-slide::before {
+          right: 64px;
+          top: 18px;
+          width: 220px;
+          height: 180px;
+          opacity: 0.34;
+          background-image: radial-gradient(circle, #bf86ff 2px, transparent 2.5px);
+          background-size: 18px 18px;
+        }
+
+        .story-slide::after {
+          left: -90px;
+          bottom: -130px;
+          width: 118%;
+          height: 300px;
+          background:
+            radial-gradient(circle at 14% 58%, rgba(65, 123, 255, 0.26), transparent 22%),
+            linear-gradient(165deg, rgba(36, 102, 255, 0.2), rgba(160, 86, 255, 0.17) 60%, transparent 61%);
+          transform: rotate(4deg);
+        }
+
+        .slide-inner {
+          position: relative;
+          z-index: 2;
+          width: min(1180px, 100%);
+          min-height: calc(100vh - 86px);
           margin: 0 auto;
         }
 
-        .site-header {
-          position: fixed;
-          top: 13px;
-          left: 50%;
-          z-index: 50;
-          width: min(1200px, calc(100% - 32px));
-          height: 72px;
-          padding: 0 18px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          transform: translateX(-50%);
-          border: 1px solid transparent;
-          transition: 0.28s ease;
-        }
-
-        .site-header.scrolled {
-          border-color: rgba(215, 220, 242, 0.9);
-          border-radius: 18px;
-          background: rgba(255, 255, 255, 0.78);
-          box-shadow: 0 10px 30px rgba(37, 48, 110, 0.08);
-          backdrop-filter: blur(18px);
-        }
-
-        .brand {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          text-decoration: none;
-          font-size: 20px;
-          letter-spacing: -0.07em;
-        }
-
-        .brand-mark {
-          display: inline-flex;
-          align-items: flex-end;
-          gap: 3px;
-          width: 24px;
-          height: 24px;
-        }
-
-        .brand-mark i {
-          display: block;
-          width: 6px;
-          border-radius: 8px;
-          background: var(--blue);
-          transform: skewY(-12deg);
-        }
-
-        .brand-mark i:nth-child(1) {
-          height: 11px;
-        }
-
-        .brand-mark i:nth-child(2) {
-          height: 18px;
-          background: var(--purple);
-        }
-
-        .brand-mark i:nth-child(3) {
-          height: 23px;
-          background: var(--lime);
-        }
-
-        .nav {
-          display: flex;
-          align-items: center;
-          gap: 24px;
-        }
-
-        .nav a {
-          color: #394361;
-          text-decoration: none;
-          font-size: 13px;
-          font-weight: 800;
-        }
-
-        .nav-cta {
-          padding: 11px 15px;
-          color: #fff !important;
-          background: var(--ink);
-          border-radius: 12px;
-        }
-
-        .nav-cta b {
-          color: var(--lime);
-          font-size: 16px;
-        }
-
-        .menu-button,
-        .mobile-menu {
-          display: none;
-        }
-
-        .hero {
-          position: relative;
-          min-height: 940px;
-          padding-top: 185px;
-          display: grid;
-          grid-template-columns: 0.95fr 1.05fr;
-          align-items: center;
-          gap: 30px;
-        }
-
-        .hero-glow {
-          position: absolute;
-          border-radius: 999px;
-          pointer-events: none;
-          filter: blur(45px);
-        }
-
-        .hero-glow.a {
-          top: 160px;
-          left: -170px;
-          width: 460px;
-          height: 460px;
-          background: rgba(155, 180, 255, 0.31);
-        }
-
-        .hero-glow.b {
-          top: 270px;
-          right: -135px;
-          width: 400px;
-          height: 400px;
-          background: rgba(215, 255, 110, 0.28);
-        }
-
-        .eyebrow {
-          margin: 0 0 18px;
-          color: #647096;
-          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-          font-size: 11px;
-          letter-spacing: 0.09em;
-        }
-
-        .eyebrow-dot {
+        .logo-word {
           display: inline-block;
-          width: 7px;
-          height: 7px;
-          margin-right: 8px;
-          border-radius: 50%;
-          background: var(--lime);
-          box-shadow: 0 0 0 4px rgba(215, 255, 85, 0.25);
-        }
-
-        h1,
-        h2,
-        h3,
-        p {
-          margin-top: 0;
-        }
-
-        .hero h1 {
-          margin-bottom: 26px;
-          font-size: clamp(42px, 4.8vw, 68px);
-          line-height: 1.25;
-          letter-spacing: -0.085em;
-        }
-
-        .gradient-text {
-          background: linear-gradient(105deg, var(--blue), var(--purple));
           color: transparent;
+          background: linear-gradient(90deg, #0959ff 4%, #2350ff 48%, #ac3eff 100%);
+          background-clip: text;
+          -webkit-background-clip: text;
+          font-size: clamp(34px, 4.1vw, 54px);
+          font-weight: 950;
+          letter-spacing: -0.08em;
+          line-height: 1;
+        }
+
+        .page-badge {
+          position: absolute;
+          top: 0;
+          right: 0;
+          z-index: 5;
+          min-width: 106px;
+          padding: 14px 22px;
+          color: var(--ink);
+          background: rgba(255, 255, 255, 0.86);
+          border: 1px solid #dfe6fb;
+          border-radius: 22px;
+          box-shadow: 0 10px 28px rgba(59, 84, 159, 0.1);
+          font-size: 25px;
+          font-weight: 950;
+          text-align: center;
+        }
+
+        .page-badge::first-letter {
+          color: var(--blue);
+        }
+
+        .page-badge.gradient {
+          color: #fff;
+          background: linear-gradient(100deg, #1259ff, #a442ff);
+          border-color: transparent;
+        }
+
+        .hero-one .slide-inner {
+          display: grid;
+          grid-template-columns: minmax(430px, 0.92fr) minmax(470px, 1fr);
+          gap: 30px;
+          align-items: start;
+        }
+
+        .hero-copy {
+          position: relative;
+          padding-top: 110px;
+        }
+
+        .hero-one .hero-copy > .logo-word {
+          position: absolute;
+          top: 0;
+          left: 0;
+        }
+
+        .hero-title {
+          margin: 0 0 28px;
+          font-size: clamp(52px, 6.5vw, 88px);
+          line-height: 1.18;
+          font-weight: 950;
+          letter-spacing: -0.08em;
+        }
+
+        .hero-title strong,
+        .section-title strong,
+        .blue-gradient {
+          color: transparent;
+          background: linear-gradient(90deg, #1557ff, #9c45ff);
           background-clip: text;
           -webkit-background-clip: text;
         }
 
-        .highlight {
-          background: linear-gradient(
-            transparent 70%,
-            rgba(215, 255, 85, 0.85) 70%
-          );
-        }
-
-        .hero-sub {
-          margin-bottom: 13px;
-          font-size: 20px;
-          line-height: 1.8;
-          letter-spacing: -0.04em;
-        }
-
-        .hero-desc {
-          max-width: 500px;
-          margin-bottom: 27px;
-          color: var(--muted);
-          font-size: 14px;
-          line-height: 1.95;
-        }
-
-        .hero-tags {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          margin-bottom: 22px;
-        }
-
-        .hero-tags span {
-          padding: 7px 10px;
-          color: #4d5a82;
-          background: #f3f5ff;
-          border: 1px solid #e7eafe;
-          border-radius: 999px;
-          font-size: 11px;
-          font-weight: 800;
-        }
-
-        .hero-actions {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 11px;
-          align-items: center;
-        }
-
-        .button {
-          display: inline-flex;
-          min-height: 52px;
-          align-items: center;
-          justify-content: center;
-          gap: 15px;
-          padding: 0 20px;
-          border-radius: 15px;
-          text-decoration: none;
-          font-size: 14px;
-          font-weight: 850;
-          transition: transform 0.22s ease, box-shadow 0.22s ease;
-        }
-
-        .button:hover {
-          transform: translateY(-3px);
-        }
-
-        .button:active {
-          transform: scale(0.98);
-        }
-
-        .button-primary {
-          color: #fff;
-          background: var(--ink);
-          box-shadow: 0 13px 25px rgba(17, 26, 59, 0.2);
-        }
-
-        .button-primary b {
-          color: var(--lime);
-          font-size: 19px;
-        }
-
-        .button-quiet {
-          color: var(--ink);
-          background: #fff;
-          border: 1px solid #e2e6f5;
-        }
-
-        .hero-note {
-          margin: 16px 0 0;
-          color: #929bb5;
-          font-size: 11px;
-        }
-
-        .hero-stage {
-          position: relative;
-          height: 555px;
-          perspective: 1000px;
-          transform-style: preserve-3d;
-        }
-
-        .dashboard-card {
-          position: absolute;
-          top: 53px;
-          left: 50%;
-          width: 412px;
-          padding: 21px;
-          background: rgba(255, 255, 255, 0.88);
-          border: 1px solid rgba(255, 255, 255, 0.95);
-          border-radius: 26px;
-          box-shadow: 0 33px 76px rgba(39, 55, 135, 0.22);
-          backdrop-filter: blur(18px);
-          transform: translateX(-50%);
-          transition: transform 0.2s ease;
-        }
-
-        .dash-top {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-        }
-
-        .dash-top p {
-          margin-bottom: 3px;
-          color: var(--muted);
-          font-size: 11px;
-        }
-
-        .dash-top h3 {
-          margin: 0;
-          font-size: 18px;
+        .hero-title .comiu-big {
+          display: block;
+          margin-top: 4px;
+          font-size: clamp(95px, 11vw, 152px);
+          line-height: 0.94;
           letter-spacing: -0.06em;
         }
 
-        .avatar {
+        .hero-lead {
           display: grid;
-          width: 34px;
-          height: 34px;
-          place-items: center;
-          color: #fff;
-          background: linear-gradient(135deg, var(--blue), var(--purple));
-          border-radius: 12px;
-          font-size: 14px;
-          font-weight: 800;
+          grid-template-columns: 6px 1fr;
+          gap: 22px;
+          align-items: center;
+          margin: 0 0 30px;
+          font-size: clamp(24px, 2.6vw, 36px);
+          line-height: 1.35;
+          font-weight: 950;
+          letter-spacing: -0.06em;
         }
 
-        .dash-stats {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-          margin-top: 18px;
+        .hero-lead::before {
+          width: 6px;
+          height: 86px;
+          content: "";
+          background: var(--blue);
+          border-radius: 999px;
         }
 
-        .dash-stats > div {
-          padding: 13px;
-          background: #f6f7ff;
-          border-radius: 15px;
+        .hero-lead strong {
+          color: var(--blue);
         }
 
-        .dash-stats small {
-          display: block;
-          color: #7c87a9;
-          font-size: 10px;
-        }
-
-        .dash-stats b {
-          display: inline-block;
-          margin-top: 4px;
+        .hero-desc {
+          max-width: 520px;
+          margin: 0 0 28px;
+          color: #17213f;
           font-size: 23px;
+          line-height: 1.75;
+          font-weight: 850;
+          letter-spacing: -0.05em;
         }
 
-        .dash-stats em {
-          float: right;
-          margin-top: 10px;
-          color: #39a56a;
-          font-size: 9px;
-          font-style: normal;
-        }
-
-        .dash-chart {
-          margin-top: 10px;
-          padding: 14px 15px 10px;
-          border: 1px solid #ebedf8;
-          border-radius: 15px;
-        }
-
-        .chart-title {
-          display: flex;
-          justify-content: space-between;
-          font-size: 10px;
-        }
-
-        .chart-title span {
-          color: #8a93ac;
-        }
-
-        .chart-bars {
-          display: flex;
-          height: 80px;
-          align-items: flex-end;
-          gap: 8px;
-          padding: 8px 4px;
-        }
-
-        .chart-bars i {
-          flex: 1;
-          display: block;
-          background: linear-gradient(180deg, var(--purple), var(--blue));
-          border-radius: 5px 5px 1px 1px;
-        }
-
-        .chart-days {
-          display: grid;
-          grid-template-columns: repeat(7, 1fr);
-          color: #98a1bc;
-          font-size: 8px;
-          text-align: center;
-        }
-
-        .event-row {
-          display: flex;
+        .big-cta {
+          display: inline-flex;
+          min-height: 86px;
           align-items: center;
-          gap: 10px;
-          margin-top: 12px;
+          justify-content: center;
+          gap: 32px;
+          padding: 0 46px;
+          color: #fff;
+          background: linear-gradient(95deg, #075cff, #a63dff);
+          border: 7px solid rgba(255, 255, 255, 0.94);
+          border-radius: 999px;
+          box-shadow: 0 18px 42px rgba(55, 77, 235, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+          text-decoration: none;
+          font-size: clamp(21px, 2.5vw, 34px);
+          font-weight: 950;
+          letter-spacing: -0.05em;
         }
 
-        .event-icon {
-          display: grid;
-          width: 34px;
-          height: 34px;
-          place-items: center;
-          border-radius: 12px;
-          font-size: 15px;
-        }
-
-        .event-icon.blue {
-          background: #eaf0ff;
-        }
-
-        .event-icon.purple {
-          background: #f0ecff;
-        }
-
-        .event-row > div {
-          flex: 1;
-        }
-
-        .event-row b,
-        .event-row small {
-          display: block;
-        }
-
-        .event-row b {
-          font-size: 11px;
-        }
-
-        .event-row small {
-          color: #8e97b0;
-          font-size: 9px;
-        }
-
-        .event-row > strong {
-          font-size: 12px;
-        }
-
-        .floating-card {
+        .hero-one .big-cta {
           position: absolute;
-          z-index: 2;
+          bottom: 96px;
+          left: 50%;
+          z-index: 7;
+          width: min(820px, calc(100% - 160px));
+          transform: translateX(-50%);
+        }
+
+        .big-cta span:first-child {
+          display: grid;
+          width: 58px;
+          height: 58px;
+          place-items: center;
+          border: 5px solid rgba(255, 255, 255, 0.88);
+          border-radius: 16px;
+          font-size: 28px;
+        }
+
+        .hero-visual {
+          position: relative;
+          min-height: 1020px;
+          padding-top: 110px;
+        }
+
+        .phone-shell {
+          position: absolute;
+          right: 12px;
+          top: 86px;
+          width: 470px;
+          height: 930px;
+          padding: 22px;
+          background: linear-gradient(180deg, #ffffff, #f7f9ff);
+          border: 10px solid rgba(238, 243, 255, 0.94);
+          border-radius: 70px;
+          box-shadow: 0 30px 70px rgba(44, 66, 151, 0.23);
+        }
+
+        .phone-shell::before {
+          position: absolute;
+          top: 16px;
+          left: 50%;
+          width: 126px;
+          height: 28px;
+          content: "";
+          background: #0b102c;
+          border-radius: 0 0 20px 20px;
+          transform: translateX(-50%);
+        }
+
+        .phone-screen {
+          height: 100%;
+          padding: 52px 24px 24px;
+          overflow: hidden;
+          background: #fff;
+          border-radius: 50px;
+        }
+
+        .float-side {
+          position: absolute;
+          right: -8px;
+          top: 430px;
+          z-index: 4;
+          display: grid;
+          gap: 22px;
+        }
+
+        .side-stat {
+          display: grid;
+          width: 122px;
+          min-height: 126px;
+          place-items: center;
+          padding: 16px 12px;
+          color: var(--green);
+          background: rgba(255, 255, 255, 0.92);
+          border: 2px solid #baffd5;
+          border-radius: 20px;
+          box-shadow: 0 18px 38px rgba(18, 194, 104, 0.18);
+          text-align: center;
+          font-size: 18px;
+          font-weight: 950;
+        }
+
+        .side-stat b {
+          color: var(--ink);
+          font-size: 29px;
+        }
+
+        .side-stat small {
+          color: var(--green);
+          font-size: 16px;
+        }
+
+        .float-card {
+          position: absolute;
+          z-index: 5;
+          padding: 20px;
+          background: rgba(255, 255, 255, 0.95);
+          border: 1px solid #e3eaff;
+          border-radius: 22px;
+          box-shadow: var(--shadow);
+        }
+
+        .members-card {
+          left: -410px;
+          bottom: 126px;
+          width: 360px;
+        }
+
+        .notice-card {
+          left: -30px;
+          bottom: 154px;
+          width: 360px;
+        }
+
+        .panel-title {
           display: flex;
           align-items: center;
-          gap: 10px;
-          padding: 11px 13px;
-          background: rgba(255, 255, 255, 0.92);
-          border: 1px solid rgba(255, 255, 255, 0.92);
-          border-radius: 14px;
-          box-shadow: 0 12px 28px rgba(40, 58, 136, 0.13);
-          font-size: 10px;
+          justify-content: space-between;
+          gap: 18px;
+          margin-bottom: 18px;
+          font-size: 16px;
+          font-weight: 950;
         }
 
-        .floating-card b {
-          display: block;
-          color: #7b849e;
-          font-weight: 650;
-        }
-
-        .floating-card strong {
-          display: block;
-          color: var(--ink);
+        .panel-title a {
+          color: var(--blue);
           font-size: 13px;
+          font-weight: 950;
+          text-decoration: none;
         }
 
-        .floating-card > span {
+        .members-card p,
+        .notice-card p {
           display: grid;
-          width: 27px;
-          height: 27px;
-          place-items: center;
-          border-radius: 9px;
-          font-size: 14px;
+          grid-template-columns: 45px 1fr auto;
+          gap: 10px 12px;
+          align-items: center;
+          margin: 0;
+          padding: 10px 0;
+          border-bottom: 1px solid #edf1fb;
+        }
+
+        .notice-card p {
+          grid-template-columns: 24px 1fr auto;
+        }
+
+        .members-card small {
+          grid-column: 2;
+          color: var(--muted);
+          font-weight: 750;
+        }
+
+        .members-card em {
+          grid-row: 1 / span 2;
+          grid-column: 3;
+          padding: 5px 9px;
+          color: #0cbf64;
+          background: #e9fff2;
+          border-radius: 8px;
+          font-size: 12px;
+          font-style: normal;
           font-weight: 900;
         }
 
-        .fc-a {
-          top: 18px;
-          left: 0;
+        .members-card > strong,
+        .notice-card > strong {
+          display: block;
+          margin-top: 14px;
+          color: var(--blue);
+          text-align: center;
+          font-size: 17px;
         }
 
-        .fc-b {
-          top: 365px;
-          right: 0;
+        .face,
+        .event-thumb {
+          display: block;
+          overflow: hidden;
+          background: linear-gradient(135deg, #9cc8ff, #f7a6d7);
+          border-radius: 12px;
         }
 
-        .fc-c {
-          bottom: 7px;
-          left: 66px;
+        .face {
+          width: 42px;
+          height: 42px;
         }
 
-        .fc-a > span {
-          background: var(--lime);
+        .face-2 {
+          background: linear-gradient(135deg, #ffe3a0, #9dcaff);
         }
 
-        .fc-b > span {
-          color: var(--purple);
-          background: #eeeaff;
+        .face-3 {
+          background: linear-gradient(135deg, #b9f1d2, #7b8cff);
         }
 
-        .fc-c > span {
-          color: #ff7133;
-          background: #fff0e7;
+        .face-4 {
+          background: linear-gradient(135deg, #ffb0b0, #ffe099);
         }
 
-        .hero-scroll {
+        .event-thumb {
+          position: relative;
+          width: 62px;
+          height: 48px;
+          flex: 0 0 auto;
+        }
+
+        .event-thumb i {
           position: absolute;
-          bottom: 35px;
-          left: 0;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.72);
+        }
+
+        .event-thumb i:nth-child(1) {
+          left: 8px;
+          top: 10px;
+          width: 14px;
+          height: 14px;
+        }
+
+        .event-thumb i:nth-child(2) {
+          left: 27px;
+          top: 16px;
+          width: 19px;
+          height: 19px;
+        }
+
+        .event-thumb i:nth-child(3) {
+          right: 7px;
+          bottom: 8px;
+          width: 24px;
+          height: 8px;
+          border-radius: 999px;
+        }
+
+        .event-thumb.green {
+          background: linear-gradient(135deg, #31d681, #8bd3ff);
+        }
+
+        .event-thumb.orange {
+          background: linear-gradient(135deg, #f09446, #ffd76f);
+        }
+
+        .event-thumb.pink {
+          background: linear-gradient(135deg, #fd84c4, #8d91ff);
+        }
+
+        .dashboard-mock {
+          color: var(--ink);
+        }
+
+        .mock-head {
           display: flex;
           align-items: center;
-          gap: 10px;
-          color: #8d97b3;
-          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-          font-size: 9px;
-          letter-spacing: 0.16em;
+          gap: 14px;
+          margin-bottom: 24px;
         }
 
-        .hero-scroll span {
-          display: block;
-          width: 56px;
-          height: 1px;
-          background: #b8c0dd;
+        .mock-head .logo-word {
+          font-size: 24px;
         }
 
-        .section-head {
-          max-width: 720px;
-          margin: 0 auto 50px;
-          text-align: center;
+        .mock-head b {
+          flex: 1;
+          font-size: 17px;
+          letter-spacing: -0.04em;
         }
 
-        .section-head h2,
-        .calendar-copy h2,
-        .trust-head h2,
-        .line-copy h2,
-        .journey h2 {
-          margin-bottom: 18px;
-          font-size: clamp(34px, 4vw, 52px);
-          line-height: 1.3;
-          letter-spacing: -0.085em;
+        .mock-panel {
+          background: #fff;
+          border: 1px solid #e4eafd;
+          border-radius: 18px;
+          box-shadow: 0 12px 25px rgba(46, 68, 150, 0.08);
         }
 
-        .section-head > p:last-child,
-        .calendar-copy > p,
-        .trust-head > p,
-        .line-copy > p {
-          color: var(--muted);
-          font-size: 15px;
-          line-height: 2;
+        .event-panel {
+          padding: 20px;
         }
 
-        .problem {
-          padding: 140px 0;
-        }
-
-        .merge-demo {
+        .event-row {
+          position: relative;
           display: grid;
-          grid-template-columns: 1fr 130px 1fr;
-          gap: 20px;
+          grid-template-columns: 62px 1fr auto auto;
+          gap: 12px;
+          align-items: center;
+          padding: 13px 0;
+          border-top: 1px solid #edf1fb;
+          font-size: 13px;
+        }
+
+        .event-row:first-of-type {
+          border-top: 0;
+        }
+
+        .event-row small,
+        .event-row span {
+          color: var(--muted);
+          font-weight: 800;
+        }
+
+        .event-row strong {
+          font-weight: 950;
+        }
+
+        .event-row em {
+          position: absolute;
+          right: 0;
+          bottom: 8px;
+          height: 7px;
+          max-width: 115px;
+          background: linear-gradient(90deg, #0f5cff, #97b9ff);
+          border-radius: 999px;
+        }
+
+        .mock-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 18px;
+          margin-top: 26px;
+        }
+
+        .stat-chart,
+        .notice-list {
+          min-height: 200px;
+          padding: 18px;
+        }
+
+        .stat-chart > span {
+          color: var(--muted);
+          font-weight: 800;
+        }
+
+        .stat-chart > strong {
+          display: block;
+          margin: 10px 0 0;
+          font-size: 46px;
+          letter-spacing: -0.06em;
+        }
+
+        .stat-chart > small {
+          color: var(--blue);
+          font-size: 16px;
+          font-weight: 950;
+        }
+
+        .spark {
+          display: flex;
+          height: 48px;
+          align-items: end;
+          gap: 8px;
+          margin-top: 22px;
+        }
+
+        .spark i {
+          flex: 1;
+          height: 22px;
+          background: linear-gradient(180deg, #7f5fff, #115cff);
+          border-radius: 999px 999px 4px 4px;
+        }
+
+        .spark i:nth-child(2) {
+          height: 31px;
+        }
+
+        .spark i:nth-child(3) {
+          height: 27px;
+        }
+
+        .spark i:nth-child(4) {
+          height: 42px;
+        }
+
+        .spark i:nth-child(5) {
+          height: 35px;
+        }
+
+        .notice-list p {
+          display: grid;
+          grid-template-columns: 28px 1fr auto;
+          gap: 10px;
+          align-items: center;
+          margin: 0;
+          padding: 11px 0;
+          border-top: 1px solid #edf1fb;
+          font-size: 14px;
+        }
+
+        .notice-list small {
+          color: var(--muted);
+        }
+
+        .bottom-count {
+          position: absolute;
+          left: 50%;
+          bottom: 0;
+          z-index: 5;
+          min-width: 160px;
+          padding: 16px 26px;
+          background: #fff;
+          border: 1px solid #e0e7fb;
+          border-radius: 20px;
+          box-shadow: var(--shadow);
+          transform: translateX(-50%);
+          text-align: center;
+          font-size: 35px;
+          font-weight: 950;
+        }
+
+        .bottom-count span:first-child {
+          color: var(--blue);
+        }
+
+        .sparkle {
+          position: absolute;
+          color: #9fc5ff;
+          font-size: 80px;
+          filter: drop-shadow(0 10px 28px rgba(61, 121, 255, 0.3));
+        }
+
+        .sparkle.one {
+          left: 68px;
+          bottom: 365px;
+        }
+
+        .slide-two .slide-inner {
+          display: grid;
+          grid-template-rows: auto 1fr auto;
+          gap: 34px;
+        }
+
+        .problem-title {
+          margin: 86px 0 0;
+          max-width: 920px;
+          font-size: clamp(42px, 5.4vw, 70px);
+          line-height: 1.35;
+          letter-spacing: -0.07em;
+        }
+
+        .problem-sub {
+          margin: 0;
+          font-size: clamp(22px, 2.4vw, 32px);
+          line-height: 1.75;
+          font-weight: 900;
+          letter-spacing: -0.04em;
+        }
+
+        .before-after {
+          display: grid;
+          grid-template-columns: minmax(380px, 0.9fr) 150px minmax(460px, 1.2fr);
+          gap: 24px;
           align-items: center;
         }
 
         .tool-cloud {
           position: relative;
-          height: 350px;
+          min-height: 300px;
         }
 
         .tool-card {
           position: absolute;
-          padding: 13px 15px;
-          background: #fff;
-          border: 1px solid #e7ebfa;
-          border-radius: 14px;
-          box-shadow: 0 13px 27px rgba(58, 72, 147, 0.1);
-          font-size: 12px;
-          font-weight: 800;
-          white-space: nowrap;
-        }
-
-        .tool-card span {
-          display: inline-grid;
-          width: 19px;
-          height: 19px;
-          margin-right: 6px;
-          place-items: center;
-          color: var(--blue);
-          background: #eef0ff;
-          border-radius: 6px;
-        }
-
-        .tool-card:nth-child(1) {
-          top: 22px;
-          left: 11%;
+          display: grid;
+          grid-template-columns: 46px 1fr;
+          gap: 14px;
+          align-items: center;
+          width: 240px;
+          min-height: 88px;
+          padding: 16px;
+          background: rgba(255, 255, 255, 0.92);
+          border: 1px solid #e1e8fb;
+          border-radius: 16px;
+          box-shadow: var(--shadow);
+          font-weight: 950;
           transform: rotate(-4deg);
         }
 
+        .tool-card span {
+          display: grid;
+          width: 44px;
+          height: 44px;
+          place-items: center;
+          font-size: 29px;
+        }
+
+        .tool-card small {
+          display: block;
+          margin-top: 4px;
+          color: var(--muted);
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        .tool-card:nth-child(1) {
+          left: 0;
+          top: 0;
+        }
+
         .tool-card:nth-child(2) {
-          top: 68px;
-          right: 4%;
-          transform: rotate(5deg);
+          left: 270px;
+          top: 0;
+          transform: rotate(0deg);
         }
 
         .tool-card:nth-child(3) {
-          top: 151px;
-          left: 0;
-          transform: rotate(3deg);
+          right: 0;
+          top: 24px;
+          transform: rotate(5deg);
         }
 
         .tool-card:nth-child(4) {
-          top: 193px;
-          right: 10%;
+          left: 20px;
+          top: 130px;
           transform: rotate(-5deg);
         }
 
         .tool-card:nth-child(5) {
-          bottom: 24px;
-          left: 18%;
-          transform: rotate(-2deg);
+          left: 320px;
+          top: 142px;
+          transform: rotate(3deg);
         }
 
         .tool-card:nth-child(6) {
-          right: 3%;
-          bottom: 1px;
-          transform: rotate(6deg);
+          right: 20px;
+          top: 154px;
+          transform: rotate(7deg);
         }
 
-        .merge-arrow {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 9px;
-          color: #8b94af;
-          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-          font-size: 10px;
+        .arrow-flow {
+          width: 145px;
+          height: 245px;
+          background: linear-gradient(90deg, rgba(94, 83, 255, 0.14), rgba(132, 69, 255, 0.56));
+          clip-path: polygon(0 27%, 61% 27%, 61% 0, 100% 50%, 61% 100%, 61% 73%, 0 73%);
+          filter: drop-shadow(0 18px 35px rgba(93, 73, 255, 0.24));
         }
 
-        .merge-arrow i {
-          color: var(--blue);
-          font-size: 39px;
-          font-style: normal;
-        }
-
-        .merge-core {
-          min-height: 280px;
-          padding: 32px;
-          color: #fff;
-          background: linear-gradient(135deg, #1c285d, #3f46be);
-          border-radius: 30px;
-          box-shadow: var(--shadow);
-        }
-
-        .core-logo {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 25px;
-          font-weight: 850;
-          letter-spacing: -0.07em;
-        }
-
-        .core-logo .brand-mark i {
-          background: #fff;
-        }
-
-        .core-logo .brand-mark i:nth-child(2) {
-          background: #bec7ff;
-        }
-
-        .core-logo .brand-mark i:nth-child(3) {
-          background: var(--lime);
-        }
-
-        .merge-core > p {
-          margin: 7px 0 20px;
-          color: #c0c8ff;
-          font-size: 11px;
-        }
-
-        .core-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 9px;
-        }
-
-        .core-grid span {
-          padding: 13px 11px;
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 11px;
-          font-size: 12px;
-        }
-
-        .center-tag {
-          margin: 42px 0 0;
-          text-align: center;
-          font-size: 14px;
-          font-weight: 800;
-        }
-
-        .center-tag i {
-          display: inline-block;
-          width: 9px;
-          height: 9px;
-          margin-right: 7px;
-          background: var(--lime);
-          border-radius: 50%;
-        }
-
-        .statement {
-          position: relative;
-          min-height: 660px;
-          padding: 110px 9% 94px;
-          overflow: hidden;
-          color: #fff;
-          background: var(--ink);
-          border-radius: 42px;
-        }
-
-        .statement::after {
-          position: absolute;
-          top: -360px;
-          right: -200px;
-          width: 680px;
-          height: 680px;
-          content: "";
-          background: radial-gradient(
-            circle,
-            rgba(97, 120, 255, 0.48),
-            transparent 66%
-          );
-          border-radius: 50%;
-        }
-
-        .statement .eyebrow {
-          position: relative;
-          z-index: 1;
-          color: #c1c7ff;
-        }
-
-        .statement h2 {
-          position: relative;
-          z-index: 1;
-          margin-bottom: 46px;
-          font-size: clamp(42px, 5vw, 69px);
-          line-height: 1.2;
-          letter-spacing: -0.09em;
-        }
-
-        .statement h2 span {
-          color: var(--lime);
-        }
-
-        .statement-grid {
-          position: relative;
-          z-index: 1;
-          display: grid;
-          max-width: 700px;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 13px 30px;
-        }
-
-        .statement-grid p {
-          margin: 0;
-          padding-bottom: 12px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-          font-size: 18px;
-        }
-
-        .statement-note {
-          position: relative;
-          z-index: 1;
-          margin: 35px 0 0;
-          color: #c6ccdf;
-          font-size: 15px;
-        }
-
-        .features {
-          padding: 145px 0 130px;
-        }
-
-        .feature-track {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 16px;
-        }
-
-        .feature-card {
-          position: relative;
-          min-height: 390px;
-          padding: 24px;
-          overflow: hidden;
-          background: #fff;
-          border: 1px solid var(--line);
-          border-radius: 24px;
-          box-shadow: 0 12px 27px rgba(45, 58, 123, 0.06);
-          transition: transform 0.25s ease, box-shadow 0.25s ease;
-        }
-
-        .feature-card:hover {
-          transform: translateY(-7px);
-          box-shadow: 0 22px 42px rgba(45, 58, 123, 0.12);
-        }
-
-        .feature-card::before {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 5px;
-          content: "";
-        }
-
-        .feature-card.blue::before {
-          background: var(--blue);
-        }
-
-        .feature-card.lime::before {
-          background: var(--lime);
-        }
-
-        .feature-card.purple::before {
-          background: var(--purple);
-        }
-
-        .feature-card.orange::before {
-          background: var(--orange);
-        }
-
-        .feature-card.green::before {
-          background: var(--green);
-        }
-
-        .feature-card.pink::before {
-          background: var(--pink);
-        }
-
-        .feature-number {
-          color: #919ab4;
-          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-          font-size: 11px;
-        }
-
-        .feature-card h3 {
-          margin: 15px 0 12px;
-          white-space: pre-line;
-          font-size: 23px;
+        .unified-title {
+          align-self: end;
+          color: transparent;
+          background: linear-gradient(100deg, var(--blue), var(--purple));
+          background-clip: text;
+          -webkit-background-clip: text;
+          font-size: clamp(38px, 4.5vw, 60px);
+          font-weight: 950;
           line-height: 1.35;
           letter-spacing: -0.07em;
         }
 
-        .feature-card > p {
-          min-height: 76px;
-          color: var(--muted);
-          font-size: 13px;
-          line-height: 1.85;
-        }
-
-        .mini-mock {
-          position: absolute;
-          right: 22px;
-          bottom: 22px;
-          left: 22px;
-          min-height: 115px;
-          padding: 14px;
-          overflow: hidden;
-          border-radius: 16px;
-        }
-
-        .mini-site {
-          color: #fff;
-          background: linear-gradient(135deg, #3349c8, #7486ff);
-        }
-
-        .mini-cover {
-          position: absolute;
-          top: -20px;
-          right: -20px;
-          width: 130px;
-          height: 90px;
-          background: radial-gradient(circle, #d7ff55, transparent 62%);
-          opacity: 0.7;
-        }
-
-        .mini-site b,
-        .mini-site span,
-        .mini-event b,
-        .mini-event span,
-        .mini-portal b,
-        .mini-portal span,
-        .mini-line b,
-        .mini-line span,
-        .mini-payment b {
-          display: block;
-        }
-
-        .mini-site b {
-          position: relative;
-          margin-top: 18px;
-          font-size: 13px;
-        }
-
-        .mini-site span {
-          position: relative;
-          margin-top: 4px;
-          color: #d5dcff;
-          font-size: 10px;
-        }
-
-        .mini-tags {
-          position: relative;
-          display: flex;
-          gap: 5px;
-          margin-top: 10px;
-        }
-
-        .mini-tags em {
-          padding: 4px 7px;
-          color: #fff;
-          background: rgba(255, 255, 255, 0.14);
-          border-radius: 999px;
-          font-size: 8px;
-          font-style: normal;
-        }
-
-        .mini-event {
-          color: #26304b;
-          background: #edffac;
-        }
-
-        .mini-event small,
-        .mini-portal small,
-        .mini-line small,
-        .mini-payment small {
-          display: block;
-          margin-bottom: 6px;
-          font-size: 9px;
-          font-weight: 800;
-        }
-
-        .mini-event b {
-          font-size: 15px;
-        }
-
-        .mini-event span {
-          margin-top: 7px;
-          color: #60721f;
-          font-size: 10px;
-        }
-
-        .mini-event button {
-          position: absolute;
-          right: 13px;
-          bottom: 13px;
-          padding: 7px 9px;
-          color: #fff;
-          background: var(--ink);
-          border: 0;
-          border-radius: 9px;
-          font-size: 9px;
-          font-weight: 800;
-        }
-
-        .mini-portal {
-          color: #fff;
-          background: linear-gradient(135deg, #7b66e9, #b6a8ff);
-        }
-
-        .mini-portal small {
-          color: #e9e5ff;
-        }
-
-        .mini-portal b {
-          font-size: 14px;
-        }
-
-        .mini-portal span {
-          margin-top: 5px;
-          color: #eeeaff;
-          font-size: 10px;
-        }
-
-        .portal-avatars {
-          position: absolute;
-          right: 15px;
-          bottom: 14px;
-          display: flex;
-        }
-
-        .portal-avatars i {
-          width: 22px;
-          height: 22px;
-          margin-left: -4px;
-          background: #ffc892;
-          border: 2px solid #9d8cf4;
-          border-radius: 50%;
-        }
-
-        .portal-avatars i:nth-child(2) {
-          background: #b9edff;
-        }
-
-        .portal-avatars i:nth-child(3) {
-          background: #ffc1d6;
-        }
-
-        .portal-avatars i:nth-child(4) {
-          background: #d7ff55;
-        }
-
-        .mini-list {
-          padding: 11px;
-          background: #fff4e9;
-        }
-
-        .mini-list span {
-          display: flex;
-          align-items: center;
-          gap: 7px;
-          padding: 7px 0;
-          border-bottom: 1px solid #f4dfcc;
-          font-size: 10px;
-        }
-
-        .mini-list span:last-child {
-          border-bottom: 0;
-        }
-
-        .mini-list i {
-          width: 16px;
-          height: 16px;
-          background: #ffba7c;
-          border-radius: 50%;
-        }
-
-        .mini-list b {
-          margin-left: auto;
-          padding: 3px 5px;
-          color: #a86023;
-          background: #ffe0c1;
-          border-radius: 6px;
-          font-size: 8px;
-        }
-
-        .mini-line {
-          color: #294b34;
-          background: #e5fbe9;
-        }
-
-        .mini-line small {
-          color: #5c9469;
-        }
-
-        .mini-line b {
-          font-size: 12px;
-        }
-
-        .mini-line span {
-          margin-top: 6px;
-          font-size: 10px;
-        }
-
-        .mini-line em {
-          position: absolute;
-          right: 14px;
-          bottom: 12px;
-          color: #6fa67a;
-          font-size: 8px;
-          font-style: normal;
-        }
-
-        .mini-payment {
-          color: #45324f;
-          background: #ffe8f3;
-        }
-
-        .mini-payment b {
-          margin-top: 7px;
-          font-size: 26px;
-          letter-spacing: -0.06em;
-        }
-
-        .mini-payment span {
-          position: absolute;
-          top: 16px;
-          right: 16px;
-          display: grid;
-          width: 28px;
-          height: 28px;
-          place-items: center;
-          color: #fff;
-          background: var(--pink);
-          border-radius: 50%;
-          font-weight: 900;
-        }
-
-        .mini-payment em {
-          position: absolute;
-          right: 14px;
-          bottom: 13px;
-          color: #ab6088;
-          font-size: 9px;
-          font-style: normal;
-        }
-
-        .scroll-hint {
-          margin: 22px 0 0;
-          color: #8993ae;
-          text-align: center;
-          font-size: 12px;
-        }
-
-        .scroll-hint span {
-          color: var(--blue);
-          font-weight: 900;
-        }
-
-        .calendar-section {
-          display: grid;
-          grid-template-columns: 0.9fr 1.1fr;
-          gap: 80px;
-          align-items: center;
-          padding: 130px 0;
-        }
-
-        .calendar-copy ul {
-          display: grid;
-          gap: 11px;
-          padding: 0;
-          list-style: none;
-        }
-
-        .calendar-copy li {
-          color: #465170;
-          font-size: 13px;
-          font-weight: 750;
-        }
-
-        .calendar-copy li::before {
-          margin-right: 9px;
-          color: var(--blue);
-          content: "✓";
-        }
-
-        .calendar-mock {
-          padding: 23px;
-          background: #fff;
-          border: 1px solid var(--line);
-          border-radius: 26px;
+        .full-dashboard {
+          padding: 28px;
+          background: rgba(255, 255, 255, 0.96);
+          border: 1px solid #e4eafd;
+          border-radius: 30px;
           box-shadow: var(--shadow);
         }
 
-        .cal-head,
-        .cal-event-list > div {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        .cal-head {
-          margin-bottom: 18px;
-          font-size: 14px;
-        }
-
-        .cal-head span {
-          color: #7f88a5;
-        }
-
-        .cal-days,
-        .cal-grid {
-          display: grid;
-          grid-template-columns: repeat(7, 1fr);
-          text-align: center;
-        }
-
-        .cal-days {
-          margin-bottom: 8px;
-          color: #9ca4bc;
-          font-size: 10px;
-        }
-
-        .cal-grid {
-          gap: 4px;
-        }
-
-        .cal-grid i {
-          display: grid;
-          min-height: 42px;
-          place-items: center;
-          color: #63708f;
-          border-radius: 10px;
-          font-size: 11px;
-          font-style: normal;
-        }
-
-        .cal-grid .active {
+        .wide-band {
           position: relative;
-          color: var(--blue);
-          background: #eaf0ff;
+          z-index: 3;
+          margin: 20px auto 0;
+          padding: 24px 36px;
+          color: #fff;
+          background: linear-gradient(95deg, var(--blue), #a64bff);
+          border-radius: 999px;
+          text-align: center;
+          font-size: clamp(24px, 2.8vw, 38px);
+          font-weight: 950;
+          letter-spacing: 0.08em;
+        }
+
+        .slide-three .slide-inner,
+        .slide-four .slide-inner,
+        .slide-five .slide-inner {
+          padding-top: 32px;
+        }
+
+        .section-title {
+          margin: 64px 0 14px;
+          text-align: center;
+          font-size: clamp(52px, 6.4vw, 88px);
+          line-height: 1.1;
+          font-weight: 950;
+          letter-spacing: -0.08em;
+        }
+
+        .section-title.left {
+          text-align: left;
+        }
+
+        .section-subtitle {
+          margin: 0 0 52px;
+          color: #49536d;
+          text-align: center;
+          font-size: clamp(25px, 2.6vw, 36px);
           font-weight: 900;
+          letter-spacing: 0.06em;
         }
 
-        .cal-grid .purple {
-          color: var(--purple);
-          background: #f0edff;
-        }
-
-        .cal-grid .orange {
-          color: #e57227;
-          background: #fff0e5;
-        }
-
-        .cal-grid em {
-          position: absolute;
-          bottom: 1px;
-          font-size: 9px;
-          font-style: normal;
-        }
-
-        .cal-grid .full {
-          color: #a5abbc;
-          text-decoration: line-through;
-        }
-
-        .cal-event-list {
+        .features-grid {
           display: grid;
-          gap: 9px;
-          margin-top: 20px;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 28px;
         }
 
-        .cal-event-list > div {
-          padding: 10px;
-          background: #f8f9ff;
-          border-radius: 12px;
+        .feature-card {
+          min-height: 445px;
+          padding: 38px 38px 32px;
+          background: rgba(255, 255, 255, 0.92);
+          border: 1px solid #e4eafd;
+          border-radius: 28px;
+          box-shadow: var(--shadow);
         }
 
-        .dot {
-          width: 8px;
-          height: 8px;
-          margin-right: 9px;
-          border-radius: 50%;
-        }
-
-        .dot.blue {
-          background: var(--blue);
-        }
-
-        .dot.purple {
-          background: var(--purple);
-        }
-
-        .dot.orange {
-          background: var(--orange);
-        }
-
-        .cal-event-list p {
-          flex: 1;
-          margin: 0;
-        }
-
-        .cal-event-list b,
-        .cal-event-list small {
-          display: block;
-        }
-
-        .cal-event-list b {
-          font-size: 11px;
-        }
-
-        .cal-event-list small {
-          margin-top: 2px;
-          color: #8490ac;
-          font-size: 9px;
-        }
-
-        .cal-event-list button {
-          min-height: 31px;
-          padding: 0 8px;
-          color: #fff;
-          background: var(--ink);
-          border: 0;
-          border-radius: 8px;
-          font-size: 9px;
-          font-weight: 800;
-        }
-
-        .cal-line-label {
-          margin-top: 14px;
-          padding: 10px;
-          color: #4f9463;
-          background: #e9fbed;
-          border-radius: 10px;
-          font-size: 10px;
-          font-weight: 800;
-          text-align: center;
-        }
-
-        .cal-line-label span {
-          display: inline-grid;
-          width: 15px;
-          height: 15px;
-          margin-left: 5px;
-          place-items: center;
-          color: #fff;
-          background: var(--green);
-          border-radius: 50%;
-          font-size: 9px;
-        }
-
-        .trust-section {
-          padding: 130px 0 150px;
-        }
-
-        .trust-head {
-          max-width: 590px;
-          margin: 0 auto 72px;
-          text-align: center;
-        }
-
-        .timeline {
-          position: relative;
-          display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          gap: 14px;
-        }
-
-        .timeline-line {
-          position: absolute;
-          top: 65px;
-          right: 8%;
-          left: 8%;
-          height: 2px;
-          background: linear-gradient(90deg, var(--pink), var(--blue), var(--lime), var(--orange), var(--ink));
-        }
-
-        .timeline-card {
-          position: relative;
-          z-index: 1;
-          min-height: 185px;
-          padding: 16px;
-          background: #fff;
-          border: 1px solid var(--line);
-          border-radius: 18px;
-          box-shadow: 0 11px 25px rgba(45, 58, 123, 0.06);
-        }
-
-        .timeline-card time {
-          color: #8e97b1;
-          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-          font-size: 10px;
-        }
-
-        .timeline-icon {
-          display: grid;
-          width: 40px;
-          height: 40px;
-          margin: 14px 0;
-          place-items: center;
-          border-radius: 14px;
-          font-size: 17px;
-        }
-
-        .timeline-icon.pink {
-          background: #ffe7f2;
-        }
-
-        .timeline-icon.blue {
-          background: #eaf0ff;
-        }
-
-        .timeline-icon.lime {
-          background: #efffc0;
-        }
-
-        .timeline-icon.orange {
-          background: #fff0e5;
-        }
-
-        .timeline-icon.dark {
-          color: #fff;
-          background: var(--ink);
-        }
-
-        .timeline-card h3 {
-          margin-bottom: 6px;
-          font-size: 14px;
-        }
-
-        .timeline-card p {
-          margin: 0;
-          color: var(--muted);
-          font-size: 10px;
-          line-height: 1.7;
-        }
-
-        .trust-end {
-          display: flex;
-          justify-content: center;
-          gap: 10px;
-          margin-top: 45px;
-          font-size: 15px;
-          text-align: center;
-        }
-
-        .trust-end span {
-          width: 10px;
-          height: 10px;
-          margin-top: 5px;
-          background: var(--lime);
-          border-radius: 50%;
-        }
-
-        .line-section {
-          display: grid;
-          grid-template-columns: 0.8fr 1.2fr;
-          gap: 110px;
-          align-items: center;
-          padding: 120px 0 150px;
-        }
-
-        .phone-wrap {
-          display: flex;
-          justify-content: center;
-        }
-
-        .phone {
-          position: relative;
-          width: 285px;
-          min-height: 520px;
-          overflow: hidden;
-          background: #f2f4f7;
-          border: 8px solid #18213e;
-          border-radius: 37px;
-          box-shadow: 0 25px 55px rgba(28, 37, 82, 0.24);
-        }
-
-        .phone-notch {
-          position: absolute;
-          top: 0;
-          left: 50%;
-          width: 110px;
-          height: 22px;
-          background: #18213e;
-          border-radius: 0 0 15px 15px;
-          transform: translateX(-50%);
-        }
-
-        .phone-top {
+        .feature-heading {
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          padding: 32px 14px 12px;
-          background: #fff;
-          font-size: 10px;
-        }
-
-        .phone-top b {
-          font-size: 12px;
-        }
-
-        .chat-area {
-          min-height: 470px;
-          padding: 14px 10px;
-          background: #dcecf5;
-        }
-
-        .chat-date {
-          margin-bottom: 16px;
-          color: #6c7b86;
-          font-size: 9px;
-          text-align: center;
-        }
-
-        .bubble {
-          max-width: 91%;
-          margin-bottom: 10px;
-          padding: 10px;
-          border-radius: 4px 14px 14px 14px;
-          background: #fff;
-          box-shadow: 0 4px 12px rgba(61, 80, 91, 0.08);
-          font-size: 10px;
-          line-height: 1.7;
-        }
-
-        .bubble b {
-          color: #547b5f;
-          font-size: 9px;
-        }
-
-        .bubble p {
-          margin: 0;
-        }
-
-        .chat-read {
-          color: #71808b;
-          font-size: 8px;
-          text-align: right;
-        }
-
-        .line-copy h2 span {
-          color: var(--blue);
-        }
-
-        .benefit-list {
-          display: grid;
-          gap: 10px;
-          margin-top: 28px;
-        }
-
-        .benefit-list div {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 14px;
-          background: #f7f9ff;
-          border-radius: 13px;
-        }
-
-        .benefit-list i {
-          color: var(--blue);
-          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-          font-size: 10px;
-          font-style: normal;
-          font-weight: 900;
-        }
-
-        .benefit-list b {
-          font-size: 13px;
-        }
-
-        .journey {
-          padding: 120px 0;
-        }
-
-        .journey-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
           gap: 18px;
+          margin-bottom: 30px;
         }
 
-        .journey-step {
-          min-height: 220px;
-          padding: 26px;
-          background: #f8f9ff;
-          border-radius: 22px;
+        .feature-heading span {
+          display: grid;
+          width: 54px;
+          height: 54px;
+          place-items: center;
+          color: #fff;
+          background: linear-gradient(135deg, var(--blue), var(--purple));
+          border-radius: 50%;
+          box-shadow: 0 12px 28px rgba(72, 73, 255, 0.24);
+          font-size: 29px;
+          font-weight: 950;
         }
 
-        .journey-step span {
-          color: var(--blue);
-          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-          font-size: 12px;
-          font-weight: 900;
-        }
-
-        .journey-step h3 {
-          margin: 34px 0 10px;
-          font-size: 22px;
+        .feature-heading h3 {
+          margin: 0;
+          font-size: clamp(25px, 2.4vw, 35px);
           letter-spacing: -0.06em;
         }
 
-        .journey-step p {
-          margin: 0;
-          color: var(--muted);
-          font-size: 13px;
-          line-height: 1.8;
-        }
-
-        .journey-end {
-          margin: 48px 0 0;
-          font-size: 17px;
-          line-height: 2;
-          text-align: center;
-        }
-
-        .journey-end strong {
+        .feature-heading strong {
           color: var(--blue);
         }
 
-        .cta-section {
-          position: relative;
-          min-height: 590px;
-          padding: 120px 24px;
-          overflow: hidden;
-          color: #fff;
-          background: linear-gradient(125deg, #162458, #3f48c5 58%, #7869ef);
+        .feature-card > p {
+          margin: 26px 0 0;
+          color: #1f2948;
+          font-size: clamp(19px, 1.9vw, 25px);
+          line-height: 1.6;
           text-align: center;
+          font-weight: 850;
         }
 
-        .cta-section::before {
-          position: absolute;
-          right: 0;
-          bottom: 0;
-          left: 0;
-          height: 100px;
-          content: "";
-          background: linear-gradient(transparent, rgba(0, 0, 0, 0.08));
+        .feature-profile,
+        .feature-event,
+        .feature-line,
+        .feature-payment {
+          min-height: 190px;
+          padding: 24px;
+          background: #fff;
+          border: 1px solid #e4eafd;
+          border-radius: 22px;
+          box-shadow: 0 14px 32px rgba(60, 82, 160, 0.11);
         }
 
-        .cta-orb {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(8px);
+        .feature-profile {
+          display: grid;
+          grid-template-columns: 148px 1fr;
+          gap: 22px;
+          align-items: center;
         }
 
-        .cta-orb.a {
-          top: -120px;
-          left: -80px;
-          width: 370px;
-          height: 370px;
-          background: rgba(215, 255, 85, 0.25);
+        .feature-profile .event-thumb {
+          width: 148px;
+          height: 128px;
+          border-radius: 16px;
         }
 
-        .cta-orb.b {
-          right: -80px;
-          bottom: -150px;
-          width: 420px;
-          height: 420px;
-          background: rgba(255, 129, 195, 0.24);
-        }
-
-        .cta-content {
-          position: relative;
-          z-index: 1;
-          max-width: 760px;
-          margin: 0 auto;
-        }
-
-        .cta-content .eyebrow {
-          color: #d9deff;
-        }
-
-        .cta-content h2 {
-          margin-bottom: 20px;
-          font-size: clamp(38px, 5vw, 62px);
-          line-height: 1.25;
-          letter-spacing: -0.085em;
-        }
-
-        .cta-content > p {
-          margin-bottom: 29px;
-          color: #d9defe;
-          font-size: 15px;
-          line-height: 2;
-        }
-
-        .button-white {
-          color: var(--ink);
-          background: var(--lime);
-          box-shadow: 0 15px 32px rgba(5, 10, 40, 0.25);
-        }
-
-        .button-white b {
-          color: var(--blue);
-          font-size: 19px;
-        }
-
-        .cta-content small {
+        .feature-profile b {
           display: block;
-          margin-top: 18px;
-          color: #d6dcff;
-          font-size: 11px;
+          font-size: 25px;
         }
 
-        footer {
+        .feature-profile small {
+          color: var(--muted);
+          font-weight: 850;
+        }
+
+        .feature-profile p {
           display: flex;
-          width: min(1160px, calc(100% - 48px));
-          margin: 0 auto;
-          padding: 33px 0 70px;
+          gap: 22px;
+          margin: 18px 0 0;
+          color: #314169;
+          font-size: 14px;
+          font-weight: 900;
+        }
+
+        .feature-event {
+          display: grid;
+          grid-template-columns: 160px 1fr;
+          gap: 22px;
+          align-items: center;
+          position: relative;
+        }
+
+        .feature-event .event-thumb {
+          width: 160px;
+          height: 138px;
+          border-radius: 16px;
+        }
+
+        .feature-event em {
+          display: inline-block;
+          margin-bottom: 8px;
+          padding: 7px 16px;
+          color: var(--blue);
+          background: #eaf0ff;
+          border-radius: 999px;
+          font-style: normal;
+          font-weight: 950;
+        }
+
+        .feature-event b {
+          display: block;
+          font-size: 24px;
+        }
+
+        .feature-event small {
+          display: block;
+          margin: 9px 0;
+          color: #293653;
+          font-weight: 850;
+        }
+
+        .feature-event p {
+          margin: 0;
+          color: var(--blue);
+          font-weight: 950;
+        }
+
+        .feature-event button,
+        .feature-payment button {
+          border: 0;
+          color: #fff;
+          background: var(--blue);
+          border-radius: 999px;
+          font-weight: 950;
+        }
+
+        .feature-event button {
+          position: absolute;
+          right: 22px;
+          bottom: 22px;
+          padding: 12px 22px;
+        }
+
+        .feature-line {
+          position: relative;
+          display: grid;
+          gap: 12px;
+          background: linear-gradient(135deg, #cfe1ff, #87b3ff);
+        }
+
+        .feature-line i {
+          position: absolute;
+          left: -40px;
+          top: 64px;
+          display: grid;
+          width: 76px;
+          height: 76px;
+          place-items: center;
+          color: #fff;
+          background: #13c45c;
+          border-radius: 50%;
+          box-shadow: 0 14px 30px rgba(19, 196, 92, 0.26);
+          font-style: normal;
+          font-size: 17px;
+          font-weight: 950;
+        }
+
+        .feature-line p {
+          width: fit-content;
+          max-width: 82%;
+          margin: 0;
+          padding: 14px 18px;
+          background: #fff;
+          border-radius: 16px;
+          font-size: 18px;
+          font-weight: 850;
+        }
+
+        .feature-line button {
+          width: fit-content;
+          margin-top: 2px;
+          padding: 13px 46px;
+          border: 1px solid #dbe5ff;
+          color: var(--blue);
+          background: #fff;
+          border-radius: 12px;
+          font-weight: 950;
+        }
+
+        .feature-payment {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 18px;
+        }
+
+        .feature-payment > div {
+          padding: 18px;
+          background: #fff;
+          border: 1px solid #e8eefb;
+          border-radius: 16px;
+        }
+
+        .feature-payment span {
+          color: #293653;
+          font-weight: 900;
+        }
+
+        .feature-payment b {
+          display: block;
+          margin: 10px 0;
+          font-size: 34px;
+        }
+
+        .feature-payment small {
+          color: var(--muted);
+        }
+
+        .feature-payment button {
+          width: 100%;
+          margin-top: 20px;
+          padding: 14px;
+        }
+
+        .feature-payment p {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin: 10px 0;
+          font-size: 14px;
+        }
+
+        .feature-payment .face {
+          width: 34px;
+          height: 34px;
+        }
+
+        .note-line {
+          position: relative;
+          z-index: 4;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 26px;
+          margin: 50px auto 0;
+          color: var(--blue);
+          font-size: clamp(24px, 2.4vw, 34px);
+          font-weight: 950;
+          letter-spacing: -0.04em;
+        }
+
+        .note-line span {
+          display: grid;
+          width: 74px;
+          height: 74px;
+          place-items: center;
+          background: #fff;
+          border: 1px solid #e2e9fb;
+          border-radius: 50%;
+          box-shadow: var(--shadow);
+        }
+
+        .note-line strong {
+          color: transparent;
+          background: linear-gradient(90deg, #1557ff, #9c45ff);
+          background-clip: text;
+          -webkit-background-clip: text;
+        }
+
+        .slide-four .section-title {
+          margin-top: 54px;
+        }
+
+        .operation-card {
+          display: grid;
+          grid-template-columns: 0.85fr 1.15fr;
+          gap: 32px;
+          align-items: center;
+          margin-top: 40px;
+          padding: 40px;
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid #e4eafd;
+          border-radius: 30px;
+          box-shadow: var(--shadow);
+        }
+
+        .operation-copy {
+          padding: 20px 0;
+        }
+
+        .number-orb {
+          display: grid;
+          width: 88px;
+          height: 88px;
+          place-items: center;
+          color: #fff;
+          background: linear-gradient(135deg, var(--blue), var(--purple));
+          border-radius: 50%;
+          box-shadow: 0 18px 38px rgba(80, 73, 255, 0.28);
+          font-size: 38px;
+          font-weight: 950;
+        }
+
+        .operation-copy h3 {
+          margin: 40px 0 22px;
+          font-size: clamp(38px, 4.5vw, 62px);
+          line-height: 1.28;
+          letter-spacing: -0.08em;
+        }
+
+        .operation-copy h3 strong {
+          color: var(--blue);
+        }
+
+        .operation-copy p {
+          color: #1d2948;
+          font-size: clamp(20px, 2vw, 28px);
+          line-height: 1.8;
+          font-weight: 800;
+          letter-spacing: -0.03em;
+        }
+
+        .line-remind {
+          display: flex;
+          max-width: 430px;
           align-items: center;
           justify-content: space-between;
+          gap: 20px;
+          margin-top: 50px;
+          padding: 20px 26px;
+          background: #fff;
+          border: 1px solid #e4eafd;
+          border-radius: 18px;
+          box-shadow: 0 15px 32px rgba(58, 78, 160, 0.12);
+          font-size: 22px;
+          font-weight: 950;
         }
 
-        footer p,
-        footer small {
+        .line-remind i {
+          display: grid;
+          width: 58px;
+          height: 58px;
+          place-items: center;
+          color: #fff;
+          background: #12c45d;
+          border-radius: 16px;
+          font-style: normal;
+          font-size: 15px;
+        }
+
+        .line-remind span {
+          color: #9b84ff;
+          font-size: 28px;
+        }
+
+        .calendar-card {
+          padding: 30px;
+          background: rgba(255, 255, 255, 0.98);
+          border: 1px solid #e4eafd;
+          border-radius: 28px;
+          box-shadow: var(--shadow);
+        }
+
+        .calendar-head {
+          display: flex;
+          align-items: center;
+          gap: 22px;
+          margin-bottom: 28px;
+          font-size: 26px;
+          font-weight: 950;
+        }
+
+        .calendar-head button {
+          display: grid;
+          width: 42px;
+          height: 42px;
+          place-items: center;
+          border: 0;
+          background: #fff;
+          border-radius: 50%;
+          box-shadow: 0 8px 20px rgba(44, 68, 145, 0.1);
+          font-size: 28px;
+        }
+
+        .calendar-head b {
+          flex: 1;
+        }
+
+        .calendar-head em {
+          padding: 10px 18px;
+          color: #fff;
+          background: var(--blue);
+          border-radius: 999px;
+          font-size: 18px;
+          font-style: normal;
+        }
+
+        .calendar-grid {
+          display: grid;
+          grid-template-columns: repeat(7, 1fr);
+          gap: 8px;
+          text-align: center;
+        }
+
+        .calendar-grid.days {
+          margin-bottom: 12px;
+          font-weight: 950;
+        }
+
+        .calendar-grid span {
+          position: relative;
+          display: grid;
+          min-height: 46px;
+          place-items: center;
+          border-radius: 50%;
+          font-size: 20px;
+          font-weight: 850;
+        }
+
+        .calendar-grid .selected {
+          color: var(--blue);
+          background: #efe9ff;
+          outline: 3px solid #9f83ff;
+        }
+
+        .calendar-grid .with-dot::after {
+          position: absolute;
+          bottom: 2px;
+          width: 7px;
+          height: 7px;
+          content: "";
+          background: var(--green);
+          border-radius: 50%;
+        }
+
+        .calendar-events {
+          margin-top: 24px;
+        }
+
+        .calendar-events p {
+          display: grid;
+          grid-template-columns: 76px 1fr auto 20px;
+          gap: 16px;
+          align-items: center;
+          margin: 12px 0;
+          padding: 12px 18px;
+          background: #fff;
+          border: 1px solid #e6ecfb;
+          border-radius: 18px;
+          box-shadow: 0 10px 22px rgba(58, 78, 160, 0.08);
+        }
+
+        .calendar-events .event-thumb {
+          width: 72px;
+          height: 58px;
+        }
+
+        .calendar-events b {
+          font-size: 24px;
+        }
+
+        .calendar-events em {
+          padding: 10px 18px;
+          border-radius: 999px;
+          font-size: 17px;
+          font-style: normal;
+          font-weight: 950;
+        }
+
+        .pill-blue {
+          color: var(--blue);
+          background: #eef3ff;
+        }
+
+        .pill-green {
+          color: #0fa856;
+          background: #eafff1;
+        }
+
+        .pill-pink {
+          color: #ff3d94;
+          background: #fff0f8;
+        }
+
+        .timeline-list {
+          display: grid;
+          gap: 15px;
+        }
+
+        .timeline-row {
+          display: grid;
+          grid-template-columns: 70px 16px 108px 1fr auto;
+          gap: 16px;
+          align-items: center;
+        }
+
+        .timeline-row time {
+          display: grid;
+          width: 60px;
+          height: 60px;
+          place-items: center;
+          color: var(--blue);
+          background: #fff;
+          border: 1px solid #e4eafd;
+          border-radius: 50%;
+          font-size: 21px;
+          font-weight: 950;
+          box-shadow: 0 10px 22px rgba(58, 78, 160, 0.08);
+        }
+
+        .timeline-row .dot {
+          width: 12px;
+          height: 12px;
+          background: var(--blue);
+          border-radius: 50%;
+          box-shadow: 0 0 0 5px #e8efff;
+        }
+
+        .timeline-row .event-thumb {
+          width: 100px;
+          height: 64px;
+        }
+
+        .timeline-row p {
           margin: 0;
-          color: #858ea8;
-          font-size: 11px;
+          font-size: 20px;
+          font-weight: 950;
         }
 
-        .mobile-fixed-cta {
-          display: none;
+        .timeline-row small {
+          display: block;
+          margin-top: 5px;
+          color: var(--muted);
+          font-size: 13px;
+          font-weight: 850;
         }
 
-        .reveal {
-          opacity: 0;
-          transform: translateY(22px);
-          transition: opacity 0.7s ease, transform 0.7s ease;
+        .timeline-row em {
+          color: #293653;
+          font-style: normal;
+          font-weight: 950;
         }
 
-        .reveal.in-view {
-          opacity: 1;
-          transform: translateY(0);
+        .stats-row {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 16px;
+          margin-top: 30px;
         }
 
-        @media (max-width: 900px) {
-          .shell {
-            width: min(100% - 32px, 620px);
+        .stats-row div {
+          padding: 22px;
+          background: #fff;
+          border: 1px solid #e4eafd;
+          border-radius: 18px;
+          box-shadow: 0 10px 22px rgba(58, 78, 160, 0.08);
+          text-align: center;
+          font-size: 18px;
+          font-weight: 950;
+        }
+
+        .stats-row strong {
+          display: block;
+          margin-top: 8px;
+          color: var(--blue);
+          font-size: 42px;
+          letter-spacing: -0.04em;
+        }
+
+        .slide-dots {
+          display: flex;
+          justify-content: center;
+          gap: 12px;
+          margin-top: 28px;
+        }
+
+        .slide-dots i {
+          width: 16px;
+          height: 16px;
+          background: linear-gradient(135deg, #81a9ff, #a64bff);
+          border-radius: 50%;
+        }
+
+        .final-layout {
+          display: grid;
+          grid-template-columns: minmax(500px, 1fr) minmax(420px, 0.88fr);
+          gap: 44px;
+          align-items: center;
+          margin-top: 80px;
+        }
+
+        .final-copy h1 {
+          margin: 0;
+          font-size: clamp(54px, 6.1vw, 82px);
+          line-height: 1.45;
+          letter-spacing: -0.08em;
+        }
+
+        .final-copy h1 strong {
+          color: transparent;
+          background: linear-gradient(90deg, #8e40ff, #175cff);
+          background-clip: text;
+          -webkit-background-clip: text;
+        }
+
+        .final-copy p {
+          margin: 38px 0 0;
+          font-size: clamp(26px, 2.5vw, 36px);
+          line-height: 1.82;
+          font-weight: 900;
+          letter-spacing: -0.04em;
+        }
+
+        .final-copy p strong {
+          color: var(--blue);
+        }
+
+        .phone-stage {
+          position: relative;
+          min-height: 650px;
+        }
+
+        .profile-phone {
+          position: absolute;
+          right: 74px;
+          top: 0;
+          width: 350px;
+          min-height: 625px;
+          padding: 16px;
+          background: #101831;
+          border-radius: 42px;
+          box-shadow: 0 26px 60px rgba(35, 61, 145, 0.25);
+          transform: rotate(9deg);
+        }
+
+        .profile-phone::before {
+          position: absolute;
+          top: 13px;
+          left: 50%;
+          width: 110px;
+          height: 30px;
+          content: "";
+          background: #070a17;
+          border-radius: 0 0 18px 18px;
+          transform: translateX(-50%);
+        }
+
+        .profile-phone > .logo-word,
+        .phone-topbar,
+        .profile-cover,
+        .profile-body {
+          position: relative;
+          z-index: 1;
+        }
+
+        .phone-topbar {
+          display: flex;
+          justify-content: space-between;
+          padding: 8px 16px 14px;
+          color: #fff;
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .phone-topbar i {
+          width: 48px;
+          height: 12px;
+          background: #fff;
+          border-radius: 999px;
+        }
+
+        .profile-phone > .logo-word {
+          margin: 8px 0 12px 16px;
+          font-size: 26px;
+        }
+
+        .profile-cover {
+          height: 165px;
+          overflow: hidden;
+          background: linear-gradient(135deg, #7cc4ff, #b7f1b1);
+          border-radius: 24px 24px 0 0;
+        }
+
+        .profile-cover i {
+          position: absolute;
+          bottom: 22px;
+          width: 30px;
+          height: 54px;
+          background: rgba(255, 255, 255, 0.75);
+          border-radius: 999px 999px 8px 8px;
+        }
+
+        .profile-cover i:nth-child(1) {
+          left: 62px;
+          height: 70px;
+        }
+
+        .profile-cover i:nth-child(2) {
+          left: 122px;
+          height: 88px;
+        }
+
+        .profile-cover i:nth-child(3) {
+          left: 182px;
+          height: 66px;
+        }
+
+        .profile-cover i:nth-child(4) {
+          left: 242px;
+          height: 82px;
+        }
+
+        .profile-body {
+          min-height: 390px;
+          padding: 18px;
+          background: #fff;
+          border-radius: 0 0 28px 28px;
+        }
+
+        .profile-logo {
+          display: grid;
+          width: 70px;
+          height: 70px;
+          place-items: center;
+          margin-top: -54px;
+          color: var(--blue);
+          background: #fff;
+          border: 3px solid #edf3ff;
+          border-radius: 50%;
+          font-size: 15px;
+          font-weight: 950;
+        }
+
+        .profile-body h3 {
+          margin: 12px 0 8px;
+          font-size: 22px;
+        }
+
+        .profile-body p {
+          color: #303b5d;
+          font-size: 13px;
+          font-weight: 850;
+          line-height: 1.55;
+        }
+
+        .profile-stats {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 8px;
+          margin: 16px 0;
+          color: #5d6680;
+          font-size: 12px;
+          font-weight: 850;
+        }
+
+        .profile-stats b {
+          color: var(--ink);
+          font-size: 15px;
+        }
+
+        .profile-body button {
+          width: 100%;
+          padding: 15px;
+          border: 0;
+          color: #fff;
+          background: linear-gradient(90deg, #115cff, #1aa1ff);
+          border-radius: 999px;
+          font-weight: 950;
+        }
+
+        .next-event {
+          display: grid;
+          grid-template-columns: 76px 1fr;
+          gap: 12px;
+          align-items: center;
+          margin-top: 18px;
+          padding: 12px;
+          border: 1px solid #e6ecfb;
+          border-radius: 14px;
+        }
+
+        .next-event .event-thumb {
+          width: 76px;
+          height: 54px;
+        }
+
+        .next-event small {
+          color: var(--muted);
+          font-weight: 800;
+        }
+
+        .floating-chip {
+          position: absolute;
+          display: grid;
+          place-items: center;
+          width: 94px;
+          height: 94px;
+          color: #7f68ff;
+          background: rgba(255, 255, 255, 0.72);
+          border: 1px solid rgba(255, 255, 255, 0.9);
+          border-radius: 22px;
+          box-shadow: 0 18px 42px rgba(60, 84, 165, 0.14);
+          font-size: 42px;
+          transform: rotate(-10deg);
+        }
+
+        .chip-line {
+          left: 8px;
+          top: 300px;
+          color: #0fc45d;
+        }
+
+        .chip-calendar {
+          right: 0;
+          top: 270px;
+          transform: rotate(11deg);
+        }
+
+        .chip-member {
+          right: 40px;
+          bottom: 128px;
+          transform: rotate(-4deg);
+        }
+
+        .final-message {
+          position: relative;
+          z-index: 5;
+          width: min(900px, 100%);
+          margin: 8px auto 26px;
+          padding: 26px 34px;
+          background: rgba(255, 255, 255, 0.86);
+          border: 1px solid rgba(255, 255, 255, 0.96);
+          border-radius: 18px;
+          box-shadow: var(--shadow);
+          text-align: center;
+          font-size: clamp(21px, 2.2vw, 30px);
+          line-height: 1.65;
+          font-weight: 950;
+        }
+
+        .final-message strong {
+          color: var(--blue);
+        }
+
+        .final-cta-panel {
+          position: relative;
+          z-index: 4;
+          width: min(1120px, 100%);
+          margin: 0 auto;
+          padding: 30px 58px 34px;
+          overflow: hidden;
+          background:
+            radial-gradient(circle at 12% 20%, rgba(255, 255, 255, 0.35), transparent 18%),
+            linear-gradient(105deg, #115cff, #9d3fff);
+          border-radius: 32px;
+          box-shadow: 0 26px 64px rgba(67, 79, 220, 0.28);
+        }
+
+        .yellow-cta {
+          display: flex;
+          width: min(720px, 100%);
+          min-height: 88px;
+          align-items: center;
+          justify-content: center;
+          gap: 34px;
+          margin: 0 auto 28px;
+          color: var(--ink);
+          background: linear-gradient(180deg, #ffff3c, #ffe914);
+          border-radius: 999px;
+          box-shadow: 0 12px 30px rgba(255, 232, 22, 0.34);
+          text-decoration: none;
+          font-size: clamp(26px, 2.8vw, 39px);
+          font-weight: 950;
+          letter-spacing: -0.05em;
+        }
+
+        .final-badges {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 28px;
+        }
+
+        .final-badges span {
+          display: flex;
+          min-height: 84px;
+          align-items: center;
+          justify-content: center;
+          gap: 18px;
+          color: var(--ink);
+          background: rgba(255, 255, 255, 0.86);
+          border-radius: 22px;
+          font-size: clamp(22px, 2.2vw, 30px);
+          font-weight: 950;
+        }
+
+        @media (max-width: 1100px) {
+          .story-slide {
+            padding-inline: 22px;
           }
 
-          .site-header {
-            width: calc(100% - 24px);
-          }
-
-          .nav {
-            display: none;
-          }
-
-          .menu-button {
-            display: grid;
-            width: 43px;
-            height: 43px;
-            place-items: center;
-            background: #fff;
-            border: 1px solid #e7eaf8;
-            border-radius: 13px;
-          }
-
-          .menu-button span,
-          .menu-button::before,
-          .menu-button::after {
-            width: 18px;
-            height: 2px;
-            content: "";
-            background: var(--ink);
-            transition: 0.2s ease;
-          }
-
-          .menu-button {
-            position: relative;
-          }
-
-          .menu-button::before,
-          .menu-button::after {
-            position: absolute;
-          }
-
-          .menu-button::before {
-            transform: translateY(-6px);
-          }
-
-          .menu-button::after {
-            transform: translateY(6px);
-          }
-
-          .menu-button.open span {
-            opacity: 0;
-          }
-
-          .menu-button.open::before {
-            transform: rotate(45deg);
-          }
-
-          .menu-button.open::after {
-            transform: rotate(-45deg);
-          }
-
-          .mobile-menu {
-            position: fixed;
-            top: 93px;
-            right: 12px;
-            left: 12px;
-            z-index: 49;
-            display: grid;
-            gap: 3px;
-            padding: 15px;
-            pointer-events: none;
-            opacity: 0;
-            background: rgba(255, 255, 255, 0.95);
-            border: 1px solid #e7eaf8;
-            border-radius: 20px;
-            box-shadow: 0 22px 46px rgba(35, 45, 107, 0.14);
-            transform: translateY(-12px);
-            transition: 0.22s ease;
-            backdrop-filter: blur(20px);
-          }
-
-          .mobile-menu.open {
-            pointer-events: auto;
-            opacity: 1;
-            transform: translateY(0);
-          }
-
-          .mobile-menu a {
-            padding: 14px;
-            color: var(--ink);
-            text-decoration: none;
-            border-radius: 11px;
-            font-size: 14px;
-            font-weight: 800;
-          }
-
-          .mobile-menu a:last-child {
-            color: #fff;
-            background: var(--ink);
-          }
-
-          .hero {
-            min-height: auto;
-            padding: 145px 0 110px;
+          .hero-one .slide-inner,
+          .before-after,
+          .operation-card,
+          .final-layout {
             grid-template-columns: 1fr;
           }
 
-          .hero h1 {
-            font-size: clamp(43px, 12vw, 58px);
+          .hero-copy {
+            padding-top: 70px;
           }
 
-          .hero-sub {
-            font-size: 18px;
+          .hero-visual {
+            min-height: 980px;
           }
 
-          .hero-stage {
-            height: 470px;
-            margin-top: 10px;
+          .phone-shell {
+            right: 50%;
+            transform: translateX(50%);
           }
 
-          .dashboard-card {
-            top: 45px;
-            width: min(100%, 390px);
+          .members-card {
+            left: 4%;
           }
 
-          .fc-a {
-            left: -5px;
+          .notice-card {
+            left: auto;
+            right: 4%;
           }
 
-          .fc-b {
-            right: -4px;
-          }
-
-          .fc-c {
-            left: 28px;
-          }
-
-          .hero-scroll {
-            display: none;
-          }
-
-          .problem,
-          .features,
-          .trust-section,
-          .journey {
-            padding: 95px 0;
-          }
-
-          .merge-demo {
-            grid-template-columns: 1fr;
+          .arrow-flow {
+            width: 100%;
+            height: 110px;
+            transform: rotate(90deg) scale(0.7);
+            justify-self: center;
           }
 
           .tool-cloud {
-            height: 300px;
-          }
-
-          .merge-arrow {
-            flex-direction: row;
-            justify-content: center;
-          }
-
-          .merge-arrow i {
-            font-size: 31px;
-          }
-
-          .statement {
-            min-height: auto;
-            padding: 78px 26px;
-            border-radius: 28px;
-          }
-
-          .statement-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .statement-grid p {
-            font-size: 16px;
-          }
-
-          .feature-track {
-            display: flex;
-            width: calc(100vw - 16px);
-            padding: 4px 0 16px 0;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            scrollbar-width: none;
-          }
-
-          .feature-track::-webkit-scrollbar {
-            display: none;
-          }
-
-          .feature-card {
-            min-width: min(82vw, 340px);
-            scroll-snap-align: start;
-          }
-
-          .calendar-section {
-            padding: 100px 0;
-            grid-template-columns: 1fr;
-            gap: 36px;
-          }
-
-          .timeline {
-            grid-template-columns: 1fr;
-            gap: 12px;
-          }
-
-          .timeline-line {
-            top: 5%;
-            bottom: 5%;
-            left: 35px;
-            width: 2px;
-            height: auto;
-            background: linear-gradient(
-              var(--pink),
-              var(--blue),
-              var(--lime),
-              var(--orange),
-              var(--ink)
-            );
-          }
-
-          .timeline-card {
-            display: grid;
-            min-height: 0;
-            grid-template-columns: 80px 55px 1fr;
-            align-items: center;
-          }
-
-          .timeline-card time {
-            grid-column: 1;
-          }
-
-          .timeline-icon {
-            grid-column: 2;
-            margin: 0;
-          }
-
-          .timeline-card h3,
-          .timeline-card p {
-            grid-column: 3;
-          }
-
-          .timeline-card h3 {
-            margin: 0 0 3px;
-          }
-
-          .timeline-card p {
-            grid-row: 1;
-            align-self: end;
-            margin-bottom: 26px;
-          }
-
-          .line-section {
-            padding: 95px 0;
-            grid-template-columns: 1fr;
-            gap: 48px;
-          }
-
-          .phone {
-            width: 276px;
-          }
-
-          .journey-grid {
-            grid-template-columns: 1fr;
-          }
-
-          footer {
-            width: min(100% - 32px, 620px);
-            padding: 28px 0 94px;
-            flex-wrap: wrap;
-            gap: 15px;
-          }
-
-          footer p {
-            width: 100%;
-            order: 3;
-          }
-
-          .mobile-fixed-cta {
-            position: fixed;
-            right: 14px;
-            bottom: 14px;
-            left: 14px;
-            z-index: 45;
-            display: flex;
-            min-height: 52px;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 18px;
-            color: #fff;
-            background: var(--ink);
-            border-radius: 15px;
-            box-shadow: 0 14px 34px rgba(17, 26, 59, 0.25);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 850;
-            transition: opacity 0.2s ease, transform 0.2s ease;
-          }
-
-          .mobile-fixed-cta span {
-            color: var(--lime);
-            font-size: 19px;
-          }
-
-          .mobile-fixed-cta.hide {
-            pointer-events: none;
-            opacity: 0;
-            transform: translateY(14px);
+            min-height: 380px;
           }
         }
 
-        @media (max-width: 480px) {
-          .shell {
-            width: calc(100% - 28px);
+        @media (max-width: 820px) {
+          .story-slide {
+            min-height: auto;
+            padding: 24px 16px 42px;
           }
 
-          .hero {
-            padding-top: 132px;
+          .slide-inner {
+            min-height: auto;
           }
 
-          .hero h1 {
-            font-size: 42px;
+          .story-slide::before {
+            right: -20px;
+            width: 160px;
           }
 
-          .hero-actions {
-            display: grid;
-            grid-template-columns: 1fr;
-          }
-
-          .button {
-            width: 100%;
-          }
-
-          .dashboard-card {
-            padding: 17px;
-            transform: translateX(-50%) scale(0.92);
-            transform-origin: top center;
-          }
-
-          .hero-stage {
-            height: 438px;
-          }
-
-          .fc-a {
-            top: 9px;
-          }
-
-          .fc-b {
-            top: 322px;
-          }
-
-          .fc-c {
-            bottom: -3px;
-          }
-
-          .floating-card {
-            padding: 9px 10px;
-            font-size: 9px;
-          }
-
-          .section-head h2,
-          .calendar-copy h2,
-          .trust-head h2,
-          .line-copy h2,
-          .journey h2 {
+          .logo-word {
             font-size: 34px;
           }
 
-          .calendar-mock {
-            padding: 16px;
+          .page-badge {
+            min-width: 82px;
+            padding: 10px 14px;
+            font-size: 18px;
           }
 
-          .cal-grid i {
-            min-height: 38px;
+          .hero-title {
+            font-size: 46px;
           }
 
-          .cta-section {
-            min-height: 510px;
-            padding: 90px 18px;
+          .hero-title .comiu-big {
+            font-size: 76px;
           }
 
-          .cta-content h2 {
-            font-size: 40px;
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          *,
-          *::before,
-          *::after {
-            scroll-behavior: auto !important;
-            transition-duration: 0.001ms !important;
-            animation-duration: 0.001ms !important;
+          .hero-lead {
+            font-size: 23px;
           }
 
-          .reveal {
-            opacity: 1;
+          .hero-desc {
+            font-size: 17px;
+          }
+
+          .big-cta {
+            width: 100%;
+            min-height: 68px;
+            gap: 16px;
+            padding: 0 22px;
+            font-size: 21px;
+          }
+
+          .hero-one .big-cta {
+            position: relative;
+            bottom: auto;
+            left: auto;
+            width: 100%;
             transform: none;
+          }
+
+          .big-cta span:first-child {
+            width: 44px;
+            height: 44px;
+            font-size: 20px;
+          }
+
+          .hero-visual {
+            min-height: 800px;
+            transform: scale(0.78);
+            transform-origin: top center;
+            margin-bottom: -160px;
+          }
+
+          .phone-shell {
+            width: 430px;
+          }
+
+          .float-side {
+            right: -32px;
+          }
+
+          .members-card,
+          .notice-card {
+            width: 310px;
+          }
+
+          .bottom-count {
+            bottom: 18px;
+          }
+
+          .problem-title,
+          .section-title,
+          .final-copy h1 {
+            font-size: 42px;
+          }
+
+          .problem-sub {
+            font-size: 19px;
+          }
+
+          .tool-cloud {
+            min-height: 560px;
+          }
+
+          .tool-card {
+            position: relative;
+            left: auto !important;
+            right: auto !important;
+            top: auto !important;
+            width: 100%;
+            margin-bottom: 12px;
+            transform: none !important;
+          }
+
+          .full-dashboard {
+            padding: 16px;
+            overflow: hidden;
+          }
+
+          .mock-grid,
+          .features-grid,
+          .feature-payment,
+          .stats-row,
+          .final-badges {
+            grid-template-columns: 1fr;
+          }
+
+          .feature-card {
+            min-height: auto;
+            padding: 24px;
+          }
+
+          .feature-profile,
+          .feature-event {
+            grid-template-columns: 1fr;
+          }
+
+          .feature-profile .event-thumb,
+          .feature-event .event-thumb {
+            width: 100%;
+          }
+
+          .operation-card {
+            padding: 24px;
+          }
+
+          .calendar-events p {
+            grid-template-columns: 62px 1fr;
+          }
+
+          .calendar-events em,
+          .calendar-events span {
+            grid-column: 2;
+          }
+
+          .timeline-row {
+            grid-template-columns: 56px 12px 80px 1fr;
+          }
+
+          .timeline-row em {
+            grid-column: 4;
+          }
+
+          .profile-phone {
+            right: 50%;
+            transform: translateX(50%) rotate(4deg) scale(0.86);
+          }
+
+          .phone-stage {
+            min-height: 560px;
+          }
+
+          .floating-chip {
+            transform: scale(0.8);
+          }
+
+          .final-copy p {
+            font-size: 21px;
+          }
+
+          .final-cta-panel {
+            padding: 24px 18px;
+          }
+
+          .yellow-cta {
+            min-height: 70px;
+            font-size: 23px;
           }
         }
       `}</style>
 
-      <div className="page-noise" />
-
-      <header className="site-header">
-        <a href="#top" aria-label="COMIU トップへ">
-          <Logo />
-        </a>
-
-        <nav className="nav">
-          <a href="#features">できること</a>
-          <a href="#future">導入メリット</a>
-          <a href="#calendar">運営の流れ</a>
-          <a href="#faq">よくある質問</a>
-          <a className="nav-cta" href="/register">
-            無料で作成 <b>→</b>
-          </a>
-        </nav>
-
-        <button
-          className={`menu-button ${menuOpen ? "open" : ""}`}
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="メニューを開く"
-          aria-expanded={menuOpen}
-        >
-          <span />
-        </button>
-      </header>
-
-      <nav className={`mobile-menu ${menuOpen ? "open" : ""}`}>
-        <a href="#features" onClick={() => setMenuOpen(false)}>
-          COMIUにできること
-        </a>
-        <a href="#future" onClick={() => setMenuOpen(false)}>
-          導入メリット
-        </a>
-        <a href="#calendar" onClick={() => setMenuOpen(false)}>
-          運営の流れ
-        </a>
-        <a href="/register" onClick={() => setMenuOpen(false)}>
-          無料で団体ページを作る →
-        </a>
-      </nav>
-
-      <main id="top">
-        <section className="shell hero">
-          <div className="hero-glow a" />
-          <div className="hero-glow b" />
-
-          <div className="hero-copy reveal">
-            <p className="eyebrow">
-              <span className="eyebrow-dot" />
-              FOR EVENT ORGANIZERS
-            </p>
-
-            <h1>
-              イベント・サークルの
-              <br />
-              <span className="gradient-text">集客ならCOMIU</span>
-              <br />
-              団体に合わせたWebサイトを
-              <br />
-              <span className="highlight">無料で作成。</span>
-            </h1>
-
-            <p className="hero-sub">
-              掲載用のホームページなら、もういらない。
-              <br />
-              Webサイトを、育てるWebアプリケーションへ。
-            </p>
-
-            <p className="hero-desc">
-              団体ページ、イベント募集、予約管理、活動ブログ、LINE連携。
-              運営をまとめて、参加者が集まる仕組みをつくる。
-            </p>
-
-            <div className="hero-tags">
-              <span>団体ページ</span>
-              <span>イベント募集</span>
-              <span>予約管理</span>
-              <span>LINE連携</span>
-              <span>事前決済</span>
-            </div>
-
-            <div className="hero-actions">
-              <a className="button button-primary" href="/register">
-                無料で団体ページを作る <b>→</b>
-              </a>
-              <a className="button button-quiet" href="#features">
-                COMIUでできることを見る ↓
-              </a>
-            </div>
-
-            <p className="hero-note">登録無料・初期費用なし・専門知識不要</p>
-          </div>
-
-          <div className="hero-stage reveal">
-            <div className="floating-card fc-a">
-              <span>＋</span>
-              <div>
-                <b>新規予約</b>
-                <strong>+12</strong>
-              </div>
-            </div>
-
-            <div className="floating-card fc-b">
-              <span>✓</span>
-              <div>
-                <b>LINE通知</b>
-                <strong>送信済み</strong>
-              </div>
-            </div>
-
-            <div className="floating-card fc-c">
-              <span>¥</span>
-              <div>
-                <b>決済ステータス</b>
-                <strong>完了</strong>
-              </div>
-            </div>
-
-            <div className="dashboard-card">
-              <div className="dash-top">
-                <div>
-                  <p>おかえりなさい、BELL</p>
-                  <h3>団体運営ダッシュボード</h3>
-                </div>
-                <div className="avatar">B</div>
-              </div>
-
-              <div className="dash-stats">
-                <div>
-                  <small>今月のページ閲覧数</small>
-                  <b>2,842</b>
-                  <em>+18.4%</em>
-                </div>
-                <div>
-                  <small>新規申込み</small>
-                  <b>128</b>
-                  <em>+12</em>
-                </div>
-              </div>
-
-              <div className="dash-chart">
-                <div className="chart-title">
-                  <b>イベント申込み推移</b>
-                  <span>今週</span>
-                </div>
-
-                <div className="chart-bars">
-                  <i style={{ height: "35%" }} />
-                  <i style={{ height: "58%" }} />
-                  <i style={{ height: "45%" }} />
-                  <i style={{ height: "72%" }} />
-                  <i style={{ height: "88%" }} />
-                  <i style={{ height: "66%" }} />
-                  <i style={{ height: "97%" }} />
-                </div>
-
-                <div className="chart-days">
-                  <span>月</span>
-                  <span>火</span>
-                  <span>水</span>
-                  <span>木</span>
-                  <span>金</span>
-                  <span>土</span>
-                  <span>日</span>
-                </div>
-              </div>
-
-              <div className="event-row">
-                <span className="event-icon blue">🏸</span>
-                <div>
-                  <b>バドミントン交流会</b>
-                  <small>7/13（日）・池袋</small>
-                </div>
-                <strong>38 / 50</strong>
-              </div>
-
-              <div className="event-row">
-                <span className="event-icon purple">✦</span>
-                <div>
-                  <b>新歓交流会</b>
-                  <small>7/17（木）・新宿</small>
-                </div>
-                <strong>予約中</strong>
-              </div>
-            </div>
-          </div>
-
-          <div className="hero-scroll">
-            SCROLL <span />
-          </div>
-        </section>
-
-        <section className="shell problem">
-          <div className="section-head reveal">
-            <p className="eyebrow">THE CURRENT WAY</p>
-            <h2>
-              毎回、ゼロから
-              <br />
-              運営していませんか？
-            </h2>
-            <p>
-              告知、フォーム、LINE、名簿、決済。
-              <br />
-              便利なツールは増えたのに、主催者の確認作業は減らない。
-            </p>
-          </div>
-
-          <div className="merge-demo reveal">
-            <div className="tool-cloud">
-              <div className="tool-card">
-                <span>◎</span>Instagram告知
-              </div>
-              <div className="tool-card">
-                <span>▣</span>Googleフォーム
-              </div>
-              <div className="tool-card">
-                <span>◔</span>LINEグループ
-              </div>
-              <div className="tool-card">
-                <span>▤</span>スプレッドシート
-              </div>
-              <div className="tool-card">
-                <span>¥</span>PayPay確認
-              </div>
-              <div className="tool-card">
-                <span>▱</span>メモ帳
-              </div>
-            </div>
-
-            <div className="merge-arrow">
-              <span>散らばる</span>
-              <i>→</i>
-              <span>まとまる</span>
-            </div>
-
-            <div className="merge-core">
-              <div className="core-logo">
-                <span className="brand-mark">
-                  <i />
-                  <i />
-                  <i />
+      <main className="story-page">
+        <section className="story-slide hero-one" id="top">
+          <div className="slide-inner">
+            <div className="hero-copy">
+              <Logo />
+              <h1 className="hero-title">
+                イベント・サークルの
+                <br />
+                集客なら
+                <strong className="comiu-big">COMIU</strong>
+              </h1>
+              <p className="hero-lead">
+                <span>
+                  団体に合わせた<strong>Webサイト</strong>を
+                  <br />
+                  <strong>無料</strong>で作成
                 </span>
-                COMIU
-              </div>
-              <p>団体運営ダッシュボード</p>
-              <div className="core-grid">
-                <span>イベント</span>
-                <span>予約</span>
-                <span>LINE</span>
-                <span>名簿</span>
-              </div>
-            </div>
-          </div>
-
-          <p className="center-tag reveal">
-            <i /> バラバラだった運営を、ひとつの流れへ。
-          </p>
-        </section>
-
-        <section className="shell statement" id="future">
-          <p className="eyebrow reveal">NOT JUST A BOOKING TOOL</p>
-          <h2 className="reveal">
-            運営が楽になって、
-            <br />
-            <span>団体が大きくなる。</span>
-          </h2>
-
-          <div className="statement-grid reveal">
-            <p>活動の魅力を見せる。</p>
-            <p>イベントを見つけてもらう。</p>
-            <p>参加しやすくする。</p>
-            <p>連絡を自動化する。</p>
-            <p>開催するほど、実績が残る。</p>
-          </div>
-
-          <p className="statement-note reveal">
-            イベントを繰り返すたびに、次の参加者に選ばれやすい団体へ。
-          </p>
-        </section>
-
-        <section className="shell features" id="features">
-          <div className="section-head reveal">
-            <p className="eyebrow">ALL-IN-ONE PLATFORM</p>
-            <h2>COMIUにできること</h2>
-            <p>
-              募集する。つながる。積み上がる。
-              <br />
-              団体運営に必要な仕組みを、ひとつに。
-            </p>
-          </div>
-
-          <div className="feature-track">
-            {features.map((feature) => (
-              <article
-                key={feature.no}
-                className={`feature-card ${feature.color} reveal`}
-              >
-                <div className="feature-number">{feature.no}</div>
-                <h3>{feature.title}</h3>
-                <p>{feature.text}</p>
-                <MiniMock type={feature.type} />
-              </article>
-            ))}
-          </div>
-
-          <p className="scroll-hint">
-            <span>←</span> 横にスワイプして見る <span>→</span>
-          </p>
-        </section>
-
-        <section className="shell calendar-section" id="calendar">
-          <div className="calendar-copy reveal">
-            <p className="eyebrow">EASY TO JOIN</p>
-            <h2>
-              次のイベントを、
-              <br />
-              迷わず見つけられる。
-            </h2>
-            <p>
-              「次はいつある？」をなくす。
-              <br />
-              活動予定、残り枠、予約状況を、参加者にわかりやすく届ける。
-            </p>
-
-            <ul>
-              <li>予定と募集状況が、ひと目で分かる</li>
-              <li>そのまま予約まで進める</li>
-              <li>前日のLINE通知で、参加を後押し</li>
-            </ul>
-          </div>
-
-          <div className="calendar-mock reveal">
-            <div className="cal-head">
-              <b>2026年 7月</b>
-              <span>‹　›</span>
+              </p>
+              <p className="hero-desc">
+                掲載用のホームページなら、もういらない。
+                <br />
+                Webサイトを、育てるWebアプリケーションへ。
+              </p>
             </div>
 
-            <div className="cal-days">
-              <span>日</span>
-              <span>月</span>
-              <span>火</span>
-              <span>水</span>
-              <span>木</span>
-              <span>金</span>
-              <span>土</span>
-            </div>
-
-            <div className="cal-grid">
-              <i />
-              <i />
-              <i />
-              <i>1</i>
-              <i>2</i>
-              <i>3</i>
-              <i>4</i>
-              <i>5</i>
-              <i>6</i>
-              <i>7</i>
-              <i>8</i>
-              <i>9</i>
-              <i>10</i>
-              <i>11</i>
-              <i>12</i>
-              <i className="active">
-                13<em>🏸</em>
-              </i>
-              <i>14</i>
-              <i>15</i>
-              <i>16</i>
-              <i className="active purple">
-                17<em>✦</em>
-              </i>
-              <i>18</i>
-              <i className="active orange">
-                19<em>☀</em>
-              </i>
-              <i>20</i>
-              <i>21</i>
-              <i>22</i>
-              <i>23</i>
-              <i className="full">24</i>
-              <i>25</i>
-            </div>
-
-            <div className="cal-event-list">
-              <div>
-                <span className="dot blue" />
-                <p>
-                  <b>7/13 バドミントン</b>
-                  <small>残り8名</small>
-                </p>
-                <button>予約する</button>
-              </div>
-
-              <div>
-                <span className="dot purple" />
-                <p>
-                  <b>7/17 新歓交流会</b>
-                  <small>予約受付中</small>
-                </p>
-                <button>予約する</button>
-              </div>
-
-              <div>
-                <span className="dot orange" />
-                <p>
-                  <b>7/19 BBQ</b>
-                  <small>女性枠あと3名</small>
-                </p>
-                <button>予約する</button>
-              </div>
-            </div>
-
-            <div className="cal-line-label">
-              LINEで前日通知が届きます <span>✓</span>
-            </div>
-          </div>
-        </section>
-
-        <section className="shell trust-section">
-          <div className="trust-head reveal">
-            <p className="eyebrow">BUILD TRUST OVER TIME</p>
-            <h2>
-              開催するたび、
-              <br />
-              団体の信頼が残る。
-            </h2>
-            <p>
-              SNS投稿は流れていく。
-              <br />
-              でも、活動レポート、イベント実績、参加者の声は団体ページに残り続ける。
-            </p>
-          </div>
-
-          <div className="timeline">
-            <div className="timeline-line" />
-
-            <article className="timeline-card reveal">
-              <time>2026.04</time>
-              <div className="timeline-icon pink">✦</div>
-              <h3>新歓交流会</h3>
-              <p>初参加者 42名</p>
-            </article>
-
-            <article className="timeline-card reveal">
-              <time>2026.05</time>
-              <div className="timeline-icon blue">🏸</div>
-              <h3>バドミントン</h3>
-              <p>月2回の定期開催へ</p>
-            </article>
-
-            <article className="timeline-card reveal">
-              <time>2026.06</time>
-              <div className="timeline-icon lime">●</div>
-              <h3>スポーツ交流会</h3>
-              <p>累計参加者 180名</p>
-            </article>
-
-            <article className="timeline-card reveal">
-              <time>2026.07</time>
-              <div className="timeline-icon orange">☀</div>
-              <h3>夏のBBQ</h3>
-              <p>参加者レビュー 34件</p>
-            </article>
-
-            <article className="timeline-card reveal">
-              <time>NOW</time>
-              <div className="timeline-icon dark">↗</div>
-              <h3>次の参加者へ</h3>
-              <p>「ここなら行ってみたい」が増える</p>
-            </article>
-          </div>
-
-          <div className="trust-end reveal">
-            <span />
-            <strong>開催するほど、次の参加者に選ばれやすい団体へ。</strong>
-          </div>
-        </section>
-
-        <section className="shell line-section">
-          <div className="phone-wrap reveal">
-            <div className="phone">
-              <div className="phone-notch" />
-
-              <div className="phone-top">
-                <span>9:41</span>
-                <b>COMIU公式LINE</b>
-                <span>•••</span>
-              </div>
-
-              <div className="chat-area">
-                <p className="chat-date">7月16日（木）</p>
-
-                <div className="bubble">
-                  <b>COMIU公式LINE</b>
-                  <p>ご予約ありがとうございます！</p>
+            <div className="hero-visual" aria-hidden="true">
+              <div className="phone-shell">
+                <div className="phone-screen">
+                  <DashboardMock />
                 </div>
-
-                <div className="bubble">
-                  <p>
-                    7/17 新歓交流会の詳細です ✦
-                    <br />
-                    会場：池袋駅東口 徒歩5分
-                    <br />
-                    集合時間：18:45
-                  </p>
+                <MemberListCard />
+                <NoticeCard />
+              </div>
+              <div className="float-side">
+                <div className="side-stat">
+                  <small>LINE</small>
+                  <span>リマインド</span>
                 </div>
-
-                <div className="bubble">
-                  <p>
-                    明日はお気をつけてお越しください。
-                    <br />
-                    参加できなくなった場合は、こちらからキャンセルできます。
-                  </p>
+                <div className="side-stat">
+                  <small>ページ閲覧数</small>
+                  <b>2,842</b>
                 </div>
-
-                <div className="chat-read">既読 38　18:02</div>
+                <div className="side-stat">
+                  <small>申込数</small>
+                  <b>+12</b>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="line-copy reveal">
-            <p className="eyebrow">AUTOMATIC LINE REMINDERS</p>
-            <h2>
-              連絡を頑張る運営から、
-              <br />
-              <span>参加しやすい仕組み</span>を
-              <br />
-              つくる運営へ。
-            </h2>
-
-            <p>
-              予約後の案内やイベント前日のリマインドを、公式LINEで自動化。
-              参加者の不安をなくし、主催者の確認作業も減らします。
-            </p>
-
-            <div className="benefit-list">
-              <div>
-                <i>01</i>
-                <b>案内漏れを減らす</b>
-              </div>
-              <div>
-                <i>02</i>
-                <b>前日の参加確認を自動化</b>
-              </div>
-              <div>
-                <i>03</i>
-                <b>当日の問い合わせを減らす</b>
-              </div>
-              <div>
-                <i>04</i>
-                <b>無断キャンセル対策につながる</b>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="shell journey">
-          <div className="section-head reveal">
-            <p className="eyebrow">WHAT CHANGES NEXT</p>
-            <h2>
-              イベントを開くたび、
-              <br />
-              次が楽になる。
-            </h2>
-          </div>
-
-          <div className="journey-grid">
-            <article className="journey-step reveal">
-              <span>01</span>
-              <h3>見つけてもらえる</h3>
-              <p>団体ページとポータル掲載で、新しい参加者に届く。</p>
-            </article>
-
-            <article className="journey-step reveal">
-              <span>02</span>
-              <h3>参加しやすくなる</h3>
-              <p>予定、残り枠、予約、決済、LINE案内がつながる。</p>
-            </article>
-
-            <article className="journey-step reveal">
-              <span>03</span>
-              <h3>団体が積み上がる</h3>
-              <p>活動実績とつながりが残り、次の集客につながる。</p>
-            </article>
-          </div>
-
-          <p className="journey-end reveal">
-            COMIUは、イベントを一回成功させるためのツールではない。
-            <br />
-            <strong>団体を、続いていくコミュニティへ育てるための仕組み。</strong>
-          </p>
-        </section>
-
-        <section className="cta-section" id="cta">
-          <div className="cta-orb a" />
-          <div className="cta-orb b" />
-
-          <div className="cta-content reveal">
-            <p className="eyebrow">START FOR FREE</p>
-            <h2>
-              あなたの団体を、
-              <br />
-              次の参加者に選ばれる場所へ。
-            </h2>
-
-            <p>
-              団体ページ、イベント募集、予約管理、LINE連携。
-              <br />
-              まずは無料で、あなたの団体に合ったページを作成しましょう。
-            </p>
-
-            <a
-              className="button button-white"
-              href="/register"
-            >
-              無料で団体ページを作る <b>→</b>
+            <span className="sparkle one">✦</span>
+            <a className="big-cta" href="/register">
+              <span>↗</span>
+              無料で団体ページを作る
+              <span>›</span>
             </a>
+            <div className="bottom-count">
+              <span>1</span> / 5
+            </div>
+          </div>
+        </section>
 
-            <small>登録無料　・　初期費用なし　・　専門知識不要</small>
+        <section className="story-slide slide-two">
+          <div className="slide-inner">
+            <Logo />
+            <PageBadge page="2" />
+            <div>
+              <h2 className="problem-title">毎回、ゼロから運営していませんか？</h2>
+              <p className="problem-sub">
+                告知、申込み、連絡、名簿管理がバラバラだと、
+                <br />
+                運営が大きくなるほど大変になる。
+              </p>
+            </div>
+
+            <div className="before-after">
+              <div className="tool-cloud">
+                {toolCards.map((tool) => (
+                  <div className="tool-card" key={tool[1]}>
+                    <span>{tool[0]}</span>
+                    <b>
+                      {tool[1]}
+                      <small>{tool[2]}</small>
+                    </b>
+                  </div>
+                ))}
+              </div>
+              <div className="arrow-flow" aria-hidden="true" />
+              <div className="full-dashboard">
+                <DashboardMock />
+              </div>
+            </div>
+
+            <div className="unified-title">
+              バラバラだった
+              <br />
+              運営を、
+              <br />
+              ひとつの流れへ。
+            </div>
+            <div className="wide-band">すべてをつなげて、迷わず進める運営へ。</div>
+          </div>
+        </section>
+
+        <section className="story-slide slide-three" id="features">
+          <div className="slide-inner">
+            <Logo />
+            <PageBadge page="3" />
+            <h2 className="section-title">
+              <strong>COMIU</strong> にできること
+            </h2>
+            <p className="section-subtitle">募集する。つながる。積み上がる。</p>
+
+            <div className="features-grid">
+              {featureCards.map((feature) => (
+                <article className="feature-card" key={feature.no}>
+                  <div className="feature-heading">
+                    <span>{feature.no}</span>
+                    <h3>
+                      {feature.title.split("無料").length > 1 ? (
+                        <>
+                          団体ページを<strong>無料</strong>で作成
+                        </>
+                      ) : feature.title.split("自動").length > 1 ? (
+                        <>
+                          公式LINEで<strong>自動リマインド</strong>
+                        </>
+                      ) : feature.title.split("決済").length > 1 ? (
+                        <>
+                          事前<strong>決済</strong>と予約管理
+                        </>
+                      ) : (
+                        <>
+                          イベント募集を<strong>まとめる</strong>
+                        </>
+                      )}
+                    </h3>
+                  </div>
+                  <FeatureMock type={feature.mock} />
+                  <p>{feature.text}</p>
+                </article>
+              ))}
+            </div>
+
+            <div className="note-line">
+              <span>▣</span>
+              活動ブログや実績も蓄積できます。
+            </div>
+          </div>
+        </section>
+
+        <section className="story-slide slide-four">
+          <div className="slide-inner">
+            <Logo />
+            <PageBadge page="4" />
+            <h2 className="section-title">
+              運営が楽になって、<strong>団体が大きくなる。</strong>
+            </h2>
+
+            <div className="operation-card">
+              <div className="operation-copy">
+                <div className="number-orb">1</div>
+                <h3>
+                  次のイベントを、
+                  <br />
+                  <strong>迷わず</strong>見つけられる。
+                </h3>
+                <p>
+                  カレンダーとリストで、予定がひと目でわかる。
+                  <br />
+                  募集も残り枠もすぐに確認できるから、
+                  <br />
+                  参加のきっかけを逃さない。
+                </p>
+                <div className="line-remind">
+                  <i>LINE</i>
+                  LINEで前日通知が届きます
+                  <span>🔔</span>
+                </div>
+              </div>
+              <CalendarMock />
+            </div>
+
+            <div className="operation-card">
+              <div className="operation-copy">
+                <div className="number-orb">2</div>
+                <h3>
+                  開催するたび、
+                  <br />
+                  団体の<strong>信頼</strong>が残る。
+                </h3>
+                <p>
+                  開催履歴やレポートが自動で積み上がる。
+                  <br />
+                  活動の見える化が、メンバーの安心や
+                  <br />
+                  新しい仲間の参加につながる。
+                </p>
+              </div>
+              <div>
+                <div className="timeline-list">
+                  {[
+                    ["4月", "新歓交流会", "参加者 96名"],
+                    ["5月", "バドミントン", "参加者 42名"],
+                    ["6月", "スポーツ交流会", "参加者 85名"],
+                    ["7月", "BBQ", "参加者 71名"],
+                  ].map((item, index) => (
+                    <div className="timeline-row" key={item[0]}>
+                      <time>{item[0]}</time>
+                      <span className="dot" />
+                      <EventThumb tone={index === 3 ? "orange" : "blue"} />
+                      <p>
+                        {item[1]}
+                        <small>開催レポートが残りました</small>
+                      </p>
+                      <em>{item[2]}</em>
+                    </div>
+                  ))}
+                </div>
+                <div className="stats-row">
+                  <div>
+                    活動ブログ更新
+                    <strong>18件</strong>
+                  </div>
+                  <div>
+                    参加者レビュー
+                    <strong>4.8</strong>
+                  </div>
+                  <div>
+                    累計参加者数
+                    <strong>532名</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="note-line">
+              イベントを開くたび、<strong>次が楽になる。</strong>
+            </div>
+            <div className="slide-dots">
+              <i />
+              <i />
+              <i />
+            </div>
+          </div>
+        </section>
+
+        <section className="story-slide slide-five">
+          <div className="slide-inner">
+            <Logo />
+            <PageBadge page="5" />
+            <div className="final-layout">
+              <div className="final-copy">
+                <h1>
+                  あなたの団体を、
+                  <br />
+                  次の参加者に
+                  <br />
+                  <strong>選ばれる場所へ。</strong>
+                </h1>
+                <p>
+                  団体ページ、イベント募集、
+                  <br />
+                  予約管理、LINE連携。
+                  <br />
+                  まずは<strong>無料</strong>で、あなたの団体に
+                  <br />
+                  合ったページを作成しましょう。
+                </p>
+              </div>
+              <div className="phone-stage">
+                <ProfilePhone />
+                <span className="floating-chip chip-line">LINE</span>
+                <span className="floating-chip chip-calendar">📅</span>
+                <span className="floating-chip chip-member">👥</span>
+              </div>
+            </div>
+
+            <div className="final-message">
+              <strong>COMIU</strong>は、イベントを一回成功させるためのツールではない。
+              <br />
+              団体を、続いていく<strong>コミュニティ</strong>へ育てるための仕組み。
+            </div>
+
+            <div className="final-cta-panel">
+              <a className="yellow-cta" href="/register">
+                無料で団体ページを作る <span>›</span>
+              </a>
+              <div className="final-badges">
+                <span>¥ 登録無料</span>
+                <span>▣ 初期費用なし</span>
+                <span>◆ 専門知識不要</span>
+              </div>
+            </div>
           </div>
         </section>
       </main>
-
-      <footer id="faq">
-        <a href="#top" aria-label="COMIU トップへ">
-          <Logo />
-        </a>
-        <p>運営が楽になって、団体が大きくなる。</p>
-        <small>© 2026 COMIU</small>
-      </footer>
-
-      <a className="mobile-fixed-cta" href="/register">
-        無料で団体ページを作る <span>→</span>
-      </a>
     </>
   );
 }
