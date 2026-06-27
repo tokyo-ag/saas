@@ -2,75 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-const scatteredTools = [
-  { icon: "IG", title: "Instagram告知", text: "投稿・DM確認" },
-  { icon: "GF", title: "Googleフォーム", text: "申込み受付" },
-  { icon: "LN", title: "LINEグループ", text: "連絡・共有" },
-  { icon: "SS", title: "スプレッドシート", text: "名簿管理" },
-  { icon: "PY", title: "PayPay確認", text: "支払い確認" },
-  { icon: "MM", title: "メモ帳", text: "やること管理" },
-];
-
-const features = [
-  {
-    title: "団体ページを無料で作成",
-    text: "団体紹介、活動写真、イベント予定、よくある質問、実績。初めて見た人にも、活動の雰囲気と信頼感が伝わるページを作成。",
-    type: "site",
-  },
-  {
-    title: "イベント募集をまとめる",
-    text: "募集人数、参加費、場所、持ち物をひとつの募集ページに。毎回の告知を、参加につながる導線へ。",
-    type: "event",
-  },
-  {
-    title: "COMIUポータルへ掲載",
-    text: "イベントを登録すると、COMIU内のポータルにも掲載。新しい参加者に団体を見つけてもらえる機会を増やす。",
-    type: "portal",
-  },
-  {
-    title: "予約を管理する",
-    text: "参加人数、定員、キャンセル、参加者名簿をまとめて管理。フォームとスプレッドシートを行き来しない運営へ。",
-    type: "reserve",
-  },
-  {
-    title: "公式LINEで自動リマインド",
-    text: "予約完了後の案内や、イベント前日のリマインドを公式LINEで送信。問い合わせと連絡漏れを減らす。",
-    type: "line",
-  },
-  {
-    title: "事前決済に対応",
-    text: "申込みから支払いまでをスムーズに。当日の受付、集金、未払い確認を減らして、イベントに集中できる。",
-    type: "pay",
-  },
-  {
-    title: "活動ブログと実績を残す",
-    text: "イベントレポートや活動写真を残して、団体の魅力を積み上げる。開催するほど、初参加者に選ばれやすくなる。",
-    type: "blog",
-  },
-];
-
-const calendarEvents = [
-  { date: "7/13", name: "バドミントン", status: "残り8名", tone: "blue" },
-  { date: "7/17", name: "新歓交流会", status: "予約受付中", tone: "green" },
-  { date: "7/19", name: "BBQ", status: "女性枠あと3名", tone: "pink" },
-  { date: "7/24", name: "フットサル", status: "満員", tone: "gray" },
-];
-
-const timeline = [
-  { month: "4月", title: "新歓交流会", text: "初参加者 96名" },
-  { month: "5月", title: "バドミントン", text: "リピート参加が増加" },
-  { month: "6月", title: "スポーツ交流会", text: "活動レポート公開" },
-  { month: "7月", title: "BBQ", text: "参加者レビュー蓄積" },
-];
-
-const lineBubbles = [
-  "ご予約ありがとうございます",
-  "7/17 新歓交流会の詳細です",
-  "会場：池袋駅東口 徒歩5分",
-  "集合時間：18:45",
-  "明日はお気をつけてお越しください",
-  "参加できなくなった場合は、こちらからキャンセルできます",
-];
 
 function Logo() {
   return (
@@ -161,64 +92,6 @@ function DashboardMock({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function FeatureMock({ type }: { type: string }) {
-  if (type === "line") {
-    return (
-      <div className="feature-mock line-mini">
-        <span>LINE</span>
-        <p>明日は新歓交流会です</p>
-        <p>会場：池袋駅東口 徒歩5分</p>
-      </div>
-    );
-  }
-
-  if (type === "pay") {
-    return (
-      <div className="feature-mock pay-mini">
-        <small>事前決済</small>
-        <strong>¥1,500</strong>
-        <span>決済完了</span>
-      </div>
-    );
-  }
-
-  if (type === "reserve") {
-    return (
-      <div className="feature-mock roster-mini">
-        {["山田 太郎", "佐藤 花子", "鈴木 健"].map((name) => (
-          <p key={name}>
-            <i />
-            <b>{name}</b>
-            <span>予約済み</span>
-          </p>
-        ))}
-      </div>
-    );
-  }
-
-  if (type === "blog") {
-    return (
-      <div className="feature-mock blog-mini">
-        <MiniPhoto tone="orange" />
-        <div>
-          <b>BBQイベントを開催しました</b>
-          <small>活動ブログ更新</small>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="feature-mock card-mini">
-      <MiniPhoto tone={type === "event" ? "green" : "blue"} />
-      <div>
-        <b>{type === "portal" ? "人気のイベントに掲載" : type === "event" ? "7/17 新歓交流会" : "団体ページ公開"}</b>
-        <small>{type === "portal" ? "閲覧数 +284" : type === "event" ? "残り8名・予約受付中" : "活動写真・FAQ・実績"}</small>
-      </div>
-      <button type="button">{type === "site" ? "見る" : "予約"}</button>
-    </div>
-  );
-}
 
 export default function ComiuLandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -2054,6 +1927,11 @@ export default function ComiuLandingPage() {
           .future-steps {
             grid-template-columns: 1fr;
           }
+
+          .portal-grid,
+          .remind-grid {
+            grid-template-columns: 1fr;
+          }
         }
 
         @media (max-width: 640px) {
@@ -2244,6 +2122,194 @@ export default function ComiuLandingPage() {
           .site-footer {
             padding-bottom: 90px;
           }
+
+          .phones-grid {
+            flex-direction: column;
+            align-items: center;
+          }
+
+          .phone-type-card {
+            max-width: 300px;
+          }
+
+          .feature-pair {
+            grid-template-columns: 1fr;
+          }
+
+          .seo-card {
+            border-radius: 28px;
+            text-align: left;
+          }
+
+          .seo-card .section-desc {
+            max-width: 100%;
+          }
+        }
+
+        /* ② Booking */
+        .booking-head {
+          max-width: 720px;
+          margin: 0 auto clamp(40px, 6vw, 64px);
+          text-align: center;
+        }
+
+        .phones-grid {
+          display: flex;
+          gap: clamp(14px, 3vw, 28px);
+          justify-content: center;
+          align-items: flex-end;
+        }
+
+        .phone-type-card {
+          flex: 1;
+          max-width: 260px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 14px;
+        }
+
+        .phone-type-img {
+          width: 100%;
+          display: block;
+          border-radius: 20px;
+          box-shadow: var(--shadow);
+        }
+
+        .phone-type-info {
+          text-align: center;
+        }
+
+        .phone-type-info b {
+          display: block;
+          font-size: 16px;
+          font-weight: 900;
+          letter-spacing: -0.03em;
+          margin-bottom: 5px;
+        }
+
+        .phone-type-info small {
+          display: block;
+          color: var(--muted);
+          font-size: 13px;
+          font-weight: 700;
+          line-height: 1.65;
+        }
+
+        /* ③ Portal */
+        .portal-section {
+          padding-top: 0;
+        }
+
+        .portal-grid {
+          display: grid;
+          grid-template-columns: 0.85fr 1fr;
+          gap: clamp(36px, 6vw, 80px);
+          align-items: center;
+        }
+
+        .portal-img {
+          width: 100%;
+          display: block;
+          border-radius: 24px;
+          box-shadow: var(--shadow);
+        }
+
+        /* ④ LINE Remind */
+        .remind-section {
+          padding-top: 0;
+        }
+
+        .remind-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: clamp(36px, 6vw, 80px);
+          align-items: center;
+        }
+
+        .remind-img {
+          width: 100%;
+          display: block;
+          border-radius: 24px;
+          box-shadow: var(--shadow);
+        }
+
+        /* ⑤ SEO */
+        .seo-card {
+          padding: clamp(44px, 7vw, 88px) clamp(28px, 6vw, 88px);
+          background:
+            radial-gradient(circle at 15% 18%, rgba(114, 141, 255, 0.45), transparent 28%),
+            linear-gradient(135deg, #081037, #17215a 54%, #3d2b8c);
+          border-radius: 40px;
+          color: #fff;
+          text-align: center;
+          box-shadow: 0 26px 80px rgba(12, 18, 58, 0.22);
+        }
+
+        .seo-card .section-label {
+          background: rgba(255, 255, 255, 0.12);
+          border-color: rgba(255, 255, 255, 0.18);
+          color: rgba(255, 255, 255, 0.88);
+        }
+
+        .seo-card .section-label::before {
+          background: var(--lime);
+        }
+
+        .seo-card .section-title {
+          color: #fff;
+        }
+
+        .seo-card .section-desc {
+          max-width: 600px;
+          margin: 0 auto;
+          color: rgba(255, 255, 255, 0.76);
+        }
+
+        /* ⑥ Feature pair */
+        .feature-pair {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 20px;
+          margin-top: 36px;
+        }
+
+        .pair-card {
+          padding: clamp(28px, 4vw, 42px);
+          background: #fff;
+          border: 1px solid var(--line);
+          border-radius: 28px;
+          box-shadow: var(--shadow-soft);
+        }
+
+        .pair-card-icon {
+          display: inline-flex;
+          min-height: 40px;
+          align-items: center;
+          padding: 0 14px;
+          color: #fff;
+          background: linear-gradient(135deg, var(--blue), var(--purple));
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 950;
+          letter-spacing: 0.04em;
+          margin-bottom: 20px;
+          box-shadow: 0 8px 20px rgba(46, 92, 255, 0.22);
+        }
+
+        .pair-card h3 {
+          font-size: clamp(19px, 2vw, 24px);
+          line-height: 1.42;
+          letter-spacing: -0.04em;
+          margin-bottom: 12px;
+        }
+
+        .pair-card p {
+          color: var(--muted);
+          font-size: 14px;
+          line-height: 1.85;
+          font-weight: 650;
+          margin: 0;
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -2358,239 +2424,106 @@ export default function ComiuLandingPage() {
           </div>
         </section>
 
-        <section className="lp-section problem" aria-labelledby="problem-title">
-          <div className="problem-head reveal">
-            <SectionLabel>BEFORE COMIU</SectionLabel>
-            <h2 className="section-title" id="problem-title">
-              毎回、ゼロから運営していませんか？
+        {/* ② 公式LINEからワンタップ予約 */}
+        <section className="lp-section" aria-labelledby="booking-title">
+          <div className="booking-head reveal">
+            <SectionLabel>ONE-TAP BOOKING</SectionLabel>
+            <h2 className="section-title" id="booking-title">
+              公式LINEから、ワンタップで予約
             </h2>
-            <p className="section-desc">
-              イベントを開催するたびに、Instagramで告知して、Googleフォームを作って、LINEで連絡して、スプレッドシートで名簿を確認する。
-              それぞれは便利でも、運営が大きくなるほど、連絡漏れや確認作業が増えていく。
+            <p className="section-desc" style={{ maxWidth: 640, margin: "0 auto" }}>
+              公式LINEのリッチメニューや予約URLから直接予約。カレンダー・カード・スレッドの3タイプから、活動スタイルに合わせて選べます。
             </p>
           </div>
-
-          <div className="flow-stage" aria-label="バラバラな運営がCOMIUにまとまる流れ">
-            <div className="tool-stack">
-              {scatteredTools.map((tool) => (
-                <div className="tool-card" key={tool.title}>
-                  <span>{tool.icon}</span>
-                  <b>
-                    {tool.title}
-                    <small>{tool.text}</small>
-                  </b>
+          <div className="phones-grid reveal">
+            {[
+              { src: "/shuttles-calendar.svg", label: "カレンダー", desc: "同じ活動が重なる時や回数が多い主催向け" },
+              { src: "/shuttles-event-cards.svg", label: "カード", desc: "画像でイメージをしっかり伝えたい主催向け" },
+              { src: "/shuttles-schedule-cards.svg", label: "スレッド", desc: "詳細をしっかり見せたい主催向け" },
+            ].map(({ src, label, desc }) => (
+              <div key={label} className="phone-type-card">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt={label} className="phone-type-img" />
+                <div className="phone-type-info">
+                  <b>{label}</b>
+                  <small>{desc}</small>
                 </div>
-              ))}
-            </div>
-            <div className="flow-arrow" aria-hidden="true" />
-            <div className="flow-result">
-              <DashboardMock compact />
-            </div>
-          </div>
-          <p className="flow-copy reveal">バラバラだった運営を、ひとつの流れへ。</p>
-        </section>
-
-        <section className="statement reveal" aria-labelledby="statement-title">
-          <div className="statement-inner">
-            <SectionLabel>WHY COMIU</SectionLabel>
-            <h2 id="statement-title">
-              運営が楽になって、
-              <br />
-              <span>団体が大きくなる。</span>
-            </h2>
-            <p>
-              COMIUは、ただ予約を受け付けるだけのサービスではありません。
-              活動の魅力を見せる。イベントを見つけてもらう。参加しやすくする。
-              連絡を自動化する。開催するほど、団体の実績が残る。
-            </p>
-            <div className="statement-list" aria-label="COMIUで起きる変化">
-              <span>魅力を見せる</span>
-              <span>見つけてもらう</span>
-              <span>参加しやすく</span>
-              <span>連絡を自動化</span>
-              <span>実績が残る</span>
-            </div>
-            <p>
-              イベントを繰り返すたびに、次の参加者に選ばれやすい団体へ。
-            </p>
-          </div>
-        </section>
-
-        <section className="lp-section features-section" id="features" aria-labelledby="features-title">
-          <div className="section-head reveal">
-            <div>
-              <SectionLabel>FEATURES</SectionLabel>
-              <h2 className="section-title" id="features-title">
-                COMIUにできること
-              </h2>
-            </div>
-            <p className="section-desc">
-              募集する。つながる。積み上がる。
-              団体運営に必要な仕組みを、ひとつに。
-            </p>
-          </div>
-
-          <div className="feature-track" data-cursor="DRAG" aria-label="COMIUの機能カード">
-            {features.map((feature) => (
-              <article className="feature-card" data-cursor="VIEW" key={feature.title}>
-                <div>
-                  <h3>{feature.title}</h3>
-                  <p>{feature.text}</p>
-                </div>
-                <FeatureMock type={feature.type} />
-              </article>
+              </div>
             ))}
           </div>
         </section>
 
-        <section className="lp-section calendar-section" aria-labelledby="calendar-title">
-          <div className="calendar-copy reveal">
-            <SectionLabel>EVENT DISCOVERY</SectionLabel>
-            <h2 className="section-title" id="calendar-title">
-              次のイベントを、迷わず見つけられる。
-            </h2>
-            <p className="section-desc">
-              「次はいつある？」をなくす。活動予定、残り枠、予約状況を、参加者にわかりやすく届ける。
-              予約まで迷わないから、問い合わせも減っていく。
-            </p>
-          </div>
-          <div className="calendar-card reveal" data-cursor="EXPLORE">
-            <div className="calendar-head">
-              <b>2026年7月</b>
-              <span>月表示</span>
-            </div>
-            <div className="calendar-grid" aria-hidden="true">
-              {["日", "月", "火", "水", "木", "金", "土", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19"].map((item, index) => (
-                <span className={index < 7 ? "day" : item === "17" ? "active" : ""} key={`${item}-${index}`}>
-                  {item}
-                </span>
-              ))}
-            </div>
-            <div className="calendar-list">
-              {calendarEvents.map((event) => (
-                <article key={event.name}>
-                  <time>{event.date}</time>
-                  <div>
-                    <b>{event.name}</b>
-                    <small>詳細・場所・参加費をまとめて表示</small>
-                  </div>
-                  <span className={`event-status ${event.tone}`}>{event.status}</span>
-                </article>
-              ))}
-            </div>
-            <div className="calendar-cta">
-              <a className="button button-primary" href="/register" data-cursor="CREATE">
-                予約する
-              </a>
-              <span className="line-label">LINEで前日通知が届きます</span>
-            </div>
-          </div>
-        </section>
-
-        <section className="lp-section asset-section" aria-labelledby="asset-title">
-          <div className="asset-grid">
+        {/* ③ 活動実績・ブログ → ポータルサイト */}
+        <section className="lp-section portal-section" aria-labelledby="portal-title">
+          <div className="portal-grid">
             <div className="reveal">
-              <SectionLabel>ASSET</SectionLabel>
-              <h2 className="section-title" id="asset-title">
-                開催するたび、団体の信頼が残る。
+              <SectionLabel>PORTAL & BLOG</SectionLabel>
+              <h2 className="section-title" id="portal-title">
+                活動実績やブログが、直接ポータルサイトに反映。
               </h2>
               <p className="section-desc">
-                SNS投稿は流れていく。でも、活動レポート、イベント実績、参加者の声は、団体ページに残り続ける。
-                開催するほど、初めての人にも「ちゃんと活動している団体」と伝わっていく。
+                コツコツ活動するほど、集客力や認知拡大につながります。SNS投稿は流れていく。でも、COMIUに積み上がった実績は残り続ける。
               </p>
             </div>
-            <div>
-              <div className="timeline" aria-label="活動実績のタイムライン">
-                {timeline.map((item, index) => (
-                  <article className="timeline-card reveal" style={{ "--i": index } as React.CSSProperties} key={item.month}>
-                    <time>{item.month}</time>
-                    <div>
-                      <b>{item.title}</b>
-                      <small>{item.text}</small>
-                    </div>
-                  </article>
-                ))}
-              </div>
-              <div className="trust-metrics reveal">
-                <div>
-                  活動ブログ更新
-                  <b>18件</b>
-                </div>
-                <div>
-                  参加者レビュー
-                  <b>4.8</b>
-                </div>
-                <div>
-                  累計参加者数
-                  <b>532名</b>
-                </div>
-              </div>
-              <p className="trust-message reveal">団体の信頼が、次の参加者へつながる。</p>
+            <div className="reveal">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/comiu_portal_mockup.svg" alt="COMIUポータルサイト" className="portal-img" />
             </div>
           </div>
         </section>
 
-        <section className="lp-section line-section" aria-labelledby="line-title">
-          <div className="line-phone" data-cursor="EXPLORE" aria-label="LINE自動リマインドの画面イメージ">
-            <div className="line-screen">
-              <h3>
-                <span>LINE</span>
-                COMIU公式LINE
-              </h3>
-              {lineBubbles.map((bubble, index) => (
-                <p className="bubble" style={{ "--i": index } as React.CSSProperties} key={bubble}>
-                  {bubble}
-                </p>
-              ))}
+        {/* ④ 公式LINEリマインド */}
+        <section className="lp-section remind-section" aria-labelledby="remind-title">
+          <div className="remind-grid">
+            <div className="reveal">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/comiu-line-reminder.svg" alt="LINE自動リマインド" className="remind-img" />
             </div>
-          </div>
-          <div className="reveal">
-            <SectionLabel>LINE REMIND</SectionLabel>
-            <h2 className="section-title" id="line-title">
-              連絡を頑張る運営から、参加しやすい仕組みをつくる運営へ。
-            </h2>
-            <p className="section-desc">
-              予約後の案内やイベント前日の通知を、公式LINEで自動化。参加者の不安を減らし、主催者の確認作業も軽くする。
-            </p>
-            <div className="benefit-list">
-              {["案内漏れを減らす", "前日の参加確認を自動化", "当日の問い合わせを減らす", "無断キャンセル対策につながる"].map((item, index) => (
-                <p key={item}>
-                  <span>{index + 1}</span>
-                  {item}
-                </p>
-              ))}
+            <div className="reveal">
+              <SectionLabel>LINE REMIND</SectionLabel>
+              <h2 className="section-title" id="remind-title">
+                公式LINEのリマインドサービス
+              </h2>
+              <p className="section-desc">
+                予約完了後の案内から、イベント前日のリマインドまで公式LINEで自動送信。参加者の不安を減らし、直前キャンセルも防げます。
+              </p>
             </div>
           </div>
         </section>
 
-        <section className="lp-section" id="future" aria-labelledby="future-title">
-          <div className="reveal">
-            <SectionLabel>AFTER COMIU</SectionLabel>
-            <h2 className="section-title" id="future-title">
-              イベントを開くたび、次が楽になる。
+        {/* ⑤ SEO・初回無料サポート */}
+        <section className="lp-section" aria-labelledby="seo-title">
+          <div className="seo-card reveal">
+            <SectionLabel>FREE SUPPORT</SectionLabel>
+            <h2 className="section-title" id="seo-title">
+              初めての主催でも、安心してスタート。
             </h2>
             <p className="section-desc">
-              募集、予約、連絡、実績がひとつにつながると、毎回ゼロから作り直す運営ではなくなる。
+              SEO専任担当者による丁寧なカウンセリングと、初回Webサイト構築を無料でサポート。イベントやサークルの主催が初めての方でも、すぐに始められます。
             </p>
           </div>
-          <div className="future-steps">
-            {[
-              ["01", "見つけてもらえる", "団体ページとポータル掲載で、新しい参加者に届く。"],
-              ["02", "参加しやすくなる", "イベント情報、残り枠、予約、決済、LINE案内がつながる。"],
-              ["03", "団体が積み上がる", "活動実績と参加者とのつながりが残り、次の集客につながる。"],
-            ].map((step) => (
-              <article className="future-card reveal" key={step[0]}>
-                <span>{step[0]}</span>
-                <h3>{step[1]}</h3>
-                <p>{step[2]}</p>
-              </article>
-            ))}
+        </section>
+
+        {/* ⑥ 予約管理・事前決済 + LINE認証 */}
+        <section className="lp-section" id="features" aria-labelledby="features-title">
+          <div className="reveal">
+            <SectionLabel>FEATURES</SectionLabel>
+            <h2 className="section-title" id="features-title">
+              運営をまとめて、団体を育てる
+            </h2>
           </div>
-          <p className="future-message reveal">
-            COMIUは、イベントを一回成功させるためのツールではない。
-            <br />
-            <strong>団体を、続いていくコミュニティへ育てるための仕組み。</strong>
-          </p>
+          <div className="feature-pair">
+            <div className="pair-card reveal">
+              <div className="pair-card-icon">予約</div>
+              <h3>イベントの予約管理・事前決済</h3>
+              <p>参加人数・キャンセル・参加者名簿・事前決済をひとつにまとめて管理。フォームとスプレッドシートを行き来しない運営へ。</p>
+            </div>
+            <div className="pair-card reveal">
+              <div className="pair-card-icon">LINE</div>
+              <h3>LINE認証でユーザーを管理できる</h3>
+              <p>LINE認証を使った参加者管理で、なりすましや複数申込み問題を解消。安心して予約を受け付けられます。</p>
+            </div>
+          </div>
         </section>
 
         <section className="final final-cta reveal" aria-labelledby="final-title">
