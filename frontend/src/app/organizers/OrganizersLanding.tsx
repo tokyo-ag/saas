@@ -2020,11 +2020,15 @@ export default function ComiuLandingPage() {
             font-size: 16px;
             line-height: 1.8;
             overflow-wrap: anywhere;
+            word-break: break-all;
           }
 
           .hero-desc {
             max-width: 100%;
+            font-size: 14px;
+            line-height: 1.75;
             overflow-wrap: anywhere;
+            word-break: break-all;
           }
 
           .hero-actions {
