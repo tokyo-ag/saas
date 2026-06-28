@@ -38,6 +38,12 @@ type EventFormData = {
 };
 
 const inputClass = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]';
+const PORTAL_CATEGORY_TAGS = ['交流会', 'バドミントン', 'バスケ', 'フットサル', 'バレー'];
+
+function normalizePortalCategoryTags(tags: string[]) {
+  const firstCategory = tags.find((tag) => PORTAL_CATEGORY_TAGS.includes(tag));
+  return tags.filter((tag) => !PORTAL_CATEGORY_TAGS.includes(tag) || tag === firstCategory);
+}
 
 function toLocalDatetimeValue(iso?: string | null): string {
   if (!iso) return '';
@@ -140,7 +146,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
     imageUrl: initial?.imageUrl ?? '',
     iconUrl: initial?.iconUrl ?? '',
     category: initial?.category ?? '',
-    tags: initial?.tags ?? [],
+    tags: normalizePortalCategoryTags(initial?.tags ?? []),
   });
 
   useEffect(() => {
@@ -273,7 +279,13 @@ export default function EventForm({ initial }: { initial?: Event }) {
   function toggleTag(tag: string) {
     setForm((prev) => ({
       ...prev,
-      tags: prev.tags.includes(tag) ? prev.tags.filter((t) => t !== tag) : [...prev.tags, tag],
+      tags: PORTAL_CATEGORY_TAGS.includes(tag)
+        ? prev.tags.includes(tag)
+          ? prev.tags.filter((t) => t !== tag)
+          : [...prev.tags.filter((t) => !PORTAL_CATEGORY_TAGS.includes(t)), tag]
+        : prev.tags.includes(tag)
+          ? prev.tags.filter((t) => t !== tag)
+          : [...prev.tags, tag],
     }));
   }
 
@@ -356,7 +368,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
       imageUrl: form.imageUrl || undefined,
       iconUrl: form.iconUrl || undefined,
       category: form.category || null,
-      tags: form.tags,
+      tags: normalizePortalCategoryTags(form.tags),
     };
 
     try {
@@ -463,6 +475,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
               </button>
             ))}
           </div>
+          <p className="mt-2 text-xs text-gray-500">交流会・バドミントン・バスケ・フットサル・バレーは、ポータル分類用のため1つだけ選択できます。</p>
         </Field>
         <Field label="説明">
           {DESCRIPTION_TEMPLATES[form.category] && (
