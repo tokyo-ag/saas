@@ -606,21 +606,23 @@ export default function EventForm({ initial }: { initial?: Event }) {
           <p className="text-sm font-medium text-gray-700">予約完了時</p>
           <div className="flex flex-wrap gap-3">
             <Check label="Talk" checked={form.notifyOnReserveApp} onChange={(checked) => set('notifyOnReserveApp', checked)} />
-            <Check
-              label="LINE"
-              checked={form.notifyOnReserve}
-              disabled={!isLineConfigured || !isPro}
-              onChange={(checked) => set('notifyOnReserve', checked)}
-            />
-            <Check
-              label="両方"
-              checked={form.notifyOnReserveApp && form.notifyOnReserve}
-              disabled={!isLineConfigured || !isPro}
-              onChange={(checked) => { set('notifyOnReserveApp', checked); set('notifyOnReserve', checked); }}
-            />
+            <div className={`contents ${!isLineConfigured ? 'pointer-events-none opacity-35' : ''}`}>
+              <Check
+                label="LINE"
+                checked={form.notifyOnReserve}
+                disabled={!isLineConfigured || !isPro}
+                onChange={(checked) => set('notifyOnReserve', checked)}
+              />
+              <Check
+                label="両方"
+                checked={form.notifyOnReserveApp && form.notifyOnReserve}
+                disabled={!isLineConfigured || !isPro}
+                onChange={(checked) => { set('notifyOnReserveApp', checked); set('notifyOnReserve', checked); }}
+              />
+            </div>
           </div>
           {!isLineConfigured && (
-            <p className="mt-1 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
+            <p className="mt-1 rounded-lg bg-gray-100 px-3 py-2 text-xs text-gray-400">
               LINE通知を使うにはLINE API設定が必要です。
               <Link href="/admin/settings/line" className="ml-1 underline">LINE設定へ</Link>
             </p>
@@ -640,21 +642,23 @@ export default function EventForm({ initial }: { initial?: Event }) {
               disabled={isFreePlan}
               onChange={(checked) => set('remindApp', checked)}
             />
-            <Check
-              label="LINE"
-              checked={form.remindEnabled}
-              disabled={isFreePlan || !isLineConfigured || !isPro}
-              onChange={(checked) => set('remindEnabled', checked)}
-            />
-            <Check
-              label="両方"
-              checked={form.remindApp && form.remindEnabled}
-              disabled={isFreePlan || !isLineConfigured || !isPro}
-              onChange={(checked) => { set('remindApp', checked); set('remindEnabled', checked); }}
-            />
+            <div className={`contents ${!isLineConfigured || isFreePlan ? 'pointer-events-none opacity-35' : ''}`}>
+              <Check
+                label="LINE"
+                checked={form.remindEnabled}
+                disabled={isFreePlan || !isLineConfigured || !isPro}
+                onChange={(checked) => set('remindEnabled', checked)}
+              />
+              <Check
+                label="両方"
+                checked={form.remindApp && form.remindEnabled}
+                disabled={isFreePlan || !isLineConfigured || !isPro}
+                onChange={(checked) => { set('remindApp', checked); set('remindEnabled', checked); }}
+              />
+            </div>
           </div>
           {!isLineConfigured && !isFreePlan && (
-            <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
+            <p className="rounded-lg bg-gray-100 px-3 py-2 text-xs text-gray-400">
               LINE通知を使うにはLINE API設定が必要です。
               <Link href="/admin/settings/line" className="ml-1 underline">LINE設定へ</Link>
             </p>
