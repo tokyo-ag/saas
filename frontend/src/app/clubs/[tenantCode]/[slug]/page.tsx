@@ -297,7 +297,7 @@ export default async function ClubCmsPage({
   const buttonStyle = page.buttonStyle ?? 'rounded';
   const rawButtonLayout = page.buttonLayout ?? 'grid2x2';
   const buttonLayout = rawButtonLayout === 'row1x4' ? 'row1x4' : 'grid2x2';
-  const buttonLayoutClass = buttonLayout === 'row1x4' ? 'grid grid-cols-4 gap-2' : 'grid grid-cols-2 gap-3';
+  const buttonLayoutClass = buttonLayout === 'row1x4' ? 'grid gap-2' : 'grid gap-3';
   const buttonOpacity = clampPercent(page.buttonOpacity ?? 100);
   const buttonOpacityStyle = { opacity: buttonOpacity / 100 };
   const rawHeroImageMode = page.heroImageMode || 'fixed';
@@ -381,6 +381,17 @@ export default async function ClubCmsPage({
   const navReserveUrl = sectionCopy.reserveUrl?.trim() || reserveHref;
   const navBlogUrl = sectionCopy.blogUrl?.trim() || '#blog';
   const navContactUrl = sectionCopy.contactUrl?.trim() || contactHref;
+  const hasReserveSection = reserveEvents.length > 0;
+  const hasBlogSection = blogPosts.length > 0;
+  const visibleNavItems = [
+    { key: 'about', label: navLabels.about, href: navAboutUrl },
+    ...(hasBlogSection ? [{ key: 'blog', label: navLabels.blog, href: navBlogUrl }] : []),
+    ...(hasReserveSection ? [{ key: 'reserve', label: navLabels.reserve, href: navReserveUrl }] : []),
+    { key: 'contact', label: navLabels.contact, href: navContactUrl },
+  ];
+  const buttonGridStyle: CSSProperties = {
+    gridTemplateColumns: `repeat(${buttonLayout === 'row1x4' ? visibleNavItems.length : Math.min(2, visibleNavItems.length)}, minmax(0, 1fr))`,
+  };
   const blogSectionTitle = sectionCopy.blogTitle?.trim() || navLabels.blog;
   const blogSectionLead = sectionCopy.blogLead?.trim() || '活動日記やお知らせを表示するエリアです。';
   const blogTitleColor = sectionCopy.blogTitleColor?.trim() || textColor;
@@ -429,22 +440,20 @@ export default async function ClubCmsPage({
                 <h1 className="font-bold drop-shadow" style={titleTextStyle}>{tenantName}</h1>
                 {page.subtitle && <p style={{ marginTop: subtitleGap, ...subtitleTextStyle }}>{page.subtitle}</p>}
                 {heroNavPosition === 'inside' && (
-                  <nav className={`mt-4 ${buttonLayoutClass}`}>
-                    <Link href={navAboutUrl} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.about}</Link>
-                    <Link href={navBlogUrl} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.blog}</Link>
-                    <Link href={navReserveUrl} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.reserve}</Link>
-                    <Link href={navContactUrl} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.contact}</Link>
+                  <nav className={`mt-4 ${buttonLayoutClass}`} style={buttonGridStyle}>
+                    {visibleNavItems.map((item) => (
+                      <Link key={item.key} href={item.href} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{item.label}</Link>
+                    ))}
                   </nav>
                 )}
               </div>
             </div>
           </div>
           {heroNavPosition === 'below' && (
-            <nav className={`border-b border-black/5 px-3 pb-3 pt-3 ${buttonLayoutClass}`}>
-              <Link href={navAboutUrl} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.about}</Link>
-              <Link href={navBlogUrl} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.blog}</Link>
-              <Link href={navReserveUrl} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.reserve}</Link>
-              <Link href={navContactUrl} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{navLabels.contact}</Link>
+            <nav className={`border-b border-black/5 px-3 pb-3 pt-3 ${buttonLayoutClass}`} style={buttonGridStyle}>
+              {visibleNavItems.map((item) => (
+                <Link key={item.key} href={item.href} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{item.label}</Link>
+              ))}
             </nav>
           )}
         </>
@@ -454,12 +463,13 @@ export default async function ClubCmsPage({
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
             <Link href={clubHref} className="text-sm font-bold" style={{ color: textColor }}>{tenantName}</Link>
             <div className="flex items-center gap-2 text-xs font-bold">
-              <Link href={navAboutUrl} className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.about}</Link>
-              <Link href={navBlogUrl} className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.blog}</Link>
-              <Link href={navContactUrl} className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{navLabels.contact}</Link>
-              <Link href={navReserveUrl} className={`px-4 py-2 font-bold text-white ${btnClass}`} style={{ backgroundColor: accentColor, ...buttonOpacityStyle }}>
-                {navLabels.reserve}
-              </Link>
+              {visibleNavItems.map((item) => item.key === 'reserve' ? (
+                <Link key={item.key} href={item.href} className={`px-4 py-2 font-bold text-white ${btnClass}`} style={{ backgroundColor: accentColor, ...buttonOpacityStyle }}>
+                  {item.label}
+                </Link>
+              ) : (
+                <Link key={item.key} href={item.href} className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{item.label}</Link>
+              ))}
             </div>
           </div>
         </header>
@@ -558,6 +568,7 @@ export default async function ClubCmsPage({
           )}
         </div>
 
+        {hasReserveSection && (
         <div id="reserve" className="relative mt-8 scroll-mt-6 rounded-xl px-5 py-6 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
           <Link href={navReserveUrl} className="absolute inset-0 rounded-xl" aria-label={navLabels.reserve} />
           <div className="relative">
@@ -580,7 +591,9 @@ export default async function ClubCmsPage({
             />
           </div>
         </div>
+        )}
 
+        {hasBlogSection && (
         <section id="blog" className="relative mt-8 scroll-mt-6 rounded-xl px-5 py-6 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
           <Link href={navBlogUrl} className="absolute inset-0 rounded-xl" aria-label={navLabels.blog} />
           <div className="relative">
@@ -613,6 +626,7 @@ export default async function ClubCmsPage({
             )}
           </div>
         </section>
+        )}
 
         <div id="contact" className="relative mt-6 scroll-mt-6 rounded-xl px-4 py-4 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
           <Link href={navContactUrl} className="absolute inset-0 rounded-xl" aria-label={navLabels.contact} />

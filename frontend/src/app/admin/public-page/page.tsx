@@ -443,6 +443,14 @@ export default function AdminPublicPage() {
     blog: form.blogLabel?.trim() || 'ブログ',
     contact: form.contactLabel?.trim() || 'お問い合わせ',
   };
+  const hasReserveSection = reserveEvents.length > 0;
+  const hasBlogSection = blogPosts.length > 0;
+  const visibleNavItems = [
+    { key: 'about', label: navLabels.about },
+    ...(hasBlogSection ? [{ key: 'blog', label: navLabels.blog }] : []),
+    ...(hasReserveSection ? [{ key: 'reserve', label: navLabels.reserve }] : []),
+    { key: 'contact', label: navLabels.contact },
+  ];
   const reserveSectionTitle = form.reserveTitle?.trim() || navLabels.reserve;
   const reserveSectionLead = form.reserveLead?.trim() || '募集中のイベントを表示します。';
   const reserveTitleColor = form.reserveTitleColor?.trim() || textColor;
@@ -473,7 +481,10 @@ export default function AdminPublicPage() {
   const btnTextColor = hexToRgba(textColor, buttonTextOpacity);
   const buttonBgStyle = btnFillColor ? { backgroundColor: btnFillColor } : {};
   const btnBoxShadow = getBtnBoxShadow(buttonStyle, btnBorderColor);
-  const previewButtonLayoutClass = buttonLayout === 'row1x4' ? 'grid grid-cols-4' : 'grid grid-cols-2';
+  const previewButtonLayoutClass = buttonLayout === 'row1x4' ? 'grid gap-2' : 'grid gap-2';
+  const previewButtonGridStyle = {
+    gridTemplateColumns: `repeat(${buttonLayout === 'row1x4' ? visibleNavItems.length : Math.min(2, visibleNavItems.length)}, minmax(0, 1fr))`,
+  };
   const btnSize = form.buttonSize ?? 40;
   const btnIsPill = buttonStyle === 'pill';
   const dragRef = useRef<{ startY: number; startSize: number } | null>(null);
@@ -1526,6 +1537,11 @@ export default function AdminPublicPage() {
           </button>
           {openSections.reserve && (
             <div className="space-y-4 border-t border-gray-100 p-4">
+              <div className={`rounded-lg px-3 py-2 text-xs font-bold ${hasReserveSection ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
+                {hasReserveSection
+                  ? `公開中イベント ${reserveEvents.length}件：公開サイトに表示されます`
+                  : '公開中イベント 0件：公開サイトでは非表示になります'}
+              </div>
               {renderCopyInput('タイトル', 'reserveTitle', 'reserveTitleColor', navLabels.reserve, textColor)}
               {renderCopyInput('説明', 'reserveLead', 'reserveLeadColor', '募集中のイベントを表示します。', '#6B7280', true)}
             </div>
@@ -1541,6 +1557,11 @@ export default function AdminPublicPage() {
           </button>
           {openSections.blog && (
             <div className="space-y-4 border-t border-gray-100 p-4">
+              <div className={`rounded-lg px-3 py-2 text-xs font-bold ${hasBlogSection ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
+                {hasBlogSection
+                  ? `公開記事 ${blogPosts.length}件：公開サイトに表示されます`
+                  : '公開記事 0件：公開サイトでは非表示になります'}
+              </div>
               {renderCopyInput('タイトル', 'blogTitle', 'blogTitleColor', navLabels.blog, textColor)}
               {renderCopyInput('説明', 'blogLead', 'blogLeadColor', '活動日記やお知らせを表示するエリアです。', '#6B7280', true)}
               <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
@@ -1664,9 +1685,9 @@ export default function AdminPublicPage() {
                         )}
                         {heroNavPosition === 'inside' && (
                           <div>
-                            <div className={`mt-3 gap-2 text-[10px] font-bold ${previewButtonLayoutClass}`}>
-                              {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
-                                <span key={label} className={`flex items-center justify-center truncate px-1 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{label}</span>
+                            <div className={`mt-3 text-[10px] font-bold ${previewButtonLayoutClass}`} style={previewButtonGridStyle}>
+                              {visibleNavItems.map((item) => (
+                                <span key={item.key} className={`flex items-center justify-center truncate px-1 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{item.label}</span>
                               ))}
                             </div>
                             <div className="mt-1 flex cursor-ns-resize select-none touch-none justify-center py-0.5"
@@ -1690,9 +1711,9 @@ export default function AdminPublicPage() {
                   </div>
                   {heroNavPosition === 'below' && (
                     <div className="border-b border-gray-100 px-3 pb-1 pt-3">
-                      <div className={`gap-2 text-[11px] font-bold ${previewButtonLayoutClass}`}>
-                        {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
-                          <span key={label} className={`flex items-center justify-center truncate px-2 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{label}</span>
+                      <div className={`text-[11px] font-bold ${previewButtonLayoutClass}`} style={previewButtonGridStyle}>
+                        {visibleNavItems.map((item) => (
+                          <span key={item.key} className={`flex items-center justify-center truncate px-2 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{item.label}</span>
                         ))}
                       </div>
                       <div className="mt-1 flex cursor-ns-resize select-none touch-none justify-center py-1"
@@ -1708,9 +1729,9 @@ export default function AdminPublicPage() {
                 /* 通常モード: 薄いナビバー */
                 <div className="border-b border-gray-100 px-4 pb-1 pt-3">
                   <span className="mb-2 block text-sm font-bold leading-5" style={{ color: textColor }}>{displayName}</span>
-                  <div className={`gap-2 text-[11px] font-bold ${previewButtonLayoutClass}`}>
-                    {[navLabels.about, navLabels.blog, navLabels.reserve, navLabels.contact].map((label) => (
-                      <span key={label} className={`flex items-center justify-center truncate px-2 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{label}</span>
+                  <div className={`text-[11px] font-bold ${previewButtonLayoutClass}`} style={previewButtonGridStyle}>
+                    {visibleNavItems.map((item) => (
+                      <span key={item.key} className={`flex items-center justify-center truncate px-2 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{item.label}</span>
                     ))}
                   </div>
                   <div className="mt-1 flex cursor-ns-resize select-none touch-none justify-center py-1"
@@ -1739,30 +1760,32 @@ export default function AdminPublicPage() {
                 <div className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
                   {renderPreviewBlocks()}
                 </div>
-                <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
-                  <p className="text-sm font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
-                  {reserveSectionLead && (
-                    <p className="mt-1 text-xs leading-5" style={{ color: reserveLeadColor }}>{reserveSectionLead}</p>
-                  )}
-                  <ReservationViewShowcase
-                    accentColor={accentColor}
-                    buttonLabel={navLabels.reserve}
-                    viewStyle={form.reserveViewStyle}
-                    events={reserveEvents}
-                    tenantCode={tenantCode}
-                    eventTitleColor={reserveEventTitleColor}
-                    eventDateColor={reserveEventDateColor}
-                    eventMetaColor={reserveEventMetaColor}
-                    eventCardBg={reserveEventCardBg}
-                    className="mt-3"
-                  />
-                </section>
-                <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
-                  <p className="text-sm font-bold" style={{ color: blogTitleColor }}>{blogSectionTitle}</p>
-                  {blogSectionLead && (
-                    <p className="mt-1 text-xs leading-5" style={{ color: blogLeadColor }}>{blogSectionLead}</p>
-                  )}
-                  {blogPosts.length > 0 && (
+                {hasReserveSection && (
+                  <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
+                    <p className="text-sm font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
+                    {reserveSectionLead && (
+                      <p className="mt-1 text-xs leading-5" style={{ color: reserveLeadColor }}>{reserveSectionLead}</p>
+                    )}
+                    <ReservationViewShowcase
+                      accentColor={accentColor}
+                      buttonLabel={navLabels.reserve}
+                      viewStyle={form.reserveViewStyle}
+                      events={reserveEvents}
+                      tenantCode={tenantCode}
+                      eventTitleColor={reserveEventTitleColor}
+                      eventDateColor={reserveEventDateColor}
+                      eventMetaColor={reserveEventMetaColor}
+                      eventCardBg={reserveEventCardBg}
+                      className="mt-3"
+                    />
+                  </section>
+                )}
+                {hasBlogSection && (
+                  <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
+                    <p className="text-sm font-bold" style={{ color: blogTitleColor }}>{blogSectionTitle}</p>
+                    {blogSectionLead && (
+                      <p className="mt-1 text-xs leading-5" style={{ color: blogLeadColor }}>{blogSectionLead}</p>
+                    )}
                     <div className="mt-3 space-y-2">
                       {blogPosts.slice(0, 3).map((post) => {
                         const image = imgUrl(post.coverImageUrl ?? firstBlogImage(post.body), API_URL);
@@ -1777,8 +1800,8 @@ export default function AdminPublicPage() {
                         );
                       })}
                     </div>
-                  )}
-                </section>
+                  </section>
+                )}
                 <section className="rounded-lg p-3" style={{ backgroundColor: navBg }}>
                   <p className="text-sm font-bold" style={{ color: contactTitleColor }}>{contactSectionTitle}</p>
                   {contactSectionLead && (
