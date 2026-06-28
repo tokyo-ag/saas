@@ -1950,6 +1950,7 @@ export default function ComiuLandingPage() {
 
           .hero {
             gap: 26px;
+            justify-content: flex-start;
             min-height: 100svh;
             padding-top: 104px;
             padding-bottom: 148px;
