@@ -972,6 +972,8 @@ export interface PublicPageInput {
   orgLogoWordmarkUrl?: string;
   orgLogoWordmarkAlt?: string;
   orgLogoWordmarkSize?: number;
+  subtitleHeroX?: number;
+  subtitleHeroY?: number | null;
   status?: 'draft' | 'published';
 }
 

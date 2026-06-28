@@ -128,6 +128,8 @@ const emptyForm: PublicPageInput = {
   orgLogoWordmarkUrl: '',
   orgLogoWordmarkAlt: '',
   orgLogoWordmarkSize: 60,
+  subtitleHeroX: 5,
+  subtitleHeroY: null as unknown as number,
   status: 'published',
 };
 
@@ -200,39 +202,54 @@ const TONE_COLORS = [
 ];
 
 async function trimTransparentBorders(imageUrl: string): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) { reject(new Error('canvas unavailable')); return; }
-      ctx.drawImage(img, 0, 0);
-      const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      let top = height, left = width, right = 0, bottom = 0;
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          if (data[(y * width + x) * 4 + 3] > 10) {
-            if (x < left) left = x;
-            if (x > right) right = x;
-            if (y < top) top = y;
-            if (y > bottom) bottom = y;
+  // Fetch first to bypass canvas CORS taint
+  const res = await fetch(imageUrl);
+  const srcBlob = await res.blob();
+  const objectUrl = URL.createObjectURL(srcBlob);
+  try {
+    return await new Promise<Blob>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        // Rasterize at 2x for SVG sharpness
+        const scale = srcBlob.type === 'image/svg+xml' ? 2 : 1;
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth * scale || 600 * scale;
+        canvas.height = img.naturalHeight * scale || 200 * scale;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('canvas unavailable')); return; }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        let top = height, left = width, right = 0, bottom = 0;
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            if (data[(y * width + x) * 4 + 3] > 10) {
+              if (x < left) left = x;
+              if (x > right) right = x;
+              if (y < top) top = y;
+              if (y > bottom) bottom = y;
+            }
           }
         }
-      }
-      if (top >= bottom || left >= right) { canvas.toBlob(b => b ? resolve(b) : reject(new Error('trim failed')), 'image/png'); return; }
-      const out = document.createElement('canvas');
-      out.width = right - left + 1;
-      out.height = bottom - top + 1;
-      const outCtx = out.getContext('2d')!;
-      outCtx.drawImage(img, left, top, out.width, out.height, 0, 0, out.width, out.height);
-      out.toBlob(b => b ? resolve(b) : reject(new Error('trim failed')), 'image/png');
-    };
-    img.onerror = () => reject(new Error('画像の読み込みに失敗しました'));
-    img.src = imageUrl;
-  });
+        if (top >= bottom || left >= right) {
+          canvas.toBlob(b => b ? resolve(b) : reject(new Error('trim failed')), 'image/png');
+          return;
+        }
+        const pad = 4;
+        const out = document.createElement('canvas');
+        out.width = Math.min(right - left + 1 + pad * 2, width);
+        out.height = Math.min(bottom - top + 1 + pad * 2, height);
+        const outCtx = out.getContext('2d')!;
+        outCtx.drawImage(img,
+          (left - pad) / scale, (top - pad) / scale, out.width / scale, out.height / scale,
+          0, 0, out.width, out.height);
+        out.toBlob(b => b ? resolve(b) : reject(new Error('trim failed')), 'image/png');
+      };
+      img.onerror = () => reject(new Error('画像の読み込みに失敗しました'));
+      img.src = objectUrl;
+    });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
 }
 
 async function uploadFile(file: File): Promise<string> {
@@ -449,6 +466,24 @@ export default function AdminPublicPage() {
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
   }, [form.heroTextX, form.heroTextY]);
+
+  const handleSubtitleDrag = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX, startY = e.clientY;
+    const startSX = form.subtitleHeroX ?? 5;
+    const startSY = form.subtitleHeroY ?? ((form.heroTextY ?? 65) + 20);
+    function onMove(ev: MouseEvent) {
+      if (!heroRef.current) return;
+      const rect = heroRef.current.getBoundingClientRect();
+      const nx = Math.max(0, Math.min(90, Math.round(startSX + ((ev.clientX - startX) / rect.width) * 100)));
+      const ny = Math.max(0, Math.min(95, Math.round(startSY + ((ev.clientY - startY) / rect.height) * 100)));
+      setForm(p => ({ ...p, subtitleHeroX: nx, subtitleHeroY: ny }));
+    }
+    function onUp() { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); }
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [form.subtitleHeroX, form.subtitleHeroY, form.heroTextY]);
 
   const handleTextResize = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -671,6 +706,8 @@ export default function AdminPublicPage() {
                   navReserveUrl: fd.reserveUrl ?? '',
                   navBlogUrl: fd.blogUrl ?? '',
                   navContactUrl: fd.contactUrl ?? '',
+                  subtitleHeroX: fd.subtitleHeroX ?? 5,
+                  subtitleHeroY: fd.subtitleHeroY ?? null,
                 };
               } catch {
                 return {
@@ -979,6 +1016,8 @@ export default function AdminPublicPage() {
         reserveUrl: form.navReserveUrl?.trim() || '',
         blogUrl: form.navBlogUrl?.trim() || '',
         contactUrl: form.navContactUrl?.trim() || '',
+        subtitleHeroX: form.subtitleHeroX ?? 5,
+        subtitleHeroY: form.subtitleHeroY ?? null,
       }),
       status: 'published',
       seoTitle: form.seoTitle?.trim() || displayName,
@@ -1133,12 +1172,11 @@ export default function AdminPublicPage() {
                         className="flex-1 rounded border border-gray-200 bg-gray-50 py-1 text-[11px] text-gray-500 hover:bg-gray-100 disabled:opacity-40">
                         {logoUploading ? 'アップロード中...' : '変更'}
                       </button>
-                      {!form.orgLogoWordmarkUrl.endsWith('.svg') && (
-                        <button type="button" onClick={handleLogoTrim} disabled={logoUploading || logoTrimming}
-                          className="flex-1 rounded border border-gray-200 bg-gray-50 py-1 text-[11px] text-gray-500 hover:bg-gray-100 disabled:opacity-40">
-                          {logoTrimming ? '処理中...' : '余白をトリム'}
-                        </button>
-                      )}
+                      <button type="button" onClick={handleLogoTrim} disabled={logoUploading || logoTrimming}
+                        className="flex-1 rounded border border-gray-200 bg-gray-50 py-1 text-[11px] text-gray-500 hover:bg-gray-100 disabled:opacity-40"
+                        title={form.orgLogoWordmarkUrl.endsWith('.svg') ? 'SVGはPNGに変換してトリムします' : '透過余白を除去します'}>
+                        {logoTrimming ? '処理中...' : '余白をトリム'}
+                      </button>
                     </div>
                     <button type="button" onClick={() => setForm(p => ({ ...p, orgLogoWordmarkUrl: '' }))}
                       className="w-full rounded py-0.5 text-[11px] text-red-400 hover:text-red-600">
@@ -1892,9 +1930,6 @@ export default function AdminPublicPage() {
                             </>
                           ) : displayName}
                         </p>
-                        {form.subtitle?.trim() && (
-                          <p style={{ marginTop: subtitleGap, ...subtitleTextStyle }}>{form.subtitle.trim()}</p>
-                        )}
                         {heroNavPosition === 'inside' && (
                           <div>
                             <div className={`mt-3 text-[10px] font-bold ${previewButtonLayoutClass}`} style={previewButtonGridStyle}>
@@ -1920,6 +1955,22 @@ export default function AdminPublicPage() {
                         <div className="h-5 w-1 rounded-full bg-white/90 shadow" />
                       </div>
                     </div>
+                    {/* 独立サブタイトル */}
+                    {form.subtitle?.trim() && (
+                      <div
+                        className="absolute z-10 group cursor-move"
+                        style={{
+                          left: `${form.subtitleHeroX ?? 5}%`,
+                          top: `${form.subtitleHeroY ?? Math.min(95, (form.heroTextY ?? 65) + 20)}%`,
+                          width: `${form.heroTextWidth ?? 85}%`,
+                        }}
+                        onMouseDown={handleSubtitleDrag}
+                      >
+                        <div className="rounded border-2 border-dashed border-transparent p-1 transition-colors group-hover:border-white/60">
+                          <p className="drop-shadow" style={subtitleTextStyle}>{form.subtitle.trim()}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   {heroNavPosition === 'below' && (
                     <div className="border-b border-gray-100 px-3 pb-1 pt-3">

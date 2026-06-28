@@ -265,6 +265,9 @@ export default async function ClubCmsPage({
   const orgLogoUrl = (page as any).orgLogoWordmarkUrl as string | null;
   const orgLogoAlt = ((page as any).orgLogoWordmarkAlt as string | null) || tenantName;
   const orgLogoSize = ((page as any).orgLogoWordmarkSize as number | null) ?? 60;
+  const parsedFt = (() => { try { return JSON.parse(page.footerText ?? '{}'); } catch { return {}; } })();
+  const subtitleHeroX: number = parsedFt.subtitleHeroX ?? 5;
+  const subtitleHeroY: number | null = parsedFt.subtitleHeroY ?? null;
   const images = (page.imageUrls?.length ? page.imageUrls : page.coverImageUrl ? [page.coverImageUrl] : [])
     .map((url) => imgUrl(url, IMAGE_BASE_URL))
     .filter(Boolean) as string[];
@@ -464,7 +467,6 @@ export default async function ClubCmsPage({
                     </>
                   ) : tenantName}
                 </h1>
-                {page.subtitle && <p style={{ marginTop: subtitleGap, ...subtitleTextStyle }}>{page.subtitle}</p>}
                 {heroNavPosition === 'inside' && (
                   <nav className={`mt-4 ${buttonLayoutClass}`} style={buttonGridStyle}>
                     {visibleNavItems.map((item) => (
@@ -473,6 +475,22 @@ export default async function ClubCmsPage({
                   </nav>
                 )}
               </div>
+              {/* サブタイトル - 独立配置 */}
+              {page.subtitle && (
+                <p
+                  className="absolute drop-shadow"
+                  style={{
+                    left: `${subtitleHeroX}%`,
+                    top: subtitleHeroY !== null
+                      ? `${subtitleHeroY}%`
+                      : `calc(${page.heroTextY ?? 65}% + ${subtitleGap + 32}px)`,
+                    width: `${page.heroTextWidth ?? 85}%`,
+                    ...subtitleTextStyle,
+                  }}
+                >
+                  {page.subtitle}
+                </p>
+              )}
             </div>
           </div>
           {heroNavPosition === 'below' && (
