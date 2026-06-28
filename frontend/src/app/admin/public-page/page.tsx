@@ -199,6 +199,42 @@ const TONE_COLORS = [
   { label: 'ピンク', value: '#BE185D' },
 ];
 
+async function trimTransparentBorders(imageUrl: string): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { reject(new Error('canvas unavailable')); return; }
+      ctx.drawImage(img, 0, 0);
+      const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      let top = height, left = width, right = 0, bottom = 0;
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          if (data[(y * width + x) * 4 + 3] > 10) {
+            if (x < left) left = x;
+            if (x > right) right = x;
+            if (y < top) top = y;
+            if (y > bottom) bottom = y;
+          }
+        }
+      }
+      if (top >= bottom || left >= right) { canvas.toBlob(b => b ? resolve(b) : reject(new Error('trim failed')), 'image/png'); return; }
+      const out = document.createElement('canvas');
+      out.width = right - left + 1;
+      out.height = bottom - top + 1;
+      const outCtx = out.getContext('2d')!;
+      outCtx.drawImage(img, left, top, out.width, out.height, 0, 0, out.width, out.height);
+      out.toBlob(b => b ? resolve(b) : reject(new Error('trim failed')), 'image/png');
+    };
+    img.onerror = () => reject(new Error('画像の読み込みに失敗しました'));
+    img.src = imageUrl;
+  });
+}
+
 async function uploadFile(file: File): Promise<string> {
   const ext = file.name.split('.').pop() ?? 'jpg';
   const filename = `public-page-${Date.now()}.${ext}`;
@@ -729,6 +765,20 @@ export default function AdminPublicPage() {
   }
   const logoUploadRef = useRef<HTMLInputElement | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
+  const [logoTrimming, setLogoTrimming] = useState(false);
+  async function handleLogoTrim() {
+    if (!form.orgLogoWordmarkUrl) return;
+    setLogoTrimming(true);
+    try {
+      const blob = await trimTransparentBorders(form.orgLogoWordmarkUrl);
+      const file = new File([blob], `logo-trimmed-${Date.now()}.png`, { type: 'image/png' });
+      await handleLogoUpload(file);
+    } catch (err: any) {
+      setError(err?.message ?? 'トリムに失敗しました');
+    } finally {
+      setLogoTrimming(false);
+    }
+  }
   async function handleLogoUpload(file: File) {
     setLogoUploading(true);
     try {
@@ -1070,25 +1120,35 @@ export default function AdminPublicPage() {
             </div>
             {(form.orgNameDisplayType === 'image' || form.orgNameDisplayType === 'both') && (
               <div className="space-y-2">
-                <input ref={logoUploadRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
+                <input ref={logoUploadRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.svg" className="hidden"
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f); e.target.value = ''; }} />
                 {form.orgLogoWordmarkUrl ? (
-                  <div className="relative rounded-lg border border-gray-200 bg-white p-3">
-                    <img src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
-                      className="mx-auto max-h-16 max-w-full object-contain" />
-                    <button type="button" onClick={() => logoUploadRef.current?.click()}
-                      className="mt-2 w-full rounded border border-gray-200 bg-gray-50 py-1 text-[11px] text-gray-500 hover:bg-gray-100">
-                      {logoUploading ? 'アップロード中...' : '画像を変更'}
-                    </button>
+                  <div className="rounded-lg border border-gray-200 bg-white p-3 space-y-1.5">
+                    <div className="rounded bg-[repeating-conic-gradient(#e5e7eb_0%_25%,transparent_0%_50%)] bg-[length:12px_12px] p-2">
+                      <img src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
+                        className="mx-auto max-h-20 max-w-full object-contain" />
+                    </div>
+                    <div className="flex gap-1.5">
+                      <button type="button" onClick={() => logoUploadRef.current?.click()} disabled={logoUploading || logoTrimming}
+                        className="flex-1 rounded border border-gray-200 bg-gray-50 py-1 text-[11px] text-gray-500 hover:bg-gray-100 disabled:opacity-40">
+                        {logoUploading ? 'アップロード中...' : '変更'}
+                      </button>
+                      {!form.orgLogoWordmarkUrl.endsWith('.svg') && (
+                        <button type="button" onClick={handleLogoTrim} disabled={logoUploading || logoTrimming}
+                          className="flex-1 rounded border border-gray-200 bg-gray-50 py-1 text-[11px] text-gray-500 hover:bg-gray-100 disabled:opacity-40">
+                          {logoTrimming ? '処理中...' : '余白をトリム'}
+                        </button>
+                      )}
+                    </div>
                     <button type="button" onClick={() => setForm(p => ({ ...p, orgLogoWordmarkUrl: '' }))}
-                      className="mt-1 w-full rounded py-0.5 text-[11px] text-red-400 hover:text-red-600">
+                      className="w-full rounded py-0.5 text-[11px] text-red-400 hover:text-red-600">
                       削除
                     </button>
                   </div>
                 ) : (
                   <button type="button" onClick={() => logoUploadRef.current?.click()} disabled={logoUploading}
                     className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 bg-white py-5 text-sm text-gray-400 hover:border-[#06C755] hover:text-[#06C755] transition disabled:opacity-50">
-                    {logoUploading ? 'アップロード中...' : 'ロゴ画像をアップロード'}
+                    {logoUploading ? 'アップロード中...' : 'PNG / SVG をアップロード'}
                   </button>
                 )}
                 <label className="block">
