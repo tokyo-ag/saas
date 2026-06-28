@@ -232,16 +232,22 @@ async function trimTransparentBorders(imageUrl: string): Promise<{ blob: Blob; c
   const bgB = Math.round(corners.reduce((s, i) => s + data[i+2], 0) / 4);
   console.log('[trim] hasSolidBg:', hasSolidBg, 'avgAlpha:', avgAlpha, 'bg:', bgR, bgG, bgB);
 
-  const isBg = (i: number) => {
-    if (data[i+3] < 10) return true;
-    if (!hasSolidBg) return false;
-    return Math.abs(data[i]-bgR) < 15 && Math.abs(data[i+1]-bgG) < 15 && Math.abs(data[i+2]-bgB) < 15;
+  // For transparent images: find bounding box of strongly visible pixels (alpha > 128)
+  // For solid-bg images: find bounding box of non-background-colored pixels
+  // Using alpha > 128 avoids faint semi-transparent artifacts counting as content
+  const isContent = (i: number) => {
+    const a = data[i+3];
+    if (hasSolidBg) {
+      if (a < 10) return false;
+      return !(Math.abs(data[i]-bgR) < 15 && Math.abs(data[i+1]-bgG) < 15 && Math.abs(data[i+2]-bgB) < 15);
+    }
+    return a > 128;
   };
 
   let top = height, left = width, right = -1, bottom = -1;
   for (let y = 0; y < height; y++)
     for (let x = 0; x < width; x++)
-      if (!isBg((y * width + x) * 4)) {
+      if (isContent((y * width + x) * 4)) {
         if (x < left) left = x;
         if (x > right) right = x;
         if (y < top) top = y;
@@ -252,7 +258,7 @@ async function trimTransparentBorders(imageUrl: string): Promise<{ blob: Blob; c
 
   if (top > bottom || left > right) return { blob: srcBlob, changed: false, msg: '検出できる内容がありません' };
 
-  const pad = 4;
+  const pad = 10; // wider pad to include semi-transparent anti-aliased edges
   const cropX = Math.max(0, left - pad);
   const cropY = Math.max(0, top - pad);
   const cropW = Math.min(right + 1 + pad, width) - cropX;
