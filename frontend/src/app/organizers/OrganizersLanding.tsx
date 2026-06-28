@@ -2016,7 +2016,7 @@ export default function ComiuLandingPage() {
           }
 
           .hero-sub {
-            width: calc(100% - 8px);
+            width: min(100%, 340px);
             max-width: 100%;
             font-size: 16px;
             line-height: 1.8;
@@ -2025,7 +2025,7 @@ export default function ComiuLandingPage() {
           }
 
           .hero-desc {
-            width: calc(100% - 14px);
+            width: min(100%, 332px);
             max-width: 100%;
             font-size: 14px;
             line-height: 1.75;
@@ -2034,7 +2034,7 @@ export default function ComiuLandingPage() {
           }
 
           .hero-actions {
-            width: calc(100% - 10px);
+            width: min(100%, 340px);
           }
 
           .hero-actions .button {
