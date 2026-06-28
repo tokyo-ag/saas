@@ -1318,27 +1318,9 @@ export default function AdminPublicPage() {
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               {imageUrls.map((url, i) => (
-                <div
-                  key={`${url}-${i}`}
-                  draggable
-                  onDragStart={() => { imageDragIndexRef.current = i; }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    const from = imageDragIndexRef.current;
-                    if (from === null || from === i) return;
-                    setForm((prev) => {
-                      const urls = [...(prev.imageUrls ?? [])];
-                      const caps = [...(prev.imageCaptions ?? [])];
-                      [urls[from], urls[i]] = [urls[i], urls[from]];
-                      [caps[from], caps[i]] = [caps[i], caps[from]];
-                      imageDragIndexRef.current = i;
-                      return { ...prev, imageUrls: urls, imageCaptions: caps, coverImageUrl: urls[0] ?? '' };
-                    });
-                  }}
-                  onDragEnd={() => { imageDragIndexRef.current = null; }}
-                  className="cursor-grab rounded-lg border border-gray-200 bg-gray-50 p-2 active:cursor-grabbing active:opacity-50">
+                <div key={`${url}-${i}`} className="rounded-lg border border-gray-200 bg-gray-50 p-2">
                   <div className="group relative h-24 overflow-hidden rounded-lg bg-gray-100">
-                    <img src={url} alt="" className="h-full w-full object-cover" draggable={false} />
+                    <img src={url} alt="" className="h-full w-full object-cover" />
                     <button type="button"
                       onClick={() => setForm((prev) => {
                         const next = (prev.imageUrls ?? []).filter((_, idx) => idx !== i);
@@ -1349,16 +1331,40 @@ export default function AdminPublicPage() {
                       削除
                     </button>
                   </div>
-                  <input
-                    value={imageCaptions[i] ?? ''}
-                    onChange={(e) => setForm((prev) => {
-                      const captions = [...(prev.imageCaptions ?? [])];
-                      captions[i] = e.target.value.slice(0, 80);
-                      return { ...prev, imageCaptions: captions.slice(0, 3) };
-                    })}
-                    placeholder="画像説明（任意）"
-                    className="mt-2 w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-                  />
+                  <div className="mt-1.5 flex items-center gap-1">
+                    <button type="button" disabled={i === 0}
+                      onClick={() => setForm((prev) => {
+                        const urls = [...(prev.imageUrls ?? [])];
+                        const caps = [...(prev.imageCaptions ?? [])];
+                        [urls[i - 1], urls[i]] = [urls[i], urls[i - 1]];
+                        [caps[i - 1], caps[i]] = [caps[i], caps[i - 1]];
+                        return { ...prev, imageUrls: urls, imageCaptions: caps, coverImageUrl: urls[0] ?? '' };
+                      })}
+                      className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 bg-white text-xs text-gray-400 disabled:opacity-30 hover:enabled:bg-gray-100">
+                      ←
+                    </button>
+                    <button type="button" disabled={i === imageUrls.length - 1}
+                      onClick={() => setForm((prev) => {
+                        const urls = [...(prev.imageUrls ?? [])];
+                        const caps = [...(prev.imageCaptions ?? [])];
+                        [urls[i + 1], urls[i]] = [urls[i], urls[i + 1]];
+                        [caps[i + 1], caps[i]] = [caps[i], caps[i + 1]];
+                        return { ...prev, imageUrls: urls, imageCaptions: caps, coverImageUrl: urls[0] ?? '' };
+                      })}
+                      className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 bg-white text-xs text-gray-400 disabled:opacity-30 hover:enabled:bg-gray-100">
+                      →
+                    </button>
+                    <input
+                      value={imageCaptions[i] ?? ''}
+                      onChange={(e) => setForm((prev) => {
+                        const captions = [...(prev.imageCaptions ?? [])];
+                        captions[i] = e.target.value.slice(0, 80);
+                        return { ...prev, imageCaptions: captions.slice(0, 3) };
+                      })}
+                      placeholder="画像説明（任意）"
+                      className="min-w-0 flex-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                    />
+                  </div>
                 </div>
               ))}
               {imageUrls.length < 3 && (
