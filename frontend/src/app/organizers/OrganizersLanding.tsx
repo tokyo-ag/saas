@@ -1980,6 +1980,12 @@ export default function ComiuLandingPage() {
             font-size: 9px;
           }
 
+          .hero-copy {
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+          }
+
           .hero h1 {
             max-width: 100%;
             font-size: clamp(22px, 7vw, 34px);
@@ -2010,12 +2016,25 @@ export default function ComiuLandingPage() {
           }
 
           .hero-sub {
+            max-width: 100%;
             font-size: 16px;
             line-height: 1.8;
+            overflow-wrap: anywhere;
+          }
+
+          .hero-desc {
+            max-width: 100%;
+            overflow-wrap: anywhere;
+          }
+
+          .hero-actions {
+            width: 100%;
           }
 
           .hero-actions .button {
             width: 100%;
+            max-width: 100%;
+            padding-inline: 14px;
           }
 
 
