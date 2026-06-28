@@ -48,20 +48,9 @@ export default function ComiuLandingPage() {
       revealObserver.observe(element);
     });
 
-    // A: text scrub
-    const scrubWords = Array.from(document.querySelectorAll<HTMLElement>('.scrub-word'));
-    const updateScrub = () => {
-      const vh = window.innerHeight;
-      scrubWords.forEach((w) => {
-        const r = w.getBoundingClientRect();
-        w.classList.toggle('lit', r.top + r.height / 2 < vh * 0.6);
-      });
-    };
-
     // Keep the header readable after scrolling.
     const handleScroll = () => {
       header?.classList.toggle("is-scrolled", window.scrollY > 12);
-      updateScrub();
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -2316,39 +2305,6 @@ export default function ComiuLandingPage() {
           color: rgba(255, 255, 255, 0.76);
         }
 
-        /* A: Text scrub */
-        .scrub-section {
-          padding: clamp(64px, 10vw, 130px) var(--page-x);
-          display: flex;
-          align-items: center;
-          background: rgba(255, 255, 255, 0.72);
-          scroll-snap-align: start;
-        }
-
-        .scrub-text {
-          max-width: 900px;
-          font-size: clamp(28px, 5vw, 66px);
-          font-weight: 950;
-          letter-spacing: -0.06em;
-          line-height: 1.22;
-        }
-
-        .scrub-word {
-          color: rgba(7, 16, 51, 0.22);
-          transition: color 0.35s ease;
-        }
-
-        .scrub-word.lit {
-          color: rgba(7, 16, 51, 0.92);
-        }
-
-        .scrub-accent.lit {
-          color: transparent;
-          background: linear-gradient(95deg, var(--blue), var(--purple));
-          background-clip: text;
-          -webkit-background-clip: text;
-        }
-
         /* B: Feature story sections */
         .h-scroll-outer {
           position: relative;
@@ -2576,20 +2532,6 @@ export default function ComiuLandingPage() {
             </span>
           </div>
         </section>
-
-        {/* A: テキストスクラブ */}
-        <div className="scrub-section">
-          <p className="scrub-text">
-            <span className="scrub-word">集客して、</span>
-            <span className="scrub-word">予約を受けて、</span>
-            <span className="scrub-word">LINEで通知して、</span>
-            <span className="scrub-word">ブログを書いて、</span>
-            <span className="scrub-word">実績を積んで、</span>
-            <span className="scrub-word">また集客する。</span>
-            {" "}
-            <span className="scrub-word scrub-accent">それが、ひとつになる。</span>
-          </p>
-        </div>
 
         {/* B: 横スクロール — ②③④⑤ */}
         <div className="h-scroll-outer" id="future">
