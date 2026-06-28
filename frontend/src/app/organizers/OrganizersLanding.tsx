@@ -2076,6 +2076,12 @@ export default function ComiuLandingPage() {
             letter-spacing: -0.075em;
           }
 
+          .booking-title {
+            font-size: clamp(21px, 5.8vw, 30px);
+            letter-spacing: -0.09em;
+            white-space: nowrap;
+          }
+
           .statement-inner,
           .final {
             text-align: left;
@@ -2187,9 +2193,14 @@ export default function ComiuLandingPage() {
 
         /* ② Booking */
         .booking-head {
-          max-width: 720px;
+          max-width: min(100%, 1040px);
           margin: 0 auto clamp(40px, 6vw, 64px);
           text-align: center;
+        }
+
+        .booking-title {
+          white-space: nowrap;
+          font-size: clamp(38px, 4.4vw, 62px);
         }
 
         .phones-grid {
@@ -2547,7 +2558,7 @@ export default function ComiuLandingPage() {
               <section className="h-panel" aria-labelledby="booking-title">
                 <div className="h-panel-inner">
                   <div className="booking-head">
-                    <h2 className="section-title" id="booking-title">
+                    <h2 className="section-title booking-title" id="booking-title">
                       公式LINEからワンタップで予約
                     </h2>
                     <p className="section-desc" style={{ maxWidth: 640, margin: "0 auto" }}>
