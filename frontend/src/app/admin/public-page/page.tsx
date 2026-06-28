@@ -1880,7 +1880,7 @@ export default function AdminPublicPage() {
               ) : (
                 /* 通常モード: 薄いナビバー */
                 <div className="border-b border-gray-100 px-4 pb-1 pt-3">
-                  <span className="mb-2 block font-bold leading-5" style={{ color: textColor, ...titleTextStyle, lineHeight: 1.25 }}>
+                  <span className="mb-2 block font-bold leading-5" style={{ ...titleTextStyle, lineHeight: 1.25 }}>
                     {form.orgLogoWordmarkUrl && form.orgNameDisplayType !== 'text' ? (
                       <>
                         <img src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
