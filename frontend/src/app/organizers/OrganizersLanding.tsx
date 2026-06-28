@@ -1995,6 +1995,12 @@ export default function ComiuLandingPage() {
             display: block;
           }
 
+          .hero .hero-fade {
+            opacity: 1;
+            transform: none;
+            animation: none;
+          }
+
           .hero-lead {
             padding-left: 14px;
             font-size: clamp(20px, 5.8vw, 26px);
