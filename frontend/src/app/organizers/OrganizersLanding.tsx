@@ -2275,10 +2275,21 @@ export default function ComiuLandingPage() {
         }
 
         .portal-img {
-          width: 100%;
+          width: auto;
+          height: min(72vh, 720px);
+          max-width: 100%;
           display: block;
           border-radius: 24px;
           box-shadow: var(--shadow);
+          object-fit: contain;
+          margin: 0 auto;
+        }
+
+        @media (max-width: 640px) {
+          .portal-img {
+            width: min(100%, 320px);
+            height: auto;
+          }
         }
 
         /* ④ LINE Remind */
@@ -2597,7 +2608,7 @@ export default function ComiuLandingPage() {
                     </div>
                     <div>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/comiu_portal_mockup.svg" alt="COMIUポータルサイト" className="portal-img" />
+                      <img src="/COMIUスマホモックアップ.svg" alt="COMIUポータルサイト" className="portal-img" />
                     </div>
                   </div>
                 </div>
