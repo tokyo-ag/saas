@@ -201,17 +201,17 @@ const TONE_COLORS = [
   { label: 'ピンク', value: '#BE185D' },
 ];
 
-async function trimTransparentBorders(imageUrl: string): Promise<Blob> {
+async function trimTransparentBorders(imageUrl: string): Promise<{ blob: Blob; changed: boolean; msg: string }> {
   const res = await fetch(imageUrl);
   if (!res.ok) throw new Error(`画像の取得に失敗しました (${res.status})`);
   const srcBlob = await res.blob();
   const isSvg = srcBlob.type === 'image/svg+xml';
 
-  // createImageBitmap gives correct dimensions even for SVG (unlike new Image())
   const bitmap = await createImageBitmap(srcBlob);
   const scale = isSvg ? 2 : 1;
   const cw = (bitmap.width || 600) * scale;
   const ch = (bitmap.height || 200) * scale;
+  console.log('[trim] bitmap:', cw, 'x', ch, srcBlob.type);
 
   const canvas = document.createElement('canvas');
   canvas.width = cw;
@@ -223,7 +223,6 @@ async function trimTransparentBorders(imageUrl: string): Promise<Blob> {
 
   const { data, width, height } = ctx.getImageData(0, 0, cw, ch);
 
-  // Detect background from 4 corners — handles both transparent and solid-bg images
   const px = (x: number, y: number) => (y * width + x) * 4;
   const corners = [px(0,0), px(width-1,0), px(0,height-1), px(width-1,height-1)];
   const avgAlpha = corners.reduce((s, i) => s + data[i+3], 0) / 4;
@@ -231,6 +230,7 @@ async function trimTransparentBorders(imageUrl: string): Promise<Blob> {
   const bgR = Math.round(corners.reduce((s, i) => s + data[i],   0) / 4);
   const bgG = Math.round(corners.reduce((s, i) => s + data[i+1], 0) / 4);
   const bgB = Math.round(corners.reduce((s, i) => s + data[i+2], 0) / 4);
+  console.log('[trim] hasSolidBg:', hasSolidBg, 'avgAlpha:', avgAlpha, 'bg:', bgR, bgG, bgB);
 
   const isBg = (i: number) => {
     if (data[i+3] < 10) return true;
@@ -248,25 +248,30 @@ async function trimTransparentBorders(imageUrl: string): Promise<Blob> {
         if (y > bottom) bottom = y;
       }
 
-  if (top > bottom || left > right) return srcBlob;
+  console.log('[trim] bounds: top=%d left=%d right=%d bottom=%d (of %dx%d)', top, left, right, bottom, width, height);
+
+  if (top > bottom || left > right) return { blob: srcBlob, changed: false, msg: '検出できる内容がありません' };
 
   const pad = 4;
   const cropX = Math.max(0, left - pad);
   const cropY = Math.max(0, top - pad);
   const cropW = Math.min(right + 1 + pad, width) - cropX;
   const cropH = Math.min(bottom + 1 + pad, height) - cropY;
+  console.log('[trim] crop:', cropX, cropY, cropW, cropH);
 
-  if (cropX === 0 && cropY === 0 && cropW === width && cropH === height) return srcBlob;
+  if (cropX === 0 && cropY === 0 && cropW === width && cropH === height) {
+    return { blob: srcBlob, changed: false, msg: 'トリムできる余白がありません' };
+  }
 
   const out = document.createElement('canvas');
   out.width = cropW;
   out.height = cropH;
-  // putImageData for exact pixel-level crop (no drawImage coordinate issues)
   out.getContext('2d')!.putImageData(ctx.getImageData(cropX, cropY, cropW, cropH), 0, 0);
 
-  return new Promise<Blob>((resolve, reject) =>
+  const blob = await new Promise<Blob>((resolve, reject) =>
     out.toBlob(b => b ? resolve(b) : reject(new Error('canvas export failed')), 'image/png')
   );
+  return { blob, changed: true, msg: `${width}×${height} → ${cropW}×${cropH}` };
 }
 
 async function uploadFile(file: File): Promise<string> {
@@ -824,10 +829,16 @@ export default function AdminPublicPage() {
     if (!form.orgLogoWordmarkUrl) return;
     setLogoTrimming(true);
     try {
-      const blob = await trimTransparentBorders(form.orgLogoWordmarkUrl);
-      const file = new File([blob], `logo-trimmed-${Date.now()}.png`, { type: 'image/png' });
+      const result = await trimTransparentBorders(form.orgLogoWordmarkUrl);
+      if (!result.changed) {
+        alert(`トリム結果: ${result.msg}\n\nF12コンソールで詳細を確認してください。`);
+        return;
+      }
+      const file = new File([result.blob], `logo-trimmed-${Date.now()}.png`, { type: 'image/png' });
       await handleLogoUpload(file);
+      alert(`トリム完了: ${result.msg}`);
     } catch (err: any) {
+      alert(`トリムエラー: ${err?.message ?? '不明なエラー'}`);
       setError(err?.message ?? 'トリムに失敗しました');
     } finally {
       setLogoTrimming(false);
