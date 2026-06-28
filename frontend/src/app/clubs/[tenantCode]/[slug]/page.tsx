@@ -520,6 +520,11 @@ export default async function ClubCmsPage({
       )}
 
       <article id="about" className={`px-4 ${heroImageMode === 'background' ? 'pt-4 pb-8' : 'py-8'}`}>
+        {page.subtitle && heroImageMode !== 'background' && (
+          <p className="whitespace-pre-wrap pb-4" style={{ ...subtitleTextStyle, marginTop: subtitleGap }}>
+            {page.subtitle}
+          </p>
+        )}
         {heroImageMode !== 'background' && (
           <HeroImageBlock
             images={images}

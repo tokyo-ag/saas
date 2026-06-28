@@ -1277,10 +1277,11 @@ export default function AdminPublicPage() {
             <div className="border-t border-gray-200 pt-4 space-y-2">
               <label className="block">
                 <span className="mb-1 block text-[11px] font-bold text-gray-400">サブタイトル</span>
-                <input value={form.subtitle ?? ''}
+                <textarea value={form.subtitle ?? ''}
                   onChange={(e) => setForm((p) => ({ ...p, subtitle: e.target.value }))}
                   placeholder="例：初心者歓迎の社会人サークル"
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                  rows={5}
+                  className="w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
               </label>
               <div className="flex flex-wrap gap-1.5">
                 {fontOptions.map((opt) => (
@@ -2010,6 +2011,11 @@ export default function AdminPublicPage() {
                       </>
                     ) : displayName}
                   </span>
+                  {form.subtitle?.trim() && (
+                    <p className="mb-2 whitespace-pre-wrap" style={{ ...subtitleTextStyle, textAlign: titleAlign }}>
+                      {form.subtitle.trim()}
+                    </p>
+                  )}
                   <div className={`text-[11px] font-bold ${previewButtonLayoutClass}`} style={previewButtonGridStyle}>
                     {visibleNavItems.map((item) => (
                       <span key={item.key} className={`flex items-center justify-center truncate px-2 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{item.label}</span>
@@ -2024,11 +2030,6 @@ export default function AdminPublicPage() {
                 </div>
               )}
               <div className="space-y-4 p-5">
-                {form.subtitle?.trim() && heroImageMode !== 'background' && (
-                  <p className="font-bold opacity-75" style={{ marginTop: subtitleGap, ...subtitleTextStyle, textAlign: titleAlign }}>
-                    {form.subtitle.trim()}
-                  </p>
-                )}
                 {heroImageMode !== 'background' && (
                   <HeaderImagePreview
                     images={imageUrls}
