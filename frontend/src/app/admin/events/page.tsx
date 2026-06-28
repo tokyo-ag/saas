@@ -16,10 +16,20 @@ const reserveViewOptions = [
 ];
 
 type ReservationActionStyle = 'comiu' | 'line';
+type DisplayFields = { location: boolean; price: boolean; capacity: boolean; description: boolean };
+
+const DEFAULT_DISPLAY_FIELDS: DisplayFields = { location: true, price: true, capacity: true, description: true };
 
 const reservationActionOptions: { label: string; value: ReservationActionStyle }[] = [
   { label: 'COMIUで予約管理', value: 'comiu' },
   { label: 'LINEで予約する', value: 'line' },
+];
+
+const displayFieldOptions: { key: keyof DisplayFields; label: string; icon: string }[] = [
+  { key: 'location', label: '場所', icon: '📍' },
+  { key: 'price', label: '参加費', icon: '💴' },
+  { key: 'capacity', label: '定員・残席', icon: '👥' },
+  { key: 'description', label: '説明文', icon: '📄' },
 ];
 
 function parseFooterSettings(raw?: string | null): Record<string, any> {
@@ -31,21 +41,33 @@ function parseFooterSettings(raw?: string | null): Record<string, any> {
   }
 }
 
-function withReservationActionStyle(
-  page: import('@/lib/api').PublicPage,
-  actionStyle: ReservationActionStyle,
-  reserveViewStyle?: string,
-) {
+function parseDisplayFields(settings: Record<string, any>): DisplayFields {
+  const df = settings.displayFields;
+  if (!df || typeof df !== 'object') return DEFAULT_DISPLAY_FIELDS;
   return {
-    ...page,
-    ...(reserveViewStyle ? { reserveViewStyle } : {}),
-    footerText: JSON.stringify({
-      ...parseFooterSettings(page.footerText),
-      reserveActionStyle: actionStyle,
-    }),
+    location: df.location !== false,
+    price: df.price !== false,
+    capacity: df.capacity !== false,
+    description: df.description !== false,
   };
 }
 
+function withFooterSettings(
+  page: import('@/lib/api').PublicPage,
+  actionStyle: ReservationActionStyle,
+  reserveViewStyle: string,
+  displayFields: DisplayFields,
+) {
+  return {
+    ...page,
+    reserveViewStyle,
+    footerText: JSON.stringify({
+      ...parseFooterSettings(page.footerText),
+      reserveActionStyle: actionStyle,
+      displayFields,
+    }),
+  };
+}
 
 type Tab = 'upcoming' | 'past' | 'draft';
 
@@ -67,6 +89,7 @@ export default function EventsPage() {
   const [publicPageData, setPublicPageData] = useState<import('@/lib/api').PublicPage | null>(null);
   const [reserveViewStyle, setReserveViewStyle] = useState<string>('calendar');
   const [reservationActionStyle, setReservationActionStyle] = useState<ReservationActionStyle>('comiu');
+  const [displayFields, setDisplayFields] = useState<DisplayFields>(DEFAULT_DISPLAY_FIELDS);
   const [savingStyle, setSavingStyle] = useState(false);
   const [reflected, setReflected] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
@@ -86,10 +109,10 @@ export default function EventsPage() {
       if (first) {
         setPublicPageId(first.id);
         setPublicPageData(first);
-        const style = first.reserveViewStyle ?? 'calendar';
-        setReserveViewStyle(style);
+        setReserveViewStyle(first.reserveViewStyle ?? 'calendar');
         const footerSettings = parseFooterSettings(first.footerText);
         setReservationActionStyle(footerSettings.reserveActionStyle === 'line' ? 'line' : 'comiu');
+        setDisplayFields(parseDisplayFields(footerSettings));
       }
     }).catch(() => {});
   }, [load]);
@@ -100,7 +123,7 @@ export default function EventsPage() {
     try {
       await api.tenant.update({ liffEventView: style });
       if (publicPageId && publicPageData) {
-        const updated = await api.publicPages.update(publicPageId, withReservationActionStyle(publicPageData, reservationActionStyle, style) as any);
+        const updated = await api.publicPages.update(publicPageId, withFooterSettings(publicPageData, reservationActionStyle, style, displayFields) as any);
         setPublicPageData(updated);
       }
     } catch { /* silent */ } finally {
@@ -114,25 +137,33 @@ export default function EventsPage() {
     if (!publicPageId || !publicPageData) return;
     setSavingStyle(true);
     try {
-      const updated = await api.publicPages.update(publicPageId, withReservationActionStyle(publicPageData, style, reserveViewStyle) as any);
+      const updated = await api.publicPages.update(publicPageId, withFooterSettings(publicPageData, style, reserveViewStyle, displayFields) as any);
       setPublicPageData(updated);
-      const tenantCode = tenantId;
-      const slug = updated.slug || publicPageData.slug;
-      if (tenantCode && slug) {
-        const token = getToken();
-        await fetch('/api/revalidate-public-page', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ tenantCode, slug }),
-        }).catch(() => null);
-      }
+      await revalidate(tenantId, updated.slug || publicPageData.slug);
     } catch { /* silent */ } finally {
       setSavingStyle(false);
       setIframeKey((k) => k + 1);
     }
+  }
+
+  async function toggleDisplayField(key: keyof DisplayFields) {
+    const next = { ...displayFields, [key]: !displayFields[key] };
+    setDisplayFields(next);
+    if (!publicPageId || !publicPageData) return;
+    try {
+      const updated = await api.publicPages.update(publicPageId, withFooterSettings(publicPageData, reservationActionStyle, reserveViewStyle, next) as any);
+      setPublicPageData(updated);
+    } catch { /* silent */ }
+  }
+
+  async function revalidate(tenantCode: string, slug: string) {
+    if (!tenantCode || !slug) return;
+    const token = getToken();
+    await fetch('/api/revalidate-public-page', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ tenantCode, slug }),
+    }).catch(() => null);
   }
 
   async function saveAndReflect() {
@@ -141,22 +172,10 @@ export default function EventsPage() {
     try {
       const [, updated] = await Promise.all([
         api.tenant.update({ liffEventView: reserveViewStyle }),
-        api.publicPages.update(publicPageId, withReservationActionStyle(publicPageData, reservationActionStyle, reserveViewStyle) as any),
+        api.publicPages.update(publicPageId, withFooterSettings(publicPageData, reservationActionStyle, reserveViewStyle, displayFields) as any),
       ]);
       setPublicPageData(updated);
-      const tenantCode = tenantId;
-      const slug = updated.slug || publicPageData.slug;
-      if (tenantCode && slug) {
-        const token = getToken();
-        await fetch('/api/revalidate-public-page', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ tenantCode, slug }),
-        }).catch(() => null);
-      }
+      await revalidate(tenantId, updated.slug || publicPageData.slug);
       setReflected(true);
       setIframeKey((k) => k + 1);
       setTimeout(() => setReflected(false), 2500);
@@ -174,7 +193,6 @@ export default function EventsPage() {
       setTimeout(() => setCopied(false), 2000);
     });
   }
-
 
   const now = new Date();
   const filtered = events
@@ -292,6 +310,32 @@ export default function EventsPage() {
       <div className="mt-6 flex gap-6 items-start">
         {/* 左：設定パネル */}
         <div className="min-w-0 flex-1 space-y-3">
+
+          {/* 表示項目 */}
+          <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+            <p className="mb-2.5 text-xs font-bold text-gray-500">公開サイトに表示する項目</p>
+            <div className="flex flex-wrap gap-2">
+              {displayFieldOptions.map(({ key, label, icon }) => {
+                const on = displayFields[key];
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => toggleDisplayField(key)}
+                    className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
+                      on
+                        ? 'border-[#06C755] bg-[#06C755]/8 text-[#06C755]'
+                        : 'border-gray-200 bg-gray-50 text-gray-400 line-through'
+                    }`}
+                  >
+                    <span>{icon}</span>
+                    <span>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* 表示スタイル */}
           <div className="rounded-xl border border-gray-200 bg-white">
             <div className="flex flex-wrap items-center gap-3 px-4 py-3">

@@ -352,6 +352,7 @@ export default async function ClubCmsPage({
         reserveEventMetaColor?: string;
         reserveEventCardBg?: string;
         reserveActionStyle?: string;
+        displayFields?: { location?: boolean; price?: boolean; capacity?: boolean; description?: boolean };
         blogPostCardBg?: string;
         blogTitle?: string;
         blogLead?: string;
@@ -379,6 +380,11 @@ export default async function ClubCmsPage({
   const reserveEventCardBg = sectionCopy.reserveEventCardBg?.trim() || '#ffffff';
   const blogPostCardBg = sectionCopy.blogPostCardBg?.trim() || '#ffffff';
   const reserveActionStyle = sectionCopy.reserveActionStyle === 'line' ? 'line' : 'comiu';
+  const df = sectionCopy.displayFields ?? {};
+  const showLocation = df.location !== false;
+  const showPrice = df.price !== false;
+  const showCapacity = df.capacity !== false;
+  const showDescription = df.description !== false;
   const navAboutUrl = sectionCopy.aboutUrl?.trim() || '#about';
   const configuredReserveUrl = sectionCopy.reserveUrl?.trim();
   const lineReserveUrl = configuredReserveUrl || sectionCopy.line?.trim() || contactHref;
@@ -596,6 +602,10 @@ export default async function ClubCmsPage({
                 events={reserveEvents}
                 tenantCode={reserveActionStyle === 'line' ? undefined : (page.tenant.code ?? tenantCode)}
                 lineMode={reserveActionStyle === 'line'}
+                showLocation={showLocation}
+                showPrice={showPrice}
+                showCapacity={showCapacity}
+                showDescription={showDescription}
                 eventTitleColor={reserveEventTitleColor}
                 eventDateColor={reserveEventDateColor}
                 eventMetaColor={reserveEventMetaColor}

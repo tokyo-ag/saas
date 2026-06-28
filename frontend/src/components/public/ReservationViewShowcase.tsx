@@ -28,6 +28,10 @@ type ReservationViewShowcaseProps = {
   events?: ReservationShowcaseEvent[];
   tenantCode?: string;
   lineMode?: boolean;
+  showLocation?: boolean;
+  showPrice?: boolean;
+  showCapacity?: boolean;
+  showDescription?: boolean;
   eventTitleColor?: string;
   eventDateColor?: string;
   eventMetaColor?: string;
@@ -247,15 +251,12 @@ function CalendarPreview({
   );
 }
 
+type FieldFlags = { showLocation?: boolean; showPrice?: boolean; showCapacity?: boolean; showDescription?: boolean };
+
 function CardMini({
-  accentColor,
-  events,
-  tenantCode,
-  fallbackHref,
-  eventTitleColor,
-  eventDateColor,
-  eventMetaColor,
-  cardBg,
+  accentColor, events, tenantCode, fallbackHref,
+  eventTitleColor, eventDateColor, eventMetaColor, cardBg,
+  showLocation = true, showPrice = true, showCapacity = true,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
@@ -265,7 +266,7 @@ function CardMini({
   eventDateColor?: string;
   eventMetaColor?: string;
   cardBg?: string;
-}) {
+} & FieldFlags) {
   const visible = readableAccent(accentColor);
   if (events) {
     if (events.length === 0) return <EmptyEvents accentColor={accentColor} />;
@@ -277,6 +278,10 @@ function CardMini({
             const status = eventStatus(event);
             const full = status === '満席';
             const price = eventPrice(event);
+            const metaLine = [
+              showCapacity && (event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : `${event.reservedCount ?? 0}人予約`),
+              showPrice && price,
+            ].filter(Boolean).join(' / ');
             return (
               <Link
                 key={event.id}
@@ -302,11 +307,8 @@ function CardMini({
                 <div className="space-y-1 p-3">
                   <p className="line-clamp-2 text-sm font-bold leading-snug" style={{ color: eventTitleColor || '#111827' }}>{event.title}</p>
                   <p className="text-xs font-medium" style={{ color: eventDateColor || '#4B5563' }}>{eventDate(event)} {eventTime(event)}</p>
-                  {event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || '#9CA3AF' }}>{event.location}</p>}
-                  <p className="text-xs" style={{ color: eventMetaColor || '#6B7280' }}>
-                    {event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : `${event.reservedCount ?? 0}人予約`}
-                    {price && ` / ${price}`}
-                  </p>
+                  {showLocation && event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || '#9CA3AF' }}>{event.location}</p>}
+                  {metaLine && <p className="text-xs" style={{ color: eventMetaColor || '#6B7280' }}>{metaLine}</p>}
                 </div>
               </Link>
             );
@@ -332,14 +334,9 @@ function CardMini({
 }
 
 function ThreadMini({
-  accentColor,
-  events,
-  tenantCode,
-  fallbackHref,
-  eventTitleColor,
-  eventDateColor,
-  eventMetaColor,
-  cardBg,
+  accentColor, events, tenantCode, fallbackHref,
+  eventTitleColor, eventDateColor, eventMetaColor, cardBg,
+  showLocation = true, showPrice = true, showCapacity = true, showDescription = true,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
@@ -349,7 +346,7 @@ function ThreadMini({
   eventDateColor?: string;
   eventMetaColor?: string;
   cardBg?: string;
-}) {
+} & FieldFlags) {
   const visible = readableAccent(accentColor);
   if (events) {
     if (events.length === 0) return <EmptyEvents accentColor={accentColor} />;
@@ -372,6 +369,10 @@ function ThreadMini({
                 const status = eventStatus(event);
                 const full = status === '満席';
                 const price = eventPrice(event);
+                const metaLine = [
+                  showCapacity && (event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : `${event.reservedCount ?? 0}人予約`),
+                  showPrice && price,
+                ].filter(Boolean).join(' / ');
                 return (
                   <Link
                     key={event.id}
@@ -383,11 +384,11 @@ function ThreadMini({
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold" style={{ color: eventTitleColor || '#111827' }}>{event.title}</p>
                         <p className="mt-1 text-xs" style={{ color: eventDateColor || '#6B7280' }}>{eventDate(event)}</p>
-                        {event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || '#9CA3AF' }}>{event.location}</p>}
-                        <p className="text-xs" style={{ color: eventMetaColor || '#6B7280' }}>
-                          {event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : `${event.reservedCount ?? 0}人予約`}
-                          {price && ` / ${price}`}
-                        </p>
+                        {showLocation && event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || '#9CA3AF' }}>{event.location}</p>}
+                        {metaLine && <p className="text-xs" style={{ color: eventMetaColor || '#6B7280' }}>{metaLine}</p>}
+                        {showDescription && (event as any).description && (
+                          <p className="mt-1 line-clamp-2 text-xs leading-relaxed" style={{ color: eventMetaColor || '#9CA3AF' }}>{(event as any).description}</p>
+                        )}
                       </div>
                       <span className={`shrink-0 rounded-md px-2.5 py-1 text-[11px] font-bold ${full ? 'bg-gray-100 text-gray-400' : ''}`} style={full ? undefined : { backgroundColor: visible.accent, color: visible.text }}>
                         {status}
@@ -432,6 +433,10 @@ export function ReservationViewShowcase({
   events,
   tenantCode,
   lineMode,
+  showLocation,
+  showPrice,
+  showCapacity,
+  showDescription,
   eventTitleColor,
   eventDateColor,
   eventMetaColor,
@@ -442,6 +447,7 @@ export function ReservationViewShowcase({
     'inline-flex w-full items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-bold transition hover:opacity-80';
   const buttonStyle = { backgroundColor: visible.accent, borderColor: visible.border, color: visible.text };
   const selectedView = viewStyle === 'card' || viewStyle === 'thread' ? viewStyle : 'calendar';
+  const fieldProps = { showLocation, showPrice, showCapacity, showDescription };
 
   return (
     <div className={`space-y-3 ${className}`}>
@@ -449,8 +455,8 @@ export function ReservationViewShowcase({
         <CalendarPreview accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} cardBg={eventCardBg} lineMode={lineMode} />
       ) : (
         <div className="rounded-xl">
-          {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} />}
-          {selectedView === 'thread' && <ThreadMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} />}
+          {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} {...fieldProps} />}
+          {selectedView === 'thread' && <ThreadMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} {...fieldProps} />}
         </div>
       )}
       {selectedView !== 'card' && (href ? (
