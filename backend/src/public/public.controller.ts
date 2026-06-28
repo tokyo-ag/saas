@@ -664,6 +664,7 @@ export class PublicController {
       orgNameDisplayType: page.orgNameDisplayType,
       orgLogoWordmarkUrl: page.orgLogoWordmarkUrl,
       orgLogoWordmarkAlt: page.orgLogoWordmarkAlt,
+      orgLogoWordmarkSize: (page as any).orgLogoWordmarkSize ?? null,
       publishedAt: page.publishedAt,
       updatedAt: page.updatedAt,
       tenant: {

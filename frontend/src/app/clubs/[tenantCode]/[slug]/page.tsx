@@ -264,6 +264,7 @@ export default async function ClubCmsPage({
   const orgDisplayType = (page as any).orgNameDisplayType ?? 'text';
   const orgLogoUrl = (page as any).orgLogoWordmarkUrl as string | null;
   const orgLogoAlt = ((page as any).orgLogoWordmarkAlt as string | null) || tenantName;
+  const orgLogoSize = ((page as any).orgLogoWordmarkSize as number | null) ?? 60;
   const images = (page.imageUrls?.length ? page.imageUrls : page.coverImageUrl ? [page.coverImageUrl] : [])
     .map((url) => imgUrl(url, IMAGE_BASE_URL))
     .filter(Boolean) as string[];
@@ -455,7 +456,7 @@ export default async function ClubCmsPage({
                     <>
                       <img src={orgLogoUrl} alt={orgLogoAlt}
                         className="max-w-full object-contain drop-shadow"
-                        style={{ maxHeight: titleFontSize * 2.5, height: 'auto' }} />
+                        style={{ height: orgLogoSize, maxWidth: '100%' }} />
                       {orgDisplayType === 'both'
                         ? <span>{tenantName}</span>
                         : <span className="sr-only">{tenantName}</span>

@@ -125,6 +125,7 @@ model PublicPage {
   orgNameDisplayType  String  @default("text") @map("org_name_display_type") @db.VarChar(20)
   orgLogoWordmarkUrl  String? @map("org_logo_wordmark_url") @db.Text
   orgLogoWordmarkAlt  String? @map("org_logo_wordmark_alt") @db.VarChar(200)
+  orgLogoWordmarkSize Int?    @map("org_logo_wordmark_size")
   status         String    @default("published") @db.VarChar(20)
   publishedAt    DateTime? @map("published_at")
   createdAt      DateTime  @default(now()) @map("created_at")

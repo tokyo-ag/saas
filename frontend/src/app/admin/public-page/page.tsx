@@ -127,6 +127,7 @@ const emptyForm: PublicPageInput = {
   orgNameDisplayType: 'text',
   orgLogoWordmarkUrl: '',
   orgLogoWordmarkAlt: '',
+  orgLogoWordmarkSize: 60,
   status: 'published',
 };
 
@@ -674,6 +675,7 @@ export default function AdminPublicPage() {
             orgNameDisplayType: (first as any).orgNameDisplayType ?? 'text',
             orgLogoWordmarkUrl: (first as any).orgLogoWordmarkUrl ?? '',
             orgLogoWordmarkAlt: (first as any).orgLogoWordmarkAlt ?? '',
+            orgLogoWordmarkSize: (first as any).orgLogoWordmarkSize ?? 60,
             status: 'published',
           });
           const loaded = (first.blocks as any[] | null);
@@ -934,6 +936,7 @@ export default function AdminPublicPage() {
       orgNameDisplayType: form.orgNameDisplayType || 'text',
       orgLogoWordmarkUrl: form.orgLogoWordmarkUrl?.trim() || '',
       orgLogoWordmarkAlt: form.orgLogoWordmarkAlt?.trim() || displayName,
+      orgLogoWordmarkSize: form.orgLogoWordmarkSize ?? 60,
     };
     try {
       const page = selectedId
@@ -1088,6 +1091,15 @@ export default function AdminPublicPage() {
                     {logoUploading ? 'アップロード中...' : 'ロゴ画像をアップロード'}
                   </button>
                 )}
+                <label className="block">
+                  <span className="mb-1 flex items-center justify-between text-[11px] text-gray-400">
+                    <span>表示サイズ</span>
+                    <span className="font-bold">{form.orgLogoWordmarkSize ?? 60}px</span>
+                  </span>
+                  <input type="range" min="20" max="200" step="4" value={form.orgLogoWordmarkSize ?? 60}
+                    onChange={e => setForm(p => ({ ...p, orgLogoWordmarkSize: Number(e.target.value) }))}
+                    className="w-full accent-[#06C755]" />
+                </label>
                 <label className="block">
                   <span className="mb-1 block text-[11px] text-gray-400">alt テキスト（SEO用）</span>
                   <input value={form.orgLogoWordmarkAlt ?? ''} placeholder={displayName}
@@ -1815,7 +1827,7 @@ export default function AdminPublicPage() {
                             <>
                               <img src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
                                 className="max-w-full object-contain drop-shadow"
-                                style={{ maxHeight: titleFontSize * 2.5, height: 'auto' }} />
+                                style={{ height: form.orgLogoWordmarkSize ?? 60, maxWidth: '100%' }} />
                               {form.orgNameDisplayType === 'both' && <span>{displayName}</span>}
                             </>
                           ) : displayName}
@@ -1868,7 +1880,16 @@ export default function AdminPublicPage() {
               ) : (
                 /* 通常モード: 薄いナビバー */
                 <div className="border-b border-gray-100 px-4 pb-1 pt-3">
-                  <span className="mb-2 block text-sm font-bold leading-5" style={{ color: textColor }}>{displayName}</span>
+                  <span className="mb-2 block font-bold leading-5" style={{ color: textColor, ...titleTextStyle, lineHeight: 1.25 }}>
+                    {form.orgLogoWordmarkUrl && form.orgNameDisplayType !== 'text' ? (
+                      <>
+                        <img src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
+                          className="max-w-full object-contain"
+                          style={{ height: form.orgLogoWordmarkSize ?? 60, maxWidth: '100%' }} />
+                        {form.orgNameDisplayType === 'both' && <span>{displayName}</span>}
+                      </>
+                    ) : displayName}
+                  </span>
                   <div className={`text-[11px] font-bold ${previewButtonLayoutClass}`} style={previewButtonGridStyle}>
                     {visibleNavItems.map((item) => (
                       <span key={item.key} className={`flex items-center justify-center truncate px-2 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{item.label}</span>

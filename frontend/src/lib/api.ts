@@ -878,6 +878,7 @@ export interface PublicPage {
   orgNameDisplayType?: string | null;
   orgLogoWordmarkUrl?: string | null;
   orgLogoWordmarkAlt?: string | null;
+  orgLogoWordmarkSize?: number | null;
   status: 'draft' | 'published';
   publishedAt?: string | null;
   createdAt: string;
@@ -970,6 +971,7 @@ export interface PublicPageInput {
   orgNameDisplayType?: string;
   orgLogoWordmarkUrl?: string;
   orgLogoWordmarkAlt?: string;
+  orgLogoWordmarkSize?: number;
   status?: 'draft' | 'published';
 }
 
@@ -1080,6 +1082,7 @@ export interface PublicCmsPage {
   orgNameDisplayType?: string | null;
   orgLogoWordmarkUrl?: string | null;
   orgLogoWordmarkAlt?: string | null;
+  orgLogoWordmarkSize?: number | null;
   publishedAt?: string | null;
   updatedAt: string;
   tenant: {

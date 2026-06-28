@@ -273,6 +273,12 @@ export class UpsertPublicPageDto {
   orgLogoWordmarkAlt?: string;
 
   @IsOptional()
+  @IsInt()
+  @Min(20)
+  @Max(400)
+  orgLogoWordmarkSize?: number;
+
+  @IsOptional()
   @IsString()
   @MaxLength(20)
   buttonStyle?: string;
@@ -407,6 +413,7 @@ export class PublicPagesService {
       orgNameDisplayType: dto.orgNameDisplayType ?? 'text',
       orgLogoWordmarkUrl: dto.orgLogoWordmarkUrl?.trim() || null,
       orgLogoWordmarkAlt: dto.orgLogoWordmarkAlt?.trim() || null,
+      orgLogoWordmarkSize: Number.isInteger(dto.orgLogoWordmarkSize) ? dto.orgLogoWordmarkSize : null,
       status,
       ...(isPublishing ? { publishedAt: new Date() } : {}),
       ...(status === 'draft' ? { publishedAt: null } : {}),
