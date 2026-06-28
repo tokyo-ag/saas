@@ -407,6 +407,10 @@ export default function ComiuLandingPage() {
           animation: line-up 1s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
+        .mobile-title-break {
+          display: none;
+        }
+
         .hero-line-wrap:nth-child(1) .title-line { animation-delay: 0.06s; }
 
         @keyframes line-up {
@@ -1986,6 +1990,10 @@ export default function ComiuLandingPage() {
             white-space: normal;
           }
 
+          .mobile-title-break {
+            display: block;
+          }
+
           .hero-lead {
             padding-left: 14px;
             font-size: clamp(20px, 5.8vw, 26px);
@@ -2511,7 +2519,7 @@ export default function ComiuLandingPage() {
         <section className="lp-section hero hero-slide">
           <div className="hero-copy">
             <h1>
-              <span className="hero-line-wrap"><span className="title-line">イベント・サークルの集客なら<wbr /><span className="accent">COMIU</span></span></span>
+              <span className="hero-line-wrap"><span className="title-line">イベント・サークルの<br className="mobile-title-break" />集客なら<wbr /><span className="accent">COMIU</span></span></span>
             </h1>
             <p className="hero-sub hero-fade" style={{ "--fd": "0.8s" } as React.CSSProperties}>
               掲載用のホームページなら、もういらない。<br />
