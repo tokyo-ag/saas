@@ -201,7 +201,7 @@ const TONE_COLORS = [
   { label: 'ピンク', value: '#BE185D' },
 ];
 
-async function trimTransparentBorders(imageUrl: string): Promise<{ blob: Blob; changed: boolean; msg: string }> {
+async function removeBgAndTrim(imageUrl: string): Promise<{ blob: Blob; msg: string }> {
   const res = await fetch(imageUrl);
   if (!res.ok) throw new Error(`画像の取得に失敗しました (${res.status})`);
   const srcBlob = await res.blob();
@@ -211,63 +211,69 @@ async function trimTransparentBorders(imageUrl: string): Promise<{ blob: Blob; c
   const scale = isSvg ? 2 : 1;
   const cw = (bitmap.width || 600) * scale;
   const ch = (bitmap.height || 200) * scale;
-  console.log('[trim] bitmap:', cw, 'x', ch, srcBlob.type);
 
   const canvas = document.createElement('canvas');
   canvas.width = cw;
   canvas.height = ch;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('canvas unavailable');
+  const ctx = canvas.getContext('2d')!;
   ctx.drawImage(bitmap, 0, 0, cw, ch);
   bitmap.close();
 
-  const { data, width, height } = ctx.getImageData(0, 0, cw, ch);
+  const imageData = ctx.getImageData(0, 0, cw, ch);
+  const { data, width, height } = imageData;
 
+  // Sample background color from 4 corners + edge midpoints for robustness
   const px = (x: number, y: number) => (y * width + x) * 4;
-  const corners = [px(0,0), px(width-1,0), px(0,height-1), px(width-1,height-1)];
-  const avgAlpha = corners.reduce((s, i) => s + data[i+3], 0) / 4;
-  const hasSolidBg = avgAlpha > 200;
-  const bgR = Math.round(corners.reduce((s, i) => s + data[i],   0) / 4);
-  const bgG = Math.round(corners.reduce((s, i) => s + data[i+1], 0) / 4);
-  const bgB = Math.round(corners.reduce((s, i) => s + data[i+2], 0) / 4);
-  console.log('[trim] hasSolidBg:', hasSolidBg, 'avgAlpha:', avgAlpha, 'bg:', bgR, bgG, bgB);
+  const samples = [
+    px(0, 0), px(width-1, 0), px(0, height-1), px(width-1, height-1),
+    px(Math.floor(width/2), 0), px(0, Math.floor(height/2)),
+    px(width-1, Math.floor(height/2)), px(Math.floor(width/2), height-1),
+  ];
+  const bgA = Math.round(samples.reduce((s, i) => s + data[i+3], 0) / samples.length);
+  const bgR = Math.round(samples.reduce((s, i) => s + data[i],   0) / samples.length);
+  const bgG = Math.round(samples.reduce((s, i) => s + data[i+1], 0) / samples.length);
+  const bgB = Math.round(samples.reduce((s, i) => s + data[i+2], 0) / samples.length);
+  const hasSolidBg = bgA > 128;
 
-  // For transparent images: find bounding box of strongly visible pixels (alpha > 128)
-  // For solid-bg images: find bounding box of non-background-colored pixels
-  // Using alpha > 128 avoids faint semi-transparent artifacts counting as content
-  const isContent = (i: number) => {
-    const a = data[i+3];
-    if (hasSolidBg) {
-      if (a < 10) return false;
-      return !(Math.abs(data[i]-bgR) < 15 && Math.abs(data[i+1]-bgG) < 15 && Math.abs(data[i+2]-bgB) < 15);
+  // Step 1: Remove background — make background-colored pixels transparent
+  if (hasSolidBg) {
+    const HARD = 25;  // fully erase pixels within this color distance
+    const SOFT = 60;  // fade pixels in this transitional range
+    for (let i = 0; i < data.length; i += 4) {
+      const dist = Math.max(
+        Math.abs(data[i]   - bgR),
+        Math.abs(data[i+1] - bgG),
+        Math.abs(data[i+2] - bgB),
+      );
+      if (dist < HARD) {
+        data[i+3] = 0;
+      } else if (dist < SOFT) {
+        data[i+3] = Math.round(data[i+3] * (dist - HARD) / (SOFT - HARD));
+      }
     }
-    return a > 128;
-  };
+    ctx.putImageData(imageData, 0, 0);
+  }
 
-  let top = height, left = width, right = -1, bottom = -1;
-  for (let y = 0; y < height; y++)
-    for (let x = 0; x < width; x++)
-      if (isContent((y * width + x) * 4)) {
+  // Step 2: Trim transparent borders — find bounding box of visible content
+  // Re-read pixel data after bg removal
+  const { data: d2, width: w2, height: h2 } = ctx.getImageData(0, 0, cw, ch);
+  let top = h2, left = w2, right = -1, bottom = -1;
+  for (let y = 0; y < h2; y++)
+    for (let x = 0; x < w2; x++)
+      if (d2[(y * w2 + x) * 4 + 3] > 20) {
         if (x < left) left = x;
         if (x > right) right = x;
         if (y < top) top = y;
         if (y > bottom) bottom = y;
       }
 
-  console.log('[trim] bounds: top=%d left=%d right=%d bottom=%d (of %dx%d)', top, left, right, bottom, width, height);
+  if (top > bottom || left > right) throw new Error('コンテンツが検出できませんでした');
 
-  if (top > bottom || left > right) return { blob: srcBlob, changed: false, msg: '検出できる内容がありません' };
-
-  const pad = 10; // wider pad to include semi-transparent anti-aliased edges
+  const pad = 6;
   const cropX = Math.max(0, left - pad);
   const cropY = Math.max(0, top - pad);
-  const cropW = Math.min(right + 1 + pad, width) - cropX;
-  const cropH = Math.min(bottom + 1 + pad, height) - cropY;
-  console.log('[trim] crop:', cropX, cropY, cropW, cropH);
-
-  if (cropX === 0 && cropY === 0 && cropW === width && cropH === height) {
-    return { blob: srcBlob, changed: false, msg: 'トリムできる余白がありません' };
-  }
+  const cropW = Math.min(right + 1 + pad, w2) - cropX;
+  const cropH = Math.min(bottom + 1 + pad, h2) - cropY;
 
   const out = document.createElement('canvas');
   out.width = cropW;
@@ -277,7 +283,7 @@ async function trimTransparentBorders(imageUrl: string): Promise<{ blob: Blob; c
   const blob = await new Promise<Blob>((resolve, reject) =>
     out.toBlob(b => b ? resolve(b) : reject(new Error('canvas export failed')), 'image/png')
   );
-  return { blob, changed: true, msg: `${width}×${height} → ${cropW}×${cropH}` };
+  return { blob, msg: `${width}×${height} → ${cropW}×${cropH}` };
 }
 
 async function uploadFile(file: File): Promise<string> {
@@ -835,17 +841,11 @@ export default function AdminPublicPage() {
     if (!form.orgLogoWordmarkUrl) return;
     setLogoTrimming(true);
     try {
-      const result = await trimTransparentBorders(form.orgLogoWordmarkUrl);
-      if (!result.changed) {
-        alert(`トリム結果: ${result.msg}\n\nF12コンソールで詳細を確認してください。`);
-        return;
-      }
-      const file = new File([result.blob], `logo-trimmed-${Date.now()}.png`, { type: 'image/png' });
+      const result = await removeBgAndTrim(form.orgLogoWordmarkUrl);
+      const file = new File([result.blob], `logo-nobg-${Date.now()}.png`, { type: 'image/png' });
       await handleLogoUpload(file);
-      alert(`トリム完了: ${result.msg}`);
     } catch (err: any) {
-      alert(`トリムエラー: ${err?.message ?? '不明なエラー'}`);
-      setError(err?.message ?? 'トリムに失敗しました');
+      setError(err?.message ?? '背景の削除に失敗しました');
     } finally {
       setLogoTrimming(false);
     }
@@ -1208,8 +1208,8 @@ export default function AdminPublicPage() {
                       </button>
                       <button type="button" onClick={handleLogoTrim} disabled={logoUploading || logoTrimming}
                         className="flex-1 rounded border border-gray-200 bg-gray-50 py-1 text-[11px] text-gray-500 hover:bg-gray-100 disabled:opacity-40"
-                        title={form.orgLogoWordmarkUrl.endsWith('.svg') ? 'SVGはPNGに変換してトリムします' : '透過余白を除去します'}>
-                        {logoTrimming ? '処理中...' : '余白をトリム'}
+                        title="背景色を自動検出して透明化し、余白をトリムします">
+                        {logoTrimming ? '処理中...' : '背景を透明化'}
                       </button>
                     </div>
                     <button type="button" onClick={() => setForm(p => ({ ...p, orgLogoWordmarkUrl: '' }))}
