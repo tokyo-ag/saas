@@ -2268,6 +2268,12 @@ export default function ComiuLandingPage() {
           display: block;
         }
 
+        @media (max-width: 640px) {
+          .portal-title {
+            font-size: clamp(32px, 9vw, 40px);
+          }
+        }
+
         .portal-img {
           width: 100%;
           display: block;
@@ -2369,11 +2375,7 @@ export default function ComiuLandingPage() {
         .h-panel:nth-child(1) { background: linear-gradient(135deg, #eef2ff 0%, #f5f0ff 100%); }
         .h-panel:nth-child(2) { background: linear-gradient(135deg, #f5f0ff 0%, #ffeef8 100%); }
         .h-panel:nth-child(3) { background: linear-gradient(135deg, #eefff8 0%, #eef4ff 100%); }
-        .h-panel:nth-child(4) {
-          background:
-            radial-gradient(circle at 15% 18%, rgba(114, 141, 255, 0.45), transparent 28%),
-            linear-gradient(135deg, #081037, #17215a 54%, #3d2b8c);
-        }
+        .h-panel:nth-child(4) { background: linear-gradient(135deg, #f8fbff 0%, #f4fff8 100%); }
 
         .h-panel:nth-child(4) .seo-card {
           background: transparent;
@@ -2564,16 +2566,53 @@ export default function ComiuLandingPage() {
             </div>
             <div className="h-scroll-track">
 
-              {/* Panel ②: 公式LINEからワンタップ予約 */}
+              {/* Panel ②: WEBサイト作成 */}
+              <section className="h-panel" aria-labelledby="seo-title">
+                <div className="h-panel-inner">
+                  <div className="seo-card">
+                    <SectionLabel>FREE WEB SITE</SectionLabel>
+                    <h2 className="section-title" id="seo-title">
+                      まずはオリジナルのWEBサイトを無料作成
+                    </h2>
+                    <p className="section-desc">
+                      団体の特色に合わせて自由にカスタマイズできます。初めての方は、SEO専任の担当者が初回無料でヒアリングし、ページ作成までサポートします。
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Panel ③: ポータル */}
+              <section className="h-panel" aria-labelledby="portal-title">
+                <div className="h-panel-inner">
+                  <div className="portal-grid">
+                    <div>
+                      <SectionLabel>PORTAL & BLOG</SectionLabel>
+                      <h2 className="section-title portal-title" id="portal-title">
+                        <span>活動やブログが</span>
+                        <span>ポータルサイトに自動反映</span>
+                      </h2>
+                      <p className="section-desc">
+                        こつこつ更新するだけで、認知拡大につなげることができます。WEBアプリケーションとして機能しているので、活動実績が資産として残ります。
+                      </p>
+                    </div>
+                    <div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/comiu_portal_mockup.svg" alt="COMIUポータルサイト" className="portal-img" />
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Panel ④: 公式LINEからワンタップ予約 */}
               <section className="h-panel" aria-labelledby="booking-title">
                 <div className="h-panel-inner">
                   <div className="booking-head">
                     <h2 className="section-title booking-title" id="booking-title">
-                      公式LINEからワンタップで予約
+                      公式LINEからワンタップ予約
                     </h2>
-                    <p className="section-desc" style={{ maxWidth: 640, margin: "0 auto" }}>
+                    <p className="section-desc" style={{ maxWidth: 760, margin: "0 auto" }}>
                       公式LINEのリッチメニューや予約URLから直接予約。<br />
-                      ３タイプから、活動スタイルに合わせて選べる日程表！
+                      3タイプから、活動スタイルに合わせて選べる日程表。LINE認証でユーザーを識別し、ドタキャンが多いユーザーや悪質なユーザーにラベルを貼ることで、COMIU全体で参加者の質を担保します。
                     </p>
                   </div>
                   <div className="phones-grid">
@@ -2595,29 +2634,7 @@ export default function ComiuLandingPage() {
                 </div>
               </section>
 
-              {/* Panel ③: ポータル */}
-              <section className="h-panel" aria-labelledby="portal-title">
-                <div className="h-panel-inner">
-                  <div className="portal-grid">
-                    <div>
-                      <SectionLabel>PORTAL & BLOG</SectionLabel>
-                      <h2 className="section-title portal-title" id="portal-title">
-                        <span>活動実績が</span>
-                        <span>ポータルに残る。</span>
-                      </h2>
-                      <p className="section-desc">
-                        イベントやブログを公開すると、COMIUポータルにも自動で反映。SNSで流れた実績を、次の参加者に見つけてもらえる資産に変えます。
-                      </p>
-                    </div>
-                    <div>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/comiu_portal_mockup.svg" alt="COMIUポータルサイト" className="portal-img" />
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* Panel ④: LINEリマインド */}
+              {/* Panel ⑤: LINEリマインド */}
               <section className="h-panel" aria-labelledby="remind-title">
                 <div className="h-panel-inner">
                   <div className="remind-grid">
@@ -2628,27 +2645,12 @@ export default function ComiuLandingPage() {
                     <div>
                       <SectionLabel>LINE REMIND</SectionLabel>
                       <h2 className="section-title" id="remind-title">
-                        公式LINEのリマインドサービス
+                        アプリ、公式LINEのリマインドを設定
                       </h2>
                       <p className="section-desc">
-                        予約完了後の案内から、イベント前日のリマインドまで公式LINEで自動送信。参加者の不安を減らし、直前キャンセルも防げます。
+                        団体の参加者が30〜100人を超えてくると、自動化のプロセスが必須です。事前決済システムや、PayPay決済確認後の受付承認システムも導入できます。初回に限り、画面共有で使用方法のレクチャーも行っています。
                       </p>
                     </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* Panel ⑤: サポート (dark) */}
-              <section className="h-panel" aria-labelledby="seo-title">
-                <div className="h-panel-inner">
-                  <div className="seo-card">
-                    <SectionLabel>FREE SUPPORT</SectionLabel>
-                    <h2 className="section-title" id="seo-title">
-                      初めての主催でも、安心してスタート。
-                    </h2>
-                    <p className="section-desc">
-                      SEO専任担当者による丁寧なカウンセリングと、初回Webサイト構築を無料でサポート。イベントやサークルの主催が初めての方でも、すぐに始められます。
-                    </p>
                   </div>
                 </div>
               </section>
