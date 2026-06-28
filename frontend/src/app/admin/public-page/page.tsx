@@ -1546,7 +1546,9 @@ export default function AdminPublicPage() {
             <div className="space-y-4 border-t border-gray-100 p-4">
               <div className={`rounded-lg px-3 py-2 text-xs font-bold ${hasReserveSection ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
                 {reserveActionStyle === 'line'
-                  ? 'LINEで予約する：公開サイトにはLINE予約ボタンを表示します'
+                  ? reserveEvents.length > 0
+                    ? `LINEで予約：カレンダーを表示→タップで公式LINE追加（${reserveEvents.length}件）`
+                    : 'LINEで予約する：公開サイトにはLINE予約ボタンを表示します'
                   : hasReserveSection
                     ? `公開中イベント ${reserveEvents.length}件：公開サイトに表示されます`
                     : '公開中イベント 0件：公開サイトでは非表示になります'}
@@ -1829,7 +1831,7 @@ export default function AdminPublicPage() {
                     {reserveSectionLead && (
                       <p className="mt-1 text-xs leading-5" style={{ color: reserveLeadColor }}>{reserveSectionLead}</p>
                     )}
-                    {reserveActionStyle === 'line' ? (
+                    {reserveActionStyle === 'line' && reserveEvents.length === 0 ? (
                       <span
                         className="mt-3 inline-flex w-full items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-bold"
                         style={{ backgroundColor: accentColor, borderColor: accentColor, color: '#fff' }}
@@ -1839,10 +1841,11 @@ export default function AdminPublicPage() {
                     ) : (
                       <ReservationViewShowcase
                         accentColor={accentColor}
-                        buttonLabel={navLabels.reserve}
+                        buttonLabel={reserveActionStyle === 'line' ? 'LINEで友達追加して予約する' : navLabels.reserve}
                         viewStyle={form.reserveViewStyle}
                         events={reserveEvents}
-                        tenantCode={tenantCode}
+                        tenantCode={reserveActionStyle === 'line' ? undefined : tenantCode}
+                        lineMode={reserveActionStyle === 'line'}
                         eventTitleColor={reserveEventTitleColor}
                         eventDateColor={reserveEventDateColor}
                         eventMetaColor={reserveEventMetaColor}
