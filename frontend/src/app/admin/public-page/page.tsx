@@ -105,6 +105,7 @@ const emptyForm: PublicPageInput = {
   reserveEventDateColor: '',
   reserveEventMetaColor: '',
   reserveEventCardBg: '',
+  reserveActionStyle: 'comiu',
   blogPostCardBg: '',
   blogTitle: '',
   blogLead: '',
@@ -443,7 +444,8 @@ export default function AdminPublicPage() {
     blog: form.blogLabel?.trim() || 'ブログ',
     contact: form.contactLabel?.trim() || 'お問い合わせ',
   };
-  const hasReserveSection = reserveEvents.length > 0;
+  const reserveActionStyle = form.reserveActionStyle === 'line' ? 'line' : 'comiu';
+  const hasReserveSection = reserveActionStyle === 'line' || reserveEvents.length > 0;
   const hasBlogSection = blogPosts.length > 0;
   const visibleNavItems = [
     { key: 'about', label: navLabels.about },
@@ -616,6 +618,7 @@ export default function AdminPublicPage() {
                   reserveEventDateColor: fd.reserveEventDateColor ?? '',
                   reserveEventMetaColor: fd.reserveEventMetaColor ?? '',
                   reserveEventCardBg: fd.reserveEventCardBg ?? '',
+                  reserveActionStyle: fd.reserveActionStyle === 'line' ? 'line' : 'comiu',
                   blogPostCardBg: fd.blogPostCardBg ?? '',
                   blogTitle: fd.blogTitle ?? '',
                   blogLead: fd.blogLead ?? '',
@@ -646,6 +649,9 @@ export default function AdminPublicPage() {
                   reserveEventTitleColor: '',
                   reserveEventDateColor: '',
                   reserveEventMetaColor: '',
+                  reserveEventCardBg: '',
+                  reserveActionStyle: 'comiu',
+                  blogPostCardBg: '',
                   blogTitle: '',
                   blogLead: '',
                   blogTitleColor: '',
@@ -889,6 +895,7 @@ export default function AdminPublicPage() {
         reserveEventDateColor: form.reserveEventDateColor?.trim() || '',
         reserveEventMetaColor: form.reserveEventMetaColor?.trim() || '',
         reserveEventCardBg: form.reserveEventCardBg?.trim() || '',
+        reserveActionStyle,
         blogPostCardBg: form.blogPostCardBg?.trim() || '',
         blogTitle: form.blogTitle?.trim() || '',
         blogLead: form.blogLead?.trim() || '',
@@ -1538,12 +1545,68 @@ export default function AdminPublicPage() {
           {openSections.reserve && (
             <div className="space-y-4 border-t border-gray-100 p-4">
               <div className={`rounded-lg px-3 py-2 text-xs font-bold ${hasReserveSection ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
-                {hasReserveSection
-                  ? `公開中イベント ${reserveEvents.length}件：公開サイトに表示されます`
-                  : '公開中イベント 0件：公開サイトでは非表示になります'}
+                {reserveActionStyle === 'line'
+                  ? 'LINEで予約する：公開サイトにはLINE予約ボタンを表示します'
+                  : hasReserveSection
+                    ? `公開中イベント ${reserveEvents.length}件：公開サイトに表示されます`
+                    : '公開中イベント 0件：公開サイトでは非表示になります'}
+              </div>
+              <div>
+                <p className="mb-2 text-[11px] font-bold text-gray-400">予約スタイル</p>
+                <div className="flex flex-wrap gap-2">
+                  {([
+                    { label: 'COMIUで予約管理', value: 'comiu' },
+                    { label: 'LINEで予約する', value: 'line' },
+                  ] as const).map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setForm((p) => ({ ...p, reserveActionStyle: opt.value }))}
+                      className={`rounded-full border px-4 py-2 text-xs font-bold transition ${
+                        reserveActionStyle === opt.value
+                          ? 'text-white'
+                          : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                      }`}
+                      style={reserveActionStyle === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
               {renderCopyInput('タイトル', 'reserveTitle', 'reserveTitleColor', navLabels.reserve, textColor)}
               {renderCopyInput('説明', 'reserveLead', 'reserveLeadColor', '募集中のイベントを表示します。', '#6B7280', true)}
+              {reserveActionStyle === 'comiu' && (
+                <div className="space-y-3 rounded-lg bg-gray-50 p-3">
+                  <p className="text-[11px] font-bold text-gray-400">イベントカードの見た目</p>
+                  <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
+                    <span className="text-[11px] font-bold text-gray-500">カード背景色</span>
+                    <input
+                      type="color"
+                      value={form.reserveEventCardBg?.trim() || '#ffffff'}
+                      onChange={(e) => setForm((p) => ({ ...p, reserveEventCardBg: e.target.value }))}
+                      className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
+                    />
+                  </label>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {[
+                      { label: 'イベント名', field: 'reserveEventTitleColor' as const, fallback: '#111827' },
+                      { label: '日時', field: 'reserveEventDateColor' as const, fallback: '#4B5563' },
+                      { label: '場所・料金', field: 'reserveEventMetaColor' as const, fallback: '#6B7280' },
+                    ].map(({ label, field, fallback }) => (
+                      <label key={field} className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
+                        <span className="text-[11px] font-bold text-gray-500">{label}</span>
+                        <input
+                          type="color"
+                          value={form[field]?.trim() || fallback}
+                          onChange={(e) => setForm((p) => ({ ...p, [field]: e.target.value }))}
+                          className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1766,18 +1829,27 @@ export default function AdminPublicPage() {
                     {reserveSectionLead && (
                       <p className="mt-1 text-xs leading-5" style={{ color: reserveLeadColor }}>{reserveSectionLead}</p>
                     )}
-                    <ReservationViewShowcase
-                      accentColor={accentColor}
-                      buttonLabel={navLabels.reserve}
-                      viewStyle={form.reserveViewStyle}
-                      events={reserveEvents}
-                      tenantCode={tenantCode}
-                      eventTitleColor={reserveEventTitleColor}
-                      eventDateColor={reserveEventDateColor}
-                      eventMetaColor={reserveEventMetaColor}
-                      eventCardBg={reserveEventCardBg}
-                      className="mt-3"
-                    />
+                    {reserveActionStyle === 'line' ? (
+                      <span
+                        className="mt-3 inline-flex w-full items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-bold"
+                        style={{ backgroundColor: accentColor, borderColor: accentColor, color: '#fff' }}
+                      >
+                        LINEで予約する
+                      </span>
+                    ) : (
+                      <ReservationViewShowcase
+                        accentColor={accentColor}
+                        buttonLabel={navLabels.reserve}
+                        viewStyle={form.reserveViewStyle}
+                        events={reserveEvents}
+                        tenantCode={tenantCode}
+                        eventTitleColor={reserveEventTitleColor}
+                        eventDateColor={reserveEventDateColor}
+                        eventMetaColor={reserveEventMetaColor}
+                        eventCardBg={reserveEventCardBg}
+                        className="mt-3"
+                      />
+                    )}
                   </section>
                 )}
                 {hasBlogSection && (

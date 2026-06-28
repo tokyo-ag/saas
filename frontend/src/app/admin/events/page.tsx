@@ -15,6 +15,37 @@ const reserveViewOptions = [
   { label: 'スレッド', value: 'thread' },
 ];
 
+type ReservationActionStyle = 'comiu' | 'line';
+
+const reservationActionOptions: { label: string; value: ReservationActionStyle }[] = [
+  { label: 'COMIUで予約管理', value: 'comiu' },
+  { label: 'LINEで予約する', value: 'line' },
+];
+
+function parseFooterSettings(raw?: string | null): Record<string, any> {
+  try {
+    const parsed = JSON.parse(raw ?? '{}');
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function withReservationActionStyle(
+  page: import('@/lib/api').PublicPage,
+  actionStyle: ReservationActionStyle,
+  reserveViewStyle?: string,
+) {
+  return {
+    ...page,
+    ...(reserveViewStyle ? { reserveViewStyle } : {}),
+    footerText: JSON.stringify({
+      ...parseFooterSettings(page.footerText),
+      reserveActionStyle: actionStyle,
+    }),
+  };
+}
+
 
 type Tab = 'upcoming' | 'past' | 'draft';
 
@@ -35,10 +66,7 @@ export default function EventsPage() {
   const [publicPageId, setPublicPageId] = useState<string | null>(null);
   const [publicPageData, setPublicPageData] = useState<import('@/lib/api').PublicPage | null>(null);
   const [reserveViewStyle, setReserveViewStyle] = useState<string>('calendar');
-  const [eventCardBg, setEventCardBg] = useState('#ffffff');
-  const [eventTitleColor, setEventTitleColor] = useState('#111827');
-  const [eventDateColor, setEventDateColor] = useState('#4B5563');
-  const [eventMetaColor, setEventMetaColor] = useState('#6B7280');
+  const [reservationActionStyle, setReservationActionStyle] = useState<ReservationActionStyle>('comiu');
   const [savingStyle, setSavingStyle] = useState(false);
   const [reflected, setReflected] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
@@ -60,22 +88,11 @@ export default function EventsPage() {
         setPublicPageData(first);
         const style = first.reserveViewStyle ?? 'calendar';
         setReserveViewStyle(style);
-        if (first.reserveEventCardBg) setEventCardBg(first.reserveEventCardBg);
-        if (first.reserveEventTitleColor) setEventTitleColor(first.reserveEventTitleColor);
-        if (first.reserveEventDateColor) setEventDateColor(first.reserveEventDateColor);
-        if (first.reserveEventMetaColor) setEventMetaColor(first.reserveEventMetaColor);
+        const footerSettings = parseFooterSettings(first.footerText);
+        setReservationActionStyle(footerSettings.reserveActionStyle === 'line' ? 'line' : 'comiu');
       }
     }).catch(() => {});
   }, [load]);
-
-  function colorPayload() {
-    return {
-      reserveEventCardBg: eventCardBg,
-      reserveEventTitleColor: eventTitleColor,
-      reserveEventDateColor: eventDateColor,
-      reserveEventMetaColor: eventMetaColor,
-    };
-  }
 
   async function saveReserveViewStyle(style: string) {
     setReserveViewStyle(style);
@@ -83,7 +100,34 @@ export default function EventsPage() {
     try {
       await api.tenant.update({ liffEventView: style });
       if (publicPageId && publicPageData) {
-        await api.publicPages.update(publicPageId, { ...publicPageData, reserveViewStyle: style, ...colorPayload() } as any);
+        const updated = await api.publicPages.update(publicPageId, withReservationActionStyle(publicPageData, reservationActionStyle, style) as any);
+        setPublicPageData(updated);
+      }
+    } catch { /* silent */ } finally {
+      setSavingStyle(false);
+      setIframeKey((k) => k + 1);
+    }
+  }
+
+  async function saveReservationActionStyle(style: ReservationActionStyle) {
+    setReservationActionStyle(style);
+    if (!publicPageId || !publicPageData) return;
+    setSavingStyle(true);
+    try {
+      const updated = await api.publicPages.update(publicPageId, withReservationActionStyle(publicPageData, style, reserveViewStyle) as any);
+      setPublicPageData(updated);
+      const tenantCode = tenantId;
+      const slug = updated.slug || publicPageData.slug;
+      if (tenantCode && slug) {
+        const token = getToken();
+        await fetch('/api/revalidate-public-page', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ tenantCode, slug }),
+        }).catch(() => null);
       }
     } catch { /* silent */ } finally {
       setSavingStyle(false);
@@ -95,12 +139,13 @@ export default function EventsPage() {
     if (!publicPageId || !publicPageData) return;
     setSavingStyle(true);
     try {
-      await Promise.all([
+      const [, updated] = await Promise.all([
         api.tenant.update({ liffEventView: reserveViewStyle }),
-        api.publicPages.update(publicPageId, { ...publicPageData, reserveViewStyle, ...colorPayload() } as any),
+        api.publicPages.update(publicPageId, withReservationActionStyle(publicPageData, reservationActionStyle, reserveViewStyle) as any),
       ]);
+      setPublicPageData(updated);
       const tenantCode = tenantId;
-      const slug = publicPageData.slug;
+      const slug = updated.slug || publicPageData.slug;
       if (tenantCode && slug) {
         const token = getToken();
         await fetch('/api/revalidate-public-page', {
@@ -267,6 +312,23 @@ export default function EventsPage() {
                   </button>
                 ))}
               </div>
+              <span className="ml-0 text-xs font-bold text-gray-500 md:ml-2">予約スタイル</span>
+              <div className="flex gap-1 rounded-lg border border-gray-200 p-0.5">
+                {reservationActionOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => saveReservationActionStyle(opt.value)}
+                    className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
+                      reservationActionStyle === opt.value
+                        ? 'bg-[#06C755] text-white'
+                        : 'text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
               <button
                 type="button"
                 onClick={saveAndReflect}
@@ -275,40 +337,6 @@ export default function EventsPage() {
               >
                 {savingStyle ? '処理中...' : reflected ? '反映済み ✓' : '保存・反映'}
               </button>
-            </div>
-          </div>
-
-          {/* カードの色設定 */}
-          <div className="rounded-xl border border-gray-200 bg-white p-4">
-            <p className="mb-3 text-xs font-bold text-gray-500">カードの色設定</p>
-            <div className="space-y-2">
-              <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-                <span className="text-[11px] font-bold text-gray-500">カード背景色</span>
-                <input
-                  type="color"
-                  value={eventCardBg}
-                  onChange={(e) => setEventCardBg(e.target.value)}
-                  className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
-                />
-              </label>
-              <p className="text-[11px] font-bold text-gray-400 px-1">文字色</p>
-              <div className="grid gap-2 grid-cols-3">
-                {[
-                  { label: 'イベント名', value: eventTitleColor, setter: setEventTitleColor },
-                  { label: '日時', value: eventDateColor, setter: setEventDateColor },
-                  { label: '場所・料金', value: eventMetaColor, setter: setEventMetaColor },
-                ].map(({ label, value, setter }) => (
-                  <label key={label} className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-2 py-2">
-                    <span className="text-[11px] font-bold text-gray-500">{label}</span>
-                    <input
-                      type="color"
-                      value={value}
-                      onChange={(e) => setter(e.target.value)}
-                      className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
-                    />
-                  </label>
-                ))}
-              </div>
             </div>
           </div>
         </div>

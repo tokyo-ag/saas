@@ -945,6 +945,7 @@ export interface PublicPageInput {
   reserveEventDateColor?: string;
   reserveEventMetaColor?: string;
   reserveEventCardBg?: string;
+  reserveActionStyle?: 'comiu' | 'line';
   blogPostCardBg?: string;
   blogTitle?: string;
   blogLead?: string;

@@ -351,6 +351,7 @@ export default async function ClubCmsPage({
         reserveEventDateColor?: string;
         reserveEventMetaColor?: string;
         reserveEventCardBg?: string;
+        reserveActionStyle?: string;
         blogPostCardBg?: string;
         blogTitle?: string;
         blogLead?: string;
@@ -377,11 +378,14 @@ export default async function ClubCmsPage({
   const reserveEventMetaColor = sectionCopy.reserveEventMetaColor?.trim() || '#6B7280';
   const reserveEventCardBg = sectionCopy.reserveEventCardBg?.trim() || '#ffffff';
   const blogPostCardBg = sectionCopy.blogPostCardBg?.trim() || '#ffffff';
+  const reserveActionStyle = sectionCopy.reserveActionStyle === 'line' ? 'line' : 'comiu';
   const navAboutUrl = sectionCopy.aboutUrl?.trim() || '#about';
-  const navReserveUrl = sectionCopy.reserveUrl?.trim() || reserveHref;
+  const configuredReserveUrl = sectionCopy.reserveUrl?.trim();
+  const lineReserveUrl = configuredReserveUrl || sectionCopy.line?.trim() || contactHref;
+  const navReserveUrl = reserveActionStyle === 'line' ? lineReserveUrl : (configuredReserveUrl || reserveHref);
   const navBlogUrl = sectionCopy.blogUrl?.trim() || '#blog';
   const navContactUrl = sectionCopy.contactUrl?.trim() || contactHref;
-  const hasReserveSection = reserveEvents.length > 0;
+  const hasReserveSection = reserveActionStyle === 'line' || reserveEvents.length > 0;
   const hasBlogSection = blogPosts.length > 0;
   const visibleNavItems = [
     { key: 'about', label: navLabels.about, href: navAboutUrl },
@@ -570,25 +574,34 @@ export default async function ClubCmsPage({
 
         {hasReserveSection && (
         <div id="reserve" className="relative mt-8 scroll-mt-6 rounded-xl px-5 py-6 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
-          <Link href={navReserveUrl} className="absolute inset-0 rounded-xl" aria-label={navLabels.reserve} />
           <div className="relative">
             <p className="text-lg font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
             {reserveSectionLead && (
               <p className="mt-2 text-sm leading-7" style={{ color: reserveLeadColor }}>{reserveSectionLead}</p>
             )}
-            <ReservationViewShowcase
-              accentColor={accentColor}
-              buttonLabel={navLabels.reserve}
-              href={navReserveUrl}
-              viewStyle={page.reserveViewStyle}
-              events={reserveEvents}
-              tenantCode={page.tenant.code ?? tenantCode}
-              eventTitleColor={reserveEventTitleColor}
-              eventDateColor={reserveEventDateColor}
-              eventMetaColor={reserveEventMetaColor}
-              eventCardBg={reserveEventCardBg}
-              className="mt-4"
-            />
+            {reserveActionStyle === 'line' ? (
+              <Link
+                href={navReserveUrl}
+                className="mt-4 inline-flex w-full items-center justify-center rounded-lg border px-4 py-3 text-sm font-bold transition hover:opacity-80"
+                style={{ backgroundColor: accentColor, borderColor: accentColor, color: '#fff' }}
+              >
+                LINEで予約する
+              </Link>
+            ) : (
+              <ReservationViewShowcase
+                accentColor={accentColor}
+                buttonLabel={navLabels.reserve}
+                href={navReserveUrl}
+                viewStyle={page.reserveViewStyle}
+                events={reserveEvents}
+                tenantCode={page.tenant.code ?? tenantCode}
+                eventTitleColor={reserveEventTitleColor}
+                eventDateColor={reserveEventDateColor}
+                eventMetaColor={reserveEventMetaColor}
+                eventCardBg={reserveEventCardBg}
+                className="mt-4"
+              />
+            )}
           </div>
         </div>
         )}
