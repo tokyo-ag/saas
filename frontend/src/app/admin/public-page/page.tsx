@@ -202,54 +202,71 @@ const TONE_COLORS = [
 ];
 
 async function trimTransparentBorders(imageUrl: string): Promise<Blob> {
-  // Fetch first to bypass canvas CORS taint
   const res = await fetch(imageUrl);
+  if (!res.ok) throw new Error(`画像の取得に失敗しました (${res.status})`);
   const srcBlob = await res.blob();
-  const objectUrl = URL.createObjectURL(srcBlob);
-  try {
-    return await new Promise<Blob>((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        // Rasterize at 2x for SVG sharpness
-        const scale = srcBlob.type === 'image/svg+xml' ? 2 : 1;
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth * scale || 600 * scale;
-        canvas.height = img.naturalHeight * scale || 200 * scale;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) { reject(new Error('canvas unavailable')); return; }
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        let top = height, left = width, right = 0, bottom = 0;
-        for (let y = 0; y < height; y++) {
-          for (let x = 0; x < width; x++) {
-            if (data[(y * width + x) * 4 + 3] > 10) {
-              if (x < left) left = x;
-              if (x > right) right = x;
-              if (y < top) top = y;
-              if (y > bottom) bottom = y;
-            }
-          }
-        }
-        if (top >= bottom || left >= right) {
-          canvas.toBlob(b => b ? resolve(b) : reject(new Error('trim failed')), 'image/png');
-          return;
-        }
-        const pad = 4;
-        const out = document.createElement('canvas');
-        out.width = Math.min(right - left + 1 + pad * 2, width);
-        out.height = Math.min(bottom - top + 1 + pad * 2, height);
-        const outCtx = out.getContext('2d')!;
-        outCtx.drawImage(img,
-          (left - pad) / scale, (top - pad) / scale, out.width / scale, out.height / scale,
-          0, 0, out.width, out.height);
-        out.toBlob(b => b ? resolve(b) : reject(new Error('trim failed')), 'image/png');
-      };
-      img.onerror = () => reject(new Error('画像の読み込みに失敗しました'));
-      img.src = objectUrl;
-    });
-  } finally {
-    URL.revokeObjectURL(objectUrl);
-  }
+  const isSvg = srcBlob.type === 'image/svg+xml';
+
+  // createImageBitmap gives correct dimensions even for SVG (unlike new Image())
+  const bitmap = await createImageBitmap(srcBlob);
+  const scale = isSvg ? 2 : 1;
+  const cw = (bitmap.width || 600) * scale;
+  const ch = (bitmap.height || 200) * scale;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = cw;
+  canvas.height = ch;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('canvas unavailable');
+  ctx.drawImage(bitmap, 0, 0, cw, ch);
+  bitmap.close();
+
+  const { data, width, height } = ctx.getImageData(0, 0, cw, ch);
+
+  // Detect background from 4 corners — handles both transparent and solid-bg images
+  const px = (x: number, y: number) => (y * width + x) * 4;
+  const corners = [px(0,0), px(width-1,0), px(0,height-1), px(width-1,height-1)];
+  const avgAlpha = corners.reduce((s, i) => s + data[i+3], 0) / 4;
+  const hasSolidBg = avgAlpha > 200;
+  const bgR = Math.round(corners.reduce((s, i) => s + data[i],   0) / 4);
+  const bgG = Math.round(corners.reduce((s, i) => s + data[i+1], 0) / 4);
+  const bgB = Math.round(corners.reduce((s, i) => s + data[i+2], 0) / 4);
+
+  const isBg = (i: number) => {
+    if (data[i+3] < 10) return true;
+    if (!hasSolidBg) return false;
+    return Math.abs(data[i]-bgR) < 15 && Math.abs(data[i+1]-bgG) < 15 && Math.abs(data[i+2]-bgB) < 15;
+  };
+
+  let top = height, left = width, right = -1, bottom = -1;
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++)
+      if (!isBg((y * width + x) * 4)) {
+        if (x < left) left = x;
+        if (x > right) right = x;
+        if (y < top) top = y;
+        if (y > bottom) bottom = y;
+      }
+
+  if (top > bottom || left > right) return srcBlob;
+
+  const pad = 4;
+  const cropX = Math.max(0, left - pad);
+  const cropY = Math.max(0, top - pad);
+  const cropW = Math.min(right + 1 + pad, width) - cropX;
+  const cropH = Math.min(bottom + 1 + pad, height) - cropY;
+
+  if (cropX === 0 && cropY === 0 && cropW === width && cropH === height) return srcBlob;
+
+  const out = document.createElement('canvas');
+  out.width = cropW;
+  out.height = cropH;
+  // putImageData for exact pixel-level crop (no drawImage coordinate issues)
+  out.getContext('2d')!.putImageData(ctx.getImageData(cropX, cropY, cropW, cropH), 0, 0);
+
+  return new Promise<Blob>((resolve, reject) =>
+    out.toBlob(b => b ? resolve(b) : reject(new Error('canvas export failed')), 'image/png')
+  );
 }
 
 async function uploadFile(file: File): Promise<string> {
