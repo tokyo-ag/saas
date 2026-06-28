@@ -310,7 +310,7 @@ export default async function ClubCmsPage({
   const rawHeroImageMode = page.heroImageMode || 'fixed';
   const heroImageMode = rawHeroImageMode === 'auto'
     ? 'fixed'
-    : ['fixed', 'slider', 'grid', 'background'].includes(rawHeroImageMode)
+    : ['fixed', 'slider', 'background'].includes(rawHeroImageMode)
       ? rawHeroImageMode
       : 'fixed';
   const heroOverlayOpacity = clampPercent(page.heroOverlayOpacity);

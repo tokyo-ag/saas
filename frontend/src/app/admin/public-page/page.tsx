@@ -184,7 +184,6 @@ const BTN_SHAPE_OPTIONS = [
 const HERO_IMAGE_MODE_OPTIONS = [
   { label: '固定', value: 'fixed' },
   { label: 'スライダー', value: 'slider' },
-  { label: '横並び', value: 'grid' },
   { label: '背景', value: 'background' },
 ];
 
@@ -476,7 +475,7 @@ export default function AdminPublicPage() {
   const rawHeroImageMode = form.heroImageMode || 'fixed';
   const heroImageMode = rawHeroImageMode === 'auto'
     ? 'fixed'
-    : ['fixed', 'slider', 'grid', 'background'].includes(rawHeroImageMode)
+    : ['fixed', 'slider', 'background'].includes(rawHeroImageMode)
       ? rawHeroImageMode
       : 'fixed';
   const heroOverlayOpacity = clampPercent(form.heroOverlayOpacity);
@@ -501,23 +500,6 @@ export default function AdminPublicPage() {
     window.addEventListener('mouseup', onUp);
   }, [form.heroTextX, form.heroTextY]);
 
-  const handleSubtitleDrag = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const startX = e.clientX, startY = e.clientY;
-    const startSX = form.subtitleHeroX ?? 5;
-    const startSY = form.subtitleHeroY ?? ((form.heroTextY ?? 65) + 20);
-    function onMove(ev: MouseEvent) {
-      if (!heroRef.current) return;
-      const rect = heroRef.current.getBoundingClientRect();
-      const nx = Math.max(0, Math.min(90, Math.round(startSX + ((ev.clientX - startX) / rect.width) * 100)));
-      const ny = Math.max(0, Math.min(95, Math.round(startSY + ((ev.clientY - startY) / rect.height) * 100)));
-      setForm(p => ({ ...p, subtitleHeroX: nx, subtitleHeroY: ny }));
-    }
-    function onUp() { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); }
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  }, [form.subtitleHeroX, form.subtitleHeroY, form.heroTextY]);
 
   const handleTextResize = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -599,6 +581,8 @@ export default function AdminPublicPage() {
   const btnSize = form.buttonSize ?? 40;
   const btnIsPill = buttonStyle === 'pill';
   const dragRef = useRef<{ startY: number; startSize: number } | null>(null);
+  const subtitleDragRef = useRef<{ startX: number; startY: number; startSX: number; startSY: number } | null>(null);
+  const imageDragIndexRef = useRef<number | null>(null);
 
   const renderCopyInput = (
     label: string,
@@ -1334,9 +1318,27 @@ export default function AdminPublicPage() {
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               {imageUrls.map((url, i) => (
-                <div key={`${url}-${i}`} className="rounded-lg border border-gray-200 bg-gray-50 p-2">
+                <div
+                  key={`${url}-${i}`}
+                  draggable
+                  onDragStart={() => { imageDragIndexRef.current = i; }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    const from = imageDragIndexRef.current;
+                    if (from === null || from === i) return;
+                    setForm((prev) => {
+                      const urls = [...(prev.imageUrls ?? [])];
+                      const caps = [...(prev.imageCaptions ?? [])];
+                      [urls[from], urls[i]] = [urls[i], urls[from]];
+                      [caps[from], caps[i]] = [caps[i], caps[from]];
+                      imageDragIndexRef.current = i;
+                      return { ...prev, imageUrls: urls, imageCaptions: caps, coverImageUrl: urls[0] ?? '' };
+                    });
+                  }}
+                  onDragEnd={() => { imageDragIndexRef.current = null; }}
+                  className="cursor-grab rounded-lg border border-gray-200 bg-gray-50 p-2 active:cursor-grabbing active:opacity-50">
                   <div className="group relative h-24 overflow-hidden rounded-lg bg-gray-100">
-                    <img src={url} alt="" className="h-full w-full object-cover" />
+                    <img src={url} alt="" className="h-full w-full object-cover" draggable={false} />
                     <button type="button"
                       onClick={() => setForm((prev) => {
                         const next = (prev.imageUrls ?? []).filter((_, idx) => idx !== i);
@@ -1968,15 +1970,34 @@ export default function AdminPublicPage() {
                     {/* 独立サブタイトル */}
                     {form.subtitle?.trim() && (
                       <div
-                        className="absolute z-10 group cursor-move"
+                        className="absolute z-10 cursor-move select-none"
                         style={{
                           left: `${form.subtitleHeroX ?? 5}%`,
-                          top: `${form.subtitleHeroY ?? Math.min(95, (form.heroTextY ?? 65) + 20)}%`,
+                          top: `${form.subtitleHeroY ?? Math.min(90, (form.heroTextY ?? 65) + 15)}%`,
                           width: `${form.heroTextWidth ?? 85}%`,
+                          touchAction: 'none',
                         }}
-                        onMouseDown={handleSubtitleDrag}
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                          e.currentTarget.setPointerCapture(e.pointerId);
+                          subtitleDragRef.current = {
+                            startX: e.clientX,
+                            startY: e.clientY,
+                            startSX: form.subtitleHeroX ?? 5,
+                            startSY: form.subtitleHeroY ?? Math.min(90, (form.heroTextY ?? 65) + 15),
+                          };
+                        }}
+                        onPointerMove={(e) => {
+                          if (!subtitleDragRef.current || !heroRef.current) return;
+                          const rect = heroRef.current.getBoundingClientRect();
+                          const { startX, startY, startSX, startSY } = subtitleDragRef.current;
+                          const nx = Math.max(0, Math.min(90, Math.round(startSX + ((e.clientX - startX) / rect.width) * 100)));
+                          const ny = Math.max(0, Math.min(90, Math.round(startSY + ((e.clientY - startY) / rect.height) * 100)));
+                          setForm(p => ({ ...p, subtitleHeroX: nx, subtitleHeroY: ny }));
+                        }}
+                        onPointerUp={() => { subtitleDragRef.current = null; }}
                       >
-                        <div className="rounded border-2 border-dashed border-transparent p-1 transition-colors group-hover:border-white/60">
+                        <div className="rounded border-2 border-dashed border-white/50 p-1">
                           <p className="drop-shadow" style={subtitleTextStyle}>{form.subtitle.trim()}</p>
                         </div>
                       </div>
