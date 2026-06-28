@@ -118,7 +118,7 @@ export default function ComiuLandingPage() {
         body {
           margin: 0;
           overflow-x: hidden;
-          background: #fbfdff;
+          background: #f7f6ff;
           color: var(--ink);
           font-family: Inter, "Noto Sans JP", system-ui, sans-serif;
           -webkit-font-smoothing: antialiased;
@@ -126,7 +126,7 @@ export default function ComiuLandingPage() {
         }
 
         body:has(.comiu-lp) {
-          background: #fbfdff;
+          background: #f7f6ff;
         }
 
         a {
@@ -142,11 +142,11 @@ export default function ComiuLandingPage() {
           min-height: 100vh;
           overflow: hidden;
           background:
-            radial-gradient(circle at var(--g1x, 12%) var(--g1y, 5%),  rgba(91, 148, 255, 0.32), transparent 26%),
-            radial-gradient(circle at var(--g2x, 90%) var(--g2y, 8%),  rgba(198, 94, 255, 0.26), transparent 28%),
-            radial-gradient(circle at var(--g3x, 52%) var(--g3y, 95%), rgba(255, 110, 190, 0.18), transparent 32%),
-            radial-gradient(circle at var(--g4x, 8%)  var(--g4y, 68%), rgba(19, 200, 106, 0.12), transparent 24%),
-            #f8f9ff;
+            radial-gradient(circle at var(--g1x, 12%) var(--g1y, 5%), rgba(176, 215, 255, 0.68), transparent 28%),
+            radial-gradient(circle at var(--g2x, 90%) var(--g2y, 8%), rgba(232, 204, 255, 0.72), transparent 30%),
+            radial-gradient(circle at var(--g3x, 52%) var(--g3y, 95%), rgba(255, 214, 237, 0.72), transparent 34%),
+            radial-gradient(circle at var(--g4x, 8%) var(--g4y, 68%), rgba(202, 247, 224, 0.68), transparent 26%),
+            linear-gradient(180deg, #fbfdff 0%, #f7f4ff 46%, #f5fbff 100%);
         }
 
         .comiu-lp::before {
@@ -1063,13 +1063,15 @@ export default function ComiuLandingPage() {
           margin-inline: auto;
           padding: clamp(88px, 12vw, 160px) var(--page-x);
           overflow: hidden;
-          color: #fff;
+          color: var(--ink);
           background:
-            radial-gradient(circle at 15% 18%, rgba(114, 141, 255, 0.45), transparent 28%),
-            radial-gradient(circle at 85% 24%, rgba(223, 255, 79, 0.16), transparent 28%),
-            linear-gradient(135deg, #081037, #17215a 54%, #3d2b8c);
+            radial-gradient(circle at 15% 18%, rgba(255, 255, 255, 0.9), transparent 28%),
+            radial-gradient(circle at 85% 24%, rgba(223, 255, 79, 0.28), transparent 28%),
+            radial-gradient(circle at 74% 82%, rgba(255, 202, 231, 0.68), transparent 34%),
+            linear-gradient(135deg, #eaf5ff, #f4ebff 54%, #fff3fb);
+          border: 1px solid rgba(255, 255, 255, 0.84);
           border-radius: 46px;
-          box-shadow: 0 26px 80px rgba(12, 18, 58, 0.22);
+          box-shadow: 0 26px 80px rgba(73, 82, 152, 0.16);
         }
 
         .statement::before {
@@ -1079,7 +1081,7 @@ export default function ComiuLandingPage() {
           width: 780px;
           height: 780px;
           content: "";
-          background: conic-gradient(from 90deg, transparent, rgba(255, 255, 255, 0.17), transparent, rgba(223, 255, 79, 0.14), transparent);
+          background: conic-gradient(from 90deg, transparent, rgba(91, 148, 255, 0.22), transparent, rgba(255, 154, 211, 0.18), transparent);
           border-radius: 50%;
           filter: blur(24px);
           transform: translateX(-50%);
@@ -1102,11 +1104,11 @@ export default function ComiuLandingPage() {
         }
 
         .statement h2 span {
-          color: var(--lime);
+          color: var(--blue);
         }
 
         .statement p {
-          color: rgba(255, 255, 255, 0.78);
+          color: #53617f;
           font-size: clamp(16px, 2vw, 22px);
           line-height: 2;
           font-weight: 700;
@@ -1124,8 +1126,8 @@ export default function ComiuLandingPage() {
           min-height: 84px;
           place-items: center;
           padding: 12px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.16);
+          background: rgba(255, 255, 255, 0.64);
+          border: 1px solid rgba(143, 170, 255, 0.24);
           border-radius: 18px;
           font-size: 14px;
           font-weight: 900;
@@ -1695,17 +1697,21 @@ export default function ComiuLandingPage() {
         .future-message {
           margin: 34px 0 0;
           padding: clamp(24px, 4vw, 42px);
-          background: linear-gradient(135deg, #081037, #1c2b71);
+          background:
+            radial-gradient(circle at 16% 20%, rgba(255, 255, 255, 0.9), transparent 28%),
+            linear-gradient(135deg, #edf5ff, #f4eaff 54%, #fff0f8);
+          border: 1px solid rgba(255, 255, 255, 0.82);
           border-radius: 30px;
-          color: #fff;
+          color: var(--ink);
           text-align: center;
           font-size: clamp(20px, 2.4vw, 32px);
           line-height: 1.7;
           font-weight: 950;
+          box-shadow: var(--shadow-soft);
         }
 
         .future-message strong {
-          color: var(--lime);
+          color: var(--blue);
         }
 
         .final {
@@ -1715,13 +1721,15 @@ export default function ComiuLandingPage() {
           scroll-snap-align: start;
           overflow: hidden;
           background:
-            radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.34), transparent 22%),
-            radial-gradient(circle at 84% 30%, rgba(223, 255, 79, 0.28), transparent 28%),
-            linear-gradient(120deg, #125bff, #8f4dff);
+            radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.88), transparent 24%),
+            radial-gradient(circle at 84% 30%, rgba(223, 255, 79, 0.34), transparent 28%),
+            radial-gradient(circle at 78% 86%, rgba(255, 189, 225, 0.5), transparent 34%),
+            linear-gradient(120deg, #e8f2ff, #f2e8ff 58%, #fff1f9);
+          border: 1px solid rgba(255, 255, 255, 0.86);
           border-radius: 38px;
-          color: #fff;
+          color: var(--ink);
           text-align: center;
-          box-shadow: 0 34px 84px rgba(66, 85, 235, 0.28);
+          box-shadow: 0 34px 84px rgba(88, 100, 190, 0.16);
         }
 
         .final h2 {
@@ -1734,7 +1742,7 @@ export default function ComiuLandingPage() {
         .final p {
           width: min(680px, 100%);
           margin: 0 auto 28px;
-          color: rgba(255, 255, 255, 0.84);
+          color: #53617f;
           font-size: clamp(16px, 2vw, 22px);
           line-height: 1.9;
           font-weight: 750;
@@ -1759,9 +1767,9 @@ export default function ComiuLandingPage() {
         .free-tags span {
           min-height: 44px;
           padding: 12px 18px;
-          color: #fff;
-          background: rgba(255, 255, 255, 0.14);
-          border: 1px solid rgba(255, 255, 255, 0.22);
+          color: #314061;
+          background: rgba(255, 255, 255, 0.64);
+          border: 1px solid rgba(143, 170, 255, 0.28);
           border-radius: 999px;
           font-weight: 900;
         }
@@ -2315,18 +2323,21 @@ export default function ComiuLandingPage() {
         .seo-card {
           padding: clamp(44px, 7vw, 88px) clamp(28px, 6vw, 88px);
           background:
-            radial-gradient(circle at 15% 18%, rgba(114, 141, 255, 0.45), transparent 28%),
-            linear-gradient(135deg, #081037, #17215a 54%, #3d2b8c);
+            radial-gradient(circle at 14% 14%, rgba(255, 255, 255, 0.92), transparent 28%),
+            radial-gradient(circle at 86% 18%, rgba(202, 247, 224, 0.8), transparent 30%),
+            radial-gradient(circle at 70% 92%, rgba(255, 213, 235, 0.72), transparent 32%),
+            linear-gradient(135deg, #dfeaff 0%, #f3e9ff 54%, #fff1f8 100%);
+          border: 1px solid rgba(255, 255, 255, 0.82);
           border-radius: 40px;
-          color: #fff;
+          color: var(--ink);
           text-align: center;
-          box-shadow: 0 26px 80px rgba(12, 18, 58, 0.22);
+          box-shadow: 0 26px 80px rgba(73, 82, 152, 0.16);
         }
 
         .seo-card .section-label {
-          background: rgba(255, 255, 255, 0.12);
-          border-color: rgba(255, 255, 255, 0.18);
-          color: rgba(255, 255, 255, 0.88);
+          background: rgba(255, 255, 255, 0.76);
+          border-color: rgba(143, 170, 255, 0.32);
+          color: #3353d8;
         }
 
         .seo-card .section-label::before {
@@ -2334,13 +2345,13 @@ export default function ComiuLandingPage() {
         }
 
         .seo-card .section-title {
-          color: #fff;
+          color: var(--ink);
         }
 
         .seo-card .section-desc {
           max-width: 600px;
           margin: 0 auto;
-          color: rgba(255, 255, 255, 0.76);
+          color: #53617f;
         }
 
         .website-card {
@@ -2372,17 +2383,18 @@ export default function ComiuLandingPage() {
 
         .website-mock-wrap {
           padding: clamp(10px, 1.6vw, 18px);
-          background: rgba(255, 255, 255, 0.10);
-          border: 1px solid rgba(255, 255, 255, 0.16);
+          background: rgba(255, 255, 255, 0.72);
+          border: 1px solid rgba(255, 255, 255, 0.86);
           border-radius: 28px;
-          box-shadow: 0 24px 70px rgba(4, 10, 38, 0.25);
+          box-shadow: 0 24px 70px rgba(65, 78, 156, 0.15);
+          backdrop-filter: blur(16px);
         }
 
         .website-mock-img {
           width: 100%;
           display: block;
           border-radius: 20px;
-          box-shadow: 0 18px 48px rgba(4, 10, 38, 0.24);
+          box-shadow: 0 18px 48px rgba(65, 78, 156, 0.16);
         }
 
         /* B: Feature story sections */
@@ -2425,10 +2437,10 @@ export default function ComiuLandingPage() {
         }
 
         /* D: panel backgrounds */
-        .h-panel:nth-child(1) { background: linear-gradient(135deg, #eef2ff 0%, #f5f0ff 100%); }
-        .h-panel:nth-child(2) { background: linear-gradient(135deg, #f5f0ff 0%, #ffeef8 100%); }
-        .h-panel:nth-child(3) { background: linear-gradient(135deg, #eefff8 0%, #eef4ff 100%); }
-        .h-panel:nth-child(4) { background: linear-gradient(135deg, #f8fbff 0%, #f4fff8 100%); }
+        .h-panel:nth-child(1) { background: linear-gradient(135deg, #f0f6ff 0%, #f7efff 52%, #fff3fb 100%); }
+        .h-panel:nth-child(2) { background: linear-gradient(135deg, #fff2fa 0%, #f3efff 52%, #eef9ff 100%); }
+        .h-panel:nth-child(3) { background: linear-gradient(135deg, #f0fff8 0%, #edf4ff 56%, #fff1f7 100%); }
+        .h-panel:nth-child(4) { background: linear-gradient(135deg, #f8fbff 0%, #f5fff8 54%, #fff6ea 100%); }
 
         .h-panel:nth-child(4) .seo-card {
           background: transparent;
@@ -2484,9 +2496,11 @@ export default function ComiuLandingPage() {
 
           .h-panel:nth-child(4) .seo-card {
             background:
-              radial-gradient(circle at 15% 18%, rgba(114,141,255,0.45), transparent 28%),
-              linear-gradient(135deg, #081037, #17215a 54%, #3d2b8c);
-            box-shadow: 0 26px 80px rgba(12,18,58,0.22);
+              radial-gradient(circle at 14% 14%, rgba(255,255,255,0.92), transparent 28%),
+              radial-gradient(circle at 86% 18%, rgba(202,247,224,0.8), transparent 30%),
+              radial-gradient(circle at 70% 92%, rgba(255,213,235,0.72), transparent 32%),
+              linear-gradient(135deg, #dfeaff 0%, #f3e9ff 54%, #fff1f8 100%);
+            box-shadow: 0 26px 80px rgba(73,82,152,0.16);
             border-radius: 40px;
           }
         }
