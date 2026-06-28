@@ -2258,6 +2258,16 @@ export default function ComiuLandingPage() {
           align-items: center;
         }
 
+        .portal-title {
+          max-width: 560px;
+          font-size: clamp(40px, 4.6vw, 66px);
+          line-height: 1.12;
+        }
+
+        .portal-title span {
+          display: block;
+        }
+
         .portal-img {
           width: 100%;
           display: block;
@@ -2591,11 +2601,12 @@ export default function ComiuLandingPage() {
                   <div className="portal-grid">
                     <div>
                       <SectionLabel>PORTAL & BLOG</SectionLabel>
-                      <h2 className="section-title" id="portal-title">
-                        活動実績やブログが、直接ポータルサイトに反映。
+                      <h2 className="section-title portal-title" id="portal-title">
+                        <span>活動実績が</span>
+                        <span>ポータルに残る。</span>
                       </h2>
                       <p className="section-desc">
-                        コツコツ活動するほど、集客力や認知拡大につながります。SNS投稿は流れていく。でも、COMIUに積み上がった実績は残り続ける。
+                        イベントやブログを公開すると、COMIUポータルにも自動で反映。SNSで流れた実績を、次の参加者に見つけてもらえる資産に変えます。
                       </p>
                     </div>
                     <div>
