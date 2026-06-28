@@ -27,6 +27,7 @@ type ReservationViewShowcaseProps = {
   viewStyle?: string | null;
   events?: ReservationShowcaseEvent[];
   tenantCode?: string;
+  lineMode?: boolean;
   eventTitleColor?: string;
   eventDateColor?: string;
   eventMetaColor?: string;
@@ -123,6 +124,7 @@ function CalendarPreview({
   eventTitleColor,
   eventDateColor,
   cardBg,
+  lineMode,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
@@ -131,6 +133,7 @@ function CalendarPreview({
   eventTitleColor?: string;
   eventDateColor?: string;
   cardBg?: string;
+  lineMode?: boolean;
 }) {
   const visible = readableAccent(accentColor);
   const actualEvents = events ?? [];
@@ -144,16 +147,16 @@ function CalendarPreview({
     }
   }
 
-  return (
-    <div className="rounded-2xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.10)' }}>
+  const calendarBody = (
+    <>
       <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: visible.accent }}>
-        <button type="button" onClick={prevMonth} className="w-7 h-7 flex items-center justify-center rounded-full bg-white/20">
+        <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); prevMonth(); }} className="w-7 h-7 flex items-center justify-center rounded-full bg-white/20">
           <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
         <span className="text-sm font-bold text-white tracking-wide">{year}年 {month + 1}月</span>
-        <button type="button" onClick={nextMonth} className="w-7 h-7 flex items-center justify-center rounded-full bg-white/20">
+        <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); nextMonth(); }} className="w-7 h-7 flex items-center justify-center rounded-full bg-white/20">
           <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
           </svg>
@@ -193,15 +196,26 @@ function CalendarPreview({
                     {day}
                   </span>
                   {dayEvents.map((event) => (
-                    <Link
-                      key={event.id}
-                      href={eventHref(event, tenantCode, fallbackHref)}
-                      className="mb-0.5 block rounded px-1 py-0.5"
-                      style={{ backgroundColor: visible.accent }}
-                    >
-                      <p className="truncate text-[8px] font-bold leading-tight" style={{ color: eventTitleColor || visible.text }}>{event.title}</p>
-                      <p className="text-[7px] leading-none opacity-75" style={{ color: eventDateColor || visible.text }}>{eventTime(event)}</p>
-                    </Link>
+                    lineMode ? (
+                      <div
+                        key={event.id}
+                        className="mb-0.5 block rounded px-1 py-0.5"
+                        style={{ backgroundColor: visible.accent }}
+                      >
+                        <p className="truncate text-[8px] font-bold leading-tight" style={{ color: eventTitleColor || visible.text }}>{event.title}</p>
+                        <p className="text-[7px] leading-none opacity-75" style={{ color: eventDateColor || visible.text }}>{eventTime(event)}</p>
+                      </div>
+                    ) : (
+                      <Link
+                        key={event.id}
+                        href={eventHref(event, tenantCode, fallbackHref)}
+                        className="mb-0.5 block rounded px-1 py-0.5"
+                        style={{ backgroundColor: visible.accent }}
+                      >
+                        <p className="truncate text-[8px] font-bold leading-tight" style={{ color: eventTitleColor || visible.text }}>{event.title}</p>
+                        <p className="text-[7px] leading-none opacity-75" style={{ color: eventDateColor || visible.text }}>{eventTime(event)}</p>
+                      </Link>
+                    )
                   ))}
                   {hasDummyEvent && (
                     <div className="rounded px-1 py-0.5" style={{ backgroundColor: visible.accent }}>
@@ -215,6 +229,20 @@ function CalendarPreview({
           );
         })}
       </div>
+    </>
+  );
+
+  if (lineMode && fallbackHref) {
+    return (
+      <Link href={fallbackHref} className="block rounded-2xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.10)' }}>
+        {calendarBody}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.10)' }}>
+      {calendarBody}
     </div>
   );
 }
@@ -403,6 +431,7 @@ export function ReservationViewShowcase({
   viewStyle = 'calendar',
   events,
   tenantCode,
+  lineMode,
   eventTitleColor,
   eventDateColor,
   eventMetaColor,
@@ -417,7 +446,7 @@ export function ReservationViewShowcase({
   return (
     <div className={`space-y-3 ${className}`}>
       {selectedView === 'calendar' ? (
-        <CalendarPreview accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} cardBg={eventCardBg} />
+        <CalendarPreview accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} cardBg={eventCardBg} lineMode={lineMode} />
       ) : (
         <div className="rounded-xl">
           {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} />}

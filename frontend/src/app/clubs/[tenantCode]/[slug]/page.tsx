@@ -579,9 +579,9 @@ export default async function ClubCmsPage({
             {reserveSectionLead && (
               <p className="mt-2 text-sm leading-7" style={{ color: reserveLeadColor }}>{reserveSectionLead}</p>
             )}
-            {reserveActionStyle === 'line' ? (
+            {reserveActionStyle === 'line' && reserveEvents.length === 0 ? (
               <Link
-                href={navReserveUrl}
+                href={lineReserveUrl}
                 className="mt-4 inline-flex w-full items-center justify-center rounded-lg border px-4 py-3 text-sm font-bold transition hover:opacity-80"
                 style={{ backgroundColor: accentColor, borderColor: accentColor, color: '#fff' }}
               >
@@ -590,11 +590,12 @@ export default async function ClubCmsPage({
             ) : (
               <ReservationViewShowcase
                 accentColor={accentColor}
-                buttonLabel={navLabels.reserve}
-                href={navReserveUrl}
+                buttonLabel={reserveActionStyle === 'line' ? 'LINEで友達追加して予約する' : navLabels.reserve}
+                href={reserveActionStyle === 'line' ? lineReserveUrl : navReserveUrl}
                 viewStyle={page.reserveViewStyle}
                 events={reserveEvents}
-                tenantCode={page.tenant.code ?? tenantCode}
+                tenantCode={reserveActionStyle === 'line' ? undefined : (page.tenant.code ?? tenantCode)}
+                lineMode={reserveActionStyle === 'line'}
                 eventTitleColor={reserveEventTitleColor}
                 eventDateColor={reserveEventDateColor}
                 eventMetaColor={reserveEventMetaColor}
