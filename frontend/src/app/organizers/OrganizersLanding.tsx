@@ -2343,6 +2343,48 @@ export default function ComiuLandingPage() {
           color: rgba(255, 255, 255, 0.76);
         }
 
+        .website-card {
+          display: grid;
+          grid-template-columns: minmax(0, 0.82fr) minmax(320px, 1fr);
+          gap: clamp(28px, 5vw, 58px);
+          align-items: center;
+          text-align: left;
+          overflow: hidden;
+        }
+
+        .website-card .section-label {
+          margin-inline: 0;
+        }
+
+        .website-card .section-title {
+          font-size: clamp(34px, 4.6vw, 64px);
+          line-height: 1.13;
+        }
+
+        .website-card .section-desc {
+          max-width: 560px;
+          margin: 0;
+        }
+
+        .website-title span {
+          display: block;
+        }
+
+        .website-mock-wrap {
+          padding: clamp(10px, 1.6vw, 18px);
+          background: rgba(255, 255, 255, 0.10);
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          border-radius: 28px;
+          box-shadow: 0 24px 70px rgba(4, 10, 38, 0.25);
+        }
+
+        .website-mock-img {
+          width: 100%;
+          display: block;
+          border-radius: 20px;
+          box-shadow: 0 18px 48px rgba(4, 10, 38, 0.24);
+        }
+
         /* B: Feature story sections */
         .h-scroll-outer {
           position: relative;
@@ -2423,6 +2465,23 @@ export default function ComiuLandingPage() {
           .h-scroll-track { display: grid; width: 100%; transition: none; }
           .h-panel { width: 100%; height: auto; min-height: 0; padding: var(--section-y) 0; }
           .h-dots { display: none; }
+          .website-card {
+            grid-template-columns: 1fr;
+            text-align: left;
+          }
+
+          .website-card .section-title {
+            font-size: clamp(32px, 9vw, 44px);
+          }
+
+          .website-mock-wrap {
+            border-radius: 22px;
+          }
+
+          .website-mock-img {
+            border-radius: 16px;
+          }
+
           .h-panel:nth-child(4) .seo-card {
             background:
               radial-gradient(circle at 15% 18%, rgba(114,141,255,0.45), transparent 28%),
@@ -2580,14 +2639,21 @@ export default function ComiuLandingPage() {
               {/* Panel ②: WEBサイト作成 */}
               <section className="h-panel" aria-labelledby="seo-title">
                 <div className="h-panel-inner">
-                  <div className="seo-card">
-                    <SectionLabel>FREE WEB SITE</SectionLabel>
-                    <h2 className="section-title" id="seo-title">
-                      まずはオリジナルのWEBサイトを無料作成
-                    </h2>
-                    <p className="section-desc">
-                      団体の特色に合わせて自由にカスタマイズできます。初めての方は、SEO専任の担当者が初回無料でヒアリングし、ページ作成までサポートします。
-                    </p>
+                  <div className="seo-card website-card">
+                    <div>
+                      <SectionLabel>FREE WEB SITE</SectionLabel>
+                      <h2 className="section-title website-title" id="seo-title">
+                        <span>まずはオリジナルの</span>
+                        <span>WEBサイトを無料作成</span>
+                      </h2>
+                      <p className="section-desc">
+                        団体の特色に合わせて自由にカスタマイズできます。初めての方は、SEO専任の担当者が初回無料でヒアリングし、ページ作成までサポートします。
+                      </p>
+                    </div>
+                    <div className="website-mock-wrap">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/バドミントンサークルウェブデザイン展示.svg" alt="団体WEBサイトの作成イメージ" className="website-mock-img" />
+                    </div>
                   </div>
                 </div>
               </section>
