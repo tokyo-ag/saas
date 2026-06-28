@@ -124,6 +124,9 @@ const emptyForm: PublicPageInput = {
   navContactUrl: '',
   seoTitle: '',
   seoDescription: '',
+  orgNameDisplayType: 'text',
+  orgLogoWordmarkUrl: '',
+  orgLogoWordmarkAlt: '',
   status: 'published',
 };
 
@@ -668,6 +671,9 @@ export default function AdminPublicPage() {
             contactLabel: first.contactLabel ?? 'お問い合わせ',
             seoTitle: first.seoTitle ?? '',
             seoDescription: first.seoDescription ?? '',
+            orgNameDisplayType: (first as any).orgNameDisplayType ?? 'text',
+            orgLogoWordmarkUrl: (first as any).orgLogoWordmarkUrl ?? '',
+            orgLogoWordmarkAlt: (first as any).orgLogoWordmarkAlt ?? '',
             status: 'published',
           });
           const loaded = (first.blocks as any[] | null);
@@ -717,6 +723,19 @@ export default function AdminPublicPage() {
       updateBlock(id, { imageUrl: url });
     } catch (err: any) {
       setError(err?.message ?? 'アップロードに失敗しました');
+    }
+  }
+  const logoUploadRef = useRef<HTMLInputElement | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  async function handleLogoUpload(file: File) {
+    setLogoUploading(true);
+    try {
+      const url = await uploadFile(file);
+      setForm(p => ({ ...p, orgLogoWordmarkUrl: url, orgLogoWordmarkAlt: p.orgLogoWordmarkAlt || displayName }));
+    } catch (err: any) {
+      setError(err?.message ?? 'ロゴのアップロードに失敗しました');
+    } finally {
+      setLogoUploading(false);
     }
   }
 
@@ -910,8 +929,11 @@ export default function AdminPublicPage() {
         contactUrl: form.navContactUrl?.trim() || '',
       }),
       status: 'published',
-      seoTitle: displayName,
-      seoDescription: blocks.map(b => b.content).join(' ').replace(/\s+/g, ' ').trim().slice(0, 150) || form.body.replace(/[#>*_-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 150),
+      seoTitle: form.seoTitle?.trim() || displayName,
+      seoDescription: form.seoDescription?.trim() || blocks.map(b => b.content).join(' ').replace(/\s+/g, ' ').trim().slice(0, 150) || form.body.replace(/[#>*_-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 150),
+      orgNameDisplayType: form.orgNameDisplayType || 'text',
+      orgLogoWordmarkUrl: form.orgLogoWordmarkUrl?.trim() || '',
+      orgLogoWordmarkAlt: form.orgLogoWordmarkAlt?.trim() || displayName,
     };
     try {
       const page = selectedId
@@ -1031,6 +1053,50 @@ export default function AdminPublicPage() {
             </div>
           </button>
           {openSections.header && <div className="space-y-4 border-t border-gray-100 p-4">
+          {/* ロゴ / ワードマーク */}
+          <div className="space-y-3 rounded-lg bg-gray-50 p-3">
+            <p className="text-[11px] font-bold text-gray-400">団体名の表示方法</p>
+            <div className="flex gap-1.5">
+              {([['text', 'テキスト'], ['image', 'ロゴ画像'], ['both', '両方']] as const).map(([val, lbl]) => (
+                <button key={val} type="button"
+                  onClick={() => setForm(p => ({ ...p, orgNameDisplayType: val }))}
+                  className={`flex-1 rounded-lg border px-2 py-1.5 text-[11px] font-bold transition ${form.orgNameDisplayType === val ? 'border-[#06C755] bg-[#06C755]/10 text-[#06C755]' : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-100'}`}>
+                  {lbl}
+                </button>
+              ))}
+            </div>
+            {(form.orgNameDisplayType === 'image' || form.orgNameDisplayType === 'both') && (
+              <div className="space-y-2">
+                <input ref={logoUploadRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f); e.target.value = ''; }} />
+                {form.orgLogoWordmarkUrl ? (
+                  <div className="relative rounded-lg border border-gray-200 bg-white p-3">
+                    <img src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
+                      className="mx-auto max-h-16 max-w-full object-contain" />
+                    <button type="button" onClick={() => logoUploadRef.current?.click()}
+                      className="mt-2 w-full rounded border border-gray-200 bg-gray-50 py-1 text-[11px] text-gray-500 hover:bg-gray-100">
+                      {logoUploading ? 'アップロード中...' : '画像を変更'}
+                    </button>
+                    <button type="button" onClick={() => setForm(p => ({ ...p, orgLogoWordmarkUrl: '' }))}
+                      className="mt-1 w-full rounded py-0.5 text-[11px] text-red-400 hover:text-red-600">
+                      削除
+                    </button>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => logoUploadRef.current?.click()} disabled={logoUploading}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 bg-white py-5 text-sm text-gray-400 hover:border-[#06C755] hover:text-[#06C755] transition disabled:opacity-50">
+                    {logoUploading ? 'アップロード中...' : 'ロゴ画像をアップロード'}
+                  </button>
+                )}
+                <label className="block">
+                  <span className="mb-1 block text-[11px] text-gray-400">alt テキスト（SEO用）</span>
+                  <input value={form.orgLogoWordmarkAlt ?? ''} placeholder={displayName}
+                    onChange={e => setForm(p => ({ ...p, orgLogoWordmarkAlt: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                </label>
+              </div>
+            )}
+          </div>
           {/* タイトル / サブタイトル */}
           <div className="space-y-5 rounded-lg bg-gray-50 p-3">
             <div className="space-y-2">
@@ -1744,7 +1810,16 @@ export default function AdminPublicPage() {
                         className="cursor-move rounded border-2 border-dashed border-transparent p-1 transition-colors group-hover:border-white/60"
                         onMouseDown={handleTextDrag}
                       >
-                        <p className="font-bold drop-shadow" style={titleTextStyle}>{displayName}</p>
+                        <p className="font-bold drop-shadow" style={titleTextStyle}>
+                          {form.orgLogoWordmarkUrl && form.orgNameDisplayType !== 'text' ? (
+                            <>
+                              <img src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
+                                className="max-w-full object-contain drop-shadow"
+                                style={{ maxHeight: titleFontSize * 2.5, height: 'auto' }} />
+                              {form.orgNameDisplayType === 'both' && <span>{displayName}</span>}
+                            </>
+                          ) : displayName}
+                        </p>
                         {form.subtitle?.trim() && (
                           <p style={{ marginTop: subtitleGap, ...subtitleTextStyle }}>{form.subtitle.trim()}</p>
                         )}

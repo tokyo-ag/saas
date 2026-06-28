@@ -875,6 +875,9 @@ export interface PublicPage {
   footerText?: string | null;
   seoTitle?: string | null;
   seoDescription?: string | null;
+  orgNameDisplayType?: string | null;
+  orgLogoWordmarkUrl?: string | null;
+  orgLogoWordmarkAlt?: string | null;
   status: 'draft' | 'published';
   publishedAt?: string | null;
   createdAt: string;
@@ -964,6 +967,9 @@ export interface PublicPageInput {
   navContactUrl?: string;
   seoTitle?: string;
   seoDescription?: string;
+  orgNameDisplayType?: string;
+  orgLogoWordmarkUrl?: string;
+  orgLogoWordmarkAlt?: string;
   status?: 'draft' | 'published';
 }
 
@@ -1071,6 +1077,9 @@ export interface PublicCmsPage {
   footerText?: string | null;
   seoTitle?: string | null;
   seoDescription?: string | null;
+  orgNameDisplayType?: string | null;
+  orgLogoWordmarkUrl?: string | null;
+  orgLogoWordmarkAlt?: string | null;
   publishedAt?: string | null;
   updatedAt: string;
   tenant: {

@@ -661,6 +661,9 @@ export class PublicController {
       footerText: page.footerText,
       seoTitle: page.seoTitle,
       seoDescription: page.seoDescription,
+      orgNameDisplayType: page.orgNameDisplayType,
+      orgLogoWordmarkUrl: page.orgLogoWordmarkUrl,
+      orgLogoWordmarkAlt: page.orgLogoWordmarkAlt,
       publishedAt: page.publishedAt,
       updatedAt: page.updatedAt,
       tenant: {

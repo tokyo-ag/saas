@@ -261,6 +261,9 @@ export default async function ClubCmsPage({
   if (!page) notFound();
 
   const tenantName = page.tenant.lineDisplayName ?? page.tenant.name;
+  const orgDisplayType = (page as any).orgNameDisplayType ?? 'text';
+  const orgLogoUrl = (page as any).orgLogoWordmarkUrl as string | null;
+  const orgLogoAlt = ((page as any).orgLogoWordmarkAlt as string | null) || tenantName;
   const images = (page.imageUrls?.length ? page.imageUrls : page.coverImageUrl ? [page.coverImageUrl] : [])
     .map((url) => imgUrl(url, IMAGE_BASE_URL))
     .filter(Boolean) as string[];
@@ -447,7 +450,19 @@ export default async function ClubCmsPage({
                   width: `${page.heroTextWidth ?? 85}%`,
                 }}
               >
-                <h1 className="font-bold drop-shadow" style={titleTextStyle}>{tenantName}</h1>
+                <h1 className="font-bold drop-shadow" style={titleTextStyle}>
+                  {orgLogoUrl && orgDisplayType !== 'text' ? (
+                    <>
+                      <img src={orgLogoUrl} alt={orgLogoAlt}
+                        className="max-w-full object-contain drop-shadow"
+                        style={{ maxHeight: titleFontSize * 2.5, height: 'auto' }} />
+                      {orgDisplayType === 'both'
+                        ? <span>{tenantName}</span>
+                        : <span className="sr-only">{tenantName}</span>
+                      }
+                    </>
+                  ) : tenantName}
+                </h1>
                 {page.subtitle && <p style={{ marginTop: subtitleGap, ...subtitleTextStyle }}>{page.subtitle}</p>}
                 {heroNavPosition === 'inside' && (
                   <nav className={`mt-4 ${buttonLayoutClass}`} style={buttonGridStyle}>

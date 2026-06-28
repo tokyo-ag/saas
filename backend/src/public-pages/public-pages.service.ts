@@ -259,6 +259,20 @@ export class UpsertPublicPageDto {
   seoDescription?: string;
 
   @IsOptional()
+  @IsIn(['text', 'image', 'both'])
+  orgNameDisplayType?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  orgLogoWordmarkUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  orgLogoWordmarkAlt?: string;
+
+  @IsOptional()
   @IsString()
   @MaxLength(20)
   buttonStyle?: string;
@@ -390,6 +404,9 @@ export class PublicPagesService {
       footerText: dto.footerText?.trim() || null,
       seoTitle: dto.seoTitle?.trim() || null,
       seoDescription: dto.seoDescription?.trim() || null,
+      orgNameDisplayType: dto.orgNameDisplayType ?? 'text',
+      orgLogoWordmarkUrl: dto.orgLogoWordmarkUrl?.trim() || null,
+      orgLogoWordmarkAlt: dto.orgLogoWordmarkAlt?.trim() || null,
       status,
       ...(isPublishing ? { publishedAt: new Date() } : {}),
       ...(status === 'draft' ? { publishedAt: null } : {}),
