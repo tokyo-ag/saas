@@ -2357,17 +2357,105 @@ export default function ComiuLandingPage() {
         }
 
         .remind-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 38px;
+          align-items: stretch;
+        }
+
+        .remind-heading {
+          text-align: center;
+        }
+
+        .remind-heading .section-label {
+          margin-inline: auto;
+        }
+
+        .remind-title {
+          max-width: none;
+          font-size: 50px;
+          line-height: 1.14;
+          letter-spacing: -0.06em;
+        }
+
+        .remind-title .heading-line {
+          display: block;
+          white-space: nowrap;
+        }
+
+        .remind-content {
           display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: clamp(36px, 6vw, 80px);
+          grid-template-columns: minmax(500px, 1fr) minmax(340px, 0.92fr);
+          gap: 48px;
           align-items: center;
         }
 
+        .remind-copy {
+          max-width: 640px;
+        }
+
+        .remind-body {
+          display: grid;
+          gap: 12px;
+          color: #53617f;
+          font-size: 17px;
+          font-weight: 650;
+          line-height: 1.95;
+          word-break: keep-all;
+          overflow-wrap: break-word;
+          text-wrap: pretty;
+        }
+
+        .remind-body p {
+          margin: 0;
+        }
+
+        .remind-body p:first-child {
+          color: var(--ink);
+          font-weight: 900;
+          line-height: 1.75;
+        }
+
         .remind-img {
-          width: 100%;
+          width: min(100%, 500px);
           display: block;
           border-radius: 24px;
           box-shadow: var(--shadow);
+          margin: 0 auto;
+        }
+
+        @media (max-width: 640px) {
+          .remind-grid {
+            gap: 24px;
+          }
+
+          .remind-heading {
+            text-align: left;
+          }
+
+          .remind-heading .section-label {
+            margin-inline: 0;
+          }
+
+          .remind-title {
+            font-size: 30px;
+            line-height: 1.14;
+          }
+
+          .remind-title .heading-line {
+            white-space: normal;
+          }
+
+          .remind-content {
+            grid-template-columns: 1fr;
+            gap: 24px;
+          }
+
+          .remind-body {
+            font-size: 14px;
+            line-height: 1.85;
+            gap: 10px;
+          }
         }
 
         /* ⑤ SEO */
@@ -2853,18 +2941,26 @@ export default function ComiuLandingPage() {
               <section className="h-panel" aria-labelledby="remind-title">
                 <div className="h-panel-inner">
                   <div className="remind-grid">
-                    <div>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/comiu-line-reminder.svg" alt="LINE自動リマインド" className="remind-img" />
-                    </div>
-                    <div>
+                    <div className="remind-heading">
                       <SectionLabel>自動リマインド</SectionLabel>
-                      <h2 className="section-title" id="remind-title">
-                        アプリと公式LINEのリマインドを設定
+                      <h2 className="section-title remind-title" id="remind-title">
+                        <span className="heading-line">アプリと公式LINEで</span>
+                        <span className="heading-line">リマインドを自動化</span>
                       </h2>
-                      <p className="section-desc">
-                        団体の参加者が30〜100人を超えてくると、自動化のプロセスが必須です。事前決済システムや、PayPay決済確認後の受付承認システムも導入できます。初回に限り、画面共有で使用方法のレクチャーも行っています。
-                      </p>
+                    </div>
+                    <div className="remind-content">
+                      <div className="remind-copy">
+                        <div className="remind-body">
+                          <p>予約完了のお知らせ、イベント詳細、前日のリマインドを、アプリと<span className="text-term">公式LINE</span>から自動で届けられます。</p>
+                          <p>参加者が30〜100人を超えてくると、個別連絡や確認作業だけで運営が重くなります。COMIUなら案内漏れや「明日ありますか？」という問い合わせを減らせます。</p>
+                          <p>事前決済や、PayPay決済確認後の受付承認にも対応。参加者への案内から当日の受付まで、主催者の負担を小さくします。</p>
+                          <p>初回は画面共有で使い方のレクチャーも行うので、はじめての団体でも安心して始められます。</p>
+                        </div>
+                      </div>
+                      <div>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/comiu-line-reminder.svg" alt="LINE自動リマインド" className="remind-img" />
+                      </div>
                     </div>
                   </div>
                 </div>
