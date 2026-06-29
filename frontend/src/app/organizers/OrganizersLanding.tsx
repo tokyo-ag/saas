@@ -2185,10 +2185,6 @@ export default function ComiuLandingPage() {
             max-width: 300px;
           }
 
-          .feature-pair {
-            grid-template-columns: 1fr;
-          }
-
           .seo-card {
             border-radius: 28px;
             text-align: left;
@@ -2701,52 +2697,6 @@ export default function ComiuLandingPage() {
           }
         }
 
-        /* ⑥ Feature pair */
-        .feature-pair {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 20px;
-          margin-top: 36px;
-        }
-
-        .pair-card {
-          padding: clamp(28px, 4vw, 42px);
-          background: #fff;
-          border: 1px solid var(--line);
-          border-radius: 28px;
-          box-shadow: var(--shadow-soft);
-        }
-
-        .pair-card-icon {
-          display: inline-flex;
-          min-height: 40px;
-          align-items: center;
-          padding: 0 14px;
-          color: #fff;
-          background: linear-gradient(135deg, var(--blue), var(--purple));
-          border-radius: 999px;
-          font-size: 12px;
-          font-weight: 950;
-          letter-spacing: 0.04em;
-          margin-bottom: 20px;
-          box-shadow: 0 8px 20px rgba(46, 92, 255, 0.22);
-        }
-
-        .pair-card h3 {
-          font-size: clamp(19px, 2vw, 24px);
-          line-height: 1.42;
-          letter-spacing: -0.04em;
-          margin-bottom: 12px;
-        }
-
-        .pair-card p {
-          color: var(--muted);
-          font-size: 14px;
-          line-height: 1.85;
-          font-weight: 650;
-          margin: 0;
-        }
-
         @media (prefers-reduced-motion: reduce) {
           *,
           *::before,
@@ -2776,7 +2726,7 @@ export default function ComiuLandingPage() {
         <header className="site-header">
           <Logo />
           <nav className="desktop-nav" aria-label="主要ナビゲーション">
-            <a href="#features">できること</a>
+            <a href="#future">できること</a>
             <a href="#future">導入メリット</a>
             <a className="nav-cta" href="/register" data-cursor="CREATE">
               無料でCOMIUを始める
@@ -2796,7 +2746,7 @@ export default function ComiuLandingPage() {
         </header>
 
         <nav className={`mobile-nav ${menuOpen ? "is-open" : ""}`} aria-label="モバイルナビゲーション">
-          <a href="#features" onClick={closeMenu}>
+          <a href="#future" onClick={closeMenu}>
             できること
           </a>
           <a href="#future" onClick={closeMenu}>
@@ -2961,28 +2911,6 @@ export default function ComiuLandingPage() {
             </div>
           </div>
         </div>
-
-        {/* ⑥ 予約管理・事前決済 + LINE認証 */}
-        <section className="lp-section" id="features" aria-labelledby="features-title">
-          <div className="reveal">
-            <SectionLabel>FEATURES</SectionLabel>
-            <h2 className="section-title" id="features-title">
-              運営をまとめて、団体を育てる
-            </h2>
-          </div>
-          <div className="feature-pair">
-            <div className="pair-card reveal">
-              <div className="pair-card-icon">予約</div>
-              <h3>イベントの予約管理・事前決済</h3>
-              <p>参加人数・キャンセル・参加者名簿・事前決済をひとつにまとめて管理。フォームとスプレッドシートを行き来しない運営へ。</p>
-            </div>
-            <div className="pair-card reveal">
-              <div className="pair-card-icon">LINE</div>
-              <h3>LINE認証でユーザーを管理できる</h3>
-              <p>LINE認証を使った参加者管理で、なりすましや複数申込み問題を解消。安心して予約を受け付けられます。</p>
-            </div>
-          </div>
-        </section>
 
         <section className="final final-cta reveal" aria-labelledby="final-title">
           <h2 id="final-title">あなたの団体を、次の参加者に選ばれる場所へ。</h2>
