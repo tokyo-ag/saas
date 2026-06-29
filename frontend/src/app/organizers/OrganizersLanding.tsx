@@ -2705,9 +2705,45 @@ export default function ComiuLandingPage() {
           transform: scale(1.5);
         }
 
-        /* Mobile: smaller panels allowed to scroll within */
+        /* Mobile: disable snap, normal scroll */
         @media (max-width: 768px) {
-          .h-panel { height: auto; min-height: 100dvh; overflow-y: auto; scroll-snap-align: start; }
+          .comiu-lp {
+            height: auto;
+            min-height: 100dvh;
+            overflow-y: visible;
+            overflow-x: hidden;
+            scroll-snap-type: none;
+          }
+
+          .hero {
+            height: auto;
+            min-height: 100svh;
+            overflow: visible;
+            padding-top: 100px;
+            padding-bottom: 60px;
+          }
+
+          .h-panel {
+            height: auto;
+            min-height: 0;
+            overflow: visible;
+            scroll-snap-align: none;
+            padding: clamp(60px, 12vw, 100px) 0;
+          }
+
+          .site-footer {
+            height: auto;
+            min-height: 0;
+            scroll-snap-align: none;
+            padding: 60px var(--page-x) 40px;
+          }
+
+          .footer-cta-title {
+            white-space: normal;
+            font-size: clamp(32px, 9vw, 52px);
+          }
+
+          .scroll-hint { display: none; }
           .page-dots { display: none; }
           .website-card {
             gap: 24px;
