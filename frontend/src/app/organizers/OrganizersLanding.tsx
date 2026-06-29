@@ -2373,7 +2373,7 @@ export default function ComiuLandingPage() {
 
         .website-copy {
           width: 100%;
-          max-width: 560px;
+          max-width: 640px;
         }
 
         .website-card .section-title {
@@ -2385,20 +2385,23 @@ export default function ComiuLandingPage() {
 
         .website-content {
           display: grid;
-          grid-template-columns: minmax(0, 0.92fr) minmax(360px, 1fr);
-          gap: 48px;
+          grid-template-columns: minmax(500px, 1.14fr) minmax(340px, 0.86fr);
+          gap: 40px;
           align-items: center;
         }
 
         .website-body {
           display: grid;
           gap: 12px;
-          max-width: 540px;
+          max-width: 620px;
           margin-top: 0;
           color: #53617f;
           font-size: 16px;
-          font-weight: 700;
-          line-height: 1.95;
+          font-weight: 650;
+          line-height: 1.9;
+          word-break: keep-all;
+          overflow-wrap: break-word;
+          text-wrap: pretty;
         }
 
         .website-body p {
@@ -2407,9 +2410,13 @@ export default function ComiuLandingPage() {
 
         .website-body p:first-child {
           color: var(--ink);
-          font-size: 18px;
+          font-size: 17px;
           font-weight: 900;
           line-height: 1.65;
+        }
+
+        .website-body .text-term {
+          white-space: nowrap;
         }
 
         .website-mock-wrap {
@@ -2720,10 +2727,10 @@ export default function ComiuLandingPage() {
                     <div className="website-content">
                       <div className="website-copy">
                         <div className="website-body">
-                          <p>団体の個性に合わせて、自由に編集できるホームページ！</p>
-                          <p>初めての方は、SEO専任の担当者が初回ヒアリングから、初回WEBサイトの作成までサポートします。</p>
+                          <p>団体の個性に合わせて、自由に編集できる<span className="text-term">ホームページ！</span></p>
+                          <p>初めての方は、SEO専任の担当者が初回ヒアリングから、初回<span className="text-term">WEBサイト</span>の作成までサポートします。</p>
                           <p>活動内容、写真、予約導線、ブログをひとつにまとめて、初めて見る人にも雰囲気と信頼が伝わるページへ。</p>
-                          <p>作って終わりではなく、更新するほど団体の実績が積み上がるWEBサイトです。</p>
+                          <p>作って終わりではなく、更新するほど団体の実績が積み上がる<span className="text-term">WEBサイト</span>です。</p>
                         </div>
                       </div>
                       <div className="website-mock-wrap">
