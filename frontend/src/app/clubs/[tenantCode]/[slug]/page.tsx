@@ -507,7 +507,7 @@ export default async function ClubCmsPage({
         <div className="border-b border-gray-100" style={{ backgroundColor: navBg }}>
           {sectionOrder.map((key) => {
             if (key === 'title') return (
-              <div key="title" className="px-4 pt-4 pb-1">
+              <div key="title" className="px-5 pt-5 pb-1">
                 <Link href={clubHref} className="block font-bold leading-tight" style={{ ...titleTextStyle, lineHeight: 1.25 }}>
                   {orgLogoUrl && orgDisplayType !== 'text' ? (
                     <>
@@ -519,12 +519,12 @@ export default async function ClubCmsPage({
               </div>
             );
             if (key === 'subtitle') return page.subtitle ? (
-              <div key="subtitle" className="px-4 py-1">
+              <div key="subtitle" className="px-5 py-1">
                 <p className="whitespace-pre-wrap" style={subtitleTextStyle}>{page.subtitle}</p>
               </div>
             ) : null;
             if (key === 'nav') return (
-              <div key="nav" className="px-4 pt-1 pb-3">
+              <div key="nav" className="px-5 pt-2 pb-4">
                 <nav className={`${buttonLayoutClass}`} style={buttonGridStyle}>
                   {visibleNavItems.map((item) => (
                     <Link key={item.key} href={item.href} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{item.label}</Link>
@@ -533,7 +533,7 @@ export default async function ClubCmsPage({
               </div>
             );
             if (key === 'image') return images.length ? (
-              <div key="image" className="px-4 pb-3">
+              <div key="image" className="px-5 pb-5">
                 <HeroImageBlock
                   images={images}
                   captions={imageCaptions}
@@ -549,9 +549,9 @@ export default async function ClubCmsPage({
         </div>
       )}
 
-      <article id="about" className={`px-4 ${heroImageMode === 'background' ? 'pt-4 pb-8' : 'py-8'}`}>
+      <article id="about" className={`px-4 ${heroImageMode === 'background' ? 'pt-4 pb-8' : 'pt-4 pb-8'}`}>
 
-        <div className={`rounded-xl px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8 ${heroImageMode === 'background' ? '' : 'mt-8'}`} style={{ backgroundColor: navBg }}>
+        <div className={`rounded-xl px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8 ${heroImageMode === 'background' ? '' : 'mt-0'}`} style={{ backgroundColor: navBg }}>
           {page.blocks?.length ? (
             <div className="space-y-5">
               {(page.blocks as any[]).map((block: any, i: number) => {
