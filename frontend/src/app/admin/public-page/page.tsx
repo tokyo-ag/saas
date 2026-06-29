@@ -565,12 +565,6 @@ export default function AdminPublicPage() {
   const blogSectionLead = form.blogLead?.trim() || '活動日記やお知らせを表示するエリアです。';
   const blogTitleColor = form.blogTitleColor?.trim() || textColor;
   const blogLeadColor = form.blogLeadColor?.trim() || '#6B7280';
-  const contactSectionTitle = form.contactTitle?.trim() || navLabels.contact;
-  const contactSectionLead = form.contactLead?.trim() || 'ご質問・ご相談はこちらからお気軽にどうぞ。';
-  const contactSectionMessage = form.contactMessage?.trim() || form.footerContact?.trim() || 'お問い合わせ　WEBサイト内でメッセージが可能です。';
-  const contactTitleColor = form.contactTitleColor?.trim() || textColor;
-  const contactLeadColor = form.contactLeadColor?.trim() || '#6B7280';
-  const contactMessageColor = form.contactMessageColor?.trim() || '#6B7280';
   const buttonStyle = form.buttonStyle ?? 'rounded';
   const buttonLayout = form.buttonLayout === 'row1x4' ? 'row1x4' : 'grid2x2';
   const buttonOpacity = clampPercent(form.buttonOpacity ?? 100);
@@ -1932,13 +1926,7 @@ export default function AdminPublicPage() {
                 <p className="text-[11px] font-bold text-gray-400 mb-1">COMIUメッセージ（固定）</p>
                 <p className="text-xs text-gray-500">Powered by <span className="font-bold">COMIU</span></p>
               </div>
-              <div className="space-y-3 rounded-lg bg-gray-50 p-3">
-                <p className="text-[11px] font-bold text-gray-400">お問い合わせ表示</p>
-                {renderCopyInput('タイトル', 'contactTitle', 'contactTitleColor', navLabels.contact, textColor)}
-                {renderCopyInput('説明', 'contactLead', 'contactLeadColor', 'ご質問・ご相談はこちらからお気軽にどうぞ。', '#6B7280', true)}
-                {renderCopyInput('リンク文言', 'contactMessage', 'contactMessageColor', 'お問い合わせ　WEBサイト内でメッセージが可能です。', '#6B7280', true)}
-              </div>
-              {/* 連絡先 */}
+              {/* 問い合わせボタン */}
               <div className="space-y-2">
                 <p className="text-[11px] font-bold text-gray-400">問い合わせボタン</p>
                 <div className="flex items-center gap-2">
@@ -1949,10 +1937,13 @@ export default function AdminPublicPage() {
                   </label>
                   <input type="text" value={form.footerContact ?? ''}
                     onChange={(e) => setForm((p) => ({ ...p, footerContact: e.target.value }))}
-                    placeholder="メール・電話番号・カスタムテキスト（空欄=デフォルト）"
+                    placeholder="メール・電話番号（空欄=アプリ内メッセージ）"
                     className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
                 </div>
-                <p className="text-[10px] text-gray-400">空欄のとき「WEBサイト内でメッセージが可能です。」→メッセージ機能へ誘導</p>
+                <input type="text" value={form.contactMessage ?? ''}
+                  onChange={(e) => setForm((p) => ({ ...p, contactMessage: e.target.value }))}
+                  placeholder="ボタン下のサブテキスト（例：LINEまたはアプリ内でお気軽に）"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
               </div>
               {/* 公式SNSリンク */}
               <div className="space-y-2">
@@ -2218,15 +2209,17 @@ export default function AdminPublicPage() {
                     </div>
                   </section>
                 )}
-                <section className="rounded-lg p-3" style={{ backgroundColor: navBg }}>
-                  <p className="text-sm font-bold" style={{ color: contactTitleColor }}>{contactSectionTitle}</p>
-                  {contactSectionLead && (
-                    <p className="mt-1 text-xs leading-5" style={{ color: contactLeadColor }}>{contactSectionLead}</p>
+                <div>
+                  <div className="flex w-full items-center justify-center rounded-xl py-3 text-sm font-bold text-white"
+                    style={{ backgroundColor: form.footerContactColor?.trim() || accentColor }}>
+                    {navLabels.contact}
+                  </div>
+                  {form.contactMessage?.trim() && (
+                    <p className="mt-1.5 text-center text-[11px] opacity-60" style={{ color: textColor }}>
+                      {form.contactMessage.trim()}
+                    </p>
                   )}
-                  <p className="mt-2 text-xs font-bold leading-5" style={{ color: contactMessageColor }}>
-                    {contactSectionMessage}
-                  </p>
-                </section>
+                </div>
               </div>
             </>
         </div>

@@ -414,12 +414,6 @@ export default async function ClubCmsPage({
   const blogSectionLead = sectionCopy.blogLead?.trim() || '活動日記やお知らせを表示するエリアです。';
   const blogTitleColor = sectionCopy.blogTitleColor?.trim() || textColor;
   const blogLeadColor = sectionCopy.blogLeadColor?.trim() || '#6B7280';
-  const contactSectionTitle = sectionCopy.contactTitle?.trim() || navLabels.contact;
-  const contactSectionLead = sectionCopy.contactLead?.trim() || 'ご質問・ご相談はこちらからお気軽にどうぞ。';
-  const contactSectionMessage = sectionCopy.contactMessage?.trim() || sectionCopy.contact?.trim() || 'お問い合わせ　WEBサイト内でメッセージが可能です。';
-  const contactTitleColor = sectionCopy.contactTitleColor?.trim() || textColor;
-  const contactLeadColor = sectionCopy.contactLeadColor?.trim() || '#6B7280';
-  const contactMessageColor = sectionCopy.contactMessageColor?.trim() || '#6B7280';
 
   return (
     <main className="min-h-screen sm:bg-gray-200" style={{ fontFamily, backgroundColor: bgColor }}>
@@ -724,41 +718,42 @@ export default async function ClubCmsPage({
         </section>
         )}
 
-        <div id="contact" className="relative mt-6 scroll-mt-6 rounded-xl px-4 py-4 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
-          <Link href={navContactUrl} className="absolute inset-0 rounded-xl" aria-label={navLabels.contact} />
-          <div className="relative">
-            <p className="text-lg font-bold" style={{ color: contactTitleColor }}>{contactSectionTitle}</p>
-            {contactSectionLead && (
-              <p className="mt-2 text-sm leading-7" style={{ color: contactLeadColor }}>{contactSectionLead}</p>
-            )}
-            {(() => {
-              const contactLink = sectionCopy.contact
-                ? sectionCopy.contact.includes('@')
-                  ? `mailto:${sectionCopy.contact}`
-                  : /^\d/.test(sectionCopy.contact)
-                    ? `tel:${sectionCopy.contact.replace(/[^\d+]/g, '')}`
-                    : contactHref
-                : contactHref;
-              return (
+        <div id="contact" className="mt-6 scroll-mt-6">
+          {(() => {
+            const contactLink = sectionCopy.contact
+              ? sectionCopy.contact.includes('@')
+                ? `mailto:${sectionCopy.contact}`
+                : /^\d/.test(sectionCopy.contact)
+                  ? `tel:${sectionCopy.contact.replace(/[^\d+]/g, '')}`
+                  : contactHref
+              : contactHref;
+            const btnColor = sectionCopy.contactColor?.trim() || accentColor;
+            const subtitle = sectionCopy.contactMessage?.trim();
+            return (
+              <>
                 <Link href={contactLink}
-                  className="mt-3 inline-flex text-xs font-bold leading-5 transition hover:underline"
-                  style={{ color: contactMessageColor }}>
-                  {contactSectionMessage}
+                  className="flex w-full items-center justify-center rounded-xl py-4 text-base font-bold text-white shadow-sm transition hover:opacity-90"
+                  style={{ backgroundColor: btnColor }}>
+                  {navLabels.contact}
                 </Link>
-              );
-            })()}
-          </div>
+                {subtitle && (
+                  <p className="mt-2 text-center text-xs leading-5" style={{ color: textColor, opacity: 0.6 }}>
+                    {subtitle}
+                  </p>
+                )}
+              </>
+            );
+          })()}
         </div>
       </article>
 
       {/* Footer */}
       {(() => {
-        const hasSocial = sectionCopy.line || sectionCopy.instagram || sectionCopy.x;
+        const hasSocial = sectionCopy.instagram || sectionCopy.x;
         return (
           <footer className="mt-4 border-t border-gray-100 pb-6 pt-4 text-center">
             {hasSocial && (
               <div className="flex justify-center gap-5">
-                {sectionCopy.line && <a href={sectionCopy.line} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[#06C755] hover:underline">LINE公式</a>}
                 {sectionCopy.instagram && <a href={sectionCopy.instagram} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[#E1306C] hover:underline">Instagram</a>}
                 {sectionCopy.x && <a href={sectionCopy.x} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-gray-800 hover:underline">X</a>}
               </div>
