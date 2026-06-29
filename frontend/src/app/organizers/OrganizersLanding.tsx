@@ -21,7 +21,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 
 export default function ComiuLandingPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [activePage, setActivePage] = useState(0);
 
   useEffect(() => {
@@ -105,8 +104,6 @@ export default function ComiuLandingPage() {
       ctaObserver.disconnect();
     };
   }, []);
-
-  const closeMenu = () => setMenuOpen(false);
 
   return (
     <>
@@ -2715,14 +2712,15 @@ export default function ComiuLandingPage() {
           .comiu-lp {
             height: auto !important;
             min-height: 100dvh;
-            overflow: visible !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
             scroll-snap-type: none !important;
           }
 
           .hero {
             height: auto !important;
             min-height: 0 !important;
-            overflow: visible !important;
+            overflow: hidden !important;
             scroll-snap-align: none !important;
             padding-top: 100px;
             padding-bottom: 60px;
@@ -2731,7 +2729,7 @@ export default function ComiuLandingPage() {
           .h-panel {
             height: auto !important;
             min-height: 0 !important;
-            overflow: visible !important;
+            overflow: hidden !important;
             scroll-snap-align: none !important;
             padding: clamp(60px, 12vw, 100px) 0;
           }
@@ -2836,24 +2834,7 @@ export default function ComiuLandingPage() {
               無料でCOMIUを始める
             </a>
           </nav>
-          <button
-            className="menu-button"
-            type="button"
-            aria-label="メニューを開閉"
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((value) => !value)}
-          >
-            <span />
-            <span />
-            <span />
-          </button>
         </header>
-
-        <nav className={`mobile-nav ${menuOpen ? "is-open" : ""}`} aria-label="モバイルナビゲーション">
-          <a className="nav-cta" href="/register" onClick={closeMenu}>
-            無料で団体ページを作る
-          </a>
-        </nav>
 
         <section className="lp-section hero hero-slide snap-page">
           <div className="hero-copy">
