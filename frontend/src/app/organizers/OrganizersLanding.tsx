@@ -2702,104 +2702,49 @@ export default function ComiuLandingPage() {
           transform: scale(1.5);
         }
 
-        /* Mobile: disable snap, normal scroll */
-        @media (max-width: 768px) {
+        /* Mobile: disable snap pagination, use normal scroll */
+        @media (max-width: 640px) {
           html, body {
-            height: auto !important;
-            overflow: auto !important;
+            height: auto;
+            overflow: auto;
           }
 
           .comiu-lp {
-            height: auto !important;
+            height: auto;
             min-height: 100dvh;
-            overflow-x: hidden !important;
-            overflow-y: auto !important;
-            scroll-snap-type: none !important;
-          }
-
-          .hero {
-            height: auto !important;
-            min-height: 0 !important;
-            overflow: hidden !important;
-            scroll-snap-align: none !important;
-            padding-top: 100px;
-            padding-bottom: 60px;
+            overflow-x: hidden;
+            overflow-y: auto;
+            scroll-snap-type: none;
           }
 
           .h-panel {
-            height: auto !important;
-            min-height: 0 !important;
-            overflow: hidden !important;
-            scroll-snap-align: none !important;
-            padding: clamp(48px, 10vw, 80px) 0;
+            height: auto;
+            min-height: 0;
+            scroll-snap-align: none;
+            padding: 56px 0;
+            overflow: hidden;
+          }
+
+          .hero {
+            scroll-snap-align: none;
           }
 
           .site-footer {
-            height: auto !important;
-            min-height: 0 !important;
-            scroll-snap-align: none !important;
-            padding: 60px var(--page-x) 40px;
+            height: auto;
+            min-height: 0;
+            scroll-snap-align: none;
+            padding: 52px var(--page-x) 36px;
           }
 
           .footer-cta-title {
             white-space: normal;
-            font-size: clamp(28px, 8vw, 48px);
+            font-size: clamp(28px, 8vw, 44px);
           }
 
-          .scroll-hint { display: none; }
           .page-dots { display: none; }
+          .scroll-hint { display: none; }
 
-          /* Keep 2-col layouts, just remove px minimums */
-          .portal-grid {
-            grid-template-columns: 1fr 1fr !important;
-            gap: 16px;
-          }
-
-          .portal-img {
-            width: 100%;
-            height: auto;
-            border-radius: 16px;
-          }
-
-          .portal-body { font-size: 12px; line-height: 1.7; }
-          .portal-body p + p { margin-top: 6px; }
-
-          .remind-content {
-            grid-template-columns: 1fr 1fr !important;
-            gap: 16px;
-          }
-
-          .remind-title {
-            white-space: normal;
-            font-size: clamp(22px, 6vw, 34px);
-          }
-
-          .remind-img {
-            width: 100%;
-            height: auto;
-          }
-
-          .website-content {
-            grid-template-columns: 1fr !important;
-            gap: 20px;
-          }
-
-          .website-mock-wrap {
-            width: min(100%, 320px);
-            margin: 0 auto;
-          }
-
-          .website-card .section-title {
-            font-size: clamp(26px, 7vw, 36px);
-            white-space: normal;
-          }
-
-          .website-body { font-size: 13px; }
-
-          .phone-type-img {
-            width: 100%;
-            height: auto;
-          }
+          .portal-title .heading-line { white-space: normal; }
 
           .h-panel:nth-child(4) .seo-card {
             background:
