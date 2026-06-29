@@ -2731,7 +2731,7 @@ export default function ComiuLandingPage() {
             min-height: 0 !important;
             overflow: hidden !important;
             scroll-snap-align: none !important;
-            padding: clamp(60px, 12vw, 100px) 0;
+            padding: clamp(48px, 10vw, 80px) 0;
           }
 
           .site-footer {
@@ -2743,79 +2743,62 @@ export default function ComiuLandingPage() {
 
           .footer-cta-title {
             white-space: normal;
-            font-size: clamp(32px, 9vw, 52px);
+            font-size: clamp(28px, 8vw, 48px);
           }
 
           .scroll-hint { display: none; }
           .page-dots { display: none; }
-          .website-card {
-            gap: 24px;
+
+          /* Keep 2-col layouts, just remove px minimums */
+          .portal-grid {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 16px;
           }
 
-          .website-heading {
-            text-align: left;
+          .portal-img {
+            width: 100%;
+            height: auto;
+            border-radius: 16px;
           }
 
-          .website-heading .section-label {
-            margin-inline: 0;
+          .portal-body { font-size: 12px; line-height: 1.7; }
+          .portal-body p + p { margin-top: 6px; }
+
+          .remind-content {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 16px;
           }
 
-          .website-card .section-title {
-            font-size: 32px;
-            white-space: nowrap;
-            letter-spacing: -0.07em;
+          .remind-title {
+            white-space: normal;
+            font-size: clamp(22px, 6vw, 34px);
+          }
+
+          .remind-img {
+            width: 100%;
+            height: auto;
           }
 
           .website-content {
-            grid-template-columns: 1fr;
-            gap: 24px;
-          }
-
-          .website-body {
-            font-size: 14px;
-            line-height: 1.85;
-            gap: 10px;
-          }
-
-          .website-body p:first-child {
-            font-size: 16px;
+            grid-template-columns: 1fr !important;
+            gap: 20px;
           }
 
           .website-mock-wrap {
             width: min(100%, 320px);
             margin: 0 auto;
-            border-radius: 22px;
           }
 
-          .website-mock-img {
-            border-radius: 16px;
+          .website-card .section-title {
+            font-size: clamp(26px, 7vw, 36px);
+            white-space: normal;
           }
 
-          .portal-img {
-            width: min(100%, 280px);
-            height: auto;
-          }
+          .website-body { font-size: 13px; }
 
           .phone-type-img {
-            width: min(100%, 180px);
+            width: 100%;
             height: auto;
-          }
-
-          .remind-content {
-            grid-template-columns: 1fr;
-            gap: 28px;
-          }
-
-          .remind-title {
-            white-space: normal;
-            font-size: clamp(30px, 8vw, 40px);
-          }
-
-          .remind-img,
-          .remind-phone {
-            width: min(100%, 260px);
-            height: auto;
-            margin: 0 auto;
           }
 
           .h-panel:nth-child(4) .seo-card {
