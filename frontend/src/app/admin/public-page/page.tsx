@@ -138,6 +138,7 @@ const emptyForm: PublicPageInput = {
   subtitleHeroX: 5,
   subtitleHeroY: null as unknown as number,
   sectionOrder: [...DEFAULT_SECTION_ORDER] as string[],
+  displayFields: { location: true, price: true, capacity: true, description: true } as { location: boolean; price: boolean; capacity: boolean; description: boolean },
   status: 'published',
 };
 
@@ -729,6 +730,12 @@ export default function AdminPublicPage() {
                   subtitleHeroX: fd.subtitleHeroX ?? 5,
                   subtitleHeroY: fd.subtitleHeroY ?? null,
                   sectionOrder: Array.isArray(fd.sectionOrder) ? fd.sectionOrder : [...DEFAULT_SECTION_ORDER],
+                  displayFields: (fd.displayFields && typeof fd.displayFields === 'object') ? {
+                    location: fd.displayFields.location !== false,
+                    price: fd.displayFields.price !== false,
+                    capacity: fd.displayFields.capacity !== false,
+                    description: fd.displayFields.description !== false,
+                  } : { location: true, price: true, capacity: true, description: true },
                 };
               } catch {
                 return {
@@ -1055,6 +1062,7 @@ export default function AdminPublicPage() {
         subtitleHeroX: form.subtitleHeroX ?? 5,
         subtitleHeroY: form.subtitleHeroY ?? null,
         sectionOrder: form.sectionOrder ?? [...DEFAULT_SECTION_ORDER],
+        displayFields: form.displayFields,
       }),
       status: 'published',
       seoTitle: form.seoTitle?.trim() || displayName,
