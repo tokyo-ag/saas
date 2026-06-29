@@ -2261,20 +2261,20 @@ export default function ComiuLandingPage() {
 
         .portal-grid {
           display: grid;
-          grid-template-columns: minmax(640px, 1.16fr) minmax(300px, 0.84fr);
+          grid-template-columns: minmax(680px, 1.2fr) minmax(280px, 0.8fr);
           gap: 40px;
           align-items: center;
         }
 
         .portal-copy {
-          max-width: 660px;
+          max-width: 720px;
         }
 
         .portal-title {
           max-width: none;
-          font-size: 52px;
+          font-size: 44px;
           line-height: 1.14;
-          letter-spacing: -0.07em;
+          letter-spacing: -0.06em;
           text-wrap: balance;
         }
 
@@ -2283,16 +2283,28 @@ export default function ComiuLandingPage() {
           white-space: nowrap;
         }
 
-        .portal-copy .section-desc {
-          max-width: 620px;
+        .portal-body {
+          display: grid;
+          gap: 12px;
+          max-width: 680px;
           margin-top: 24px;
           font-size: 17px;
-          font-weight: 700;
+          font-weight: 650;
           line-height: 1.95;
           color: #53617f;
           word-break: keep-all;
           overflow-wrap: break-word;
           text-wrap: pretty;
+        }
+
+        .portal-body p {
+          margin: 0;
+        }
+
+        .portal-body p:first-child {
+          color: var(--ink);
+          font-weight: 900;
+          line-height: 1.75;
         }
 
         .text-term {
@@ -2314,9 +2326,10 @@ export default function ComiuLandingPage() {
             white-space: normal;
           }
 
-          .portal-copy .section-desc {
+          .portal-body {
             font-size: 14px;
             line-height: 1.85;
+            gap: 10px;
           }
         }
 
@@ -2787,12 +2800,15 @@ export default function ComiuLandingPage() {
                     <div className="portal-copy">
                       <SectionLabel>ポータル掲載</SectionLabel>
                       <h2 className="section-title portal-title" id="portal-title">
-                        <span className="heading-line">活動やブログが</span>
+                        <span className="heading-line">サークルや団体の活動やブログが</span>
                         <span className="heading-line">ポータルサイトに自動反映</span>
                       </h2>
-                      <p className="section-desc">
-                        こつこつ更新するだけで、認知拡大につなげることができます。<span className="text-term">WEBアプリケーション</span>として機能しているので、活動実績が資産として残ります。
-                      </p>
+                      <div className="portal-body">
+                        <p>イベント募集や活動ブログを更新すると、COMIUのポータルサイトにも自動で掲載されます。</p>
+                        <p>InstagramやXの投稿は時間が経つと流れてしまいますが、COMIUなら活動内容や開催実績を、検索される場所に残していけます。</p>
+                        <p>新歓、スポーツイベント、交流会、BBQ、ボランティア活動など、日々の活動をこつこつ更新することで、初めて見る人にも団体の雰囲気や信頼感が伝わります。</p>
+                        <p>開催するたびに情報が積み上がり、次の参加者に見つけてもらいやすい団体へ育っていきます。</p>
+                      </div>
                     </div>
                     <div>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
