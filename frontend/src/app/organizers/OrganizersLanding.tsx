@@ -2746,6 +2746,27 @@ export default function ComiuLandingPage() {
 
           .portal-title .heading-line { white-space: normal; }
 
+          /* Website section — missing from other 640px blocks */
+          .website-card .section-title {
+            font-size: clamp(28px, 8vw, 40px);
+            white-space: normal;
+          }
+
+          .website-content {
+            grid-template-columns: 1fr;
+            gap: 20px;
+          }
+
+          .website-body {
+            font-size: 14px;
+            line-height: 1.8;
+          }
+
+          .website-mock-wrap {
+            width: min(100%, 320px);
+            margin: 0 auto;
+          }
+
           .h-panel:nth-child(4) .seo-card {
             background:
               radial-gradient(circle at 14% 14%, rgba(255,255,255,0.92), transparent 28%),
