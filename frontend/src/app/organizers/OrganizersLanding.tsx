@@ -51,7 +51,6 @@ export default function ComiuLandingPage() {
     const header = document.querySelector<HTMLElement>(".site-header");
     const fixedCta = document.querySelector<HTMLElement>(".fixed-mobile-cta");
     const footer = document.querySelector<HTMLElement>(".site-footer");
-    const finalCta = document.querySelector<HTMLElement>(".final-cta");
 
     // Reveal sections and staged UI pieces as they enter the viewport.
     const revealObserver = new IntersectionObserver(
@@ -90,7 +89,6 @@ export default function ComiuLandingPage() {
     const heroActions = document.querySelector<HTMLElement>(".hero-actions");
     if (heroActions) ctaObserver.observe(heroActions);
     if (footer) ctaObserver.observe(footer);
-    if (finalCta) ctaObserver.observe(finalCta);
 
     return () => {
       if (restoreScrollBehaviorFrame) {
@@ -505,8 +503,7 @@ export default function ComiuLandingPage() {
 
         .hero h1,
         .section-title,
-        .statement h2,
-        .final h2 {
+        .statement h2 {
           letter-spacing: -0.08em;
         }
 
@@ -1743,66 +1740,6 @@ export default function ComiuLandingPage() {
           color: var(--blue);
         }
 
-        .final {
-          width: min(1180px, calc(100% - var(--page-x) * 2));
-          margin: 0 auto var(--section-y);
-          padding: clamp(44px, 7vw, 84px) clamp(22px, 6vw, 80px);
-          scroll-snap-align: start;
-          overflow: hidden;
-          background:
-            radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.88), transparent 24%),
-            radial-gradient(circle at 84% 30%, rgba(223, 255, 79, 0.34), transparent 28%),
-            radial-gradient(circle at 78% 86%, rgba(255, 189, 225, 0.5), transparent 34%),
-            linear-gradient(120deg, #e8f2ff, #f2e8ff 58%, #fff1f9);
-          border: 1px solid rgba(255, 255, 255, 0.86);
-          border-radius: 38px;
-          color: var(--ink);
-          text-align: center;
-          box-shadow: 0 34px 84px rgba(88, 100, 190, 0.16);
-        }
-
-        .final h2 {
-          margin-bottom: 20px;
-          font-size: clamp(38px, 6vw, 72px);
-          line-height: 1.18;
-          font-weight: 950;
-        }
-
-        .final p {
-          width: min(680px, 100%);
-          margin: 0 auto 28px;
-          color: #53617f;
-          font-size: clamp(16px, 2vw, 22px);
-          line-height: 1.9;
-          font-weight: 750;
-        }
-
-        .final .button-primary {
-          min-height: 66px;
-          padding-inline: 34px;
-          color: var(--ink);
-          background: var(--yellow);
-          box-shadow: 0 18px 38px rgba(255, 242, 62, 0.28);
-        }
-
-        .free-tags {
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: center;
-          gap: 10px;
-          margin-top: 24px;
-        }
-
-        .free-tags span {
-          min-height: 44px;
-          padding: 12px 18px;
-          color: #314061;
-          background: rgba(255, 255, 255, 0.64);
-          border: 1px solid rgba(143, 170, 255, 0.28);
-          border-radius: 999px;
-          font-weight: 900;
-        }
-
         .site-footer {
           position: relative;
           z-index: 1;
@@ -2119,13 +2056,8 @@ export default function ComiuLandingPage() {
             white-space: nowrap;
           }
 
-          .statement-inner,
-          .final {
+          .statement-inner {
             text-align: left;
-          }
-
-          .final .button-primary {
-            width: 100%;
           }
 
           .section-desc,
@@ -2940,22 +2872,6 @@ export default function ComiuLandingPage() {
             </div>
           </div>
         </div>
-
-        <section className="final final-cta reveal" aria-labelledby="final-title">
-          <h2 id="final-title">あなたの団体を、次の参加者に選ばれる場所へ。</h2>
-          <p>
-            団体ページ、イベント募集、予約管理、LINE連携。
-            まずは無料で、あなたの団体に合ったページを作成しましょう。
-          </p>
-          <a className="button button-primary" href="/register" data-cursor="CREATE">
-            無料で団体ページを作る
-          </a>
-          <div className="free-tags" aria-label="無料で始めやすい理由">
-            <span>登録無料</span>
-            <span>初期費用なし</span>
-            <span>専門知識不要</span>
-          </div>
-        </section>
 
         <footer className="site-footer">
           <Logo />
