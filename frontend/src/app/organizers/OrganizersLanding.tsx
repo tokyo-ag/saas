@@ -348,6 +348,51 @@ export default function ComiuLandingPage() {
           isolation: isolate;
         }
 
+        .scroll-hint {
+          position: absolute;
+          bottom: 32px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 0;
+          z-index: 10;
+          animation: scroll-hint-fade 1s ease 1.8s both;
+        }
+
+        @keyframes scroll-hint-fade {
+          from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .scroll-hint-text {
+          font-size: 10px;
+          font-weight: 850;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: var(--muted);
+        }
+
+        .scroll-hint-line {
+          display: block;
+          width: 1px;
+          height: 40px;
+          background: linear-gradient(to bottom, var(--muted), transparent);
+          animation: scroll-line 1.6s ease-in-out infinite;
+          transform-origin: top;
+        }
+
+        @keyframes scroll-line {
+          0%   { transform: scaleY(0); opacity: 0; }
+          30%  { opacity: 1; }
+          100% { transform: scaleY(1); opacity: 0; }
+        }
+
         .hero-copy {
           position: relative;
           z-index: 5;
@@ -2804,6 +2849,17 @@ export default function ComiuLandingPage() {
               <span className="hero-basket-rim" />
             </span>
           </div>
+          <button
+            className="scroll-hint"
+            aria-label="次のセクションへ"
+            onClick={() => {
+              const pages = document.querySelectorAll<HTMLElement>(".snap-page");
+              pages[1]?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            <span className="scroll-hint-text">scroll</span>
+            <span className="scroll-hint-line" aria-hidden="true" />
+          </button>
         </section>
 
         {/* Vertical page dots */}
