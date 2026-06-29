@@ -2355,33 +2355,37 @@ export default function ComiuLandingPage() {
         }
 
         .website-card {
-          display: grid;
-          grid-template-columns: minmax(0, 0.82fr) minmax(320px, 1fr);
-          gap: clamp(28px, 5vw, 58px);
+          display: flex;
+          flex-direction: column;
+          gap: 36px;
           align-items: center;
-          text-align: left;
+          text-align: center;
           overflow: hidden;
         }
 
+        .website-copy {
+          width: 100%;
+          max-width: 980px;
+        }
+
         .website-card .section-label {
-          margin-inline: 0;
+          margin-inline: auto;
         }
 
         .website-card .section-title {
-          font-size: clamp(34px, 4.6vw, 64px);
-          line-height: 1.13;
+          max-width: none;
+          font-size: 58px;
+          line-height: 1.12;
+          white-space: nowrap;
         }
 
         .website-card .section-desc {
-          max-width: 560px;
-          margin: 0;
-        }
-
-        .website-title span {
-          display: block;
+          max-width: 760px;
+          margin: 18px auto 0;
         }
 
         .website-mock-wrap {
+          width: min(720px, 92%);
           padding: clamp(10px, 1.6vw, 18px);
           background: rgba(255, 255, 255, 0.72);
           border: 1px solid rgba(255, 255, 255, 0.86);
@@ -2477,16 +2481,14 @@ export default function ComiuLandingPage() {
           .h-scroll-track { display: grid; width: 100%; transition: none; }
           .h-panel { width: 100%; height: auto; min-height: 0; padding: var(--section-y) 0; }
           .h-dots { display: none; }
-          .website-card {
-            grid-template-columns: 1fr;
-            text-align: left;
-          }
-
           .website-card .section-title {
-            font-size: clamp(32px, 9vw, 44px);
+            font-size: 25px;
+            white-space: nowrap;
+            letter-spacing: -0.08em;
           }
 
           .website-mock-wrap {
+            width: 100%;
             border-radius: 22px;
           }
 
@@ -2654,11 +2656,10 @@ export default function ComiuLandingPage() {
               <section className="h-panel" aria-labelledby="seo-title">
                 <div className="h-panel-inner">
                   <div className="seo-card website-card">
-                    <div>
-                      <SectionLabel>FREE WEB SITE</SectionLabel>
+                    <div className="website-copy">
+                      <SectionLabel>WEBサイト作成</SectionLabel>
                       <h2 className="section-title website-title" id="seo-title">
-                        <span>まずはオリジナルの</span>
-                        <span>WEBサイトを無料作成</span>
+                        まずはオリジナルのWEBサイトを無料作成
                       </h2>
                       <p className="section-desc">
                         団体の特色に合わせて自由にカスタマイズできます。初めての方は、SEO専任の担当者が初回無料でヒアリングし、ページ作成までサポートします。
@@ -2677,10 +2678,9 @@ export default function ComiuLandingPage() {
                 <div className="h-panel-inner">
                   <div className="portal-grid">
                     <div>
-                      <SectionLabel>PORTAL & BLOG</SectionLabel>
+                      <SectionLabel>ポータル掲載</SectionLabel>
                       <h2 className="section-title portal-title" id="portal-title">
-                        <span>活動やブログが</span>
-                        <span>ポータルサイトに自動反映</span>
+                        活動やブログがポータルサイトに自動反映
                       </h2>
                       <p className="section-desc">
                         こつこつ更新するだけで、認知拡大につなげることができます。WEBアプリケーションとして機能しているので、活動実績が資産として残ります。
@@ -2734,9 +2734,9 @@ export default function ComiuLandingPage() {
                       <img src="/comiu-line-reminder.svg" alt="LINE自動リマインド" className="remind-img" />
                     </div>
                     <div>
-                      <SectionLabel>LINE REMIND</SectionLabel>
+                      <SectionLabel>自動リマインド</SectionLabel>
                       <h2 className="section-title" id="remind-title">
-                        アプリ、公式LINEのリマインドを設定
+                        アプリと公式LINEのリマインドを設定
                       </h2>
                       <p className="section-desc">
                         団体の参加者が30〜100人を超えてくると、自動化のプロセスが必須です。事前決済システムや、PayPay決済確認後の受付承認システムも導入できます。初回に限り、画面共有で使用方法のレクチャーも行っています。
