@@ -2570,7 +2570,7 @@ export default function ComiuLandingPage() {
         .h-panel:nth-child(3) { background: linear-gradient(135deg, #f0fff8 0%, #edf4ff 56%, #fff1f7 100%); }
         .h-panel:nth-child(4) { background: linear-gradient(135deg, #f8fbff 0%, #f5fff8 54%, #fff6ea 100%); }
 
-        .h-panel:nth-child(2) .seo-card,
+        .h-panel:nth-child(1) .seo-card,
         .h-panel:nth-child(4) .seo-card {
           background: transparent;
           box-shadow: none;
