@@ -24,6 +24,28 @@ export default function ComiuLandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
+    const canControlScrollRestoration = "scrollRestoration" in window.history;
+    const previousScrollRestoration = canControlScrollRestoration ? window.history.scrollRestoration : null;
+    const html = document.documentElement;
+    const previousScrollBehavior = html.style.scrollBehavior;
+    let restoreScrollBehaviorFrame = 0;
+
+    if (canControlScrollRestoration) {
+      window.history.scrollRestoration = "manual";
+    }
+
+    // Refreshing a hash URL should open the landing page from the hero.
+    if (window.location.hash) {
+      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+    }
+
+    html.style.scrollBehavior = "auto";
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    restoreScrollBehaviorFrame = window.requestAnimationFrame(() => {
+      html.style.scrollBehavior = previousScrollBehavior;
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
+
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     const header = document.querySelector<HTMLElement>(".site-header");
@@ -71,6 +93,13 @@ export default function ComiuLandingPage() {
     if (finalCta) ctaObserver.observe(finalCta);
 
     return () => {
+      if (restoreScrollBehaviorFrame) {
+        window.cancelAnimationFrame(restoreScrollBehaviorFrame);
+      }
+      html.style.scrollBehavior = previousScrollBehavior;
+      if (canControlScrollRestoration && previousScrollRestoration) {
+        window.history.scrollRestoration = previousScrollRestoration;
+      }
       revealObserver.disconnect();
       ctaObserver.disconnect();
       window.removeEventListener("scroll", handleScroll);
