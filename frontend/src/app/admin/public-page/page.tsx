@@ -1856,8 +1856,6 @@ export default function AdminPublicPage() {
                     ? `公開中イベント ${reserveEvents.length}件：公開サイトに表示されます`
                     : '公開中イベント 0件：公開サイトでは非表示になります'}
               </div>
-              {renderCopyInput('タイトル', 'reserveTitle', 'reserveTitleColor', navLabels.reserve, textColor)}
-              {renderCopyInput('説明', 'reserveLead', 'reserveLeadColor', '募集中のイベントを表示します。', '#6B7280', true)}
               <div className="space-y-3 rounded-lg bg-gray-50 p-3">
                 <p className="text-[11px] font-bold text-gray-400">イベントカードの見た目</p>
                 <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
@@ -1905,8 +1903,6 @@ export default function AdminPublicPage() {
                   ? `公開記事 ${blogPosts.length}件：公開サイトに表示されます`
                   : '公開記事 0件：公開サイトでは非表示になります'}
               </div>
-              {renderCopyInput('タイトル', 'blogTitle', 'blogTitleColor', navLabels.blog, textColor)}
-              {renderCopyInput('説明', 'blogLead', 'blogLeadColor', '活動日記やお知らせを表示するエリアです。', '#6B7280', true)}
               <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
                 <span className="text-[11px] font-bold text-gray-500">記事カードの背景色</span>
                 <input
