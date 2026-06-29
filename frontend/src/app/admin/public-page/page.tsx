@@ -8,7 +8,8 @@ import { getToken } from '@/lib/auth';
 import { SaveToast } from '@/components/ui/SaveToast';
 import { ReservationViewShowcase } from '@/components/public/ReservationViewShowcase';
 
-type BlockType = 'text' | 'media-text' | 'profile' | 'feature' | 'sns';
+type BlockType = 'text' | 'media-text' | 'profile' | 'feature' | 'sns' | 'faq';
+interface FaqItem { q: string; a: string; }
 interface Block {
   id: string;
   type: BlockType;
@@ -27,6 +28,8 @@ interface Block {
   xUsername?: string;
   instagramEmbedUrl?: string;
   threadsEmbedUrl?: string;
+  // FAQ block fields
+  faqItems?: FaqItem[];
 }
 const BLOCK_LABELS: Record<BlockType, string> = {
   'text': 'テキスト',
@@ -34,6 +37,7 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   'profile': 'プロフィール',
   'feature': 'フィーチャー',
   'sns': 'SNS',
+  'faq': 'Q&A',
 };
 const BLOG_IMAGE_RE = /!\[[^\]]*]\(([^)]+)\)/;
 function genId() { return Math.random().toString(36).slice(2); }
@@ -910,6 +914,21 @@ export default function AdminPublicPage() {
             );
           }
 
+          if (block.type === 'faq') {
+            const items = block.faqItems ?? [];
+            return (
+              <div key={block.id} className="space-y-1.5">
+                {items.length === 0 && <p className="text-xs text-gray-400">Q&Aを追加してください</p>}
+                {items.map((item, j) => (
+                  <div key={j} className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
+                    <p className="text-xs font-bold" style={{ color: textColor }}>Q. {item.q || '（質問）'}</p>
+                    {item.a && <p className="mt-0.5 text-xs opacity-60" style={{ color: textColor }}>A. {item.a}</p>}
+                  </div>
+                ))}
+              </div>
+            );
+          }
+
           if (block.type === 'sns') {
             const snsItems = [
               { url: block.instagramUrl, label: block.instagramLabel || 'Instagramでフォロー', color: '#E1306C' },
@@ -1619,7 +1638,7 @@ export default function AdminPublicPage() {
             <p className="mb-2 text-[11px] font-bold text-gray-400">ブロック追加（最大4つ）</p>
             {blocks.length < 4 ? (
               <div className="flex flex-wrap gap-2">
-                {(['text', 'media-text', 'profile', 'feature', 'sns'] as BlockType[]).map((type) => (
+                {(['text', 'media-text', 'profile', 'feature', 'sns', 'faq'] as BlockType[]).map((type) => (
                   <button key={type} type="button"
                     onClick={() => addBlock(type)}
                     className="rounded-full border border-dashed border-gray-300 px-3 py-1.5 text-xs text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition">
@@ -1711,7 +1730,38 @@ export default function AdminPublicPage() {
                     </div>
                   )}
 
-                  {block.type !== 'sns' && (
+                  {/* FAQ フィールド */}
+                  {block.type === 'faq' && (
+                    <div className="space-y-2">
+                      {(block.faqItems ?? []).map((item, j) => (
+                        <div key={j} className="rounded-lg border border-gray-100 bg-white p-2 space-y-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="shrink-0 text-[11px] font-bold text-[#06C755]">Q</span>
+                            <input value={item.q}
+                              onChange={(e) => { const items = [...(block.faqItems ?? [])]; items[j] = { ...items[j], q: e.target.value }; updateBlock(block.id, { faqItems: items }); }}
+                              placeholder="質問を入力"
+                              className="flex-1 rounded border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755]" />
+                            <button type="button" onClick={() => { const items = (block.faqItems ?? []).filter((_, k) => k !== j); updateBlock(block.id, { faqItems: items }); }}
+                              className="shrink-0 text-gray-400 hover:text-red-500 text-xs">×</button>
+                          </div>
+                          <div className="flex items-start gap-1.5">
+                            <span className="shrink-0 mt-1 text-[11px] font-bold text-gray-400">A</span>
+                            <textarea value={item.a} rows={2}
+                              onChange={(e) => { const items = [...(block.faqItems ?? [])]; items[j] = { ...items[j], a: e.target.value }; updateBlock(block.id, { faqItems: items }); }}
+                              placeholder="回答を入力"
+                              className="flex-1 resize-y rounded border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755]" />
+                          </div>
+                        </div>
+                      ))}
+                      <button type="button"
+                        onClick={() => updateBlock(block.id, { faqItems: [...(block.faqItems ?? []), { q: '', a: '' }] })}
+                        className="w-full rounded-lg border border-dashed border-gray-300 py-1.5 text-xs text-gray-500 hover:border-[#06C755] hover:text-[#06C755] transition">
+                        + Q&A 追加
+                      </button>
+                    </div>
+                  )}
+
+                  {block.type !== 'sns' && block.type !== 'faq' && (
                     <label className="block">
                       <span className="mb-1 flex items-center justify-between text-xs text-gray-500">
                         <span className="font-bold text-gray-400">文字サイズ</span>
@@ -1767,7 +1817,7 @@ export default function AdminPublicPage() {
                           className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
                       </label>
                     </div>
-                  ) : (
+                  ) : block.type !== 'faq' ? (
                   /* テキスト */
                   <textarea value={block.content}
                     onChange={(e) => updateBlock(block.id, { content: e.target.value })}
@@ -1775,7 +1825,7 @@ export default function AdminPublicPage() {
                     placeholder={block.type === 'profile' ? '名前や紹介文' : block.type === 'feature' ? 'キャプションや説明文' : '内容を入力'}
                     className="w-full resize-y break-words rounded-lg border border-gray-200 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
                     style={{ fontSize: blockFontSize, lineHeight: 1.7, overflowWrap: 'anywhere' }} />
-                  )}
+                  ) : null}
                 </div>
               );
             })}

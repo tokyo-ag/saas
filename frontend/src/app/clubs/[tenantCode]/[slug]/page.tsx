@@ -601,6 +601,24 @@ export default async function ClubCmsPage({
                     </div>
                   );
                 }
+                if (block.type === 'faq') {
+                  const items = (block.faqItems ?? []).filter((item: {q:string;a:string}) => item.q);
+                  return (
+                    <div key={i} className="space-y-1.5">
+                      {items.map((item: {q:string;a:string}, j: number) => (
+                        <details key={j} className="group overflow-hidden rounded-xl border border-gray-100">
+                          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 select-none" style={{ color: textColor }}>
+                            <span className="flex-1 font-bold text-sm">{item.q}</span>
+                            <span className="ml-2 shrink-0 text-xs text-gray-400 transition-transform duration-200 group-open:rotate-180">▼</span>
+                          </summary>
+                          <div className="border-t border-gray-100 px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap" style={{ color: textColor, opacity: 0.8 }}>
+                            {item.a}
+                          </div>
+                        </details>
+                      ))}
+                    </div>
+                  );
+                }
                 if (block.type === 'sns') {
                   return (
                     <SnsBlock key={i}
