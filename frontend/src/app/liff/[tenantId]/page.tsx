@@ -170,8 +170,8 @@ function LiffThreadView({ events, tenantId, accentColor, cardBg }: { events: Lif
                         <p>{formatThreadDate(event)}</p>
                         <p className="truncate">{event.location}</p>
                         <p>
-                          {event.capacity ? `${event.reservedCount}/${event.capacity}人` : `${event.reservedCount}人予約`}
-                          <span className="mx-1 text-gray-300">/</span>
+                          {event.capacity ? `${event.reservedCount}/${event.capacity}人` : null}
+                          {event.capacity && <span className="mx-1 text-gray-300">/</span>}
                           {threadPriceLabel(event)}
                         </p>
                       </div>
