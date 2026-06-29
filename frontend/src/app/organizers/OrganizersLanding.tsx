@@ -2355,12 +2355,20 @@ export default function ComiuLandingPage() {
         }
 
         .website-card {
-          display: grid;
-          grid-template-columns: minmax(0, 0.96fr) minmax(360px, 1fr);
-          gap: 48px;
-          align-items: center;
+          display: flex;
+          flex-direction: column;
+          gap: 38px;
+          align-items: stretch;
           text-align: left;
           overflow: hidden;
+        }
+
+        .website-heading {
+          text-align: center;
+        }
+
+        .website-heading .section-label {
+          margin-inline: auto;
         }
 
         .website-copy {
@@ -2368,30 +2376,40 @@ export default function ComiuLandingPage() {
           max-width: 560px;
         }
 
-        .website-card .section-label {
-          margin-inline: 0;
-        }
-
         .website-card .section-title {
           max-width: none;
-          font-size: 46px;
-          line-height: 1.14;
+          font-size: 56px;
+          line-height: 1.08;
           white-space: nowrap;
+        }
+
+        .website-content {
+          display: grid;
+          grid-template-columns: minmax(0, 0.92fr) minmax(360px, 1fr);
+          gap: 48px;
+          align-items: center;
         }
 
         .website-body {
           display: grid;
-          gap: 14px;
+          gap: 12px;
           max-width: 540px;
-          margin-top: 22px;
+          margin-top: 0;
           color: #53617f;
-          font-size: 17px;
-          font-weight: 750;
-          line-height: 1.9;
+          font-size: 16px;
+          font-weight: 700;
+          line-height: 1.95;
         }
 
         .website-body p {
           margin: 0;
+        }
+
+        .website-body p:first-child {
+          color: var(--ink);
+          font-size: 18px;
+          font-weight: 900;
+          line-height: 1.65;
         }
 
         .website-mock-wrap {
@@ -2492,19 +2510,36 @@ export default function ComiuLandingPage() {
           .h-panel { width: 100%; height: auto; min-height: 0; padding: var(--section-y) 0; }
           .h-dots { display: none; }
           .website-card {
-            grid-template-columns: 1fr;
-            gap: 28px;
+            gap: 24px;
+          }
+
+          .website-heading {
+            text-align: left;
+          }
+
+          .website-heading .section-label {
+            margin-inline: 0;
           }
 
           .website-card .section-title {
-            font-size: 25px;
+            font-size: 32px;
             white-space: nowrap;
-            letter-spacing: -0.08em;
+            letter-spacing: -0.07em;
+          }
+
+          .website-content {
+            grid-template-columns: 1fr;
+            gap: 24px;
           }
 
           .website-body {
-            font-size: 15px;
+            font-size: 14px;
             line-height: 1.85;
+            gap: 10px;
+          }
+
+          .website-body p:first-child {
+            font-size: 16px;
           }
 
           .website-mock-wrap {
@@ -2676,21 +2711,25 @@ export default function ComiuLandingPage() {
               <section className="h-panel" aria-labelledby="seo-title">
                 <div className="h-panel-inner">
                   <div className="seo-card website-card">
-                    <div className="website-copy">
+                    <div className="website-heading">
                       <SectionLabel>WEBサイト作成</SectionLabel>
                       <h2 className="section-title website-title" id="seo-title">
                         WEBサイトを無料作成
                       </h2>
-                      <div className="website-body">
-                        <p>団体の個性に合わせて、自由に編集できるホームページ！</p>
-                        <p>初めての方は、SEO専任の担当者が初回ヒアリングから、初回WEBサイトの作成までサポートします。</p>
-                        <p>活動内容、写真、予約導線、ブログをひとつにまとめて、初めて見る人にも雰囲気と信頼が伝わるページへ。</p>
-                        <p>作って終わりではなく、更新するほど団体の実績が積み上がるWEBサイトです。</p>
-                      </div>
                     </div>
-                    <div className="website-mock-wrap">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/バドミントンサークルウェブデザイン展示.svg" alt="団体WEBサイトの作成イメージ" className="website-mock-img" />
+                    <div className="website-content">
+                      <div className="website-copy">
+                        <div className="website-body">
+                          <p>団体の個性に合わせて、自由に編集できるホームページ！</p>
+                          <p>初めての方は、SEO専任の担当者が初回ヒアリングから、初回WEBサイトの作成までサポートします。</p>
+                          <p>活動内容、写真、予約導線、ブログをひとつにまとめて、初めて見る人にも雰囲気と信頼が伝わるページへ。</p>
+                          <p>作って終わりではなく、更新するほど団体の実績が積み上がるWEBサイトです。</p>
+                        </div>
+                      </div>
+                      <div className="website-mock-wrap">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/バドミントンサークルウェブデザイン展示.svg" alt="団体WEBサイトの作成イメージ" className="website-mock-img" />
+                      </div>
                     </div>
                   </div>
                 </div>
