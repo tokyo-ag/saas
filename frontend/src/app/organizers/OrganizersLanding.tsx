@@ -2782,12 +2782,30 @@ export default function ComiuLandingPage() {
           }
 
           .website-mock-wrap {
-            width: 100%;
+            width: min(100%, 320px);
+            margin: 0 auto;
             border-radius: 22px;
           }
 
           .website-mock-img {
             border-radius: 16px;
+          }
+
+          .portal-img {
+            width: min(100%, 280px);
+            height: auto;
+          }
+
+          .phone-type-img {
+            width: min(100%, 180px);
+            height: auto;
+          }
+
+          .remind-img,
+          .remind-phone {
+            width: min(100%, 260px);
+            height: auto;
+            margin: 0 auto;
           }
 
           .h-panel:nth-child(4) .seo-card {
