@@ -2707,34 +2707,39 @@ export default function ComiuLandingPage() {
 
         /* Mobile: disable snap, normal scroll */
         @media (max-width: 768px) {
+          html, body {
+            height: auto !important;
+            overflow: auto !important;
+          }
+
           .comiu-lp {
-            height: auto;
+            height: auto !important;
             min-height: 100dvh;
-            overflow-y: visible;
-            overflow-x: hidden;
-            scroll-snap-type: none;
+            overflow: visible !important;
+            scroll-snap-type: none !important;
           }
 
           .hero {
-            height: auto;
-            min-height: 100svh;
-            overflow: visible;
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            scroll-snap-align: none !important;
             padding-top: 100px;
             padding-bottom: 60px;
           }
 
           .h-panel {
-            height: auto;
-            min-height: 0;
-            overflow: visible;
-            scroll-snap-align: none;
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            scroll-snap-align: none !important;
             padding: clamp(60px, 12vw, 100px) 0;
           }
 
           .site-footer {
-            height: auto;
-            min-height: 0;
-            scroll-snap-align: none;
+            height: auto !important;
+            min-height: 0 !important;
+            scroll-snap-align: none !important;
             padding: 60px var(--page-x) 40px;
           }
 
@@ -2827,8 +2832,6 @@ export default function ComiuLandingPage() {
         <header className="site-header">
           <Logo />
           <nav className="desktop-nav" aria-label="主要ナビゲーション">
-            <a href="#future">できること</a>
-            <a href="#future">導入メリット</a>
             <a className="nav-cta" href="/register" data-cursor="CREATE">
               無料でCOMIUを始める
             </a>
@@ -2847,12 +2850,6 @@ export default function ComiuLandingPage() {
         </header>
 
         <nav className={`mobile-nav ${menuOpen ? "is-open" : ""}`} aria-label="モバイルナビゲーション">
-          <a href="#future" onClick={closeMenu}>
-            できること
-          </a>
-          <a href="#future" onClick={closeMenu}>
-            導入メリット
-          </a>
           <a className="nav-cta" href="/register" onClick={closeMenu}>
             無料で団体ページを作る
           </a>
