@@ -22,37 +22,25 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export default function ComiuLandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activePage, setActivePage] = useState(0);
 
   useEffect(() => {
-    const canControlScrollRestoration = "scrollRestoration" in window.history;
-    const previousScrollRestoration = canControlScrollRestoration ? window.history.scrollRestoration : null;
-    const html = document.documentElement;
-    const previousScrollBehavior = html.style.scrollBehavior;
-    let restoreScrollBehaviorFrame = 0;
-
-    if (canControlScrollRestoration) {
-      window.history.scrollRestoration = "manual";
-    }
-
-    // Refreshing a hash URL should open the landing page from the hero.
-    if (window.location.hash) {
-      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
-    }
-
-    html.style.scrollBehavior = "auto";
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    restoreScrollBehaviorFrame = window.requestAnimationFrame(() => {
-      html.style.scrollBehavior = previousScrollBehavior;
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    });
-
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    const mainEl = document.querySelector<HTMLElement>(".comiu-lp");
     const header = document.querySelector<HTMLElement>(".site-header");
     const fixedCta = document.querySelector<HTMLElement>(".fixed-mobile-cta");
-    const footer = document.querySelector<HTMLElement>(".site-footer");
 
-    // Reveal sections and staged UI pieces as they enter the viewport.
+    // Scroll to top on mount.
+    if (mainEl) mainEl.scrollTop = 0;
+
+    // Keep the header readable after scrolling.
+    const handleScroll = () => {
+      header?.classList.toggle("is-scrolled", (mainEl?.scrollTop ?? 0) > 12);
+    };
+
+    mainEl?.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    // Reveal sections as they enter the viewport.
     const revealObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -62,45 +50,59 @@ export default function ComiuLandingPage() {
           }
         });
       },
-      { threshold: 0.16, rootMargin: "0px 0px -6% 0px" }
+      { root: mainEl, threshold: 0.16 }
     );
-
-    document.querySelectorAll<HTMLElement>(".reveal, .flow-stage, .line-phone").forEach((element) => {
-      revealObserver.observe(element);
+    document.querySelectorAll<HTMLElement>(".reveal, .flow-stage, .line-phone").forEach((el) => {
+      revealObserver.observe(el);
     });
 
-    // Keep the header readable after scrolling.
-    const handleScroll = () => {
-      header?.classList.toggle("is-scrolled", window.scrollY > 12);
-    };
+    // Track active page for dot navigation.
+    const pages = document.querySelectorAll<HTMLElement>(".snap-page");
+    const pageObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const idx = Array.from(pages).indexOf(entry.target as HTMLElement);
+            if (idx !== -1) setActivePage(idx);
+          }
+        });
+      },
+      { root: mainEl, threshold: 0.5 }
+    );
+    pages.forEach((p) => pageObserver.observe(p));
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-
-    // Hide the mobile fixed CTA near the final CTA/footer so it does not cover content.
+    // Hide fixed CTA on last page / footer.
     const ctaObserver = new IntersectionObserver(
       (entries) => {
-        const shouldHide = entries.some((entry) => entry.isIntersecting);
+        const shouldHide = entries.some((e) => e.isIntersecting);
         fixedCta?.classList.toggle("is-hidden", shouldHide);
       },
-      { threshold: 0.1 }
+      { root: mainEl, threshold: 0.1 }
     );
-
     const heroActions = document.querySelector<HTMLElement>(".hero-actions");
+    const footer = document.querySelector<HTMLElement>(".site-footer");
     if (heroActions) ctaObserver.observe(heroActions);
     if (footer) ctaObserver.observe(footer);
 
+    // Keyboard navigation.
+    const handleKey = (e: KeyboardEvent) => {
+      if (!mainEl) return;
+      const allPages = Array.from(document.querySelectorAll<HTMLElement>(".snap-page"));
+      const cur = Math.round(mainEl.scrollTop / mainEl.clientHeight);
+      if (e.key === "ArrowDown" && cur < allPages.length - 1) {
+        allPages[cur + 1].scrollIntoView({ behavior: "smooth" });
+      } else if (e.key === "ArrowUp" && cur > 0) {
+        allPages[cur - 1].scrollIntoView({ behavior: "smooth" });
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+
     return () => {
-      if (restoreScrollBehaviorFrame) {
-        window.cancelAnimationFrame(restoreScrollBehaviorFrame);
-      }
-      html.style.scrollBehavior = previousScrollBehavior;
-      if (canControlScrollRestoration && previousScrollRestoration) {
-        window.history.scrollRestoration = previousScrollRestoration;
-      }
+      mainEl?.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("keydown", handleKey);
       revealObserver.disconnect();
+      pageObserver.disconnect();
       ctaObserver.disconnect();
-      window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
@@ -166,8 +168,11 @@ export default function ComiuLandingPage() {
 
         .comiu-lp {
           position: relative;
-          min-height: 100vh;
-          overflow: hidden;
+          height: 100dvh;
+          overflow-y: scroll;
+          overflow-x: hidden;
+          scroll-snap-type: y mandatory;
+          overscroll-behavior: none;
           background:
             radial-gradient(circle at var(--g1x, 12%) var(--g1y, 5%), rgba(176, 215, 255, 0.68), transparent 28%),
             radial-gradient(circle at var(--g2x, 90%) var(--g2y, 8%), rgba(232, 204, 255, 0.72), transparent 30%),
@@ -334,10 +339,10 @@ export default function ComiuLandingPage() {
           display: flex;
           flex-direction: column;
           justify-content: center;
-          overflow: visible;
-          min-height: 100svh;
-          padding-top: 142px;
-          padding-bottom: 80px;
+          overflow: hidden;
+          height: 100dvh;
+          padding-top: 120px;
+          padding-bottom: 60px;
           scroll-snap-align: start;
           scroll-snap-stop: always;
           isolation: isolate;
@@ -1743,11 +1748,19 @@ export default function ComiuLandingPage() {
         .site-footer {
           position: relative;
           z-index: 1;
-          width: min(1180px, calc(100% - var(--page-x) * 2));
-          margin: 0 auto;
-          padding: 28px 0 42px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          width: 100%;
+          height: 100dvh;
+          padding: 28px var(--page-x) 42px;
           color: var(--muted);
           border-top: 1px solid var(--line);
+          scroll-snap-align: start;
+          scroll-snap-stop: always;
+          background: linear-gradient(135deg, #f8fbff 0%, #f5fff8 54%, #fff6ea 100%);
         }
 
         .fixed-mobile-cta {
@@ -2525,37 +2538,23 @@ export default function ComiuLandingPage() {
           box-shadow: 0 18px 48px rgba(65, 78, 156, 0.16);
         }
 
-        /* B: Feature story sections */
-        .h-scroll-outer {
-          position: relative;
-          z-index: 1;
-          height: auto;
-        }
-
-        .h-scroll-sticky {
-          position: relative;
-          height: auto;
-          overflow: visible;
-        }
-
+        /* B: Feature story sections — vertical snap */
+        .h-scroll-outer,
+        .h-scroll-sticky,
         .h-scroll-track {
-          display: grid;
-          width: 100%;
-          height: auto;
-          transform: none !important;
-          transition: none;
+          display: contents;
         }
 
         .h-panel {
           position: relative;
           width: 100%;
-          min-height: auto;
-          padding: var(--section-y) 0;
+          height: 100dvh;
           display: flex;
           align-items: center;
           justify-content: center;
           overflow: hidden;
           scroll-snap-align: start;
+          scroll-snap-stop: always;
         }
 
         .h-panel-inner {
@@ -2579,35 +2578,41 @@ export default function ComiuLandingPage() {
           padding: 0;
         }
 
-        /* Progress dots */
-        .h-dots {
-          display: none;
+        /* Page dots — vertical side nav */
+        .page-dots {
+          position: fixed;
+          right: 20px;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 200;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          padding: 0;
+          margin: 0;
+          list-style: none;
         }
 
-        .h-dot {
-          width: 7px;
-          height: 7px;
+        .page-dot {
+          width: 8px;
+          height: 8px;
           border-radius: 50%;
-          background: rgba(7, 16, 51, 0.18);
-          transition: background 0.3s, transform 0.3s;
+          background: rgba(7, 16, 51, 0.2);
+          border: none;
+          padding: 0;
+          cursor: pointer;
+          transition: background 0.25s, transform 0.25s;
         }
 
-        .h-dot.active {
+        .page-dot.active {
           background: var(--blue);
-          transform: scale(1.4);
+          transform: scale(1.5);
         }
 
-        .h-panel:nth-child(4) ~ * .h-dot,
-        .h-panel-dark .h-dot { background: rgba(255,255,255,0.3); }
-        .h-panel-dark .h-dot.active { background: #fff; }
-
-        /* Mobile: stack vertically */
+        /* Mobile: smaller panels allowed to scroll within */
         @media (max-width: 768px) {
-          .h-scroll-outer { height: auto; }
-          .h-scroll-sticky { position: static; height: auto; overflow: visible; }
-          .h-scroll-track { display: grid; width: 100%; transition: none; }
-          .h-panel { width: 100%; height: auto; min-height: 0; padding: var(--section-y) 0; }
-          .h-dots { display: none; }
+          .h-panel { height: auto; min-height: 100dvh; overflow-y: auto; scroll-snap-align: start; }
+          .page-dots { display: none; }
           .website-card {
             gap: 24px;
           }
@@ -2721,7 +2726,7 @@ export default function ComiuLandingPage() {
           </a>
         </nav>
 
-        <section className="lp-section hero hero-slide">
+        <section className="lp-section hero hero-slide snap-page">
           <div className="hero-copy">
             <h1>
               <span className="hero-line-wrap"><span className="title-line">イベント・サークルの<br className="mobile-title-break" />集客なら<wbr /><span className="accent">COMIU</span></span></span>
@@ -2750,18 +2755,28 @@ export default function ComiuLandingPage() {
           </div>
         </section>
 
-        {/* B: 横スクロール — ②③④⑤ */}
+        {/* Vertical page dots */}
+        <nav className="page-dots" aria-label="ページナビゲーション">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <button
+              key={i}
+              className={`page-dot${activePage === i ? " active" : ""}`}
+              aria-label={`ページ ${i + 1}`}
+              onClick={() => {
+                const pages = document.querySelectorAll<HTMLElement>(".snap-page");
+                pages[i]?.scrollIntoView({ behavior: "smooth" });
+              }}
+            />
+          ))}
+        </nav>
+
+        {/* B: 縦スナップ — ②③④⑤ */}
         <div className="h-scroll-outer" id="future">
           <div className="h-scroll-sticky">
-            <div className="h-dots" aria-hidden="true">
-              {[0, 1, 2, 3].map((i) => (
-                <span key={i} className={`h-dot${i === 0 ? " active" : ""}`} />
-              ))}
-            </div>
             <div className="h-scroll-track">
 
               {/* Panel ②: WEBサイト作成 */}
-              <section className="h-panel" aria-labelledby="seo-title">
+              <section className="h-panel snap-page" aria-labelledby="seo-title">
                 <div className="h-panel-inner">
                   <div className="seo-card website-card">
                     <div className="website-heading">
@@ -2789,7 +2804,7 @@ export default function ComiuLandingPage() {
               </section>
 
               {/* Panel ③: ポータル */}
-              <section className="h-panel" aria-labelledby="portal-title">
+              <section className="h-panel snap-page" aria-labelledby="portal-title">
                 <div className="h-panel-inner">
                   <div className="portal-grid">
                     <div className="portal-copy">
@@ -2814,7 +2829,7 @@ export default function ComiuLandingPage() {
               </section>
 
               {/* Panel ④: 公式LINEからワンタップ予約 */}
-              <section className="h-panel" aria-labelledby="booking-title">
+              <section className="h-panel snap-page" aria-labelledby="booking-title">
                 <div className="h-panel-inner">
                   <div className="booking-head">
                     <h2 className="section-title booking-title" id="booking-title">
@@ -2845,7 +2860,7 @@ export default function ComiuLandingPage() {
               </section>
 
               {/* Panel ⑤: LINEリマインド */}
-              <section className="h-panel" aria-labelledby="remind-title">
+              <section className="h-panel snap-page" aria-labelledby="remind-title">
                 <div className="h-panel-inner">
                   <div className="remind-grid">
                     <div className="remind-heading">
@@ -2876,14 +2891,14 @@ export default function ComiuLandingPage() {
           </div>
         </div>
 
-        <footer className="site-footer">
-          <Logo />
-          <p>© 2026 COMIU. 団体運営を、続いていくコミュニティへ。</p>
-        </footer>
-
         <a className="fixed-mobile-cta" href="/register">
           無料で団体ページを作る
         </a>
+
+        <footer className="site-footer snap-page">
+          <Logo />
+          <p>© 2026 COMIU. 団体運営を、続いていくコミュニティへ。</p>
+        </footer>
       </main>
     </>
   );
