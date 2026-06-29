@@ -1751,16 +1751,66 @@ export default function ComiuLandingPage() {
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: center;
-          gap: 12px;
+          justify-content: space-between;
           width: 100%;
           height: 100dvh;
-          padding: 28px var(--page-x) 42px;
+          padding: 80px var(--page-x) 40px;
           color: var(--muted);
-          border-top: 1px solid var(--line);
           scroll-snap-align: start;
           scroll-snap-stop: always;
-          background: linear-gradient(135deg, #f8fbff 0%, #f5fff8 54%, #fff6ea 100%);
+          background: linear-gradient(160deg, #f0f6ff 0%, #f3eeff 50%, #fff2f9 100%);
+        }
+
+        .footer-cta {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          gap: 20px;
+        }
+
+        .footer-cta-eyebrow {
+          margin: 0;
+          font-size: 13px;
+          font-weight: 850;
+          letter-spacing: 0.12em;
+          color: var(--blue);
+          text-transform: uppercase;
+        }
+
+        .footer-cta-title {
+          margin: 0;
+          font-size: clamp(36px, 6vw, 72px);
+          font-weight: 950;
+          letter-spacing: -0.06em;
+          line-height: 1.1;
+          color: var(--ink);
+        }
+
+        .footer-cta-desc {
+          margin: 0;
+          font-size: 15px;
+          color: var(--muted);
+        }
+
+        .footer-cta-btn {
+          margin-top: 8px;
+          font-size: 17px;
+          padding: 18px 48px;
+          border-radius: 50px;
+        }
+
+        .footer-bottom {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          font-size: 13px;
+          border-top: 1px solid var(--line);
+          width: 100%;
+          padding-top: 24px;
         }
 
         .fixed-mobile-cta {
@@ -2896,8 +2946,18 @@ export default function ComiuLandingPage() {
         </a>
 
         <footer className="site-footer snap-page">
-          <Logo />
-          <p>© 2026 COMIU. 団体運営を、続いていくコミュニティへ。</p>
+          <div className="footer-cta">
+            <p className="footer-cta-eyebrow">さあ、始めよう</p>
+            <h2 className="footer-cta-title">まずは無料で<br />始めてみよう</h2>
+            <p className="footer-cta-desc">クレジットカード不要。団体ページを数分で作れます。</p>
+            <a className="button button-primary footer-cta-btn" href="/register">
+              無料でCOMIUを始める
+            </a>
+          </div>
+          <div className="footer-bottom">
+            <Logo />
+            <p>© 2026 COMIU. 団体運営を、続いていくコミュニティへ。</p>
+          </div>
         </footer>
       </main>
     </>
