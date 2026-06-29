@@ -2373,13 +2373,9 @@ export default function ComiuLandingPage() {
 
         .remind-title {
           max-width: none;
-          font-size: 50px;
+          font-size: 46px;
           line-height: 1.14;
           letter-spacing: -0.06em;
-        }
-
-        .remind-title .heading-line {
-          display: block;
           white-space: nowrap;
         }
 
@@ -2440,9 +2436,6 @@ export default function ComiuLandingPage() {
           .remind-title {
             font-size: 30px;
             line-height: 1.14;
-          }
-
-          .remind-title .heading-line {
             white-space: normal;
           }
 
@@ -2944,8 +2937,7 @@ export default function ComiuLandingPage() {
                     <div className="remind-heading">
                       <SectionLabel>自動リマインド</SectionLabel>
                       <h2 className="section-title remind-title" id="remind-title">
-                        <span className="heading-line">アプリと公式LINEで</span>
-                        <span className="heading-line">リマインドを自動化</span>
+                        アプリと公式LINEでリマインドを自動化
                       </h2>
                     </div>
                     <div className="remind-content">
