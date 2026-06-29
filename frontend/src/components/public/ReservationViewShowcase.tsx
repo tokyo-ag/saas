@@ -279,7 +279,7 @@ function CardMini({
             const full = status === '満席';
             const price = eventPrice(event);
             const metaLine = [
-              showCapacity && (event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : `${event.reservedCount ?? 0}人予約`),
+              showCapacity && event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : null,
               showPrice && price,
             ].filter(Boolean).join(' / ');
             return (
@@ -370,7 +370,7 @@ function ThreadMini({
                 const full = status === '満席';
                 const price = eventPrice(event);
                 const metaLine = [
-                  showCapacity && (event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : `${event.reservedCount ?? 0}人予約`),
+                  showCapacity && event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : null,
                   showPrice && price,
                 ].filter(Boolean).join(' / ');
                 return (
