@@ -2801,6 +2801,16 @@ export default function ComiuLandingPage() {
             height: auto;
           }
 
+          .remind-content {
+            grid-template-columns: 1fr;
+            gap: 28px;
+          }
+
+          .remind-title {
+            white-space: normal;
+            font-size: clamp(30px, 8vw, 40px);
+          }
+
           .remind-img,
           .remind-phone {
             width: min(100%, 260px);
