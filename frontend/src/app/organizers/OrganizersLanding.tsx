@@ -2261,24 +2261,62 @@ export default function ComiuLandingPage() {
 
         .portal-grid {
           display: grid;
-          grid-template-columns: 0.85fr 1fr;
-          gap: clamp(36px, 6vw, 80px);
+          grid-template-columns: minmax(640px, 1.16fr) minmax(300px, 0.84fr);
+          gap: 40px;
           align-items: center;
         }
 
-        .portal-title {
-          max-width: 560px;
-          font-size: clamp(40px, 4.6vw, 66px);
-          line-height: 1.12;
+        .portal-copy {
+          max-width: 660px;
         }
 
-        .portal-title span {
+        .portal-title {
+          max-width: none;
+          font-size: 52px;
+          line-height: 1.14;
+          letter-spacing: -0.07em;
+          text-wrap: balance;
+        }
+
+        .portal-title .heading-line {
           display: block;
+          white-space: nowrap;
+        }
+
+        .portal-copy .section-desc {
+          max-width: 620px;
+          margin-top: 24px;
+          font-size: 17px;
+          font-weight: 700;
+          line-height: 1.95;
+          color: #53617f;
+          word-break: keep-all;
+          overflow-wrap: break-word;
+          text-wrap: pretty;
+        }
+
+        .text-term {
+          white-space: nowrap;
         }
 
         @media (max-width: 640px) {
+          .portal-grid {
+            grid-template-columns: 1fr;
+            gap: 28px;
+          }
+
           .portal-title {
-            font-size: clamp(32px, 9vw, 40px);
+            font-size: 30px;
+            line-height: 1.14;
+          }
+
+          .portal-title .heading-line {
+            white-space: normal;
+          }
+
+          .portal-copy .section-desc {
+            font-size: 14px;
+            line-height: 1.85;
           }
         }
 
@@ -2746,13 +2784,14 @@ export default function ComiuLandingPage() {
               <section className="h-panel" aria-labelledby="portal-title">
                 <div className="h-panel-inner">
                   <div className="portal-grid">
-                    <div>
+                    <div className="portal-copy">
                       <SectionLabel>ポータル掲載</SectionLabel>
                       <h2 className="section-title portal-title" id="portal-title">
-                        活動やブログがポータルサイトに自動反映
+                        <span className="heading-line">活動やブログが</span>
+                        <span className="heading-line">ポータルサイトに自動反映</span>
                       </h2>
                       <p className="section-desc">
-                        こつこつ更新するだけで、認知拡大につなげることができます。WEBアプリケーションとして機能しているので、活動実績が資産として残ります。
+                        こつこつ更新するだけで、認知拡大につなげることができます。<span className="text-term">WEBアプリケーション</span>として機能しているので、活動実績が資産として残ります。
                       </p>
                     </div>
                     <div>
