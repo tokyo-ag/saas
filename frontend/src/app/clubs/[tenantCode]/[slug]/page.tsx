@@ -268,6 +268,7 @@ export default async function ClubCmsPage({
   const parsedFt = (() => { try { return JSON.parse(page.footerText ?? '{}'); } catch { return {}; } })();
   const subtitleHeroX: number = parsedFt.subtitleHeroX ?? 5;
   const subtitleHeroY: number | null = parsedFt.subtitleHeroY ?? null;
+  const sectionOrder: string[] = Array.isArray(parsedFt.sectionOrder) ? parsedFt.sectionOrder : ['title', 'subtitle', 'nav', 'image'];
   const images = (page.imageUrls?.length ? page.imageUrls : page.coverImageUrl ? [page.coverImageUrl] : [])
     .map((url) => imgUrl(url, IMAGE_BASE_URL))
     .filter(Boolean) as string[];
@@ -502,39 +503,53 @@ export default async function ClubCmsPage({
           )}
         </>
       ) : (
-        /* 通常モード: 薄いスティッキーヘッダー */
-        <header className="sticky top-0 z-10 px-4 py-3" style={{ backgroundColor: navBg }}>
-          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
-            <Link href={clubHref} className="text-sm font-bold" style={{ color: textColor }}>{tenantName}</Link>
-            <div className="flex items-center gap-2 text-xs font-bold">
-              {visibleNavItems.map((item) => item.key === 'reserve' ? (
-                <Link key={item.key} href={item.href} className={`px-4 py-2 font-bold text-white ${btnClass}`} style={{ backgroundColor: accentColor, ...buttonOpacityStyle }}>
-                  {item.label}
+        /* 通常モード: セクション順序で描画 */
+        <div className="border-b border-gray-100" style={{ backgroundColor: navBg }}>
+          {sectionOrder.map((key) => {
+            if (key === 'title') return (
+              <div key="title" className="px-4 pt-4 pb-1">
+                <Link href={clubHref} className="block font-bold leading-tight" style={{ ...titleTextStyle, lineHeight: 1.25 }}>
+                  {orgLogoUrl && orgDisplayType !== 'text' ? (
+                    <>
+                      <img src={orgLogoUrl} alt={orgLogoAlt} className="max-w-full object-contain" style={{ height: orgLogoSize }} />
+                      {orgDisplayType === 'both' && <span>{tenantName}</span>}
+                    </>
+                  ) : tenantName}
                 </Link>
-              ) : (
-                <Link key={item.key} href={item.href} className="hidden sm:block opacity-70 hover:opacity-100 transition-opacity" style={{ color: textColor }}>{item.label}</Link>
-              ))}
-            </div>
-          </div>
-        </header>
+              </div>
+            );
+            if (key === 'subtitle') return page.subtitle ? (
+              <div key="subtitle" className="px-4 py-1">
+                <p className="whitespace-pre-wrap" style={subtitleTextStyle}>{page.subtitle}</p>
+              </div>
+            ) : null;
+            if (key === 'nav') return (
+              <div key="nav" className="px-4 pt-1 pb-3">
+                <nav className={`${buttonLayoutClass}`} style={buttonGridStyle}>
+                  {visibleNavItems.map((item) => (
+                    <Link key={item.key} href={item.href} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{item.label}</Link>
+                  ))}
+                </nav>
+              </div>
+            );
+            if (key === 'image') return images.length ? (
+              <div key="image" className="px-4 pb-3">
+                <HeroImageBlock
+                  images={images}
+                  captions={imageCaptions}
+                  mode={heroImageMode}
+                  overlayColor={heroOverlayColor}
+                  overlayOpacity={heroOverlayOpacity}
+                  alt={page.title}
+                />
+              </div>
+            ) : null;
+            return null;
+          })}
+        </div>
       )}
 
       <article id="about" className={`px-4 ${heroImageMode === 'background' ? 'pt-4 pb-8' : 'py-8'}`}>
-        {page.subtitle && heroImageMode !== 'background' && (
-          <p className="whitespace-pre-wrap pb-4" style={{ ...subtitleTextStyle, marginTop: subtitleGap }}>
-            {page.subtitle}
-          </p>
-        )}
-        {heroImageMode !== 'background' && (
-          <HeroImageBlock
-            images={images}
-            captions={imageCaptions}
-            mode={heroImageMode}
-            overlayColor={heroOverlayColor}
-            overlayOpacity={heroOverlayOpacity}
-            alt={page.title}
-          />
-        )}
 
         <div className={`rounded-xl px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8 ${heroImageMode === 'background' ? '' : 'mt-8'}`} style={{ backgroundColor: navBg }}>
           {page.blocks?.length ? (

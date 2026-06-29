@@ -42,6 +42,9 @@ function firstBlogImage(body: string | null | undefined) {
   return body?.match(BLOG_IMAGE_RE)?.[1] ?? null;
 }
 
+const DEFAULT_SECTION_ORDER = ['title', 'subtitle', 'nav', 'image'] as const;
+const SECTION_LABELS: Record<string, string> = { title: 'タイトル', subtitle: 'サブタイトル', nav: 'ボタン', image: '画像' };
+
 const emptyForm: PublicPageInput = {
   title: '',
   slug: '',
@@ -130,6 +133,7 @@ const emptyForm: PublicPageInput = {
   orgLogoWordmarkSize: 60,
   subtitleHeroX: 5,
   subtitleHeroY: null as unknown as number,
+  sectionOrder: [...DEFAULT_SECTION_ORDER] as string[],
   status: 'published',
 };
 
@@ -726,6 +730,7 @@ export default function AdminPublicPage() {
                   navContactUrl: fd.contactUrl ?? '',
                   subtitleHeroX: fd.subtitleHeroX ?? 5,
                   subtitleHeroY: fd.subtitleHeroY ?? null,
+                  sectionOrder: Array.isArray(fd.sectionOrder) ? fd.sectionOrder : [...DEFAULT_SECTION_ORDER],
                 };
               } catch {
                 return {
@@ -1036,6 +1041,7 @@ export default function AdminPublicPage() {
         contactUrl: form.navContactUrl?.trim() || '',
         subtitleHeroX: form.subtitleHeroX ?? 5,
         subtitleHeroY: form.subtitleHeroY ?? null,
+        sectionOrder: form.sectionOrder ?? [...DEFAULT_SECTION_ORDER],
       }),
       status: 'published',
       seoTitle: form.seoTitle?.trim() || displayName,
@@ -1376,6 +1382,32 @@ export default function AdminPublicPage() {
                 </label>
               )}
             </div>
+            {heroImageMode !== 'background' && (
+              <div className="mt-4">
+                <p className="mb-2 text-[11px] font-bold text-gray-400">セクションの順番</p>
+                <div className="space-y-1.5">
+                  {(form.sectionOrder ?? [...DEFAULT_SECTION_ORDER]).map((key, i, arr) => (
+                    <div key={key} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
+                      <span className="flex-1 text-xs font-bold text-gray-700">{SECTION_LABELS[key] ?? key}</span>
+                      <button type="button" disabled={i === 0}
+                        onClick={() => setForm(p => {
+                          const a = [...(p.sectionOrder ?? [...DEFAULT_SECTION_ORDER])];
+                          [a[i - 1], a[i]] = [a[i], a[i - 1]];
+                          return { ...p, sectionOrder: a };
+                        })}
+                        className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs text-gray-400 disabled:opacity-30 hover:enabled:bg-gray-100">↑</button>
+                      <button type="button" disabled={i === arr.length - 1}
+                        onClick={() => setForm(p => {
+                          const a = [...(p.sectionOrder ?? [...DEFAULT_SECTION_ORDER])];
+                          [a[i + 1], a[i]] = [a[i], a[i + 1]];
+                          return { ...p, sectionOrder: a };
+                        })}
+                        className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs text-gray-400 disabled:opacity-30 hover:enabled:bg-gray-100">↓</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {heroImageMode === 'background' && (
               <div className="mt-3 space-y-4">
                 {/* 画像の焦点位置: ドラッグで調整 */}
@@ -2026,46 +2058,61 @@ export default function AdminPublicPage() {
                   )}
                 </>
               ) : (
-                /* 通常モード: 薄いナビバー */
-                <div className="border-b border-gray-100 px-4 pb-1 pt-3">
-                  <span className="mb-2 block font-bold leading-5" style={{ ...titleTextStyle, lineHeight: 1.25 }}>
-                    {form.orgLogoWordmarkUrl && form.orgNameDisplayType !== 'text' ? (
-                      <>
-                        <img src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
-                          className="max-w-full object-contain"
-                          style={{ height: form.orgLogoWordmarkSize ?? 60, maxWidth: '100%' }} />
-                        {form.orgNameDisplayType === 'both' && <span>{displayName}</span>}
-                      </>
-                    ) : displayName}
-                  </span>
-                  {form.subtitle?.trim() && (
-                    <p className="mb-2 whitespace-pre-wrap" style={{ ...subtitleTextStyle, textAlign: titleAlign }}>
-                      {form.subtitle.trim()}
-                    </p>
-                  )}
-                  <div className={`text-[11px] font-bold ${previewButtonLayoutClass}`} style={previewButtonGridStyle}>
-                    {visibleNavItems.map((item) => (
-                      <span key={item.key} className={`flex items-center justify-center truncate px-2 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{item.label}</span>
-                    ))}
-                  </div>
-                  <div className="mt-1 flex cursor-ns-resize select-none touch-none justify-center py-1"
-                    style={{ touchAction: 'none' }}
-                    onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); dragRef.current = { startY: e.clientY, startSize: btnSize }; }}
-                    onPointerMove={(e) => { if (!dragRef.current) return; const d = e.clientY - dragRef.current.startY; setForm(p => ({ ...p, buttonSize: Math.round(Math.min(80, Math.max(24, dragRef.current!.startSize + d))) })); }}
-                    onPointerUp={() => { dragRef.current = null; }}
-                  ><div className="h-0.5 w-8 rounded bg-gray-300" /></div>
+                /* 通常モード: セクション順序に従って描画 */
+                <div className="border-b border-gray-100">
+                  {(form.sectionOrder ?? [...DEFAULT_SECTION_ORDER]).map((key) => {
+                    if (key === 'title') return (
+                      <div key="title" className="px-4 pt-3 pb-1">
+                        <span className="block font-bold leading-5" style={{ ...titleTextStyle, lineHeight: 1.25 }}>
+                          {form.orgLogoWordmarkUrl && form.orgNameDisplayType !== 'text' ? (
+                            <>
+                              <img src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
+                                className="max-w-full object-contain"
+                                style={{ height: form.orgLogoWordmarkSize ?? 60, maxWidth: '100%' }} />
+                              {form.orgNameDisplayType === 'both' && <span>{displayName}</span>}
+                            </>
+                          ) : displayName}
+                        </span>
+                      </div>
+                    );
+                    if (key === 'subtitle') return form.subtitle?.trim() ? (
+                      <div key="subtitle" className="px-4 py-1">
+                        <p className="whitespace-pre-wrap" style={{ ...subtitleTextStyle, textAlign: titleAlign }}>
+                          {form.subtitle.trim()}
+                        </p>
+                      </div>
+                    ) : null;
+                    if (key === 'nav') return (
+                      <div key="nav" className="px-4 pb-1 pt-1">
+                        <div className={`text-[11px] font-bold ${previewButtonLayoutClass}`} style={previewButtonGridStyle}>
+                          {visibleNavItems.map((item) => (
+                            <span key={item.key} className={`flex items-center justify-center truncate px-2 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{item.label}</span>
+                          ))}
+                        </div>
+                        <div className="mt-1 flex cursor-ns-resize select-none touch-none justify-center py-1"
+                          style={{ touchAction: 'none' }}
+                          onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); dragRef.current = { startY: e.clientY, startSize: btnSize }; }}
+                          onPointerMove={(e) => { if (!dragRef.current) return; const d = e.clientY - dragRef.current.startY; setForm(p => ({ ...p, buttonSize: Math.round(Math.min(80, Math.max(24, dragRef.current!.startSize + d))) })); }}
+                          onPointerUp={() => { dragRef.current = null; }}
+                        ><div className="h-0.5 w-8 rounded bg-gray-300" /></div>
+                      </div>
+                    );
+                    if (key === 'image') return imageUrls.length ? (
+                      <div key="image" className="px-4 py-2">
+                        <HeaderImagePreview
+                          images={imageUrls}
+                          captions={imageCaptions}
+                          mode={heroImageMode}
+                          overlayColor={heroOverlayColor}
+                          overlayOpacity={heroOverlayOpacity}
+                        />
+                      </div>
+                    ) : null;
+                    return null;
+                  })}
                 </div>
               )}
               <div className="space-y-4 p-5">
-                {heroImageMode !== 'background' && (
-                  <HeaderImagePreview
-                    images={imageUrls}
-                    captions={imageCaptions}
-                    mode={heroImageMode}
-                    overlayColor={heroOverlayColor}
-                    overlayOpacity={heroOverlayOpacity}
-                  />
-                )}
                 <div className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
                   {renderPreviewBlocks()}
                 </div>

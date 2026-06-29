@@ -974,6 +974,7 @@ export interface PublicPageInput {
   orgLogoWordmarkSize?: number;
   subtitleHeroX?: number;
   subtitleHeroY?: number | null;
+  sectionOrder?: string[];
   status?: 'draft' | 'published';
 }
 
