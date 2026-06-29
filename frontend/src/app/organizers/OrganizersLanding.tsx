@@ -1782,10 +1782,11 @@ export default function ComiuLandingPage() {
 
         .footer-cta-title {
           margin: 0;
-          font-size: clamp(36px, 6vw, 72px);
+          font-size: clamp(28px, 4.2vw, 64px);
           font-weight: 950;
           letter-spacing: -0.06em;
           line-height: 1.1;
+          white-space: nowrap;
           color: var(--ink);
         }
 
@@ -2948,7 +2949,7 @@ export default function ComiuLandingPage() {
         <footer className="site-footer snap-page">
           <div className="footer-cta">
             <p className="footer-cta-eyebrow">さあ、始めよう</p>
-            <h2 className="footer-cta-title">まずは無料で<br />始めてみよう</h2>
+            <h2 className="footer-cta-title">まずは無料で始めてみよう</h2>
             <p className="footer-cta-desc">クレジットカード不要。団体ページを数分で作れます。</p>
             <a className="button button-primary footer-cta-btn" href="/register">
               無料でCOMIUを始める
