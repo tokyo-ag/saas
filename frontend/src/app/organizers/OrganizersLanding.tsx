@@ -2355,37 +2355,47 @@ export default function ComiuLandingPage() {
         }
 
         .website-card {
-          display: flex;
-          flex-direction: column;
-          gap: 36px;
+          display: grid;
+          grid-template-columns: minmax(0, 0.96fr) minmax(360px, 1fr);
+          gap: 48px;
           align-items: center;
-          text-align: center;
+          text-align: left;
           overflow: hidden;
         }
 
         .website-copy {
           width: 100%;
-          max-width: 980px;
+          max-width: 560px;
         }
 
         .website-card .section-label {
-          margin-inline: auto;
+          margin-inline: 0;
         }
 
         .website-card .section-title {
           max-width: none;
-          font-size: 58px;
-          line-height: 1.12;
+          font-size: 46px;
+          line-height: 1.14;
           white-space: nowrap;
         }
 
-        .website-card .section-desc {
-          max-width: 760px;
-          margin: 18px auto 0;
+        .website-body {
+          display: grid;
+          gap: 14px;
+          max-width: 540px;
+          margin-top: 22px;
+          color: #53617f;
+          font-size: 17px;
+          font-weight: 750;
+          line-height: 1.9;
+        }
+
+        .website-body p {
+          margin: 0;
         }
 
         .website-mock-wrap {
-          width: min(720px, 92%);
+          width: 100%;
           padding: clamp(10px, 1.6vw, 18px);
           background: rgba(255, 255, 255, 0.72);
           border: 1px solid rgba(255, 255, 255, 0.86);
@@ -2481,10 +2491,20 @@ export default function ComiuLandingPage() {
           .h-scroll-track { display: grid; width: 100%; transition: none; }
           .h-panel { width: 100%; height: auto; min-height: 0; padding: var(--section-y) 0; }
           .h-dots { display: none; }
+          .website-card {
+            grid-template-columns: 1fr;
+            gap: 28px;
+          }
+
           .website-card .section-title {
             font-size: 25px;
             white-space: nowrap;
             letter-spacing: -0.08em;
+          }
+
+          .website-body {
+            font-size: 15px;
+            line-height: 1.85;
           }
 
           .website-mock-wrap {
@@ -2659,11 +2679,14 @@ export default function ComiuLandingPage() {
                     <div className="website-copy">
                       <SectionLabel>WEBサイト作成</SectionLabel>
                       <h2 className="section-title website-title" id="seo-title">
-                        まずはオリジナルのWEBサイトを無料作成
+                        WEBサイトを無料作成
                       </h2>
-                      <p className="section-desc">
-                        団体の特色に合わせて自由にカスタマイズできます。初めての方は、SEO専任の担当者が初回無料でヒアリングし、ページ作成までサポートします。
-                      </p>
+                      <div className="website-body">
+                        <p>団体の個性に合わせて、自由に編集できるホームページ！</p>
+                        <p>初めての方は、SEO専任の担当者が初回ヒアリングから、初回WEBサイトの作成までサポートします。</p>
+                        <p>活動内容、写真、予約導線、ブログをひとつにまとめて、初めて見る人にも雰囲気と信頼が伝わるページへ。</p>
+                        <p>作って終わりではなく、更新するほど団体の実績が積み上がるWEBサイトです。</p>
+                      </div>
                     </div>
                     <div className="website-mock-wrap">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
