@@ -2333,6 +2333,13 @@ export default function ComiuLandingPage() {
           max-width: 720px;
         }
 
+        .portal-visual {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 0;
+        }
+
         .portal-title {
           max-width: none;
           font-size: 44px;
@@ -2397,9 +2404,10 @@ export default function ComiuLandingPage() {
         }
 
         .portal-img {
-          width: auto;
-          height: min(72vh, 720px);
+          width: clamp(200px, 22vw, 300px);
+          height: auto;
           max-width: 100%;
+          max-height: min(58dvh, 620px);
           display: block;
           border-radius: 24px;
           box-shadow: var(--shadow);
@@ -2409,8 +2417,9 @@ export default function ComiuLandingPage() {
 
         @media (max-width: 640px) {
           .portal-img {
-            width: min(100%, 320px);
+            width: min(54vw, 220px);
             height: auto;
+            max-height: 42dvh;
           }
         }
 
@@ -2476,10 +2485,13 @@ export default function ComiuLandingPage() {
         }
 
         .remind-img {
-          width: min(100%, 500px);
+          width: min(100%, 420px);
+          height: auto;
+          max-height: min(62dvh, 560px);
           display: block;
           border-radius: 24px;
           box-shadow: var(--shadow);
+          object-fit: contain;
           margin: 0 auto;
         }
 
@@ -2687,9 +2699,9 @@ export default function ComiuLandingPage() {
           }
 
           .portal-img {
-            width: min(58vw, 320px) !important;
+            width: min(46vw, 250px) !important;
             height: auto !important;
-            max-height: 56dvh !important;
+            max-height: 48dvh !important;
             margin: 0 auto !important;
             display: block !important;
           }
@@ -2700,8 +2712,9 @@ export default function ComiuLandingPage() {
           }
 
           .remind-img {
-            width: min(100%, 360px) !important;
+            width: min(100%, 320px) !important;
             height: auto !important;
+            max-height: 56dvh !important;
             margin: 0 auto !important;
             display: block !important;
           }
@@ -2796,9 +2809,9 @@ export default function ComiuLandingPage() {
           }
 
           .portal-img {
-            width: min(62vw, 260px) !important;
+            width: min(54vw, 210px) !important;
             height: auto !important;
-            max-height: 52dvh !important;
+            max-height: 42dvh !important;
             margin: 0 auto !important;
             display: block !important;
           }
@@ -3007,7 +3020,7 @@ export default function ComiuLandingPage() {
                         <p>開催するたびに情報が積み上がり、次の参加者に見つけてもらいやすい団体へ育っていきます。</p>
                       </div>
                     </div>
-                    <div>
+                    <div className="portal-visual">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src="/COMIUスマホモックアップ.svg" alt="COMIUポータルサイト" className="portal-img" />
                     </div>
