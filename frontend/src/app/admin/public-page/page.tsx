@@ -96,6 +96,7 @@ const emptyForm: PublicPageInput = {
   buttonTextOpacity: 100,
   headerText: '',
   footerText: '',
+  footerTextColor: '',
   footerContact: '',
   footerContactColor: '',
   contactTitle: '',
@@ -699,6 +700,7 @@ export default function AdminPublicPage() {
                 const fd = JSON.parse((first as any).footerText ?? '{}');
                 return {
                   footerContact: fd.contact ?? '',
+                  footerTextColor: fd.footerTextColor ?? '',
                   footerContactColor: fd.contactColor ?? '',
                   contactTitle: fd.contactTitle ?? '',
                   contactLead: fd.contactLead ?? '',
@@ -740,6 +742,7 @@ export default function AdminPublicPage() {
               } catch {
                 return {
                   footerContact: (first as any).footerText ?? '',
+                  footerTextColor: '',
                   footerContactColor: '',
                   contactTitle: '',
                   contactLead: '',
@@ -1031,6 +1034,7 @@ export default function AdminPublicPage() {
       blocks: blocks.length > 0 ? blocks.map(({ id: _id, ...rest }) => rest) : undefined,
       footerText: JSON.stringify({
         contact: form.footerContact?.trim() || '',
+        footerTextColor: form.footerTextColor?.trim() || '',
         contactColor: form.footerContactColor?.trim() || '',
         contactTitle: form.contactTitle?.trim() || '',
         contactLead: form.contactLead?.trim() || '',
@@ -1928,7 +1932,13 @@ export default function AdminPublicPage() {
               {/* COMIU固定メッセージ */}
               <div className="rounded-lg bg-gray-50 px-3 py-2">
                 <p className="text-[11px] font-bold text-gray-400 mb-1">COMIUメッセージ（固定）</p>
-                <p className="text-xs text-gray-500">Powered by <span className="font-bold">COMIU</span></p>
+                <p className="text-xs" style={{ color: form.footerTextColor?.trim() || '#6B7280' }}>Powered by <span className="font-bold">COMIU</span></p>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-[11px] font-bold text-gray-400">文字色</span>
+                  <input type="color" value={form.footerTextColor || '#6B7280'}
+                    onChange={(e) => setForm((p) => ({ ...p, footerTextColor: e.target.value }))}
+                    className="h-8 w-11 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+                </div>
               </div>
               {/* 問い合わせボタン */}
               <div className="space-y-2">
@@ -1948,6 +1958,12 @@ export default function AdminPublicPage() {
                   onChange={(e) => setForm((p) => ({ ...p, contactMessage: e.target.value }))}
                   placeholder="ボタン下のサブテキスト（例：LINEまたはアプリ内でお気軽に）"
                   className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold text-gray-400">説明文の色</span>
+                  <input type="color" value={form.contactMessageColor || '#6B7280'}
+                    onChange={(e) => setForm((p) => ({ ...p, contactMessageColor: e.target.value }))}
+                    className="h-8 w-11 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+                </div>
               </div>
               {/* 公式SNSリンク */}
               <div className="space-y-2">
@@ -2219,10 +2235,13 @@ export default function AdminPublicPage() {
                     {navLabels.contact}
                   </div>
                   {form.contactMessage?.trim() && (
-                    <p className="mt-1.5 text-center text-[11px] opacity-60" style={{ color: textColor }}>
+                    <p className="mt-1.5 text-center text-[11px]" style={{ color: form.contactMessageColor?.trim() || '#6B7280' }}>
                       {form.contactMessage.trim()}
                     </p>
                   )}
+                  <p className="mt-3 text-center text-[10px]" style={{ color: form.footerTextColor?.trim() || '#9CA3AF' }}>
+                    Powered by <span className="font-bold">COMIU</span>
+                  </p>
                 </div>
               </div>
             </>

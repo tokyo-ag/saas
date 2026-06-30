@@ -344,6 +344,7 @@ export default async function ClubCmsPage({
     try {
       return JSON.parse(page.footerText ?? '{}') as {
         contact?: string;
+        footerTextColor?: string;
         contactColor?: string;
         contactTitle?: string;
         contactLead?: string;
@@ -414,6 +415,8 @@ export default async function ClubCmsPage({
   const blogSectionLead = sectionCopy.blogLead?.trim() || '活動日記やお知らせを表示するエリアです。';
   const blogTitleColor = sectionCopy.blogTitleColor?.trim() || textColor;
   const blogLeadColor = sectionCopy.blogLeadColor?.trim() || '#6B7280';
+  const contactMessageColor = sectionCopy.contactMessageColor?.trim() || '#6B7280';
+  const footerTextColor = sectionCopy.footerTextColor?.trim() || '#9CA3AF';
 
   return (
     <main className="min-h-screen sm:bg-gray-200" style={{ fontFamily, backgroundColor: bgColor }}>
@@ -737,7 +740,7 @@ export default async function ClubCmsPage({
                   {navLabels.contact}
                 </Link>
                 {subtitle && (
-                  <p className="mt-2 text-center text-xs leading-5" style={{ color: textColor, opacity: 0.6 }}>
+                  <p className="mt-2 text-center text-xs leading-5" style={{ color: contactMessageColor }}>
                     {subtitle}
                   </p>
                 )}
@@ -758,7 +761,7 @@ export default async function ClubCmsPage({
                 {sectionCopy.x && <a href={sectionCopy.x} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-gray-800 hover:underline">X</a>}
               </div>
             )}
-            <p className="mt-4 text-[11px] text-gray-400">
+            <p className="mt-4 text-[11px]" style={{ color: footerTextColor }}>
               Powered by <a href="https://comiu.link" target="_blank" rel="noopener noreferrer" className="font-bold hover:underline">COMIU</a>
             </p>
           </footer>

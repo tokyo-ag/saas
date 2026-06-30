@@ -933,6 +933,7 @@ export interface PublicPageInput {
   buttonSize?: number;
   headerText?: string;
   footerText?: string;
+  footerTextColor?: string;
   footerContact?: string;
   footerContactColor?: string;
   contactTitle?: string;
