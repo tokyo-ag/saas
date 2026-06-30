@@ -2702,104 +2702,120 @@ export default function ComiuLandingPage() {
           transform: scale(1.5);
         }
 
-        /* Mobile: disable snap pagination, use normal scroll */
+        /* Mobile: override all layout for 640px and below */
         @media (max-width: 640px) {
           html, body {
-            height: auto;
-            overflow: auto;
+            height: auto !important;
+            overflow: auto !important;
           }
 
           .comiu-lp {
-            height: auto;
+            height: auto !important;
             min-height: 100dvh;
-            overflow-x: hidden;
-            overflow-y: auto;
-            scroll-snap-type: none;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            scroll-snap-type: none !important;
           }
 
           .h-panel {
-            height: auto;
-            min-height: 0;
-            scroll-snap-align: none;
-            padding: 56px 0;
-            overflow: hidden;
+            height: auto !important;
+            min-height: 0 !important;
+            scroll-snap-align: none !important;
+            padding: 56px 0 !important;
+            overflow: visible !important;
           }
 
           .hero {
-            scroll-snap-align: none;
+            scroll-snap-align: none !important;
           }
 
           .site-footer {
-            height: auto;
-            min-height: 0;
-            scroll-snap-align: none;
-            padding: 52px var(--page-x) 36px;
+            height: auto !important;
+            min-height: 0 !important;
+            scroll-snap-align: none !important;
+            padding: 52px var(--page-x) 36px !important;
           }
 
           .footer-cta-title {
-            white-space: normal;
-            font-size: clamp(28px, 8vw, 44px);
+            white-space: normal !important;
+            font-size: clamp(28px, 8vw, 44px) !important;
           }
 
-          .page-dots { display: none; }
-          .scroll-hint { display: none; }
+          .page-dots { display: none !important; }
+          .scroll-hint { display: none !important; }
 
-          .portal-title .heading-line { white-space: normal; }
+          /* Portal section: single column */
+          .portal-grid {
+            grid-template-columns: 1fr !important;
+            gap: 24px !important;
+          }
 
-          /* Portal image: 632×1322 (1:2.09) — set width, let height scale */
+          .portal-copy {
+            max-width: 100% !important;
+          }
+
+          .portal-title .heading-line {
+            white-space: normal !important;
+          }
+
           .portal-img {
-            width: 160px;
-            height: auto;
-            margin: 0 auto;
-            display: block;
+            width: 140px !important;
+            height: auto !important;
+            margin: 0 auto !important;
+            display: block !important;
           }
 
-          /* Remind image: 1122×1402 (1:1.25) — wider since nearly square */
+          /* Remind section: single column */
+          .remind-grid {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+
           .remind-img {
-            width: min(100%, 240px);
-            height: auto;
-            margin: 0 auto;
-            display: block;
+            width: min(100%, 200px) !important;
+            height: auto !important;
+            margin: 0 auto !important;
+            display: block !important;
           }
 
-          /* Phone cards: 863×1822 (1:2.11) — 3-column grid */
+          /* Phone cards: 3-column grid */
           .phones-grid {
             display: grid !important;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            align-items: end;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 10px !important;
+            align-items: end !important;
           }
 
           .phone-type-card {
-            flex: none;
-            width: 100%;
-            max-width: none;
+            flex: none !important;
+            width: 100% !important;
+            max-width: none !important;
           }
 
           .phone-type-img {
-            width: 100%;
-            height: auto;
+            width: 100% !important;
+            height: auto !important;
           }
 
-          /* Website section: 1448×1086 (landscape ✓) — single column */
+          /* Website section: single column */
           .website-card .section-title {
-            font-size: clamp(28px, 8vw, 40px);
-            white-space: normal;
+            font-size: clamp(28px, 8vw, 40px) !important;
+            white-space: normal !important;
           }
 
           .website-content {
-            grid-template-columns: 1fr;
-            gap: 20px;
+            grid-template-columns: 1fr !important;
+            gap: 20px !important;
           }
 
           .website-body {
-            font-size: 14px;
-            line-height: 1.8;
+            font-size: 14px !important;
+            line-height: 1.8 !important;
           }
 
           .website-mock-wrap {
-            width: min(100%, 320px);
-            margin: 0 auto;
+            width: min(100%, 300px) !important;
+            margin: 0 auto !important;
           }
 
           .h-panel:nth-child(4) .seo-card {
@@ -2807,9 +2823,9 @@ export default function ComiuLandingPage() {
               radial-gradient(circle at 14% 14%, rgba(255,255,255,0.92), transparent 28%),
               radial-gradient(circle at 86% 18%, rgba(202,247,224,0.8), transparent 30%),
               radial-gradient(circle at 70% 92%, rgba(255,213,235,0.72), transparent 32%),
-              linear-gradient(135deg, #dfeaff 0%, #f3e9ff 54%, #fff1f8 100%);
-            box-shadow: 0 26px 80px rgba(73,82,152,0.16);
-            border-radius: 40px;
+              linear-gradient(135deg, #dfeaff 0%, #f3e9ff 54%, #fff1f8 100%) !important;
+            box-shadow: 0 26px 80px rgba(73,82,152,0.16) !important;
+            border-radius: 40px !important;
           }
         }
 
