@@ -2707,6 +2707,7 @@ export default function ComiuLandingPage() {
           html, body {
             height: auto !important;
             overflow: auto !important;
+            scroll-snap-type: none !important;
           }
 
           .comiu-lp {
