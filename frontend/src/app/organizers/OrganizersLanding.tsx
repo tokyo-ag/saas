@@ -2746,6 +2746,27 @@ export default function ComiuLandingPage() {
 
           .portal-title .heading-line { white-space: normal; }
 
+          /* Portrait SVG images: cap height, not width */
+          .portal-img {
+            height: 220px;
+            width: auto;
+            max-width: 100%;
+          }
+
+          .phone-type-img {
+            height: 190px;
+            width: auto;
+            max-width: 100%;
+          }
+
+          .remind-img {
+            height: 200px;
+            width: auto;
+            max-width: 100%;
+            margin: 0 auto;
+            display: block;
+          }
+
           /* Website section — missing from other 640px blocks */
           .website-card .section-title {
             font-size: clamp(28px, 8vw, 40px);
