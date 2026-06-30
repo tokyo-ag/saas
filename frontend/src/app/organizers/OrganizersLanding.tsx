@@ -2746,28 +2746,49 @@ export default function ComiuLandingPage() {
 
           .portal-title .heading-line { white-space: normal; }
 
-          /* Portrait SVG images: cap height, not width */
+          /* Portal image: 632×1322 (1:2.09) — set width, let height scale */
           .portal-img {
-            height: 220px;
-            width: auto;
-            max-width: 100%;
-          }
-
-          .phone-type-img {
-            height: 190px;
-            width: auto;
-            max-width: 100%;
-          }
-
-          .remind-img {
-            height: 200px;
-            width: auto;
-            max-width: 100%;
+            width: 160px;
+            height: auto;
             margin: 0 auto;
             display: block;
           }
 
-          /* Website section — missing from other 640px blocks */
+          /* Remind image: 1122×1402 (1:1.25) — wider since nearly square */
+          .remind-img {
+            width: min(100%, 240px);
+            height: auto;
+            margin: 0 auto;
+            display: block;
+          }
+
+          /* Phone cards: 863×1822 (1:2.11) — horizontal scroll row */
+          .phones-grid {
+            flex-direction: row !important;
+            overflow-x: auto;
+            overflow-y: visible;
+            justify-content: flex-start;
+            align-items: flex-end;
+            gap: 12px;
+            padding-bottom: 8px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+          }
+
+          .phones-grid::-webkit-scrollbar { display: none; }
+
+          .phone-type-card {
+            flex: 0 0 auto;
+            width: 110px;
+            max-width: none;
+          }
+
+          .phone-type-img {
+            width: 100%;
+            height: auto;
+          }
+
+          /* Website section: 1448×1086 (landscape ✓) — single column */
           .website-card .section-title {
             font-size: clamp(28px, 8vw, 40px);
             white-space: normal;
