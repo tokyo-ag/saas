@@ -2798,22 +2798,41 @@ export default function ComiuLandingPage() {
           .portal-grid {
             grid-template-columns: 1fr !important;
             gap: 24px !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
           }
 
           .portal-copy {
+            width: 100% !important;
+            min-width: 0 !important;
             max-width: 100% !important;
           }
 
           .portal-visual {
             width: 100% !important;
+            min-width: 0 !important;
             max-width: 100% !important;
             justify-content: center !important;
             overflow: visible !important;
             padding-inline: 0 !important;
           }
 
+          .portal-title,
+          .portal-body,
+          .portal-body p {
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            overflow-wrap: anywhere !important;
+            word-break: normal !important;
+          }
+
           .portal-title .heading-line {
             white-space: normal !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
           }
 
           .portal-img {
@@ -2869,6 +2888,22 @@ export default function ComiuLandingPage() {
           .website-content {
             grid-template-columns: 1fr !important;
             gap: 20px !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+          }
+
+          .website-copy,
+          .website-body,
+          .website-body p,
+          .remind-copy,
+          .remind-body,
+          .remind-body p {
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            overflow-wrap: anywhere !important;
+            word-break: normal !important;
           }
 
           .website-body {
@@ -2876,8 +2911,13 @@ export default function ComiuLandingPage() {
             line-height: 1.8 !important;
           }
 
+          .website-body .text-term {
+            white-space: normal !important;
+          }
+
           .website-mock-wrap {
-            width: min(100%, 300px) !important;
+            width: min(100%, calc(100vw - 48px), 280px) !important;
+            max-width: calc(100vw - 48px) !important;
             margin: 0 auto !important;
           }
 
@@ -2895,6 +2935,17 @@ export default function ComiuLandingPage() {
             letter-spacing: -0.06em !important;
           }
 
+          .remind-content {
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+          }
+
+          .h-panel-inner {
+            min-width: 0 !important;
+            max-width: 100% !important;
+          }
+
           .h-panel:nth-child(4) .seo-card {
             background:
               radial-gradient(circle at 14% 14%, rgba(255,255,255,0.92), transparent 28%),
@@ -2903,6 +2954,20 @@ export default function ComiuLandingPage() {
               linear-gradient(135deg, #dfeaff 0%, #f3e9ff 54%, #fff1f8 100%) !important;
             box-shadow: 0 26px 80px rgba(73,82,152,0.16) !important;
             border-radius: 40px !important;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .portal-img {
+            width: min(42vw, 150px) !important;
+          }
+
+          .remind-img {
+            width: min(100%, 176px) !important;
+          }
+
+          .phone-type-img {
+            border-radius: 14px !important;
           }
         }
 
