@@ -2671,6 +2671,42 @@ export default function ComiuLandingPage() {
           padding: 0;
         }
 
+        @media (max-width: 1180px) {
+          .portal-grid,
+          .website-content,
+          .remind-content {
+            grid-template-columns: 1fr !important;
+          }
+
+          .portal-grid {
+            gap: 30px !important;
+          }
+
+          .portal-copy {
+            max-width: 720px !important;
+          }
+
+          .portal-img {
+            width: min(58vw, 320px) !important;
+            height: auto !important;
+            max-height: 56dvh !important;
+            margin: 0 auto !important;
+            display: block !important;
+          }
+
+          .website-mock-wrap {
+            width: min(100%, 520px) !important;
+            margin: 0 auto !important;
+          }
+
+          .remind-img {
+            width: min(100%, 360px) !important;
+            height: auto !important;
+            margin: 0 auto !important;
+            display: block !important;
+          }
+        }
+
         /* Page dots — vertical side nav */
         .page-dots {
           position: fixed;
@@ -2760,8 +2796,9 @@ export default function ComiuLandingPage() {
           }
 
           .portal-img {
-            width: 140px !important;
+            width: min(62vw, 260px) !important;
             height: auto !important;
+            max-height: 52dvh !important;
             margin: 0 auto !important;
             display: block !important;
           }
