@@ -2762,24 +2762,17 @@ export default function ComiuLandingPage() {
             display: block;
           }
 
-          /* Phone cards: 863×1822 (1:2.11) — horizontal scroll row */
+          /* Phone cards: 863×1822 (1:2.11) — 3-column grid */
           .phones-grid {
-            flex-direction: row !important;
-            overflow-x: auto;
-            overflow-y: visible;
-            justify-content: flex-start;
-            align-items: flex-end;
-            gap: 12px;
-            padding-bottom: 8px;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            align-items: end;
           }
 
-          .phones-grid::-webkit-scrollbar { display: none; }
-
           .phone-type-card {
-            flex: 0 0 auto;
-            width: 110px;
+            flex: none;
+            width: 100%;
             max-width: none;
           }
 
