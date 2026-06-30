@@ -2804,16 +2804,28 @@ export default function ComiuLandingPage() {
             max-width: 100% !important;
           }
 
+          .portal-visual {
+            width: 100% !important;
+            max-width: 100% !important;
+            justify-content: center !important;
+            overflow: visible !important;
+            padding-inline: 0 !important;
+          }
+
           .portal-title .heading-line {
             white-space: normal !important;
           }
 
           .portal-img {
-            width: min(54vw, 210px) !important;
+            width: min(46vw, 184px) !important;
+            max-width: 100% !important;
             height: auto !important;
-            max-height: 42dvh !important;
+            max-height: 38dvh !important;
             margin: 0 auto !important;
             display: block !important;
+            object-fit: contain !important;
+            object-position: center center !important;
+            transform: translateX(0) !important;
           }
 
           /* Remind section: single column */
@@ -2867,6 +2879,20 @@ export default function ComiuLandingPage() {
           .website-mock-wrap {
             width: min(100%, 300px) !important;
             margin: 0 auto !important;
+          }
+
+          .website-mock-img {
+            max-width: 100% !important;
+            height: auto !important;
+            object-fit: contain !important;
+            object-position: center center !important;
+          }
+
+          .booking-title {
+            white-space: nowrap !important;
+            font-size: clamp(24px, 7.2vw, 30px) !important;
+            line-height: 1.16 !important;
+            letter-spacing: -0.06em !important;
           }
 
           .h-panel:nth-child(4) .seo-card {
