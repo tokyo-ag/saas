@@ -17,7 +17,7 @@ type OfficialArticle = {
 };
 
 export const metadata: Metadata = {
-  title: 'サークル・イベント運営ガイド | COMIU',
+  title: 'サークル・イベント運営ガイド',
   description: 'サークル運営、イベント予約管理、新歓集客、LINE活用に関するCOMIU公式記事です。',
   alternates: { canonical: `${SITE_URL}/guide` },
   openGraph: {
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 
 async function fetchArticles(): Promise<OfficialArticle[]> {
   try {
-    const res = await fetch(`${API_URL}/api/public/official-articles?limit=50`, { next: { revalidate } });
+    const res = await fetch(`${API_URL}/api/public/official-articles?limit=120`, { next: { revalidate } });
     if (!res.ok) return [];
     return res.json();
   } catch {
@@ -42,8 +42,54 @@ async function fetchArticles(): Promise<OfficialArticle[]> {
 export default async function GuidePage() {
   const articles = await fetchArticles();
   const categories = Array.from(new Set(articles.map((a) => a.category).filter(Boolean))) as string[];
+  const guideUrl = `${SITE_URL}/guide`;
+  const description = metadata.description as string;
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        '@id': `${SITE_URL}#website`,
+        url: SITE_URL,
+        name: 'COMIU',
+        inLanguage: 'ja',
+      },
+      {
+        '@type': 'CollectionPage',
+        '@id': `${guideUrl}#webpage`,
+        url: guideUrl,
+        name: 'サークル・イベント運営ガイド',
+        description,
+        inLanguage: 'ja',
+        isPartOf: { '@id': `${SITE_URL}#website` },
+        mainEntity: { '@id': `${guideUrl}#itemlist` },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${guideUrl}#breadcrumb`,
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'COMIU', item: SITE_URL },
+          { '@type': 'ListItem', position: 2, name: 'ガイド', item: guideUrl },
+        ],
+      },
+      {
+        '@type': 'ItemList',
+        '@id': `${guideUrl}#itemlist`,
+        name: 'COMIUガイド記事一覧',
+        numberOfItems: articles.length,
+        itemListElement: articles.map((article, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: article.title,
+          url: `${SITE_URL}/guide/${article.slug}`,
+        })),
+      },
+    ],
+  };
 
   return (
+    <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
     <main className="min-h-screen bg-[#F7F8FA] text-gray-900">
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-5 py-4">
@@ -99,5 +145,6 @@ export default async function GuidePage() {
         )}
       </section>
     </main>
+    </>
   );
 }
