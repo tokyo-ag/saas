@@ -168,7 +168,6 @@ export default function ComiuLandingPage() {
           height: 100dvh;
           overflow-y: scroll;
           overflow-x: hidden;
-          scroll-snap-type: y mandatory;
           overscroll-behavior: none;
           background:
             radial-gradient(circle at var(--g1x, 12%) var(--g1y, 5%), rgba(176, 215, 255, 0.68), transparent 28%),
@@ -340,8 +339,6 @@ export default function ComiuLandingPage() {
           height: 100dvh;
           padding-top: 120px;
           padding-bottom: 60px;
-          scroll-snap-align: start;
-          scroll-snap-stop: always;
           isolation: isolate;
         }
 
@@ -1798,8 +1795,6 @@ export default function ComiuLandingPage() {
           height: 100dvh;
           padding: 80px var(--page-x) 40px;
           color: var(--muted);
-          scroll-snap-align: start;
-          scroll-snap-stop: always;
           background: linear-gradient(160deg, #f0f6ff 0%, #f3eeff 50%, #fff2f9 100%);
         }
 
@@ -2658,8 +2653,6 @@ export default function ComiuLandingPage() {
           align-items: center;
           justify-content: center;
           overflow: hidden;
-          scroll-snap-align: start;
-          scroll-snap-stop: always;
         }
 
         .h-panel-inner {
@@ -2722,12 +2715,12 @@ export default function ComiuLandingPage() {
 
         /* Page dots — vertical side nav */
         .page-dots {
+          display: none;
           position: fixed;
           right: 20px;
           top: 50%;
           transform: translateY(-50%);
           z-index: 200;
-          display: flex;
           flex-direction: column;
           gap: 10px;
           padding: 0;
@@ -2836,15 +2829,11 @@ export default function ComiuLandingPage() {
           }
 
           .portal-img {
-            width: min(46vw, 184px) !important;
-            max-width: 100% !important;
+            width: min(100%, 280px) !important;
             height: auto !important;
-            max-height: 38dvh !important;
+            max-height: none !important;
             margin: 0 auto !important;
             display: block !important;
-            object-fit: contain !important;
-            object-position: center center !important;
-            transform: translateX(0) !important;
           }
 
           /* Remind section: single column */
@@ -2854,18 +2843,18 @@ export default function ComiuLandingPage() {
           }
 
           .remind-img {
-            width: min(100%, 200px) !important;
+            width: 100% !important;
             height: auto !important;
             margin: 0 auto !important;
             display: block !important;
           }
 
-          /* Phone cards: 3-column grid */
+          /* Phone cards: 3-column grid, top-aligned to fix 3rd card offset */
           .phones-grid {
             display: grid !important;
             grid-template-columns: repeat(3, 1fr) !important;
             gap: 10px !important;
-            align-items: end !important;
+            align-items: start !important;
           }
 
           .phone-type-card {
@@ -2958,14 +2947,6 @@ export default function ComiuLandingPage() {
         }
 
         @media (max-width: 360px) {
-          .portal-img {
-            width: min(42vw, 150px) !important;
-          }
-
-          .remind-img {
-            width: min(100%, 176px) !important;
-          }
-
           .phone-type-img {
             border-radius: 14px !important;
           }
