@@ -364,7 +364,11 @@ export class PublicController {
 
   @Get('official-articles')
   async listOfficialArticles(@Query('limit') limitParam?: string) {
-    const limit = Math.min(parseInt(limitParam ?? '20', 10) || 20, 50);
+    const requestedLimit = parseInt(limitParam ?? '20', 10);
+    const limit = Math.min(
+      Math.max(Number.isFinite(requestedLimit) ? requestedLimit : 20, 1),
+      150,
+    );
     const rows = await this.prisma.$queryRaw<OfficialArticleRow[]>(Prisma.sql`
       ${this.officialArticleSelect()}
       WHERE status = 'published'
