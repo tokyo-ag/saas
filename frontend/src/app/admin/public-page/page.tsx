@@ -713,7 +713,7 @@ export default function AdminPublicPage() {
                   contactMessage: fd.contactMessage ?? '',
                   contactTitleColor: fd.contactTitleColor ?? '',
                   contactLeadColor: fd.contactLeadColor ?? '',
-                  contactMessageColor: fd.contactMessageColor?.trim() || '#111827',
+                  contactMessageColor: normalizeFooterTextColor(fd.contactMessageColor),
                   reserveTitle: fd.reserveTitle ?? '',
                   reserveLead: fd.reserveLead ?? '',
                   reserveTitleColor: fd.reserveTitleColor ?? '',
