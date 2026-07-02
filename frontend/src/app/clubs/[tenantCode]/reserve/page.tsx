@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { api, API_URL, formatDateShort, LiffEvent, LiffTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
+import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
@@ -127,7 +128,11 @@ function CardView({ events, tenantCode }: { events: LiffEvent[]; tenantCode: str
           <Link key={ev.id} href={`/e/${tenantCode}/${ev.id}`}
             className="block rounded-xl overflow-hidden bg-white shadow-sm active:opacity-70">
             <div className="relative aspect-[4/5]">
-              {img ? <Image src={img} alt={ev.title} fill className="object-cover" unoptimized /> : <div className="absolute inset-0 bg-gradient-to-br from-[#06C755] to-[#05a847]" />}
+              {img ? (
+                <Image src={img} alt={ev.title} fill className="object-cover" unoptimized />
+              ) : (
+                <Image src={DEFAULT_EVENT_IMAGE} alt={ev.title} fill className="object-cover" unoptimized />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <p className="absolute bottom-2 left-2 right-2 text-white text-[12px] font-bold leading-snug">{ev.title}</p>
               {rem !== null && rem <= 0 && <span className="absolute top-2 right-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">満席</span>}

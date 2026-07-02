@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { API_URL, formatDateShort } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
+import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
 
 export type ReservationShowcaseEvent = {
@@ -293,9 +294,7 @@ function CardMini({
                   {image ? (
                     <img src={image} alt={event.title} className="h-full w-full object-cover" />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-4xl font-bold" style={{ background: `linear-gradient(135deg, ${visible.accent}, #111827)`, color: visible.text }}>
-                      {new Date(event.heldAt).getDate()}
-                    </div>
+                    <img src={DEFAULT_EVENT_IMAGE} alt={event.title} className="h-full w-full object-cover" />
                   )}
                   <span
                     className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-bold shadow-sm ${full ? 'bg-white/90 text-gray-400' : ''}`}

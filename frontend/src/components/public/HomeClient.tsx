@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
+import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import PublicFooter from '@/components/public/PublicFooter';
 
 type HomeClientProps = {
@@ -91,7 +92,13 @@ function EventCard({
             className="object-cover"
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-[#06C755] to-[#047a35]" />
+          <Image
+            src={DEFAULT_EVENT_IMAGE}
+            alt={event.title}
+            fill
+            sizes={compact ? '128px' : '176px'}
+            className="object-cover"
+          />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
         {remaining !== null && remaining <= 0 && (
