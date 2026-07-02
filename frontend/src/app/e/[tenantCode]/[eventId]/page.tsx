@@ -316,139 +316,166 @@ export default async function PublicEventPage({
         )}
       </header>
 
-      <main className="mx-auto max-w-2xl px-4 py-6 space-y-5">
+      <main className="mx-auto max-w-5xl px-4 py-6 md:py-10 space-y-5">
         {isEnded && (
-          <div className="rounded-2xl bg-gray-100 border border-gray-200 px-4 py-3 text-center text-sm text-gray-500">
+          <div className="mx-auto max-w-3xl rounded-2xl bg-gray-100 border border-gray-200 px-4 py-3 text-center text-sm text-gray-500">
             このイベントは終了しました
           </div>
         )}
 
-        {event.imageUrl && (
-          <div className="relative overflow-hidden rounded-2xl aspect-[4/3] bg-gray-100">
-            <Image
-              src={imgSrc(event.imageUrl)!}
-              alt={event.title}
-              fill
-              sizes="(min-width: 768px) 672px, calc(100vw - 32px)"
-              className="object-cover"
-              priority
-            />
-          </div>
-        )}
-
-        <div>
-          {event.category && (
-            <span className="inline-block mb-2 rounded-full bg-[#06C755]/10 px-2.5 py-0.5 text-xs font-medium text-[#06C755]">
-              {event.category}
-            </span>
-          )}
-          <h1 className="text-xl font-bold text-gray-900 leading-snug">
-            {event.title}
-          </h1>
-          <div className="mt-2 flex items-center gap-2">
-            {imgSrc(event.tenantIconUrl) && (
+        <section className={`rounded-3xl border border-gray-200 bg-white p-4 shadow-sm md:p-5 ${event.imageUrl ? 'md:grid md:grid-cols-[minmax(280px,42%)_1fr] md:gap-6' : 'mx-auto max-w-3xl'}`}>
+          {event.imageUrl && (
+            <div className="relative mb-4 aspect-[4/5] w-full overflow-hidden rounded-2xl bg-gray-100 md:mb-0">
               <Image
-                src={imgSrc(event.tenantIconUrl)!}
-                alt={event.tenantName}
-                width={24}
-                height={24}
-                className="w-6 h-6 rounded-full object-cover"
+                src={imgSrc(event.imageUrl)!}
+                alt={event.title}
+                fill
+                sizes="(min-width: 768px) 420px, calc(100vw - 48px)"
+                className="object-cover"
+                priority
               />
-            )}
-            <Link
-              href={`/clubs/${event.tenantCode}`}
-              className="text-sm text-gray-500 hover:text-[#06C755]"
-            >
-              {event.tenantName}
-            </Link>
-          </div>
-          {event.tags && event.tags.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {event.tags.map((tag) => {
-                const href = tagHref(tag);
-                const className =
-                  'rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-xs text-gray-600 hover:border-[#06C755] hover:text-[#06C755]';
-                return href ? (
-                  <Link key={tag} href={href} className={className}>
-                    {tag}
-                  </Link>
-                ) : (
-                  <span key={tag} className={className}>
-                    {tag}
-                  </span>
-                );
-              })}
             </div>
           )}
-        </div>
 
-        <div className="rounded-2xl bg-white border border-gray-200 divide-y divide-gray-100 shadow-sm">
-          <div className="px-4 py-3.5">
-            <p className="text-xs font-semibold text-gray-400 mb-1">日時</p>
-            <p className="text-sm text-gray-800">{formatDate(event.heldAt)}</p>
-            {endAt && (
-              <p className="text-sm text-gray-500">終了 {formatDate(endAt)}</p>
-            )}
-          </div>
-
-          <div className="px-4 py-3.5">
-            <p className="text-xs font-semibold text-gray-400 mb-1">場所</p>
-            <div className="text-sm text-gray-800">
-              {event.locationUrl ? (
-                <a
-                  href={event.locationUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#06C755] underline"
+          <div className="min-w-0">
+            <div>
+              {event.category && (
+                <span className="inline-block mb-2 rounded-full bg-[#06C755]/10 px-2.5 py-0.5 text-xs font-medium text-[#06C755]">
+                  {event.category}
+                </span>
+              )}
+              <h1 className="text-xl font-bold text-gray-900 leading-snug md:text-2xl">
+                {event.title}
+              </h1>
+              <div className="mt-2 flex items-center gap-2">
+                {imgSrc(event.tenantIconUrl) && (
+                  <Image
+                    src={imgSrc(event.tenantIconUrl)!}
+                    alt={event.tenantName}
+                    width={24}
+                    height={24}
+                    className="w-6 h-6 rounded-full object-cover"
+                  />
+                )}
+                <Link
+                  href={`/clubs/${event.tenantCode}`}
+                  className="text-sm text-gray-500 hover:text-[#06C755]"
                 >
-                  {event.location}
-                </a>
-              ) : (
-                <span>{event.location}</span>
+                  {event.tenantName}
+                </Link>
+              </div>
+              {event.tags && event.tags.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {event.tags.map((tag) => {
+                    const href = tagHref(tag);
+                    const className =
+                      'rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-xs text-gray-600 hover:border-[#06C755] hover:text-[#06C755]';
+                    return href ? (
+                      <Link key={tag} href={href} className={className}>
+                        {tag}
+                      </Link>
+                    ) : (
+                      <span key={tag} className={className}>
+                        {tag}
+                      </span>
+                    );
+                  })}
+                </div>
               )}
             </div>
-          </div>
 
-          <div className="px-4 py-3.5">
-            <p className="text-xs font-semibold text-gray-400 mb-1">参加費</p>
-            <p className="text-sm text-gray-800">{priceText(event)}</p>
-          </div>
+            <div className="mt-4 grid gap-2 rounded-2xl bg-gray-50 p-3 text-sm">
+              <div className="flex items-start gap-2">
+                <span className="mt-0.5 text-gray-400">日</span>
+                <div>
+                  <p className="text-xs font-semibold text-gray-400">日時</p>
+                  <p className="text-gray-800">{formatDate(event.heldAt)}</p>
+                  {endAt && <p className="text-gray-500">終了 {formatDate(endAt)}</p>}
+                </div>
+              </div>
 
-          {event.capacity != null && (
-            <div className="px-4 py-3.5">
-              <p className="text-xs font-semibold text-gray-400 mb-1">定員</p>
-              <p className="text-sm text-gray-800">
-                {isEnded ? (
-                  <span className="text-gray-500">
-                    {event.reservedCount}人が参加しました
-                  </span>
-                ) : isFull ? (
-                  <span className="text-red-500 font-medium">満席</span>
-                ) : (
-                  <span>
-                    {event.reservedCount} / {event.capacity}人
-                    {spotsLeft != null && spotsLeft <= 5 && (
-                      <span className="ml-2 text-amber-500 font-medium">
-                        残り{spotsLeft}名
-                      </span>
+              <div className="flex items-start gap-2">
+                <span className="mt-0.5 text-gray-400">場</span>
+                <div>
+                  <p className="text-xs font-semibold text-gray-400">場所</p>
+                  <div className="text-gray-800">
+                    {event.locationUrl ? (
+                      <a
+                        href={event.locationUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#06C755] underline"
+                      >
+                        {event.location}
+                      </a>
+                    ) : (
+                      <span>{event.location}</span>
                     )}
-                  </span>
-                )}
-              </p>
-            </div>
-          )}
-        </div>
+                  </div>
+                </div>
+              </div>
 
-        {event.description && (
-          <div className="rounded-2xl bg-white border border-gray-200 px-4 py-4 shadow-sm">
-            <h2 className="mb-2 text-sm font-semibold text-gray-800">
-              イベント詳細
-            </h2>
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
-              {event.description}
-            </p>
+              <div className="flex items-start gap-2">
+                <span className="mt-0.5 text-gray-400">円</span>
+                <div>
+                  <p className="text-xs font-semibold text-gray-400">参加費</p>
+                  <p className="font-semibold text-gray-900">{priceText(event)}</p>
+                </div>
+              </div>
+
+              {event.capacity != null && (
+                <div className="flex items-start gap-2">
+                  <span className="mt-0.5 text-gray-400">人</span>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400">定員</p>
+                    <p className="text-gray-800">
+                      {isEnded ? (
+                        <span className="text-gray-500">
+                          {event.reservedCount}人が参加しました
+                        </span>
+                      ) : isFull ? (
+                        <span className="font-medium text-red-500">満席</span>
+                      ) : (
+                        <span>
+                          {event.reservedCount} / {event.capacity}人
+                          {spotsLeft != null && spotsLeft <= 5 && (
+                            <span className="ml-2 font-medium text-amber-500">
+                              残り{spotsLeft}名
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {event.description && (
+              <div className="mt-4 border-t border-gray-100 pt-4">
+                <h2 className="mb-2 text-sm font-semibold text-gray-800">
+                  イベント詳細
+                </h2>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
+                  {event.description}
+                </p>
+              </div>
+            )}
+
+            {!isEnded && (
+              <Link
+                href={liffUrl}
+                className={`mt-5 block w-full rounded-xl py-3.5 text-center text-sm font-bold text-white transition-colors ${
+                  isFull
+                    ? 'bg-gray-400 pointer-events-none'
+                    : 'bg-[#06C755] hover:bg-[#05a847]'
+                }`}
+              >
+                {isFull ? '満席のため受付終了' : 'LINEで予約する'}
+              </Link>
+            )}
           </div>
-        )}
+        </section>
 
         {reviews.length > 0 && (
           <div className="rounded-2xl bg-white border border-gray-200 px-4 py-4 shadow-sm space-y-4">
@@ -481,42 +508,6 @@ export default async function PublicEventPage({
           </div>
         )}
 
-        {!isEnded ? (
-          <div className="rounded-2xl bg-white border border-gray-200 px-4 py-5 shadow-sm text-center space-y-3">
-            <p className="text-sm text-gray-500">
-              参加にはLINEアカウントが必要です
-            </p>
-            <Link
-              href={liffUrl}
-              className={`block w-full rounded-xl py-3.5 text-sm font-bold text-white transition-colors ${
-                isFull
-                  ? 'bg-gray-400 pointer-events-none'
-                  : 'bg-[#06C755] hover:bg-[#05a847]'
-              }`}
-            >
-              {isFull ? '満席のため受付終了' : 'LINEで予約する'}
-            </Link>
-            <p className="text-xs text-gray-400">
-              このイベントは{' '}
-              <a href={SITE_URL} className="text-[#06C755] underline">
-                COMIU
-              </a>{' '}
-              で管理されています
-            </p>
-          </div>
-        ) : (
-          <div className="rounded-2xl bg-white border border-gray-200 px-4 py-5 shadow-sm text-center space-y-3">
-            <p className="text-sm text-gray-500">
-              ほかのイベントも探してみましょう
-            </p>
-            <a
-              href={SITE_URL}
-              className="block w-full rounded-xl py-3.5 text-sm font-bold text-[#06C755] border border-[#06C755] transition-colors hover:bg-[#06C755]/5"
-            >
-              COMIUでイベントを探す
-            </a>
-          </div>
-        )}
       </main>
       <PublicFooter />
     </div>

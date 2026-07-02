@@ -180,12 +180,11 @@ export default function LiffEventDetailPage() {
           <div className="h-4 w-40 bg-[#06C755]/20 rounded-full animate-pulse" />
         </div>
         <div className="px-4 py-4">
-          <div className="mx-auto flex max-w-2xl gap-3 rounded-3xl border border-gray-100 bg-white p-3 shadow-sm">
-            <div className="aspect-[4/5] w-[42%] min-w-32 max-w-[280px] shrink-0 rounded-2xl bg-gray-200 animate-pulse" />
-            <div className="min-w-0 flex-1 space-y-3 py-1">
+          <div className="mx-auto max-w-3xl rounded-3xl border border-gray-100 bg-white p-4 shadow-sm">
+            <div className="space-y-3">
               <div className="h-5 w-11/12 rounded-full bg-gray-200 animate-pulse" />
               <div className="h-4 w-1/2 rounded-full bg-gray-200 animate-pulse" />
-              <div className="h-4 w-2/3 rounded-full bg-gray-200 animate-pulse" />
+              <div className="h-24 rounded-2xl bg-gray-100 animate-pulse" />
             </div>
           </div>
         </div>
