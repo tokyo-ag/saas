@@ -229,8 +229,8 @@ export default function LiffEventDetailPage() {
 
       {/* overview */}
       <div className="px-4 py-4">
-        <section className="mx-auto flex max-w-2xl items-start gap-3 rounded-3xl border border-gray-100 bg-white p-3 shadow-sm">
-          <div className="relative aspect-[4/5] w-[42%] min-w-32 max-w-[280px] shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-[#06C755]/20 to-[#06C755]/5">
+        <section className="mx-auto flex max-w-3xl items-start gap-4 rounded-3xl border border-gray-100 bg-white p-4 shadow-sm">
+          <div className={`relative aspect-[4/5] w-[42%] min-w-32 max-w-[280px] shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-[#06C755]/20 to-[#06C755]/5 ${event.imageUrl ? '' : 'hidden'}`}>
             {event.imageUrl ? (
               <Image
                 src={imgUrl(event.imageUrl, API_URL)!}
@@ -255,20 +255,10 @@ export default function LiffEventDetailPage() {
           </div>
 
           <div className="min-w-0 flex-1 py-0.5">
-            <h2 className="max-h-[4.35rem] overflow-hidden text-[16px] font-bold leading-snug text-gray-900">
+            <h2 className="text-[19px] font-bold leading-snug text-gray-900">
               {event.title}
             </h2>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {event.priceMale != null && event.priceFemale != null ? (
-                <>
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600">男性 ¥{event.priceMale.toLocaleString()}</span>
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600">女性 ¥{event.priceFemale.toLocaleString()}</span>
-                </>
-              ) : (
-                <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${event.price === 0 ? 'bg-green-50 text-[#06C755]' : 'bg-gray-100 text-gray-600'}`}>
-                  {event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`}
-                </span>
-              )}
               {remaining !== null && remaining <= 5 && remaining > 0 && (
                 <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-600">残り{remaining}席</span>
               )}
@@ -276,25 +266,54 @@ export default function LiffEventDetailPage() {
                 <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-500">満席</span>
               )}
             </div>
-            <div className="mt-3 space-y-1.5 text-xs text-gray-600">
-              <div className="flex items-center gap-1.5">
+            <div className="mt-3 grid gap-2 rounded-2xl bg-gray-50 p-3 text-xs text-gray-600">
+              <div className="flex items-start gap-2">
                 <span className="shrink-0 text-gray-400"><CalendarIcon /></span>
-                <span className="min-w-0 truncate">{formatDate(event.heldAt)}</span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold text-gray-400">日時</p>
+                  <p className="font-medium text-gray-800">{formatDate(event.heldAt)}</p>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-start gap-2">
                 <span className="shrink-0 text-gray-400"><PinIcon /></span>
-                <span className="min-w-0 truncate">{event.location}</span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold text-gray-400">場所</p>
+                  {event.locationUrl ? (
+                    <a href={event.locationUrl} target="_blank" rel="noopener noreferrer" className="break-words font-medium text-[#06C755] underline">
+                      {event.location}
+                    </a>
+                  ) : (
+                    <p className="break-words font-medium text-gray-800">{event.location}</p>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-start gap-2">
                 <span className="shrink-0 text-gray-400"><UsersIcon /></span>
-                <span className="min-w-0 truncate">
-                  {event.capacity ? `${event.reservedCount}/${event.capacity}人・残り${Math.max(0, remaining ?? 0)}席` : '定員なし'}
-                </span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold text-gray-400">定員</p>
+                  <p className="font-medium text-gray-800">
+                    {event.capacity ? `${event.reservedCount}/${event.capacity}名・残り${Math.max(0, remaining ?? 0)}名` : '定員なし'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="shrink-0 text-gray-400"><TicketIcon /></span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold text-gray-400">参加費</p>
+                  <p className="font-bold text-gray-900">
+                    {event.priceMale != null && event.priceFemale != null
+                      ? `男性 ¥${event.priceMale.toLocaleString()} / 女性 ¥${event.priceFemale.toLocaleString()}`
+                      : event.price === 0
+                        ? '無料'
+                        : `¥${event.price.toLocaleString()}`}
+                  </p>
+                </div>
               </div>
             </div>
             {event.description && (
               <div className="mt-3 border-t border-gray-100 pt-3">
-                <p className="text-xs leading-relaxed text-gray-700 whitespace-pre-wrap">
+                <h3 className="mb-2 text-sm font-bold text-gray-900">イベント詳細</h3>
+                <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">
                   <Linkified text={event.description} />
                 </p>
               </div>
