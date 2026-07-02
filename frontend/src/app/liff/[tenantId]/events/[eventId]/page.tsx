@@ -179,10 +179,15 @@ export default function LiffEventDetailPage() {
           </button>
           <div className="h-4 w-40 bg-[#06C755]/20 rounded-full animate-pulse" />
         </div>
-        <div className="aspect-[4/5] w-full bg-gray-200 animate-pulse" />
-        <div className="px-4 py-5 space-y-4">
-          <div className="h-5 bg-gray-200 rounded-full animate-pulse w-3/4" />
-          <div className="h-3 bg-gray-200 rounded-full animate-pulse w-1/3" />
+        <div className="px-4 py-4">
+          <div className="mx-auto flex max-w-2xl gap-3 rounded-3xl border border-gray-100 bg-white p-3 shadow-sm">
+            <div className="aspect-[4/5] w-28 shrink-0 rounded-2xl bg-gray-200 animate-pulse" />
+            <div className="min-w-0 flex-1 space-y-3 py-1">
+              <div className="h-5 w-11/12 rounded-full bg-gray-200 animate-pulse" />
+              <div className="h-4 w-1/2 rounded-full bg-gray-200 animate-pulse" />
+              <div className="h-4 w-2/3 rounded-full bg-gray-200 animate-pulse" />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -222,6 +227,76 @@ export default function LiffEventDetailPage() {
         </div>
       )}
 
+      {/* overview */}
+      <div className="px-4 py-4">
+        <section className="mx-auto flex max-w-2xl gap-3 rounded-3xl border border-gray-100 bg-white p-3 shadow-sm">
+          <div className="relative aspect-[4/5] w-28 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-[#06C755]/20 to-[#06C755]/5 sm:w-36">
+            {event.imageUrl ? (
+              <Image
+                src={imgUrl(event.imageUrl, API_URL)!}
+                alt={event.title}
+                fill
+                sizes="(max-width: 640px) 112px, 144px"
+                className="object-cover"
+                unoptimized
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <span className="text-xs font-bold tracking-[0.18em] text-[#06C755]">COMIU</span>
+              </div>
+            )}
+            {(isFull || isClosed) && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-gray-800">
+                  {isClosed ? '受付終了' : '満席'}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1 py-0.5">
+            <h2 className="max-h-[4.35rem] overflow-hidden text-[16px] font-bold leading-snug text-gray-900">
+              {event.title}
+            </h2>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {event.priceMale != null && event.priceFemale != null ? (
+                <>
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600">男性 ¥{event.priceMale.toLocaleString()}</span>
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600">女性 ¥{event.priceFemale.toLocaleString()}</span>
+                </>
+              ) : (
+                <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${event.price === 0 ? 'bg-green-50 text-[#06C755]' : 'bg-gray-100 text-gray-600'}`}>
+                  {event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`}
+                </span>
+              )}
+              {remaining !== null && remaining <= 5 && remaining > 0 && (
+                <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-600">残り{remaining}席</span>
+              )}
+              {isFull && !isClosed && (
+                <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-500">満席</span>
+              )}
+            </div>
+            <div className="mt-3 space-y-1.5 text-xs text-gray-600">
+              <div className="flex items-center gap-1.5">
+                <span className="shrink-0 text-gray-400"><CalendarIcon /></span>
+                <span className="min-w-0 truncate">{formatDate(event.heldAt)}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="shrink-0 text-gray-400"><PinIcon /></span>
+                <span className="min-w-0 truncate">{event.location}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="shrink-0 text-gray-400"><UsersIcon /></span>
+                <span className="min-w-0 truncate">
+                  {event.capacity ? `${event.reservedCount}/${event.capacity}人・残り${Math.max(0, remaining ?? 0)}席` : '定員なし'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div className="hidden">
       {/* hero image */}
       {event.imageUrl ? (
         <div className="relative">
@@ -240,8 +315,10 @@ export default function LiffEventDetailPage() {
         </div>
       )}
 
+      </div>
+
       {/* title + quick badges */}
-      <div className="px-4 pt-5 pb-2">
+      <div className="hidden">
         <h2 className="text-[18px] font-bold text-gray-900 leading-snug mb-3">{event.title}</h2>
         <div className="flex flex-wrap gap-2">
           {event.priceMale != null && event.priceFemale != null ? (
@@ -270,7 +347,8 @@ export default function LiffEventDetailPage() {
       </div>
 
       {/* info rows */}
-      <div className="px-4 mt-4 bg-white">
+      <div className="mx-auto max-w-2xl px-4 mt-1 bg-white">
+        <div className="hidden">
         <InfoRow icon={<CalendarIcon />}>
           <p className="text-sm font-medium text-gray-900">{formatDate(event.heldAt)}</p>
         </InfoRow>
@@ -293,6 +371,7 @@ export default function LiffEventDetailPage() {
             <p className="text-xs text-gray-400 mt-0.5">{event.reservedCount}人が予約済み</p>
           )}
         </InfoRow>
+        </div>
         <InfoRow icon={<TicketIcon />}>
           {event.priceMale != null && event.priceFemale != null ? (
             <div className="space-y-0.5">
