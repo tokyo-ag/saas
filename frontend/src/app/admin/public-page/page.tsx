@@ -104,7 +104,7 @@ const emptyForm: PublicPageInput = {
   contactMessage: '',
   contactTitleColor: '',
   contactLeadColor: '',
-  contactMessageColor: '',
+  contactMessageColor: '#111827',
   reserveTitle: '',
   reserveLead: '',
   reserveTitleColor: '',
@@ -713,7 +713,7 @@ export default function AdminPublicPage() {
                   contactMessage: fd.contactMessage ?? '',
                   contactTitleColor: fd.contactTitleColor ?? '',
                   contactLeadColor: fd.contactLeadColor ?? '',
-                  contactMessageColor: fd.contactMessageColor ?? '',
+                  contactMessageColor: fd.contactMessageColor?.trim() || '#111827',
                   reserveTitle: fd.reserveTitle ?? '',
                   reserveLead: fd.reserveLead ?? '',
                   reserveTitleColor: fd.reserveTitleColor ?? '',
@@ -755,7 +755,7 @@ export default function AdminPublicPage() {
                   contactMessage: '',
                   contactTitleColor: '',
                   contactLeadColor: '',
-                  contactMessageColor: '',
+                  contactMessageColor: '#111827',
                   reserveTitle: '',
                   reserveLead: '',
                   reserveTitleColor: '',
@@ -1047,7 +1047,7 @@ export default function AdminPublicPage() {
         contactMessage: form.contactMessage?.trim() || '',
         contactTitleColor: form.contactTitleColor?.trim() || '',
         contactLeadColor: form.contactLeadColor?.trim() || '',
-        contactMessageColor: form.contactMessageColor?.trim() || '',
+        contactMessageColor: form.contactMessageColor?.trim() || '#111827',
         reserveTitle: form.reserveTitle?.trim() || '',
         reserveLead: form.reserveLead?.trim() || '',
         reserveTitleColor: form.reserveTitleColor?.trim() || '',
@@ -1966,7 +1966,7 @@ export default function AdminPublicPage() {
                   className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] font-bold text-gray-400">説明文の色</span>
-                  <input type="color" value={form.contactMessageColor || '#6B7280'}
+                  <input type="color" value={form.contactMessageColor || '#111827'}
                     onChange={(e) => setForm((p) => ({ ...p, contactMessageColor: e.target.value }))}
                     className="h-8 w-11 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
                 </div>
@@ -2241,7 +2241,7 @@ export default function AdminPublicPage() {
                     {navLabels.contact}
                   </div>
                   {form.contactMessage?.trim() && (
-                    <p className="mt-1.5 text-center text-[11px]" style={{ color: form.contactMessageColor?.trim() || '#6B7280' }}>
+                    <p className="mt-1.5 text-center text-[11px]" style={{ color: form.contactMessageColor?.trim() || '#111827' }}>
                       {form.contactMessage.trim()}
                     </p>
                   )}

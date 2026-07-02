@@ -415,7 +415,11 @@ export default async function ClubCmsPage({
   const blogSectionLead = sectionCopy.blogLead?.trim() || '活動日記やお知らせを表示するエリアです。';
   const blogTitleColor = sectionCopy.blogTitleColor?.trim() || textColor;
   const blogLeadColor = sectionCopy.blogLeadColor?.trim() || '#6B7280';
-  const contactMessageColor = sectionCopy.contactMessageColor?.trim() || '#6B7280';
+  const contactMessageColorRaw = sectionCopy.contactMessageColor?.trim();
+  const contactMessageColor =
+    !contactMessageColorRaw || ['#6B7280', '#9CA3AF'].includes(contactMessageColorRaw.toUpperCase())
+      ? '#111827'
+      : contactMessageColorRaw;
   const footerTextColorRaw = sectionCopy.footerTextColor?.trim();
   const footerTextColor =
     !footerTextColorRaw || ['#6B7280', '#9CA3AF'].includes(footerTextColorRaw.toUpperCase())
