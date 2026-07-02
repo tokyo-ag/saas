@@ -170,6 +170,15 @@ export default function LiffEventDetailPage() {
     }
   }
 
+  useEffect(() => {
+    if (loading || !event || myReservation) return;
+    const isPast = new Date(event.heldAt).getTime() < Date.now();
+    const isClosed = event.status === 'closed' || isPast;
+    if (!isClosed) {
+      router.replace(`/liff/${tenantId}/events/${eventId}/reserve`);
+    }
+  }, [loading, event, myReservation, router, tenantId, eventId]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -188,6 +197,20 @@ export default function LiffEventDetailPage() {
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  const isPendingReserveRedirect =
+    !!event &&
+    !myReservation &&
+    event.status !== 'closed' &&
+    new Date(event.heldAt).getTime() >= Date.now();
+
+  if (isPendingReserveRedirect) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-[#06C755] text-sm">予約画面を開いています...</div>
       </div>
     );
   }

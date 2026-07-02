@@ -233,7 +233,7 @@ function ReservePageInner() {
           </p>
         </div>
         <button
-          onClick={() => router.push(`/liff/${tenantId}/events/${eventId}`)}
+          onClick={() => router.push(`/liff/${tenantId}`)}
           className="bg-[#06C755] text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:bg-[#05a847]"
         >
           イベントページへ戻る
@@ -377,7 +377,7 @@ function ReservePageInner() {
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
       <div className="bg-[#06C755] text-white px-4 py-4 flex items-center gap-3">
-        <button onClick={() => router.push(`/liff/${tenantId}/events/${eventId}`)} className="text-white text-xl leading-none">‹</button>
+        <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-white text-xl leading-none">‹</button>
         <h1 className="text-base font-bold">{isWaitlist ? 'キャンセル待ち登録' : '予約確認'}</h1>
       </div>
 
