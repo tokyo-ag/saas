@@ -416,7 +416,11 @@ export default async function ClubCmsPage({
   const blogTitleColor = sectionCopy.blogTitleColor?.trim() || textColor;
   const blogLeadColor = sectionCopy.blogLeadColor?.trim() || '#6B7280';
   const contactMessageColor = sectionCopy.contactMessageColor?.trim() || '#6B7280';
-  const footerTextColor = sectionCopy.footerTextColor?.trim() || '#9CA3AF';
+  const footerTextColorRaw = sectionCopy.footerTextColor?.trim();
+  const footerTextColor =
+    !footerTextColorRaw || ['#6B7280', '#9CA3AF'].includes(footerTextColorRaw.toUpperCase())
+      ? '#111827'
+      : footerTextColorRaw;
 
   return (
     <main className="min-h-screen sm:bg-gray-200" style={{ fontFamily, backgroundColor: bgColor }}>
