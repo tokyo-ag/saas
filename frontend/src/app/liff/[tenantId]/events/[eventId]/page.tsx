@@ -181,7 +181,7 @@ export default function LiffEventDetailPage() {
         </div>
         <div className="px-4 py-4">
           <div className="mx-auto flex max-w-2xl gap-3 rounded-3xl border border-gray-100 bg-white p-3 shadow-sm">
-            <div className="aspect-[4/5] w-28 shrink-0 rounded-2xl bg-gray-200 animate-pulse" />
+            <div className="aspect-[4/5] w-[42%] min-w-32 max-w-[280px] shrink-0 rounded-2xl bg-gray-200 animate-pulse" />
             <div className="min-w-0 flex-1 space-y-3 py-1">
               <div className="h-5 w-11/12 rounded-full bg-gray-200 animate-pulse" />
               <div className="h-4 w-1/2 rounded-full bg-gray-200 animate-pulse" />
@@ -229,14 +229,14 @@ export default function LiffEventDetailPage() {
 
       {/* overview */}
       <div className="px-4 py-4">
-        <section className="mx-auto flex max-w-2xl gap-3 rounded-3xl border border-gray-100 bg-white p-3 shadow-sm">
-          <div className="relative aspect-[4/5] w-28 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-[#06C755]/20 to-[#06C755]/5 sm:w-36">
+        <section className="mx-auto flex max-w-2xl items-start gap-3 rounded-3xl border border-gray-100 bg-white p-3 shadow-sm">
+          <div className="relative aspect-[4/5] w-[42%] min-w-32 max-w-[280px] shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-[#06C755]/20 to-[#06C755]/5">
             {event.imageUrl ? (
               <Image
                 src={imgUrl(event.imageUrl, API_URL)!}
                 alt={event.title}
                 fill
-                sizes="(max-width: 640px) 112px, 144px"
+                sizes="(max-width: 640px) 42vw, 280px"
                 className="object-cover"
                 unoptimized
               />
@@ -292,6 +292,13 @@ export default function LiffEventDetailPage() {
                 </span>
               </div>
             </div>
+            {event.description && (
+              <div className="mt-3 border-t border-gray-100 pt-3">
+                <p className="text-xs leading-relaxed text-gray-700 whitespace-pre-wrap">
+                  <Linkified text={event.description} />
+                </p>
+              </div>
+            )}
           </div>
         </section>
       </div>
@@ -347,7 +354,7 @@ export default function LiffEventDetailPage() {
       </div>
 
       {/* info rows */}
-      <div className="mx-auto max-w-2xl px-4 mt-1 bg-white">
+      <div className="hidden">
         <div className="hidden">
         <InfoRow icon={<CalendarIcon />}>
           <p className="text-sm font-medium text-gray-900">{formatDate(event.heldAt)}</p>
