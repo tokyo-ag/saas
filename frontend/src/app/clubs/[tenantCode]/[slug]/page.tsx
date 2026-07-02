@@ -346,6 +346,7 @@ export default async function ClubCmsPage({
         contact?: string;
         footerTextColor?: string;
         contactColor?: string;
+        contactTextColor?: string;
         contactTitle?: string;
         contactLead?: string;
         contactMessage?: string;
@@ -420,6 +421,11 @@ export default async function ClubCmsPage({
     !contactMessageColorRaw || ['#6B7280', '#9CA3AF'].includes(contactMessageColorRaw.toUpperCase())
       ? '#111827'
       : contactMessageColorRaw;
+  const contactTextColorRaw = sectionCopy.contactTextColor?.trim();
+  const contactTextColor =
+    !contactTextColorRaw || ['#6B7280', '#9CA3AF'].includes(contactTextColorRaw.toUpperCase())
+      ? '#111827'
+      : contactTextColorRaw;
   const footerTextColorRaw = sectionCopy.footerTextColor?.trim();
   const footerTextColor =
     !footerTextColorRaw || ['#6B7280', '#9CA3AF'].includes(footerTextColorRaw.toUpperCase())
@@ -743,8 +749,8 @@ export default async function ClubCmsPage({
             return (
               <>
                 <Link href={contactLink}
-                  className="flex w-full items-center justify-center rounded-xl py-4 text-base font-bold text-white shadow-sm transition hover:opacity-90"
-                  style={{ backgroundColor: btnColor }}>
+                  className="flex w-full items-center justify-center rounded-xl py-4 text-base font-bold shadow-sm transition hover:opacity-90"
+                  style={{ backgroundColor: btnColor, color: contactTextColor }}>
                   {navLabels.contact}
                 </Link>
                 {subtitle && (

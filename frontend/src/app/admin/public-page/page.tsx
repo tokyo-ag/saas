@@ -99,6 +99,7 @@ const emptyForm: PublicPageInput = {
   footerTextColor: '#111827',
   footerContact: '',
   footerContactColor: '',
+  footerContactTextColor: '#111827',
   contactTitle: '',
   contactLead: '',
   contactMessage: '',
@@ -708,6 +709,7 @@ export default function AdminPublicPage() {
                   footerContact: fd.contact ?? '',
                   footerTextColor: normalizeFooterTextColor(fd.footerTextColor),
                   footerContactColor: fd.contactColor ?? '',
+                  footerContactTextColor: normalizeFooterTextColor(fd.contactTextColor),
                   contactTitle: fd.contactTitle ?? '',
                   contactLead: fd.contactLead ?? '',
                   contactMessage: fd.contactMessage ?? '',
@@ -750,6 +752,7 @@ export default function AdminPublicPage() {
                   footerContact: (first as any).footerText ?? '',
                   footerTextColor: '#111827',
                   footerContactColor: '',
+                  footerContactTextColor: '#111827',
                   contactTitle: '',
                   contactLead: '',
                   contactMessage: '',
@@ -1042,6 +1045,7 @@ export default function AdminPublicPage() {
         contact: form.footerContact?.trim() || '',
         footerTextColor: form.footerTextColor?.trim() || '',
         contactColor: form.footerContactColor?.trim() || '',
+        contactTextColor: form.footerContactTextColor?.trim() || '#111827',
         contactTitle: form.contactTitle?.trim() || '',
         contactLead: form.contactLead?.trim() || '',
         contactMessage: form.contactMessage?.trim() || '',
@@ -1955,6 +1959,12 @@ export default function AdminPublicPage() {
                       onChange={(e) => setForm((p) => ({ ...p, footerContactColor: e.target.value }))}
                       className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
                   </label>
+                  <label className="flex items-center gap-1 text-[11px] font-bold text-gray-400">
+                    文字色
+                    <input type="color" value={form.footerContactTextColor || '#111827'}
+                      onChange={(e) => setForm((p) => ({ ...p, footerContactTextColor: e.target.value }))}
+                      className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+                  </label>
                   <input type="text" value={form.footerContact ?? ''}
                     onChange={(e) => setForm((p) => ({ ...p, footerContact: e.target.value }))}
                     placeholder="メール・電話番号（空欄=アプリ内メッセージ）"
@@ -2236,8 +2246,8 @@ export default function AdminPublicPage() {
                   </section>
                 )}
                 <div>
-                  <div className="flex w-full items-center justify-center rounded-xl py-3 text-sm font-bold text-white"
-                    style={{ backgroundColor: form.footerContactColor?.trim() || accentColor }}>
+                  <div className="flex w-full items-center justify-center rounded-xl py-3 text-sm font-bold"
+                    style={{ backgroundColor: form.footerContactColor?.trim() || accentColor, color: form.footerContactTextColor?.trim() || '#111827' }}>
                     {navLabels.contact}
                   </div>
                   {form.contactMessage?.trim() && (

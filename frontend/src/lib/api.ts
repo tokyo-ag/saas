@@ -936,6 +936,7 @@ export interface PublicPageInput {
   footerTextColor?: string;
   footerContact?: string;
   footerContactColor?: string;
+  footerContactTextColor?: string;
   contactTitle?: string;
   contactLead?: string;
   contactMessage?: string;
