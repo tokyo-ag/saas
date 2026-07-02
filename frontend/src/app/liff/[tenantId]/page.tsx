@@ -45,7 +45,7 @@ function EventCard({ event, tenantId, accentColor, cardBg }: { event: LiffEvent;
 
   return (
     <Link
-      href={`/liff/${tenantId}/events/${event.id}`}
+      href={`/liff/${tenantId}/events/${event.id}/reserve`}
       className="block rounded-xl overflow-hidden active:opacity-70"
       style={{ backgroundColor: cardBg, boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
     >
@@ -159,7 +159,7 @@ function LiffThreadView({ events, tenantId, accentColor, cardBg }: { events: Lif
               return (
                 <Link
                   key={event.id}
-                  href={`/liff/${tenantId}/events/${event.id}`}
+                  href={`/liff/${tenantId}/events/${event.id}/reserve`}
                   className="block rounded-xl border border-gray-200 px-4 py-3 shadow-sm active:opacity-80"
                   style={{ backgroundColor: cardBg }}
                 >
@@ -289,7 +289,7 @@ function LiffCalendarView({ events, tenantId, accentColor, cardBg }: { events: L
                       return (
                         <Link
                           key={ev.id}
-                          href={`/liff/${tenantId}/events/${ev.id}`}
+                          href={`/liff/${tenantId}/events/${ev.id}/reserve`}
                           className="block rounded-md px-1 py-0.5 active:opacity-70"
                           style={{ backgroundColor: accentColor }}
                         >

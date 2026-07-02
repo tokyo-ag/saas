@@ -284,7 +284,7 @@ export default async function PublicEventPage({
 
   if (!event || !event.tenantCode || event.tenantCode !== tenantCode) notFound();
 
-  const liffUrl = `/liff/${event.tenantCode}/events/${event.id}`;
+  const reserveUrl = `/liff/${event.tenantCode}/events/${event.id}/reserve`;
   const isFull =
     event.capacity != null && event.reservedCount >= event.capacity;
   const spotsLeft =
@@ -308,7 +308,7 @@ export default async function PublicEventPage({
         </Link>
         {!isEnded && (
           <Link
-            href={liffUrl}
+            href={reserveUrl}
             className="rounded-full bg-[#06C755] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#05a847]"
           >
             LINEで予約
@@ -464,7 +464,7 @@ export default async function PublicEventPage({
 
             {!isEnded && (
               <Link
-                href={liffUrl}
+                href={reserveUrl}
                 className={`mt-5 block w-full rounded-xl py-3.5 text-center text-sm font-bold text-white transition-colors ${
                   isFull
                     ? 'bg-gray-400 pointer-events-none'
