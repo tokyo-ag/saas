@@ -69,7 +69,7 @@ function ReservePageInner() {
         window.location.href = result.stripeCheckoutUrl;
         return;
       }
-      router.replace(`${eventDetailPath}/reserve?status=${result.status}&order=${result.waitlistOrder ?? ''}`);
+      router.replace(`/clubs/${tenantCode}/reserve`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '予約に失敗しました';
       const isDuplicate = msg.includes('予約済み') || msg.includes('同じ日');

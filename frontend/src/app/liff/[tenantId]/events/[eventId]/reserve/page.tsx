@@ -198,7 +198,7 @@ function ReservePageInner() {
         return;
       }
       // router.push()はLIFF(iOS WKWebView)で動作しない場合があるためhrefを使う
-      window.location.href = `/liff/${tenantId}/events/${eventId}/reserve?status=${result.status}&order=${result.waitlistOrder ?? ''}`;
+      window.location.href = `/liff/${tenantId}`;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '予約に失敗しました';
       if (isLineAuthErrorMessage(msg)) {
