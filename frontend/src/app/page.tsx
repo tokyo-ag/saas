@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import HomeClient from '@/components/public/HomeClient';
-import LiffReturnRedirector from '@/components/liff/LiffReturnRedirector';
 import type { PublicEvent, PublicTenant } from '@/lib/api';
 
 import {
@@ -60,7 +59,6 @@ function tenantName(tenant: PublicTenant) {
 function LockedDiscoveryHome({ tenants }: { tenants: PublicTenant[] }) {
   return (
     <main className="min-h-screen bg-[#F7F8FA] px-5 py-8 text-gray-900">
-      <LiffReturnRedirector />
       <div className="mx-auto flex min-h-[calc(100vh-64px)] w-full max-w-sm flex-col">
         <div>
           <p className="text-[12px] font-bold tracking-wide text-[#06C755]">

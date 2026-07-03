@@ -11,13 +11,23 @@ function getPendingRedirect() {
       url: string;
       expires: number;
     };
-    if (Date.now() < expires) return url;
+    if (Date.now() < expires) return normalizeSameOriginPath(url);
   } catch {
     // Clear malformed values below.
   }
 
   localStorage.removeItem('liff-pending-redirect');
   return null;
+}
+
+function normalizeSameOriginPath(value: string) {
+  try {
+    const url = new URL(value, window.location.origin);
+    if (url.origin !== window.location.origin) return null;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return null;
+  }
 }
 
 function normalizeLiffState(raw: string | null) {
@@ -78,7 +88,7 @@ export default function LiffReturnRedirector() {
       const pending = getPendingRedirect();
       const liffStateRedirect = getLiffStateRedirect(searchParams);
 
-      const redirectTo = pending ?? liffStateRedirect;
+      const redirectTo = liffStateRedirect ?? pending;
       if (redirectTo) {
         localStorage.removeItem('liff-pending-redirect');
         window.location.replace(redirectTo);
