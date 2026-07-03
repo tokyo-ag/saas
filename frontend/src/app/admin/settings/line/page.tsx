@@ -294,10 +294,13 @@ export default function LineSettingsPage() {
           </StepCard>
 
           <section className="rounded-xl border border-gray-200 bg-white p-4 md:p-5">
-            <h2 className="mb-1 text-sm font-semibold text-gray-900">主催者のLINEユーザーID</h2>
+            <h2 className="mb-1 text-sm font-semibold text-gray-900">主催者のLINEユーザーID（任意）</h2>
             <p className="mb-3 text-xs leading-relaxed text-gray-500">
-              キャンセル通知など、管理者向けメッセージの送信先です。LINE Developers のWebhookログから確認できます。
+              予約導線や参加者への通知には不要です。主催者個人のLINEにキャンセル通知を受け取りたい場合だけ設定します。
             </p>
+            <div className="mb-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-3 text-xs leading-relaxed text-gray-600">
+              分からなければ空欄でOKです。確認する場合は、主催者の個人LINEで公式アカウントを友だち追加して一度メッセージを送り、Webhookの受信内容に出る <span className="font-mono text-gray-800">U...</span> で始まる userId を入れます。
+            </div>
             <input
               value={organizerLineUserId}
               onChange={(e) => setOrganizerLineUserId(e.target.value)}
