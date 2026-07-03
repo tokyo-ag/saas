@@ -294,12 +294,14 @@ export default function LineSettingsPage() {
           </StepCard>
 
           <section className="rounded-xl border border-gray-200 bg-white p-4 md:p-5">
-            <h2 className="mb-1 text-sm font-semibold text-gray-900">主催者のLINEユーザーID（任意）</h2>
-            <p className="mb-3 text-xs leading-relaxed text-gray-500">
-              予約導線や参加者への通知には不要です。主催者個人のLINEにキャンセル通知を受け取りたい場合だけ設定します。
+            <h2 className="mb-1 text-sm font-semibold text-gray-900">キャンセル通知の受け取り先（任意）</h2>
+            <p className="mb-3 text-sm font-medium text-gray-900">
+              ここは空欄でOKです。
             </p>
             <div className="mb-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-3 text-xs leading-relaxed text-gray-600">
-              分からなければ空欄でOKです。確認する場合は、主催者の個人LINEで公式アカウントを友だち追加して一度メッセージを送り、Webhookの受信内容に出る <span className="font-mono text-gray-800">U...</span> で始まる userId を入れます。
+              参加者がキャンセルした時に、主催者の個人LINEへ通知したい場合だけ入力します。予約受付や参加者へのLINE通知には関係ありません。
+              <br />
+              入れる値は、主催者本人の <span className="font-mono text-gray-800">U...</span> で始まるLINEユーザーIDです。分からない場合は空欄のまま進めてください。
             </div>
             <input
               value={organizerLineUserId}
