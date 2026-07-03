@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { api, LiffEvent, LiffProfile, LiffTenant, setLiffToken, formatDate } from '@/lib/api';
+import { buildLiffUrl } from '@/lib/config';
 import { getLineToken, getLineUser, startLineLogin } from '@/lib/lineLogin';
 
 const LINE_CHANNEL_ID = process.env.NEXT_PUBLIC_LINE_LOGIN_CHANNEL_ID ?? '';
@@ -21,6 +22,7 @@ function ReservePageInner() {
 
   const eventDetailPath = `/clubs/${tenantCode}/events/${eventId}`;
   const reservePath = `/clubs/${tenantCode}/events/${eventId}/reserve${isWaitlist ? '?waitlist=1' : ''}`;
+  const liffReservePath = `/liff/${tenantCode}/events/${eventId}/reserve${isWaitlist ? '?waitlist=1' : ''}`;
 
   const [authChecked, setAuthChecked] = useState(false);
   const [lineUserId, setLineUserId] = useState('');
@@ -36,6 +38,10 @@ function ReservePageInner() {
   useEffect(() => {
     const token = getLineToken();
     if (!token) {
+      if (!LINE_CHANNEL_ID) {
+        window.location.href = buildLiffUrl(liffReservePath) ?? liffReservePath;
+        return;
+      }
       startLineLogin(LINE_CHANNEL_ID, reservePath);
       return;
     }
@@ -51,7 +57,7 @@ function ReservePageInner() {
     if (user) {
       api.liff.profile(tenantCode, user.userId).then(setProfile).catch(() => {});
     }
-  }, [tenantCode, eventId, reservePath]);
+  }, [tenantCode, eventId, reservePath, liffReservePath]);
 
   async function submit(overrides?: { name: string; grade: string; gender: string }) {
     if (!lineUserId) return;
@@ -79,6 +85,10 @@ function ReservePageInner() {
         return;
       }
       if (msg.includes('Unauthorized') || msg.includes('LINEトークン')) {
+        if (!LINE_CHANNEL_ID) {
+          window.location.href = buildLiffUrl(liffReservePath) ?? liffReservePath;
+          return;
+        }
         startLineLogin(LINE_CHANNEL_ID, reservePath);
         return;
       }
