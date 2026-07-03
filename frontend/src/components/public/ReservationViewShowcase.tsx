@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { API_URL, formatDateShort } from '@/lib/api';
+import { buildLiffUrl } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
@@ -71,7 +72,9 @@ function readableAccent(color: string | null | undefined) {
 }
 
 function eventHref(event: ReservationShowcaseEvent, tenantCode?: string, fallbackHref?: string) {
-  return tenantCode ? `/liff/${tenantCode}/events/${event.id}/reserve` : fallbackHref || '#';
+  if (!tenantCode) return fallbackHref || '#';
+  const path = `/liff/${tenantCode}/events/${event.id}/reserve`;
+  return buildLiffUrl(path) ?? path;
 }
 
 function eventTime(event: ReservationShowcaseEvent) {

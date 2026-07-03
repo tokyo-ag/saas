@@ -67,7 +67,8 @@ function getLiffStateRedirect(searchParams: URLSearchParams) {
   const nextParams = new URLSearchParams(searchParams);
   nextParams.delete('liff.state');
   const query = nextParams.toString();
-  return `${target}${query ? `?${query}` : ''}`;
+  const separator = target.includes('?') ? '&' : '?';
+  return `${target}${query ? `${separator}${query}` : ''}`;
 }
 
 export default function LiffReturnRedirector() {

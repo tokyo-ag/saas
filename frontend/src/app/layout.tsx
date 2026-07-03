@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
 
+import LiffReturnRedirector from '@/components/liff/LiffReturnRedirector';
 import { SITE_URL } from '@/lib/config';
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
@@ -75,6 +76,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <LiffReturnRedirector />
         {children}
         {GA_ID && (
           <>
