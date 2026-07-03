@@ -73,3 +73,36 @@ describe('TenantService billing checkout', () => {
     });
   });
 });
+
+describe('TenantService tenant settings', () => {
+  it('returns LINE setup status flags without secret values', async () => {
+    const prisma = {
+      tenant: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'tenant-1',
+          name: 'COMIU Club',
+          code: 'comiu',
+          lineChannelId: '2010599444',
+          lineChannelSecret: 'secret',
+          lineChannelAccessToken: 'token',
+          liffId: null,
+          stripeSecretKey: null,
+          stripeWebhookSecret: null,
+        }),
+      },
+    };
+    const service = new TenantService(prisma as never, {} as never);
+
+    const result = await service.findOne('tenant-1');
+
+    expect(result).toMatchObject({
+      lineChannelId: '2010599444',
+      lineBasicConfigured: true,
+      lineChannelSecretConfigured: true,
+      lineChannelAccessTokenConfigured: true,
+      lineConfigured: true,
+    });
+    expect(result).not.toHaveProperty('lineChannelSecret');
+    expect(result).not.toHaveProperty('lineChannelAccessToken');
+  });
+});

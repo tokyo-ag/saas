@@ -674,6 +674,9 @@ export interface Tenant {
   lineChannelId?: string;
   lineChannelSecret?: string;
   lineChannelAccessToken?: string;
+  lineBasicConfigured?: boolean;
+  lineChannelSecretConfigured?: boolean;
+  lineChannelAccessTokenConfigured?: boolean;
   lineConfigured?: boolean;
   organizerLineUserId?: string;
   lineDisplayName?: string;

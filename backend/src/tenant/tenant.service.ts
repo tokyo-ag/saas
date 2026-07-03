@@ -38,6 +38,7 @@ export class TenantService {
 
   private toSafeTenant<
     T extends {
+      lineChannelId?: unknown;
       lineChannelSecret: unknown;
       lineChannelAccessToken: unknown;
       liffId?: unknown;
@@ -57,6 +58,9 @@ export class TenantService {
     } = tenant;
     return {
       ...safe,
+      lineBasicConfigured: Boolean(safe.lineChannelId && _lineChannelSecret),
+      lineChannelSecretConfigured: Boolean(_lineChannelSecret),
+      lineChannelAccessTokenConfigured: Boolean(_lineChannelAccessToken),
       lineConfigured: Boolean(_lineChannelAccessToken),
     };
   }

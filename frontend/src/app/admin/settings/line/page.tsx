@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, Tenant, TenantInput } from '@/lib/api';
 import { DIRECT_API_URL } from '@/lib/client-api-base';
+import { SITE_URL } from '@/lib/config';
 import { SaveToast } from '@/components/ui/SaveToast';
 
 const BASE = `${DIRECT_API_URL}/api`;
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4;
 
 const tabs = [
   { label: '団体情報', href: '/admin/settings' },
@@ -64,7 +65,11 @@ export default function LineSettingsPage() {
         lineChannelAccessToken: '',
       });
       setOrganizerLineUserId(tenantData.organizerLineUserId ?? '');
-      if (tenantData.lineConfigured) setStep(3);
+      if (tenantData.lineConfigured) {
+        setStep(4);
+      } else if (tenantData.lineBasicConfigured || tenantData.lineChannelId) {
+        setStep(3);
+      }
     });
   }, []);
 
@@ -88,7 +93,10 @@ export default function LineSettingsPage() {
   }
 
   const webhookUrl = `${BASE}/webhook/${tenant?.id ?? ''}`;
+  const liffEndpointUrl = SITE_URL;
+  const lineBasicConfigured = !!(tenant?.lineBasicConfigured || (tenant?.lineChannelId && tenant?.lineChannelSecretConfigured));
   const lineCredentialsLocked = !!tenant?.lineConfigured && !editUnlocked;
+  const requiresChannelSecret = !lineBasicConfigured || editUnlocked;
 
   async function unlockLineSettings(e: React.FormEvent) {
     e.preventDefault();
@@ -178,34 +186,27 @@ export default function LineSettingsPage() {
             </button>
           </StepCard>
 
-          <StepCard step={2} currentStep={step} title="Messaging APIの情報を入力する" forceExpanded={editUnlocked}>
+          <StepCard step={2} currentStep={step} title="Channel ID / Secretを保存する" forceExpanded={editUnlocked}>
             <p className="mb-4 text-sm leading-relaxed text-gray-600">
-              LINE Developers のチャネル設定から、Channel ID、Channel Secret、Access Token をコピーして貼り付けてください。
+              先にLINE DevelopersのMessaging APIチャネルから、Channel IDとChannel Secretだけを保存します。Access TokenはWebhookとLIFF endpointの設定後に発行して保存します。
             </p>
             <div className="space-y-3">
               <Field label="Channel ID" value={form.lineChannelId ?? ''} onChange={(value) => set('lineChannelId', value)} placeholder="1234567890" disabled={lineCredentialsLocked} />
-              <Field label="Channel Secret" type="password" value={form.lineChannelSecret ?? ''} onChange={(value) => set('lineChannelSecret', value)} placeholder={tenant.lineConfigured ? '変更する場合のみ入力' : 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'} disabled={lineCredentialsLocked} />
-              <Field label="Channel Access Token" type="password" value={form.lineChannelAccessToken ?? ''} onChange={(value) => set('lineChannelAccessToken', value)} placeholder={tenant.lineConfigured ? '変更する場合のみ入力' : '長い文字列'} disabled={lineCredentialsLocked} />
+              <Field label="Channel Secret" type="password" value={form.lineChannelSecret ?? ''} onChange={(value) => set('lineChannelSecret', value)} placeholder={lineBasicConfigured ? '変更する場合のみ入力' : 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'} disabled={lineCredentialsLocked} />
             </div>
             <button
-              disabled={saving || lineCredentialsLocked || !form.lineChannelId || (!tenant.lineConfigured && (!form.lineChannelSecret || !form.lineChannelAccessToken))}
+              disabled={saving || lineCredentialsLocked || !form.lineChannelId || (requiresChannelSecret && !form.lineChannelSecret)}
               onClick={async () => {
                 const payload: Partial<TenantInput> = {
                   lineChannelId: form.lineChannelId,
                 };
                 if (form.lineChannelSecret) payload.lineChannelSecret = form.lineChannelSecret;
-                if (form.lineChannelAccessToken) payload.lineChannelAccessToken = form.lineChannelAccessToken;
                 const ok = await save(payload);
                 if (ok) {
-                  try {
-                    const updated = await api.tenant.syncLineProfile();
-                    setTenant(updated);
-                    setEditUnlocked(false);
-                    setReauthToken('');
-                    setStep(3);
-                  } catch (err: any) {
-                    setError(err.message);
-                  }
+                  setEditUnlocked(false);
+                  setReauthToken('');
+                  setForm((prev) => ({ ...prev, lineChannelSecret: '' }));
+                  setStep(3);
                 }
               }}
               className="mt-4 w-full rounded-lg bg-[#06C755] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] disabled:opacity-50 sm:w-auto"
@@ -214,14 +215,50 @@ export default function LineSettingsPage() {
             </button>
           </StepCard>
 
-          <StepCard step={3} currentStep={step} title="Webhook URLを設定する">
+          <StepCard step={3} currentStep={step} title="Webhook URL / LIFF endpointを設定する">
             <p className="mb-3 text-sm leading-relaxed text-gray-600">
-              LINE Developers の Messaging API 設定で、Webhook URLに以下を設定して検証してください。
+              LINE Developers側でWebhook URLを設定して有効化し、LIFFアプリのEndpoint URLもこのサイトに向けます。ここまで終わったらAccess Tokenを発行できます。
             </p>
-            <CopyBox value={webhookUrl} />
-            <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-              設定完了です。LINE公式アカウントを友だち追加するとWebhookが届きます。
+            <div className="space-y-3">
+              <CopyBox label="Webhook URL" value={webhookUrl} />
+              <CopyBox label="LIFF Endpoint URL" value={liffEndpointUrl} />
             </div>
+            <button onClick={() => setStep(4)} className="mt-4 w-full rounded-lg bg-[#06C755] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] sm:w-auto">
+              設定できたので次へ
+            </button>
+          </StepCard>
+
+          <StepCard step={4} currentStep={step} title="Channel Access Tokenを保存する" forceExpanded={editUnlocked}>
+            <p className="mb-4 text-sm leading-relaxed text-gray-600">
+              WebhookとLIFF endpointの設定後に、Messaging API設定で長期のChannel Access Tokenを発行して保存します。保存後に公式アカウント情報を同期します。
+            </p>
+            <Field label="Channel Access Token" type="password" value={form.lineChannelAccessToken ?? ''} onChange={(value) => set('lineChannelAccessToken', value)} placeholder={tenant.lineConfigured ? '変更する場合のみ入力' : '長い文字列'} disabled={lineCredentialsLocked} />
+            <button
+              disabled={saving || lineCredentialsLocked || !form.lineChannelAccessToken}
+              onClick={async () => {
+                const ok = await save({ lineChannelAccessToken: form.lineChannelAccessToken });
+                if (ok) {
+                  try {
+                    const updated = await api.tenant.syncLineProfile();
+                    setTenant(updated);
+                    setEditUnlocked(false);
+                    setReauthToken('');
+                    setForm((prev) => ({ ...prev, lineChannelAccessToken: '' }));
+                    setStep(4);
+                  } catch (err: any) {
+                    setError(err.message);
+                  }
+                }
+              }}
+              className="mt-4 w-full rounded-lg bg-[#06C755] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] disabled:opacity-50 sm:w-auto"
+            >
+              {saving ? '保存中...' : '保存して同期'}
+            </button>
+            {tenant.lineConfigured && (
+              <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+                LINE連携は完了しています。友だち追加後のWebhook受信とLIFF予約導線を確認してください。
+              </div>
+            )}
           </StepCard>
 
           <section className="rounded-xl border border-gray-200 bg-white p-4 md:p-5">
@@ -279,9 +316,10 @@ function Field({ label, value, onChange, placeholder, type = 'text', disabled = 
   );
 }
 
-function CopyBox({ value }: { value: string }) {
+function CopyBox({ value, label }: { value: string; label?: string }) {
   return (
     <div className="rounded-lg bg-gray-100 px-3 py-2">
+      {label && <div className="mb-1 text-xs font-medium text-gray-500">{label}</div>}
       <div className="break-all font-mono text-xs text-gray-800 sm:text-sm">{value}</div>
       <button type="button" onClick={() => navigator.clipboard.writeText(value)} className="mt-2 text-xs font-medium text-[#06C755] hover:underline">
         コピー
