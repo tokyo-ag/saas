@@ -445,7 +445,7 @@ export class LiffService {
             price: effectivePrice,
             reservationId: reservation.id,
             tenantId,
-            successUrl: `${frontendUrl}/liff/${tenantId}`,
+            successUrl: `${frontendUrl}/liff/${tenantId}/events/${event.id}/reserve?status=reserved`,
             cancelUrl: `${frontendUrl}/liff/${tenantId}/events/${event.id}/reserve`,
           },
         );

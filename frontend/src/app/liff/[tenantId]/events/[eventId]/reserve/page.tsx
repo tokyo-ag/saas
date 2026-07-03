@@ -197,6 +197,14 @@ function ReservePageInner() {
         window.location.href = result.stripeCheckoutUrl;
         return;
       }
+      if (result.status === 'waiting_payment') {
+        setError('Payment checkout is unavailable.');
+        return;
+      }
+      const resultParams = new URLSearchParams({ status: result.status });
+      if (result.waitlistOrder) resultParams.set('order', String(result.waitlistOrder));
+      window.location.href = `/liff/${tenantId}/events/${eventId}/reserve?${resultParams.toString()}`;
+      return;
       // router.push()はLIFF(iOS WKWebView)で動作しない場合があるためhrefを使う
       window.location.href = `/liff/${tenantId}`;
     } catch (err: unknown) {
