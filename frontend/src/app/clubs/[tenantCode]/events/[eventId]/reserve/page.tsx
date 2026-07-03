@@ -39,7 +39,7 @@ function ReservePageInner() {
     const token = getLineToken();
     if (!token) {
       if (!LINE_CHANNEL_ID) {
-        window.location.href = buildLiffUrl(liffReservePath) ?? liffReservePath;
+        window.location.href = buildLiffUrl(liffReservePath, { directInLineBrowser: true }) ?? liffReservePath;
         return;
       }
       startLineLogin(LINE_CHANNEL_ID, reservePath);
@@ -86,7 +86,7 @@ function ReservePageInner() {
       }
       if (msg.includes('Unauthorized') || msg.includes('LINEトークン')) {
         if (!LINE_CHANNEL_ID) {
-          window.location.href = buildLiffUrl(liffReservePath) ?? liffReservePath;
+          window.location.href = buildLiffUrl(liffReservePath, { directInLineBrowser: true }) ?? liffReservePath;
           return;
         }
         startLineLogin(LINE_CHANNEL_ID, reservePath);

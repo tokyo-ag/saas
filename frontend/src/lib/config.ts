@@ -23,9 +23,17 @@ export const OFFICIAL_LINE_URL =
 
 export const LIFF_ID = envOr('NEXT_PUBLIC_LIFF_ID', '');
 
-export function buildLiffUrl(path: string): string | null {
-  if (!LIFF_ID) return null;
+function isLineBrowser() {
+  return typeof navigator !== 'undefined' && /Line\//i.test(navigator.userAgent);
+}
+
+export function buildLiffUrl(
+  path: string,
+  options?: { directInLineBrowser?: boolean },
+): string | null {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  if (options?.directInLineBrowser && isLineBrowser()) return normalizedPath;
+  if (!LIFF_ID) return null;
   const url = new URL(`https://liff.line.me/${LIFF_ID}`);
   url.searchParams.set('liff.state', normalizedPath);
   return url.toString();
