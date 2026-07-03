@@ -368,7 +368,9 @@ export default async function ClubCmsPage({
         blogLead?: string;
         blogTitleColor?: string;
         blogLeadColor?: string;
+        reserveLineUrl?: string;
         line?: string;
+        footerLine?: string;
         instagram?: string;
         x?: string;
         aboutUrl?: string;
@@ -397,7 +399,7 @@ export default async function ClubCmsPage({
   const showDescription = df.description !== false;
   const navAboutUrl = sectionCopy.aboutUrl?.trim() || '#about';
   const configuredReserveUrl = sectionCopy.reserveUrl?.trim();
-  const configuredLineUrl = sectionCopy.line?.trim();
+  const configuredLineUrl = sectionCopy.reserveLineUrl?.trim() || sectionCopy.line?.trim();
   const lineReserveUrl = configuredLineUrl || configuredReserveUrl || contactHref;
   const navReserveUrl = reserveActionStyle === 'line' ? lineReserveUrl : (configuredReserveUrl || reserveHref);
   const navBlogUrl = sectionCopy.blogUrl?.trim() || '#blog';

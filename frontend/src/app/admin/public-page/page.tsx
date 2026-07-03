@@ -115,6 +115,7 @@ const emptyForm: PublicPageInput = {
   reserveEventMetaColor: '',
   reserveEventCardBg: '',
   reserveActionStyle: 'comiu',
+  reserveLineUrl: '',
   blogPostCardBg: '',
   blogTitle: '',
   blogLead: '',
@@ -725,12 +726,13 @@ export default function AdminPublicPage() {
                   reserveEventMetaColor: fd.reserveEventMetaColor ?? '',
                   reserveEventCardBg: fd.reserveEventCardBg ?? '',
                   reserveActionStyle: fd.reserveActionStyle === 'line' ? 'line' : 'comiu',
+                  reserveLineUrl: fd.reserveLineUrl ?? fd.line ?? '',
                   blogPostCardBg: fd.blogPostCardBg ?? '',
                   blogTitle: fd.blogTitle ?? '',
                   blogLead: fd.blogLead ?? '',
                   blogTitleColor: fd.blogTitleColor ?? '',
                   blogLeadColor: fd.blogLeadColor ?? '',
-                  footerLine: fd.line ?? '',
+                  footerLine: fd.footerLine ?? '',
                   footerInstagram: fd.instagram ?? '',
                   footerX: fd.x ?? '',
                   navAboutUrl: fd.aboutUrl ?? '',
@@ -768,6 +770,7 @@ export default function AdminPublicPage() {
                   reserveEventMetaColor: '',
                   reserveEventCardBg: '',
                   reserveActionStyle: 'comiu',
+                  reserveLineUrl: '',
                   blogPostCardBg: '',
                   blogTitle: '',
                   blogLead: '',
@@ -1061,12 +1064,13 @@ export default function AdminPublicPage() {
         reserveEventMetaColor: form.reserveEventMetaColor?.trim() || '',
         reserveEventCardBg: form.reserveEventCardBg?.trim() || '',
         reserveActionStyle,
+        reserveLineUrl: form.reserveLineUrl?.trim() || '',
         blogPostCardBg: form.blogPostCardBg?.trim() || '',
         blogTitle: form.blogTitle?.trim() || '',
         blogLead: form.blogLead?.trim() || '',
         blogTitleColor: form.blogTitleColor?.trim() || '',
         blogLeadColor: form.blogLeadColor?.trim() || '',
-        line: form.footerLine?.trim() || '',
+        footerLine: form.footerLine?.trim() || '',
         instagram: form.footerInstagram?.trim() || '',
         x: form.footerX?.trim() || '',
         aboutUrl: form.navAboutUrl?.trim() || '',
@@ -1919,8 +1923,8 @@ export default function AdminPublicPage() {
                       <span className="text-[11px] font-bold text-gray-500">公式LINE URL</span>
                       <input
                         type="url"
-                        value={form.footerLine ?? ''}
-                        onChange={(e) => setForm((p) => ({ ...p, footerLine: e.target.value }))}
+                        value={form.reserveLineUrl ?? ''}
+                        onChange={(e) => setForm((p) => ({ ...p, reserveLineUrl: e.target.value }))}
                         placeholder="https://lin.ee/..."
                         className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
                       />
@@ -2034,7 +2038,6 @@ export default function AdminPublicPage() {
               <div className="space-y-2">
                 <p className="text-[11px] font-bold text-gray-400">公式SNSリンク</p>
                 {([
-                  { key: 'footerLine' as const, label: 'LINE', placeholder: 'https://lin.ee/...' },
                   { key: 'footerInstagram' as const, label: 'Instagram', placeholder: 'https://www.instagram.com/...' },
                   { key: 'footerX' as const, label: 'X', placeholder: 'https://x.com/...' },
                 ] as const).map(({ key, label, placeholder }) => (
@@ -2261,7 +2264,7 @@ export default function AdminPublicPage() {
                         buttonLabel={reserveActionStyle === 'line' ? 'LINEで友達追加して予約する' : navLabels.reserve}
                         viewStyle={form.reserveViewStyle}
                         events={reserveEvents}
-                        href={reserveActionStyle === 'line' ? (form.footerLine?.trim() || form.navContactUrl?.trim() || '#') : undefined}
+                        href={reserveActionStyle === 'line' ? (form.reserveLineUrl?.trim() || form.navContactUrl?.trim() || '#') : undefined}
                         tenantCode={reserveActionStyle === 'line' ? undefined : tenantCode}
                         lineMode={reserveActionStyle === 'line'}
                         eventTitleColor={reserveEventTitleColor}

@@ -57,6 +57,7 @@ function withFooterSettings(
   actionStyle: ReservationActionStyle,
   reserveViewStyle: string,
   displayFields: DisplayFields,
+  reserveLineUrl: string,
 ) {
   return {
     ...page,
@@ -64,6 +65,7 @@ function withFooterSettings(
     footerText: JSON.stringify({
       ...parseFooterSettings(page.footerText),
       reserveActionStyle: actionStyle,
+      reserveLineUrl: reserveLineUrl.trim(),
       displayFields,
     }),
   };
@@ -89,6 +91,7 @@ export default function EventsPage() {
   const [publicPageData, setPublicPageData] = useState<import('@/lib/api').PublicPage | null>(null);
   const [reserveViewStyle, setReserveViewStyle] = useState<string>('calendar');
   const [reservationActionStyle, setReservationActionStyle] = useState<ReservationActionStyle>('comiu');
+  const [reservationLineUrl, setReservationLineUrl] = useState('');
   const [displayFields, setDisplayFields] = useState<DisplayFields>(DEFAULT_DISPLAY_FIELDS);
   const [savingStyle, setSavingStyle] = useState(false);
   const [reflected, setReflected] = useState(false);
@@ -112,6 +115,7 @@ export default function EventsPage() {
         setReserveViewStyle(first.reserveViewStyle ?? 'calendar');
         const footerSettings = parseFooterSettings(first.footerText);
         setReservationActionStyle(footerSettings.reserveActionStyle === 'line' ? 'line' : 'comiu');
+        setReservationLineUrl((footerSettings.reserveLineUrl ?? footerSettings.line ?? '').trim());
         setDisplayFields(parseDisplayFields(footerSettings));
       }
     }).catch(() => {});
@@ -123,7 +127,7 @@ export default function EventsPage() {
     try {
       await api.tenant.update({ liffEventView: style });
       if (publicPageId && publicPageData) {
-        const updated = await api.publicPages.update(publicPageId, withFooterSettings(publicPageData, reservationActionStyle, style, displayFields) as any);
+        const updated = await api.publicPages.update(publicPageId, withFooterSettings(publicPageData, reservationActionStyle, style, displayFields, reservationLineUrl) as any);
         setPublicPageData(updated);
       }
     } catch { /* silent */ } finally {
@@ -137,7 +141,7 @@ export default function EventsPage() {
     if (!publicPageId || !publicPageData) return;
     setSavingStyle(true);
     try {
-      const updated = await api.publicPages.update(publicPageId, withFooterSettings(publicPageData, style, reserveViewStyle, displayFields) as any);
+      const updated = await api.publicPages.update(publicPageId, withFooterSettings(publicPageData, style, reserveViewStyle, displayFields, reservationLineUrl) as any);
       setPublicPageData(updated);
       await revalidate(tenantId, updated.slug || publicPageData.slug);
     } catch { /* silent */ } finally {
@@ -151,7 +155,7 @@ export default function EventsPage() {
     setDisplayFields(next);
     if (!publicPageId || !publicPageData) return;
     try {
-      const updated = await api.publicPages.update(publicPageId, withFooterSettings(publicPageData, reservationActionStyle, reserveViewStyle, next) as any);
+      const updated = await api.publicPages.update(publicPageId, withFooterSettings(publicPageData, reservationActionStyle, reserveViewStyle, next, reservationLineUrl) as any);
       setPublicPageData(updated);
     } catch { /* silent */ }
   }
@@ -172,7 +176,7 @@ export default function EventsPage() {
     try {
       const [, updated] = await Promise.all([
         api.tenant.update({ liffEventView: reserveViewStyle }),
-        api.publicPages.update(publicPageId, withFooterSettings(publicPageData, reservationActionStyle, reserveViewStyle, displayFields) as any),
+        api.publicPages.update(publicPageId, withFooterSettings(publicPageData, reservationActionStyle, reserveViewStyle, displayFields, reservationLineUrl) as any),
       ]);
       setPublicPageData(updated);
       await revalidate(tenantId, updated.slug || publicPageData.slug);
@@ -373,6 +377,15 @@ export default function EventsPage() {
                   </button>
                 ))}
               </div>
+              {reservationActionStyle === 'line' && (
+                <input
+                  type="url"
+                  value={reservationLineUrl}
+                  onChange={(e) => setReservationLineUrl(e.target.value)}
+                  placeholder="予約用LINE URL（https://lin.ee/...）"
+                  className="min-w-[240px] flex-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                />
+              )}
               <button
                 type="button"
                 onClick={saveAndReflect}

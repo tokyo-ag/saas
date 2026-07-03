@@ -952,6 +952,7 @@ export interface PublicPageInput {
   reserveEventMetaColor?: string;
   reserveEventCardBg?: string;
   reserveActionStyle?: 'comiu' | 'line';
+  reserveLineUrl?: string;
   blogPostCardBg?: string;
   blogTitle?: string;
   blogLead?: string;
