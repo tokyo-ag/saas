@@ -397,7 +397,8 @@ export default async function ClubCmsPage({
   const showDescription = df.description !== false;
   const navAboutUrl = sectionCopy.aboutUrl?.trim() || '#about';
   const configuredReserveUrl = sectionCopy.reserveUrl?.trim();
-  const lineReserveUrl = configuredReserveUrl || sectionCopy.line?.trim() || contactHref;
+  const configuredLineUrl = sectionCopy.line?.trim();
+  const lineReserveUrl = configuredLineUrl || configuredReserveUrl || contactHref;
   const navReserveUrl = reserveActionStyle === 'line' ? lineReserveUrl : (configuredReserveUrl || reserveHref);
   const navBlogUrl = sectionCopy.blogUrl?.trim() || '#blog';
   const navContactUrl = sectionCopy.contactUrl?.trim() || contactHref;

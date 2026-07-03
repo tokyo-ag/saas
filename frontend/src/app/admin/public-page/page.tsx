@@ -1881,6 +1881,55 @@ export default function AdminPublicPage() {
                     className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
                   />
                 </label>
+                <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-3">
+                  <p className="text-[11px] font-bold text-gray-400">予約スタイル</p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {([
+                      {
+                        value: 'comiu' as const,
+                        label: 'COMIUで予約管理',
+                        description: '予約画面へ進み、参加者をCOMIUのDBに登録します。',
+                      },
+                      {
+                        value: 'line' as const,
+                        label: 'LINEで予約する',
+                        description: 'イベントやカレンダーをタップすると公式LINEへ誘導します。',
+                      },
+                    ]).map((option) => {
+                      const active = reserveActionStyle === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => setForm((p) => ({ ...p, reserveActionStyle: option.value }))}
+                          className={`rounded-xl border px-3 py-3 text-left transition ${
+                            active
+                              ? 'border-[#06C755] bg-green-50 text-green-700'
+                              : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                          }`}
+                        >
+                          <span className="block text-sm font-bold">{option.label}</span>
+                          <span className="mt-1 block text-[11px] leading-relaxed">{option.description}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {reserveActionStyle === 'line' && (
+                    <label className="block space-y-1">
+                      <span className="text-[11px] font-bold text-gray-500">公式LINE URL</span>
+                      <input
+                        type="url"
+                        value={form.footerLine ?? ''}
+                        onChange={(e) => setForm((p) => ({ ...p, footerLine: e.target.value }))}
+                        placeholder="https://lin.ee/..."
+                        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                      />
+                      <span className="block text-[11px] leading-relaxed text-gray-400">
+                        未設定の場合は、お問い合わせ画面へつながります。
+                      </span>
+                    </label>
+                  )}
+                </div>
                 <div className="grid gap-2 sm:grid-cols-3">
                   {[
                     { label: 'イベント名', field: 'reserveEventTitleColor' as const, fallback: '#111827' },
@@ -2212,6 +2261,7 @@ export default function AdminPublicPage() {
                         buttonLabel={reserveActionStyle === 'line' ? 'LINEで友達追加して予約する' : navLabels.reserve}
                         viewStyle={form.reserveViewStyle}
                         events={reserveEvents}
+                        href={reserveActionStyle === 'line' ? (form.footerLine?.trim() || form.navContactUrl?.trim() || '#') : undefined}
                         tenantCode={reserveActionStyle === 'line' ? undefined : tenantCode}
                         lineMode={reserveActionStyle === 'line'}
                         eventTitleColor={reserveEventTitleColor}
