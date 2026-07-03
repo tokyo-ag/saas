@@ -39,6 +39,7 @@ function SettingsTabs() {
 export default function LineSettingsPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [hasPassword, setHasPassword] = useState<boolean | null>(null);
+  const [accountEmail, setAccountEmail] = useState('');
   const [step, setStep] = useState<Step>(1);
   const [form, setForm] = useState<Pick<TenantInput, 'lineChannelId' | 'lineChannelSecret' | 'lineChannelAccessToken'>>({
     lineChannelId: '',
@@ -59,6 +60,8 @@ export default function LineSettingsPage() {
     Promise.all([api.tenant.get(), api.auth.getMe().catch(() => null)]).then(([tenantData, me]) => {
       setTenant(tenantData);
       setHasPassword(me?.hasPassword ?? null);
+      setAccountEmail(me?.email ?? '');
+      setReauthEmail(me?.email ?? '');
       setForm({
         lineChannelId: tenantData.lineChannelId ?? '',
         lineChannelSecret: tenantData.lineChannelSecret ?? '',
@@ -159,11 +162,11 @@ export default function LineSettingsPage() {
               ) : (
                 <>
                   <p className="mb-4 text-xs leading-relaxed text-gray-600">
-                    公式LINEの設定を変更するには、管理者のメールアドレスとパスワードを再入力してください。
+                    公式LINEの設定を変更するには、いまログイン中の管理者パスワードを入力してください。
                   </p>
                   <form onSubmit={unlockLineSettings} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-                    <Field label="メールアドレス" type="email" value={reauthEmail} onChange={setReauthEmail} placeholder="admin@example.com" />
-                    <Field label="パスワード" type="password" value={reauthPassword} onChange={setReauthPassword} placeholder="パスワード" />
+                    <Field label="ログイン中のメール" type="email" value={reauthEmail} onChange={setReauthEmail} placeholder="admin@example.com" disabled={!!accountEmail} />
+                    <Field label="パスワード" type="password" value={reauthPassword} onChange={setReauthPassword} placeholder="このメールのパスワード" />
                     <button
                       type="submit"
                       disabled={reauthing || !reauthEmail || !reauthPassword}

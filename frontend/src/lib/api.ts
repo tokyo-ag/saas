@@ -48,7 +48,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   });
 
   if (!res.ok) {
-    if (res.status === 401 && needsAuth && typeof window !== 'undefined') {
+    if (res.status === 401 && needsAuth && path !== '/auth/reconfirm' && typeof window !== 'undefined') {
       clearToken();
       window.location.href = isSuperadmin ? '/superadmin/login' : '/login';
       return Promise.reject(new Error('Unauthorized'));
