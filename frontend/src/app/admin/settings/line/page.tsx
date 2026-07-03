@@ -177,7 +177,7 @@ export default function LineSettingsPage() {
             </section>
           )}
 
-          <StepCard step={1} currentStep={step} title="LINE公式アカウントを用意する">
+          <StepCard step={1} currentStep={step} title="LINE公式アカウントを用意する" onOpen={() => setStep(1)}>
             <p className="mb-4 text-sm leading-relaxed text-gray-600">
               まだLINE公式アカウントがない場合は作成してください。作成済みなら次の手順へ進めます。
             </p>
@@ -186,7 +186,7 @@ export default function LineSettingsPage() {
             </button>
           </StepCard>
 
-          <StepCard step={2} currentStep={step} title="Channel ID / Secretを保存する" forceExpanded={editUnlocked}>
+          <StepCard step={2} currentStep={step} title="Channel ID / Secretを保存する" forceExpanded={editUnlocked} onOpen={() => setStep(2)}>
             <p className="mb-4 text-sm leading-relaxed text-gray-600">
               先にLINE DevelopersのMessaging APIチャネルから、Channel IDとChannel Secretだけを保存します。Access TokenはWebhookとLIFF endpointの設定後に発行して保存します。
             </p>
@@ -194,28 +194,33 @@ export default function LineSettingsPage() {
               <Field label="Channel ID" value={form.lineChannelId ?? ''} onChange={(value) => set('lineChannelId', value)} placeholder="1234567890" disabled={lineCredentialsLocked} />
               <Field label="Channel Secret" type="password" value={form.lineChannelSecret ?? ''} onChange={(value) => set('lineChannelSecret', value)} placeholder={lineBasicConfigured ? '変更する場合のみ入力' : 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'} disabled={lineCredentialsLocked} />
             </div>
-            <button
-              disabled={saving || lineCredentialsLocked || !form.lineChannelId || (requiresChannelSecret && !form.lineChannelSecret)}
-              onClick={async () => {
-                const payload: Partial<TenantInput> = {
-                  lineChannelId: form.lineChannelId,
-                };
-                if (form.lineChannelSecret) payload.lineChannelSecret = form.lineChannelSecret;
-                const ok = await save(payload);
-                if (ok) {
-                  setEditUnlocked(false);
-                  setReauthToken('');
-                  setForm((prev) => ({ ...prev, lineChannelSecret: '' }));
-                  setStep(3);
-                }
-              }}
-              className="mt-4 w-full rounded-lg bg-[#06C755] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] disabled:opacity-50 sm:w-auto"
-            >
-              {saving ? '保存中...' : '保存して次へ'}
-            </button>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+              <button type="button" onClick={() => setStep(1)} className="w-full rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 sm:w-auto">
+                戻る
+              </button>
+              <button
+                disabled={saving || lineCredentialsLocked || !form.lineChannelId || (requiresChannelSecret && !form.lineChannelSecret)}
+                onClick={async () => {
+                  const payload: Partial<TenantInput> = {
+                    lineChannelId: form.lineChannelId,
+                  };
+                  if (form.lineChannelSecret) payload.lineChannelSecret = form.lineChannelSecret;
+                  const ok = await save(payload);
+                  if (ok) {
+                    setEditUnlocked(false);
+                    setReauthToken('');
+                    setForm((prev) => ({ ...prev, lineChannelSecret: '' }));
+                    setStep(3);
+                  }
+                }}
+                className="w-full rounded-lg bg-[#06C755] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] disabled:opacity-50 sm:w-auto"
+              >
+                {saving ? '保存中...' : '保存して次へ'}
+              </button>
+            </div>
           </StepCard>
 
-          <StepCard step={3} currentStep={step} title="Webhook URL / LIFF endpointを設定する">
+          <StepCard step={3} currentStep={step} title="Webhook URL / LIFF endpointを設定する" onOpen={() => setStep(3)}>
             <p className="mb-3 text-sm leading-relaxed text-gray-600">
               LINE Developers側でWebhook URLを設定して有効化し、LIFFアプリのEndpoint URLもこのサイトに向けます。ここまで終わったらAccess Tokenを発行できます。
             </p>
@@ -223,37 +228,47 @@ export default function LineSettingsPage() {
               <CopyBox label="Webhook URL" value={webhookUrl} />
               <CopyBox label="LIFF Endpoint URL" value={liffEndpointUrl} />
             </div>
-            <button onClick={() => setStep(4)} className="mt-4 w-full rounded-lg bg-[#06C755] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] sm:w-auto">
-              設定できたので次へ
-            </button>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+              <button type="button" onClick={() => setStep(2)} className="w-full rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 sm:w-auto">
+                戻る
+              </button>
+              <button onClick={() => setStep(4)} className="w-full rounded-lg bg-[#06C755] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] sm:w-auto">
+                設定できたので次へ
+              </button>
+            </div>
           </StepCard>
 
-          <StepCard step={4} currentStep={step} title="Channel Access Tokenを保存する" forceExpanded={editUnlocked}>
+          <StepCard step={4} currentStep={step} title="Channel Access Tokenを保存する" forceExpanded={editUnlocked} onOpen={() => setStep(4)}>
             <p className="mb-4 text-sm leading-relaxed text-gray-600">
               WebhookとLIFF endpointの設定後に、Messaging API設定で長期のChannel Access Tokenを発行して保存します。保存後に公式アカウント情報を同期します。
             </p>
             <Field label="Channel Access Token" type="password" value={form.lineChannelAccessToken ?? ''} onChange={(value) => set('lineChannelAccessToken', value)} placeholder={tenant.lineConfigured ? '変更する場合のみ入力' : '長い文字列'} disabled={lineCredentialsLocked} />
-            <button
-              disabled={saving || lineCredentialsLocked || !form.lineChannelAccessToken}
-              onClick={async () => {
-                const ok = await save({ lineChannelAccessToken: form.lineChannelAccessToken });
-                if (ok) {
-                  try {
-                    const updated = await api.tenant.syncLineProfile();
-                    setTenant(updated);
-                    setEditUnlocked(false);
-                    setReauthToken('');
-                    setForm((prev) => ({ ...prev, lineChannelAccessToken: '' }));
-                    setStep(4);
-                  } catch (err: any) {
-                    setError(err.message);
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+              <button type="button" onClick={() => setStep(3)} className="w-full rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 sm:w-auto">
+                戻る
+              </button>
+              <button
+                disabled={saving || lineCredentialsLocked || !form.lineChannelAccessToken}
+                onClick={async () => {
+                  const ok = await save({ lineChannelAccessToken: form.lineChannelAccessToken });
+                  if (ok) {
+                    try {
+                      const updated = await api.tenant.syncLineProfile();
+                      setTenant(updated);
+                      setEditUnlocked(false);
+                      setReauthToken('');
+                      setForm((prev) => ({ ...prev, lineChannelAccessToken: '' }));
+                      setStep(4);
+                    } catch (err: any) {
+                      setError(err.message);
+                    }
                   }
-                }
-              }}
-              className="mt-4 w-full rounded-lg bg-[#06C755] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] disabled:opacity-50 sm:w-auto"
-            >
-              {saving ? '保存中...' : '保存して同期'}
-            </button>
+                }}
+                className="w-full rounded-lg bg-[#06C755] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] disabled:opacity-50 sm:w-auto"
+              >
+                {saving ? '保存中...' : '保存して同期'}
+              </button>
+            </div>
             {tenant.lineConfigured && (
               <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
                 LINE連携は完了しています。友だち追加後のWebhook受信とLIFF予約導線を確認してください。
@@ -317,35 +332,59 @@ function Field({ label, value, onChange, placeholder, type = 'text', disabled = 
 }
 
 function CopyBox({ value, label }: { value: string; label?: string }) {
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopyStatus('copied');
+      window.setTimeout(() => setCopyStatus('idle'), 1800);
+    } catch {
+      setCopyStatus('failed');
+      window.setTimeout(() => setCopyStatus('idle'), 2400);
+    }
+  }
+
   return (
     <div className="rounded-lg bg-gray-100 px-3 py-2">
       {label && <div className="mb-1 text-xs font-medium text-gray-500">{label}</div>}
       <div className="break-all font-mono text-xs text-gray-800 sm:text-sm">{value}</div>
-      <button type="button" onClick={() => navigator.clipboard.writeText(value)} className="mt-2 text-xs font-medium text-[#06C755] hover:underline">
-        コピー
+      <button type="button" onClick={copy} className="mt-2 text-xs font-medium text-[#06C755] hover:underline">
+        {copyStatus === 'copied' ? 'コピーしました' : copyStatus === 'failed' ? 'コピーできませんでした' : 'コピー'}
       </button>
+      <span className="sr-only" aria-live="polite">
+        {copyStatus === 'copied' ? `${label ?? 'URL'}をコピーしました` : copyStatus === 'failed' ? `${label ?? 'URL'}をコピーできませんでした` : ''}
+      </span>
     </div>
   );
 }
 
-function StepCard({ step, currentStep, title, children, forceExpanded = false }: {
+function StepCard({ step, currentStep, title, children, forceExpanded = false, onOpen }: {
   step: Step;
   currentStep: Step;
   title: string;
   children: React.ReactNode;
   forceExpanded?: boolean;
+  onOpen?: () => void;
 }) {
   const done = currentStep > step;
   const active = currentStep === step || forceExpanded;
+  const canReopen = !active && done && !!onOpen;
 
   return (
     <section className={`rounded-xl border bg-white p-4 transition-all md:p-5 ${active ? 'border-[#06C755]/50 shadow-sm' : 'border-gray-200 opacity-70'}`}>
-      <div className="mb-3 flex items-center gap-3">
+      <button
+        type="button"
+        onClick={canReopen ? onOpen : undefined}
+        disabled={!canReopen}
+        className={`mb-3 flex w-full items-center gap-3 text-left ${canReopen ? 'cursor-pointer' : 'cursor-default'}`}
+      >
         <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${done ? 'bg-green-500 text-white' : active ? 'bg-[#06C755] text-white' : 'bg-gray-200 text-gray-500'}`}>
           {done ? '済' : step}
         </span>
-        <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
-      </div>
+        <h2 className="min-w-0 flex-1 text-sm font-semibold text-gray-900">{title}</h2>
+        {canReopen && <span className="shrink-0 text-xs font-medium text-[#06C755]">戻る</span>}
+      </button>
       {active && children}
     </section>
   );
