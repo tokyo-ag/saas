@@ -12,7 +12,7 @@ function envOr(name: string, fallback: string): string {
 }
 
 export const DIRECT_API_URL = withoutTrailingSlash(
-  envOr('NEXT_PUBLIC_API_URL', 'http://localhost:3001'),
+  envOr('NEXT_PUBLIC_API_URL', 'https://comiu.up.railway.app'),
 );
 
 export const CLIENT_API_BASE =
