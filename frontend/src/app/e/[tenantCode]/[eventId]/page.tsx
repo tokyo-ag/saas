@@ -285,7 +285,7 @@ export default async function PublicEventPage({
   if (!event || !event.tenantCode || event.tenantCode !== tenantCode) notFound();
 
   const reservePath = `/liff/${event.tenantCode}/events/${event.id}/reserve`;
-  const reserveUrl = buildLiffUrl(reservePath, { directInLineBrowser: true }) ?? reservePath;
+  const reserveUrl = buildLiffUrl(reservePath) ?? reservePath;
   const isFull =
     event.capacity != null && event.reservedCount >= event.capacity;
   const spotsLeft =

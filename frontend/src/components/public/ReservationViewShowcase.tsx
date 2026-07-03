@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 import { API_URL, formatDateShort } from '@/lib/api';
 import { buildLiffUrl } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
@@ -72,10 +71,10 @@ function readableAccent(color: string | null | undefined) {
   };
 }
 
-function eventHref(event: ReservationShowcaseEvent, tenantCode?: string, fallbackHref?: string, directInLineBrowser = false) {
+function eventHref(event: ReservationShowcaseEvent, tenantCode?: string, fallbackHref?: string) {
   if (!tenantCode) return fallbackHref || '#';
   const path = `/liff/${tenantCode}/events/${event.id}/reserve`;
-  return buildLiffUrl(path, { directInLineBrowser }) ?? path;
+  return buildLiffUrl(path) ?? path;
 }
 
 function eventTime(event: ReservationShowcaseEvent) {
@@ -134,7 +133,6 @@ function CalendarPreview({
   eventDateColor,
   cardBg,
   lineMode,
-  directInLineBrowser,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
@@ -144,7 +142,6 @@ function CalendarPreview({
   eventDateColor?: string;
   cardBg?: string;
   lineMode?: boolean;
-  directInLineBrowser?: boolean;
 }) {
   const visible = readableAccent(accentColor);
   const actualEvents = events ?? [];
@@ -219,7 +216,7 @@ function CalendarPreview({
                     ) : (
                       <Link
                         key={event.id}
-                        href={eventHref(event, tenantCode, fallbackHref, directInLineBrowser)}
+                        href={eventHref(event, tenantCode, fallbackHref)}
                         className="mb-0.5 block rounded px-1 py-0.5"
                         style={{ backgroundColor: visible.accent }}
                       >
@@ -264,7 +261,6 @@ function CardMini({
   accentColor, events, tenantCode, fallbackHref,
   eventTitleColor, eventDateColor, eventMetaColor, cardBg,
   showLocation = true, showPrice = true, showCapacity = true,
-  directInLineBrowser,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
@@ -274,7 +270,6 @@ function CardMini({
   eventDateColor?: string;
   eventMetaColor?: string;
   cardBg?: string;
-  directInLineBrowser?: boolean;
 } & FieldFlags) {
   const visible = readableAccent(accentColor);
   if (events) {
@@ -294,7 +289,7 @@ function CardMini({
             return (
               <Link
                 key={event.id}
-                href={eventHref(event, tenantCode, fallbackHref, directInLineBrowser)}
+                href={eventHref(event, tenantCode, fallbackHref)}
                 className="block shrink-0 snap-start overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
                 style={{ backgroundColor: cardBg || '#ffffff', width: 'calc(50% - 6px)' }}
               >
@@ -344,7 +339,6 @@ function ThreadMini({
   accentColor, events, tenantCode, fallbackHref,
   eventTitleColor, eventDateColor, eventMetaColor, cardBg,
   showLocation = true, showPrice = true, showCapacity = true, showDescription = true,
-  directInLineBrowser,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
@@ -354,7 +348,6 @@ function ThreadMini({
   eventDateColor?: string;
   eventMetaColor?: string;
   cardBg?: string;
-  directInLineBrowser?: boolean;
 } & FieldFlags) {
   const visible = readableAccent(accentColor);
   if (events) {
@@ -385,7 +378,7 @@ function ThreadMini({
                 return (
                   <Link
                     key={event.id}
-                    href={eventHref(event, tenantCode, fallbackHref, directInLineBrowser)}
+                    href={eventHref(event, tenantCode, fallbackHref)}
                     className="block rounded-xl border border-gray-200 px-4 py-3 shadow-sm transition hover:opacity-90"
                     style={{ backgroundColor: cardBg || '#ffffff' }}
                   >
@@ -457,20 +450,15 @@ export function ReservationViewShowcase({
   const buttonStyle = { backgroundColor: visible.accent, borderColor: visible.border, color: visible.text };
   const selectedView = viewStyle === 'card' || viewStyle === 'thread' ? viewStyle : 'calendar';
   const fieldProps = { showLocation, showPrice, showCapacity, showDescription };
-  const [directInLineBrowser, setDirectInLineBrowser] = useState(false);
-
-  useEffect(() => {
-    setDirectInLineBrowser(/Line\//i.test(navigator.userAgent));
-  }, []);
 
   return (
     <div className={`space-y-3 ${className}`}>
       {selectedView === 'calendar' ? (
-        <CalendarPreview accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} cardBg={eventCardBg} lineMode={lineMode} directInLineBrowser={directInLineBrowser} />
+        <CalendarPreview accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} cardBg={eventCardBg} lineMode={lineMode} />
       ) : (
         <div className="rounded-xl">
-          {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} directInLineBrowser={directInLineBrowser} {...fieldProps} />}
-          {selectedView === 'thread' && <ThreadMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} directInLineBrowser={directInLineBrowser} {...fieldProps} />}
+          {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} {...fieldProps} />}
+          {selectedView === 'thread' && <ThreadMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} {...fieldProps} />}
         </div>
       )}
       {selectedView !== 'card' && (href ? (

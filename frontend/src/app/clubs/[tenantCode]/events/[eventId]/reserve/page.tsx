@@ -12,7 +12,7 @@ function PublicReserveRedirectInner() {
 
   useEffect(() => {
     window.location.replace(
-      buildLiffUrl(liffReservePath, { directInLineBrowser: true }) ?? liffReservePath,
+      buildLiffUrl(liffReservePath) ?? liffReservePath,
     );
   }, [liffReservePath]);
 

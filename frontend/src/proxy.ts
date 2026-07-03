@@ -14,6 +14,56 @@ function decodeJwtPayload(token: string) {
   }
 }
 
+function normalizeLiffState(raw: string | null) {
+  if (!raw) return null;
+  let state = raw;
+  const seen = new Set<string>();
+
+  while (state && !seen.has(state)) {
+    seen.add(state);
+
+    try {
+      const decoded = decodeURIComponent(state);
+      if (decoded !== state) {
+        state = decoded;
+        continue;
+      }
+    } catch {
+      // Keep the original state when decoding fails.
+    }
+
+    if (state.startsWith('?')) {
+      const params = new URLSearchParams(state.slice(1));
+      const nested = params.get('liff.state');
+      if (nested) {
+        params.delete('liff.state');
+        const rest = params.toString();
+        state = nested + (rest ? `?${rest}` : '');
+        continue;
+      }
+    }
+
+    break;
+  }
+
+  return state || null;
+}
+
+function getLiffStateRedirectUrl(request: NextRequest) {
+  const state = normalizeLiffState(request.nextUrl.searchParams.get('liff.state'));
+  if (!state) return null;
+
+  const path = state.startsWith('/') ? state : `/${state}`;
+  if (path === '/' || path.startsWith('//')) return null;
+
+  const target = path.startsWith('/liff/') ? path : `/liff${path}`;
+  const redirectUrl = new URL(target, request.url);
+  request.nextUrl.searchParams.forEach((value, key) => {
+    if (key !== 'liff.state') redirectUrl.searchParams.append(key, value);
+  });
+  return redirectUrl;
+}
+
 export function proxy(request: NextRequest) {
   const canonicalRedirectEnabled =
     process.env.CANONICAL_REDIRECT_ENABLED === 'true';
@@ -38,6 +88,11 @@ export function proxy(request: NextRequest) {
   }
 
   const { pathname } = request.nextUrl;
+
+  const liffStateRedirectUrl = getLiffStateRedirectUrl(request);
+  if (liffStateRedirectUrl) {
+    return NextResponse.redirect(liffStateRedirectUrl, { status: 307 });
+  }
 
   // Admin auth guard. Cookie is written by setToken/setImpersonationToken in auth.ts.
   if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
