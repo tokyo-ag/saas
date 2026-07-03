@@ -415,6 +415,10 @@ export class LiffService {
         : 'reserved';
     let waitlistOrder: number | null = null;
 
+    if (status === 'waiting_payment' && !tenant?.stripeSecretKey) {
+      throw new BadRequestException('Stripe payment is not configured');
+    }
+
     if (status === 'waitlisted') {
       const maxOrder = await this.prisma.reservation.aggregate({
         where: { eventId: dto.eventId, status: 'waitlisted' },
@@ -438,22 +442,33 @@ export class LiffService {
     if (status === 'waiting_payment') {
       if (tenant?.stripeSecretKey) {
         const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
-        const session = await this.stripeService.createCheckoutSession(
-          tenant.stripeSecretKey,
-          {
-            eventTitle: event.title,
-            price: effectivePrice,
-            reservationId: reservation.id,
-            tenantId,
-            successUrl: `${frontendUrl}/liff/${tenantId}/events/${event.id}/reserve?status=reserved`,
-            cancelUrl: `${frontendUrl}/liff/${tenantId}/events/${event.id}/reserve`,
-          },
-        );
-        stripeCheckoutUrl = session.url ?? undefined;
-        await this.prisma.reservation.update({
-          where: { id: reservation.id },
-          data: { stripePaymentIntentId: session.id },
-        });
+        try {
+          const session = await this.stripeService.createCheckoutSession(
+            tenant.stripeSecretKey,
+            {
+              eventTitle: event.title,
+              price: effectivePrice,
+              reservationId: reservation.id,
+              tenantId,
+              successUrl: `${frontendUrl}/liff/${tenantId}/events/${event.id}/reserve?status=reserved`,
+              cancelUrl: `${frontendUrl}/liff/${tenantId}/events/${event.id}/reserve`,
+            },
+          );
+          stripeCheckoutUrl = session.url ?? undefined;
+          if (!stripeCheckoutUrl) {
+            throw new BadRequestException('Stripe checkout URL is unavailable');
+          }
+          await this.prisma.reservation.update({
+            where: { id: reservation.id },
+            data: { stripePaymentIntentId: session.id },
+          });
+        } catch (err) {
+          await this.prisma.reservation.update({
+            where: { id: reservation.id },
+            data: { status: ReservationStatus.cancelled },
+          });
+          throw err;
+        }
       }
     }
 
