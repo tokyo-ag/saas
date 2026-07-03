@@ -10,12 +10,20 @@ import { LineMessagingService } from '../line-messaging/line-messaging.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { PLAN_LIMITS } from '../config/plan-limits';
 
-const PORTAL_CATEGORY_TAGS = ['交流会', 'バドミントン', 'バスケ', 'フットサル', 'バレー'];
+const PORTAL_CATEGORY_TAGS = [
+  '交流会',
+  'バドミントン',
+  'バスケ',
+  'フットサル',
+  'バレー',
+];
 
 function normalizePortalCategoryTags(tags?: string[] | null) {
   if (!tags) return [];
   const firstCategory = tags.find((tag) => PORTAL_CATEGORY_TAGS.includes(tag));
-  return tags.filter((tag) => !PORTAL_CATEGORY_TAGS.includes(tag) || tag === firstCategory);
+  return tags.filter(
+    (tag) => !PORTAL_CATEGORY_TAGS.includes(tag) || tag === firstCategory,
+  );
 }
 
 @Injectable()
@@ -237,7 +245,9 @@ export class EventsService {
         ...(dto.imageUrl !== undefined && { imageUrl: dto.imageUrl || null }),
         ...(dto.iconUrl !== undefined && { iconUrl: dto.iconUrl || null }),
         ...(dto.category !== undefined && { category: dto.category ?? null }),
-        ...(dto.tags !== undefined && { tags: normalizePortalCategoryTags(dto.tags) }),
+        ...(dto.tags !== undefined && {
+          tags: normalizePortalCategoryTags(dto.tags),
+        }),
       },
     });
   }

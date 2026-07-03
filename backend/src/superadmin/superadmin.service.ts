@@ -586,7 +586,9 @@ export class SuperadminService implements OnApplicationBootstrap {
   }
 
   async updateOfficialArticle(id: string, dto: UpsertOfficialArticleDto) {
-    const existing = await this.prisma.$queryRaw<OfficialArticleRow[]>(Prisma.sql`
+    const existing = await this.prisma.$queryRaw<
+      OfficialArticleRow[]
+    >(Prisma.sql`
       ${this.officialArticleSelect()}
       WHERE id = ${id}
       LIMIT 1
@@ -599,9 +601,7 @@ export class SuperadminService implements OnApplicationBootstrap {
       id,
     );
     const publishedAt =
-      status === 'draft'
-        ? null
-        : current.published_at ?? new Date();
+      status === 'draft' ? null : (current.published_at ?? new Date());
 
     const rows = await this.prisma.$queryRaw<OfficialArticleRow[]>(Prisma.sql`
       UPDATE official_articles

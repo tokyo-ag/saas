@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { TenantId } from '../auth/tenant-id.decorator';
 import { AdminGuard } from '../auth/admin.guard';
 import { BlogService, UpsertBlogPostDto } from './blog.service';
@@ -24,7 +33,11 @@ export class BlogController {
   }
 
   @Put(':id')
-  update(@TenantId() tenantId: string, @Param('id') id: string, @Body() dto: UpsertBlogPostDto) {
+  update(
+    @TenantId() tenantId: string,
+    @Param('id') id: string,
+    @Body() dto: UpsertBlogPostDto,
+  ) {
     return this.blogService.update(tenantId, id, dto);
   }
 

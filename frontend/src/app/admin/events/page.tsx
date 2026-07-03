@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, formatDate } from '@/lib/api';
 import { getToken } from '@/lib/auth';
-import { SITE_URL } from '@/lib/config';
+import { SITE_URL, buildLiffUrl } from '@/lib/config';
 import { EventStatusBadge } from '@/components/ui/StatusBadge';
 import type { Event } from '@/lib/api';
 
@@ -188,7 +188,8 @@ export default function EventsPage() {
     }
   }
 
-  const scheduleUrl = tenantId ? `${SITE_URL}/liff/${tenantId}` : '';
+  const schedulePath = tenantId ? `/liff/${tenantId}` : '';
+  const scheduleUrl = schedulePath ? buildLiffUrl(schedulePath) ?? `${SITE_URL}${schedulePath}` : '';
 
   function copyScheduleUrl() {
     if (!scheduleUrl) return;

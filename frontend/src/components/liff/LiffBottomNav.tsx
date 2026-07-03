@@ -4,18 +4,7 @@ import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import { initLiff, getLiffUserId } from '@/lib/liff';
-import { DISCOVERY_LOCKED } from '@/lib/config';
-
-function CompassIcon({ active }: { active: boolean }) {
-  const s = active ? '#06C755' : '#BDBDBD';
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={s} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill={active ? '#06C755' : 'none'} />
-    </svg>
-  );
-}
+import { getLiffUserId, initLiff, liff } from '@/lib/liff';
 
 function HomeIcon({ active }: { active: boolean }) {
   const s = active ? '#06C755' : '#BDBDBD';
@@ -91,16 +80,9 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
   }, [tid, pathname]);
 
   const base = tid ? `/liff/${tid}` : '';
-
-  const discoveryActive =
-    pathname === '/' &&
-    !new URLSearchParams(
-      typeof window !== 'undefined' ? window.location.search : '',
-    ).get('prompt');
-
   const items = [
     {
-      href: base || '/?prompt=home',
+      href: base || null,
       label: '参加',
       Icon: HomeIcon,
       active: !!base && pathname === base,
@@ -122,28 +104,32 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
     },
   ];
 
-  return (
-    <>
-      {!DISCOVERY_LOCKED && (
-        <Link
-          href="/"
-          aria-label="イベントを探す"
-          className={`fixed right-4 top-[calc(env(safe-area-inset-top)+16px)] z-50 inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white shadow-lg shadow-black/10 ${
-            discoveryActive ? 'border-[#06C755]' : 'border-gray-100'
-          }`}
-        >
-          <CompassIcon active={discoveryActive} />
-        </Link>
-      )}
+  async function openComiuSite() {
+    const url = 'https://comiu.link';
+    try {
+      await initLiff();
+      if (liff.isInClient()) {
+        liff.openWindow({ url, external: true });
+        return;
+      }
+    } catch {
+      // Fall back to a regular browser tab below.
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
 
-      <nav
-        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50"
-        style={{ paddingBottom: `calc(env(safe-area-inset-bottom) + ${linePad}px)` }}
-      >
-        <p className="text-center text-[9px] text-gray-300 pt-1 leading-none">
-          Powered by <a href="https://comiu.link" target="_blank" rel="noopener noreferrer" className="font-bold">COMIU</a>
-        </p>
-        <div className="flex">
+  return (
+    <nav
+      className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50"
+      style={{ paddingBottom: `calc(env(safe-area-inset-bottom) + ${linePad}px)` }}
+    >
+      <p className="text-center text-[9px] text-gray-300 pt-1 leading-none">
+        Powered by{' '}
+        <button type="button" onClick={openComiuSite} className="font-bold">
+          COMIU
+        </button>
+      </p>
+      <div className="flex">
         {items.map(({ href, label, Icon, active, badge }) => {
           const cls = `flex-1 flex flex-col items-center py-2 gap-0.5 ${active ? 'text-[#06C755]' : 'text-gray-400'}`;
           const labelEl = <span className="text-[10px] font-medium tracking-wide">{label}</span>;
@@ -157,6 +143,7 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
               )}
             </div>
           );
+
           if (!href) {
             return (
               <span key={label} className={`${cls} opacity-30`}>
@@ -165,6 +152,7 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
               </span>
             );
           }
+
           return (
             <Link key={label} href={href} className={cls}>
               {iconEl}
@@ -172,8 +160,7 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
             </Link>
           );
         })}
-        </div>
-      </nav>
-    </>
+      </div>
+    </nav>
   );
 }

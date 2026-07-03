@@ -40,3 +40,5 @@ Thumbs.db
 .idea/
 
 .vercel
+.vercel.env
+tmp/

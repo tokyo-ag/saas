@@ -84,16 +84,16 @@ export default function ManagementTabs() {
           {active === 0 && (
             <div className="shrink-0 lg:w-64 xl:w-72">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/comiu-line-reminder.svg" alt="LINE自動リマインド" className="w-full rounded-xl" />
+              <img src="/lp/organizers/comiu-line-reminder.svg" alt="LINE自動リマインド" className="w-full rounded-xl" />
             </div>
           )}
           {active === 1 && (
             <div className="shrink-0">
               <div className="flex items-end gap-3">
                 {[
-                  { src: '/shuttles-calendar.svg', label: 'カレンダー' },
-                  { src: '/shuttles-event-cards.svg', label: 'カード' },
-                  { src: '/shuttles-schedule-cards.svg', label: 'スレッド' },
+                  { src: '/lp/organizers/shuttles-calendar.svg', label: 'カレンダー' },
+                  { src: '/lp/organizers/shuttles-event-cards.svg', label: 'カード' },
+                  { src: '/lp/organizers/shuttles-schedule-cards.svg', label: 'スレッド' },
                 ].map(({ src, label }) => (
                   <div key={label} className="flex flex-col items-center gap-1.5">
                     {/* eslint-disable-next-line @next/next/no-img-element */}

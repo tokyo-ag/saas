@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import PublicFooter from '@/components/public/PublicFooter';
-import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
+import { SITE_URL, API_URL, IMAGE_BASE_URL, buildLiffUrl } from '@/lib/config';
 
 type Review = {
   id: string;
@@ -284,7 +284,8 @@ export default async function PublicEventPage({
 
   if (!event || !event.tenantCode || event.tenantCode !== tenantCode) notFound();
 
-  const reserveUrl = `/liff/${event.tenantCode}/events/${event.id}/reserve`;
+  const reservePath = `/liff/${event.tenantCode}/events/${event.id}/reserve`;
+  const reserveUrl = buildLiffUrl(reservePath) ?? reservePath;
   const isFull =
     event.capacity != null && event.reservedCount >= event.capacity;
   const spotsLeft =

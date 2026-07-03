@@ -1,7 +1,19 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { TenantId } from '../auth/tenant-id.decorator';
 import { AdminGuard } from '../auth/admin.guard';
-import { PublicPagesService, UpsertPublicPageDto } from './public-pages.service';
+import {
+  PublicPagesService,
+  UpsertPublicPageDto,
+} from './public-pages.service';
 
 @UseGuards(AdminGuard)
 @Controller('admin/public-pages')

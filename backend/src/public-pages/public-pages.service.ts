@@ -5,7 +5,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { IsArray, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import {
+  IsArray,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 
 const PAGE_STATUS = ['draft', 'published'] as const;
@@ -350,7 +359,8 @@ export class PublicPagesService {
     if (!PAGE_STATUS.includes(status as PageStatus)) {
       throw new BadRequestException('status must be draft or published');
     }
-    const isPublishing = status === 'published' && currentStatus !== 'published';
+    const isPublishing =
+      status === 'published' && currentStatus !== 'published';
 
     return {
       title: dto.title.trim(),
@@ -370,7 +380,9 @@ export class PublicPagesService {
       backgroundColor: dto.backgroundColor?.trim() || null,
       navColor: dto.navColor?.trim() || null,
       navOpacity: Number.isInteger(dto.navOpacity) ? dto.navOpacity : null,
-      backgroundOpacity: Number.isInteger(dto.backgroundOpacity) ? dto.backgroundOpacity : null,
+      backgroundOpacity: Number.isInteger(dto.backgroundOpacity)
+        ? dto.backgroundOpacity
+        : null,
       imageLayout: dto.imageLayout?.trim() || null,
       heroImageMode: dto.heroImageMode?.trim() || null,
       heroNavPosition: dto.heroNavPosition?.trim() || null,
@@ -378,12 +390,20 @@ export class PublicPagesService {
       heroTextPosition: dto.heroTextPosition?.trim() || null,
       heroTextX: Number.isInteger(dto.heroTextX) ? dto.heroTextX : null,
       heroTextY: Number.isInteger(dto.heroTextY) ? dto.heroTextY : null,
-      heroTextWidth: Number.isInteger(dto.heroTextWidth) ? dto.heroTextWidth : null,
+      heroTextWidth: Number.isInteger(dto.heroTextWidth)
+        ? dto.heroTextWidth
+        : null,
       buttonBgColor: dto.buttonBgColor?.trim() || null,
-      buttonBgOpacity: Number.isInteger(dto.buttonBgOpacity) ? dto.buttonBgOpacity : null,
-      buttonTextOpacity: Number.isInteger(dto.buttonTextOpacity) ? dto.buttonTextOpacity : null,
+      buttonBgOpacity: Number.isInteger(dto.buttonBgOpacity)
+        ? dto.buttonBgOpacity
+        : null,
+      buttonTextOpacity: Number.isInteger(dto.buttonTextOpacity)
+        ? dto.buttonTextOpacity
+        : null,
       blocks: dto.blocks ?? Prisma.JsonNull,
-      heroOverlayOpacity: Number.isInteger(dto.heroOverlayOpacity) ? dto.heroOverlayOpacity : null,
+      heroOverlayOpacity: Number.isInteger(dto.heroOverlayOpacity)
+        ? dto.heroOverlayOpacity
+        : null,
       heroOverlayColor: dto.heroOverlayColor?.trim() || null,
       reserveViewStyle: dto.reserveViewStyle?.trim() || null,
       fontFamily: dto.fontFamily?.trim() || null,
@@ -392,8 +412,12 @@ export class PublicPagesService {
       subtitleFont: dto.subtitleFont?.trim() || null,
       subtitleSize: dto.subtitleSize?.trim() || null,
       subtitleColor: dto.subtitleColor?.trim() || null,
-      subtitleMarginTop: Number.isInteger(dto.subtitleMarginTop) ? dto.subtitleMarginTop : null,
-      buttonRadius: Number.isInteger(dto.buttonRadius) ? dto.buttonRadius : null,
+      subtitleMarginTop: Number.isInteger(dto.subtitleMarginTop)
+        ? dto.subtitleMarginTop
+        : null,
+      buttonRadius: Number.isInteger(dto.buttonRadius)
+        ? dto.buttonRadius
+        : null,
       buttonSize: Number.isInteger(dto.buttonSize) ? dto.buttonSize : null,
       titleSize: dto.titleSize?.trim() || null,
       titleAlign: dto.titleAlign?.trim() || null,
@@ -405,7 +429,9 @@ export class PublicPagesService {
       contactLabel: dto.contactLabel?.trim() || null,
       buttonStyle: dto.buttonStyle?.trim() || null,
       buttonLayout: dto.buttonLayout?.trim() || null,
-      buttonOpacity: Number.isInteger(dto.buttonOpacity) ? dto.buttonOpacity : null,
+      buttonOpacity: Number.isInteger(dto.buttonOpacity)
+        ? dto.buttonOpacity
+        : null,
       headerText: dto.headerText?.trim() || null,
       footerText: dto.footerText?.trim() || null,
       seoTitle: dto.seoTitle?.trim() || null,
@@ -413,7 +439,9 @@ export class PublicPagesService {
       orgNameDisplayType: dto.orgNameDisplayType ?? 'text',
       orgLogoWordmarkUrl: dto.orgLogoWordmarkUrl?.trim() || null,
       orgLogoWordmarkAlt: dto.orgLogoWordmarkAlt?.trim() || null,
-      orgLogoWordmarkSize: Number.isInteger(dto.orgLogoWordmarkSize) ? dto.orgLogoWordmarkSize : null,
+      orgLogoWordmarkSize: Number.isInteger(dto.orgLogoWordmarkSize)
+        ? dto.orgLogoWordmarkSize
+        : null,
       status,
       ...(isPublishing ? { publishedAt: new Date() } : {}),
       ...(status === 'draft' ? { publishedAt: null } : {}),
@@ -436,7 +464,8 @@ export class PublicPagesService {
   }
 
   async create(tenantId: string, dto: UpsertPublicPageDto) {
-    const slug = this.normalizeSlug(dto.slug ?? '') || this.slugFromTitle(dto.title);
+    const slug =
+      this.normalizeSlug(dto.slug ?? '') || this.slugFromTitle(dto.title);
     await this.ensureUniqueSlug(tenantId, slug);
 
     return this.prisma.publicPage.create({

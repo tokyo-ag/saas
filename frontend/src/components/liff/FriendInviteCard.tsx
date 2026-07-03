@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { formatDate } from '@/lib/api';
 import { initLiff, liff } from '@/lib/liff';
-import { SITE_URL } from '@/lib/config';
+import { SITE_URL, buildLiffUrl } from '@/lib/config';
 
 type FriendInviteCardProps = {
   tenantId: string;
@@ -14,7 +14,8 @@ type FriendInviteCardProps = {
 };
 
 function buildEventUrl(tenantId: string, eventId: string) {
-  return `${SITE_URL}/liff/${tenantId}/events/${eventId}`;
+  const path = `/liff/${tenantId}/events/${eventId}`;
+  return buildLiffUrl(path) ?? `${SITE_URL}${path}`;
 }
 
 export function FriendInviteCard({ tenantId, eventId, title, heldAt, location }: FriendInviteCardProps) {

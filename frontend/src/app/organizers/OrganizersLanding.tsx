@@ -3068,7 +3068,7 @@ export default function ComiuLandingPage() {
                       </div>
                       <div className="website-mock-wrap">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/バドミントンサークルウェブデザイン展示.svg" alt="団体WEBサイトの作成イメージ" className="website-mock-img" />
+                        <img src="/lp/organizers/バドミントンサークルウェブデザイン展示.svg" alt="団体WEBサイトの作成イメージ" className="website-mock-img" />
                       </div>
                     </div>
                   </div>
@@ -3094,7 +3094,7 @@ export default function ComiuLandingPage() {
                     </div>
                     <div className="portal-visual">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/COMIUスマホモックアップ.svg" alt="COMIUポータルサイト" className="portal-img" />
+                      <img src="/lp/organizers/COMIUスマホモックアップ.svg" alt="COMIUポータルサイト" className="portal-img" />
                     </div>
                   </div>
                 </div>
@@ -3114,9 +3114,9 @@ export default function ComiuLandingPage() {
                   </div>
                   <div className="phones-grid">
                     {[
-                      { src: "/shuttles-calendar.svg", label: "カレンダー", desc: "同じ活動が重なる時や回数が多い主催向け" },
-                      { src: "/shuttles-event-cards.svg", label: "カード", desc: "画像でイメージをしっかり伝えたい主催向け" },
-                      { src: "/shuttles-schedule-cards.svg", label: "スレッド", desc: "詳細をしっかり見せたい主催向け" },
+                      { src: "/lp/organizers/shuttles-calendar.svg", label: "カレンダー", desc: "同じ活動が重なる時や回数が多い主催向け" },
+                      { src: "/lp/organizers/shuttles-event-cards.svg", label: "カード", desc: "画像でイメージをしっかり伝えたい主催向け" },
+                      { src: "/lp/organizers/shuttles-schedule-cards.svg", label: "スレッド", desc: "詳細をしっかり見せたい主催向け" },
                     ].map(({ src, label, desc }) => (
                       <div key={label} className="phone-type-card">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -3152,7 +3152,7 @@ export default function ComiuLandingPage() {
                       </div>
                       <div>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/comiu-line-reminder.svg" alt="LINE自動リマインド" className="remind-img" />
+                        <img src="/lp/organizers/comiu-line-reminder.svg" alt="LINE自動リマインド" className="remind-img" />
                       </div>
                     </div>
                   </div>

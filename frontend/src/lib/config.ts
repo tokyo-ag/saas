@@ -21,6 +21,16 @@ export const SUPPORT_EMAIL =
 export const OFFICIAL_LINE_URL =
   envOr('NEXT_PUBLIC_OFFICIAL_LINE_URL', 'https://lin.ee/oLnMgPkA');
 
+export const LIFF_ID = envOr('NEXT_PUBLIC_LIFF_ID', '');
+
+export function buildLiffUrl(path: string): string | null {
+  if (!LIFF_ID) return null;
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const url = new URL(`https://liff.line.me/${LIFF_ID}`);
+  url.searchParams.set('liff.state', normalizedPath);
+  return url.toString();
+}
+
 export const DISCOVERY_LOCKED =
   process.env.NEXT_PUBLIC_DISCOVERY_LOCKED === 'true';
 

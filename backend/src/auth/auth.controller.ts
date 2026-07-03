@@ -180,7 +180,8 @@ export class AuthController {
   async lineLoginPublic(@Body() dto: LineLoginPublicDto) {
     const channelId = this.config.get<string>('LINE_LOGIN_CHANNEL_ID');
     const channelSecret = this.config.get<string>('LINE_LOGIN_CHANNEL_SECRET');
-    if (!channelId || !channelSecret) throw new BadRequestException('LINE Login未設定');
+    if (!channelId || !channelSecret)
+      throw new BadRequestException('LINE Login未設定');
 
     const tokenRes = await fetch('https://api.line.me/oauth2/v2.1/token', {
       method: 'POST',
@@ -194,13 +195,21 @@ export class AuthController {
       }),
     });
     if (!tokenRes.ok) throw new BadRequestException('LINE Loginに失敗しました');
-    const tokens = await tokenRes.json() as { id_token: string; access_token: string };
+    const tokens = (await tokenRes.json()) as {
+      id_token: string;
+      access_token: string;
+    };
 
     const profileRes = await fetch('https://api.line.me/v2/profile', {
       headers: { Authorization: `Bearer ${tokens.access_token}` },
     });
-    if (!profileRes.ok) throw new BadRequestException('プロフィール取得に失敗しました');
-    const profile = await profileRes.json() as { userId: string; displayName: string; pictureUrl?: string };
+    if (!profileRes.ok)
+      throw new BadRequestException('プロフィール取得に失敗しました');
+    const profile = (await profileRes.json()) as {
+      userId: string;
+      displayName: string;
+      pictureUrl?: string;
+    };
 
     return {
       idToken: tokens.id_token,

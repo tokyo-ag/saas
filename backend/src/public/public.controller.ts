@@ -210,6 +210,7 @@ export class PublicController {
           select: {
             accentColor: true,
             backgroundColor: true,
+            backgroundOpacity: true,
             navColor: true,
             navOpacity: true,
             footerText: true,
@@ -217,8 +218,7 @@ export class PublicController {
         },
       },
     });
-    type PageWithBgOpacity = { accentColor: string | null; backgroundColor: string | null; navColor: string | null; navOpacity: number | null; footerText: string | null; backgroundOpacity?: number | null };
-    const page = (tenant?.publicPages?.[0] ?? null) as PageWithBgOpacity | null;
+    const page = tenant?.publicPages?.[0] ?? null;
     return {
       themeColor: tenant?.themeColor ?? 'green',
       accentColor: page?.accentColor ?? null,
@@ -298,8 +298,7 @@ export class PublicController {
 
   @Get('sitemap-blog-posts')
   async getSitemapBlogPosts() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const posts = await (this.prisma.blogPost as any).findMany({
+    const posts = await this.prisma.blogPost.findMany({
       where: {
         status: 'published',
         tenant: { deletedAt: null, bannedAt: null, code: { not: null } },
@@ -311,12 +310,7 @@ export class PublicController {
         tenant: { select: { code: true } },
       },
       orderBy: { updatedAt: 'desc' },
-    }) as Array<{
-      slug: string;
-      updatedAt: Date;
-      publishedAt: Date | null;
-      tenant: { code: string | null };
-    }>;
+    });
 
     return posts
       .filter((p) => p.tenant.code)
@@ -623,7 +617,9 @@ export class PublicController {
       textColor: page.textColor,
       accentColor: page.accentColor,
       backgroundColor: page.backgroundColor,
-      backgroundOpacity: (page as { backgroundOpacity?: number | null }).backgroundOpacity ?? null,
+      backgroundOpacity:
+        (page as { backgroundOpacity?: number | null }).backgroundOpacity ??
+        null,
       navColor: page.navColor,
       navOpacity: page.navOpacity,
       imageLayout: page.imageLayout,
@@ -668,7 +664,9 @@ export class PublicController {
       orgNameDisplayType: page.orgNameDisplayType,
       orgLogoWordmarkUrl: page.orgLogoWordmarkUrl,
       orgLogoWordmarkAlt: page.orgLogoWordmarkAlt,
-      orgLogoWordmarkSize: (page as any).orgLogoWordmarkSize ?? null,
+      orgLogoWordmarkSize:
+        (page as { orgLogoWordmarkSize?: number | null }).orgLogoWordmarkSize ??
+        null,
       publishedAt: page.publishedAt,
       updatedAt: page.updatedAt,
       tenant: {
@@ -680,18 +678,26 @@ export class PublicController {
 
   @Get('tenants/:tenantCode/blog')
   async listBlogPosts(@Param('tenantCode') tenantCode: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const posts = await (this.prisma.blogPost as any).findMany({
+    const posts = await this.prisma.blogPost.findMany({
       where: {
         status: 'published',
         tenant: { code: tenantCode, deletedAt: null, bannedAt: null },
       },
       orderBy: { publishedAt: 'desc' },
-      select: { id: true, title: true, slug: true, excerpt: true, body: true, tags: true, publishedAt: true, createdAt: true },
-    }) as Array<{ body: string; [k: string]: unknown }>;
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        excerpt: true,
+        body: true,
+        tags: true,
+        publishedAt: true,
+        createdAt: true,
+      },
+    });
     return posts.map(({ body, ...post }) => ({
       ...post,
-      coverImageUrl: this.firstMarkdownImage(body as string),
+      coverImageUrl: this.firstMarkdownImage(body),
     }));
   }
 
@@ -704,8 +710,16 @@ export class PublicController {
   }
 
   @Get('blog')
-  async listBlogByTags(@Query('tags') tagsParam: string, @Query('limit') limitParam?: string) {
-    const tags = tagsParam ? tagsParam.split(',').map(t => t.trim()).filter(Boolean) : [];
+  async listBlogByTags(
+    @Query('tags') tagsParam: string,
+    @Query('limit') limitParam?: string,
+  ) {
+    const tags = tagsParam
+      ? tagsParam
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : [];
     if (tags.length === 0) return [];
     const limit = Math.min(parseInt(limitParam ?? '10', 10) || 10, 30);
     return this.blogService.listByTags(tags, limit);
