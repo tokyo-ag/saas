@@ -220,13 +220,25 @@ export default function LineSettingsPage() {
             </div>
           </StepCard>
 
-          <StepCard step={3} currentStep={step} title="Webhook URL / LIFF endpointを設定する" onOpen={() => setStep(3)}>
+          <StepCard step={3} currentStep={step} title="Webhook URLとLIFF Endpoint URLを設定する" onOpen={() => setStep(3)}>
             <p className="mb-3 text-sm leading-relaxed text-gray-600">
-              LINE Developers側でWebhook URLを設定して有効化し、LIFFアプリのEndpoint URLもこのサイトに向けます。ここまで終わったらAccess Tokenを発行できます。
+              下の2つは設定する場所が違います。Webhook URLはMessaging APIチャネル、LIFF Endpoint URLはLIFFアプリの設定画面に入れます。
             </p>
             <div className="space-y-3">
-              <CopyBox label="Webhook URL" value={webhookUrl} />
-              <CopyBox label="LIFF Endpoint URL" value={liffEndpointUrl} />
+              <SetupGuide
+                title="Webhook URL"
+                place="LINE Developers > Provider > Messaging APIチャネル > Messaging APIタブ > Webhook settings"
+                detail="Webhook URLに貼り付けて、Use webhookをONにしてからVerifyを押します。"
+              >
+                <CopyBox value={webhookUrl} />
+              </SetupGuide>
+              <SetupGuide
+                title="LIFF Endpoint URL"
+                place="LINE Developers > Provider > LINE Loginチャネル > LIFFタブ > LIFFアプリ > Endpoint URL"
+                detail="LIFFアプリを追加または編集して、Endpoint URLに貼り付けます。予約画面をLINE内で開くための入口です。"
+              >
+                <CopyBox value={liffEndpointUrl} />
+              </SetupGuide>
             </div>
             <div className="mt-4 flex flex-col gap-2 sm:flex-row">
               <button type="button" onClick={() => setStep(2)} className="w-full rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 sm:w-auto">
@@ -240,8 +252,13 @@ export default function LineSettingsPage() {
 
           <StepCard step={4} currentStep={step} title="Channel Access Tokenを保存する" forceExpanded={editUnlocked} onOpen={() => setStep(4)}>
             <p className="mb-4 text-sm leading-relaxed text-gray-600">
-              WebhookとLIFF endpointの設定後に、Messaging API設定で長期のChannel Access Tokenを発行して保存します。保存後に公式アカウント情報を同期します。
+              LINE DevelopersのMessaging APIチャネルで発行した長期のChannel Access Tokenを保存します。保存後に公式アカウント情報を同期します。
             </p>
+            <SetupGuide
+              title="Channel Access Tokenの場所"
+              place="LINE Developers > Provider > Messaging APIチャネル > Messaging APIタブ > Channel access token"
+              detail="まだ発行していない場合はIssueを押して、表示された長い文字列を下に貼り付けます。"
+            />
             <Field label="Channel Access Token" type="password" value={form.lineChannelAccessToken ?? ''} onChange={(value) => set('lineChannelAccessToken', value)} placeholder={tenant.lineConfigured ? '変更する場合のみ入力' : '長い文字列'} disabled={lineCredentialsLocked} />
             <div className="mt-4 flex flex-col gap-2 sm:flex-row">
               <button type="button" onClick={() => setStep(3)} className="w-full rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 sm:w-auto">
@@ -327,6 +344,23 @@ function Field({ label, value, onChange, placeholder, type = 'text', disabled = 
         disabled={disabled}
         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755] disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
       />
+    </div>
+  );
+}
+
+function SetupGuide({ title, place, detail, children }: {
+  title: string;
+  place: string;
+  detail: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-3">
+      <div className="mb-1 text-sm font-semibold text-gray-900">{title}</div>
+      <div className="mb-1 text-xs font-medium text-gray-500">設定場所</div>
+      <div className="mb-2 text-sm leading-relaxed text-gray-800">{place}</div>
+      <p className="mb-3 text-xs leading-relaxed text-gray-600">{detail}</p>
+      {children}
     </div>
   );
 }
