@@ -18,7 +18,7 @@ const reserveViewOptions = [
 type ReservationActionStyle = 'comiu' | 'line';
 type DisplayFields = { location: boolean; price: boolean; capacity: boolean; description: boolean };
 
-const DEFAULT_DISPLAY_FIELDS: DisplayFields = { location: true, price: true, capacity: true, description: true };
+const DEFAULT_DISPLAY_FIELDS: DisplayFields = { location: true, price: true, capacity: false, description: true };
 
 const reservationActionOptions: { label: string; value: ReservationActionStyle }[] = [
   { label: 'COMIUで予約管理', value: 'comiu' },
@@ -47,7 +47,7 @@ function parseDisplayFields(settings: Record<string, any>): DisplayFields {
   return {
     location: df.location !== false,
     price: df.price !== false,
-    capacity: df.capacity !== false,
+    capacity: df.capacity === true,
     description: df.description !== false,
   };
 }
@@ -232,8 +232,9 @@ export default function EventsPage() {
         paymentTiming: ev.paymentTiming,
         notifyOnReserve: ev.notifyOnReserve,
         notifyOnReserveApp: true,
-        remindEnabled: false,
-        remindApp: false,
+        remindEnabled: ev.remindEnabled,
+        remindApp: ev.remindApp,
+        remindAt: ev.remindAt ?? null,
         imageUrl: ev.imageUrl,
         iconUrl: ev.iconUrl,
         category: ev.category ?? null,

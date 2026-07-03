@@ -141,7 +141,7 @@ const emptyForm: PublicPageInput = {
   subtitleHeroX: 5,
   subtitleHeroY: null as unknown as number,
   sectionOrder: [...DEFAULT_SECTION_ORDER] as string[],
-  displayFields: { location: true, price: true, capacity: true, description: true } as { location: boolean; price: boolean; capacity: boolean; description: boolean },
+  displayFields: { location: true, price: true, capacity: false, description: true } as { location: boolean; price: boolean; capacity: boolean; description: boolean },
   status: 'published',
 };
 
@@ -745,7 +745,7 @@ export default function AdminPublicPage() {
                   displayFields: (fd.displayFields && typeof fd.displayFields === 'object') ? {
                     location: fd.displayFields.location !== false,
                     price: fd.displayFields.price !== false,
-                    capacity: fd.displayFields.capacity !== false,
+                    capacity: fd.displayFields.capacity === true,
                     description: fd.displayFields.description !== false,
                   } : { location: true, price: true, capacity: true, description: true },
                 };
@@ -1249,7 +1249,7 @@ export default function AdminPublicPage() {
                 ) : (
                   <button type="button" onClick={() => logoUploadRef.current?.click()} disabled={logoUploading}
                     className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 bg-white py-5 text-sm text-gray-400 hover:border-[#06C755] hover:text-[#06C755] transition disabled:opacity-50">
-                    {logoUploading ? 'アップロード中...' : 'PNG / SVG をアップロード'}
+                    {logoUploading ? 'アップロード中...' : 'PNG / JPEG / SVG をアップロード'}
                   </button>
                 )}
                 <label className="block">

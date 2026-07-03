@@ -502,13 +502,13 @@ export default function EventForm({ initial }: { initial?: Event }) {
       <Section title="日時と場所">
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="開始日時" required>
-            <input required type="datetime-local" step={1800} value={form.heldAt} onChange={(e) => handleHeldAtChange(e.target.value)} className={inputClass} />
+            <input required type="datetime-local" step={900} value={form.heldAt} onChange={(e) => handleHeldAtChange(e.target.value)} className={inputClass} />
           </Field>
           <Field label="終了日時">
             <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
               <input
                 type="time"
-                step={1800}
+                step={900}
                 min={timeFromLocalDatetime(form.heldAt) || undefined}
                 disabled={!form.heldAt}
                 value={timeFromLocalDatetime(form.endAt)}

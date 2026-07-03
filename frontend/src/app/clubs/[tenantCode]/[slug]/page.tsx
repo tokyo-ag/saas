@@ -395,7 +395,7 @@ export default async function ClubCmsPage({
   const df = sectionCopy.displayFields ?? {};
   const showLocation = df.location !== false;
   const showPrice = df.price !== false;
-  const showCapacity = df.capacity !== false;
+  const showCapacity = df.capacity === true;
   const showDescription = df.description !== false;
   const navAboutUrl = sectionCopy.aboutUrl?.trim() || '#about';
   const configuredReserveUrl = sectionCopy.reserveUrl?.trim();
