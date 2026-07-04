@@ -2001,6 +2001,24 @@ export default function AdminPublicPage() {
                     : '公開中イベント 0件：公開サイトでは非表示になります'}
               </div>
               <div className="space-y-3 rounded-lg bg-gray-50 p-3">
+                <p className="text-[11px] font-bold text-gray-400">セクションのタイトル・説明文</p>
+                <label className="block space-y-1">
+                  <span className="text-[11px] text-gray-500">タイトル(空欄: 「{navLabels.reserve}」)</span>
+                  <input value={form.reserveTitle ?? ''}
+                    onChange={(e) => setForm((p) => ({ ...p, reserveTitle: e.target.value }))}
+                    placeholder={navLabels.reserve}
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                </label>
+                <label className="block space-y-1">
+                  <span className="text-[11px] text-gray-500">説明文</span>
+                  <textarea value={form.reserveLead ?? ''}
+                    onChange={(e) => setForm((p) => ({ ...p, reserveLead: e.target.value }))}
+                    rows={2}
+                    placeholder="募集中のイベントを表示します。"
+                    className="w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                </label>
+              </div>
+              <div className="space-y-3 rounded-lg bg-gray-50 p-3">
                 <p className="text-[11px] font-bold text-gray-400">イベントカードの見た目</p>
                 <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
                   <span className="text-[11px] font-bold text-gray-500">カード背景色</span>
@@ -2122,6 +2140,24 @@ export default function AdminPublicPage() {
                 {hasBlogSection
                   ? `公開記事 ${blogPosts.length}件：公開サイトに表示されます`
                   : '公開記事 0件：公開サイトでは非表示になります'}
+              </div>
+              <div className="space-y-3 rounded-lg bg-gray-50 p-3">
+                <p className="text-[11px] font-bold text-gray-400">セクションのタイトル・説明文</p>
+                <label className="block space-y-1">
+                  <span className="text-[11px] text-gray-500">タイトル(空欄: 「{navLabels.blog}」)</span>
+                  <input value={form.blogTitle ?? ''}
+                    onChange={(e) => setForm((p) => ({ ...p, blogTitle: e.target.value }))}
+                    placeholder={navLabels.blog}
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                </label>
+                <label className="block space-y-1">
+                  <span className="text-[11px] text-gray-500">説明文</span>
+                  <textarea value={form.blogLead ?? ''}
+                    onChange={(e) => setForm((p) => ({ ...p, blogLead: e.target.value }))}
+                    rows={2}
+                    placeholder="活動日記やお知らせを表示するエリアです。"
+                    className="w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                </label>
               </div>
               <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
                 <span className="text-[11px] font-bold text-gray-500">記事カードの背景色</span>
