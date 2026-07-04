@@ -38,7 +38,7 @@ type EventFormData = {
 };
 
 const inputClass = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]';
-const PORTAL_CATEGORY_TAGS = ['交流会', 'バドミントン', 'バスケ', 'フットサル', 'バレー'];
+export const PORTAL_CATEGORY_TAGS = ['交流会', 'バドミントン', 'バスケ', 'フットサル', 'バレー'];
 
 function normalizePortalCategoryTags(tags: string[]) {
   const firstCategory = tags.find((tag) => PORTAL_CATEGORY_TAGS.includes(tag));

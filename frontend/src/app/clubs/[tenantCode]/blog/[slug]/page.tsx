@@ -77,6 +77,15 @@ function formatDate(iso: string | null | undefined) {
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 
+function linkifyText(text: string, keyPrefix: string) {
+  const parts = text.split(/(https?:\/\/[^\s]+)/g);
+  return parts.map((part, i) => (
+    /^https?:\/\//.test(part) ? (
+      <a key={`${keyPrefix}-${i}`} href={part} target="_blank" rel="noopener noreferrer" className="underline">{part}</a>
+    ) : part
+  ));
+}
+
 function BodyRenderer({ body }: { body: string }) {
   const parts = body.split('\n');
   return (
@@ -96,7 +105,7 @@ function BodyRenderer({ body }: { body: string }) {
             </div>
           );
         }
-        return line ? <p key={i}>{line}</p> : <br key={i} />;
+        return line ? <p key={i}>{linkifyText(line, `line-${i}`)}</p> : <br key={i} />;
       })}
     </div>
   );

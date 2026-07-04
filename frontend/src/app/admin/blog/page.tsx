@@ -5,6 +5,7 @@ import { api, BlogPost, BlogPostInput } from '@/lib/api';
 import { API_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { getToken } from '@/lib/auth';
+import { PORTAL_CATEGORY_TAGS } from '@/components/admin/EventForm';
 
 type TextBlock = { type: 'text'; content: string };
 type ImageBlock = { type: 'image'; url: string };
@@ -234,7 +235,6 @@ export default function AdminBlogPage() {
   const [mode, setMode] = useState<Mode>('list');
   const [editing, setEditing] = useState<BlogPost | null>(null);
   const [form, setForm] = useState<BlogPostInput>({ title: '', body: '', excerpt: '', tags: [], status: 'draft' });
-  const [tagInput, setTagInput] = useState('');
   const [blocks, setBlocks] = useState<Block[]>([{ type: 'text', content: '' }]);
   const [activeBlockIdx, setActiveBlockIdx] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -272,7 +272,6 @@ export default function AdminBlogPage() {
   function openNew() {
     setEditing(null);
     setForm({ title: '', body: '', excerpt: '', tags: [], status: 'draft' });
-    setTagInput('');
     setBlocks([{ type: 'text', content: '' }]);
     setActiveBlockIdx(0);
     setError('');
@@ -282,22 +281,10 @@ export default function AdminBlogPage() {
   function openEdit(post: BlogPost) {
     setEditing(post);
     setForm({ title: post.title, body: post.body, excerpt: post.excerpt ?? '', tags: post.tags ?? [], status: post.status });
-    setTagInput('');
     setBlocks(bodyToBlocks(post.body));
     setActiveBlockIdx(0);
     setError('');
     setMode('edit');
-  }
-
-  function addTag(raw: string) {
-    const tag = raw.trim();
-    if (!tag || (form.tags ?? []).includes(tag)) return;
-    setForm(p => ({ ...p, tags: [...(p.tags ?? []), tag] }));
-    setTagInput('');
-  }
-
-  function removeTag(tag: string) {
-    setForm(p => ({ ...p, tags: (p.tags ?? []).filter(t => t !== tag) }));
   }
 
   async function handleSave(publish: boolean) {
@@ -423,34 +410,26 @@ export default function AdminBlogPage() {
 
           <div>
             <label className="mb-1 block text-sm font-bold text-gray-700">カテゴリタグ <span className="text-red-500">*</span></label>
-            <p className="mb-1.5 text-xs text-gray-400">カテゴリページへの掲載に必要です。例：バドミントン・交流会（1つまで）</p>
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {(form.tags ?? []).map(tag => (
-                <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-[#06C755]/10 px-2.5 py-1 text-xs font-medium text-[#047a35]">
-                  {tag}
-                  <button type="button" onClick={() => removeTag(tag)} className="text-[#047a35]/60 hover:text-[#047a35] leading-none">×</button>
-                </span>
-              ))}
+            <p className="mb-1.5 text-xs text-gray-400">カテゴリページへの掲載に必要です（1つ選択）</p>
+            <div className="flex flex-wrap gap-1.5">
+              {PORTAL_CATEGORY_TAGS.map(tag => {
+                const active = (form.tags ?? []).includes(tag);
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => setForm(p => ({ ...p, tags: active ? [] : [tag] }))}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                      active
+                        ? 'border-[#06C755] bg-[#06C755] text-white'
+                        : 'border-gray-300 bg-white text-gray-600 hover:border-[#06C755]'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                );
+              })}
             </div>
-            {(form.tags ?? []).length < 1 && (
-            <div className="flex gap-2">
-              <input
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(tagInput); } }}
-                placeholder="タグを入力してEnter"
-                maxLength={30}
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              />
-              <button
-                type="button"
-                onClick={() => addTag(tagInput)}
-                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
-              >
-                追加
-              </button>
-            </div>
-            )}
           </div>
 
           {/* Block editor */}

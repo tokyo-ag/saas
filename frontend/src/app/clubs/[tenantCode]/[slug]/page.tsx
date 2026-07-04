@@ -96,13 +96,22 @@ function bodyLeadingClass(size: number) {
   return 'leading-8';
 }
 
+function linkifyText(text: string, keyPrefix: string) {
+  const parts = text.split(/(https?:\/\/[^\s]+)/g);
+  return parts.map((part, i) => (
+    /^https?:\/\//.test(part) ? (
+      <a key={`${keyPrefix}-${i}`} href={part} target="_blank" rel="noopener noreferrer" className="underline">{part}</a>
+    ) : part
+  ));
+}
+
 function renderLine(line: string, index: number, textColor: string, bodyClassName: string, textStyle: CSSProperties = {}) {
   const style: CSSProperties = { color: textColor, overflowWrap: 'anywhere', ...textStyle };
   if (line.startsWith('### ')) return <h3 key={index} className="mt-7 text-xl font-bold" style={{ color: textColor }}>{line.slice(4)}</h3>;
   if (line.startsWith('## ') || line.startsWith('# ')) return <h2 key={index} className="mt-9 text-2xl font-bold" style={{ color: textColor }}>{line.replace(/^#{1,3}\s/, '')}</h2>;
-  if (line.startsWith('- ')) return <li key={index} className="ml-5 list-disc break-words" style={style}>{line.slice(2)}</li>;
+  if (line.startsWith('- ')) return <li key={index} className="ml-5 list-disc break-words" style={style}>{linkifyText(line.slice(2), `line-${index}`)}</li>;
   if (!line.trim()) return <div key={index} className="h-3" />;
-  return <p key={index} className={`${bodyClassName} break-words`} style={style}>{line}</p>;
+  return <p key={index} className={`${bodyClassName} break-words`} style={style}>{linkifyText(line, `line-${index}`)}</p>;
 }
 
 function getBtnClass(style: string | null | undefined) {
