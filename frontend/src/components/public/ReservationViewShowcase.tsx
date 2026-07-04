@@ -352,7 +352,11 @@ function ThreadMini({
   const visible = readableAccent(accentColor);
   if (events) {
     if (events.length === 0) return <EmptyEvents accentColor={accentColor} />;
-    const groups = events.reduce<Record<string, ReservationShowcaseEvent[]>>((acc, event) => {
+    const THREAD_LIMIT = 3;
+    const visibleEvents = events.slice(0, THREAD_LIMIT);
+    const hasMore = events.length > THREAD_LIMIT;
+    const moreHref = tenantCode ? `/clubs/${tenantCode}/reserve` : (fallbackHref || '#');
+    const groups = visibleEvents.reduce<Record<string, ReservationShowcaseEvent[]>>((acc, event) => {
       const key = monthLabel(event.heldAt);
       (acc[key] ??= []).push(event);
       return acc;
@@ -402,6 +406,14 @@ function ThreadMini({
             </div>
           </section>
         ))}
+        {hasMore && (
+          <Link
+            href={moreHref}
+            className="block rounded-xl border border-dashed border-gray-200 px-4 py-2.5 text-center text-xs font-bold text-gray-400 transition hover:opacity-80"
+          >
+            つづく
+          </Link>
+        )}
       </div>
     );
   }
