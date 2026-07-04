@@ -997,13 +997,14 @@ export default function AdminPublicPage() {
 
           if (block.type === 'faq') {
             const items = block.faqItems ?? [];
+            const faqTextStyle = { fontSize: blockFontSize, color: textColor };
             return (
               <div key={block.id} className="space-y-1.5">
                 {items.length === 0 && <p className="text-xs text-gray-400">Q&Aを追加してください</p>}
                 {items.map((item, j) => (
                   <div key={j} className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
-                    <p className="text-xs font-bold" style={{ color: textColor }}>Q. {item.q || '（質問）'}</p>
-                    {item.a && <p className="mt-0.5 text-xs opacity-60" style={{ color: textColor }}>A. {item.a}</p>}
+                    <p className="font-bold" style={faqTextStyle}>Q. {item.q || '（質問）'}</p>
+                    {item.a && <p className="mt-0.5 opacity-60" style={faqTextStyle}>A. {item.a}</p>}
                   </div>
                 ))}
               </div>
@@ -1748,6 +1749,12 @@ export default function AdminPublicPage() {
                 onChange={(e) => setForm((p) => ({ ...p, bodySize: e.target.value }))}
                 className="w-full accent-[#06C755]" />
             </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-gray-400">文字色</span>
+            <input type="color" value={textColor}
+              onChange={(e) => setForm((p) => ({ ...p, textColor: e.target.value }))}
+              className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
           </div>
 
           {/* ブロック追加ボタン */}

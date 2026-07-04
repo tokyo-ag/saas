@@ -643,10 +643,10 @@ export default async function ClubCmsPage({
                       {items.map((item: {q:string;a:string}, j: number) => (
                         <details key={j} className="group overflow-hidden rounded-xl border border-gray-100">
                           <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 select-none" style={{ color: textColor }}>
-                            <span className="flex-1 font-bold text-sm">{item.q}</span>
+                            <span className="flex-1 font-bold" style={blockTextStyle}>{item.q}</span>
                             <span className="ml-2 shrink-0 text-xs text-gray-400 transition-transform duration-200 group-open:rotate-180">▼</span>
                           </summary>
-                          <div className="border-t border-gray-100 px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap" style={{ color: textColor, opacity: 0.8 }}>
+                          <div className={`border-t border-gray-100 px-4 py-3 leading-relaxed whitespace-pre-wrap ${blockBodyClass}`} style={{ color: textColor, opacity: 0.8, ...blockTextStyle }}>
                             {item.a}
                           </div>
                         </details>
