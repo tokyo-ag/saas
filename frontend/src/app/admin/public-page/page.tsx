@@ -551,15 +551,45 @@ export default function AdminPublicPage() {
   const subtitleColor = form.subtitleColor?.trim() || textColor;
   const subtitleFontSize = resolvePxSize(form.subtitleSize, 14, 11, 28, SUBTITLE_SIZE_LEGACY);
   const subtitleTextStyle = { color: subtitleColor, fontFamily: subtitleFontFamily, fontSize: subtitleFontSize, lineHeight: 1.6 };
-  const heroOverlayKeys = ['name', 'logo', 'nav'] as const;
+  const heroKeys = ['name', 'logo', 'nav', 'image'] as const;
   const heroOutsideKeysList = form.heroOutsideKeys ?? ['nav'];
   const heroOutsideSet = new Set(heroOutsideKeysList);
-  const heroOrderedBgKeys = [
-    ...(form.sectionOrder ?? [...DEFAULT_SECTION_ORDER]).filter((k) => (heroOverlayKeys as readonly string[]).includes(k)),
-    ...heroOverlayKeys.filter((k) => !(form.sectionOrder ?? [...DEFAULT_SECTION_ORDER]).includes(k)),
+  const heroFullOrder = [
+    ...(form.sectionOrder ?? [...DEFAULT_SECTION_ORDER]).filter((k) => (heroKeys as readonly string[]).includes(k)),
+    ...heroKeys.filter((k) => !(form.sectionOrder ?? [...DEFAULT_SECTION_ORDER]).includes(k)),
   ];
-  const heroInsideKeys = heroOrderedBgKeys.filter((k) => !heroOutsideSet.has(k));
-  const heroOutsideOrderedKeys = heroOrderedBgKeys.filter((k) => heroOutsideSet.has(k));
+  const heroInsideKeys = heroFullOrder.filter((k) => k !== 'image' && !heroOutsideSet.has(k));
+  const heroImageIdx = heroFullOrder.indexOf('image');
+  const heroOutsideBefore = heroFullOrder.slice(0, heroImageIdx).filter((k) => heroOutsideSet.has(k));
+  const heroOutsideAfter = heroFullOrder.slice(heroImageIdx + 1).filter((k) => heroOutsideSet.has(k));
+  const renderHeroOutsideItem = (key: string) => {
+    if (key === 'name') return (
+      <p key="name" className={`font-bold ${form.orgNameDisplayType === 'image' ? 'sr-only' : ''}`} style={form.orgNameDisplayType === 'image' ? undefined : titleTextStyle}>
+        {displayName}
+      </p>
+    );
+    if (key === 'logo') return form.orgLogoWordmarkUrl && form.orgNameDisplayType !== 'text' ? (
+      <img key="logo" src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
+        className="max-w-full object-contain"
+        style={{ height: form.orgLogoWordmarkSize ?? 60, maxWidth: '100%' }} />
+    ) : null;
+    if (key === 'nav') return (
+      <div key="nav">
+        <div className={`text-[11px] font-bold ${previewButtonLayoutClass}`} style={previewButtonGridStyle}>
+          {visibleNavItems.map((item) => (
+            <span key={item.key} className={`flex items-center justify-center truncate px-2 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{item.label}</span>
+          ))}
+        </div>
+        <div className="mt-1 flex cursor-ns-resize select-none touch-none justify-center py-1"
+          style={{ touchAction: 'none' }}
+          onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); dragRef.current = { startY: e.clientY, startSize: btnSize }; }}
+          onPointerMove={(e) => { if (!dragRef.current) return; const d = e.clientY - dragRef.current.startY; setForm(p => ({ ...p, buttonSize: Math.round(Math.min(80, Math.max(24, dragRef.current!.startSize + d))) })); }}
+          onPointerUp={() => { dragRef.current = null; }}
+        ><div className="h-0.5 w-8 rounded bg-gray-300" /></div>
+      </div>
+    );
+    return null;
+  };
   const navLabels = {
     about: form.aboutLabel?.trim() || '団体詳細',
     reserve: form.reserveLabel?.trim() || '予約する',
@@ -1438,10 +1468,11 @@ export default function AdminPublicPage() {
             </div>
             {heroImageMode === 'background' ? (
               <div className="mt-4">
-                <p className="mb-2 text-[11px] font-bold text-gray-400">名前・ロゴ・ナビボタンの順番と配置</p>
+                <p className="mb-2 text-[11px] font-bold text-gray-400">名前・ロゴ・ナビボタン・写真の順番と配置</p>
+                <p className="mb-2 text-[11px] text-gray-400">「写真の中」を選んだ項目は写真に重ねて表示され、「写真の外」は写真との前後関係が順番通りに並びます(写真より上に置けば写真の上、下に置けば写真の下に表示されます)。</p>
                 <div className="space-y-1.5">
                   {(() => {
-                    const bgKeys = ['name', 'logo', 'nav'] as const;
+                    const bgKeys = ['name', 'logo', 'nav', 'image'] as const;
                     const order = form.sectionOrder ?? [...DEFAULT_SECTION_ORDER];
                     const ordered = [
                       ...order.filter((k) => (bgKeys as readonly string[]).includes(k)),
@@ -1468,16 +1499,18 @@ export default function AdminPublicPage() {
                     return ordered.map((key, i) => (
                       <div key={key} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
                         <span className="flex-1 text-xs font-bold text-gray-700">{SECTION_LABELS[key] ?? key}</span>
-                        <div className="flex overflow-hidden rounded-full border border-gray-200">
-                          {[{ label: '写真の中', outside: false }, { label: '写真の外', outside: true }].map((opt) => (
-                            <button key={opt.label} type="button"
-                              onClick={() => setOutside(key, opt.outside)}
-                              className={`px-2 py-1 text-[10px] font-bold transition ${outsideKeys.includes(key) === opt.outside ? 'text-white' : 'text-gray-400 hover:bg-gray-50'}`}
-                              style={outsideKeys.includes(key) === opt.outside ? { backgroundColor: accentColor } : undefined}>
-                              {opt.label}
-                            </button>
-                          ))}
-                        </div>
+                        {key !== 'image' && (
+                          <div className="flex overflow-hidden rounded-full border border-gray-200">
+                            {[{ label: '写真の中', outside: false }, { label: '写真の外', outside: true }].map((opt) => (
+                              <button key={opt.label} type="button"
+                                onClick={() => setOutside(key, opt.outside)}
+                                className={`px-2 py-1 text-[10px] font-bold transition ${outsideKeys.includes(key) === opt.outside ? 'text-white' : 'text-gray-400 hover:bg-gray-50'}`}
+                                style={outsideKeys.includes(key) === opt.outside ? { backgroundColor: accentColor } : undefined}>
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                         <button type="button" disabled={i === 0} onClick={() => moveBgKey(key, -1)}
                           className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs text-gray-400 disabled:opacity-30 hover:enabled:bg-gray-100">↑</button>
                         <button type="button" disabled={i === ordered.length - 1} onClick={() => moveBgKey(key, 1)}
@@ -2138,6 +2171,11 @@ export default function AdminPublicPage() {
               {heroImageMode === 'background' && imageUrls[0] ? (
                 /* 背景モード: 大きいヒーロー */
                 <>
+                  {heroOutsideBefore.length > 0 && (
+                    <div className="space-y-2 border-b border-gray-100 px-3 pb-1 pt-3">
+                      {heroOutsideBefore.map((key) => renderHeroOutsideItem(key))}
+                    </div>
+                  )}
                   <div ref={heroRef} className="relative overflow-hidden select-none" style={{ minHeight: 220 }}>
                     <div className="absolute inset-0" style={{ backgroundImage: `url(${imageUrls[0]})`, backgroundSize: 'cover', backgroundPosition: form.heroImagePosition ?? 'center center' }} />
                     <div className="absolute inset-0" style={{ backgroundColor: heroOverlayBg }} />
@@ -2226,36 +2264,9 @@ export default function AdminPublicPage() {
                       </div>
                     )}
                   </div>
-                  {heroOutsideOrderedKeys.length > 0 && (
+                  {heroOutsideAfter.length > 0 && (
                     <div className="space-y-2 border-b border-gray-100 px-3 pb-1 pt-3">
-                      {heroOutsideOrderedKeys.map((key) => {
-                        if (key === 'name') return (
-                          <p key="name" className={`font-bold ${form.orgNameDisplayType === 'image' ? 'sr-only' : ''}`} style={form.orgNameDisplayType === 'image' ? undefined : titleTextStyle}>
-                            {displayName}
-                          </p>
-                        );
-                        if (key === 'logo') return form.orgLogoWordmarkUrl && form.orgNameDisplayType !== 'text' ? (
-                          <img key="logo" src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
-                            className="max-w-full object-contain"
-                            style={{ height: form.orgLogoWordmarkSize ?? 60, maxWidth: '100%' }} />
-                        ) : null;
-                        if (key === 'nav') return (
-                          <div key="nav">
-                            <div className={`text-[11px] font-bold ${previewButtonLayoutClass}`} style={previewButtonGridStyle}>
-                              {visibleNavItems.map((item) => (
-                                <span key={item.key} className={`flex items-center justify-center truncate px-2 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{item.label}</span>
-                              ))}
-                            </div>
-                            <div className="mt-1 flex cursor-ns-resize select-none touch-none justify-center py-1"
-                              style={{ touchAction: 'none' }}
-                              onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); dragRef.current = { startY: e.clientY, startSize: btnSize }; }}
-                              onPointerMove={(e) => { if (!dragRef.current) return; const d = e.clientY - dragRef.current.startY; setForm(p => ({ ...p, buttonSize: Math.round(Math.min(80, Math.max(24, dragRef.current!.startSize + d))) })); }}
-                              onPointerUp={() => { dragRef.current = null; }}
-                            ><div className="h-0.5 w-8 rounded bg-gray-300" /></div>
-                          </div>
-                        );
-                        return null;
-                      })}
+                      {heroOutsideAfter.map((key) => renderHeroOutsideItem(key))}
                     </div>
                   )}
                 </>

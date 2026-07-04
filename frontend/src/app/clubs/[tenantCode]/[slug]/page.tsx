@@ -270,17 +270,36 @@ export default async function ClubCmsPage({
   const subtitleHeroY: number | null = parsedFt.subtitleHeroY ?? null;
   const rawSectionOrder: string[] = Array.isArray(parsedFt.sectionOrder) ? parsedFt.sectionOrder : ['name', 'logo', 'subtitle', 'nav', 'image'];
   const sectionOrder: string[] = rawSectionOrder.flatMap((key) => (key === 'title' ? ['name', 'logo'] : [key]));
-  const HERO_OVERLAY_KEYS = ['name', 'logo', 'nav'] as const;
+  const HERO_KEYS = ['name', 'logo', 'nav', 'image'] as const;
   const heroOutsideKeys: string[] = Array.isArray(parsedFt.heroOutsideKeys)
     ? parsedFt.heroOutsideKeys
     : (page.heroNavPosition === 'inside' ? [] : ['nav']);
   const heroOutsideSet = new Set(heroOutsideKeys);
-  const heroOrderedKeys = [
-    ...sectionOrder.filter((key) => (HERO_OVERLAY_KEYS as readonly string[]).includes(key)),
-    ...HERO_OVERLAY_KEYS.filter((key) => !sectionOrder.includes(key)),
+  const heroFullOrder = [
+    ...sectionOrder.filter((key) => (HERO_KEYS as readonly string[]).includes(key)),
+    ...HERO_KEYS.filter((key) => !sectionOrder.includes(key)),
   ];
-  const heroInsideKeys = heroOrderedKeys.filter((key) => !heroOutsideSet.has(key));
-  const heroOutsideOrderedKeys = heroOrderedKeys.filter((key) => heroOutsideSet.has(key));
+  const heroInsideKeys = heroFullOrder.filter((key) => key !== 'image' && !heroOutsideSet.has(key));
+  function renderHeroOverlayItem(key: string, dropShadow: boolean) {
+    if (key === 'name') return (
+      <h1 key="name" className={`font-bold ${dropShadow ? 'drop-shadow' : ''} ${orgDisplayType === 'image' ? 'sr-only' : ''}`} style={orgDisplayType === 'image' ? undefined : { ...titleTextStyle, margin: 0 }}>
+        {tenantName}
+      </h1>
+    );
+    if (key === 'logo') return orgLogoUrl && orgDisplayType !== 'text' ? (
+      <img key="logo" src={orgLogoUrl} alt={orgLogoAlt}
+        className={`max-w-full object-contain ${dropShadow ? 'drop-shadow' : ''}`}
+        style={{ height: orgLogoSize, maxWidth: '100%' }} />
+    ) : null;
+    if (key === 'nav') return (
+      <nav key="nav" className={buttonLayoutClass} style={buttonGridStyle}>
+        {visibleNavItems.map((item) => (
+          <Link key={item.key} href={item.href} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{item.label}</Link>
+        ))}
+      </nav>
+    );
+    return null;
+  }
   const images = (page.imageUrls?.length ? page.imageUrls : page.coverImageUrl ? [page.coverImageUrl] : [])
     .map((url) => imgUrl(url, IMAGE_BASE_URL))
     .filter(Boolean) as string[];
@@ -467,82 +486,49 @@ export default async function ClubCmsPage({
       {heroImageMode === 'background' && images[0] ? (
         /* 背景モード: 大きいヒーローエリア */
         <>
-          <div className="relative overflow-hidden" style={{ minHeight: 220 }}>
-            <div className="absolute inset-0" style={{ backgroundImage: `url(${images[0]})`, backgroundSize: 'cover', backgroundPosition: page.heroImagePosition ?? 'center center' }} />
-            <div className="absolute inset-0" style={{ backgroundColor: hexToRgba(heroOverlayColor, heroOverlayOpacity) }} />
-            <div className="relative z-10" style={{ minHeight: 220 }}>
-              {/* テキストブロック - X/Y/Width で自由配置 */}
-              <div
-                className="absolute flex flex-col gap-2"
-                style={{
-                  left: `${page.heroTextX ?? 5}%`,
-                  top: `${page.heroTextY ?? 65}%`,
-                  width: `${page.heroTextWidth ?? 85}%`,
-                }}
-              >
-                {heroInsideKeys.map((key) => {
-                  if (key === 'name') return (
-                    <h1 key="name" className={`font-bold drop-shadow ${orgDisplayType === 'image' ? 'sr-only' : ''}`} style={orgDisplayType === 'image' ? undefined : { ...titleTextStyle, margin: 0 }}>
-                      {tenantName}
-                    </h1>
-                  );
-                  if (key === 'logo') return orgLogoUrl && orgDisplayType !== 'text' ? (
-                    <img key="logo" src={orgLogoUrl} alt={orgLogoAlt}
-                      className="max-w-full object-contain drop-shadow"
-                      style={{ height: orgLogoSize, maxWidth: '100%' }} />
-                  ) : null;
-                  if (key === 'nav') return (
-                    <nav key="nav" className={buttonLayoutClass} style={buttonGridStyle}>
-                      {visibleNavItems.map((item) => (
-                        <Link key={item.key} href={item.href} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{item.label}</Link>
-                      ))}
-                    </nav>
-                  );
-                  return null;
-                })}
+          {heroFullOrder.map((key) => {
+            if (key === 'image') return (
+              <div key="image" className="relative overflow-hidden" style={{ minHeight: 220 }}>
+                <div className="absolute inset-0" style={{ backgroundImage: `url(${images[0]})`, backgroundSize: 'cover', backgroundPosition: page.heroImagePosition ?? 'center center' }} />
+                <div className="absolute inset-0" style={{ backgroundColor: hexToRgba(heroOverlayColor, heroOverlayOpacity) }} />
+                <div className="relative z-10" style={{ minHeight: 220 }}>
+                  {/* テキストブロック - X/Y/Width で自由配置 */}
+                  <div
+                    className="absolute flex flex-col gap-2"
+                    style={{
+                      left: `${page.heroTextX ?? 5}%`,
+                      top: `${page.heroTextY ?? 65}%`,
+                      width: `${page.heroTextWidth ?? 85}%`,
+                    }}
+                  >
+                    {heroInsideKeys.map((insideKey) => renderHeroOverlayItem(insideKey, true))}
+                  </div>
+                  {/* サブタイトル - 独立配置 */}
+                  {page.subtitle && (
+                    <p
+                      className="absolute drop-shadow"
+                      style={{
+                        left: `${subtitleHeroX}%`,
+                        top: subtitleHeroY !== null
+                          ? `${subtitleHeroY}%`
+                          : `calc(${page.heroTextY ?? 65}% + ${subtitleGap + 32}px)`,
+                        width: `${page.heroTextWidth ?? 85}%`,
+                        ...subtitleTextStyle,
+                      }}
+                    >
+                      {page.subtitle}
+                    </p>
+                  )}
+                </div>
               </div>
-              {/* サブタイトル - 独立配置 */}
-              {page.subtitle && (
-                <p
-                  className="absolute drop-shadow"
-                  style={{
-                    left: `${subtitleHeroX}%`,
-                    top: subtitleHeroY !== null
-                      ? `${subtitleHeroY}%`
-                      : `calc(${page.heroTextY ?? 65}% + ${subtitleGap + 32}px)`,
-                    width: `${page.heroTextWidth ?? 85}%`,
-                    ...subtitleTextStyle,
-                  }}
-                >
-                  {page.subtitle}
-                </p>
-              )}
-            </div>
-          </div>
-          {heroOutsideOrderedKeys.length > 0 && (
-            <div className="space-y-2 border-b border-black/5 px-3 pb-3 pt-3">
-              {heroOutsideOrderedKeys.map((key) => {
-                if (key === 'name') return (
-                  <h1 key="name" className={`font-bold ${orgDisplayType === 'image' ? 'sr-only' : ''}`} style={orgDisplayType === 'image' ? undefined : { ...titleTextStyle, margin: 0 }}>
-                    {tenantName}
-                  </h1>
-                );
-                if (key === 'logo') return orgLogoUrl && orgDisplayType !== 'text' ? (
-                  <img key="logo" src={orgLogoUrl} alt={orgLogoAlt}
-                    className="max-w-full object-contain"
-                    style={{ height: orgLogoSize, maxWidth: '100%' }} />
-                ) : null;
-                if (key === 'nav') return (
-                  <nav key="nav" className={buttonLayoutClass} style={buttonGridStyle}>
-                    {visibleNavItems.map((item) => (
-                      <Link key={item.key} href={item.href} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{item.label}</Link>
-                    ))}
-                  </nav>
-                );
-                return null;
-              })}
-            </div>
-          )}
+            );
+            if (heroOutsideSet.has(key)) return (
+              <div key={key} className={`px-3 py-3 ${key === heroFullOrder[heroFullOrder.length - 1] ? 'border-b border-black/5' : ''}`}>
+                {renderHeroOverlayItem(key, false)}
+              </div>
+            );
+            return null;
+          })}
         </>
       ) : (
         /* 通常モード: セクション順序で描画 */
