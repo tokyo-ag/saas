@@ -1425,7 +1425,33 @@ export default function AdminPublicPage() {
                 </label>
               )}
             </div>
-            {heroImageMode !== 'background' && (
+            {heroImageMode === 'background' ? (
+              <div className="mt-4">
+                <p className="mb-2 text-[11px] font-bold text-gray-400">名前とロゴの順番(写真に重ねて表示されます)</p>
+                <div className="space-y-1.5">
+                  {(() => {
+                    const order = form.sectionOrder ?? [...DEFAULT_SECTION_ORDER];
+                    const items: ('name' | 'logo')[] = order.indexOf('name') < order.indexOf('logo') ? ['name', 'logo'] : ['logo', 'name'];
+                    const swapNameLogo = () => setForm(p => {
+                      const a = [...(p.sectionOrder ?? [...DEFAULT_SECTION_ORDER])];
+                      const ni = a.indexOf('name');
+                      const li = a.indexOf('logo');
+                      [a[ni], a[li]] = [a[li], a[ni]];
+                      return { ...p, sectionOrder: a };
+                    });
+                    return items.map((key, i) => (
+                      <div key={key} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
+                        <span className="flex-1 text-xs font-bold text-gray-700">{SECTION_LABELS[key]}</span>
+                        <button type="button" disabled={i === 0} onClick={swapNameLogo}
+                          className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs text-gray-400 disabled:opacity-30 hover:enabled:bg-gray-100">↑</button>
+                        <button type="button" disabled={i === items.length - 1} onClick={swapNameLogo}
+                          className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs text-gray-400 disabled:opacity-30 hover:enabled:bg-gray-100">↓</button>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+            ) : (
               <div className="mt-4">
                 <p className="mb-2 text-[11px] font-bold text-gray-400">セクションの順番</p>
                 <div className="space-y-1.5">
@@ -2105,12 +2131,17 @@ export default function AdminPublicPage() {
                       >
                         <p className="font-bold drop-shadow" style={titleTextStyle}>
                           {form.orgLogoWordmarkUrl && form.orgNameDisplayType !== 'text' ? (
-                            <>
-                              <img src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
-                                className="max-w-full object-contain drop-shadow"
-                                style={{ height: form.orgLogoWordmarkSize ?? 60, maxWidth: '100%' }} />
-                              {form.orgNameDisplayType === 'both' && <span>{displayName}</span>}
-                            </>
+                            (() => {
+                              const order = form.sectionOrder ?? [...DEFAULT_SECTION_ORDER];
+                              const nameBeforeLogo = order.indexOf('name') < order.indexOf('logo');
+                              const logo = (
+                                <img key="logo" src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
+                                  className="max-w-full object-contain drop-shadow"
+                                  style={{ height: form.orgLogoWordmarkSize ?? 60, maxWidth: '100%' }} />
+                              );
+                              const name = form.orgNameDisplayType === 'both' ? <span key="name">{displayName}</span> : null;
+                              return nameBeforeLogo ? <>{name}{logo}</> : <>{logo}{name}</>;
+                            })()
                           ) : displayName}
                         </p>
                         {heroNavPosition === 'inside' && (

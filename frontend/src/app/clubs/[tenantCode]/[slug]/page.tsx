@@ -270,6 +270,7 @@ export default async function ClubCmsPage({
   const subtitleHeroY: number | null = parsedFt.subtitleHeroY ?? null;
   const rawSectionOrder: string[] = Array.isArray(parsedFt.sectionOrder) ? parsedFt.sectionOrder : ['name', 'logo', 'subtitle', 'nav', 'image'];
   const sectionOrder: string[] = rawSectionOrder.flatMap((key) => (key === 'title' ? ['name', 'logo'] : [key]));
+  const nameBeforeLogo = sectionOrder.indexOf('name') < sectionOrder.indexOf('logo');
   const images = (page.imageUrls?.length ? page.imageUrls : page.coverImageUrl ? [page.coverImageUrl] : [])
     .map((url) => imgUrl(url, IMAGE_BASE_URL))
     .filter(Boolean) as string[];
@@ -473,13 +474,20 @@ export default async function ClubCmsPage({
                 <h1 className="font-bold drop-shadow" style={titleTextStyle}>
                   {orgLogoUrl && orgDisplayType !== 'text' ? (
                     <>
-                      <img src={orgLogoUrl} alt={orgLogoAlt}
-                        className="max-w-full object-contain drop-shadow"
-                        style={{ height: orgLogoSize, maxWidth: '100%' }} />
+                      {!nameBeforeLogo && (
+                        <img src={orgLogoUrl} alt={orgLogoAlt}
+                          className="max-w-full object-contain drop-shadow"
+                          style={{ height: orgLogoSize, maxWidth: '100%' }} />
+                      )}
                       {orgDisplayType === 'both'
                         ? <span>{tenantName}</span>
                         : <span className="sr-only">{tenantName}</span>
                       }
+                      {nameBeforeLogo && (
+                        <img src={orgLogoUrl} alt={orgLogoAlt}
+                          className="max-w-full object-contain drop-shadow"
+                          style={{ height: orgLogoSize, maxWidth: '100%' }} />
+                      )}
                     </>
                   ) : tenantName}
                 </h1>
