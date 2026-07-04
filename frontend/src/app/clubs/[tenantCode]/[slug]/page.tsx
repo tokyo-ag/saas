@@ -270,7 +270,7 @@ export default async function ClubCmsPage({
   const subtitleHeroY: number | null = parsedFt.subtitleHeroY ?? null;
   const rawSectionOrder: string[] = Array.isArray(parsedFt.sectionOrder) ? parsedFt.sectionOrder : ['name', 'logo', 'subtitle', 'nav', 'image'];
   const sectionOrder: string[] = rawSectionOrder.flatMap((key) => (key === 'title' ? ['name', 'logo'] : [key]));
-  const HERO_KEYS = ['name', 'logo', 'nav', 'image'] as const;
+  const HERO_KEYS = ['name', 'logo', 'nav', 'image', 'subtitle'] as const;
   const heroOutsideKeys: string[] = Array.isArray(parsedFt.heroOutsideKeys)
     ? parsedFt.heroOutsideKeys
     : (page.heroNavPosition === 'inside' ? [] : ['nav']);
@@ -279,7 +279,7 @@ export default async function ClubCmsPage({
     ...sectionOrder.filter((key) => (HERO_KEYS as readonly string[]).includes(key)),
     ...HERO_KEYS.filter((key) => !sectionOrder.includes(key)),
   ];
-  const heroInsideKeys = heroFullOrder.filter((key) => key !== 'image' && !heroOutsideSet.has(key));
+  const heroInsideKeys = heroFullOrder.filter((key) => key !== 'image' && key !== 'subtitle' && !heroOutsideSet.has(key));
   function renderHeroOverlayItem(key: string, dropShadow: boolean) {
     if (key === 'name') return (
       <h1 key="name" className={`font-bold ${dropShadow ? 'drop-shadow' : ''} ${orgDisplayType === 'image' ? 'sr-only' : ''}`} style={orgDisplayType === 'image' ? undefined : { ...titleTextStyle, margin: 0 }}>
@@ -298,6 +298,9 @@ export default async function ClubCmsPage({
         ))}
       </nav>
     );
+    if (key === 'subtitle') return page?.subtitle ? (
+      <p key="subtitle" className={dropShadow ? 'drop-shadow' : ''} style={subtitleTextStyle}>{page?.subtitle}</p>
+    ) : null;
     return null;
   }
   const images = (page.imageUrls?.length ? page.imageUrls : page.coverImageUrl ? [page.coverImageUrl] : [])
@@ -504,7 +507,7 @@ export default async function ClubCmsPage({
                     {heroInsideKeys.map((insideKey) => renderHeroOverlayItem(insideKey, true))}
                   </div>
                   {/* サブタイトル - 独立配置 */}
-                  {page.subtitle && (
+                  {page.subtitle && !heroOutsideSet.has('subtitle') && (
                     <p
                       className="absolute drop-shadow"
                       style={{

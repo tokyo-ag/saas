@@ -569,14 +569,14 @@ export default function AdminPublicPage() {
   const subtitleColor = form.subtitleColor?.trim() || textColor;
   const subtitleFontSize = resolvePxSize(form.subtitleSize, 14, 11, 28, SUBTITLE_SIZE_LEGACY);
   const subtitleTextStyle = { color: subtitleColor, fontFamily: subtitleFontFamily, fontSize: subtitleFontSize, lineHeight: 1.6 };
-  const heroKeys = ['name', 'logo', 'nav', 'image'] as const;
+  const heroKeys = ['name', 'logo', 'nav', 'image', 'subtitle'] as const;
   const heroOutsideKeysList = form.heroOutsideKeys ?? ['nav'];
   const heroOutsideSet = new Set(heroOutsideKeysList);
   const heroFullOrder = [
     ...(form.sectionOrder ?? [...DEFAULT_SECTION_ORDER]).filter((k) => (heroKeys as readonly string[]).includes(k)),
     ...heroKeys.filter((k) => !(form.sectionOrder ?? [...DEFAULT_SECTION_ORDER]).includes(k)),
   ];
-  const heroInsideKeys = heroFullOrder.filter((k) => k !== 'image' && !heroOutsideSet.has(k));
+  const heroInsideKeys = heroFullOrder.filter((k) => k !== 'image' && k !== 'subtitle' && !heroOutsideSet.has(k));
   const heroImageIdx = heroFullOrder.indexOf('image');
   const heroOutsideBefore = heroFullOrder.slice(0, heroImageIdx).filter((k) => heroOutsideSet.has(k));
   const heroOutsideAfter = heroFullOrder.slice(heroImageIdx + 1).filter((k) => heroOutsideSet.has(k));
@@ -606,6 +606,9 @@ export default function AdminPublicPage() {
         ><div className="h-0.5 w-8 rounded bg-gray-300" /></div>
       </div>
     );
+    if (key === 'subtitle') return form.subtitle?.trim() ? (
+      <p key="subtitle" style={subtitleTextStyle}>{form.subtitle.trim()}</p>
+    ) : null;
     return null;
   };
   const navLabels = {
@@ -1510,7 +1513,7 @@ export default function AdminPublicPage() {
               </div>
             )}
             {heroImageMode === 'background' && (
-              <p className="text-[11px] text-gray-400">テキスト位置は右のプレビューでドラッグして調整できます。名前・ロゴ・ナビボタンの配置は下の「レイアウト」で設定します。</p>
+              <p className="text-[11px] text-gray-400">写真に重ねる名前・ロゴ・サブタイトルの位置は右のプレビューでドラッグして調整できます。名前・ロゴ・サブタイトル・ナビボタンの配置(写真の中/外・順番)は下の「レイアウト」で設定します。</p>
             )}
             {imageUrls.length > 0 && (
               <div className="border-t border-gray-100 pt-3 space-y-2">
@@ -1539,11 +1542,11 @@ export default function AdminPublicPage() {
           <SubSection label="レイアウト(要素の並び順)" open={openSections.headerLayout} onToggle={() => toggleSection('headerLayout')}>
             {heroImageMode === 'background' ? (
               <div>
-                <p className="mb-2 text-[11px] font-bold text-gray-400">名前・ロゴ・ナビボタン・写真の順番と配置</p>
+                <p className="mb-2 text-[11px] font-bold text-gray-400">名前・ロゴ・サブタイトル・ナビボタン・写真の順番と配置</p>
                 <p className="mb-2 text-[11px] text-gray-400">「写真の中」を選んだ項目は写真に重ねて表示され、「写真の外」は写真との前後関係が順番通りに並びます(写真より上に置けば写真の上、下に置けば写真の下に表示されます)。</p>
                 <div className="space-y-1.5">
                   {(() => {
-                    const bgKeys = ['name', 'logo', 'nav', 'image'] as const;
+                    const bgKeys = ['name', 'logo', 'nav', 'image', 'subtitle'] as const;
                     const order = form.sectionOrder ?? [...DEFAULT_SECTION_ORDER];
                     const ordered = [
                       ...order.filter((k) => (bgKeys as readonly string[]).includes(k)),
@@ -2239,7 +2242,7 @@ export default function AdminPublicPage() {
                       </div>
                     </div>
                     {/* 独立サブタイトル */}
-                    {form.subtitle?.trim() && (
+                    {form.subtitle?.trim() && !heroOutsideSet.has('subtitle') && (
                       <div
                         className="absolute z-10 cursor-move select-none"
                         style={{
