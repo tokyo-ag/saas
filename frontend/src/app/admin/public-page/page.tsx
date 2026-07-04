@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { api, BlogPost, LiffEvent, PublicPageInput, Tenant } from '@/lib/api';
 import { API_URL, SITE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
@@ -51,6 +51,21 @@ const SECTION_LABELS: Record<string, string> = { name: '名前', logo: 'ロゴ',
 
 function normalizeSectionOrder(order: string[]): string[] {
   return order.flatMap((key) => (key === 'title' ? ['name', 'logo'] : [key]));
+}
+
+function SubSection({ label, open, onToggle, children }: { label: string; open: boolean; onToggle: () => void; children: ReactNode }) {
+  return (
+    <div className="rounded-lg border border-gray-100">
+      <button type="button" onClick={onToggle}
+        className="flex w-full items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-left transition hover:bg-gray-100">
+        <span className="text-xs font-bold text-gray-600">{label}</span>
+        <svg className={`h-3.5 w-3.5 shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && <div className="space-y-3 p-3">{children}</div>}
+    </div>
+  );
 }
 
 const emptyForm: PublicPageInput = {
@@ -470,7 +485,10 @@ export default function AdminPublicPage() {
   const heroFocalDragRef = useRef<{ startX: number; startY: number; startFocal: { x: number; y: number } } | null>(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ global: true, header: true, structure: true, reserve: false, blog: false, footer: false });
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    global: true, header: true, structure: true, reserve: false, blog: false, footer: false,
+    headerLogo: false, headerTitle: false, headerSubtitle: false, headerPhoto: false, headerLayout: false, headerButton: false, headerNavLabel: false,
+  });
   const toggleSection = (key: string) => setOpenSections(p => ({ ...p, [key]: !p[key] }));
 
   const tenantCode = tenant?.code ?? tenant?.id ?? '';
@@ -1253,8 +1271,7 @@ export default function AdminPublicPage() {
             </div>
           </button>
           {openSections.header && <div className="space-y-4 border-t border-gray-100 p-4">
-          {/* ロゴ / ワードマーク */}
-          <div className="space-y-3 rounded-lg bg-gray-50 p-3">
+          <SubSection label="団体名・ロゴ" open={openSections.headerLogo} onToggle={() => toggleSection('headerLogo')}>
             <p className="text-[11px] font-bold text-gray-400">団体名の表示方法</p>
             <div className="flex gap-1.5">
               {([['text', 'テキスト'], ['image', 'ロゴ画像'], ['both', '両方']] as const).map(([val, lbl]) => (
@@ -1314,89 +1331,86 @@ export default function AdminPublicPage() {
                 </label>
               </div>
             )}
-          </div>
+          </SubSection>
           {/* タイトル / サブタイトル */}
-          <div className="space-y-5 rounded-lg bg-gray-50 p-3">
-            <div className="space-y-2">
-              <p className="text-[11px] font-bold text-gray-400">タイトル（団体名）</p>
-              <input value={displayName} readOnly
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-bold text-gray-500" />
-              <div className="flex flex-wrap gap-1.5">
-                {fontOptions.map((opt) => (
-                  <button key={opt.value} type="button"
-                    onClick={() => setForm((p) => ({ ...p, titleFont: opt.value }))}
-                    className={`rounded-full border px-3 py-1 text-xs font-bold transition ${(form.titleFont || form.fontFamily) === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                    style={(form.titleFont || form.fontFamily) === opt.value ? { backgroundColor: accentColor, borderColor: accentColor, fontFamily: opt.family } : { fontFamily: opt.family }}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              <label className="block">
-                <span className="mb-1 flex items-center justify-between text-xs text-gray-500">
-                  <span>文字サイズ</span>
-                  <span className="font-bold">{titleFontSize}px</span>
-                </span>
-                <input type="range" min="18" max="48" step="1" value={titleFontSize}
-                  onChange={(e) => setForm((p) => ({ ...p, titleSize: e.target.value }))}
-                  className="w-full accent-[#06C755]" />
-              </label>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">色</span>
-                <input type="color" value={form.titleColor || textColor}
-                  onChange={(e) => setForm((p) => ({ ...p, titleColor: e.target.value }))}
-                  className="h-8 w-10 cursor-pointer rounded border border-gray-200 bg-white p-0.5" />
-              </div>
+          <SubSection label="タイトル文字" open={openSections.headerTitle} onToggle={() => toggleSection('headerTitle')}>
+            <p className="text-[11px] font-bold text-gray-400">タイトル（団体名）</p>
+            <input value={displayName} readOnly
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-bold text-gray-500" />
+            <div className="flex flex-wrap gap-1.5">
+              {fontOptions.map((opt) => (
+                <button key={opt.value} type="button"
+                  onClick={() => setForm((p) => ({ ...p, titleFont: opt.value }))}
+                  className={`rounded-full border px-3 py-1 text-xs font-bold transition ${(form.titleFont || form.fontFamily) === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                  style={(form.titleFont || form.fontFamily) === opt.value ? { backgroundColor: accentColor, borderColor: accentColor, fontFamily: opt.family } : { fontFamily: opt.family }}>
+                  {opt.label}
+                </button>
+              ))}
             </div>
-
-            <div className="border-t border-gray-200 pt-4 space-y-2">
-              <label className="block">
-                <span className="mb-1 block text-[11px] font-bold text-gray-400">サブタイトル</span>
-                <textarea value={form.subtitle ?? ''}
-                  onChange={(e) => setForm((p) => ({ ...p, subtitle: e.target.value }))}
-                  placeholder="例：初心者歓迎の社会人サークル"
-                  rows={5}
-                  className="w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {fontOptions.map((opt) => (
-                  <button key={opt.value} type="button"
-                    onClick={() => setForm((p) => ({ ...p, subtitleFont: opt.value }))}
-                    className={`rounded-full border px-3 py-1 text-xs font-bold transition ${(form.subtitleFont || form.fontFamily) === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                    style={(form.subtitleFont || form.fontFamily) === opt.value ? { backgroundColor: accentColor, borderColor: accentColor, fontFamily: opt.family } : { fontFamily: opt.family }}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              <label className="block">
-                <span className="mb-1 flex items-center justify-between text-xs text-gray-500">
-                  <span>文字サイズ</span>
-                  <span className="font-bold">{subtitleFontSize}px</span>
-                </span>
-                <input type="range" min="11" max="28" step="1" value={subtitleFontSize}
-                  onChange={(e) => setForm((p) => ({ ...p, subtitleSize: e.target.value }))}
-                  className="w-full accent-[#06C755]" />
-              </label>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">色</span>
-                <input type="color" value={form.subtitleColor || textColor}
-                  onChange={(e) => setForm((p) => ({ ...p, subtitleColor: e.target.value }))}
-                  className="h-8 w-10 cursor-pointer rounded border border-gray-200 bg-white p-0.5" />
-              </div>
-              <label className="block">
-                <span className="mb-1 flex items-center justify-between text-xs text-gray-500">
-                  <span>タイトルとの間隔</span>
-                  <span className="font-bold">{subtitleGap}px</span>
-                </span>
-                <input type="range" min="0" max="48" step="2" value={subtitleGap}
-                  onChange={(e) => setForm((p) => ({ ...p, subtitleMarginTop: Number(e.target.value) }))}
-                  className="w-full accent-[#06C755]" />
-              </label>
+            <label className="block">
+              <span className="mb-1 flex items-center justify-between text-xs text-gray-500">
+                <span>文字サイズ</span>
+                <span className="font-bold">{titleFontSize}px</span>
+              </span>
+              <input type="range" min="18" max="48" step="1" value={titleFontSize}
+                onChange={(e) => setForm((p) => ({ ...p, titleSize: e.target.value }))}
+                className="w-full accent-[#06C755]" />
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">色</span>
+              <input type="color" value={form.titleColor || textColor}
+                onChange={(e) => setForm((p) => ({ ...p, titleColor: e.target.value }))}
+                className="h-8 w-10 cursor-pointer rounded border border-gray-200 bg-white p-0.5" />
             </div>
-          </div>
+          </SubSection>
 
-          {/* 画像 */}
-          <div>
-            <div className="mb-3 flex flex-wrap gap-2">
+          <SubSection label="サブタイトル文字" open={openSections.headerSubtitle} onToggle={() => toggleSection('headerSubtitle')}>
+            <label className="block">
+              <span className="mb-1 block text-[11px] font-bold text-gray-400">サブタイトル</span>
+              <textarea value={form.subtitle ?? ''}
+                onChange={(e) => setForm((p) => ({ ...p, subtitle: e.target.value }))}
+                placeholder="例：初心者歓迎の社会人サークル"
+                rows={5}
+                className="w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {fontOptions.map((opt) => (
+                <button key={opt.value} type="button"
+                  onClick={() => setForm((p) => ({ ...p, subtitleFont: opt.value }))}
+                  className={`rounded-full border px-3 py-1 text-xs font-bold transition ${(form.subtitleFont || form.fontFamily) === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                  style={(form.subtitleFont || form.fontFamily) === opt.value ? { backgroundColor: accentColor, borderColor: accentColor, fontFamily: opt.family } : { fontFamily: opt.family }}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <label className="block">
+              <span className="mb-1 flex items-center justify-between text-xs text-gray-500">
+                <span>文字サイズ</span>
+                <span className="font-bold">{subtitleFontSize}px</span>
+              </span>
+              <input type="range" min="11" max="28" step="1" value={subtitleFontSize}
+                onChange={(e) => setForm((p) => ({ ...p, subtitleSize: e.target.value }))}
+                className="w-full accent-[#06C755]" />
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">色</span>
+              <input type="color" value={form.subtitleColor || textColor}
+                onChange={(e) => setForm((p) => ({ ...p, subtitleColor: e.target.value }))}
+                className="h-8 w-10 cursor-pointer rounded border border-gray-200 bg-white p-0.5" />
+            </div>
+            <label className="block">
+              <span className="mb-1 flex items-center justify-between text-xs text-gray-500">
+                <span>タイトルとの間隔</span>
+                <span className="font-bold">{subtitleGap}px</span>
+              </span>
+              <input type="range" min="0" max="48" step="2" value={subtitleGap}
+                onChange={(e) => setForm((p) => ({ ...p, subtitleMarginTop: Number(e.target.value) }))}
+                className="w-full accent-[#06C755]" />
+            </label>
+          </SubSection>
+
+          <SubSection label="写真" open={openSections.headerPhoto} onToggle={() => toggleSection('headerPhoto')}>
+            <div className="flex flex-wrap gap-2">
               {HERO_IMAGE_MODE_OPTIONS.map((opt) => (
                 <button key={opt.value} type="button"
                   onClick={() => setForm((p) => ({ ...p, heroImageMode: opt.value }))}
@@ -1466,8 +1480,65 @@ export default function AdminPublicPage() {
                 </label>
               )}
             </div>
+            {heroImageMode === 'background' && imageUrls[0] && (
+              <div>
+                <p className="mb-1.5 text-[11px] font-bold text-gray-400">画像の位置</p>
+                <div
+                  className="relative h-36 w-full overflow-hidden rounded-xl cursor-grab active:cursor-grabbing select-none"
+                  style={{ touchAction: 'none' }}
+                  onPointerDown={(e) => {
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                    heroFocalDragRef.current = { startX: e.clientX, startY: e.clientY, startFocal: parseFocal(form.heroImagePosition) };
+                  }}
+                  onPointerMove={(e) => {
+                    if (!heroFocalDragRef.current) return;
+                    const dx = e.clientX - heroFocalDragRef.current.startX;
+                    const dy = e.clientY - heroFocalDragRef.current.startY;
+                    const x = Math.round(Math.min(100, Math.max(0, heroFocalDragRef.current.startFocal.x - dx * 0.5)));
+                    const y = Math.round(Math.min(100, Math.max(0, heroFocalDragRef.current.startFocal.y - dy * 0.5)));
+                    setForm(p => ({ ...p, heroImagePosition: `${x}% ${y}%` }));
+                  }}
+                  onPointerUp={() => { heroFocalDragRef.current = null; }}
+                >
+                  <img src={imageUrls[0]} alt="" draggable={false}
+                    className="pointer-events-none h-full w-full object-cover"
+                    style={{ objectPosition: form.heroImagePosition ?? '50% 50%' }} />
+                  <div className="absolute inset-0 flex items-end justify-end p-2 opacity-0 hover:opacity-100 transition-opacity">
+                    <div className="rounded-full bg-black/40 px-2 py-1 text-[10px] text-white">ドラッグで調整</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {heroImageMode === 'background' && (
+              <p className="text-[11px] text-gray-400">テキスト位置は右のプレビューでドラッグして調整できます。名前・ロゴ・ナビボタンの配置は下の「レイアウト」で設定します。</p>
+            )}
+            {imageUrls.length > 0 && (
+              <div className="border-t border-gray-100 pt-3 space-y-2">
+                <p className="text-[11px] font-bold text-gray-400">画像の色味</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input type="color" value={heroOverlayColor}
+                    onChange={(e) => setForm((p) => ({ ...p, heroOverlayColor: e.target.value }))}
+                    className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+                  {TONE_COLORS.map((c) => (
+                    <button key={c.value} type="button" title={c.label}
+                      onClick={() => setForm((p) => ({ ...p, heroOverlayColor: c.value }))}
+                      className={`h-8 w-8 rounded-full border-2 ${heroOverlayColor === c.value ? 'border-gray-500' : 'border-transparent'}`}
+                      style={{ backgroundColor: c.value, boxShadow: '0 0 0 1px #e5e7eb' }} />
+                  ))}
+                  <div className="flex flex-1 min-w-[120px] items-center gap-2 pl-1">
+                    <input type="range" min="0" max="80" step="5" value={heroOverlayOpacity}
+                      onChange={(e) => setForm((p) => ({ ...p, heroOverlayOpacity: Number(e.target.value) }))}
+                      className="flex-1 accent-[#06C755]" />
+                    <span className="w-8 text-right text-xs text-gray-400">{heroOverlayOpacity}%</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </SubSection>
+
+          <SubSection label="レイアウト(要素の並び順)" open={openSections.headerLayout} onToggle={() => toggleSection('headerLayout')}>
             {heroImageMode === 'background' ? (
-              <div className="mt-4">
+              <div>
                 <p className="mb-2 text-[11px] font-bold text-gray-400">名前・ロゴ・ナビボタン・写真の順番と配置</p>
                 <p className="mb-2 text-[11px] text-gray-400">「写真の中」を選んだ項目は写真に重ねて表示され、「写真の外」は写真との前後関係が順番通りに並びます(写真より上に置けば写真の上、下に置けば写真の下に表示されます)。</p>
                 <div className="space-y-1.5">
@@ -1521,7 +1592,7 @@ export default function AdminPublicPage() {
                 </div>
               </div>
             ) : (
-              <div className="mt-4">
+              <div>
                 <p className="mb-2 text-[11px] font-bold text-gray-400">セクションの順番</p>
                 <div className="space-y-1.5">
                   {(form.sectionOrder ?? [...DEFAULT_SECTION_ORDER]).map((key, i, arr) => (
@@ -1546,68 +1617,8 @@ export default function AdminPublicPage() {
                 </div>
               </div>
             )}
-            {heroImageMode === 'background' && (
-              <div className="mt-3 space-y-4">
-                {/* 画像の焦点位置: ドラッグで調整 */}
-                {imageUrls[0] && (
-                  <div>
-                    <p className="mb-1.5 text-[11px] font-bold text-gray-400">画像の位置</p>
-                    <div
-                      className="relative h-36 w-full overflow-hidden rounded-xl cursor-grab active:cursor-grabbing select-none"
-                      style={{ touchAction: 'none' }}
-                      onPointerDown={(e) => {
-                        e.currentTarget.setPointerCapture(e.pointerId);
-                        heroFocalDragRef.current = { startX: e.clientX, startY: e.clientY, startFocal: parseFocal(form.heroImagePosition) };
-                      }}
-                      onPointerMove={(e) => {
-                        if (!heroFocalDragRef.current) return;
-                        const dx = e.clientX - heroFocalDragRef.current.startX;
-                        const dy = e.clientY - heroFocalDragRef.current.startY;
-                        const x = Math.round(Math.min(100, Math.max(0, heroFocalDragRef.current.startFocal.x - dx * 0.5)));
-                        const y = Math.round(Math.min(100, Math.max(0, heroFocalDragRef.current.startFocal.y - dy * 0.5)));
-                        setForm(p => ({ ...p, heroImagePosition: `${x}% ${y}%` }));
-                      }}
-                      onPointerUp={() => { heroFocalDragRef.current = null; }}
-                    >
-                      <img src={imageUrls[0]} alt="" draggable={false}
-                        className="pointer-events-none h-full w-full object-cover"
-                        style={{ objectPosition: form.heroImagePosition ?? '50% 50%' }} />
-                      <div className="absolute inset-0 flex items-end justify-end p-2 opacity-0 hover:opacity-100 transition-opacity">
-                        <div className="rounded-full bg-black/40 px-2 py-1 text-[10px] text-white">ドラッグで調整</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* テキスト位置: 右プレビューでドラッグ */}
-                <p className="text-[11px] text-gray-400">テキスト位置は右のプレビューでドラッグして調整できます。名前・ロゴ・ナビボタンの配置は上の「セクションの順番」で設定します。</p>
-              </div>
-            )}
-            {imageUrls.length > 0 && (
-              <div className="mt-4 border-t border-gray-100 pt-4 space-y-2">
-                <p className="text-[11px] font-bold text-gray-400">画像の色味</p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <input type="color" value={heroOverlayColor}
-                    onChange={(e) => setForm((p) => ({ ...p, heroOverlayColor: e.target.value }))}
-                    className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-                  {TONE_COLORS.map((c) => (
-                    <button key={c.value} type="button" title={c.label}
-                      onClick={() => setForm((p) => ({ ...p, heroOverlayColor: c.value }))}
-                      className={`h-8 w-8 rounded-full border-2 ${heroOverlayColor === c.value ? 'border-gray-500' : 'border-transparent'}`}
-                      style={{ backgroundColor: c.value, boxShadow: '0 0 0 1px #e5e7eb' }} />
-                  ))}
-                  <div className="flex flex-1 min-w-[120px] items-center gap-2 pl-1">
-                    <input type="range" min="0" max="80" step="5" value={heroOverlayOpacity}
-                      onChange={(e) => setForm((p) => ({ ...p, heroOverlayOpacity: Number(e.target.value) }))}
-                      className="flex-1 accent-[#06C755]" />
-                    <span className="w-8 text-right text-xs text-gray-400">{heroOverlayOpacity}%</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          {/* ナビ・ボタン */}
-          <div className="border-t border-gray-100 pt-4 space-y-4">
+          </SubSection>
+          <SubSection label="ボタンのスタイル" open={openSections.headerButton} onToggle={() => toggleSection('headerButton')}>
             <div className="space-y-2">
               <div className="flex items-center gap-3">
                 <span className="w-14 shrink-0 text-xs font-bold text-gray-500">外枠色</span>
@@ -1689,10 +1700,9 @@ export default function AdminPublicPage() {
                 ))}
               </div>
             </div>
-          </div>
-          {/* ナビラベル */}
-          <div className="border-t border-gray-100 pt-4">
-            <p className="mb-2 text-[11px] font-bold text-gray-400">ナビラベル・リンク先</p>
+          </SubSection>
+
+          <SubSection label="ナビラベル・リンク先" open={openSections.headerNavLabel} onToggle={() => toggleSection('headerNavLabel')}>
             <div className="space-y-2">
               {[
                 { labelField: 'aboutLabel' as const, urlField: 'navAboutUrl' as const, placeholder: '団体詳細', defaultUrl: '#about' },
@@ -1712,7 +1722,7 @@ export default function AdminPublicPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </SubSection>
           </div>}
         </div>
 
