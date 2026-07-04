@@ -419,7 +419,7 @@ export default async function ClubCmsPage({
     }
   })();
   const reserveSectionTitle = sectionCopy.reserveTitle?.trim() || navLabels.reserve;
-  const reserveSectionLead = sectionCopy.reserveLead?.trim() || '募集中のイベントを表示します。';
+  const reserveSectionLead = sectionCopy.reserveLead?.trim() || '';
   const reserveTitleColor = sectionCopy.reserveTitleColor?.trim() || textColor;
   const reserveLeadColor = sectionCopy.reserveLeadColor?.trim() || '#6B7280';
   const reserveEventTitleColor = sectionCopy.reserveEventTitleColor?.trim() || '#111827';
@@ -455,7 +455,7 @@ export default async function ClubCmsPage({
     gridTemplateColumns: `repeat(${buttonLayout === 'row1x4' ? visibleNavItems.length : Math.min(2, visibleNavItems.length)}, minmax(0, 1fr))`,
   };
   const blogSectionTitle = sectionCopy.blogTitle?.trim() || navLabels.blog;
-  const blogSectionLead = sectionCopy.blogLead?.trim() || '活動日記やお知らせを表示するエリアです。';
+  const blogSectionLead = sectionCopy.blogLead?.trim() || '';
   const blogTitleColor = sectionCopy.blogTitleColor?.trim() || textColor;
   const blogLeadColor = sectionCopy.blogLeadColor?.trim() || '#6B7280';
   const contactMessageColorRaw = sectionCopy.contactMessageColor?.trim();

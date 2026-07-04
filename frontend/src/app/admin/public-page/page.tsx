@@ -631,7 +631,7 @@ export default function AdminPublicPage() {
     { key: 'contact', label: navLabels.contact },
   ];
   const reserveSectionTitle = form.reserveTitle?.trim() || navLabels.reserve;
-  const reserveSectionLead = form.reserveLead?.trim() || '募集中のイベントを表示します。';
+  const reserveSectionLead = form.reserveLead?.trim() || '';
   const reserveTitleColor = form.reserveTitleColor?.trim() || textColor;
   const reserveLeadColor = form.reserveLeadColor?.trim() || '#6B7280';
   const reserveEventTitleColor = form.reserveEventTitleColor?.trim() || '#111827';
@@ -643,7 +643,7 @@ export default function AdminPublicPage() {
   const reserveButtonBorderColor = form.reserveButtonBorderColor?.trim() || reserveButtonBgColor;
   const blogPostCardBg = form.blogPostCardBg?.trim() || '#ffffff';
   const blogSectionTitle = form.blogTitle?.trim() || navLabels.blog;
-  const blogSectionLead = form.blogLead?.trim() || '活動日記やお知らせを表示するエリアです。';
+  const blogSectionLead = form.blogLead?.trim() || '';
   const blogTitleColor = form.blogTitleColor?.trim() || textColor;
   const blogLeadColor = form.blogLeadColor?.trim() || '#6B7280';
   const buttonStyle = form.buttonStyle ?? 'rounded';
