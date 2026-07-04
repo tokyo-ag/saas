@@ -333,7 +333,7 @@ export default async function ClubCmsPage({
   const navLabels = {
     about: page.aboutLabel || '団体詳細',
     reserve: page.reserveLabel || '予約する',
-    blog: page.blogLabel || 'ブログ',
+    blog: page.blogLabel || '活動ブログ',
     contact: page.contactLabel || 'お問い合わせ',
   };
   const buttonStyle = page.buttonStyle ?? 'rounded';
@@ -396,6 +396,7 @@ export default async function ClubCmsPage({
         reserveEventCardBg?: string;
         reserveButtonBgColor?: string;
         reserveButtonTextColor?: string;
+        reserveButtonBorderColor?: string;
         reserveActionStyle?: string;
         displayFields?: { location?: boolean; price?: boolean; capacity?: boolean; description?: boolean };
         blogPostCardBg?: string;
@@ -427,6 +428,7 @@ export default async function ClubCmsPage({
   const reserveEventCardBg = sectionCopy.reserveEventCardBg?.trim() || '#ffffff';
   const reserveButtonBgColor = sectionCopy.reserveButtonBgColor?.trim() || '#06C755';
   const reserveButtonTextColor = sectionCopy.reserveButtonTextColor?.trim() || '#111827';
+  const reserveButtonBorderColor = sectionCopy.reserveButtonBorderColor?.trim() || reserveButtonBgColor;
   const blogPostCardBg = sectionCopy.blogPostCardBg?.trim() || '#ffffff';
   const reserveActionStyle = sectionCopy.reserveActionStyle === 'line' ? 'line' : 'comiu';
   const df = sectionCopy.displayFields ?? {};
@@ -700,7 +702,7 @@ export default async function ClubCmsPage({
               <Link
                 href={lineReserveUrl}
                 className="mt-4 inline-flex w-full items-center justify-center rounded-lg border px-4 py-3 text-sm font-bold transition hover:opacity-80"
-                style={{ backgroundColor: reserveButtonBgColor, borderColor: reserveButtonBgColor, color: reserveButtonTextColor }}
+                style={{ backgroundColor: reserveButtonBgColor, borderColor: reserveButtonBorderColor, color: reserveButtonTextColor }}
               >
                 LINEで予約する
               </Link>
@@ -723,6 +725,7 @@ export default async function ClubCmsPage({
                 eventCardBg={reserveEventCardBg}
                 buttonBgColor={reserveButtonBgColor}
                 buttonTextColor={reserveButtonTextColor}
+                buttonBorderColor={reserveButtonBorderColor}
                 className="mt-4"
               />
             )}

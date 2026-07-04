@@ -137,6 +137,7 @@ const emptyForm: PublicPageInput = {
   reserveEventCardBg: '',
   reserveButtonBgColor: '',
   reserveButtonTextColor: '',
+  reserveButtonBorderColor: '',
   reserveActionStyle: 'comiu',
   reserveLineUrl: '',
   blogPostCardBg: '',
@@ -617,7 +618,7 @@ export default function AdminPublicPage() {
   const navLabels = {
     about: form.aboutLabel?.trim() || '団体詳細',
     reserve: form.reserveLabel?.trim() || '予約する',
-    blog: form.blogLabel?.trim() || 'ブログ',
+    blog: form.blogLabel?.trim() || '活動ブログ',
     contact: form.contactLabel?.trim() || 'お問い合わせ',
   };
   const reserveActionStyle = form.reserveActionStyle === 'line' ? 'line' : 'comiu';
@@ -639,6 +640,7 @@ export default function AdminPublicPage() {
   const reserveEventCardBg = form.reserveEventCardBg?.trim() || '#ffffff';
   const reserveButtonBgColor = form.reserveButtonBgColor?.trim() || '#06C755';
   const reserveButtonTextColor = form.reserveButtonTextColor?.trim() || '#111827';
+  const reserveButtonBorderColor = form.reserveButtonBorderColor?.trim() || reserveButtonBgColor;
   const blogPostCardBg = form.blogPostCardBg?.trim() || '#ffffff';
   const blogSectionTitle = form.blogTitle?.trim() || navLabels.blog;
   const blogSectionLead = form.blogLead?.trim() || '活動日記やお知らせを表示するエリアです。';
@@ -796,6 +798,7 @@ export default function AdminPublicPage() {
                   reserveEventCardBg: fd.reserveEventCardBg ?? '',
                   reserveButtonBgColor: fd.reserveButtonBgColor ?? '',
                   reserveButtonTextColor: fd.reserveButtonTextColor ?? '',
+                  reserveButtonBorderColor: fd.reserveButtonBorderColor ?? '',
                   reserveActionStyle: fd.reserveActionStyle === 'line' ? 'line' : 'comiu',
                   reserveLineUrl: fd.reserveLineUrl ?? fd.line ?? '',
                   blogPostCardBg: fd.blogPostCardBg ?? '',
@@ -843,6 +846,7 @@ export default function AdminPublicPage() {
                   reserveEventCardBg: '',
                   reserveButtonBgColor: '',
                   reserveButtonTextColor: '',
+                  reserveButtonBorderColor: '',
                   reserveActionStyle: 'comiu',
                   reserveLineUrl: '',
                   blogPostCardBg: '',
@@ -858,7 +862,7 @@ export default function AdminPublicPage() {
             })(),
             aboutLabel: first.aboutLabel ?? '団体詳細',
             reserveLabel: first.reserveLabel ?? '予約する',
-            blogLabel: first.blogLabel ?? 'ブログ',
+            blogLabel: first.blogLabel ?? '活動ブログ',
             contactLabel: first.contactLabel ?? 'お問い合わせ',
             seoTitle: first.seoTitle ?? '',
             seoDescription: first.seoDescription ?? '',
@@ -1140,6 +1144,7 @@ export default function AdminPublicPage() {
         reserveEventCardBg: form.reserveEventCardBg?.trim() || '',
         reserveButtonBgColor: form.reserveButtonBgColor?.trim() || '',
         reserveButtonTextColor: form.reserveButtonTextColor?.trim() || '',
+        reserveButtonBorderColor: form.reserveButtonBorderColor?.trim() || '',
         reserveActionStyle,
         reserveLineUrl: form.reserveLineUrl?.trim() || '',
         blogPostCardBg: form.blogPostCardBg?.trim() || '',
@@ -1722,7 +1727,7 @@ export default function AdminPublicPage() {
               {[
                 { labelField: 'aboutLabel' as const, urlField: 'navAboutUrl' as const, placeholder: '団体詳細', defaultUrl: '#about' },
                 { labelField: 'reserveLabel' as const, urlField: 'navReserveUrl' as const, placeholder: '予約する', defaultUrl: '#reserve' },
-                { labelField: 'blogLabel' as const, urlField: 'navBlogUrl' as const, placeholder: 'ブログ', defaultUrl: '#blog' },
+                { labelField: 'blogLabel' as const, urlField: 'navBlogUrl' as const, placeholder: '活動ブログ', defaultUrl: '#blog' },
                 { labelField: 'contactLabel' as const, urlField: 'navContactUrl' as const, placeholder: 'お問い合わせ', defaultUrl: '#contact' },
               ].map(({ labelField, urlField, placeholder, defaultUrl }) => (
                 <div key={labelField} className="flex gap-1.5">
@@ -2021,6 +2026,15 @@ export default function AdminPublicPage() {
                     type="color"
                     value={reserveButtonTextColor}
                     onChange={(e) => setForm((p) => ({ ...p, reserveButtonTextColor: e.target.value }))}
+                    className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
+                  />
+                </label>
+                <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
+                  <span className="text-[11px] font-bold text-gray-500">予約ボタンの外枠色</span>
+                  <input
+                    type="color"
+                    value={reserveButtonBorderColor}
+                    onChange={(e) => setForm((p) => ({ ...p, reserveButtonBorderColor: e.target.value }))}
                     className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
                   />
                 </label>
@@ -2393,7 +2407,7 @@ export default function AdminPublicPage() {
                     {reserveActionStyle === 'line' && reserveEvents.length === 0 ? (
                       <span
                         className="mt-3 inline-flex w-full items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-bold"
-                        style={{ backgroundColor: reserveButtonBgColor, borderColor: reserveButtonBgColor, color: reserveButtonTextColor }}
+                        style={{ backgroundColor: reserveButtonBgColor, borderColor: reserveButtonBorderColor, color: reserveButtonTextColor }}
                       >
                         LINEで予約する
                       </span>
@@ -2412,6 +2426,7 @@ export default function AdminPublicPage() {
                         eventCardBg={reserveEventCardBg}
                         buttonBgColor={reserveButtonBgColor}
                         buttonTextColor={reserveButtonTextColor}
+                        buttonBorderColor={reserveButtonBorderColor}
                         className="mt-3"
                       />
                     )}

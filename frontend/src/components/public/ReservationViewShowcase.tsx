@@ -40,6 +40,7 @@ type ReservationViewShowcaseProps = {
   eventCardBg?: string;
   buttonBgColor?: string;
   buttonTextColor?: string;
+  buttonBorderColor?: string;
 };
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
@@ -447,11 +448,12 @@ export function ReservationViewShowcase({
   eventCardBg,
   buttonBgColor,
   buttonTextColor,
+  buttonBorderColor,
 }: ReservationViewShowcaseProps) {
   const buttonClassName =
     'inline-flex w-full items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-bold transition hover:opacity-80';
   const resolvedButtonBg = buttonBgColor || DEFAULT_ACCENT;
-  const buttonStyle = { backgroundColor: resolvedButtonBg, borderColor: resolvedButtonBg, color: buttonTextColor || '#111827' };
+  const buttonStyle = { backgroundColor: resolvedButtonBg, borderColor: buttonBorderColor || resolvedButtonBg, color: buttonTextColor || '#111827' };
   const selectedView = viewStyle === 'card' || viewStyle === 'thread' ? viewStyle : 'calendar';
   const fieldProps = { showLocation, showPrice, showCapacity, showDescription };
 
