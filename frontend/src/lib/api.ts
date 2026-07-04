@@ -906,6 +906,7 @@ export interface PublicPageInput {
   imageLayout?: string;
   heroImageMode?: string;
   heroNavPosition?: string;
+  heroOutsideKeys?: string[];
   heroImagePosition?: string;
   heroTextPosition?: string;
   heroTextX?: number;

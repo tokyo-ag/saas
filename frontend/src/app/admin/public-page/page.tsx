@@ -71,6 +71,7 @@ const emptyForm: PublicPageInput = {
   imageLayout: 'slider',
   heroImageMode: 'fixed',
   heroNavPosition: 'below',
+  heroOutsideKeys: ['nav'] as string[],
   heroImagePosition: 'center center',
   heroTextPosition: 'bottom',
   heroTextX: 5,
@@ -550,7 +551,15 @@ export default function AdminPublicPage() {
   const subtitleColor = form.subtitleColor?.trim() || textColor;
   const subtitleFontSize = resolvePxSize(form.subtitleSize, 14, 11, 28, SUBTITLE_SIZE_LEGACY);
   const subtitleTextStyle = { color: subtitleColor, fontFamily: subtitleFontFamily, fontSize: subtitleFontSize, lineHeight: 1.6 };
-  const heroNavPosition = form.heroNavPosition === 'inside' ? 'inside' : 'below';
+  const heroOverlayKeys = ['name', 'logo', 'nav'] as const;
+  const heroOutsideKeysList = form.heroOutsideKeys ?? ['nav'];
+  const heroOutsideSet = new Set(heroOutsideKeysList);
+  const heroOrderedBgKeys = [
+    ...(form.sectionOrder ?? [...DEFAULT_SECTION_ORDER]).filter((k) => (heroOverlayKeys as readonly string[]).includes(k)),
+    ...heroOverlayKeys.filter((k) => !(form.sectionOrder ?? [...DEFAULT_SECTION_ORDER]).includes(k)),
+  ];
+  const heroInsideKeys = heroOrderedBgKeys.filter((k) => !heroOutsideSet.has(k));
+  const heroOutsideOrderedKeys = heroOrderedBgKeys.filter((k) => heroOutsideSet.has(k));
   const navLabels = {
     about: form.aboutLabel?.trim() || '団体詳細',
     reserve: form.reserveLabel?.trim() || '予約する',
@@ -746,6 +755,7 @@ export default function AdminPublicPage() {
                   subtitleHeroX: fd.subtitleHeroX ?? 5,
                   subtitleHeroY: fd.subtitleHeroY ?? null,
                   sectionOrder: Array.isArray(fd.sectionOrder) ? normalizeSectionOrder(fd.sectionOrder) : [...DEFAULT_SECTION_ORDER],
+                  heroOutsideKeys: Array.isArray(fd.heroOutsideKeys) ? fd.heroOutsideKeys : (first.heroNavPosition === 'inside' ? [] : ['nav']),
                   displayFields: (fd.displayFields && typeof fd.displayFields === 'object') ? {
                     location: fd.displayFields.location !== false,
                     price: fd.displayFields.price !== false,
@@ -1021,7 +1031,7 @@ export default function AdminPublicPage() {
       textColor, accentColor, backgroundColor, backgroundOpacity: clampPercent(form.backgroundOpacity ?? 100), navColor, navOpacity,
       imageLayout: form.imageLayout || 'slider',
       heroImageMode,
-      heroNavPosition,
+      heroNavPosition: form.heroNavPosition,
       heroOverlayOpacity,
       heroOverlayColor,
       fontFamily: form.fontFamily,
@@ -1084,6 +1094,7 @@ export default function AdminPublicPage() {
         subtitleHeroX: form.subtitleHeroX ?? 5,
         subtitleHeroY: form.subtitleHeroY ?? null,
         sectionOrder: form.sectionOrder ?? [...DEFAULT_SECTION_ORDER],
+        heroOutsideKeys: form.heroOutsideKeys ?? ['nav'],
         displayFields: form.displayFields,
       }),
       status: 'published',
@@ -1427,24 +1438,49 @@ export default function AdminPublicPage() {
             </div>
             {heroImageMode === 'background' ? (
               <div className="mt-4">
-                <p className="mb-2 text-[11px] font-bold text-gray-400">名前とロゴの順番(写真に重ねて表示されます)</p>
+                <p className="mb-2 text-[11px] font-bold text-gray-400">名前・ロゴ・ナビボタンの順番と配置</p>
                 <div className="space-y-1.5">
                   {(() => {
+                    const bgKeys = ['name', 'logo', 'nav'] as const;
                     const order = form.sectionOrder ?? [...DEFAULT_SECTION_ORDER];
-                    const items: ('name' | 'logo')[] = order.indexOf('name') < order.indexOf('logo') ? ['name', 'logo'] : ['logo', 'name'];
-                    const swapNameLogo = () => setForm(p => {
+                    const ordered = [
+                      ...order.filter((k) => (bgKeys as readonly string[]).includes(k)),
+                      ...bgKeys.filter((k) => !order.includes(k)),
+                    ];
+                    const outsideKeys = form.heroOutsideKeys ?? ['nav'];
+                    const moveBgKey = (key: string, direction: 1 | -1) => setForm(p => {
                       const a = [...(p.sectionOrder ?? [...DEFAULT_SECTION_ORDER])];
-                      const ni = a.indexOf('name');
-                      const li = a.indexOf('logo');
-                      [a[ni], a[li]] = [a[li], a[ni]];
+                      bgKeys.forEach((k) => { if (!a.includes(k)) a.push(k); });
+                      const ord = a.filter((k) => (bgKeys as readonly string[]).includes(k));
+                      const idx = ord.indexOf(key);
+                      const swapWith = ord[idx + direction];
+                      if (!swapWith) return p;
+                      const ai = a.indexOf(key);
+                      const bi = a.indexOf(swapWith);
+                      [a[ai], a[bi]] = [a[bi], a[ai]];
                       return { ...p, sectionOrder: a };
                     });
-                    return items.map((key, i) => (
+                    const setOutside = (key: string, outside: boolean) => setForm(p => {
+                      const cur = p.heroOutsideKeys ?? ['nav'];
+                      const next = outside ? [...cur.filter((k) => k !== key), key] : cur.filter((k) => k !== key);
+                      return { ...p, heroOutsideKeys: next };
+                    });
+                    return ordered.map((key, i) => (
                       <div key={key} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
-                        <span className="flex-1 text-xs font-bold text-gray-700">{SECTION_LABELS[key]}</span>
-                        <button type="button" disabled={i === 0} onClick={swapNameLogo}
+                        <span className="flex-1 text-xs font-bold text-gray-700">{SECTION_LABELS[key] ?? key}</span>
+                        <div className="flex overflow-hidden rounded-full border border-gray-200">
+                          {[{ label: '写真の中', outside: false }, { label: '写真の外', outside: true }].map((opt) => (
+                            <button key={opt.label} type="button"
+                              onClick={() => setOutside(key, opt.outside)}
+                              className={`px-2 py-1 text-[10px] font-bold transition ${outsideKeys.includes(key) === opt.outside ? 'text-white' : 'text-gray-400 hover:bg-gray-50'}`}
+                              style={outsideKeys.includes(key) === opt.outside ? { backgroundColor: accentColor } : undefined}>
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                        <button type="button" disabled={i === 0} onClick={() => moveBgKey(key, -1)}
                           className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs text-gray-400 disabled:opacity-30 hover:enabled:bg-gray-100">↑</button>
-                        <button type="button" disabled={i === items.length - 1} onClick={swapNameLogo}
+                        <button type="button" disabled={i === ordered.length - 1} onClick={() => moveBgKey(key, 1)}
                           className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs text-gray-400 disabled:opacity-30 hover:enabled:bg-gray-100">↓</button>
                       </div>
                     ));
@@ -1511,22 +1547,7 @@ export default function AdminPublicPage() {
                 )}
 
                 {/* テキスト位置: 右プレビューでドラッグ */}
-                <p className="text-[11px] text-gray-400">テキスト位置は右のプレビューでドラッグして調整できます</p>
-
-                {/* ナビボタン位置 */}
-                <div>
-                  <p className="mb-2 text-[11px] font-bold text-gray-400">ナビボタン位置</p>
-                  <div className="flex gap-2">
-                    {[{ label: '背景の中', value: 'inside' }, { label: '背景の下', value: 'below' }].map((opt) => (
-                      <button key={opt.value} type="button"
-                        onClick={() => setForm((p) => ({ ...p, heroNavPosition: opt.value }))}
-                        className={`rounded-full border px-4 py-2 text-xs font-bold transition ${heroNavPosition === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                        style={heroNavPosition === opt.value ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <p className="text-[11px] text-gray-400">テキスト位置は右のプレビューでドラッグして調整できます。名前・ロゴ・ナビボタンの配置は上の「セクションの順番」で設定します。</p>
               </div>
             )}
             {imageUrls.length > 0 && (
@@ -2129,36 +2150,36 @@ export default function AdminPublicPage() {
                         className="cursor-move rounded border-2 border-dashed border-transparent p-1 transition-colors group-hover:border-white/60"
                         onMouseDown={handleTextDrag}
                       >
-                        <p className="font-bold drop-shadow" style={titleTextStyle}>
-                          {form.orgLogoWordmarkUrl && form.orgNameDisplayType !== 'text' ? (
-                            (() => {
-                              const order = form.sectionOrder ?? [...DEFAULT_SECTION_ORDER];
-                              const nameBeforeLogo = order.indexOf('name') < order.indexOf('logo');
-                              const logo = (
-                                <img key="logo" src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
-                                  className="max-w-full object-contain drop-shadow"
-                                  style={{ height: form.orgLogoWordmarkSize ?? 60, maxWidth: '100%' }} />
-                              );
-                              const name = form.orgNameDisplayType === 'both' ? <span key="name">{displayName}</span> : null;
-                              return nameBeforeLogo ? <>{name}{logo}</> : <>{logo}{name}</>;
-                            })()
-                          ) : displayName}
-                        </p>
-                        {heroNavPosition === 'inside' && (
-                          <div>
-                            <div className={`mt-3 text-[10px] font-bold ${previewButtonLayoutClass}`} style={previewButtonGridStyle}>
-                              {visibleNavItems.map((item) => (
-                                <span key={item.key} className={`flex items-center justify-center truncate px-1 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{item.label}</span>
-                              ))}
-                            </div>
-                            <div className="mt-1 flex cursor-ns-resize select-none touch-none justify-center py-0.5"
-                              style={{ touchAction: 'none' }}
-                              onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); dragRef.current = { startY: e.clientY, startSize: btnSize }; }}
-                              onPointerMove={(e) => { if (!dragRef.current) return; const d = e.clientY - dragRef.current.startY; setForm(p => ({ ...p, buttonSize: Math.round(Math.min(80, Math.max(24, dragRef.current!.startSize + d))) })); }}
-                              onPointerUp={() => { dragRef.current = null; }}
-                            ><div className="h-0.5 w-6 rounded bg-white/50" /></div>
-                          </div>
-                        )}
+                        <div className="flex flex-col gap-2">
+                          {heroInsideKeys.map((key) => {
+                            if (key === 'name') return (
+                              <p key="name" className={`font-bold drop-shadow ${form.orgNameDisplayType === 'image' ? 'sr-only' : ''}`} style={form.orgNameDisplayType === 'image' ? undefined : titleTextStyle}>
+                                {displayName}
+                              </p>
+                            );
+                            if (key === 'logo') return form.orgLogoWordmarkUrl && form.orgNameDisplayType !== 'text' ? (
+                              <img key="logo" src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
+                                className="max-w-full object-contain drop-shadow"
+                                style={{ height: form.orgLogoWordmarkSize ?? 60, maxWidth: '100%' }} />
+                            ) : null;
+                            if (key === 'nav') return (
+                              <div key="nav">
+                                <div className={`text-[10px] font-bold ${previewButtonLayoutClass}`} style={previewButtonGridStyle}>
+                                  {visibleNavItems.map((item) => (
+                                    <span key={item.key} className={`flex items-center justify-center truncate px-1 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{item.label}</span>
+                                  ))}
+                                </div>
+                                <div className="mt-1 flex cursor-ns-resize select-none touch-none justify-center py-0.5"
+                                  style={{ touchAction: 'none' }}
+                                  onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); dragRef.current = { startY: e.clientY, startSize: btnSize }; }}
+                                  onPointerMove={(e) => { if (!dragRef.current) return; const d = e.clientY - dragRef.current.startY; setForm(p => ({ ...p, buttonSize: Math.round(Math.min(80, Math.max(24, dragRef.current!.startSize + d))) })); }}
+                                  onPointerUp={() => { dragRef.current = null; }}
+                                ><div className="h-0.5 w-6 rounded bg-white/50" /></div>
+                              </div>
+                            );
+                            return null;
+                          })}
+                        </div>
                       </div>
                       {/* リサイズハンドル（右端） */}
                       <div
@@ -2205,19 +2226,36 @@ export default function AdminPublicPage() {
                       </div>
                     )}
                   </div>
-                  {heroNavPosition === 'below' && (
-                    <div className="border-b border-gray-100 px-3 pb-1 pt-3">
-                      <div className={`text-[11px] font-bold ${previewButtonLayoutClass}`} style={previewButtonGridStyle}>
-                        {visibleNavItems.map((item) => (
-                          <span key={item.key} className={`flex items-center justify-center truncate px-2 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{item.label}</span>
-                        ))}
-                      </div>
-                      <div className="mt-1 flex cursor-ns-resize select-none touch-none justify-center py-1"
-                        style={{ touchAction: 'none' }}
-                        onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); dragRef.current = { startY: e.clientY, startSize: btnSize }; }}
-                        onPointerMove={(e) => { if (!dragRef.current) return; const d = e.clientY - dragRef.current.startY; setForm(p => ({ ...p, buttonSize: Math.round(Math.min(80, Math.max(24, dragRef.current!.startSize + d))) })); }}
-                        onPointerUp={() => { dragRef.current = null; }}
-                      ><div className="h-0.5 w-8 rounded bg-gray-300" /></div>
+                  {heroOutsideOrderedKeys.length > 0 && (
+                    <div className="space-y-2 border-b border-gray-100 px-3 pb-1 pt-3">
+                      {heroOutsideOrderedKeys.map((key) => {
+                        if (key === 'name') return (
+                          <p key="name" className={`font-bold ${form.orgNameDisplayType === 'image' ? 'sr-only' : ''}`} style={form.orgNameDisplayType === 'image' ? undefined : titleTextStyle}>
+                            {displayName}
+                          </p>
+                        );
+                        if (key === 'logo') return form.orgLogoWordmarkUrl && form.orgNameDisplayType !== 'text' ? (
+                          <img key="logo" src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
+                            className="max-w-full object-contain"
+                            style={{ height: form.orgLogoWordmarkSize ?? 60, maxWidth: '100%' }} />
+                        ) : null;
+                        if (key === 'nav') return (
+                          <div key="nav">
+                            <div className={`text-[11px] font-bold ${previewButtonLayoutClass}`} style={previewButtonGridStyle}>
+                              {visibleNavItems.map((item) => (
+                                <span key={item.key} className={`flex items-center justify-center truncate px-2 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{item.label}</span>
+                              ))}
+                            </div>
+                            <div className="mt-1 flex cursor-ns-resize select-none touch-none justify-center py-1"
+                              style={{ touchAction: 'none' }}
+                              onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); dragRef.current = { startY: e.clientY, startSize: btnSize }; }}
+                              onPointerMove={(e) => { if (!dragRef.current) return; const d = e.clientY - dragRef.current.startY; setForm(p => ({ ...p, buttonSize: Math.round(Math.min(80, Math.max(24, dragRef.current!.startSize + d))) })); }}
+                              onPointerUp={() => { dragRef.current = null; }}
+                            ><div className="h-0.5 w-8 rounded bg-gray-300" /></div>
+                          </div>
+                        );
+                        return null;
+                      })}
                     </div>
                   )}
                 </>
