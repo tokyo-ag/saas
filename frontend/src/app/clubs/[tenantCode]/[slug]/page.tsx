@@ -394,6 +394,8 @@ export default async function ClubCmsPage({
         reserveEventDateColor?: string;
         reserveEventMetaColor?: string;
         reserveEventCardBg?: string;
+        reserveButtonBgColor?: string;
+        reserveButtonTextColor?: string;
         reserveActionStyle?: string;
         displayFields?: { location?: boolean; price?: boolean; capacity?: boolean; description?: boolean };
         blogPostCardBg?: string;
@@ -423,6 +425,8 @@ export default async function ClubCmsPage({
   const reserveEventDateColor = sectionCopy.reserveEventDateColor?.trim() || '#4B5563';
   const reserveEventMetaColor = sectionCopy.reserveEventMetaColor?.trim() || '#6B7280';
   const reserveEventCardBg = sectionCopy.reserveEventCardBg?.trim() || '#ffffff';
+  const reserveButtonBgColor = sectionCopy.reserveButtonBgColor?.trim() || '#06C755';
+  const reserveButtonTextColor = sectionCopy.reserveButtonTextColor?.trim() || '#111827';
   const blogPostCardBg = sectionCopy.blogPostCardBg?.trim() || '#ffffff';
   const reserveActionStyle = sectionCopy.reserveActionStyle === 'line' ? 'line' : 'comiu';
   const df = sectionCopy.displayFields ?? {};
@@ -641,7 +645,7 @@ export default async function ClubCmsPage({
                   return (
                     <div key={i} className="space-y-1.5">
                       {items.map((item: {q:string;a:string}, j: number) => (
-                        <details key={j} className="group overflow-hidden rounded-xl border border-gray-100">
+                        <details key={j} className="group overflow-hidden rounded-xl border border-gray-100" style={{ backgroundColor: block.faqCardBg || '#F9FAFB' }}>
                           <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 select-none" style={{ color: textColor }}>
                             <span className="flex-1 font-bold" style={blockTextStyle}>{item.q}</span>
                             <span className="ml-2 shrink-0 text-xs text-gray-400 transition-transform duration-200 group-open:rotate-180">▼</span>
@@ -696,7 +700,7 @@ export default async function ClubCmsPage({
               <Link
                 href={lineReserveUrl}
                 className="mt-4 inline-flex w-full items-center justify-center rounded-lg border px-4 py-3 text-sm font-bold transition hover:opacity-80"
-                style={{ backgroundColor: accentColor, borderColor: accentColor, color: '#fff' }}
+                style={{ backgroundColor: reserveButtonBgColor, borderColor: reserveButtonBgColor, color: reserveButtonTextColor }}
               >
                 LINEで予約する
               </Link>
@@ -717,6 +721,8 @@ export default async function ClubCmsPage({
                 eventDateColor={reserveEventDateColor}
                 eventMetaColor={reserveEventMetaColor}
                 eventCardBg={reserveEventCardBg}
+                buttonBgColor={reserveButtonBgColor}
+                buttonTextColor={reserveButtonTextColor}
                 className="mt-4"
               />
             )}

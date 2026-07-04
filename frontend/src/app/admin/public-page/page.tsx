@@ -30,6 +30,7 @@ interface Block {
   threadsEmbedUrl?: string;
   // FAQ block fields
   faqItems?: FaqItem[];
+  faqCardBg?: string;
 }
 const BLOCK_LABELS: Record<BlockType, string> = {
   'text': 'テキスト',
@@ -134,6 +135,8 @@ const emptyForm: PublicPageInput = {
   reserveEventDateColor: '',
   reserveEventMetaColor: '',
   reserveEventCardBg: '',
+  reserveButtonBgColor: '',
+  reserveButtonTextColor: '',
   reserveActionStyle: 'comiu',
   reserveLineUrl: '',
   blogPostCardBg: '',
@@ -634,6 +637,8 @@ export default function AdminPublicPage() {
   const reserveEventDateColor = form.reserveEventDateColor?.trim() || '#4B5563';
   const reserveEventMetaColor = form.reserveEventMetaColor?.trim() || '#6B7280';
   const reserveEventCardBg = form.reserveEventCardBg?.trim() || '#ffffff';
+  const reserveButtonBgColor = form.reserveButtonBgColor?.trim() || '#06C755';
+  const reserveButtonTextColor = form.reserveButtonTextColor?.trim() || '#111827';
   const blogPostCardBg = form.blogPostCardBg?.trim() || '#ffffff';
   const blogSectionTitle = form.blogTitle?.trim() || navLabels.blog;
   const blogSectionLead = form.blogLead?.trim() || '活動日記やお知らせを表示するエリアです。';
@@ -789,6 +794,8 @@ export default function AdminPublicPage() {
                   reserveEventDateColor: fd.reserveEventDateColor ?? '',
                   reserveEventMetaColor: fd.reserveEventMetaColor ?? '',
                   reserveEventCardBg: fd.reserveEventCardBg ?? '',
+                  reserveButtonBgColor: fd.reserveButtonBgColor ?? '',
+                  reserveButtonTextColor: fd.reserveButtonTextColor ?? '',
                   reserveActionStyle: fd.reserveActionStyle === 'line' ? 'line' : 'comiu',
                   reserveLineUrl: fd.reserveLineUrl ?? fd.line ?? '',
                   blogPostCardBg: fd.blogPostCardBg ?? '',
@@ -834,6 +841,8 @@ export default function AdminPublicPage() {
                   reserveEventDateColor: '',
                   reserveEventMetaColor: '',
                   reserveEventCardBg: '',
+                  reserveButtonBgColor: '',
+                  reserveButtonTextColor: '',
                   reserveActionStyle: 'comiu',
                   reserveLineUrl: '',
                   blogPostCardBg: '',
@@ -1002,7 +1011,7 @@ export default function AdminPublicPage() {
               <div key={block.id} className="space-y-1.5">
                 {items.length === 0 && <p className="text-xs text-gray-400">Q&Aを追加してください</p>}
                 {items.map((item, j) => (
-                  <div key={j} className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
+                  <div key={j} className="rounded-lg border border-gray-100 px-3 py-2" style={{ backgroundColor: block.faqCardBg || '#F9FAFB' }}>
                     <p className="font-bold" style={faqTextStyle}>Q. {item.q || '（質問）'}</p>
                     {item.a && <p className="mt-0.5 opacity-60" style={faqTextStyle}>A. {item.a}</p>}
                   </div>
@@ -1129,6 +1138,8 @@ export default function AdminPublicPage() {
         reserveEventDateColor: form.reserveEventDateColor?.trim() || '',
         reserveEventMetaColor: form.reserveEventMetaColor?.trim() || '',
         reserveEventCardBg: form.reserveEventCardBg?.trim() || '',
+        reserveButtonBgColor: form.reserveButtonBgColor?.trim() || '',
+        reserveButtonTextColor: form.reserveButtonTextColor?.trim() || '',
         reserveActionStyle,
         reserveLineUrl: form.reserveLineUrl?.trim() || '',
         blogPostCardBg: form.blogPostCardBg?.trim() || '',
@@ -1857,6 +1868,12 @@ export default function AdminPublicPage() {
                   {/* FAQ フィールド */}
                   {block.type === 'faq' && (
                     <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-gray-400">カードの背景色</span>
+                        <input type="color" value={block.faqCardBg || '#F9FAFB'}
+                          onChange={(e) => updateBlock(block.id, { faqCardBg: e.target.value })}
+                          className="h-8 w-10 cursor-pointer rounded border border-gray-200 bg-white p-0.5" />
+                      </div>
                       {(block.faqItems ?? []).map((item, j) => (
                         <div key={j} className="rounded-lg border border-gray-100 bg-white p-2 space-y-1.5">
                           <div className="flex items-center gap-1.5">
@@ -1986,6 +2003,24 @@ export default function AdminPublicPage() {
                     type="color"
                     value={form.reserveEventCardBg?.trim() || '#ffffff'}
                     onChange={(e) => setForm((p) => ({ ...p, reserveEventCardBg: e.target.value }))}
+                    className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
+                  />
+                </label>
+                <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
+                  <span className="text-[11px] font-bold text-gray-500">予約ボタンの色</span>
+                  <input
+                    type="color"
+                    value={reserveButtonBgColor}
+                    onChange={(e) => setForm((p) => ({ ...p, reserveButtonBgColor: e.target.value }))}
+                    className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
+                  />
+                </label>
+                <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
+                  <span className="text-[11px] font-bold text-gray-500">予約ボタンの文字色</span>
+                  <input
+                    type="color"
+                    value={reserveButtonTextColor}
+                    onChange={(e) => setForm((p) => ({ ...p, reserveButtonTextColor: e.target.value }))}
                     className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
                   />
                 </label>
@@ -2358,7 +2393,7 @@ export default function AdminPublicPage() {
                     {reserveActionStyle === 'line' && reserveEvents.length === 0 ? (
                       <span
                         className="mt-3 inline-flex w-full items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-bold"
-                        style={{ backgroundColor: accentColor, borderColor: accentColor, color: '#fff' }}
+                        style={{ backgroundColor: reserveButtonBgColor, borderColor: reserveButtonBgColor, color: reserveButtonTextColor }}
                       >
                         LINEで予約する
                       </span>
@@ -2375,6 +2410,8 @@ export default function AdminPublicPage() {
                         eventDateColor={reserveEventDateColor}
                         eventMetaColor={reserveEventMetaColor}
                         eventCardBg={reserveEventCardBg}
+                        buttonBgColor={reserveButtonBgColor}
+                        buttonTextColor={reserveButtonTextColor}
                         className="mt-3"
                       />
                     )}

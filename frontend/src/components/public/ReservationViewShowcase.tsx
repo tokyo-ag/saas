@@ -38,6 +38,8 @@ type ReservationViewShowcaseProps = {
   eventDateColor?: string;
   eventMetaColor?: string;
   eventCardBg?: string;
+  buttonBgColor?: string;
+  buttonTextColor?: string;
 };
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
@@ -352,18 +354,14 @@ function ThreadMini({
   const visible = readableAccent(accentColor);
   if (events) {
     if (events.length === 0) return <EmptyEvents accentColor={accentColor} />;
-    const THREAD_LIMIT = 3;
-    const visibleEvents = events.slice(0, THREAD_LIMIT);
-    const hasMore = events.length > THREAD_LIMIT;
-    const moreHref = tenantCode ? `/clubs/${tenantCode}/reserve` : (fallbackHref || '#');
-    const groups = visibleEvents.reduce<Record<string, ReservationShowcaseEvent[]>>((acc, event) => {
+    const groups = events.reduce<Record<string, ReservationShowcaseEvent[]>>((acc, event) => {
       const key = monthLabel(event.heldAt);
       (acc[key] ??= []).push(event);
       return acc;
     }, {});
 
     return (
-      <div className="space-y-5">
+      <div className="max-h-[380px] space-y-5 overflow-y-auto pr-1">
         {Object.entries(groups).map(([month, monthEvents]) => (
           <section key={month}>
             <div className="mb-2 flex items-center gap-2 px-1">
@@ -406,14 +404,6 @@ function ThreadMini({
             </div>
           </section>
         ))}
-        {hasMore && (
-          <Link
-            href={moreHref}
-            className="block rounded-xl border border-dashed border-gray-200 px-4 py-2.5 text-center text-xs font-bold text-gray-400 transition hover:opacity-80"
-          >
-            つづく
-          </Link>
-        )}
       </div>
     );
   }
@@ -455,11 +445,13 @@ export function ReservationViewShowcase({
   eventDateColor,
   eventMetaColor,
   eventCardBg,
+  buttonBgColor,
+  buttonTextColor,
 }: ReservationViewShowcaseProps) {
-  const visible = readableAccent(accentColor);
   const buttonClassName =
     'inline-flex w-full items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-bold transition hover:opacity-80';
-  const buttonStyle = { backgroundColor: visible.accent, borderColor: visible.border, color: visible.text };
+  const resolvedButtonBg = buttonBgColor || DEFAULT_ACCENT;
+  const buttonStyle = { backgroundColor: resolvedButtonBg, borderColor: resolvedButtonBg, color: buttonTextColor || '#111827' };
   const selectedView = viewStyle === 'card' || viewStyle === 'thread' ? viewStyle : 'calendar';
   const fieldProps = { showLocation, showPrice, showCapacity, showDescription };
 

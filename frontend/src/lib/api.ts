@@ -850,6 +850,8 @@ export interface PublicPage {
   reserveEventTitleColor?: string | null;
   reserveEventDateColor?: string | null;
   reserveEventMetaColor?: string | null;
+  reserveButtonBgColor?: string | null;
+  reserveButtonTextColor?: string | null;
   fontFamily?: string | null;
   titleFont?: string | null;
   titleColor?: string | null;
@@ -955,6 +957,8 @@ export interface PublicPageInput {
   reserveEventDateColor?: string;
   reserveEventMetaColor?: string;
   reserveEventCardBg?: string;
+  reserveButtonBgColor?: string;
+  reserveButtonTextColor?: string;
   reserveActionStyle?: 'comiu' | 'line';
   reserveLineUrl?: string;
   blogPostCardBg?: string;
