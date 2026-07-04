@@ -46,8 +46,12 @@ function firstBlogImage(body: string | null | undefined) {
   return body?.match(BLOG_IMAGE_RE)?.[1] ?? null;
 }
 
-const DEFAULT_SECTION_ORDER = ['title', 'subtitle', 'nav', 'image'] as const;
-const SECTION_LABELS: Record<string, string> = { title: 'タイトル', subtitle: 'サブタイトル', nav: 'ボタン', image: '画像' };
+const DEFAULT_SECTION_ORDER = ['name', 'logo', 'subtitle', 'nav', 'image'] as const;
+const SECTION_LABELS: Record<string, string> = { name: '名前', logo: 'ロゴ', subtitle: 'サブタイトル', nav: 'ナビボタン', image: '写真' };
+
+function normalizeSectionOrder(order: string[]): string[] {
+  return order.flatMap((key) => (key === 'title' ? ['name', 'logo'] : [key]));
+}
 
 const emptyForm: PublicPageInput = {
   title: '',
@@ -741,7 +745,7 @@ export default function AdminPublicPage() {
                   navContactUrl: fd.contactUrl ?? '',
                   subtitleHeroX: fd.subtitleHeroX ?? 5,
                   subtitleHeroY: fd.subtitleHeroY ?? null,
-                  sectionOrder: Array.isArray(fd.sectionOrder) ? fd.sectionOrder : [...DEFAULT_SECTION_ORDER],
+                  sectionOrder: Array.isArray(fd.sectionOrder) ? normalizeSectionOrder(fd.sectionOrder) : [...DEFAULT_SECTION_ORDER],
                   displayFields: (fd.displayFields && typeof fd.displayFields === 'object') ? {
                     location: fd.displayFields.location !== false,
                     price: fd.displayFields.price !== false,
@@ -2189,21 +2193,21 @@ export default function AdminPublicPage() {
               ) : (
                 /* 通常モード: セクション順序に従って描画 */
                 <div className="border-b border-gray-100">
-                  {(form.sectionOrder ?? [...DEFAULT_SECTION_ORDER]).map((key) => {
-                    if (key === 'title') return (
-                      <div key="title" className="px-4 pt-3 pb-1">
+                  {normalizeSectionOrder(form.sectionOrder ?? [...DEFAULT_SECTION_ORDER]).map((key) => {
+                    if (key === 'name') return form.orgNameDisplayType !== 'image' ? (
+                      <div key="name" className="px-4 pt-3 pb-1">
                         <span className="block font-bold leading-5" style={{ ...titleTextStyle, lineHeight: 1.25 }}>
-                          {form.orgLogoWordmarkUrl && form.orgNameDisplayType !== 'text' ? (
-                            <>
-                              <img src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
-                                className="max-w-full object-contain"
-                                style={{ height: form.orgLogoWordmarkSize ?? 60, maxWidth: '100%' }} />
-                              {form.orgNameDisplayType === 'both' && <span>{displayName}</span>}
-                            </>
-                          ) : displayName}
+                          {displayName}
                         </span>
                       </div>
-                    );
+                    ) : null;
+                    if (key === 'logo') return form.orgLogoWordmarkUrl && form.orgNameDisplayType !== 'text' ? (
+                      <div key="logo" className="px-4 pt-3 pb-1">
+                        <img src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
+                          className="max-w-full object-contain"
+                          style={{ height: form.orgLogoWordmarkSize ?? 60, maxWidth: '100%' }} />
+                      </div>
+                    ) : null;
                     if (key === 'subtitle') return form.subtitle?.trim() ? (
                       <div key="subtitle" className="px-4 py-1">
                         <p className="whitespace-pre-wrap" style={{ ...subtitleTextStyle, textAlign: titleAlign }}>

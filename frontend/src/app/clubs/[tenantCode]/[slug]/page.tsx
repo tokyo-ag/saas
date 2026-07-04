@@ -268,7 +268,8 @@ export default async function ClubCmsPage({
   const parsedFt = (() => { try { return JSON.parse(page.footerText ?? '{}'); } catch { return {}; } })();
   const subtitleHeroX: number = parsedFt.subtitleHeroX ?? 5;
   const subtitleHeroY: number | null = parsedFt.subtitleHeroY ?? null;
-  const sectionOrder: string[] = Array.isArray(parsedFt.sectionOrder) ? parsedFt.sectionOrder : ['title', 'subtitle', 'nav', 'image'];
+  const rawSectionOrder: string[] = Array.isArray(parsedFt.sectionOrder) ? parsedFt.sectionOrder : ['name', 'logo', 'subtitle', 'nav', 'image'];
+  const sectionOrder: string[] = rawSectionOrder.flatMap((key) => (key === 'title' ? ['name', 'logo'] : [key]));
   const images = (page.imageUrls?.length ? page.imageUrls : page.coverImageUrl ? [page.coverImageUrl] : [])
     .map((url) => imgUrl(url, IMAGE_BASE_URL))
     .filter(Boolean) as string[];
@@ -520,18 +521,22 @@ export default async function ClubCmsPage({
         /* 通常モード: セクション順序で描画 */
         <div className="border-b border-gray-100" style={{ backgroundColor: navBg }}>
           {sectionOrder.map((key) => {
-            if (key === 'title') return (
-              <div key="title" className="px-5 pt-5 pb-1">
-                <Link href={clubHref} className="block font-bold leading-tight" style={{ ...titleTextStyle, lineHeight: 1.25 }}>
-                  {orgLogoUrl && orgDisplayType !== 'text' ? (
-                    <>
-                      <img src={orgLogoUrl} alt={orgLogoAlt} className="max-w-full object-contain" style={{ height: orgLogoSize }} />
-                      {orgDisplayType === 'both' && <span>{tenantName}</span>}
-                    </>
-                  ) : tenantName}
+            if (key === 'name') return orgDisplayType !== 'image' ? (
+              <div key="name" className="px-5 pt-3 pb-1">
+                <h1 className="font-bold leading-tight" style={{ ...titleTextStyle, lineHeight: 1.25, margin: 0 }}>
+                  <Link href={clubHref} className="block">
+                    {tenantName}
+                  </Link>
+                </h1>
+              </div>
+            ) : null;
+            if (key === 'logo') return orgLogoUrl && orgDisplayType !== 'text' ? (
+              <div key="logo" className="px-5 pt-3 pb-1">
+                <Link href={clubHref} className="block">
+                  <img src={orgLogoUrl} alt={orgLogoAlt} className="max-w-full object-contain" style={{ height: orgLogoSize }} />
                 </Link>
               </div>
-            );
+            ) : null;
             if (key === 'subtitle') return page.subtitle ? (
               <div key="subtitle" className="px-5 py-1">
                 <p className="whitespace-pre-wrap" style={subtitleTextStyle}>{page.subtitle}</p>
