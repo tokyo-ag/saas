@@ -2478,8 +2478,8 @@ export default function AdminPublicPage() {
                     {blogSectionLead && (
                       <p className="mt-1 text-xs leading-5" style={{ color: blogLeadColor }}>{blogSectionLead}</p>
                     )}
-                    <div className="mt-3 space-y-2">
-                      {blogPosts.slice(0, 3).map((post) => {
+                    <div className="mt-3 max-h-[380px] space-y-2 overflow-y-auto pr-1">
+                      {blogPosts.map((post) => {
                         const image = imgUrl(post.coverImageUrl ?? firstBlogImage(post.body), API_URL);
                         return (
                           <div key={post.id} className="flex gap-2 rounded-lg p-2 ring-1 ring-black/5" style={{ backgroundColor: blogPostCardBg }}>

@@ -752,7 +752,8 @@ export default async function ClubCmsPage({
             )}
             {blogPosts.length > 0 && (
               <div className="mt-4 space-y-3">
-                {blogPosts.slice(0, 3).map((post) => {
+                <div className="max-h-[420px] space-y-3 overflow-y-auto pr-1">
+                {blogPosts.map((post) => {
                   const postImage = imgUrl(post.coverImageUrl, IMAGE_BASE_URL);
                   return (
                     <Link key={post.id} href={`/clubs/${page.tenant.code ?? tenantCode}/blog/${post.slug}`}
@@ -766,6 +767,7 @@ export default async function ClubCmsPage({
                     </Link>
                   );
                 })}
+                </div>
                 <Link href={`/clubs/${page.tenant.code ?? tenantCode}/blog`}
                   className="inline-flex text-xs font-bold transition hover:underline"
                   style={{ color: accentColor }}>
