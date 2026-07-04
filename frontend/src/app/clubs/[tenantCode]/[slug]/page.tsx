@@ -229,7 +229,7 @@ export async function generateMetadata({
   const page = await fetchPage(tenantCode, slug);
   if (!page) return { robots: { index: false, follow: false } };
 
-  const tenantName = page.tenant.lineDisplayName ?? page.tenant.name;
+  const tenantName = page.title?.trim() || page.tenant.lineDisplayName || page.tenant.name;
   const title = page.seoTitle || `${page.title} | ${tenantName}`;
   const description = descriptionFromPage(page);
   const image = imgUrl(page.imageUrls?.[0] ?? page.coverImageUrl ?? page.tenant.linePictureUrl, IMAGE_BASE_URL);
@@ -269,7 +269,7 @@ export default async function ClubCmsPage({
   ]);
   if (!page) notFound();
 
-  const tenantName = page.tenant.lineDisplayName ?? page.tenant.name;
+  const tenantName = page.title?.trim() || page.tenant.lineDisplayName || page.tenant.name;
   const orgDisplayType = (page as any).orgNameDisplayType ?? 'text';
   const orgLogoUrl = (page as any).orgLogoWordmarkUrl as string | null;
   const orgLogoAlt = ((page as any).orgLogoWordmarkAlt as string | null) || tenantName;

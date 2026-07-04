@@ -497,6 +497,7 @@ export default function AdminPublicPage() {
 
   const tenantCode = tenant?.code ?? tenant?.id ?? '';
   const displayName = tenant?.lineDisplayName ?? tenant?.name ?? '公開サイト';
+  const siteTitle = form.title?.trim() || displayName;
   const tenantIcon = tenant?.iconUrl ?? tenant?.linePictureUrl ?? null;
   const generatedSlug = slugify(displayName) || slugify(tenantCode) || 'home';
   const previewUrl = tenantCode ? `${SITE_URL}/clubs/${tenantCode}/${generatedSlug}` : '';
@@ -587,11 +588,11 @@ export default function AdminPublicPage() {
   const renderHeroOutsideItem = (key: string) => {
     if (key === 'name') return (
       <p key="name" className={`font-bold ${form.orgNameDisplayType === 'image' ? 'sr-only' : ''}`} style={form.orgNameDisplayType === 'image' ? undefined : titleTextStyle}>
-        {displayName}
+        {siteTitle}
       </p>
     );
     if (key === 'logo') return form.orgLogoWordmarkUrl && form.orgNameDisplayType !== 'text' ? (
-      <img key="logo" src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
+      <img key="logo" src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || siteTitle}
         className="max-w-full object-contain"
         style={{ height: form.orgLogoWordmarkSize ?? 60, maxWidth: '100%' }} />
     ) : null;
@@ -729,7 +730,7 @@ export default function AdminPublicPage() {
           setSelectedId(first.id);
           const variant = first.layoutVariant;
           setForm({
-            title: tenantName, slug: tenantSlug,
+            title: first.title?.trim() || tenantName, slug: tenantSlug,
             subtitle: first.subtitle ?? '',
             body: first.body,
             coverImageUrl: first.coverImageUrl ?? '',
@@ -941,7 +942,7 @@ export default function AdminPublicPage() {
     setLogoUploading(true);
     try {
       const url = await uploadFile(file);
-      setForm(p => ({ ...p, orgLogoWordmarkUrl: url, orgLogoWordmarkAlt: p.orgLogoWordmarkAlt || displayName }));
+      setForm(p => ({ ...p, orgLogoWordmarkUrl: url, orgLogoWordmarkAlt: p.orgLogoWordmarkAlt || siteTitle }));
     } catch (err: any) {
       setError(err?.message ?? 'ロゴのアップロードに失敗しました');
     } finally {
@@ -1087,7 +1088,7 @@ export default function AdminPublicPage() {
     setSaving(true); setError(''); setSaved(false);
     const payload: PublicPageInput = {
       ...form,
-      title: displayName, slug: generatedSlug,
+      title: siteTitle, slug: generatedSlug,
       subtitle: form.subtitle?.trim(),
       coverImageUrl: imageUrls[0]?.trim(),
       imageUrls,
@@ -1166,11 +1167,11 @@ export default function AdminPublicPage() {
         displayFields: form.displayFields,
       }),
       status: 'published',
-      seoTitle: form.seoTitle?.trim() || displayName,
+      seoTitle: form.seoTitle?.trim() || siteTitle,
       seoDescription: form.seoDescription?.trim() || blocks.map(b => b.content).join(' ').replace(/\s+/g, ' ').trim().slice(0, 150) || form.body.replace(/[#>*_-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 150),
       orgNameDisplayType: form.orgNameDisplayType || 'text',
       orgLogoWordmarkUrl: form.orgLogoWordmarkUrl?.trim() || '',
-      orgLogoWordmarkAlt: form.orgLogoWordmarkAlt?.trim() || displayName,
+      orgLogoWordmarkAlt: form.orgLogoWordmarkAlt?.trim() || siteTitle,
       orgLogoWordmarkSize: form.orgLogoWordmarkSize ?? 60,
     };
     try {
@@ -1309,7 +1310,7 @@ export default function AdminPublicPage() {
                 {form.orgLogoWordmarkUrl ? (
                   <div className="rounded-lg border border-gray-200 bg-white p-3 space-y-1.5">
                     <div className="rounded bg-[repeating-conic-gradient(#e5e7eb_0%_25%,transparent_0%_50%)] bg-[length:12px_12px] p-2">
-                      <img src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
+                      <img src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || siteTitle}
                         className="mx-auto max-h-20 max-w-full object-contain" />
                     </div>
                     <div className="flex gap-1.5">
@@ -1345,7 +1346,7 @@ export default function AdminPublicPage() {
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-[11px] text-gray-400">alt テキスト（SEO用）</span>
-                  <input value={form.orgLogoWordmarkAlt ?? ''} placeholder={displayName}
+                  <input value={form.orgLogoWordmarkAlt ?? ''} placeholder={siteTitle}
                     onChange={e => setForm(p => ({ ...p, orgLogoWordmarkAlt: e.target.value }))}
                     className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
                 </label>
@@ -1355,8 +1356,11 @@ export default function AdminPublicPage() {
           {/* タイトル / サブタイトル */}
           <SubSection label="タイトル文字" open={openSections.headerTitle} onToggle={() => toggleSection('headerTitle')}>
             <p className="text-[11px] font-bold text-gray-400">タイトル（団体名）</p>
-            <input value={displayName} readOnly
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-bold text-gray-500" />
+            <input value={form.title ?? ''}
+              onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
+              placeholder={displayName}
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+            <p className="text-[11px] text-gray-400">空欄にするとLINE公式アカウントの表示名「{displayName}」が使われます。</p>
             <div className="flex flex-wrap gap-1.5">
               {fontOptions.map((opt) => (
                 <button key={opt.value} type="button"
@@ -2297,11 +2301,11 @@ export default function AdminPublicPage() {
                           {heroInsideKeys.map((key) => {
                             if (key === 'name') return (
                               <p key="name" className={`font-bold drop-shadow ${form.orgNameDisplayType === 'image' ? 'sr-only' : ''}`} style={form.orgNameDisplayType === 'image' ? undefined : titleTextStyle}>
-                                {displayName}
+                                {siteTitle}
                               </p>
                             );
                             if (key === 'logo') return form.orgLogoWordmarkUrl && form.orgNameDisplayType !== 'text' ? (
-                              <img key="logo" src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
+                              <img key="logo" src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || siteTitle}
                                 className="max-w-full object-contain drop-shadow"
                                 style={{ height: form.orgLogoWordmarkSize ?? 60, maxWidth: '100%' }} />
                             ) : null;
@@ -2382,13 +2386,13 @@ export default function AdminPublicPage() {
                     if (key === 'name') return form.orgNameDisplayType !== 'image' ? (
                       <div key="name" className="px-4 pt-3 pb-1">
                         <span className="block font-bold leading-5" style={{ ...titleTextStyle, lineHeight: 1.25 }}>
-                          {displayName}
+                          {siteTitle}
                         </span>
                       </div>
                     ) : null;
                     if (key === 'logo') return form.orgLogoWordmarkUrl && form.orgNameDisplayType !== 'text' ? (
                       <div key="logo" className="px-4 pt-3 pb-1">
-                        <img src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || displayName}
+                        <img src={form.orgLogoWordmarkUrl} alt={form.orgLogoWordmarkAlt || siteTitle}
                           className="max-w-full object-contain"
                           style={{ height: form.orgLogoWordmarkSize ?? 60, maxWidth: '100%' }} />
                       </div>
