@@ -773,10 +773,12 @@ export default async function ClubCmsPage({
             const contactLink = sectionCopy.contact
               ? sectionCopy.contact.includes('@')
                 ? `mailto:${sectionCopy.contact}`
-                : /^\d/.test(sectionCopy.contact)
-                  ? `tel:${sectionCopy.contact.replace(/[^\d+]/g, '')}`
-                  : contactHref
-              : contactHref;
+                : /^https?:\/\//.test(sectionCopy.contact)
+                  ? sectionCopy.contact
+                  : /^\d/.test(sectionCopy.contact)
+                    ? `tel:${sectionCopy.contact.replace(/[^\d+]/g, '')}`
+                    : contactHref
+              : (configuredLineUrl || contactHref);
             const btnColor = sectionCopy.contactColor?.trim() || accentColor;
             const subtitle = sectionCopy.contactMessage?.trim();
             return (

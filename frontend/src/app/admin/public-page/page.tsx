@@ -2209,7 +2209,7 @@ export default function AdminPublicPage() {
                   </label>
                   <input type="text" value={form.footerContact ?? ''}
                     onChange={(e) => setForm((p) => ({ ...p, footerContact: e.target.value }))}
-                    placeholder="メール・電話番号（空欄=アプリ内メッセージ）"
+                    placeholder="メール・電話番号・LINE URL（空欄=アプリ内メッセージ）"
                     className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
                 </div>
                 <input type="text" value={form.contactMessage ?? ''}
