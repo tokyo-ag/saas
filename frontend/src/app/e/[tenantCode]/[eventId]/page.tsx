@@ -36,6 +36,7 @@ type EventDetail = {
   tenantIconUrl?: string | null;
   isEnded?: boolean;
   reviews?: Review[];
+  footerText?: string | null;
 };
 
 async function fetchEvent(eventId: string): Promise<EventDetail | null> {
@@ -284,8 +285,24 @@ export default async function PublicEventPage({
 
   if (!event || !event.tenantCode || event.tenantCode !== tenantCode) notFound();
 
+  const footerSettings = (() => {
+    try {
+      return JSON.parse(event.footerText ?? '{}') as {
+        reserveActionStyle?: string;
+        reserveLineUrl?: string;
+        line?: string;
+        contact?: string;
+      };
+    } catch {
+      return {};
+    }
+  })();
+  const configuredLineUrl = footerSettings.reserveLineUrl?.trim() || footerSettings.line?.trim();
   const reservePath = `/liff/${event.tenantCode}/events/${event.id}/reserve`;
-  const reserveUrl = buildLiffUrl(reservePath) ?? reservePath;
+  const reserveUrl =
+    footerSettings.reserveActionStyle === 'line' && configuredLineUrl
+      ? configuredLineUrl
+      : buildLiffUrl(reservePath) ?? reservePath;
   const isFull =
     event.capacity != null && event.reservedCount >= event.capacity;
   const spotsLeft =

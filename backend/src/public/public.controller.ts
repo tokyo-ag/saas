@@ -398,6 +398,10 @@ export class PublicController {
             lineDisplayName: true,
             linePictureUrl: true,
             iconUrl: true,
+            publicPages: {
+              take: 1,
+              select: { footerText: true },
+            },
           },
         },
         reservations: {
@@ -444,6 +448,7 @@ export class PublicController {
       tenantCode: event.tenant.code,
       tenantName: event.tenant.lineDisplayName ?? event.tenant.name,
       tenantIconUrl: event.tenant.linePictureUrl ?? event.tenant.iconUrl,
+      footerText: event.tenant.publicPages[0]?.footerText ?? null,
       isEnded,
       reviews: event.reviews.map((r) => ({
         id: r.id,
