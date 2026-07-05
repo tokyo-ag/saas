@@ -381,6 +381,20 @@ export default async function ClubCmsPage({
     ...(image ? { image, logo: image } : {}),
   };
 
+  const faqItems = ((page.blocks as any[]) ?? [])
+    .filter((block: any) => block.type === 'faq')
+    .flatMap((block: any) => (block.faqItems ?? []) as { q: string; a: string }[])
+    .filter((item) => item.q?.trim() && item.a?.trim());
+  const faqJsonLd = faqItems.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.q.trim(),
+      acceptedAnswer: { '@type': 'Answer', text: item.a.trim() },
+    })),
+  } : null;
+
   const contactHref = `/liff/${page.tenant.code ?? tenantCode}/admin-talk`;
   const sectionCopy = (() => {
     try {
@@ -487,6 +501,9 @@ export default async function ClubCmsPage({
     <main className="min-h-screen sm:bg-gray-200" style={{ fontFamily, backgroundColor: bgColor }}>
       <div className="mx-auto w-full max-w-[480px] sm:my-8 sm:overflow-hidden sm:rounded-3xl sm:shadow-2xl" style={{ backgroundColor: bgColor, minHeight: '100dvh' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
+      {faqJsonLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd).replace(/</g, '\\u003c') }} />
+      )}
       <style>{`
         @keyframes public-site-slide-2 {
           0%, 42% { transform: translateX(0); }
