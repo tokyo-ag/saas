@@ -51,7 +51,8 @@ export class BlogService {
         .replace(/[̀-ͯ]/g, '')
         .replace(/[^a-z0-9぀-ヿ㐀-鿿]+/g, '-')
         .replace(/^-+|-+$/g, '')
-        .slice(0, 120) || `post-${Date.now()}`
+        .slice(0, 120)
+        .normalize('NFC') || `post-${Date.now()}`
     );
   }
 

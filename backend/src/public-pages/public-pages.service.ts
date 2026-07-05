@@ -330,7 +330,8 @@ export class PublicPagesService {
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9\u3040-\u30ff\u3400-\u9fff]+/g, '-')
       .replace(/^-+|-+$/g, '')
-      .slice(0, 80);
+      .slice(0, 80)
+      .normalize('NFC');
   }
 
   private slugFromTitle(title: string) {

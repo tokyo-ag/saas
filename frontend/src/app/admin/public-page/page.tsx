@@ -376,7 +376,8 @@ function slugify(value: string) {
     .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9぀-ヿ㐀-鿿]+/g, '-')
     .replace(/^-+|-+$/g, '')
-    .slice(0, 80);
+    .slice(0, 80)
+    .normalize('NFC');
 }
 
 function clampPercent(value: number | string | null | undefined) {
