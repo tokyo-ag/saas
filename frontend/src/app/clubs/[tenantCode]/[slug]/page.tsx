@@ -441,7 +441,7 @@ export default async function ClubCmsPage({
       return {};
     }
   })();
-  const reserveSectionTitle = sectionCopy.reserveTitle?.trim() || navLabels.reserve;
+  const reserveSectionTitle = sectionCopy.reserveTitle?.trim() || '';
   const reserveSectionLead = sectionCopy.reserveLead?.trim() || '';
   const reserveTitleColor = sectionCopy.reserveTitleColor?.trim() || textColor;
   const reserveLeadColor = sectionCopy.reserveLeadColor?.trim() || '#6B7280';
@@ -477,7 +477,7 @@ export default async function ClubCmsPage({
   const buttonGridStyle: CSSProperties = {
     gridTemplateColumns: `repeat(${buttonLayout === 'row1x4' ? visibleNavItems.length : Math.min(2, visibleNavItems.length)}, minmax(0, 1fr))`,
   };
-  const blogSectionTitle = sectionCopy.blogTitle?.trim() || navLabels.blog;
+  const blogSectionTitle = sectionCopy.blogTitle?.trim() || '';
   const blogSectionLead = sectionCopy.blogLead?.trim() || '';
   const blogTitleColor = sectionCopy.blogTitleColor?.trim() || textColor;
   const blogLeadColor = sectionCopy.blogLeadColor?.trim() || '#6B7280';
@@ -720,7 +720,9 @@ export default async function ClubCmsPage({
         {hasReserveSection && (
         <div id="reserve" className="relative mt-8 scroll-mt-6 rounded-xl px-5 py-6 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
           <div className="relative">
-            <p className="text-lg font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
+            {reserveSectionTitle && (
+              <p className="text-lg font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
+            )}
             {reserveSectionLead && (
               <p className="mt-2 text-sm leading-7" style={{ color: reserveLeadColor }}>{reserveSectionLead}</p>
             )}
@@ -763,7 +765,9 @@ export default async function ClubCmsPage({
         <section id="blog" className="relative mt-8 scroll-mt-6 rounded-xl px-5 py-6 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
           <Link href={navBlogUrl} className="absolute inset-0 rounded-xl" aria-label={navLabels.blog} />
           <div className="relative">
-            <p className="text-lg font-bold" style={{ color: blogTitleColor }}>{blogSectionTitle}</p>
+            {blogSectionTitle && (
+              <p className="text-lg font-bold" style={{ color: blogTitleColor }}>{blogSectionTitle}</p>
+            )}
             {blogSectionLead && (
               <p className="mt-2 text-sm leading-7" style={{ color: blogLeadColor }}>{blogSectionLead}</p>
             )}

@@ -631,7 +631,7 @@ export default function AdminPublicPage() {
     ...(hasReserveSection ? [{ key: 'reserve', label: navLabels.reserve }] : []),
     { key: 'contact', label: navLabels.contact },
   ];
-  const reserveSectionTitle = form.reserveTitle?.trim() || navLabels.reserve;
+  const reserveSectionTitle = form.reserveTitle?.trim() || '';
   const reserveSectionLead = form.reserveLead?.trim() || '';
   const reserveTitleColor = form.reserveTitleColor?.trim() || textColor;
   const reserveLeadColor = form.reserveLeadColor?.trim() || '#6B7280';
@@ -643,7 +643,7 @@ export default function AdminPublicPage() {
   const reserveButtonTextColor = form.reserveButtonTextColor?.trim() || '#111827';
   const reserveButtonBorderColor = form.reserveButtonBorderColor?.trim() || reserveButtonBgColor;
   const blogPostCardBg = form.blogPostCardBg?.trim() || '#ffffff';
-  const blogSectionTitle = form.blogTitle?.trim() || navLabels.blog;
+  const blogSectionTitle = form.blogTitle?.trim() || '';
   const blogSectionLead = form.blogLead?.trim() || '';
   const blogTitleColor = form.blogTitleColor?.trim() || textColor;
   const blogLeadColor = form.blogLeadColor?.trim() || '#6B7280';
@@ -2007,10 +2007,10 @@ export default function AdminPublicPage() {
               <div className="space-y-3 rounded-lg bg-gray-50 p-3">
                 <p className="text-[11px] font-bold text-gray-400">セクションのタイトル・説明文</p>
                 <label className="block space-y-1">
-                  <span className="text-[11px] text-gray-500">タイトル(空欄: 「{navLabels.reserve}」)</span>
+                  <span className="text-[11px] text-gray-500">タイトル(空欄: 非表示)</span>
                   <input value={form.reserveTitle ?? ''}
                     onChange={(e) => setForm((p) => ({ ...p, reserveTitle: e.target.value }))}
-                    placeholder={navLabels.reserve}
+                    placeholder="例：予約する"
                     className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
                 </label>
                 <label className="block space-y-1">
@@ -2148,10 +2148,10 @@ export default function AdminPublicPage() {
               <div className="space-y-3 rounded-lg bg-gray-50 p-3">
                 <p className="text-[11px] font-bold text-gray-400">セクションのタイトル・説明文</p>
                 <label className="block space-y-1">
-                  <span className="text-[11px] text-gray-500">タイトル(空欄: 「{navLabels.blog}」)</span>
+                  <span className="text-[11px] text-gray-500">タイトル(空欄: 非表示)</span>
                   <input value={form.blogTitle ?? ''}
                     onChange={(e) => setForm((p) => ({ ...p, blogTitle: e.target.value }))}
-                    placeholder={navLabels.blog}
+                    placeholder="例：活動ブログ"
                     className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
                 </label>
                 <label className="block space-y-1">
@@ -2440,7 +2440,9 @@ export default function AdminPublicPage() {
                 </div>
                 {hasReserveSection && (
                   <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
-                    <p className="text-sm font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
+                    {reserveSectionTitle && (
+                      <p className="text-sm font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
+                    )}
                     {reserveSectionLead && (
                       <p className="mt-1 text-xs leading-5" style={{ color: reserveLeadColor }}>{reserveSectionLead}</p>
                     )}
@@ -2474,7 +2476,9 @@ export default function AdminPublicPage() {
                 )}
                 {hasBlogSection && (
                   <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
-                    <p className="text-sm font-bold" style={{ color: blogTitleColor }}>{blogSectionTitle}</p>
+                    {blogSectionTitle && (
+                      <p className="text-sm font-bold" style={{ color: blogTitleColor }}>{blogSectionTitle}</p>
+                    )}
                     {blogSectionLead && (
                       <p className="mt-1 text-xs leading-5" style={{ color: blogLeadColor }}>{blogSectionLead}</p>
                     )}
