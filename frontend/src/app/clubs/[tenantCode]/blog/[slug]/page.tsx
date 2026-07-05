@@ -78,12 +78,17 @@ function formatDate(iso: string | null | undefined) {
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 
 function linkifyText(text: string, keyPrefix: string) {
-  const parts = text.split(/(https?:\/\/[^\s]+)/g);
-  return parts.map((part, i) => (
-    /^https?:\/\//.test(part) ? (
-      <a key={`${keyPrefix}-${i}`} href={part} target="_blank" rel="noopener noreferrer" className="underline">{part}</a>
-    ) : part
-  ));
+  const parts = text.split(/(https?:\/\/[^\s\])}"'」』]+)/g);
+  return parts.flatMap((part, i) => {
+    if (!/^https?:\/\//.test(part)) return [part];
+    const m = part.match(/^(.*?)([.,!?！?。、]*)$/);
+    const url = m ? m[1] : part;
+    const trailing = m ? m[2] : '';
+    return [
+      <a key={`${keyPrefix}-${i}`} href={url} target="_blank" rel="noopener noreferrer" className="underline">{url}</a>,
+      trailing,
+    ];
+  });
 }
 
 function BodyRenderer({ body }: { body: string }) {
