@@ -890,6 +890,7 @@ export interface PublicPage {
   orgLogoWordmarkUrl?: string | null;
   orgLogoWordmarkAlt?: string | null;
   orgLogoWordmarkSize?: number | null;
+  titleLogoLayout?: 'stacked' | 'inline';
   status: 'draft' | 'published';
   publishedAt?: string | null;
   createdAt: string;
@@ -990,6 +991,7 @@ export interface PublicPageInput {
   orgLogoWordmarkUrl?: string;
   orgLogoWordmarkAlt?: string;
   orgLogoWordmarkSize?: number;
+  titleLogoLayout?: 'stacked' | 'inline';
   subtitleHeroX?: number;
   subtitleHeroY?: number | null;
   sectionOrder?: string[];

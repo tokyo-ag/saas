@@ -306,6 +306,7 @@ export default async function ClubCmsPage({
   const parsedFt = (() => { try { return JSON.parse(page.footerText ?? '{}'); } catch { return {}; } })();
   const subtitleHeroX: number = parsedFt.subtitleHeroX ?? 5;
   const subtitleHeroY: number | null = parsedFt.subtitleHeroY ?? null;
+  const titleLogoLayout = parsedFt.titleLogoLayout === 'inline' ? 'inline' : 'stacked';
   const rawSectionOrder: string[] = Array.isArray(parsedFt.sectionOrder) ? parsedFt.sectionOrder : ['name', 'logo', 'subtitle', 'nav', 'image'];
   const sectionOrder: string[] = rawSectionOrder.flatMap((key) => (key === 'title' ? ['name', 'logo'] : [key]));
   const HERO_KEYS = ['name', 'logo', 'nav', 'image', 'subtitle'] as const;
@@ -319,6 +320,8 @@ export default async function ClubCmsPage({
   ];
   const heroInsideKeys = heroFullOrder.filter((key) => key !== 'image' && key !== 'subtitle' && !heroOutsideSet.has(key));
   function renderHeroOverlayItem(key: string, dropShadow: boolean) {
+    if (shouldRenderInlineTitleLogo && key === 'name') return <div key="name">{renderInlineTitleLogo(dropShadow)}</div>;
+    if (shouldRenderInlineTitleLogo && key === 'logo') return null;
     if (key === 'name') return (
       <h1 key="name" className={`font-bold ${dropShadow ? 'drop-shadow' : ''} ${orgDisplayType === 'image' ? 'sr-only' : ''}`} style={orgDisplayType === 'image' ? undefined : { ...titleTextStyle, margin: 0 }}>
         {tenantName}
@@ -361,6 +364,9 @@ export default async function ClubCmsPage({
   const titleTextColor = page.titleColor || textColor;
   const titleFontSize = resolvePxSize(page.titleSize, 30, 18, 48, TITLE_SIZE_LEGACY);
   const titleTextStyle = { color: titleTextColor, fontFamily: titleFontFamily, fontSize: titleFontSize, lineHeight: 1.25 };
+  const canRenderTitle = orgDisplayType !== 'image';
+  const canRenderLogo = Boolean(orgLogoUrl && orgDisplayType !== 'text');
+  const shouldRenderInlineTitleLogo = titleLogoLayout === 'inline' && canRenderTitle && canRenderLogo;
   const subtitleFontFamily = page.subtitleFont ? (fontFamilyMap[page.subtitleFont] ?? fontFamily) : fontFamily;
   const subtitleTextColor = page.subtitleColor || textColor;
   const subtitleFontSize = resolvePxSize(page.subtitleSize, 14, 11, 28, SUBTITLE_SIZE_LEGACY);
@@ -400,6 +406,14 @@ export default async function ClubCmsPage({
   const btnSizeStyle = { minHeight: btnSize, ...(buttonStyle === 'pill' ? { height: btnSize } : {}) };
   const btnBoxShadow = buttonStyle === 'double' ? { boxShadow: `inset 0 0 0 3px ${btnBorderColor}` } : {};
   const subtitleGap = Number.isInteger(page.subtitleMarginTop) ? page.subtitleMarginTop! : 8;
+  const renderInlineTitleLogo = (dropShadow = false) => (
+    <Link href={clubHref} className={`flex min-w-0 items-center gap-3 ${dropShadow ? 'drop-shadow' : ''}`}>
+      <img src={orgLogoUrl || ''} alt={orgLogoAlt}
+        className="shrink-0 object-contain"
+        style={{ height: orgLogoSize, maxWidth: '38%' }} />
+      <span className="min-w-0 flex-1 break-words font-bold" style={titleTextStyle}>{tenantName}</span>
+    </Link>
+  );
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -598,6 +612,12 @@ export default async function ClubCmsPage({
         /* 通常モード: セクション順序で描画 */
         <div className="border-b border-gray-100" style={{ backgroundColor: navBg }}>
           {sectionOrder.map((key) => {
+            if (shouldRenderInlineTitleLogo && key === 'name') return (
+              <div key="name" className="px-5 pt-3 pb-1">
+                {renderInlineTitleLogo(false)}
+              </div>
+            );
+            if (shouldRenderInlineTitleLogo && key === 'logo') return null;
             if (key === 'name') return orgDisplayType !== 'image' ? (
               <div key="name" className="px-5 pt-3 pb-1">
                 <h1 className="font-bold leading-tight" style={{ ...titleTextStyle, lineHeight: 1.25, margin: 0 }}>

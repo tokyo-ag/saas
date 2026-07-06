@@ -48,6 +48,7 @@ function firstBlogImage(body: string | null | undefined) {
 }
 
 const DEFAULT_SECTION_ORDER = ['name', 'logo', 'subtitle', 'nav', 'image'] as const;
+type TitleLogoLayout = 'stacked' | 'inline';
 const SECTION_LABELS: Record<string, string> = { name: '名前', logo: 'ロゴ', subtitle: 'サブタイトル', nav: 'ナビボタン', image: '写真' };
 
 function normalizeSectionOrder(order: string[]): string[] {
@@ -162,6 +163,7 @@ const emptyForm: PublicPageInput = {
   orgLogoWordmarkUrl: '',
   orgLogoWordmarkAlt: '',
   orgLogoWordmarkSize: 60,
+  titleLogoLayout: 'stacked' as TitleLogoLayout,
   subtitleHeroX: 5,
   subtitleHeroY: null as unknown as number,
   sectionOrder: [...DEFAULT_SECTION_ORDER] as string[],
@@ -570,6 +572,10 @@ export default function AdminPublicPage() {
   const titleColor = form.titleColor?.trim() || textColor;
   const titleFontSize = resolvePxSize(form.titleSize, 30, 18, 48, TITLE_SIZE_LEGACY);
   const titleTextStyle = { color: titleColor, fontFamily: titleFontFamily, fontSize: titleFontSize, lineHeight: 1.25 };
+  const titleLogoLayout: TitleLogoLayout = form.titleLogoLayout === 'inline' ? 'inline' : 'stacked';
+  const canRenderTitle = form.orgNameDisplayType !== 'image';
+  const canRenderLogo = Boolean(form.orgLogoWordmarkUrl && form.orgNameDisplayType !== 'text');
+  const shouldRenderInlineTitleLogo = titleLogoLayout === 'inline' && canRenderTitle && canRenderLogo;
   const subtitleFontFamily = (form.subtitleFont?.trim()
     ? fontOptions.find(f => f.value === form.subtitleFont)?.family
     : undefined) ?? fontFamily;
@@ -587,7 +593,17 @@ export default function AdminPublicPage() {
   const heroImageIdx = heroFullOrder.indexOf('image');
   const heroOutsideBefore = heroFullOrder.slice(0, heroImageIdx).filter((k) => heroOutsideSet.has(k));
   const heroOutsideAfter = heroFullOrder.slice(heroImageIdx + 1).filter((k) => heroOutsideSet.has(k));
+  const renderInlineTitleLogo = (dropShadow = false) => (
+    <div className={`flex min-w-0 items-center gap-3 ${dropShadow ? 'drop-shadow' : ''}`}>
+      <img src={form.orgLogoWordmarkUrl || ''} alt={form.orgLogoWordmarkAlt || siteTitle}
+        className="shrink-0 object-contain"
+        style={{ height: form.orgLogoWordmarkSize ?? 60, maxWidth: '38%' }} />
+      <p className="min-w-0 flex-1 break-words font-bold" style={titleTextStyle}>{siteTitle}</p>
+    </div>
+  );
   const renderHeroOutsideItem = (key: string) => {
+    if (shouldRenderInlineTitleLogo && key === 'name') return <div key="name">{renderInlineTitleLogo(false)}</div>;
+    if (shouldRenderInlineTitleLogo && key === 'logo') return null;
     if (key === 'name') return (
       <p key="name" className={`font-bold ${form.orgNameDisplayType === 'image' ? 'sr-only' : ''}`} style={form.orgNameDisplayType === 'image' ? undefined : titleTextStyle}>
         {siteTitle}
@@ -821,6 +837,7 @@ export default function AdminPublicPage() {
                   subtitleHeroY: fd.subtitleHeroY ?? null,
                   sectionOrder: Array.isArray(fd.sectionOrder) ? normalizeSectionOrder(fd.sectionOrder) : [...DEFAULT_SECTION_ORDER],
                   heroOutsideKeys: Array.isArray(fd.heroOutsideKeys) ? fd.heroOutsideKeys : (first.heroNavPosition === 'inside' ? [] : ['nav']),
+                  titleLogoLayout: fd.titleLogoLayout === 'inline' ? 'inline' : 'stacked',
                   displayFields: (fd.displayFields && typeof fd.displayFields === 'object') ? {
                     location: fd.displayFields.location !== false,
                     price: fd.displayFields.price !== false,
@@ -861,6 +878,7 @@ export default function AdminPublicPage() {
                   footerLine: '',
                   footerInstagram: '',
                   footerX: '',
+                  titleLogoLayout: 'stacked',
                 };
               }
             })(),
@@ -1167,6 +1185,7 @@ export default function AdminPublicPage() {
         subtitleHeroY: form.subtitleHeroY ?? null,
         sectionOrder: form.sectionOrder ?? [...DEFAULT_SECTION_ORDER],
         heroOutsideKeys: form.heroOutsideKeys ?? ['nav'],
+        titleLogoLayout,
         displayFields: form.displayFields,
       }),
       status: 'published',
@@ -1565,6 +1584,31 @@ export default function AdminPublicPage() {
           </SubSection>
 
           <SubSection label="レイアウト(要素の並び順)" open={openSections.headerLayout} onToggle={() => toggleSection('headerLayout')}>
+            <div className="rounded-lg border border-gray-200 bg-white p-3">
+              <p className="mb-2 text-[11px] font-bold text-gray-500">名前とロゴの並び</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {([
+                  ['stacked', '上下に表示'],
+                  ['inline', 'ロゴの右に名前'],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setForm((p) => ({ ...p, titleLogoLayout: value }))}
+                    className={`rounded-lg border px-3 py-2 text-[11px] font-bold transition ${
+                      titleLogoLayout === value
+                        ? 'border-[#06C755] bg-[#06C755]/10 text-[#06C755]'
+                        : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {titleLogoLayout === 'inline' && !shouldRenderInlineTitleLogo && (
+                <p className="mt-2 text-[11px] text-gray-400">ロゴ画像とテキスト表示の両方を有効にすると反映されます。</p>
+              )}
+            </div>
             {heroImageMode === 'background' ? (
               <div>
                 <p className="mb-2 text-[11px] font-bold text-gray-400">名前・ロゴ・サブタイトル・ナビボタン・写真の順番と配置</p>
@@ -2303,6 +2347,8 @@ export default function AdminPublicPage() {
                       >
                         <div className="flex flex-col gap-2">
                           {heroInsideKeys.map((key) => {
+                            if (shouldRenderInlineTitleLogo && key === 'name') return <div key="name">{renderInlineTitleLogo(true)}</div>;
+                            if (shouldRenderInlineTitleLogo && key === 'logo') return null;
                             if (key === 'name') return (
                               <p key="name" className={`font-bold drop-shadow ${form.orgNameDisplayType === 'image' ? 'sr-only' : ''}`} style={form.orgNameDisplayType === 'image' ? undefined : titleTextStyle}>
                                 {siteTitle}
@@ -2387,6 +2433,12 @@ export default function AdminPublicPage() {
                 /* 通常モード: セクション順序に従って描画 */
                 <div className="border-b border-gray-100">
                   {normalizeSectionOrder(form.sectionOrder ?? [...DEFAULT_SECTION_ORDER]).map((key) => {
+                    if (shouldRenderInlineTitleLogo && key === 'name') return (
+                      <div key="name" className="px-4 pt-3 pb-1">
+                        {renderInlineTitleLogo(false)}
+                      </div>
+                    );
+                    if (shouldRenderInlineTitleLogo && key === 'logo') return null;
                     if (key === 'name') return form.orgNameDisplayType !== 'image' ? (
                       <div key="name" className="px-4 pt-3 pb-1">
                         <span className="block font-bold leading-5" style={{ ...titleTextStyle, lineHeight: 1.25 }}>
