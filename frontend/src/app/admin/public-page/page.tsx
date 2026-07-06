@@ -1118,7 +1118,7 @@ export default function AdminPublicPage() {
     const payload: PublicPageInput = {
       ...form,
       title: siteTitle, slug: generatedSlug,
-      subtitle: subtitleDraft.trim(),
+      subtitle: subtitleDraft.trim().slice(0, 1000),
       coverImageUrl: imageUrls[0]?.trim(),
       imageUrls,
       imageCaptions: imageCaptions.map((caption) => caption.trim()).slice(0, imageUrls.length),

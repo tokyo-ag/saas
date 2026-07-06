@@ -36,7 +36,7 @@ export class UpsertPublicPageDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(160)
+  @MaxLength(1000)
   subtitle?: string;
 
   @IsOptional()

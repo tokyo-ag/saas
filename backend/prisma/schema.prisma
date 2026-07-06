@@ -71,7 +71,7 @@ model PublicPage {
   tenantId       String    @map("tenant_id")
   title          String    @db.VarChar(120)
   slug           String    @db.VarChar(80)
-  subtitle       String?   @db.VarChar(160)
+  subtitle       String?   @db.Text
   body           String    @db.Text
   coverImageUrl  String?   @map("cover_image_url") @db.Text
   imageUrls      String[]  @default([]) @map("image_urls")
