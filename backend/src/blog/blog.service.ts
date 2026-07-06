@@ -9,6 +9,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
+import { toRomaji } from '../common/romaji';
 
 const POST_STATUS = ['draft', 'published'] as const;
 type PostStatus = (typeof POST_STATUS)[number];
@@ -42,9 +43,10 @@ export class UpsertBlogPostDto {
 export class BlogService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private slugify(title: string) {
+  private async slugify(title: string) {
+    const romaji = title.trim() ? await toRomaji(title) : title;
     return (
-      title
+      romaji
         .trim()
         .toLowerCase()
         .normalize('NFKD')
@@ -101,7 +103,7 @@ export class BlogService {
   }
 
   async create(tenantId: string, dto: UpsertBlogPostDto) {
-    const baseSlug = this.slugify(dto.title);
+    const baseSlug = await this.slugify(dto.title);
     const slug = await this.uniqueSlug(tenantId, baseSlug);
     const status = dto.status ?? 'draft';
     return await this.prisma.blogPost.create({

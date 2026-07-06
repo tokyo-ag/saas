@@ -16,6 +16,7 @@ import {
   Min,
 } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
+import { toRomaji } from '../common/romaji';
 
 const PAGE_STATUS = ['draft', 'published'] as const;
 type PageStatus = (typeof PAGE_STATUS)[number];
@@ -322,8 +323,9 @@ export class UpsertPublicPageDto {
 export class PublicPagesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private normalizeSlug(input: string) {
-    return input
+  private async normalizeSlug(input: string) {
+    const romaji = input.trim() ? await toRomaji(input) : input;
+    return romaji
       .trim()
       .toLowerCase()
       .normalize('NFKD')
@@ -334,8 +336,8 @@ export class PublicPagesService {
       .normalize('NFC');
   }
 
-  private slugFromTitle(title: string) {
-    const slug = this.normalizeSlug(title);
+  private async slugFromTitle(title: string) {
+    const slug = await this.normalizeSlug(title);
     return slug || `page-${Date.now()}`;
   }
 
@@ -466,7 +468,8 @@ export class PublicPagesService {
 
   async create(tenantId: string, dto: UpsertPublicPageDto) {
     const slug =
-      this.normalizeSlug(dto.slug ?? '') || this.slugFromTitle(dto.title);
+      (await this.normalizeSlug(dto.slug ?? '')) ||
+      (await this.slugFromTitle(dto.title));
     await this.ensureUniqueSlug(tenantId, slug);
 
     return this.prisma.publicPage.create({
@@ -480,7 +483,7 @@ export class PublicPagesService {
 
   async update(tenantId: string, id: string, dto: UpsertPublicPageDto) {
     const current = await this.findOne(tenantId, id);
-    const slug = this.normalizeSlug(dto.slug ?? current.slug);
+    const slug = await this.normalizeSlug(dto.slug ?? current.slug);
     if (!slug) throw new BadRequestException('slug is required');
     await this.ensureUniqueSlug(tenantId, slug, id);
 
