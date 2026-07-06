@@ -51,7 +51,7 @@ export class BlogService {
         .toLowerCase()
         .normalize('NFKD')
         .replace(/[̀-ͯ]/g, '')
-        .replace(/[^a-z0-9぀-ヿ㐀-鿿]+/g, '-')
+        .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '')
         .slice(0, 120)
         .normalize('NFC') || `post-${Date.now()}`

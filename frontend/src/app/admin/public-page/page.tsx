@@ -826,7 +826,7 @@ export default function AdminPublicPage() {
                     price: fd.displayFields.price !== false,
                     capacity: fd.displayFields.capacity === true,
                     description: fd.displayFields.description !== false,
-                  } : { location: true, price: true, capacity: true, description: true },
+                  } : { location: true, price: true, capacity: false, description: true },
                 };
               } catch {
                 return {
