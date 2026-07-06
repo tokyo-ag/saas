@@ -273,7 +273,10 @@ export const api = {
     },
     tenants: () => request<PublicTenant[]>('/public/tenants'),
     tenant: (tenantCode: string) => request<PublicTenant>(`/public/tenants/${tenantCode}`),
-    sitemapPages: () => request<PublicSitemapPage[]>('/public/sitemap-pages'),
+    sitemapPages: () =>
+      request<PublicSitemapPage[]>(`/public/sitemap-pages?t=${Date.now()}`, {
+        cache: 'no-store',
+      }),
     tenantPage: (tenantCode: string, slug: string) =>
       request<PublicCmsPage>(`/public/tenants/${tenantCode}/pages/${slug}`),
     recordView: (eventId: string) =>

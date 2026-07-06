@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -11,6 +11,10 @@ import { SnsBlock } from '@/components/public/SnsBlock';
 
 export const revalidate = 60;
 
+type TenantPageList = {
+  pages?: Array<{ slug: string; updatedAt?: string | null }>;
+};
+
 async function fetchPage(tenantCode: string, slug: string): Promise<PublicCmsPage | null> {
   try {
     const res = await fetch(`${API_URL}/api/public/tenants/${tenantCode}/pages/${slug}`, {
@@ -18,6 +22,19 @@ async function fetchPage(tenantCode: string, slug: string): Promise<PublicCmsPag
     });
     if (!res.ok) return null;
     return res.json();
+  } catch {
+    return null;
+  }
+}
+
+async function fetchPrimaryPageSlug(tenantCode: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/tenants/${tenantCode}`, {
+      next: { revalidate },
+    });
+    if (!res.ok) return null;
+    const tenant = (await res.json()) as TenantPageList;
+    return tenant.pages?.[0]?.slug ?? null;
   } catch {
     return null;
   }
@@ -232,7 +249,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { tenantCode, slug } = await params;
   const page = await fetchPage(tenantCode, slug);
-  if (!page) return { robots: { index: false, follow: false } };
+  if (!page) {
+    const primarySlug = await fetchPrimaryPageSlug(tenantCode);
+    return primarySlug ? { robots: { index: false, follow: true } } : { robots: { index: false, follow: false } };
+  }
 
   const tenantName = page.title?.trim() || page.tenant.lineDisplayName || page.tenant.name;
   const title = page.seoTitle || `${page.title} | ${tenantName}`;
@@ -272,7 +292,11 @@ export default async function ClubCmsPage({
     fetchReserveEvents(tenantCode),
     fetchBlogPosts(tenantCode),
   ]);
-  if (!page) notFound();
+  if (!page) {
+    const primarySlug = await fetchPrimaryPageSlug(tenantCode);
+    if (primarySlug && primarySlug !== slug) redirect(`/clubs/${tenantCode}/${primarySlug}`);
+    notFound();
+  }
 
   const tenantName = page.title?.trim() || page.tenant.lineDisplayName || page.tenant.name;
   const orgDisplayType = (page as any).orgNameDisplayType ?? 'text';
