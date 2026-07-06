@@ -727,6 +727,8 @@ export interface LiffTenant {
   lineChannelId?: string;
   liffEventView?: string;
   themeColor?: string;
+  reserveActionStyle?: string | null;
+  reserveLineUrl?: string | null;
 }
 
 export interface LiffReservation {

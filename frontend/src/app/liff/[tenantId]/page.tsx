@@ -14,6 +14,10 @@ import { useLiffTheme } from '@/components/liff/LiffThemeProvider';
 
 const SHOW_FEATURED_TENANTS = false;
 
+function reserveHref(tenantId: string, eventId: string, reserveLineUrl?: string | null) {
+  return reserveLineUrl || `/liff/${tenantId}/events/${eventId}/reserve`;
+}
+
 function AvatarRow({ count, friends }: { count: number; friends?: { id: string; name: string | null }[] }) {
   const friendCount = friends?.length ?? 0;
   const total = count;
@@ -39,13 +43,13 @@ function AvatarRow({ count, friends }: { count: number; friends?: { id: string; 
   );
 }
 
-function EventCard({ event, tenantId, accentColor, cardBg }: { event: LiffEvent; tenantId: string; accentColor: string; cardBg: string }) {
+function EventCard({ event, tenantId, accentColor, cardBg, reserveLineUrl }: { event: LiffEvent; tenantId: string; accentColor: string; cardBg: string; reserveLineUrl?: string | null }) {
   const img = imgUrl(event.imageUrl, API_URL);
   const remaining = event.capacity != null ? event.capacity - event.reservedCount : null;
 
   return (
     <Link
-      href={`/liff/${tenantId}/events/${event.id}/reserve`}
+      href={reserveHref(tenantId, event.id, reserveLineUrl)}
       className="block rounded-xl overflow-hidden active:opacity-70"
       style={{ backgroundColor: cardBg, boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
     >
@@ -137,7 +141,7 @@ function threadStatusLabel(event: LiffEvent) {
   return '募集中';
 }
 
-function LiffThreadView({ events, tenantId, accentColor, cardBg }: { events: LiffEvent[]; tenantId: string; accentColor: string; cardBg: string }) {
+function LiffThreadView({ events, tenantId, accentColor, cardBg, reserveLineUrl }: { events: LiffEvent[]; tenantId: string; accentColor: string; cardBg: string; reserveLineUrl?: string | null }) {
   const groups = events.reduce<Record<string, LiffEvent[]>>((acc, event) => {
     const key = threadMonthLabel(event.heldAt);
     (acc[key] ??= []).push(event);
@@ -159,7 +163,7 @@ function LiffThreadView({ events, tenantId, accentColor, cardBg }: { events: Lif
               return (
                 <Link
                   key={event.id}
-                  href={`/liff/${tenantId}/events/${event.id}/reserve`}
+                  href={reserveHref(tenantId, event.id, reserveLineUrl)}
                   className="block rounded-xl border border-gray-200 px-4 py-3 shadow-sm active:opacity-80"
                   style={{ backgroundColor: cardBg }}
                 >
@@ -221,7 +225,7 @@ function TenantCard({ tenant }: { tenant: PublicTenant }) {
 
 const WEEKDAYS_SHORT = ['日', '月', '火', '水', '木', '金', '土'];
 
-function LiffCalendarView({ events, tenantId, accentColor, cardBg }: { events: LiffEvent[]; tenantId: string; accentColor: string; cardBg: string }) {
+function LiffCalendarView({ events, tenantId, accentColor, cardBg, reserveLineUrl }: { events: LiffEvent[]; tenantId: string; accentColor: string; cardBg: string; reserveLineUrl?: string | null }) {
   const { year, month, prevMonth, nextMonth, cells, isToday } = useCalendarMonth();
 
   const eventsByDate: Record<string, LiffEvent[]> = {};
@@ -289,7 +293,7 @@ function LiffCalendarView({ events, tenantId, accentColor, cardBg }: { events: L
                       return (
                         <Link
                           key={ev.id}
-                          href={`/liff/${tenantId}/events/${ev.id}/reserve`}
+                          href={reserveHref(tenantId, ev.id, reserveLineUrl)}
                           className="block rounded-md px-1 py-0.5 active:opacity-70"
                           style={{ backgroundColor: accentColor }}
                         >
@@ -317,6 +321,7 @@ export default function LiffTopPage() {
   const [loading, setLoading] = useState(true);
   const [otherTenants, setOtherTenants] = useState<PublicTenant[]>([]);
   const [isOffline, setIsOffline] = useState(false);
+  const liffReserveLineUrl = tenant?.reserveActionStyle === 'line' ? tenant.reserveLineUrl : null;
 
   useEffect(() => {
     async function init() {
@@ -411,12 +416,12 @@ export default function LiffTopPage() {
               <p className="text-gray-400 text-xs">新しいイベントをお待ちください</p>
             </div>
           ) : tenant?.liffEventView === 'calendar' ? (
-            <LiffCalendarView events={events} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} />
+            <LiffCalendarView events={events} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} reserveLineUrl={liffReserveLineUrl} />
           ) : tenant?.liffEventView === 'thread' ? (
-            <LiffThreadView events={events} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} />
+            <LiffThreadView events={events} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} reserveLineUrl={liffReserveLineUrl} />
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-              {events.map((ev) => <EventCard key={ev.id} event={ev} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} />)}
+              {events.map((ev) => <EventCard key={ev.id} event={ev} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} reserveLineUrl={liffReserveLineUrl} />)}
             </div>
           )}
 

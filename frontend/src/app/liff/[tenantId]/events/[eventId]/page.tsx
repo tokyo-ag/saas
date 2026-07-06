@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { api, API_URL, formatDate, LiffEvent, LiffReservation } from '@/lib/api';
+import { api, API_URL, formatDate, LiffEvent, LiffReservation, LiffTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { initLiff, getLiffUserId, liff } from '@/lib/liff';
 import { FriendInviteCard } from '@/components/liff/FriendInviteCard';
@@ -96,6 +96,7 @@ export default function LiffEventDetailPage() {
   const { tenantId, eventId } = useParams<{ tenantId: string; eventId: string }>();
   const router = useRouter();
   const [event, setEvent] = useState<LiffEvent | null>(null);
+  const [tenant, setTenant] = useState<LiffTenant | null>(null);
   const [myReservation, setMyReservation] = useState<LiffReservation | null>(null);
   const [lineUserId, setLineUserId] = useState('');
   const [myReview, setMyReview] = useState<{ content: string; isPublished?: boolean } | null>(null);
@@ -104,11 +105,16 @@ export default function LiffEventDetailPage() {
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
+  const [tenantLoading, setTenantLoading] = useState(true);
   const lineBrowserBottomPad = useLineBrowserBottomPad();
+  const reserveLineUrl = tenant?.reserveActionStyle === 'line' ? tenant.reserveLineUrl : null;
+  const reservePath = reserveLineUrl || `/liff/${tenantId}/events/${eventId}/reserve`;
+  const waitlistPath = reserveLineUrl || `/liff/${tenantId}/events/${eventId}/reserve?waitlist=1`;
 
   useEffect(() => {
     async function load() {
       api.public.recordView(eventId).catch(() => {});
+      api.liff.tenant(tenantId).then(setTenant).catch(() => {}).finally(() => setTenantLoading(false));
       const cacheKey = `liff_event_${tenantId}_${eventId}`;
       let evt: LiffEvent;
       try {
@@ -171,13 +177,17 @@ export default function LiffEventDetailPage() {
   }
 
   useEffect(() => {
-    if (loading || !event || myReservation) return;
+    if (loading || tenantLoading || !event || myReservation) return;
     const isPast = new Date(event.heldAt).getTime() < Date.now();
     const isClosed = event.status === 'closed' || isPast;
     if (!isClosed) {
-      router.replace(`/liff/${tenantId}/events/${eventId}/reserve`);
+      if (reserveLineUrl) {
+        window.location.href = reserveLineUrl;
+      } else {
+        router.replace(reservePath);
+      }
     }
-  }, [loading, event, myReservation, router, tenantId, eventId]);
+  }, [loading, tenantLoading, event, myReservation, router, tenantId, eventId, reserveLineUrl, reservePath]);
 
   if (loading) {
     return (
@@ -536,14 +546,14 @@ export default function LiffEventDetailPage() {
           <button disabled className="w-full bg-gray-100 text-gray-400 py-3 rounded-2xl text-sm font-medium">満席</button>
         ) : isFull ? (
           <button
-            onClick={() => router.push(`/liff/${tenantId}/events/${eventId}/reserve?waitlist=1`)}
+            onClick={() => { if (reserveLineUrl) window.location.href = reserveLineUrl; else router.push(waitlistPath); }}
             className="w-full bg-amber-400 text-white py-3 rounded-2xl font-bold active:bg-amber-500"
           >
             キャンセル待ちに登録する
           </button>
         ) : (
           <button
-            onClick={() => router.push(`/liff/${tenantId}/events/${eventId}/reserve`)}
+            onClick={() => { if (reserveLineUrl) window.location.href = reserveLineUrl; else router.push(reservePath); }}
             className="w-full bg-[#06C755] text-white py-3 rounded-2xl font-bold active:bg-[#05a847]"
           >
             予約する

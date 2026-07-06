@@ -85,6 +85,11 @@ function ReservePageInner() {
       const tenantInfo = await api.liff.tenant(tenantId).catch(() => null);
       if (tenantInfo) setTenant(tenantInfo);
 
+      if (!isResultView && tenantInfo?.reserveActionStyle === 'line' && tenantInfo.reserveLineUrl) {
+        window.location.href = tenantInfo.reserveLineUrl;
+        return;
+      }
+
       if (isResultView) {
         const ev = await api.liff.event(tenantId, eventId).catch(() => null);
         if (ev) {

@@ -66,8 +66,14 @@ export class LiffService {
         deletedAt: null,
         bannedAt: null,
       },
+      include: {
+        publicPages: { take: 1, select: { footerText: true } },
+      },
     });
     if (!tenant) throw new NotFoundException('テナントが見つかりません');
+    const reserveSettings = this.parseReserveSettings(
+      tenant.publicPages[0]?.footerText,
+    );
     return {
       id: tenant.id,
       name: tenant.name,
@@ -78,7 +84,29 @@ export class LiffService {
       lineChannelId: tenant.lineChannelId,
       liffEventView: tenant.liffEventView,
       themeColor: tenant.themeColor,
+      ...reserveSettings,
     };
+  }
+
+  private parseReserveSettings(footerText?: string | null) {
+    try {
+      const parsed = JSON.parse(footerText ?? '{}');
+      const reserveLineUrl =
+        typeof parsed.reserveLineUrl === 'string' && parsed.reserveLineUrl.trim()
+          ? parsed.reserveLineUrl.trim()
+          : typeof parsed.line === 'string' && parsed.line.trim()
+            ? parsed.line.trim()
+            : null;
+      return {
+        reserveActionStyle:
+          typeof parsed.reserveActionStyle === 'string'
+            ? parsed.reserveActionStyle
+            : null,
+        reserveLineUrl,
+      };
+    } catch {
+      return { reserveActionStyle: null, reserveLineUrl: null };
+    }
   }
 
   // イベント一覧（status=open のものだけ）
