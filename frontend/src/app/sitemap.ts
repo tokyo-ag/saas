@@ -2,6 +2,9 @@ import type { MetadataRoute } from 'next';
 
 import { SITE_URL, API_URL } from '@/lib/config';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 type SitemapEvent = { id: string; tenantCode: string; updatedAt: string };
 type SitemapPage = { tenantCode: string; slug: string; updatedAt: string };
 type SitemapBlogPost = { tenantCode: string; slug: string; updatedAt: string };
@@ -22,7 +25,7 @@ const STATIC_LAST_MODIFIED = staticLastModified();
 
 async function fetchSitemapEvents(): Promise<{ id: string; tenantCode: string; updatedAt: string }[]> {
   try {
-    const res = await fetch(`${API_URL}/api/public/sitemap-events`, { next: { revalidate: 3600 } });
+    const res = await fetch(`${API_URL}/api/public/sitemap-events`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`sitemap-events returned ${res.status}`);
     const events = (await res.json()) as SitemapEvent[];
     lastSuccessfulEvents = events;
@@ -37,7 +40,7 @@ async function fetchSitemapEvents(): Promise<{ id: string; tenantCode: string; u
 
 async function fetchSitemapPages(): Promise<SitemapPage[]> {
   try {
-    const res = await fetch(`${API_URL}/api/public/sitemap-pages`, { next: { revalidate: 3600 } });
+    const res = await fetch(`${API_URL}/api/public/sitemap-pages`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`sitemap-pages returned ${res.status}`);
     const pages = (await res.json()) as SitemapPage[];
     lastSuccessfulPages = pages;
@@ -52,7 +55,7 @@ async function fetchSitemapPages(): Promise<SitemapPage[]> {
 
 async function fetchSitemapBlogPosts(): Promise<SitemapBlogPost[]> {
   try {
-    const res = await fetch(`${API_URL}/api/public/sitemap-blog-posts`, { next: { revalidate: 3600 } });
+    const res = await fetch(`${API_URL}/api/public/sitemap-blog-posts`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`sitemap-blog-posts returned ${res.status}`);
     const posts = (await res.json()) as SitemapBlogPost[];
     lastSuccessfulBlogPosts = posts;
@@ -67,7 +70,7 @@ async function fetchSitemapBlogPosts(): Promise<SitemapBlogPost[]> {
 
 async function fetchSitemapOfficialArticles(): Promise<SitemapOfficialArticle[]> {
   try {
-    const res = await fetch(`${API_URL}/api/public/sitemap-official-articles`, { next: { revalidate: 3600 } });
+    const res = await fetch(`${API_URL}/api/public/sitemap-official-articles`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`sitemap-official-articles returned ${res.status}`);
     const articles = (await res.json()) as SitemapOfficialArticle[];
     lastSuccessfulOfficialArticles = articles;
