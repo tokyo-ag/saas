@@ -481,6 +481,8 @@ export default function AdminPublicPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [savedSlug, setSavedSlug] = useState<string | null>(null);
   const [form, setForm] = useState<PublicPageInput>(emptyForm);
+  const [subtitleDraft, setSubtitleDraft] = useState(emptyForm.subtitle ?? '');
+  const [isSubtitleComposing, setIsSubtitleComposing] = useState(false);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [reserveEvents, setReserveEvents] = useState<LiffEvent[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
@@ -498,6 +500,12 @@ export default function AdminPublicPage() {
     headerLogo: false, headerTitle: false, headerSubtitle: false, headerPhoto: false, headerLayout: false, headerButton: false, headerNavLabel: false,
   });
   const toggleSection = (key: string) => setOpenSections(p => ({ ...p, [key]: !p[key] }));
+
+  useEffect(() => {
+    const active = typeof document !== 'undefined' ? document.activeElement : null;
+    if (active instanceof HTMLElement && active.dataset.subtitleInput === 'true') return;
+    setSubtitleDraft(form.subtitle ?? '');
+  }, [form.subtitle]);
 
   const tenantCode = tenant?.code ?? tenant?.id ?? '';
   const displayName = tenant?.lineDisplayName ?? tenant?.name ?? '公開サイト';
@@ -1110,7 +1118,7 @@ export default function AdminPublicPage() {
     const payload: PublicPageInput = {
       ...form,
       title: siteTitle, slug: generatedSlug,
-      subtitle: form.subtitle?.trim(),
+      subtitle: subtitleDraft.trim(),
       coverImageUrl: imageUrls[0]?.trim(),
       imageUrls,
       imageCaptions: imageCaptions.map((caption) => caption.trim()).slice(0, imageUrls.length),
@@ -1414,8 +1422,19 @@ export default function AdminPublicPage() {
           <SubSection label="サブタイトル文字" open={openSections.headerSubtitle} onToggle={() => toggleSection('headerSubtitle')}>
             <label className="block">
               <span className="mb-1 block text-[11px] font-bold text-gray-400">サブタイトル</span>
-              <textarea value={form.subtitle ?? ''}
-                onChange={(e) => setForm((p) => ({ ...p, subtitle: e.target.value }))}
+              <textarea value={subtitleDraft}
+                data-subtitle-input="true"
+                onCompositionStart={() => setIsSubtitleComposing(true)}
+                onCompositionEnd={(e) => {
+                  setIsSubtitleComposing(false);
+                  setSubtitleDraft(e.currentTarget.value);
+                  setForm((p) => ({ ...p, subtitle: e.currentTarget.value }));
+                }}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setSubtitleDraft(next);
+                  if (!isSubtitleComposing) setForm((p) => ({ ...p, subtitle: next }));
+                }}
                 placeholder="例：初心者歓迎の社会人サークル"
                 rows={5}
                 className="w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
