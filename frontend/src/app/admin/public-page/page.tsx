@@ -477,6 +477,7 @@ function HeaderImagePreview({
 export default function AdminPublicPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [savedSlug, setSavedSlug] = useState<string | null>(null);
   const [form, setForm] = useState<PublicPageInput>(emptyForm);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [reserveEvents, setReserveEvents] = useState<LiffEvent[]>([]);
@@ -501,7 +502,7 @@ export default function AdminPublicPage() {
   const siteTitle = form.title?.trim() || displayName;
   const tenantIcon = tenant?.iconUrl ?? tenant?.linePictureUrl ?? null;
   const generatedSlug = slugify(displayName) || slugify(tenantCode) || 'home';
-  const previewUrl = tenantCode ? `${SITE_URL}/clubs/${tenantCode}/${generatedSlug}` : '';
+  const previewUrl = tenantCode ? `${SITE_URL}/clubs/${tenantCode}/${savedSlug || generatedSlug}` : '';
   const textColor = form.textColor?.trim() || '#111827';
   const accentColor = form.accentColor?.trim() || '#06C755';
   const backgroundColor = form.backgroundColor?.trim() || '#F7F8FA';
@@ -729,6 +730,7 @@ export default function AdminPublicPage() {
         const first = pageData[0];
         if (first) {
           setSelectedId(first.id);
+          setSavedSlug(first.slug || null);
           const variant = first.layoutVariant;
           setForm({
             title: first.title?.trim() || tenantName, slug: tenantSlug,
@@ -1180,6 +1182,7 @@ export default function AdminPublicPage() {
         ? await api.publicPages.update(selectedId, payload)
         : await api.publicPages.create(payload);
       setSelectedId(page.id);
+      setSavedSlug(page.slug || null);
       if (tenantCode) {
         const token = getToken();
         await fetch('/api/revalidate-public-page', {
