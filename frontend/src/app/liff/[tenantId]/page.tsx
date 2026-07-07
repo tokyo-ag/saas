@@ -313,6 +313,121 @@ function LiffCalendarView({ events, tenantId, accentColor, cardBg, reserveLineUr
   );
 }
 
+function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl }: { events: LiffEvent[]; tenantId: string; accentColor: string; reserveLineUrl?: string | null }) {
+  const { year, month, prevMonth, nextMonth, cells, isToday } = useCalendarMonth();
+  const eventsByDate: Record<string, LiffEvent[]> = {};
+
+  for (const event of events) {
+    const date = new Date(event.heldAt);
+    if (date.getFullYear() === year && date.getMonth() === month) {
+      const key = date.getDate().toString();
+      (eventsByDate[key] ??= []).push(event);
+    }
+  }
+
+  return (
+    <section className="mx-auto max-w-[480px] rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+      <div className="mb-4 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={prevMonth}
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 active:bg-gray-50"
+          aria-label="前の月"
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <div className="text-center">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400">Schedule</p>
+          <p className="text-lg font-bold text-gray-900">{year}年 {month + 1}月</p>
+        </div>
+        <button
+          type="button"
+          onClick={nextMonth}
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 active:bg-gray-50"
+          aria-label="次の月"
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+      <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.08)]">
+        <div className="grid grid-cols-7 bg-gray-50">
+          {WEEKDAYS_SHORT.map((weekday, index) => (
+            <div
+              key={weekday}
+              className={`py-2 text-center text-[11px] font-bold ${index === 0 ? 'text-red-400' : index === 6 ? 'text-blue-500' : 'text-gray-500'}`}
+            >
+              {weekday}
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 bg-white">
+          {cells.map((day, index) => {
+            const column = index % 7;
+            const dayEvents = day ? (eventsByDate[day.toString()] ?? []) : [];
+            const todayCell = day ? isToday(day) : false;
+
+            return (
+              <div
+                key={index}
+                className={`min-h-[70px] border-t border-r border-gray-100 p-1.5 align-top sm:min-h-[82px] ${!day ? 'bg-gray-50/70' : 'bg-white'}`}
+                style={todayCell ? { backgroundColor: `${accentColor}12` } : undefined}
+              >
+                {day && (
+                  <>
+                    <span
+                      className={`mb-1 flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${
+                        todayCell
+                          ? 'text-white shadow-sm'
+                          : column === 0
+                            ? 'text-red-400'
+                            : column === 6
+                              ? 'text-blue-500'
+                              : 'text-gray-700'
+                      }`}
+                      style={todayCell ? { backgroundColor: accentColor } : undefined}
+                    >
+                      {day}
+                    </span>
+                    <div className="space-y-1">
+                      {dayEvents.slice(0, 2).map((event) => {
+                        const startTime = new Date(event.heldAt).toLocaleTimeString('ja-JP', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          timeZone: 'Asia/Tokyo',
+                        });
+                        return (
+                          <Link
+                            key={event.id}
+                            href={reserveHref(tenantId, event.id, reserveLineUrl)}
+                            className="block rounded-md px-1.5 py-1 text-white active:opacity-80"
+                            style={{ backgroundColor: accentColor }}
+                          >
+                            <p className="truncate text-[9px] font-bold leading-tight">{event.title}</p>
+                            <p className="mt-0.5 text-[8px] leading-none opacity-80">{startTime}</p>
+                          </Link>
+                        );
+                      })}
+                      {dayEvents.length > 2 && (
+                        <p className="text-center text-[9px] font-bold text-gray-400">+{dayEvents.length - 2}</p>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function LiffTopPage() {
   const { tenantId } = useParams<{ tenantId: string }>();
   const theme = useLiffTheme();
@@ -416,7 +531,7 @@ export default function LiffTopPage() {
               <p className="text-gray-400 text-xs">新しいイベントをお待ちください</p>
             </div>
           ) : tenant?.liffEventView === 'calendar' ? (
-            <LiffCalendarView events={events} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} reserveLineUrl={liffReserveLineUrl} />
+            <LiffCalendarCard events={events} tenantId={tenantId} accentColor={theme.accentColor} reserveLineUrl={liffReserveLineUrl} />
           ) : tenant?.liffEventView === 'thread' ? (
             <LiffThreadView events={events} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} reserveLineUrl={liffReserveLineUrl} />
           ) : (
