@@ -250,6 +250,15 @@ function eventPriceLabel(event: LiffEvent) {
   return event.price === 0 ? '無料' : `${event.price.toLocaleString()}円`;
 }
 
+function isLightHexColor(color: string) {
+  const hex = color.trim().replace('#', '');
+  if (!/^[0-9a-fA-F]{6}$/.test(hex)) return false;
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 > 180;
+}
+
 function LiffCalendarView({ events, tenantId, accentColor, cardBg, reserveLineUrl }: { events: LiffEvent[]; tenantId: string; accentColor: string; cardBg: string; reserveLineUrl?: string | null }) {
   const { year, month, prevMonth, nextMonth, cells, isToday } = useCalendarMonth();
 
@@ -342,6 +351,8 @@ function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl }: { e
   const firstEventDate = events[0]?.heldAt ?? null;
   const { year, month, prevMonth, nextMonth, cells, isToday } = useCalendarMonth(firstEventDate);
   const eventsByDate: Record<string, LiffEvent[]> = {};
+  const eventChipBg = isLightHexColor(accentColor) ? '#111827' : accentColor;
+  const eventChipText = '#ffffff';
   const monthEvents = events
     .filter((event) => {
       const date = new Date(event.heldAt);
@@ -405,7 +416,7 @@ function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl }: { e
             return (
               <div
                 key={index}
-                className={`min-h-[92px] border-t border-r border-gray-100 p-1 align-top ${!day ? 'bg-gray-50/70' : 'bg-white'}`}
+                className={`min-h-[98px] border-t border-r border-gray-100 p-1 align-top ${!day ? 'bg-gray-50/70' : 'bg-white'}`}
                 style={todayCell ? { backgroundColor: `${accentColor}12` } : undefined}
               >
                 {day && (
@@ -431,12 +442,12 @@ function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl }: { e
                           <Link
                             key={event.id}
                             href={reserveHref(tenantId, event.id, reserveLineUrl)}
-                            className="block rounded-md px-1 py-1 text-white active:opacity-80"
-                            style={{ backgroundColor: accentColor }}
+                            className="block rounded-md px-1 py-1 active:opacity-80"
+                            style={{ backgroundColor: eventChipBg, color: eventChipText }}
                           >
-                            <p className="truncate text-[8px] font-bold leading-tight">{locationPreview}</p>
-                            <p className="mt-0.5 truncate text-[7px] font-semibold leading-none opacity-90">{eventTimeRange(event).replace('-', '~')}</p>
-                            <p className="mt-0.5 truncate text-[7px] font-semibold leading-none opacity-90">{eventPriceLabel(event).replace(',', '')}</p>
+                            <p className="truncate text-[9px] font-bold leading-tight">{locationPreview}</p>
+                            <p className="mt-0.5 truncate text-[8px] font-semibold leading-none opacity-95">{eventTimeRange(event).replace('-', '~')}</p>
+                            <p className="mt-0.5 truncate text-[8px] font-semibold leading-none opacity-95">{eventPriceLabel(event).replace(',', '')}</p>
                           </Link>
                         );
                       })}
