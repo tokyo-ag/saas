@@ -405,7 +405,7 @@ function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl }: { e
             return (
               <div
                 key={index}
-                className={`min-h-[70px] border-t border-r border-gray-100 p-1.5 align-top sm:min-h-[82px] ${!day ? 'bg-gray-50/70' : 'bg-white'}`}
+                className={`min-h-[92px] border-t border-r border-gray-100 p-1 align-top ${!day ? 'bg-gray-50/70' : 'bg-white'}`}
                 style={todayCell ? { backgroundColor: `${accentColor}12` } : undefined}
               >
                 {day && (
@@ -434,9 +434,9 @@ function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl }: { e
                             className="block rounded-md px-1 py-1 text-white active:opacity-80"
                             style={{ backgroundColor: accentColor }}
                           >
-                            <p className="truncate text-[9px] font-bold leading-tight">{locationPreview}</p>
-                            <p className="mt-0.5 truncate text-[8px] leading-none opacity-85">{eventTimeRange(event)}</p>
-                            <p className="mt-0.5 truncate text-[8px] leading-none opacity-85">{eventPriceLabel(event)}</p>
+                            <p className="truncate text-[8px] font-bold leading-tight">{locationPreview}</p>
+                            <p className="mt-0.5 truncate text-[7px] font-semibold leading-none opacity-90">{eventTimeRange(event).replace('-', '~')}</p>
+                            <p className="mt-0.5 truncate text-[7px] font-semibold leading-none opacity-90">{eventPriceLabel(event).replace(',', '')}</p>
                           </Link>
                         );
                       })}
@@ -451,28 +451,6 @@ function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl }: { e
           })}
         </div>
       </div>
-      {monthEvents.length > 0 && (
-        <div className="mt-4 space-y-2">
-          {monthEvents.map((event) => (
-            <Link
-              key={event.id}
-              href={reserveHref(tenantId, event.id, reserveLineUrl)}
-              className="block rounded-xl border border-gray-100 bg-white px-3 py-3 shadow-sm active:opacity-80"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-14 shrink-0 rounded-lg px-2 py-1.5 text-center text-white" style={{ backgroundColor: accentColor }}>
-                  <p className="text-[11px] font-bold leading-tight">{eventDateLabel(event)}</p>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[14px] font-bold text-gray-900">{event.location}</p>
-                  <p className="mt-1 text-[12px] font-semibold text-gray-700">時間 {eventTimeRange(event)}</p>
-                  <p className="mt-0.5 text-[12px] font-semibold text-gray-700">参加費 {eventPriceLabel(event)}</p>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
     </section>
   );
 }
