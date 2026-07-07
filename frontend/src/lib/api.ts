@@ -907,6 +907,8 @@ export interface PublicPageInput {
   imageCaptions?: string[];
   dividerText?: string;
   textColor?: string;
+  bodyTextColor?: string;
+  navButtonTextColor?: string;
   accentColor?: string;
   backgroundColor?: string;
   backgroundOpacity?: number;

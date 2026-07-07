@@ -80,6 +80,8 @@ const emptyForm: PublicPageInput = {
   imageCaptions: [],
   dividerText: '',
   textColor: '#111827',
+  bodyTextColor: '',
+  navButtonTextColor: '',
   accentColor: '#06C755',
   backgroundColor: '#F7F8FA',
   backgroundOpacity: 100,
@@ -481,8 +483,6 @@ export default function AdminPublicPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [savedSlug, setSavedSlug] = useState<string | null>(null);
   const [form, setForm] = useState<PublicPageInput>(emptyForm);
-  const [subtitleDraft, setSubtitleDraft] = useState(emptyForm.subtitle ?? '');
-  const [isSubtitleComposing, setIsSubtitleComposing] = useState(false);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [reserveEvents, setReserveEvents] = useState<LiffEvent[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
@@ -501,12 +501,6 @@ export default function AdminPublicPage() {
   });
   const toggleSection = (key: string) => setOpenSections(p => ({ ...p, [key]: !p[key] }));
 
-  useEffect(() => {
-    const active = typeof document !== 'undefined' ? document.activeElement : null;
-    if (active instanceof HTMLElement && active.dataset.subtitleInput === 'true') return;
-    setSubtitleDraft(form.subtitle ?? '');
-  }, [form.subtitle]);
-
   const tenantCode = tenant?.code ?? tenant?.id ?? '';
   const displayName = tenant?.lineDisplayName ?? tenant?.name ?? '公開サイト';
   const siteTitle = form.title?.trim() || displayName;
@@ -514,6 +508,8 @@ export default function AdminPublicPage() {
   const generatedSlug = slugify(displayName) || slugify(tenantCode) || 'home';
   const previewUrl = tenantCode ? `${SITE_URL}/clubs/${tenantCode}/${savedSlug || generatedSlug}` : '';
   const textColor = form.textColor?.trim() || '#111827';
+  const bodyTextColor = form.bodyTextColor?.trim() || textColor;
+  const navButtonTextColor = form.navButtonTextColor?.trim() || textColor;
   const accentColor = form.accentColor?.trim() || '#06C755';
   const backgroundColor = form.backgroundColor?.trim() || '#F7F8FA';
   const backgroundOpacity = clampPercent(form.backgroundOpacity ?? 100);
@@ -681,7 +677,7 @@ export default function AdminPublicPage() {
   const buttonBgColor = form.buttonBgColor?.trim() || undefined;
   const btnBorderColor = hexToRgba(accentColor, buttonOpacity);
   const btnFillColor = buttonBgColor ? hexToRgba(buttonBgColor, buttonBgOpacity) : undefined;
-  const btnTextColor = hexToRgba(textColor, buttonTextOpacity);
+  const btnTextColor = hexToRgba(navButtonTextColor, buttonTextOpacity);
   const buttonBgStyle = btnFillColor ? { backgroundColor: btnFillColor } : {};
   const btnBoxShadow = getBtnBoxShadow(buttonStyle, btnBorderColor);
   const previewButtonLayoutClass = buttonLayout === 'row1x4' ? 'grid gap-2' : 'grid gap-2';
@@ -810,6 +806,8 @@ export default function AdminPublicPage() {
                   footerTextColor: normalizeFooterTextColor(fd.footerTextColor),
                   footerContactColor: fd.contactColor ?? '',
                   footerContactTextColor: normalizeFooterTextColor(fd.contactTextColor),
+                  bodyTextColor: fd.bodyTextColor ?? '',
+                  navButtonTextColor: fd.navButtonTextColor ?? '',
                   contactTitle: fd.contactTitle ?? '',
                   contactLead: fd.contactLead ?? '',
                   contactMessage: fd.contactMessage ?? '',
@@ -859,6 +857,8 @@ export default function AdminPublicPage() {
                   footerTextColor: '#111827',
                   footerContactColor: '',
                   footerContactTextColor: '#111827',
+                  bodyTextColor: '',
+                  navButtonTextColor: '',
                   contactTitle: '',
                   contactLead: '',
                   contactMessage: '',
@@ -983,7 +983,7 @@ export default function AdminPublicPage() {
     return (
       <p
         className={`${bodyLeadingClass(fontSize)} whitespace-pre-wrap break-words opacity-90`}
-        style={{ color: textColor, fontFamily, fontSize, overflowWrap: 'anywhere' }}>
+        style={{ color: bodyTextColor, fontFamily, fontSize, overflowWrap: 'anywhere' }}>
         {content || '団体説明'}
       </p>
     );
@@ -1040,7 +1040,7 @@ export default function AdminPublicPage() {
 
           if (block.type === 'faq') {
             const items = block.faqItems ?? [];
-            const faqTextStyle = { fontSize: blockFontSize, color: textColor };
+            const faqTextStyle = { fontSize: blockFontSize, color: bodyTextColor };
             return (
               <div key={block.id} className="space-y-1.5">
                 {items.length === 0 && <p className="text-xs text-gray-400">Q&Aを追加してください</p>}
@@ -1118,7 +1118,7 @@ export default function AdminPublicPage() {
     const payload: PublicPageInput = {
       ...form,
       title: siteTitle, slug: generatedSlug,
-      subtitle: subtitleDraft.trim().slice(0, 1000),
+      subtitle: (form.subtitle ?? '').trim().slice(0, 1000),
       coverImageUrl: imageUrls[0]?.trim(),
       imageUrls,
       imageCaptions: imageCaptions.map((caption) => caption.trim()).slice(0, imageUrls.length),
@@ -1158,6 +1158,8 @@ export default function AdminPublicPage() {
         footerTextColor: form.footerTextColor?.trim() || '',
         contactColor: form.footerContactColor?.trim() || '',
         contactTextColor: form.footerContactTextColor?.trim() || '#111827',
+        bodyTextColor: form.bodyTextColor?.trim() || '',
+        navButtonTextColor: form.navButtonTextColor?.trim() || '',
         contactTitle: form.contactTitle?.trim() || '',
         contactLead: form.contactLead?.trim() || '',
         contactMessage: form.contactMessage?.trim() || '',
@@ -1422,19 +1424,8 @@ export default function AdminPublicPage() {
           <SubSection label="サブタイトル文字" open={openSections.headerSubtitle} onToggle={() => toggleSection('headerSubtitle')}>
             <label className="block">
               <span className="mb-1 block text-[11px] font-bold text-gray-400">サブタイトル</span>
-              <textarea value={subtitleDraft}
-                data-subtitle-input="true"
-                onCompositionStart={() => setIsSubtitleComposing(true)}
-                onCompositionEnd={(e) => {
-                  setIsSubtitleComposing(false);
-                  setSubtitleDraft(e.currentTarget.value);
-                  setForm((p) => ({ ...p, subtitle: e.currentTarget.value }));
-                }}
-                onChange={(e) => {
-                  const next = e.target.value;
-                  setSubtitleDraft(next);
-                  if (!isSubtitleComposing) setForm((p) => ({ ...p, subtitle: next }));
-                }}
+              <textarea value={form.subtitle ?? ''}
+                onChange={(e) => setForm((p) => ({ ...p, subtitle: e.target.value }))}
                 placeholder="例：初心者歓迎の社会人サークル"
                 rows={5}
                 className="w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
@@ -1741,8 +1732,8 @@ export default function AdminPublicPage() {
               </div>
               <div className="flex items-center gap-3">
                 <span className="w-14 shrink-0 text-xs font-bold text-gray-500">文字色</span>
-                <input type="color" value={textColor}
-                  onChange={(e) => setForm((p) => ({ ...p, textColor: e.target.value }))}
+                <input type="color" value={navButtonTextColor}
+                  onChange={(e) => setForm((p) => ({ ...p, navButtonTextColor: e.target.value }))}
                   className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
                 <input type="range" min="0" max="100" step="5" value={buttonTextOpacity}
                   onChange={(e) => setForm((p) => ({ ...p, buttonTextOpacity: Number(e.target.value) }))}
@@ -1839,8 +1830,8 @@ export default function AdminPublicPage() {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-gray-400">文字色</span>
-            <input type="color" value={textColor}
-              onChange={(e) => setForm((p) => ({ ...p, textColor: e.target.value }))}
+            <input type="color" value={bodyTextColor}
+              onChange={(e) => setForm((p) => ({ ...p, bodyTextColor: e.target.value }))}
               className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
           </div>
 

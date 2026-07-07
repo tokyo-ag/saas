@@ -352,6 +352,12 @@ export default async function ClubCmsPage({
   const clubHref = `/clubs/${page.tenant.code ?? tenantCode}`;
   const reserveHref = `/clubs/${page.tenant.code ?? tenantCode}/reserve`;
   const textColor = page.textColor || '#111827';
+  const bodyTextColor = typeof parsedFt.bodyTextColor === 'string' && parsedFt.bodyTextColor.trim()
+    ? parsedFt.bodyTextColor.trim()
+    : textColor;
+  const navButtonTextColor = typeof parsedFt.navButtonTextColor === 'string' && parsedFt.navButtonTextColor.trim()
+    ? parsedFt.navButtonTextColor.trim()
+    : textColor;
   const accentColor = page.accentColor || '#06C755';
   const backgroundColor = page.backgroundColor || '#F7F8FA';
   const backgroundOpacity = clampPercent(page.backgroundOpacity ?? 100);
@@ -399,7 +405,7 @@ export default async function ClubCmsPage({
   const btnBgOpacity = clampPercent(page.buttonBgOpacity ?? 100);
   const btnTextOpacity = clampPercent(page.buttonTextOpacity ?? 100);
   const btnBorderColor = hexToRgba(btnBorderHex, buttonOpacity);
-  const btnTextColor = hexToRgba(textColor, btnTextOpacity);
+  const btnTextColor = hexToRgba(navButtonTextColor, btnTextOpacity);
   const btnBgStyle = page.buttonBgColor ? { backgroundColor: hexToRgba(page.buttonBgColor, btnBgOpacity) } : {};
   const btnRadiusStyle = Number.isInteger(page.buttonRadius) ? { borderRadius: `${page.buttonRadius}px` } : {};
   const btnSize = Number.isInteger(page.buttonSize) ? page.buttonSize! : 40;
@@ -683,8 +689,8 @@ export default async function ClubCmsPage({
                           <Image src={block.imageUrl} alt="" fill className="object-cover" sizes="96px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                         </div>
                       )}
-                      <div className={`min-w-0 flex-1 space-y-1 ${blockBodyClass}`} style={{ color: textColor, ...blockTextStyle }}>
-                        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, blockBodyClass, blockTextStyle))}
+                      <div className={`min-w-0 flex-1 space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>
+                        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, bodyTextColor, blockBodyClass, blockTextStyle))}
                       </div>
                     </div>
                   );
@@ -697,8 +703,8 @@ export default async function ClubCmsPage({
                           <Image src={block.imageUrl} alt="" fill className="object-cover" sizes="80px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                         </div>
                       )}
-                      <div className={`min-w-0 space-y-1 ${blockBodyClass}`} style={{ color: textColor, ...blockTextStyle }}>
-                        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, blockBodyClass, blockTextStyle))}
+                      <div className={`min-w-0 space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>
+                        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, bodyTextColor, blockBodyClass, blockTextStyle))}
                       </div>
                     </div>
                   );
@@ -711,8 +717,8 @@ export default async function ClubCmsPage({
                           <Image src={block.imageUrl} alt="" fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                         </div>
                       )}
-                      <div className={`space-y-1 ${blockBodyClass}`} style={{ color: textColor, ...blockTextStyle }}>
-                        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, blockBodyClass, blockTextStyle))}
+                      <div className={`space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>
+                        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, bodyTextColor, blockBodyClass, blockTextStyle))}
                       </div>
                     </div>
                   );
@@ -723,11 +729,11 @@ export default async function ClubCmsPage({
                     <div key={i} className="space-y-1.5">
                       {items.map((item: {q:string;a:string}, j: number) => (
                         <details key={j} className="group overflow-hidden rounded-xl border border-gray-100" style={{ backgroundColor: block.faqCardBg || '#F9FAFB' }}>
-                          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 select-none" style={{ color: textColor }}>
+                          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 select-none" style={{ color: bodyTextColor }}>
                             <span className="flex-1 font-bold" style={blockTextStyle}>{item.q}</span>
                             <span className="ml-2 shrink-0 text-xs text-gray-400 transition-transform duration-200 group-open:rotate-180">▼</span>
                           </summary>
-                          <div className={`border-t border-gray-100 px-4 py-3 leading-relaxed whitespace-pre-wrap ${blockBodyClass}`} style={{ color: textColor, opacity: 0.8, ...blockTextStyle }}>
+                          <div className={`border-t border-gray-100 px-4 py-3 leading-relaxed whitespace-pre-wrap ${blockBodyClass}`} style={{ color: bodyTextColor, opacity: 0.8, ...blockTextStyle }}>
                             {linkifyText(item.a, `faq-${i}-${j}`)}
                           </div>
                         </details>
@@ -753,15 +759,15 @@ export default async function ClubCmsPage({
                 }
                 // text
                 return (
-                  <div key={i} className={`space-y-1 ${blockBodyClass}`} style={{ color: textColor, ...blockTextStyle }}>
-                    {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, textColor, blockBodyClass, blockTextStyle))}
+                  <div key={i} className={`space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>
+                    {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, bodyTextColor, blockBodyClass, blockTextStyle))}
                   </div>
                 );
               })}
             </div>
           ) : (
             <div className={`space-y-2 ${bodySizeClass}`} style={bodyTextStyle}>
-              {page.body.split('\n').map((line, index) => renderLine(line, index, textColor, bodySizeClass, bodyTextStyle))}
+              {page.body.split('\n').map((line, index) => renderLine(line, index, bodyTextColor, bodySizeClass, bodyTextStyle))}
             </div>
           )}
         </div>
