@@ -616,7 +616,7 @@ export default async function ClubCmsPage({
         </>
       ) : (
         /* 通常モード: セクション順序で描画 */
-        <div className="border-b border-gray-100" style={{ backgroundColor: navBg }}>
+        <div className="border-b border-gray-100">
           {sectionOrder.map((key) => {
             if (shouldRenderInlineTitleLogo && key === 'name') return (
               <div key="name" className="px-5 pt-3 pb-1">
@@ -627,7 +627,7 @@ export default async function ClubCmsPage({
             if (key === 'name') return orgDisplayType !== 'image' ? (
               <div key="name" className="px-5 pt-3 pb-1">
                 <h1 className="font-bold leading-tight" style={{ ...titleTextStyle, lineHeight: 1.25, margin: 0 }}>
-                  <Link href={clubHref} className="block">
+                  <Link href={clubHref} className="block" style={{ color: 'inherit' }}>
                     {tenantName}
                   </Link>
                 </h1>
