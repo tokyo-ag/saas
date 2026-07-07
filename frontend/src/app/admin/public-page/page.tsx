@@ -144,6 +144,7 @@ const emptyForm: PublicPageInput = {
   reserveActionStyle: 'comiu',
   reserveLineUrl: '',
   blogPostCardBg: '',
+  blogPostTitleColor: '',
   blogTitle: '',
   blogLead: '',
   blogTitleColor: '',
@@ -665,6 +666,7 @@ export default function AdminPublicPage() {
   const reserveButtonTextColor = form.reserveButtonTextColor?.trim() || '#111827';
   const reserveButtonBorderColor = form.reserveButtonBorderColor?.trim() || reserveButtonBgColor;
   const blogPostCardBg = form.blogPostCardBg?.trim() || '#ffffff';
+  const blogPostTitleColor = form.blogPostTitleColor?.trim() || textColor;
   const blogSectionTitle = form.blogTitle?.trim() || '';
   const blogSectionLead = form.blogLead?.trim() || '';
   const blogTitleColor = form.blogTitleColor?.trim() || textColor;
@@ -828,6 +830,7 @@ export default function AdminPublicPage() {
                   reserveActionStyle: fd.reserveActionStyle === 'line' ? 'line' : 'comiu',
                   reserveLineUrl: fd.reserveLineUrl ?? fd.line ?? '',
                   blogPostCardBg: fd.blogPostCardBg ?? '',
+                  blogPostTitleColor: fd.blogPostTitleColor ?? '',
                   blogTitle: fd.blogTitle ?? '',
                   blogLead: fd.blogLead ?? '',
                   blogTitleColor: fd.blogTitleColor ?? '',
@@ -879,6 +882,7 @@ export default function AdminPublicPage() {
                   reserveActionStyle: 'comiu',
                   reserveLineUrl: '',
                   blogPostCardBg: '',
+                  blogPostTitleColor: '',
                   blogTitle: '',
                   blogLead: '',
                   blogTitleColor: '',
@@ -1180,6 +1184,7 @@ export default function AdminPublicPage() {
         reserveActionStyle,
         reserveLineUrl: form.reserveLineUrl?.trim() || '',
         blogPostCardBg: form.blogPostCardBg?.trim() || '',
+        blogPostTitleColor: form.blogPostTitleColor?.trim() || '',
         blogTitle: form.blogTitle?.trim() || '',
         blogLead: form.blogLead?.trim() || '',
         blogTitleColor: form.blogTitleColor?.trim() || '',
@@ -2230,6 +2235,15 @@ export default function AdminPublicPage() {
                   className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
                 />
               </label>
+              <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                <span className="text-[11px] font-bold text-gray-500">記事タイトルの文字色</span>
+                <input
+                  type="color"
+                  value={blogPostTitleColor}
+                  onChange={(e) => setForm((p) => ({ ...p, blogPostTitleColor: e.target.value }))}
+                  className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
+                />
+              </label>
             </div>
           )}
         </div>
@@ -2555,7 +2569,7 @@ export default function AdminPublicPage() {
                           <div key={post.id} className="flex gap-2 rounded-lg p-2 ring-1 ring-black/5" style={{ backgroundColor: blogPostCardBg }}>
                             {image && <img src={image} alt="" className="h-12 w-16 shrink-0 rounded-md object-cover" />}
                             <div className="min-w-0">
-                              <p className="truncate text-xs font-bold" style={{ color: textColor }}>{post.title}</p>
+                              <p className="truncate text-xs font-bold" style={{ color: blogPostTitleColor }}>{post.title}</p>
                               {post.excerpt && <p className="mt-0.5 line-clamp-2 text-[10px] leading-4" style={{ color: blogLeadColor }}>{post.excerpt}</p>}
                             </div>
                           </div>

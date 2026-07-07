@@ -972,6 +972,7 @@ export interface PublicPageInput {
   reserveActionStyle?: 'comiu' | 'line';
   reserveLineUrl?: string;
   blogPostCardBg?: string;
+  blogPostTitleColor?: string;
   blogTitle?: string;
   blogLead?: string;
   blogTitleColor?: string;

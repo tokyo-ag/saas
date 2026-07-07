@@ -472,6 +472,7 @@ export default async function ClubCmsPage({
         reserveActionStyle?: string;
         displayFields?: { location?: boolean; price?: boolean; capacity?: boolean; description?: boolean };
         blogPostCardBg?: string;
+        blogPostTitleColor?: string;
         blogTitle?: string;
         blogLead?: string;
         blogTitleColor?: string;
@@ -502,6 +503,7 @@ export default async function ClubCmsPage({
   const reserveButtonTextColor = sectionCopy.reserveButtonTextColor?.trim() || '#111827';
   const reserveButtonBorderColor = sectionCopy.reserveButtonBorderColor?.trim() || reserveButtonBgColor;
   const blogPostCardBg = sectionCopy.blogPostCardBg?.trim() || '#ffffff';
+  const blogPostTitleColor = sectionCopy.blogPostTitleColor?.trim() || textColor;
   const reserveActionStyle = sectionCopy.reserveActionStyle === 'line' ? 'line' : 'comiu';
   const df = sectionCopy.displayFields ?? {};
   const showLocation = df.location !== false;
@@ -837,7 +839,7 @@ export default async function ClubCmsPage({
                       style={{ backgroundColor: blogPostCardBg }}>
                       {postImage && <Image src={postImage} alt="" width={80} height={64} className="h-16 w-20 shrink-0 rounded-lg object-cover" />}
                       <div className="min-w-0">
-                        <p className="line-clamp-2 text-sm font-bold leading-5" style={{ color: textColor }}>{post.title}</p>
+                        <p className="line-clamp-2 text-sm font-bold leading-5" style={{ color: blogPostTitleColor }}>{post.title}</p>
                         {post.excerpt && <p className="mt-1 line-clamp-2 text-xs leading-5" style={{ color: blogLeadColor }}>{post.excerpt}</p>}
                       </div>
                     </Link>
