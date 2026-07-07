@@ -225,6 +225,31 @@ function TenantCard({ tenant }: { tenant: PublicTenant }) {
 
 const WEEKDAYS_SHORT = ['日', '月', '火', '水', '木', '金', '土'];
 
+function eventTimeRange(event: LiffEvent) {
+  const start = new Date(event.heldAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
+  if (!event.endAt) return start;
+  const end = new Date(event.endAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
+  return `${start}-${end}`;
+}
+
+function eventDateLabel(event: LiffEvent) {
+  return new Date(event.heldAt).toLocaleDateString('ja-JP', {
+    month: 'numeric',
+    day: 'numeric',
+    weekday: 'short',
+    timeZone: 'Asia/Tokyo',
+  });
+}
+
+function eventPriceLabel(event: LiffEvent) {
+  if (event.priceMale != null && event.priceFemale != null) {
+    return event.priceMale === event.priceFemale
+      ? `${event.priceMale.toLocaleString()}円`
+      : `男${event.priceMale.toLocaleString()}円 / 女${event.priceFemale.toLocaleString()}円`;
+  }
+  return event.price === 0 ? '無料' : `${event.price.toLocaleString()}円`;
+}
+
 function LiffCalendarView({ events, tenantId, accentColor, cardBg, reserveLineUrl }: { events: LiffEvent[]; tenantId: string; accentColor: string; cardBg: string; reserveLineUrl?: string | null }) {
   const { year, month, prevMonth, nextMonth, cells, isToday } = useCalendarMonth();
 
@@ -314,15 +339,20 @@ function LiffCalendarView({ events, tenantId, accentColor, cardBg, reserveLineUr
 }
 
 function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl }: { events: LiffEvent[]; tenantId: string; accentColor: string; reserveLineUrl?: string | null }) {
-  const { year, month, prevMonth, nextMonth, cells, isToday } = useCalendarMonth();
+  const firstEventDate = events[0]?.heldAt ?? null;
+  const { year, month, prevMonth, nextMonth, cells, isToday } = useCalendarMonth(firstEventDate);
   const eventsByDate: Record<string, LiffEvent[]> = {};
+  const monthEvents = events
+    .filter((event) => {
+      const date = new Date(event.heldAt);
+      return date.getFullYear() === year && date.getMonth() === month;
+    })
+    .sort((a, b) => new Date(a.heldAt).getTime() - new Date(b.heldAt).getTime());
 
-  for (const event of events) {
+  for (const event of monthEvents) {
     const date = new Date(event.heldAt);
-    if (date.getFullYear() === year && date.getMonth() === month) {
-      const key = date.getDate().toString();
-      (eventsByDate[key] ??= []).push(event);
-    }
+    const key = date.getDate().toString();
+    (eventsByDate[key] ??= []).push(event);
   }
 
   return (
@@ -395,26 +425,23 @@ function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl }: { e
                       {day}
                     </span>
                     <div className="space-y-1">
-                      {dayEvents.slice(0, 2).map((event) => {
-                        const startTime = new Date(event.heldAt).toLocaleTimeString('ja-JP', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          timeZone: 'Asia/Tokyo',
-                        });
+                      {dayEvents.slice(0, 1).map((event) => {
+                        const locationPreview = event.location.trim().slice(0, 6);
                         return (
                           <Link
                             key={event.id}
                             href={reserveHref(tenantId, event.id, reserveLineUrl)}
-                            className="block rounded-md px-1.5 py-1 text-white active:opacity-80"
+                            className="block rounded-md px-1 py-1 text-white active:opacity-80"
                             style={{ backgroundColor: accentColor }}
                           >
-                            <p className="truncate text-[9px] font-bold leading-tight">{event.title}</p>
-                            <p className="mt-0.5 text-[8px] leading-none opacity-80">{startTime}</p>
+                            <p className="truncate text-[9px] font-bold leading-tight">{locationPreview}</p>
+                            <p className="mt-0.5 truncate text-[8px] leading-none opacity-85">{eventTimeRange(event)}</p>
+                            <p className="mt-0.5 truncate text-[8px] leading-none opacity-85">{eventPriceLabel(event)}</p>
                           </Link>
                         );
                       })}
-                      {dayEvents.length > 2 && (
-                        <p className="text-center text-[9px] font-bold text-gray-400">+{dayEvents.length - 2}</p>
+                      {dayEvents.length > 1 && (
+                        <p className="text-center text-[9px] font-bold text-gray-400">+{dayEvents.length - 1}</p>
                       )}
                     </div>
                   </>
@@ -424,6 +451,28 @@ function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl }: { e
           })}
         </div>
       </div>
+      {monthEvents.length > 0 && (
+        <div className="mt-4 space-y-2">
+          {monthEvents.map((event) => (
+            <Link
+              key={event.id}
+              href={reserveHref(tenantId, event.id, reserveLineUrl)}
+              className="block rounded-xl border border-gray-100 bg-white px-3 py-3 shadow-sm active:opacity-80"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-14 shrink-0 rounded-lg px-2 py-1.5 text-center text-white" style={{ backgroundColor: accentColor }}>
+                  <p className="text-[11px] font-bold leading-tight">{eventDateLabel(event)}</p>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[14px] font-bold text-gray-900">{event.location}</p>
+                  <p className="mt-1 text-[12px] font-semibold text-gray-700">時間 {eventTimeRange(event)}</p>
+                  <p className="mt-0.5 text-[12px] font-semibold text-gray-700">参加費 {eventPriceLabel(event)}</p>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
