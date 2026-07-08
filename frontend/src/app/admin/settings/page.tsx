@@ -15,6 +15,13 @@ const tabs = [
   { label: 'プラン', href: '/admin/settings/plan' },
 ];
 
+const TENANT_TAG_GROUPS = [
+  { label: '活動ジャンル', tags: ['インカレ', 'バドミントン', 'バスケ', 'フットサル', 'バレー', '交流会', '飲み会', '旅行'] },
+  { label: '参加しやすさ', tags: ['初心者歓迎', '一人参加OK', '初参加歓迎', '見学OK', '途中参加OK', '手ぶらOK'] },
+  { label: '雰囲気', tags: ['ゆるい', '少人数', '友達作り', 'アットホーム', '飲み会少なめ', 'ガチすぎない'] },
+  { label: '参加対象', tags: ['大学生向け', '社会人OK', '女子歓迎', '男子歓迎', '留学生歓迎', '新歓'] },
+] as const;
+
 function SettingsTabs() {
   return (
     <nav className="-mx-4 mb-6 flex gap-1 overflow-x-auto border-b border-gray-200 px-4 md:mx-0 md:px-0">
@@ -66,7 +73,7 @@ async function uploadIconBlob(blob: Blob): Promise<string> {
 
 export default function SettingsPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [form, setForm] = useState<Pick<TenantInput, 'name' | 'description' | 'iconUrl'>>({ name: '', description: '', iconUrl: '' });
+  const [form, setForm] = useState<Pick<TenantInput, 'name' | 'description' | 'iconUrl' | 'tags'>>({ name: '', description: '', iconUrl: '', tags: [] });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
@@ -120,9 +127,20 @@ export default function SettingsPage() {
         name: tenantData.name,
         description: tenantData.description ?? '',
         iconUrl: tenantData.iconUrl ?? '',
+        tags: tenantData.tags ?? [],
       });
     });
   }, []);
+
+  function toggleTag(tag: string) {
+    setForm((prev) => {
+      const tags = prev.tags ?? [];
+      return {
+        ...prev,
+        tags: tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag],
+      };
+    });
+  }
 
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
@@ -134,6 +152,7 @@ export default function SettingsPage() {
         name: form.name,
         description: form.description,
         iconUrl: form.iconUrl,
+        tags: form.tags ?? [],
       });
       setTenant(updated);
       setSaved(true);
@@ -270,6 +289,44 @@ export default function SettingsPage() {
             <span className={`inline-flex rounded px-2 py-1 text-xs font-medium ${tenant.plan === 'standard' ? 'bg-[#06C755]/10 text-[#06C755]' : 'bg-gray-100 text-gray-600'}`}>
               {tenant.plan === 'standard' ? 'スタンダード' : tenant.plan === 'pro' ? 'プロ' : 'フリー'}
             </span>
+          </div>
+
+          <div>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">団体タグ</label>
+                <p className="mt-1 text-xs text-gray-500">記事やLPから団体を紹介するときに使う分類です。</p>
+              </div>
+              {(form.tags?.length ?? 0) > 0 && (
+                <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs font-bold text-gray-500">{form.tags?.length}個</span>
+              )}
+            </div>
+            <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+              {TENANT_TAG_GROUPS.map((group) => (
+                <div key={group.label}>
+                  <p className="mb-1.5 text-xs font-bold text-gray-500">{group.label}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {group.tags.map((tag) => {
+                      const selected = form.tags?.includes(tag) ?? false;
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => toggleTag(tag)}
+                          className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
+                            selected
+                              ? 'border-[#06C755] bg-[#06C755] text-white'
+                              : 'border-gray-200 bg-white text-gray-600 hover:border-[#06C755]/60'
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <button

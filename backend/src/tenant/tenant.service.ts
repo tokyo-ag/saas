@@ -9,13 +9,14 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import Stripe from 'stripe';
-import { IsString, IsOptional } from 'class-validator';
+import { IsArray, IsOptional, IsString } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 
 export class UpdateTenantDto {
   @IsOptional() @IsString() name?: string;
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsString() publicBlogUrl?: string;
+  @IsOptional() @IsArray() @IsString({ each: true }) tags?: string[];
   @IsOptional() @IsString() lineChannelId?: string;
   @IsOptional() @IsString() lineChannelSecret?: string;
   @IsOptional() @IsString() lineChannelAccessToken?: string;
@@ -181,6 +182,9 @@ export class TenantService {
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.publicBlogUrl !== undefined && {
           publicBlogUrl: dto.publicBlogUrl || null,
+        }),
+        ...(dto.tags !== undefined && {
+          tags: dto.tags.map((tag) => tag.trim()).filter(Boolean).slice(0, 20),
         }),
         ...(dto.lineChannelId !== undefined && {
           lineChannelId: dto.lineChannelId.trim() || null,

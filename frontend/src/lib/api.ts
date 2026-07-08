@@ -674,6 +674,7 @@ export interface Tenant {
   name: string;
   description?: string;
   publicBlogUrl?: string;
+  tags?: string[];
   lineChannelId?: string;
   lineChannelSecret?: string;
   lineChannelAccessToken?: string;
@@ -707,6 +708,7 @@ export interface TenantInput {
   name: string;
   description?: string;
   publicBlogUrl?: string;
+  tags?: string[];
   lineChannelId?: string;
   lineChannelSecret?: string;
   lineChannelAccessToken?: string;
@@ -724,6 +726,7 @@ export interface LiffTenant {
   id: string;
   name: string;
   description?: string;
+  tags?: string[];
   lineDisplayName?: string;
   linePictureUrl?: string;
   iconUrl?: string;
@@ -796,6 +799,7 @@ export interface PublicTenant {
   code?: string | null;
   name: string;
   description?: string;
+  tags?: string[];
   lineDisplayName?: string;
   linePictureUrl?: string;
   publicBlogUrl?: string;
