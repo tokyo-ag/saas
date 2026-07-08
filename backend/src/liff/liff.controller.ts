@@ -85,6 +85,15 @@ export class LiffController {
   }
 
   @UseGuards(LiffGuard)
+  @Get('my-reservations')
+  getMyReservations(
+    @Param('tenantId') tenantId: string,
+    @LiffUser() lineUserId: string,
+  ) {
+    return this.liffService.getMyReservations(tenantId, lineUserId);
+  }
+
+  @UseGuards(LiffGuard)
   @Get('events/:eventId/my-review')
   getMyReview(
     @Param('tenantId') tenantId: string,

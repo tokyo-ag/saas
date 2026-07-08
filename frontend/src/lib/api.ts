@@ -214,11 +214,13 @@ export const api = {
         body: JSON.stringify({ content }),
       });
     },
-    updateProfile: (tenantId: string, _lineUserId: string, data: { name: string; grade: string; gender: string; level?: string }) =>
+    updateProfile: (tenantId: string, _lineUserId: string, data: { name: string; grade: string; gender: string; level?: string; comment?: string }) =>
       request<LiffProfile>(
         `/liff/${tenantId}/profile`,
         { method: 'PATCH', body: JSON.stringify(data) },
       ),
+    myReservations: (tenantId: string) =>
+      request<LiffMyReservation[]>(`/liff/${tenantId}/my-reservations`),
     syncLineProfile: (tenantId: string, _lineUserId: string, data: { lineDisplayName?: string; linePictureUrl?: string }) =>
       request<void>(
         `/liff/${tenantId}/profile/line`,
@@ -652,6 +654,7 @@ export interface LiffEvent {
   levelEnabled?: boolean;
   rosterShareEnabled?: boolean;
   rosterShareToken?: string | null;
+  category?: string | null;
   friendAttendees?: { id: string; name: string | null }[];
   reviews?: EventReview[];
 }
@@ -682,6 +685,7 @@ export interface ReserveInput {
   grade: string;
   gender: string;
   level?: string;
+  comment?: string;
 }
 
 export interface Tenant {
@@ -772,7 +776,26 @@ export interface LiffProfile {
   grade?: string;
   gender?: string;
   level?: string;
+  comment?: string;
   showEventsToConnections: boolean;
+}
+
+export interface LiffMyReservation {
+  id: string;
+  status: ReservationStatus;
+  waitlistOrder?: number | null;
+  event: {
+    id: string;
+    title: string;
+    heldAt: string;
+    endAt?: string | null;
+    location: string;
+    price: number;
+    priceMale?: number | null;
+    priceFemale?: number | null;
+    description?: string | null;
+    category?: string | null;
+  };
 }
 
 export interface LiffConnection {
@@ -1164,6 +1187,7 @@ export interface PublicRoster {
     grade: string | null;
     gender: string | null;
     level: string | null;
+    comment: string | null;
     status: ReservationStatus;
     waitlistOrder: number | null;
   }[];

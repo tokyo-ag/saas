@@ -67,7 +67,7 @@ export class PublicController {
     const reservations = await this.prisma.reservation.findMany({
       where: { eventId: event.id, status: { not: 'cancelled' } },
       include: {
-        member: { select: { name: true, grade: true, gender: true, level: true } },
+        member: { select: { name: true, grade: true, gender: true, level: true, comment: true } },
       },
       orderBy: [{ status: 'asc' }, { reservedAt: 'asc' }],
     });
@@ -84,6 +84,7 @@ export class PublicController {
         grade: r.member.grade,
         gender: r.member.gender,
         level: r.member.level,
+        comment: r.member.comment,
         status: r.status,
         waitlistOrder: r.waitlistOrder,
       })),

@@ -296,6 +296,7 @@ model Member {
   grade               String?   @db.VarChar(50)
   gender              String?   @db.VarChar(20)
   level               String?   @db.VarChar(20)
+  comment             String?   @db.VarChar(200)
   showEventsToConnections Boolean  @default(true) @map("show_events_to_connections")
   blockedAt           DateTime? @map("blocked_at")
   createdAt           DateTime  @default(now()) @map("created_at")

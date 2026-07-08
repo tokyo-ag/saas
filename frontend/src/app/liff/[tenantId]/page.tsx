@@ -8,7 +8,6 @@ import { api, API_URL, formatDateShort, LiffEvent, LiffTenant, PublicTenant } fr
 import { imgUrl } from '@/lib/imgUrl';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
 import { initLiff, getLiffProfile } from '@/lib/liff';
-import LiffBottomNav from '@/components/liff/LiffBottomNav';
 import { EventCardSkeleton } from '@/components/liff/EventCardSkeleton';
 import { useLiffTheme } from '@/components/liff/LiffThemeProvider';
 
@@ -532,7 +531,7 @@ export default function LiffTopPage() {
 
   return (
     <>
-      <div className="min-h-screen animate-page-in pb-24" style={{ backgroundColor: theme.backgroundColor }}>
+      <div className="min-h-screen animate-page-in" style={{ backgroundColor: theme.backgroundColor }}>
         {/* header */}
         <div className="sticky top-0 z-10 border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
           <div className="flex items-center gap-2.5 px-4 pt-12 pb-3 sm:pt-4 max-w-4xl mx-auto">
@@ -541,9 +540,16 @@ export default function LiffTopPage() {
             ) : (
               <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-sm" style={{ backgroundColor: `${theme.accentColor}30` }}>🎉</div>
             )}
-            <h1 className="text-[18px] font-bold text-gray-900 tracking-tight truncate">
+            <h1 className="text-[18px] font-bold text-gray-900 tracking-tight truncate flex-1">
               {tenant?.lineDisplayName ?? tenant?.name ?? 'Home'}
             </h1>
+            <Link
+              href={`/liff/${tenantId}/profile`}
+              className="shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500"
+              aria-label="マイページ"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </Link>
           </div>
         </div>
 
@@ -592,8 +598,6 @@ export default function LiffTopPage() {
           )}
         </div>
       </div>
-
-      <LiffBottomNav tenantId={tenantId} />
     </>
   );
 }

@@ -19,6 +19,7 @@ export class CreateReservationDto {
   @IsOptional() @IsString() grade?: string;
   @IsOptional() @IsString() gender?: string;
   @IsOptional() @IsString() level?: string;
+  @IsOptional() @IsString() @MaxLength(200) comment?: string;
   @IsOptional() @IsString() lineDisplayName?: string;
   @IsOptional() @IsString() linePictureUrl?: string;
 }
@@ -363,6 +364,7 @@ export class LiffService {
           grade: dto.grade,
           gender: dto.gender,
           ...(dto.level && { level: dto.level }),
+          ...(dto.comment !== undefined && { comment: dto.comment }),
           ...(resolvedDisplayName && { lineDisplayName: resolvedDisplayName }),
           ...(resolvedPictureUrl && { linePictureUrl: resolvedPictureUrl }),
         },
@@ -375,6 +377,7 @@ export class LiffService {
           ...(dto.grade && { grade: dto.grade }),
           ...(dto.gender && { gender: dto.gender }),
           ...(dto.level && { level: dto.level }),
+          ...(dto.comment !== undefined && { comment: dto.comment }),
           ...(resolvedDisplayName && { lineDisplayName: resolvedDisplayName }),
           ...(resolvedPictureUrl && { linePictureUrl: resolvedPictureUrl }),
         },
@@ -625,6 +628,41 @@ export class LiffService {
     return reservation;
   }
 
+  // 自分の予約一覧（マイページ用）
+  async getMyReservations(tenantId: string, lineUserId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
+    const member = await this.findMember(tenantId, lineUserId);
+    if (!member) return [];
+
+    const reservations = await this.prisma.reservation.findMany({
+      where: {
+        tenantId,
+        memberId: member.id,
+        status: { not: 'cancelled' },
+      },
+      include: { event: true },
+      orderBy: { event: { heldAt: 'desc' } },
+    });
+
+    return reservations.map((r) => ({
+      id: r.id,
+      status: r.status,
+      waitlistOrder: r.waitlistOrder,
+      event: {
+        id: r.event.id,
+        title: r.event.title,
+        heldAt: r.event.heldAt,
+        endAt: this.publicEndAt(r.event.heldAt, r.event.endAt),
+        location: r.event.location,
+        price: r.event.price,
+        priceMale: r.event.priceMale,
+        priceFemale: r.event.priceFemale,
+        description: r.event.description,
+        category: r.event.category,
+      },
+    }));
+  }
+
   private async ensureEventExists(tenantId: string, eventId: string) {
     const event = await this.prisma.event.findFirst({
       where: { id: eventId, tenantId },
@@ -672,6 +710,7 @@ export class LiffService {
       grade: member.grade,
       gender: member.gender,
       level: member.level,
+      comment: member.comment,
       showEventsToConnections: member.showEventsToConnections,
     };
   }
@@ -686,6 +725,7 @@ export class LiffService {
       grade: member.grade,
       gender: member.gender,
       level: member.level,
+      comment: member.comment,
       showEventsToConnections: member.showEventsToConnections,
     };
   }
@@ -693,7 +733,7 @@ export class LiffService {
   async updateProfile(
     tenantId: string,
     lineUserId: string,
-    data: { name: string; grade: string; gender: string; level?: string },
+    data: { name: string; grade: string; gender: string; level?: string; comment?: string },
   ) {
     tenantId = await this.resolveTenantId(tenantId);
     const member = await this.findMember(tenantId, lineUserId);
@@ -705,6 +745,7 @@ export class LiffService {
         grade: data.grade,
         gender: data.gender,
         level: data.level || null,
+        comment: data.comment || null,
       },
     });
     return {
@@ -713,6 +754,7 @@ export class LiffService {
       grade: updated.grade,
       gender: updated.gender,
       level: updated.level,
+      comment: updated.comment,
       showEventsToConnections: updated.showEventsToConnections,
     };
   }
