@@ -383,15 +383,17 @@ function ReservePageInner() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
-      <div className="text-white px-4 py-4 flex items-center gap-3" style={{ backgroundColor: accentColor }}>
-        <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-white text-xl leading-none">‹</button>
-        <h1 className="text-base font-bold flex-1">{isWaitlist ? 'キャンセル待ち登録' : '予約確認'}</h1>
-        <Link href={`/liff/${tenantId}/profile`} className="text-xs font-medium text-white/90 underline underline-offset-2">
-          マイページ
-        </Link>
+      <div className="text-white" style={{ backgroundColor: accentColor }}>
+        <div className="max-w-[480px] mx-auto px-4 py-4 flex items-center gap-3">
+          <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-white text-xl leading-none">‹</button>
+          <h1 className="text-base font-bold flex-1">{isWaitlist ? 'キャンセル待ち登録' : '予約確認'}</h1>
+          <Link href={`/liff/${tenantId}/profile`} className="text-xs font-medium text-white/90 underline underline-offset-2">
+            マイページ
+          </Link>
+        </div>
       </div>
 
-      <div className="px-4 py-5 space-y-4">
+      <div className="max-w-[480px] mx-auto px-4 py-5 space-y-4">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>
         )}
@@ -478,7 +480,7 @@ function ReservePageInner() {
             <button
               onClick={handleCancel}
               disabled={cancelling}
-              className="rounded-full px-3 py-1 text-[11px] font-bold transition-colors disabled:opacity-50"
+              className="rounded-full px-6 py-2.5 text-sm font-bold transition-colors disabled:opacity-50"
               style={cancelling ? { border: '1px solid #fecaca', color: '#ef4444', backgroundColor: '#fef2f2' } : { backgroundColor: hexToRgba(accentColor, 10), color: accentColor }}
             >
               {cancelling ? 'キャンセル' : (

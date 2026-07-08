@@ -152,12 +152,14 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F5]" style={{ '--liff-accent': accentColor } as React.CSSProperties}>
-      <div className="text-white px-4 py-4 flex items-center gap-3" style={{ backgroundColor: accentColor }}>
-        <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-white text-xl leading-none">‹</button>
-        <h1 className="text-base font-bold">マイページ</h1>
+      <div className="text-white" style={{ backgroundColor: accentColor }}>
+        <div className="max-w-[480px] mx-auto px-4 py-4 flex items-center gap-3">
+          <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-white text-xl leading-none">‹</button>
+          <h1 className="text-base font-bold">マイページ</h1>
+        </div>
       </div>
 
-      <div className="px-4 py-5 space-y-5">
+      <div className="max-w-[480px] mx-auto px-4 py-5 space-y-5">
         {returnTo && (
           <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-xl text-sm">
             予約を続けるには、プロフィールを入力して保存してください。
