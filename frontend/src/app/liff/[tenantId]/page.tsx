@@ -42,13 +42,13 @@ function AvatarRow({ count, friends }: { count: number; friends?: { id: string; 
   );
 }
 
-function ReservedBadge({ status, accentColor, className = '' }: { status?: string; accentColor: string; className?: string }) {
+function ReservedBadge({ status, accentColor, className = '', style }: { status?: string; accentColor: string; className?: string; style?: React.CSSProperties }) {
   if (!status) return null;
   const isWaitlisted = status === 'waitlisted';
   return (
     <span
-      className={`text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full ${className}`}
-      style={{ backgroundColor: isWaitlisted ? '#fbbf24' : accentColor }}
+      className={`text-white font-bold rounded-full whitespace-nowrap ${className}`}
+      style={{ backgroundColor: isWaitlisted ? '#fbbf24' : accentColor, fontSize: '9px', padding: '2px 6px', ...style }}
     >
       {isWaitlisted ? 'キャンセル待ち' : '予約済み'}
     </span>
@@ -462,7 +462,12 @@ function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl, mySta
                             style={{ backgroundColor: eventChipBg, color: eventChipText }}
                           >
                             {myStatusByEvent?.[event.id] && (
-                              <ReservedBadge status={myStatusByEvent[event.id]} accentColor={accentColor} className="mb-0.5 inline-block px-1 py-0 text-[6px] leading-tight" />
+                              <ReservedBadge
+                                status={myStatusByEvent[event.id]}
+                                accentColor={accentColor}
+                                className="mb-0.5 inline-block leading-tight"
+                                style={{ fontSize: '6px', padding: '1px 3px' }}
+                              />
                             )}
                             <p className="truncate text-[9px] font-bold leading-tight">{locationPreview}</p>
                             <p className="mt-0.5 truncate text-[8px] font-semibold leading-none opacity-95">{eventTimeRange(event).replace('-', '~')}</p>

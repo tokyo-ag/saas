@@ -474,19 +474,21 @@ function ReservePageInner() {
         )}
 
         {myReservation ? (
-          <button
-            onClick={handleCancel}
-            disabled={cancelling}
-            className="w-full py-4 rounded-2xl text-sm font-bold transition-colors disabled:opacity-50"
-            style={cancelling ? { border: '1px solid #fecaca', color: '#ef4444', backgroundColor: '#fef2f2' } : { backgroundColor: hexToRgba(accentColor, 10), color: accentColor }}
-          >
-            {cancelling ? 'キャンセル' : (
-              <>
-                {STATUS_LABEL[myReservation.status] ?? myReservation.status}
-                {myReservation.status === 'waitlisted' && myReservation.waitlistOrder ? `（${myReservation.waitlistOrder}番目）` : ''}
-              </>
-            )}
-          </button>
+          <div className="flex justify-center">
+            <button
+              onClick={handleCancel}
+              disabled={cancelling}
+              className="rounded-full px-3 py-1 text-[11px] font-bold transition-colors disabled:opacity-50"
+              style={cancelling ? { border: '1px solid #fecaca', color: '#ef4444', backgroundColor: '#fef2f2' } : { backgroundColor: hexToRgba(accentColor, 10), color: accentColor }}
+            >
+              {cancelling ? 'キャンセル' : (
+                <>
+                  {STATUS_LABEL[myReservation.status] ?? myReservation.status}
+                  {myReservation.status === 'waitlisted' && myReservation.waitlistOrder ? `（${myReservation.waitlistOrder}番目）` : ''}
+                </>
+              )}
+            </button>
+          </div>
         ) : (
           <button
             onClick={() => submit()}
