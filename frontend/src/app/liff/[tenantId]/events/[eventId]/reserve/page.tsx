@@ -466,21 +466,20 @@ function ReservePageInner() {
         )}
 
         {myReservation ? (
-          <div className="space-y-2">
-            <p className="text-center text-sm font-semibold text-[#06C755]">
-              {STATUS_LABEL[myReservation.status] ?? myReservation.status}
-              {myReservation.status === 'waitlisted' && myReservation.waitlistOrder && (
-                <span className="text-gray-400 font-normal ml-1">（{myReservation.waitlistOrder}番目）</span>
-              )}
-            </p>
-            <button
-              onClick={handleCancel}
-              disabled={cancelling}
-              className="w-full border border-red-200 text-red-400 py-4 rounded-2xl text-sm font-medium disabled:opacity-50 active:bg-red-50"
-            >
-              {cancelling ? 'キャンセル中...' : 'キャンセルする'}
-            </button>
-          </div>
+          <button
+            onClick={handleCancel}
+            disabled={cancelling}
+            className={`w-full py-4 rounded-2xl text-sm font-bold transition-colors disabled:opacity-50 ${
+              cancelling ? 'border border-red-200 text-red-500 bg-red-50' : 'bg-[#06C755]/10 text-[#06C755]'
+            }`}
+          >
+            {cancelling ? 'キャンセル' : (
+              <>
+                {STATUS_LABEL[myReservation.status] ?? myReservation.status}
+                {myReservation.status === 'waitlisted' && myReservation.waitlistOrder ? `（${myReservation.waitlistOrder}番目）` : ''}
+              </>
+            )}
+          </button>
         ) : (
           <button
             onClick={() => submit()}

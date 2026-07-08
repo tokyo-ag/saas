@@ -249,19 +249,22 @@ export default function ProfilePage() {
                               <p>{priceLabel(r)}</p>
                             </div>
                           </div>
-                          <span className="shrink-0 rounded-full bg-[#06C755]/10 px-2.5 py-1 text-[11px] font-bold text-[#06C755]">
-                            {STATUS_LABEL[r.status] ?? r.status}
-                            {r.status === 'waitlisted' && r.waitlistOrder ? `（${r.waitlistOrder}番目）` : ''}
-                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleCancel(r.id)}
+                            disabled={cancellingId === r.id}
+                            className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors disabled:opacity-50 ${
+                              cancellingId === r.id ? 'bg-red-50 text-red-500' : 'bg-[#06C755]/10 text-[#06C755]'
+                            }`}
+                          >
+                            {cancellingId === r.id ? 'キャンセル' : (
+                              <>
+                                {STATUS_LABEL[r.status] ?? r.status}
+                                {r.status === 'waitlisted' && r.waitlistOrder ? `（${r.waitlistOrder}番目）` : ''}
+                              </>
+                            )}
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleCancel(r.id)}
-                          disabled={cancellingId === r.id}
-                          className="mt-2 text-xs text-red-400 disabled:opacity-50"
-                        >
-                          {cancellingId === r.id ? 'キャンセル中...' : 'キャンセルする'}
-                        </button>
                       </div>
                     ))}
                   </div>

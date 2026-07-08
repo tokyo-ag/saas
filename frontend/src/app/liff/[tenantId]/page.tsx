@@ -455,15 +455,15 @@ function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl, mySta
                           <Link
                             key={event.id}
                             href={reserveHref(tenantId, event.id, reserveLineUrl)}
-                            className="relative block rounded-md px-1 py-1 active:opacity-80"
+                            className="block rounded-md px-1 py-1 active:opacity-80"
                             style={{ backgroundColor: eventChipBg, color: eventChipText }}
                           >
+                            {myStatusByEvent?.[event.id] && (
+                              <ReservedBadge status={myStatusByEvent[event.id]} className="mb-0.5 inline-block px-1 py-0 text-[6px] leading-tight" />
+                            )}
                             <p className="truncate text-[9px] font-bold leading-tight">{locationPreview}</p>
                             <p className="mt-0.5 truncate text-[8px] font-semibold leading-none opacity-95">{eventTimeRange(event).replace('-', '~')}</p>
                             <p className="mt-0.5 truncate text-[8px] font-semibold leading-none opacity-95">{eventPriceLabel(event).replace(',', '')}</p>
-                            {myStatusByEvent?.[event.id] && (
-                              <ReservedBadge status={myStatusByEvent[event.id]} className="absolute -top-1 -right-1 px-1 py-0 text-[6px] leading-tight" />
-                            )}
                           </Link>
                         );
                       })}
