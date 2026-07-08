@@ -79,6 +79,8 @@ export class LiffService {
       name: tenant.name,
       description: tenant.description,
       tags: tenant.tags,
+      typeTags: tenant.typeTags,
+      activityTags: tenant.activityTags,
       lineDisplayName: tenant.lineDisplayName,
       linePictureUrl: tenant.linePictureUrl,
       iconUrl: tenant.iconUrl,

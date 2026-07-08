@@ -17,6 +17,8 @@ export class UpdateTenantDto {
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsString() publicBlogUrl?: string;
   @IsOptional() @IsArray() @IsString({ each: true }) tags?: string[];
+  @IsOptional() @IsArray() @IsString({ each: true }) typeTags?: string[];
+  @IsOptional() @IsArray() @IsString({ each: true }) activityTags?: string[];
   @IsOptional() @IsString() lineChannelId?: string;
   @IsOptional() @IsString() lineChannelSecret?: string;
   @IsOptional() @IsString() lineChannelAccessToken?: string;
@@ -185,6 +187,13 @@ export class TenantService {
         }),
         ...(dto.tags !== undefined && {
           tags: dto.tags.map((tag) => tag.trim()).filter(Boolean).slice(0, 20),
+        }),
+        ...(dto.typeTags !== undefined && {
+          typeTags: dto.typeTags.map((tag) => tag.trim()).filter(Boolean).slice(0, 10),
+        }),
+        ...(dto.activityTags !== undefined && {
+          activityTags: dto.activityTags.map((tag) => tag.trim()).filter(Boolean).slice(0, 20),
+          tags: dto.activityTags.map((tag) => tag.trim()).filter(Boolean).slice(0, 20),
         }),
         ...(dto.lineChannelId !== undefined && {
           lineChannelId: dto.lineChannelId.trim() || null,

@@ -15,9 +15,8 @@ const tabs = [
   { label: 'プラン', href: '/admin/settings/plan' },
 ];
 
-const TENANT_TAG_GROUPS = [
-  { label: '活動タグ', tags: ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー', 'テニス', 'ランニング', '飲み会'] },
-] as const;
+const TENANT_TYPE_TAGS = ['インカレサークル', '学生団体', 'イベント団体', '社会人サークル'] as const;
+const TENANT_ACTIVITY_TAGS = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー', 'テニス', 'ランニング', '飲み会'] as const;
 
 function SettingsTabs() {
   return (
@@ -70,7 +69,14 @@ async function uploadIconBlob(blob: Blob): Promise<string> {
 
 export default function SettingsPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [form, setForm] = useState<Pick<TenantInput, 'name' | 'description' | 'iconUrl' | 'tags'>>({ name: '', description: '', iconUrl: '', tags: [] });
+  const [form, setForm] = useState<Pick<TenantInput, 'name' | 'description' | 'iconUrl' | 'tags' | 'typeTags' | 'activityTags'>>({
+    name: '',
+    description: '',
+    iconUrl: '',
+    tags: [],
+    typeTags: [],
+    activityTags: [],
+  });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
@@ -125,16 +131,18 @@ export default function SettingsPage() {
         description: tenantData.description ?? '',
         iconUrl: tenantData.iconUrl ?? '',
         tags: tenantData.tags ?? [],
+        typeTags: tenantData.typeTags ?? [],
+        activityTags: tenantData.activityTags ?? tenantData.tags ?? [],
       });
     });
   }, []);
 
-  function toggleTag(tag: string) {
+  function toggleTag(field: 'typeTags' | 'activityTags', tag: string) {
     setForm((prev) => {
-      const tags = prev.tags ?? [];
+      const tags = prev[field] ?? [];
       return {
         ...prev,
-        tags: tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag],
+        [field]: tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag],
       };
     });
   }
@@ -149,7 +157,9 @@ export default function SettingsPage() {
         name: form.name,
         description: form.description,
         iconUrl: form.iconUrl,
-        tags: form.tags ?? [],
+        typeTags: form.typeTags ?? [],
+        activityTags: form.activityTags ?? [],
+        tags: form.activityTags ?? [],
       });
       setTenant(updated);
       setSaved(true);
@@ -294,35 +304,57 @@ export default function SettingsPage() {
                 <label className="block text-sm font-medium text-gray-700">団体タグ</label>
                 <p className="mt-1 text-xs text-gray-500">記事やLPから団体を紹介するときに使う分類です。</p>
               </div>
-              {(form.tags?.length ?? 0) > 0 && (
-                <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs font-bold text-gray-500">{form.tags?.length}個</span>
+              {((form.typeTags?.length ?? 0) + (form.activityTags?.length ?? 0)) > 0 && (
+                <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs font-bold text-gray-500">
+                  {(form.typeTags?.length ?? 0) + (form.activityTags?.length ?? 0)}個
+                </span>
               )}
             </div>
             <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
-              {TENANT_TAG_GROUPS.map((group) => (
-                <div key={group.label}>
-                  <p className="mb-1.5 text-xs font-bold text-gray-500">{group.label}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {group.tags.map((tag) => {
-                      const selected = form.tags?.includes(tag) ?? false;
-                      return (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={() => toggleTag(tag)}
-                          className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
-                            selected
-                              ? 'border-[#06C755] bg-[#06C755] text-white'
-                              : 'border-gray-200 bg-white text-gray-600 hover:border-[#06C755]/60'
-                          }`}
-                        >
-                          {tag}
-                        </button>
-                      );
-                    })}
-                  </div>
+              <div>
+                <p className="mb-1.5 text-xs font-bold text-gray-500">団体種別タグ</p>
+                <div className="flex flex-wrap gap-2">
+                  {TENANT_TYPE_TAGS.map((tag) => {
+                    const selected = form.typeTags?.includes(tag) ?? false;
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleTag('typeTags', tag)}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
+                          selected
+                            ? 'border-[#06C755] bg-[#06C755] text-white'
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-[#06C755]/60'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
                 </div>
-              ))}
+              </div>
+              <div>
+                <p className="mb-1.5 text-xs font-bold text-gray-500">活動タグ</p>
+                <div className="flex flex-wrap gap-2">
+                  {TENANT_ACTIVITY_TAGS.map((tag) => {
+                    const selected = form.activityTags?.includes(tag) ?? false;
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleTag('activityTags', tag)}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
+                          selected
+                            ? 'border-[#06C755] bg-[#06C755] text-white'
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-[#06C755]/60'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
 
