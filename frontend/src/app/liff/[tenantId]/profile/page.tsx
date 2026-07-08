@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { api, LiffMyReservation, LiffProfile, setLiffToken } from '@/lib/api';
-import { initLiff, getLiffUserId, loginIfNeeded, liff } from '@/lib/liff';
+import { initLiff, getLiffUserId, loginIfNeeded, liff, redirectToLiffApp } from '@/lib/liff';
 import { useLiffTheme, hexToRgba } from '@/components/liff/LiffThemeProvider';
 
 const GRADES = ['大学生（18～22歳）', '社会人'];
@@ -65,22 +65,35 @@ export default function ProfilePage() {
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [loginRequired, setLoginRequired] = useState(false);
 
   useEffect(() => {
     async function init() {
       const ok = await initLiff();
       let uid = '';
       if (ok) {
-        const loggedIn = await loginIfNeeded();
-        if (loggedIn) uid = (await getLiffUserId()) ?? '';
+        if (liff.isInClient()) {
+          uid = (await getLiffUserId()) ?? '';
+        } else {
+          const loggedIn = await loginIfNeeded();
+          if (loggedIn) {
+            uid = (await getLiffUserId()) ?? '';
+          } else {
+            setLoginRequired(true);
+            setLoading(false);
+            return;
+          }
+        }
       } else {
         uid = `demo-${tenantId}`;
       }
 
       if (!uid) {
+        setLoginRequired(true);
         setLoading(false);
         return;
       }
+      localStorage.removeItem('liff-login-tried');
       setLineUserId(uid);
       setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
 
@@ -143,6 +156,30 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-sm" style={{ color: accentColor }}>読み込み中...</div>
+      </div>
+    );
+  }
+
+  async function handleLoginRetry() {
+    if (redirectToLiffApp()) return;
+    try {
+      liff.login({ redirectUri: window.location.href });
+    } catch {
+      window.location.reload();
+    }
+  }
+
+  if (loginRequired) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center gap-5">
+        <p className="text-sm text-gray-500">LINEへのログインが必要です。</p>
+        <button
+          onClick={handleLoginRetry}
+          className="text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
+          style={{ backgroundColor: accentColor }}
+        >
+          LINEログインをやり直す
+        </button>
       </div>
     );
   }
