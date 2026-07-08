@@ -252,6 +252,9 @@ model Event {
   remindApp          Boolean     @default(false) @map("remind_app")
   remindAt        DateTime?   @map("remind_at")
   remindedAt      DateTime?   @map("reminded_at")
+  levelEnabled    Boolean     @default(false) @map("level_enabled")
+  rosterShareEnabled Boolean  @default(false) @map("roster_share_enabled")
+  rosterShareToken String?    @unique @map("roster_share_token") @db.VarChar(64)
   category        String?     @db.VarChar(50)
   tags            String[]    @default([])
   imageUrl        String?     @map("image_url") @db.Text
@@ -292,6 +295,7 @@ model Member {
   name                String?   @db.VarChar(100)
   grade               String?   @db.VarChar(50)
   gender              String?   @db.VarChar(20)
+  level               String?   @db.VarChar(20)
   showEventsToConnections Boolean  @default(true) @map("show_events_to_connections")
   blockedAt           DateTime? @map("blocked_at")
   createdAt           DateTime  @default(now()) @map("created_at")

@@ -7,6 +7,7 @@ import { initLiff, getLiffUserId } from '@/lib/liff';
 
 const GRADES = ['高校1年', '高校2年', '高校3年', '大学1年', '大学2年', '大学3年', '大学4年', '大学院生', '社会人', 'その他'];
 const GENDERS = ['男性', '女性', 'その他・回答しない'];
+const LEVELS = ['初心者', '中級', '上級'];
 
 export default function ProfileEditPage() {
   const { tenantId } = useParams<{ tenantId: string }>();
@@ -16,6 +17,7 @@ export default function ProfileEditPage() {
   const [name, setName] = useState('');
   const [grade, setGrade] = useState('');
   const [gender, setGender] = useState('');
+  const [level, setLevel] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -31,6 +33,7 @@ export default function ProfileEditPage() {
           setName(prof.name ?? '');
           setGrade(prof.grade ?? '');
           setGender(prof.gender ?? '');
+          setLevel(prof.level ?? '');
         }
       }
       setLoading(false);
@@ -43,7 +46,7 @@ export default function ProfileEditPage() {
     setError('');
     setSubmitting(true);
     try {
-      await api.liff.updateProfile(tenantId, lineUserId, { name, grade, gender });
+      await api.liff.updateProfile(tenantId, lineUserId, { name, grade, gender, level });
       router.back();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '更新に失敗しました');
@@ -100,6 +103,18 @@ export default function ProfileEditPage() {
                   <label key={g} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
                     <input type="radio" name="gender" value={g} required checked={gender === g} onChange={() => setGender(g)} className="accent-[#06C755]" />
                     {g}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-2">レベル（任意）</label>
+              <div className="flex gap-4">
+                {LEVELS.map((l) => (
+                  <label key={l} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
+                    <input type="radio" name="level" value={l} checked={level === l} onChange={() => setLevel(l)} className="accent-[#06C755]" />
+                    {l}
                   </label>
                 ))}
               </div>

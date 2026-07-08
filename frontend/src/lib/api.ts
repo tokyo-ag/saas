@@ -114,6 +114,11 @@ export const api = {
         { method: 'POST', body: JSON.stringify(data) },
       ),
     exportUrl: (id: string) => `${BASE}/admin/events/${id}/export`,
+    toggleRosterShare: (id: string, enabled: boolean) =>
+      request<Event>(`/admin/events/${id}/roster-share`, {
+        method: 'PATCH',
+        body: JSON.stringify({ enabled }),
+      }),
   },
   members: {
     list: (params?: { name?: string; grade?: string; gender?: string }) => {
@@ -209,7 +214,7 @@ export const api = {
         body: JSON.stringify({ content }),
       });
     },
-    updateProfile: (tenantId: string, _lineUserId: string, data: { name: string; grade: string; gender: string }) =>
+    updateProfile: (tenantId: string, _lineUserId: string, data: { name: string; grade: string; gender: string; level?: string }) =>
       request<LiffProfile>(
         `/liff/${tenantId}/profile`,
         { method: 'PATCH', body: JSON.stringify(data) },
@@ -287,6 +292,7 @@ export const api = {
       request<BlogPost>(`/public/tenants/${tenantCode}/blog/${slug}`),
     blogByTags: (tags: string[], limit = 10) =>
       request<PortalBlogPost[]>(`/public/blog?tags=${encodeURIComponent(tags.join(','))}&limit=${limit}`),
+    roster: (token: string) => request<PublicRoster>(`/public/roster/${token}`),
   },
   blog: {
     list: () => request<BlogPost[]>('/admin/blog'),
@@ -439,6 +445,9 @@ export interface Event {
   iconUrl?: string;
   category?: string | null;
   tags?: string[];
+  levelEnabled?: boolean;
+  rosterShareEnabled?: boolean;
+  rosterShareToken?: string | null;
 }
 
 export interface EventInput {
@@ -466,6 +475,8 @@ export interface EventInput {
   iconUrl?: string;
   category?: string | null;
   tags?: string[];
+  levelEnabled?: boolean;
+  rosterShareEnabled?: boolean;
 }
 
 export interface Member {
@@ -637,6 +648,7 @@ export interface LiffEvent {
   reservedCount: number;
   imageUrl?: string;
   iconUrl?: string;
+  levelEnabled?: boolean;
   friendAttendees?: { id: string; name: string | null }[];
   reviews?: EventReview[];
 }
@@ -666,6 +678,7 @@ export interface ReserveInput {
   name: string;
   grade: string;
   gender: string;
+  level?: string;
 }
 
 export interface Tenant {
@@ -755,6 +768,7 @@ export interface LiffProfile {
   name?: string;
   grade?: string;
   gender?: string;
+  level?: string;
   showEventsToConnections: boolean;
 }
 
@@ -1133,6 +1147,23 @@ export interface PublicCmsPage {
     linePictureUrl?: string | null;
     iconUrl?: string | null;
   };
+}
+
+export interface PublicRoster {
+  event: {
+    title: string;
+    heldAt: string;
+    location: string;
+    levelEnabled: boolean;
+  };
+  reservations: {
+    name: string | null;
+    grade: string | null;
+    gender: string | null;
+    level: string | null;
+    status: ReservationStatus;
+    waitlistOrder: number | null;
+  }[];
 }
 
 export interface PublicEvent {

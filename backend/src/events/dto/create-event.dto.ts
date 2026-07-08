@@ -123,6 +123,11 @@ export class CreateEventDto {
   remindAt?: string | null;
 
   @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => Boolean(value))
+  levelEnabled?: boolean;
+
+  @IsOptional()
   @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
   @MaxLength(500)
   imageUrl?: string;

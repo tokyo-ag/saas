@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import { ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LineMessagingService } from '../line-messaging/line-messaging.service';
@@ -126,6 +127,10 @@ export class EventsService {
     return { ...event, reservedCount: reserved, waitlistedCount: waitlisted };
   }
 
+  private generateRosterShareToken(): string {
+    return randomBytes(24).toString('base64url');
+  }
+
   async create(tenantId: string, dto: CreateEventDto) {
     const { heldAt, endAt, remindAt } = this.validateEventDates(dto);
     const tenant = await this.prisma.tenant.findUnique({
@@ -175,6 +180,7 @@ export class EventsService {
         iconUrl: dto.iconUrl ?? null,
         category: dto.category ?? null,
         tags: normalizePortalCategoryTags(dto.tags),
+        levelEnabled: dto.levelEnabled ?? false,
       },
     });
   }
@@ -248,6 +254,24 @@ export class EventsService {
         ...(dto.tags !== undefined && {
           tags: normalizePortalCategoryTags(dto.tags),
         }),
+        ...(dto.levelEnabled !== undefined && {
+          levelEnabled: dto.levelEnabled,
+        }),
+      },
+    });
+  }
+
+  async toggleRosterShare(tenantId: string, eventId: string, enabled: boolean) {
+    const current = await this.findOne(tenantId, eventId);
+    const rosterShareToken =
+      enabled && !current.rosterShareToken
+        ? this.generateRosterShareToken()
+        : current.rosterShareToken;
+    return this.prisma.event.update({
+      where: { id: eventId },
+      data: {
+        rosterShareEnabled: enabled,
+        ...(rosterShareToken && { rosterShareToken }),
       },
     });
   }
@@ -269,6 +293,7 @@ export class EventsService {
             name: true,
             grade: true,
             gender: true,
+            level: true,
             lineUserId: true,
             lineDisplayName: true,
             linePictureUrl: true,
@@ -427,7 +452,7 @@ export class EventsService {
       return `"${text.replace(/"/g, '""')}"`;
     };
 
-    const header = '名前,学年,性別,予約日時,ステータス,支払い状況';
+    const header = '名前,学年,性別,レベル,予約日時,ステータス,支払い状況';
     const rows = reservations.map((r) => {
       const statusLabel = this.statusLabel(r.status, r.waitlistOrder);
       const paymentLabel = r.paidAt
@@ -442,6 +467,7 @@ export class EventsService {
         r.member.name,
         r.member.grade,
         r.member.gender,
+        r.member.level,
         date,
         statusLabel,
         paymentLabel,

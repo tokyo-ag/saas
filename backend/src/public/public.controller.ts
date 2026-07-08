@@ -57,6 +57,39 @@ export class PublicController {
     return endAt;
   }
 
+  @Get('roster/:token')
+  async getRoster(@Param('token') token: string) {
+    const event = await this.prisma.event.findFirst({
+      where: { rosterShareToken: token, rosterShareEnabled: true },
+    });
+    if (!event) throw new NotFoundException('名簿が見つかりません');
+
+    const reservations = await this.prisma.reservation.findMany({
+      where: { eventId: event.id, status: { not: 'cancelled' } },
+      include: {
+        member: { select: { name: true, grade: true, gender: true, level: true } },
+      },
+      orderBy: [{ status: 'asc' }, { reservedAt: 'asc' }],
+    });
+
+    return {
+      event: {
+        title: event.title,
+        heldAt: event.heldAt,
+        location: event.location,
+        levelEnabled: event.levelEnabled,
+      },
+      reservations: reservations.map((r) => ({
+        name: r.member.name,
+        grade: r.member.grade,
+        gender: r.member.gender,
+        level: r.member.level,
+        status: r.status,
+        waitlistOrder: r.waitlistOrder,
+      })),
+    };
+  }
+
   private mapOfficialSite(row: OfficialSiteRow) {
     return {
       status: row.status,

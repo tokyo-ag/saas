@@ -16,6 +16,7 @@ import { FriendInviteCard } from '@/components/liff/FriendInviteCard';
 
 const GRADES = ['高校1年', '高校2年', '高校3年', '大学1年', '大学2年', '大学3年', '大学4年', '大学院生', '社会人', 'その他'];
 const GENDERS = ['男性', '女性', 'その他・回答しない'];
+const LEVELS = ['初心者', '中級', '上級'];
 
 // auth状態を3値で管理
 type AuthStatus = 'loading' | 'error' | 'ok';
@@ -52,6 +53,7 @@ function ReservePageInner() {
   const [name, setName] = useState('');
   const [grade, setGrade] = useState('');
   const [gender, setGender] = useState('');
+  const [level, setLevel] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -182,7 +184,7 @@ function ReservePageInner() {
     init();
   }, [tenantId, eventId, isResultView]);
 
-  async function submit(overrides?: { name: string; grade: string; gender: string }) {
+  async function submit(overrides?: { name: string; grade: string; gender: string; level?: string }) {
     if (!lineUserId) return;
     setError('');
     setSubmitting(true);
@@ -383,7 +385,7 @@ function ReservePageInner() {
   }
 
   // ── 予約フォーム ──
-  const hasProfile = profile && profile.name && profile.grade && profile.gender;
+  const hasProfile = profile && profile.name && profile.grade && profile.gender && (!event?.levelEnabled || profile.level);
 
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
@@ -420,6 +422,12 @@ function ReservePageInner() {
                 <span className="text-gray-500">性別</span>
                 <span className="font-medium text-gray-900">{profile.gender}</span>
               </div>
+              {event?.levelEnabled && profile.level && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">レベル</span>
+                  <span className="font-medium text-gray-900">{profile.level}</span>
+                </div>
+              )}
               <button
                 type="button"
                 onClick={() => router.push(`/liff/${tenantId}/profile/edit`)}
@@ -439,7 +447,7 @@ function ReservePageInner() {
           </>
         ) : (
           <form
-            onSubmit={(e) => { e.preventDefault(); submit({ name, grade, gender }); }}
+            onSubmit={(e) => { e.preventDefault(); submit({ name, grade, gender, ...(event?.levelEnabled && { level }) }); }}
             className="space-y-4"
           >
             <p className="text-xs text-gray-500 px-1">初回のみ情報を入力してください。次回以降は省略できます。</p>
@@ -470,6 +478,19 @@ function ReservePageInner() {
                   ))}
                 </div>
               </div>
+              {event?.levelEnabled && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-2">レベル <span className="text-red-400">*</span></label>
+                  <div className="flex gap-4">
+                    {LEVELS.map((l) => (
+                      <label key={l} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
+                        <input type="radio" name="level" value={l} required checked={level === l} onChange={() => setLevel(l)} className="accent-[#06C755]" />
+                        {l}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <button

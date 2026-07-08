@@ -18,6 +18,7 @@ export class CreateReservationDto {
   @IsOptional() @IsString() name?: string;
   @IsOptional() @IsString() grade?: string;
   @IsOptional() @IsString() gender?: string;
+  @IsOptional() @IsString() level?: string;
   @IsOptional() @IsString() lineDisplayName?: string;
   @IsOptional() @IsString() linePictureUrl?: string;
 }
@@ -148,6 +149,7 @@ export class LiffService {
       reservedCount: e.reservations.length,
       imageUrl: e.imageUrl,
       iconUrl: e.iconUrl,
+      levelEnabled: e.levelEnabled,
       friendAttendees: [] as { id: string; name: string | null }[],
     }));
 
@@ -341,9 +343,16 @@ export class LiffService {
       dto.linePictureUrl ?? lineProfile?.pictureUrl ?? null;
 
     if (!member) {
-      if (!dto.name || !dto.grade || !dto.gender) {
+      if (
+        !dto.name ||
+        !dto.grade ||
+        !dto.gender ||
+        (event.levelEnabled && !dto.level)
+      ) {
         throw new BadRequestException(
-          '初回予約時はお名前・学年・性別を入力してください',
+          event.levelEnabled
+            ? '初回予約時はお名前・学年・性別・レベルを入力してください'
+            : '初回予約時はお名前・学年・性別を入力してください',
         );
       }
       member = await this.prisma.member.create({
@@ -353,6 +362,7 @@ export class LiffService {
           name: dto.name,
           grade: dto.grade,
           gender: dto.gender,
+          ...(dto.level && { level: dto.level }),
           ...(resolvedDisplayName && { lineDisplayName: resolvedDisplayName }),
           ...(resolvedPictureUrl && { linePictureUrl: resolvedPictureUrl }),
         },
@@ -364,6 +374,7 @@ export class LiffService {
           ...(dto.name && { name: dto.name }),
           ...(dto.grade && { grade: dto.grade }),
           ...(dto.gender && { gender: dto.gender }),
+          ...(dto.level && { level: dto.level }),
           ...(resolvedDisplayName && { lineDisplayName: resolvedDisplayName }),
           ...(resolvedPictureUrl && { linePictureUrl: resolvedPictureUrl }),
         },
@@ -660,6 +671,7 @@ export class LiffService {
       name: member.name,
       grade: member.grade,
       gender: member.gender,
+      level: member.level,
       showEventsToConnections: member.showEventsToConnections,
     };
   }
@@ -673,6 +685,7 @@ export class LiffService {
       name: member.name,
       grade: member.grade,
       gender: member.gender,
+      level: member.level,
       showEventsToConnections: member.showEventsToConnections,
     };
   }
@@ -680,20 +693,26 @@ export class LiffService {
   async updateProfile(
     tenantId: string,
     lineUserId: string,
-    data: { name: string; grade: string; gender: string },
+    data: { name: string; grade: string; gender: string; level?: string },
   ) {
     tenantId = await this.resolveTenantId(tenantId);
     const member = await this.findMember(tenantId, lineUserId);
     if (!member) throw new NotFoundException('プロフィールが見つかりません');
     const updated = await this.prisma.member.update({
       where: { id: member.id },
-      data: { name: data.name, grade: data.grade, gender: data.gender },
+      data: {
+        name: data.name,
+        grade: data.grade,
+        gender: data.gender,
+        level: data.level || null,
+      },
     });
     return {
       id: updated.id,
       name: updated.name,
       grade: updated.grade,
       gender: updated.gender,
+      level: updated.level,
       showEventsToConnections: updated.showEventsToConnections,
     };
   }

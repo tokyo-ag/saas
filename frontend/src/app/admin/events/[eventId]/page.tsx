@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { api, formatDate, downloadWithAuth, API_URL, Event, Reservation, AdminEventReview } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
+import { SITE_URL } from '@/lib/config';
 import { EventBadge, ReservationBadge } from '@/components/ui/StatusBadge';
 
 
@@ -15,6 +16,7 @@ type EventReservation = Reservation & {
     name?: string | null;
     grade?: string | null;
     gender?: string | null;
+    level?: string | null;
   };
 };
 
@@ -24,6 +26,8 @@ export default function EventDetailPage() {
   const [reservations, setReservations] = useState<EventReservation[]>([]);
   const [reviews, setReviews] = useState<AdminEventReview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rosterCopied, setRosterCopied] = useState(false);
+  const [savingRosterShare, setSavingRosterShare] = useState(false);
 
   const load = useCallback(async () => {
     const [eventData, reservationList, reviewList] = await Promise.all([
@@ -57,6 +61,26 @@ export default function EventDetailPage() {
     } catch {
       alert('感想の更新に失敗しました');
     }
+  }
+
+  async function toggleRosterShare(enabled: boolean) {
+    setSavingRosterShare(true);
+    try {
+      const updated = await api.events.toggleRosterShare(eventId, enabled);
+      setEvent(updated);
+    } catch {
+      alert('名簿共有設定の更新に失敗しました');
+    } finally {
+      setSavingRosterShare(false);
+    }
+  }
+
+  function copyRosterUrl() {
+    if (!event?.rosterShareToken) return;
+    navigator.clipboard.writeText(`${SITE_URL}/roster/${event.rosterShareToken}`).then(() => {
+      setRosterCopied(true);
+      setTimeout(() => setRosterCopied(false), 2000);
+    });
   }
 
   if (loading) return <div className="px-4 py-12 text-center text-sm text-gray-400">読み込み中...</div>;
@@ -135,6 +159,7 @@ export default function EventDetailPage() {
                         <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
                           <span>{reservation.member.grade ?? '-'}</span>
                           <span>{reservation.member.gender ?? '-'}</span>
+                          {event.levelEnabled && <span>{reservation.member.level ?? '-'}</span>}
                         </div>
                       </div>
                     </div>
@@ -167,6 +192,7 @@ export default function EventDetailPage() {
                     <th className="px-6 py-3 text-left">名前</th>
                     <th className="px-6 py-3 text-left">学年</th>
                     <th className="px-6 py-3 text-left">性別</th>
+                    {event.levelEnabled && <th className="px-6 py-3 text-left">レベル</th>}
                     <th className="px-6 py-3 text-left">予約日時</th>
                     <th className="px-6 py-3 text-left">ステータス</th>
                     <th className="px-6 py-3 text-left">操作</th>
@@ -196,6 +222,7 @@ export default function EventDetailPage() {
                       </td>
                       <td className="px-6 py-4 text-gray-600">{reservation.member.grade ?? '-'}</td>
                       <td className="px-6 py-4 text-gray-600">{reservation.member.gender ?? '-'}</td>
+                      {event.levelEnabled && <td className="px-6 py-4 text-gray-600">{reservation.member.level ?? '-'}</td>}
                       <td className="px-6 py-4 text-gray-500">{formatDate(reservation.reservedAt)}</td>
                       <td className="px-6 py-4">
                         <ReservationBadge status={reservation.status} />
@@ -263,6 +290,41 @@ export default function EventDetailPage() {
           </div>
         )}
       </section>
+      <section className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-800">参加者名簿の共有</h2>
+            <p className="mt-1 text-xs leading-relaxed text-gray-400">ONにすると、ログイン不要で参加者名簿を閲覧できるリンクを発行できます。スタッフへの共有などにご活用ください。</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={!!event.rosterShareEnabled}
+            disabled={savingRosterShare}
+            onClick={() => toggleRosterShare(!event.rosterShareEnabled)}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${event.rosterShareEnabled ? 'bg-[#06C755]' : 'bg-gray-300'}`}
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${event.rosterShareEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+        </div>
+        {event.rosterShareEnabled && event.rosterShareToken && (
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <input
+              readOnly
+              value={`${SITE_URL}/roster/${event.rosterShareToken}`}
+              className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600"
+              onFocus={(e) => e.target.select()}
+            />
+            <button
+              onClick={copyRosterUrl}
+              className="shrink-0 rounded-lg border border-gray-300 px-4 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              {rosterCopied ? 'コピーしました' : 'コピー'}
+            </button>
+          </div>
+        )}
+      </section>
+
       <section className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
         <h2 className="text-sm font-semibold text-gray-800">データエクスポート</h2>
         <p className="mt-1 text-xs leading-relaxed text-gray-400">参加者一覧・予約状況をCSVファイルでダウンロードできます。名簿管理や出欠確認にご活用ください。</p>

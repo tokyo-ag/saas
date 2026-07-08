@@ -32,6 +32,7 @@ type EventFormData = {
   remindApp: boolean;
   remindPreset: 'prev18' | 'day9' | 'custom';
   remindAt: string;
+  levelEnabled: boolean;
   imageUrl: string;
   iconUrl: string;
   category: string;
@@ -149,6 +150,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
     remindApp: initial?.remindApp ?? false,
     remindPreset: 'prev18',
     remindAt: toLocalDatetimeValue(initial?.remindAt),
+    levelEnabled: initial?.levelEnabled ?? false,
     imageUrl: initial?.imageUrl ?? '',
     iconUrl: initial?.iconUrl ?? '',
     category: initial?.category ?? '',
@@ -373,6 +375,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
       remindEnabled: form.remindEnabled,
       remindApp: form.remindApp,
       remindAt,
+      levelEnabled: form.levelEnabled,
       imageUrl: form.imageUrl || undefined,
       iconUrl: form.iconUrl || undefined,
       category: form.category || null,
@@ -613,6 +616,14 @@ export default function EventForm({ initial }: { initial?: Event }) {
             </p>
           )}
         </div>
+      </Section>
+
+      <Section title="参加者情報">
+        <Check
+          label="予約時にレベル（初心者・中級・上級）を聞く"
+          checked={form.levelEnabled}
+          onChange={(checked) => set('levelEnabled', checked)}
+        />
       </Section>
 
       <Section title="通知">

@@ -110,6 +110,19 @@ export class EventsController {
     );
   }
 
+  @Patch(':eventId/roster-share')
+  toggleRosterShare(
+    @TenantId() tenantId: string,
+    @Param('eventId') eventId: string,
+    @Body() body: { enabled: boolean },
+  ) {
+    return this.eventsService.toggleRosterShare(
+      tenantId,
+      eventId,
+      body.enabled,
+    );
+  }
+
   @Get(':eventId/export')
   async exportCsv(
     @TenantId() tenantId: string,
