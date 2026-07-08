@@ -27,7 +27,7 @@ export const BLOG_TAG_GROUPS = [
 export const EVENT_TAG_GROUPS = [
   { label: '活動タグ', tags: ACTIVITY_TAGS, single: true },
   { label: '場所タグ', tags: LOCATION_TAGS, single: false },
-  { label: 'LP補助タグ', tags: LP_SUPPORT_TAGS, single: false },
+  { label: '補助タグ', tags: LP_SUPPORT_TAGS, single: false },
 ] as const;
 
 export function normalizePortalCategoryTags(tags: string[]) {
