@@ -13,6 +13,7 @@ import {
   loginIfNeeded,
   redirectToLiffApp,
 } from '@/lib/liff';
+import { useLiffTheme, hexToRgba } from '@/components/liff/LiffThemeProvider';
 
 const CATEGORY_LABELS: Record<string, string> = {
   meetup: '交流会',
@@ -51,6 +52,8 @@ function ReservePageInner() {
   const { tenantId, eventId } = useParams<{ tenantId: string; eventId: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const theme = useLiffTheme();
+  const accentColor = theme.accentColor;
   const isWaitlist = searchParams.get('waitlist') === '1';
 
   const [authStatus, setAuthStatus] = useState<AuthStatus>('loading');
@@ -273,7 +276,7 @@ function ReservePageInner() {
   if (event && isClosed) {
     return (
       <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center gap-4">
-        <div className="w-16 h-16 rounded-full bg-[#06C755]/10 flex items-center justify-center text-3xl">⚠️</div>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl" style={{ backgroundColor: hexToRgba(accentColor, 10) }}>⚠️</div>
         <div>
           <p className="text-lg font-bold text-gray-900">このイベントは予約できません</p>
           <p className="text-sm text-gray-500 mt-2">
@@ -284,7 +287,8 @@ function ReservePageInner() {
         </div>
         <button
           onClick={() => router.push(`/liff/${tenantId}`)}
-          className="bg-[#06C755] text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:bg-[#05a847]"
+          className="text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
+          style={{ backgroundColor: accentColor }}
         >
           イベントページへ戻る
         </button>
@@ -296,7 +300,7 @@ function ReservePageInner() {
   if (authStatus === 'loading' || (authStatus === 'ok' && isFriend === true && !hasProfile)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#06C755] text-sm">読み込み中...</div>
+        <div className="text-sm" style={{ color: accentColor }}>読み込み中...</div>
       </div>
     );
   }
@@ -321,14 +325,16 @@ function ReservePageInner() {
         {loginRequired ? (
           <button
             onClick={handleLoginRetry}
-            className="bg-[#06C755] text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:bg-[#05a847]"
+            className="text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
+            style={{ backgroundColor: accentColor }}
           >
             LINEログインをやり直す
           </button>
         ) : (
           <button
             onClick={() => window.location.reload()}
-            className="bg-[#06C755] text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:bg-[#05a847]"
+            className="text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
+            style={{ backgroundColor: accentColor }}
           >
             再試行する
           </button>
@@ -344,7 +350,7 @@ function ReservePageInner() {
       : null;
     return (
       <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center gap-6">
-        <div className="w-20 h-20 rounded-full bg-[#06C755]/10 flex items-center justify-center">
+        <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ backgroundColor: hexToRgba(accentColor, 10), color: accentColor }}>
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
             <path d="M12 2C6.48 2 2 6.03 2 11c0 3.13 1.68 5.9 4.28 7.54L5.5 22l3.78-1.97C10.16 20.65 11.07 21 12 21c5.52 0 10-4.03 10-9S17.52 2 12 2z" fill="currentColor"/>
           </svg>
@@ -360,7 +366,8 @@ function ReservePageInner() {
             href={addFriendUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-[#06C755] text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:bg-[#05a847]"
+            className="text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
+            style={{ backgroundColor: accentColor }}
           >
             友だち追加する
           </a>
@@ -376,7 +383,7 @@ function ReservePageInner() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
-      <div className="bg-[#06C755] text-white px-4 py-4 flex items-center gap-3">
+      <div className="text-white px-4 py-4 flex items-center gap-3" style={{ backgroundColor: accentColor }}>
         <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-white text-xl leading-none">‹</button>
         <h1 className="text-base font-bold flex-1">{isWaitlist ? 'キャンセル待ち登録' : '予約確認'}</h1>
         <Link href={`/liff/${tenantId}/profile`} className="text-xs font-medium text-white/90 underline underline-offset-2">
@@ -458,7 +465,8 @@ function ReservePageInner() {
             )}
             <Link
               href={`/liff/${tenantId}/profile?returnTo=${encodeURIComponent(`/liff/${tenantId}/events/${eventId}/reserve`)}`}
-              className="block text-xs text-[#06C755] hover:underline pt-1"
+              className="block text-xs hover:underline pt-1"
+              style={{ color: accentColor }}
             >
               情報を変更する →
             </Link>
@@ -469,9 +477,8 @@ function ReservePageInner() {
           <button
             onClick={handleCancel}
             disabled={cancelling}
-            className={`w-full py-4 rounded-2xl text-sm font-bold transition-colors disabled:opacity-50 ${
-              cancelling ? 'border border-red-200 text-red-500 bg-red-50' : 'bg-[#06C755]/10 text-[#06C755]'
-            }`}
+            className="w-full py-4 rounded-2xl text-sm font-bold transition-colors disabled:opacity-50"
+            style={cancelling ? { border: '1px solid #fecaca', color: '#ef4444', backgroundColor: '#fef2f2' } : { backgroundColor: hexToRgba(accentColor, 10), color: accentColor }}
           >
             {cancelling ? 'キャンセル' : (
               <>
@@ -484,7 +491,8 @@ function ReservePageInner() {
           <button
             onClick={() => submit()}
             disabled={submitting}
-            className="w-full bg-[#06C755] text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[#05a847] transition-colors shadow-sm"
+            className="w-full text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:opacity-90 transition-colors shadow-sm"
+            style={{ backgroundColor: accentColor }}
           >
             {submitting ? '送信中...' : isWaitlist ? 'キャンセル待ちに登録する' : 'この情報で予約する'}
           </button>

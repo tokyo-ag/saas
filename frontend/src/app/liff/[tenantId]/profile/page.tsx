@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { api, LiffMyReservation, LiffProfile } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded } from '@/lib/liff';
+import { useLiffTheme, hexToRgba } from '@/components/liff/LiffThemeProvider';
 
 const GRADES = ['大学生（18～22歳）', '社会人'];
 const GENDERS = ['男性', '女性'];
@@ -46,6 +47,8 @@ export default function ProfilePage() {
   const { tenantId } = useParams<{ tenantId: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const theme = useLiffTheme();
+  const accentColor = theme.accentColor;
   const returnTo = searchParams.get('returnTo');
 
   const [lineUserId, setLineUserId] = useState('');
@@ -131,12 +134,12 @@ export default function ProfilePage() {
     }
   }
 
-  const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#06C755] focus:border-transparent';
+  const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--liff-accent)] focus:border-transparent';
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-[#06C755] text-sm">読み込み中...</div>
+        <div className="text-sm" style={{ color: accentColor }}>読み込み中...</div>
       </div>
     );
   }
@@ -148,8 +151,8 @@ export default function ProfilePage() {
   }, {});
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5]">
-      <div className="bg-[#06C755] text-white px-4 py-4 flex items-center gap-3">
+    <div className="min-h-screen bg-[#F5F5F5]" style={{ '--liff-accent': accentColor } as React.CSSProperties}>
+      <div className="text-white px-4 py-4 flex items-center gap-3" style={{ backgroundColor: accentColor }}>
         <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-white text-xl leading-none">‹</button>
         <h1 className="text-base font-bold">マイページ</h1>
       </div>
@@ -188,7 +191,7 @@ export default function ProfilePage() {
               <div className="flex gap-4">
                 {GENDERS.map((g) => (
                   <label key={g} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
-                    <input type="radio" name="gender" value={g} required checked={gender === g} onChange={() => setGender(g)} className="accent-[#06C755]" />
+                    <input type="radio" name="gender" value={g} required checked={gender === g} onChange={() => setGender(g)} className="accent-[var(--liff-accent)]" />
                     {g}
                   </label>
                 ))}
@@ -199,7 +202,7 @@ export default function ProfilePage() {
               <div className="flex gap-4">
                 {LEVELS.map((l) => (
                   <label key={l} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
-                    <input type="radio" name="level" value={l} checked={level === l} onChange={() => setLevel(l)} className="accent-[#06C755]" />
+                    <input type="radio" name="level" value={l} checked={level === l} onChange={() => setLevel(l)} className="accent-[var(--liff-accent)]" />
                     {l}
                   </label>
                 ))}
@@ -217,7 +220,8 @@ export default function ProfilePage() {
 
           <button
             type="submit" disabled={saving}
-            className="w-full bg-[#06C755] text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[#05a847] transition-colors shadow-sm"
+            className="w-full text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:opacity-90 transition-colors shadow-sm"
+            style={{ backgroundColor: accentColor }}
           >
             {saving ? '保存中...' : saved ? '保存しました' : '保存する'}
           </button>
@@ -253,9 +257,8 @@ export default function ProfilePage() {
                             type="button"
                             onClick={() => handleCancel(r.id)}
                             disabled={cancellingId === r.id}
-                            className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors disabled:opacity-50 ${
-                              cancellingId === r.id ? 'bg-red-50 text-red-500' : 'bg-[#06C755]/10 text-[#06C755]'
-                            }`}
+                            className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors disabled:opacity-50"
+                            style={cancellingId === r.id ? { color: '#ef4444', backgroundColor: '#fef2f2' } : { color: accentColor, backgroundColor: hexToRgba(accentColor, 10) }}
                           >
                             {cancellingId === r.id ? 'キャンセル' : (
                               <>

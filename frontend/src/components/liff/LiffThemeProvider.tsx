@@ -25,3 +25,12 @@ export function LiffThemeProvider({ theme, children }: { theme: LiffTheme; child
 export function useLiffTheme(): LiffTheme {
   return useContext(LiffThemeContext);
 }
+
+export function hexToRgba(hex: string, opacityPercent: number): string {
+  const h = hex.trim().replace('#', '');
+  if (h.length < 6) return `rgba(6,199,85,${opacityPercent / 100})`;
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${opacityPercent / 100})`;
+}

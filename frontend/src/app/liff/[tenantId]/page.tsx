@@ -42,11 +42,14 @@ function AvatarRow({ count, friends }: { count: number; friends?: { id: string; 
   );
 }
 
-function ReservedBadge({ status, className = '' }: { status?: string; className?: string }) {
+function ReservedBadge({ status, accentColor, className = '' }: { status?: string; accentColor: string; className?: string }) {
   if (!status) return null;
   const isWaitlisted = status === 'waitlisted';
   return (
-    <span className={`${isWaitlisted ? 'bg-amber-400' : 'bg-[#06C755]'} text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full ${className}`}>
+    <span
+      className={`text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full ${className}`}
+      style={{ backgroundColor: isWaitlisted ? '#fbbf24' : accentColor }}
+    >
       {isWaitlisted ? 'キャンセル待ち' : '予約済み'}
     </span>
   );
@@ -74,7 +77,7 @@ function EventCard({ event, tenantId, accentColor, cardBg, reserveLineUrl, mySta
             {event.title}
           </p>
         </div>
-        {myStatus && <ReservedBadge status={myStatus} className="absolute top-2 left-2" />}
+        {myStatus && <ReservedBadge status={myStatus} accentColor={accentColor} className="absolute top-2 left-2" />}
         {remaining !== null && remaining <= 0 && (
           <div className="absolute top-2 right-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">満席</div>
         )}
@@ -198,7 +201,7 @@ function LiffThreadView({ events, tenantId, accentColor, cardBg, reserveLineUrl,
                         style={isFull ? undefined : { backgroundColor: accentColor }}>
                         {status}
                       </span>
-                      <ReservedBadge status={myStatusByEvent?.[event.id]} />
+                      <ReservedBadge status={myStatusByEvent?.[event.id]} accentColor={accentColor} />
                     </div>
                   </div>
                 </Link>
@@ -459,7 +462,7 @@ function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl, mySta
                             style={{ backgroundColor: eventChipBg, color: eventChipText }}
                           >
                             {myStatusByEvent?.[event.id] && (
-                              <ReservedBadge status={myStatusByEvent[event.id]} className="mb-0.5 inline-block px-1 py-0 text-[6px] leading-tight" />
+                              <ReservedBadge status={myStatusByEvent[event.id]} accentColor={accentColor} className="mb-0.5 inline-block px-1 py-0 text-[6px] leading-tight" />
                             )}
                             <p className="truncate text-[9px] font-bold leading-tight">{locationPreview}</p>
                             <p className="mt-0.5 truncate text-[8px] font-semibold leading-none opacity-95">{eventTimeRange(event).replace('-', '~')}</p>
