@@ -16,6 +16,14 @@ const STATUS_LABEL: Record<string, string> = {
   waiting_payment: '支払待ち',
 };
 
+function isLineAuthErrorMessage(message: string): boolean {
+  return (
+    message.includes('LINEトークン') ||
+    message.includes('LIFF認証') ||
+    message.includes('Unauthorized')
+  );
+}
+
 function threadMonthLabel(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('ja-JP', {
     year: 'numeric',
@@ -115,6 +123,30 @@ export default function ProfilePage() {
     init();
   }, [tenantId]);
 
+  function restartLineAuth() {
+    setError('LINE認証を更新しています。画面が切り替わらない場合は、LINEからもう一度開き直してください。');
+    localStorage.removeItem('liff-login-tried');
+    localStorage.setItem(
+      'liff-pending-redirect',
+      JSON.stringify({ url: window.location.href, expires: Date.now() + 10 * 60 * 1000 }),
+    );
+    setLiffToken(null);
+
+    if (liff.isInClient()) {
+      window.location.reload();
+      return;
+    }
+
+    try {
+      if (liff.isLoggedIn()) liff.logout();
+    } catch {
+      // ignore
+    }
+    if (!redirectToLiffApp()) {
+      liff.login({ redirectUri: window.location.href });
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -130,7 +162,12 @@ export default function ProfilePage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '更新に失敗しました');
+      const msg = err instanceof Error ? err.message : '更新に失敗しました';
+      if (isLineAuthErrorMessage(msg)) {
+        restartLineAuth();
+        return;
+      }
+      setError(msg);
     } finally {
       setSaving(false);
     }
@@ -143,7 +180,12 @@ export default function ProfilePage() {
       setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
       await api.liff.cancel(tenantId, reservationId);
       setReservations((prev) => prev.filter((r) => r.id !== reservationId));
-    } catch {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (isLineAuthErrorMessage(msg)) {
+        restartLineAuth();
+        return;
+      }
       alert('キャンセルに失敗しました');
     } finally {
       setCancellingId(null);
