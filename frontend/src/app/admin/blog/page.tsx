@@ -5,7 +5,7 @@ import { api, BlogPost, BlogPostInput } from '@/lib/api';
 import { API_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { getToken } from '@/lib/auth';
-import { PORTAL_CATEGORY_TAGS } from '@/components/admin/EventForm';
+import { BLOG_TAG_GROUPS } from '@/lib/lpTags';
 
 type TextBlock = { type: 'text'; content: string };
 type ImageBlock = { type: 'image'; url: string };
@@ -343,6 +343,19 @@ export default function AdminBlogPage() {
     }
   }
 
+  function toggleGroupedTag(tag: string, groupTags: readonly string[]) {
+    setForm((prev) => {
+      const tags = prev.tags ?? [];
+      const active = tags.includes(tag);
+      return {
+        ...prev,
+        tags: active
+          ? tags.filter((t) => t !== tag)
+          : [...tags.filter((t) => !groupTags.includes(t)), tag],
+      };
+    });
+  }
+
   function removeImage(idx: number) {
     setBlocks((prev) => {
       const next = [...prev];
@@ -409,26 +422,33 @@ export default function AdminBlogPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-bold text-gray-700">カテゴリタグ <span className="text-red-500">*</span></label>
-            <p className="mb-1.5 text-xs text-gray-400">カテゴリページへの掲載に必要です（1つ選択）</p>
-            <div className="flex flex-wrap gap-1.5">
-              {PORTAL_CATEGORY_TAGS.map(tag => {
-                const active = (form.tags ?? []).includes(tag);
-                return (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => setForm(p => ({ ...p, tags: active ? [] : [tag] }))}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                      active
-                        ? 'border-[#06C755] bg-[#06C755] text-white'
-                        : 'border-gray-300 bg-white text-gray-600 hover:border-[#06C755]'
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                );
-              })}
+            <label className="mb-1 block text-sm font-bold text-gray-700">LP用タグ <span className="text-red-500">*</span></label>
+            <p className="mb-1.5 text-xs text-gray-400">活動ブログを関連LPに載せるためのタグです。</p>
+            <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+              {BLOG_TAG_GROUPS.map((group) => (
+                <div key={group.label}>
+                  <p className="mb-1.5 text-xs font-bold text-gray-500">{group.label}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {group.tags.map((tag) => {
+                      const active = (form.tags ?? []).includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => toggleGroupedTag(tag, group.tags)}
+                          className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                            active
+                              ? 'border-[#06C755] bg-[#06C755] text-white'
+                              : 'border-gray-300 bg-white text-gray-600 hover:border-[#06C755]'
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 

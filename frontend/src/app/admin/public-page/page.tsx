@@ -1821,7 +1821,7 @@ export default function AdminPublicPage() {
             <svg className={`h-4 w-4 text-gray-400 transition-transform ${openSections.structure ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
           </button>
           {openSections.structure && <div className="space-y-3 border-t border-gray-100 p-4">
-          {/* 予約表示スタイルは予約管理ページで設定 */}
+          {/* 予約表示スタイルは予約ページで設定 */}
           <div>
             <label className="block">
               <span className="mb-2 flex items-center justify-between text-xs text-gray-500">
@@ -2049,11 +2049,11 @@ export default function AdminPublicPage() {
           </div>}
         </div>
 
-        {/* 予約管理 */}
+        {/* 予約ページ */}
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
           <button type="button" onClick={() => toggleSection('reserve')}
             className="flex w-full items-center justify-between px-4 py-3 transition hover:bg-gray-50">
-            <p className="text-xs font-bold text-gray-700">予約管理</p>
+            <p className="text-xs font-bold text-gray-700">予約ページ</p>
             <svg className={`h-4 w-4 text-gray-400 transition-transform ${openSections.reserve ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
           </button>
           {openSections.reserve && (
@@ -2129,7 +2129,7 @@ export default function AdminPublicPage() {
                     {([
                       {
                         value: 'comiu' as const,
-                        label: 'COMIUで予約管理',
+                        label: 'COMIUで予約する',
                         description: '予約画面へ進み、参加者をCOMIUのDBに登録します。',
                       },
                       {

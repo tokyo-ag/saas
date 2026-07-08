@@ -21,7 +21,7 @@ type DisplayFields = { location: boolean; price: boolean; capacity: boolean; des
 const DEFAULT_DISPLAY_FIELDS: DisplayFields = { location: true, price: true, capacity: false, description: true };
 
 const reservationActionOptions: { label: string; value: ReservationActionStyle }[] = [
-  { label: 'COMIUで予約管理', value: 'comiu' },
+  { label: 'COMIUで予約する', value: 'comiu' },
   { label: 'LINEで予約する', value: 'line' },
 ];
 
@@ -262,7 +262,7 @@ export default function EventsPage() {
 
       {/* ヘッダー */}
       <div className="mb-5 flex items-start justify-between gap-3">
-        <h1 className="text-xl md:text-2xl font-bold text-gray-900">予約管理</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">予約ページ</h1>
         <Link href="/admin/events/new" className="shrink-0 rounded-lg bg-[#06C755] px-4 py-2 text-sm font-bold text-white hover:bg-[#05a847]">
           新規作成
         </Link>

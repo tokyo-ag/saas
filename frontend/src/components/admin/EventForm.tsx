@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, API_URL, Event, Tenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
+import { EVENT_TAG_GROUPS } from '@/lib/lpTags';
 import { Section, Field, RadioGroup, Check, UploadButton } from './EventFormPrimitives';
 
 type EventFormData = {
@@ -458,24 +459,31 @@ export default function EventForm({ initial }: { initial?: Event }) {
             className={inputClass}
           />
         </Field>
-        <Field label="タグ">
-          <div className="flex flex-wrap gap-2">
-            {AVAILABLE_TAGS.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                onClick={() => toggleTag(tag)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                  form.tags.includes(tag)
-                    ? 'bg-[#06C755] text-white border-[#06C755]'
-                    : 'bg-white text-gray-600 border-gray-300 hover:border-[#06C755]'
-                }`}
-              >
-                {tag}
-              </button>
+        <Field label="LP用タグ">
+          <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+            {EVENT_TAG_GROUPS.map((group) => (
+              <div key={group.label}>
+                <p className="mb-1.5 text-xs font-bold text-gray-500">{group.label}</p>
+                <div className="flex flex-wrap gap-2">
+                  {group.tags.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                        form.tags.includes(tag)
+                          ? 'bg-[#06C755] text-white border-[#06C755]'
+                          : 'bg-white text-gray-600 border-gray-300 hover:border-[#06C755]'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
-          <p className="mt-2 text-xs text-gray-500">交流会・バドミントン・バスケ・フットサル・バレーは、ポータル分類用のため1つだけ選択できます。</p>
+          <p className="mt-2 text-xs text-gray-500">活動タグはポータル分類用のため1つだけ選択できます。場所タグとLP補助タグは地域LPや検索ページ整理に使います。</p>
         </Field>
         <Field label="説明">
           {DESCRIPTION_TEMPLATES[form.category] && (
