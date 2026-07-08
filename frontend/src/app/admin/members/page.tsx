@@ -4,7 +4,6 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, formatDateOnly, Member } from '@/lib/api';
-import { SITE_URL } from '@/lib/config';
 
 
 const grades = ['高校1年', '高校2年', '高校3年', '大学1年', '大学2年', '大学3年', '大学4年', '大学院生', '社会人', 'その他'];
@@ -19,11 +18,6 @@ export default function MembersPage() {
   const [gender, setGender] = useState('');
   const [level, setLevel] = useState('');
 
-  const [rosterShareEnabled, setRosterShareEnabled] = useState(false);
-  const [rosterShareToken, setRosterShareToken] = useState<string | null>(null);
-  const [savingRosterShare, setSavingRosterShare] = useState(false);
-  const [rosterCopied, setRosterCopied] = useState(false);
-
   async function load() {
     const data = await api.members.list({
       name: name || undefined,
@@ -36,36 +30,11 @@ export default function MembersPage() {
 
   useEffect(() => {
     api.members.list().then(setMembers).catch(console.error).finally(() => setLoading(false));
-    api.tenant.get().then((t) => {
-      setRosterShareEnabled(!!t.memberRosterShareEnabled);
-      setRosterShareToken(t.memberRosterShareToken ?? null);
-    }).catch(() => {});
   }, []);
 
   async function handleSearch() {
     setLoading(true);
     await load().catch(console.error).finally(() => setLoading(false));
-  }
-
-  async function toggleRosterShare(enabled: boolean) {
-    setSavingRosterShare(true);
-    try {
-      const updated = await api.tenant.toggleMemberRosterShare(enabled);
-      setRosterShareEnabled(!!updated.memberRosterShareEnabled);
-      setRosterShareToken(updated.memberRosterShareToken ?? null);
-    } catch {
-      alert('名簿共有設定の更新に失敗しました');
-    } finally {
-      setSavingRosterShare(false);
-    }
-  }
-
-  function copyRosterUrl() {
-    if (!rosterShareToken) return;
-    navigator.clipboard.writeText(`${SITE_URL}/member-roster/${rosterShareToken}`).then(() => {
-      setRosterCopied(true);
-      setTimeout(() => setRosterCopied(false), 2000);
-    });
   }
 
   return (
@@ -79,41 +48,6 @@ export default function MembersPage() {
           <span className="shrink-0 rounded-full bg-[#06C755]/10 px-3 py-1.5 text-xs font-bold text-[#06C755]">
             登録者 {members.length}人
           </span>
-        )}
-      </div>
-
-      <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-sm font-semibold text-gray-800">参加者名簿の共有</h2>
-            <p className="mt-1 text-xs leading-relaxed text-gray-400">ONにすると、ログイン不要で参加者名簿を閲覧できるリンクを発行できます。スタッフへの共有などにご活用ください。</p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={rosterShareEnabled}
-            disabled={savingRosterShare}
-            onClick={() => toggleRosterShare(!rosterShareEnabled)}
-            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${rosterShareEnabled ? 'bg-[#06C755]' : 'bg-gray-300'}`}
-          >
-            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${rosterShareEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-          </button>
-        </div>
-        {rosterShareEnabled && rosterShareToken && (
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-            <input
-              readOnly
-              value={`${SITE_URL}/member-roster/${rosterShareToken}`}
-              className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600"
-              onFocus={(e) => e.target.select()}
-            />
-            <button
-              onClick={copyRosterUrl}
-              className="shrink-0 rounded-lg border border-gray-300 px-4 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
-            >
-              {rosterCopied ? 'コピーしました' : 'コピー'}
-            </button>
-          </div>
         )}
       </div>
 

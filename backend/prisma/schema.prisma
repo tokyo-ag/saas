@@ -54,8 +54,6 @@ model Tenant {
   typeTags               String[]  @default([]) @map("type_tags")
   activityTags           String[]  @default([]) @map("activity_tags")
   code                   String?   @unique @db.VarChar(32)
-  memberRosterShareEnabled Boolean @default(false) @map("member_roster_share_enabled")
-  memberRosterShareToken   String? @unique @map("member_roster_share_token") @db.VarChar(64)
   createdAt              DateTime  @default(now()) @map("created_at")
   updatedAt              DateTime  @updatedAt @map("updated_at")
   deletedAt              DateTime? @map("deleted_at")

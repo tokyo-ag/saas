@@ -57,38 +57,6 @@ export class PublicController {
     return endAt;
   }
 
-  @Get('member-roster/:token')
-  async getMemberRoster(@Param('token') token: string) {
-    const tenant = await this.prisma.tenant.findFirst({
-      where: { memberRosterShareToken: token, memberRosterShareEnabled: true },
-    });
-    if (!tenant) throw new NotFoundException('名簿が見つかりません');
-
-    const members = await this.prisma.member.findMany({
-      where: { tenantId: tenant.id },
-      include: {
-        _count: {
-          select: {
-            reservations: { where: { status: { in: ['reserved', 'attended'] } } },
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return {
-      tenant: { name: tenant.name },
-      members: members.map((m) => ({
-        name: m.name,
-        grade: m.grade,
-        gender: m.gender,
-        level: m.level,
-        eventCount: m._count.reservations,
-        createdAt: m.createdAt,
-      })),
-    };
-  }
-
   @Get('roster/:token')
   async getRoster(@Param('token') token: string) {
     const event = await this.prisma.event.findFirst({

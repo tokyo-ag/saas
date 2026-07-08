@@ -293,7 +293,6 @@ export const api = {
     blogByTags: (tags: string[], limit = 10) =>
       request<PortalBlogPost[]>(`/public/blog?tags=${encodeURIComponent(tags.join(','))}&limit=${limit}`),
     roster: (token: string) => request<PublicRoster>(`/public/roster/${token}`),
-    memberRoster: (token: string) => request<PublicMemberRoster>(`/public/member-roster/${token}`),
   },
   blog: {
     list: () => request<BlogPost[]>('/admin/blog'),
@@ -331,11 +330,6 @@ export const api = {
       totalRevenue: number;
     }>('/admin/tenant/stats'),
     syncLineProfile: () => request<Tenant>('/admin/tenant/sync-line-profile', { method: 'POST' }),
-    toggleMemberRosterShare: (enabled: boolean) =>
-      request<Tenant>('/admin/tenant/member-roster-share', {
-        method: 'PATCH',
-        body: JSON.stringify({ enabled }),
-      }),
     billingCheckout: (plan: 'standard' | 'pro') =>
       request<{ url: string }>('/admin/tenant/billing/checkout', {
         method: 'POST',
@@ -719,8 +713,6 @@ export interface Tenant {
   updatedAt: string;
   deletedAt?: string | null;
   bannedAt?: string | null;
-  memberRosterShareEnabled?: boolean;
-  memberRosterShareToken?: string | null;
 }
 
 export interface TenantWithStats extends Tenant {
@@ -1156,18 +1148,6 @@ export interface PublicCmsPage {
     linePictureUrl?: string | null;
     iconUrl?: string | null;
   };
-}
-
-export interface PublicMemberRoster {
-  tenant: { name: string };
-  members: {
-    name: string | null;
-    grade: string | null;
-    gender: string | null;
-    level: string | null;
-    eventCount: number;
-    createdAt: string;
-  }[];
 }
 
 export interface PublicRoster {

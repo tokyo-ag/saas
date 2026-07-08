@@ -3,7 +3,6 @@ import {
   Get,
   Put,
   Post,
-  Patch,
   Body,
   BadRequestException,
   UseGuards,
@@ -37,17 +36,6 @@ export class TenantController {
       dto,
       req.user.accountId,
       reauthToken,
-    );
-  }
-
-  @Patch('member-roster-share')
-  toggleMemberRosterShare(
-    @TenantId() tenantId: string,
-    @Body() body: { enabled: boolean },
-  ) {
-    return this.tenantService.toggleMemberRosterShare(
-      tenantId,
-      body.enabled,
     );
   }
 
