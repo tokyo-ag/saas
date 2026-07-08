@@ -5,8 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { initLiff, getLiffUserId } from '@/lib/liff';
 
-const GRADES = ['高校1年', '高校2年', '高校3年', '大学1年', '大学2年', '大学3年', '大学4年', '大学院生', '社会人', 'その他'];
-const GENDERS = ['男性', '女性', 'その他・回答しない'];
+const GRADES = ['大学生（18～22歳）', '社会人'];
+const GENDERS = ['男性', '女性'];
 const LEVELS = ['初心者', '中級', '上級'];
 
 export default function ProfileEditPage() {
@@ -89,7 +89,7 @@ export default function ProfileEditPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">学年 <span className="text-red-400">*</span></label>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">年齢 <span className="text-red-400">*</span></label>
               <select required value={grade} onChange={(e) => setGrade(e.target.value)} className={inputClass}>
                 <option value="">選択してください</option>
                 {GRADES.map((g) => <option key={g} value={g}>{g}</option>)}

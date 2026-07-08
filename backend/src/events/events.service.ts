@@ -465,7 +465,7 @@ export class EventsService {
       return `"${text.replace(/"/g, '""')}"`;
     };
 
-    const header = '名前,学年,性別,レベル,予約日時,ステータス,支払い状況';
+    const header = '名前,年齢,性別,レベル,予約日時,ステータス,支払い状況';
     const rows = reservations.map((r) => {
       const statusLabel = this.statusLabel(r.status, r.waitlistOrder);
       const paymentLabel = r.paidAt

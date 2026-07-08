@@ -124,7 +124,7 @@ export default function MemberDetailPage() {
 
         <dl className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
           <div>
-            <dt className="text-gray-500">学年</dt>
+            <dt className="text-gray-500">年齢</dt>
             <dd className="mt-1 font-medium text-gray-900">{member.grade ?? '-'}</dd>
           </div>
           <div>

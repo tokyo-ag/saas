@@ -14,8 +14,8 @@ import {
 } from '@/lib/liff';
 import { FriendInviteCard } from '@/components/liff/FriendInviteCard';
 
-const GRADES = ['高校1年', '高校2年', '高校3年', '大学1年', '大学2年', '大学3年', '大学4年', '大学院生', '社会人', 'その他'];
-const GENDERS = ['男性', '女性', 'その他・回答しない'];
+const GRADES = ['大学生（18～22歳）', '社会人'];
+const GENDERS = ['男性', '女性'];
 const LEVELS = ['初心者', '中級', '上級'];
 
 // auth状態を3値で管理
@@ -292,6 +292,16 @@ function ReservePageInner() {
               <p className="font-semibold text-gray-900 text-sm">{event.title}</p>
               <p className="text-xs text-gray-500">📅 {formatDate(event.heldAt)}</p>
               <p className="text-xs text-gray-500">📍 {event.location}</p>
+              {event.rosterShareEnabled && event.rosterShareToken && (
+                <a
+                  href={`/roster/${event.rosterShareToken}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block text-xs text-[#06C755] hover:underline pt-1"
+                >
+                  参加者名簿を見る →
+                </a>
+              )}
             </div>
             <FriendInviteCard
               tenantId={tenantId}
@@ -415,7 +425,7 @@ function ReservePageInner() {
                 <span className="font-medium text-gray-900">{profile.name}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">学年</span>
+                <span className="text-gray-500">年齢</span>
                 <span className="font-medium text-gray-900">{profile.grade}</span>
               </div>
               <div className="flex justify-between text-sm">
@@ -435,6 +445,16 @@ function ReservePageInner() {
               >
                 情報を変更する →
               </button>
+              {event?.rosterShareEnabled && event.rosterShareToken && (
+                <a
+                  href={`/roster/${event.rosterShareToken}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-xs text-[#06C755] hover:underline pt-1"
+                >
+                  参加者名簿を見る →
+                </a>
+              )}
             </div>
 
             <button
@@ -461,7 +481,7 @@ function ReservePageInner() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">学年 <span className="text-red-400">*</span></label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">年齢 <span className="text-red-400">*</span></label>
                 <select required value={grade} onChange={(e) => setGrade(e.target.value)} className={inputClass}>
                   <option value="">選択してください</option>
                   {GRADES.map((g) => <option key={g} value={g}>{g}</option>)}

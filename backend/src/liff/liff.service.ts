@@ -351,8 +351,8 @@ export class LiffService {
       ) {
         throw new BadRequestException(
           event.levelEnabled
-            ? '初回予約時はお名前・学年・性別・レベルを入力してください'
-            : '初回予約時はお名前・学年・性別を入力してください',
+            ? '初回予約時はお名前・年齢・性別・レベルを入力してください'
+            : '初回予約時はお名前・年齢・性別を入力してください',
         );
       }
       member = await this.prisma.member.create({

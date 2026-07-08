@@ -78,7 +78,7 @@ export default function RosterSharePage() {
                   <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
                     <tr>
                       <th className="px-6 py-3 text-left">名前</th>
-                      <th className="px-6 py-3 text-left">学年</th>
+                      <th className="px-6 py-3 text-left">年齢</th>
                       <th className="px-6 py-3 text-left">性別</th>
                       {event.levelEnabled && <th className="px-6 py-3 text-left">レベル</th>}
                       <th className="px-6 py-3 text-left">ステータス</th>

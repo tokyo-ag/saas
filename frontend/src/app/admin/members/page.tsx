@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { api, formatDateOnly, Member } from '@/lib/api';
 
 
-const grades = ['高校1年', '高校2年', '高校3年', '大学1年', '大学2年', '大学3年', '大学4年', '大学院生', '社会人', 'その他'];
-const genders = ['男性', '女性', 'その他・回答しない'];
+const grades = ['大学生（18～22歳）', '社会人'];
+const genders = ['男性', '女性'];
 const levels = ['初心者', '中級', '上級'];
 
 export default function MembersPage() {
@@ -65,7 +65,7 @@ export default function MembersPage() {
             onChange={(e) => setGrade(e.target.value)}
             className="min-h-11 rounded-lg border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
           >
-            <option value="">学年 すべて</option>
+            <option value="">年齢 すべて</option>
             {grades.map((g) => <option key={g} value={g}>{g}</option>)}
           </select>
           <select
@@ -127,7 +127,7 @@ export default function MembersPage() {
                         <p className="text-xs text-gray-400">LINE: {member.lineDisplayName}</p>
                       )}
                       <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-500">
-                        <span>学年: {member.grade ?? '-'}</span>
+                        <span>年齢: {member.grade ?? '-'}</span>
                         <span>性別: {member.gender ?? '-'}</span>
                         {member.level && <span>レベル: {member.level}</span>}
                         <span>登録: {formatDateOnly(member.createdAt)}</span>
@@ -159,7 +159,7 @@ export default function MembersPage() {
                   <tr>
                     <th className="px-6 py-3 text-left">ID</th>
                     <th className="px-6 py-3 text-left">名前 / LINE名</th>
-                    <th className="px-6 py-3 text-left">学年</th>
+                    <th className="px-6 py-3 text-left">年齢</th>
                     <th className="px-6 py-3 text-left">性別</th>
                     <th className="px-6 py-3 text-left">レベル</th>
                     <th className="px-6 py-3 text-left">登録日</th>

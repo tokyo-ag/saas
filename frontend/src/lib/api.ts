@@ -650,6 +650,8 @@ export interface LiffEvent {
   imageUrl?: string;
   iconUrl?: string;
   levelEnabled?: boolean;
+  rosterShareEnabled?: boolean;
+  rosterShareToken?: string | null;
   friendAttendees?: { id: string; name: string | null }[];
   reviews?: EventReview[];
 }
