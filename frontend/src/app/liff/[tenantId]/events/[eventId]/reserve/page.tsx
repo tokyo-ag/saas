@@ -14,6 +14,7 @@ import {
   redirectToLiffApp,
 } from '@/lib/liff';
 import { useLiffTheme, hexToRgba } from '@/components/liff/LiffThemeProvider';
+import { ConfirmDialog } from '@/components/liff/ConfirmDialog';
 
 const CATEGORY_LABELS: Record<string, string> = {
   meetup: '交流会',
@@ -73,6 +74,7 @@ function ReservePageInner() {
   const [roster, setRoster] = useState<PublicRoster | null>(null);
   const [myReservation, setMyReservation] = useState<LiffReservation | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
 
   const hasProfile = !!(profile && profile.name && profile.grade && profile.gender && (!event?.levelEnabled || profile.level));
 
@@ -261,7 +263,6 @@ function ReservePageInner() {
 
   async function handleCancel() {
     if (!myReservation) return;
-    if (!confirm('予約をキャンセルしますか？')) return;
     setCancelling(true);
     try {
       setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
@@ -479,7 +480,7 @@ function ReservePageInner() {
         {myReservation ? (
           <div className="flex justify-center">
             <button
-              onClick={handleCancel}
+              onClick={() => setConfirmCancelOpen(true)}
               disabled={cancelling}
               className="rounded-full px-6 py-2.5 text-sm font-bold transition-colors disabled:opacity-50"
               style={cancelling ? { border: '1px solid #fecaca', color: '#ef4444', backgroundColor: '#fef2f2' } : { backgroundColor: hexToRgba(accentColor, 10), color: accentColor }}
@@ -503,6 +504,17 @@ function ReservePageInner() {
           </button>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmCancelOpen}
+        message="予約をキャンセルしますか？"
+        confirmLabel="キャンセルする"
+        cancelLabel="戻る"
+        accentColor={accentColor}
+        danger
+        onCancel={() => setConfirmCancelOpen(false)}
+        onConfirm={() => { setConfirmCancelOpen(false); handleCancel(); }}
+      />
     </div>
   );
 }

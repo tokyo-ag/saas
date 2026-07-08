@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { api, LiffMyReservation, LiffProfile, setLiffToken } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded, liff, redirectToLiffApp } from '@/lib/liff';
 import { useLiffTheme, hexToRgba } from '@/components/liff/LiffThemeProvider';
+import { ConfirmDialog } from '@/components/liff/ConfirmDialog';
 
 const GRADES = ['大学生（18～22歳）', '社会人'];
 const GENDERS = ['男性', '女性'];
@@ -73,6 +74,7 @@ export default function ProfilePage() {
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
   const [loginRequired, setLoginRequired] = useState(false);
 
   useEffect(() => {
@@ -174,7 +176,6 @@ export default function ProfilePage() {
   }
 
   async function handleCancel(reservationId: string) {
-    if (!confirm('予約をキャンセルしますか？')) return;
     setCancellingId(reservationId);
     try {
       setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
@@ -339,7 +340,7 @@ export default function ProfilePage() {
                           </div>
                           <button
                             type="button"
-                            onClick={() => handleCancel(r.id)}
+                            onClick={() => setConfirmCancelId(r.id)}
                             disabled={cancellingId === r.id}
                             className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors disabled:opacity-50"
                             style={cancellingId === r.id ? { color: '#ef4444', backgroundColor: '#fef2f2' } : { color: accentColor, backgroundColor: hexToRgba(accentColor, 10) }}
@@ -361,6 +362,17 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!confirmCancelId}
+        message="予約をキャンセルしますか？"
+        confirmLabel="キャンセルする"
+        cancelLabel="戻る"
+        accentColor={accentColor}
+        danger
+        onCancel={() => setConfirmCancelId(null)}
+        onConfirm={() => { const id = confirmCancelId; setConfirmCancelId(null); if (id) handleCancel(id); }}
+      />
     </div>
   );
 }
