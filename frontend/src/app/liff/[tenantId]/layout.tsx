@@ -19,7 +19,6 @@ async function fetchTheme(tenantId: string): Promise<LiffTheme> {
       .then(r => r.ok ? r.json() : null);
     if (!data) return DEFAULT_LIFF_THEME;
 
-    const accentColor = data.accentColor?.trim() || DEFAULT_LIFF_THEME.accentColor;
     const bgBase = data.backgroundColor?.trim() || DEFAULT_LIFF_THEME.backgroundColor;
     const bgOpacity = typeof data.backgroundOpacity === 'number' ? data.backgroundOpacity : 100;
     const backgroundColor = hexToRgba(bgBase, bgOpacity);
@@ -27,11 +26,16 @@ async function fetchTheme(tenantId: string): Promise<LiffTheme> {
     const navOpacity = typeof data.navOpacity === 'number' ? data.navOpacity : 100;
     const navBg = hexToRgba(navColor, navOpacity);
 
+    // 公開ページの「予約する」ボタン色（実際にWEBサイトで表示されている色）を最優先で使う
     let eventCardBg = DEFAULT_LIFF_THEME.eventCardBg;
+    let reserveButtonColor: string | null = null;
     try {
       const fd = JSON.parse(data.footerText ?? '{}');
       eventCardBg = fd.reserveEventCardBg?.trim() || DEFAULT_LIFF_THEME.eventCardBg;
+      reserveButtonColor = fd.reserveButtonBgColor?.trim() || null;
     } catch { /* ignore */ }
+
+    const accentColor = reserveButtonColor || data.accentColor?.trim() || DEFAULT_LIFF_THEME.accentColor;
 
     return { accentColor, backgroundColor, navBg, eventCardBg };
   } catch {
