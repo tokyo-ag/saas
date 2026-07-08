@@ -213,7 +213,7 @@ export default function ProfilePage() {
 
   if (loginRequired) {
     return (
-      <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center gap-5">
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center gap-5" style={{ backgroundColor: theme.backgroundColor }}>
         <p className="text-sm text-gray-500">LINEへのログインが必要です。</p>
         <button
           onClick={handleLoginRetry}
@@ -233,7 +233,7 @@ export default function ProfilePage() {
   }, {});
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5]" style={{ '--liff-accent': accentColor } as React.CSSProperties}>
+    <div className="min-h-screen" style={{ backgroundColor: theme.backgroundColor, '--liff-accent': accentColor } as React.CSSProperties}>
       <div className="text-white" style={{ backgroundColor: accentColor }}>
         <div className="max-w-[480px] mx-auto px-4 py-4 flex items-center gap-3">
           <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-white text-xl leading-none">‹</button>

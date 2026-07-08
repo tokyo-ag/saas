@@ -276,7 +276,7 @@ function ReservePageInner() {
 
   if (event && isClosed) {
     return (
-      <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center gap-4">
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center gap-4" style={{ backgroundColor: theme.backgroundColor }}>
         <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl" style={{ backgroundColor: hexToRgba(accentColor, 10) }}>⚠️</div>
         <div>
           <p className="text-lg font-bold text-gray-900">このイベントは予約できません</p>
@@ -318,7 +318,7 @@ function ReservePageInner() {
 
   if (authStatus === 'error') {
     return (
-      <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center gap-5">
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center gap-5" style={{ backgroundColor: theme.backgroundColor }}>
         <p className="text-sm text-gray-500">認証に失敗しました。もう一度お試しください。</p>
         {authError && (
           <p className="text-xs text-red-400 bg-red-50 px-3 py-2 rounded-lg font-mono break-all">{authError}</p>
@@ -350,7 +350,7 @@ function ReservePageInner() {
       ? `https://line.me/R/ti/p/@${tenant.lineChannelId}`
       : null;
     return (
-      <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center gap-6">
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center gap-6" style={{ backgroundColor: theme.backgroundColor }}>
         <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ backgroundColor: hexToRgba(accentColor, 10), color: accentColor }}>
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
             <path d="M12 2C6.48 2 2 6.03 2 11c0 3.13 1.68 5.9 4.28 7.54L5.5 22l3.78-1.97C10.16 20.65 11.07 21 12 21c5.52 0 10-4.03 10-9S17.52 2 12 2z" fill="currentColor"/>
@@ -383,7 +383,7 @@ function ReservePageInner() {
   const categoryLabel = event?.category ? (CATEGORY_LABELS[event.category] ?? event.category) : null;
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5]">
+    <div className="min-h-screen" style={{ backgroundColor: theme.backgroundColor }}>
       <div className="text-white" style={{ backgroundColor: accentColor }}>
         <div className="max-w-[480px] mx-auto px-4 py-4 flex items-center gap-3">
           <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-white text-xl leading-none">‹</button>
