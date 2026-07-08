@@ -264,6 +264,7 @@ function ReservePageInner() {
     if (!confirm('予約をキャンセルしますか？')) return;
     setCancelling(true);
     try {
+      setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
       await api.liff.cancel(tenantId, myReservation.id);
       setMyReservation(null);
     } catch {

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { api, LiffMyReservation, LiffProfile } from '@/lib/api';
-import { initLiff, getLiffUserId, loginIfNeeded } from '@/lib/liff';
+import { api, LiffMyReservation, LiffProfile, setLiffToken } from '@/lib/api';
+import { initLiff, getLiffUserId, loginIfNeeded, liff } from '@/lib/liff';
 import { useLiffTheme, hexToRgba } from '@/components/liff/LiffThemeProvider';
 
 const GRADES = ['大学生（18～22歳）', '社会人'];
@@ -82,6 +82,7 @@ export default function ProfilePage() {
         return;
       }
       setLineUserId(uid);
+      setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
 
       const [prof, myReservations] = await Promise.all([
         api.liff.profile(tenantId, uid).catch(() => null),
@@ -106,6 +107,7 @@ export default function ProfilePage() {
     setError('');
     setSaving(true);
     try {
+      setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
       const updated = await api.liff.updateProfile(tenantId, lineUserId, { name, grade, gender, level, comment });
       setProfile(updated);
       if (returnTo) {
@@ -125,6 +127,7 @@ export default function ProfilePage() {
     if (!confirm('予約をキャンセルしますか？')) return;
     setCancellingId(reservationId);
     try {
+      setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
       await api.liff.cancel(tenantId, reservationId);
       setReservations((prev) => prev.filter((r) => r.id !== reservationId));
     } catch {

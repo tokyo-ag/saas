@@ -25,7 +25,12 @@ export function getInitInfo() {
 
 export async function initLiff(): Promise<boolean> {
   const id = getLiffId();
-  if (initialized && initializedLiffId === id) return true;
+  if (initialized && initializedLiffId === id) {
+    // 既に初期化済みでも、ページ遷移や時間経過でトークンが古くなっている可能性があるため
+    // liff.init()はスキップしつつ、トークンだけは毎回取り直す。
+    setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
+    return true;
+  }
   if (!id) {
     lastError = 'LIFF_ID未設定';
     return false;
