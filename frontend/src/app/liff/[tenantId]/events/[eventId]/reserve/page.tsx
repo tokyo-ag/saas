@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { api, LiffEvent, LiffProfile, LiffTenant, setLiffToken, formatDate } from '@/lib/api';
+import { api, LiffEvent, LiffProfile, LiffTenant, PublicRoster, setLiffToken, formatDate } from '@/lib/api';
 import {
   initLiff,
   getLiffProfile,
@@ -56,6 +56,7 @@ function ReservePageInner() {
   const [level, setLevel] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [roster, setRoster] = useState<PublicRoster | null>(null);
 
   function restartLineAuth() {
     setError('LINE認証を更新しています。画面が切り替わらない場合は、LINEからもう一度開き直してください。');
@@ -184,6 +185,14 @@ function ReservePageInner() {
     init();
   }, [tenantId, eventId, isResultView]);
 
+  useEffect(() => {
+    if (!event?.rosterShareEnabled || !event.rosterShareToken) {
+      setRoster(null);
+      return;
+    }
+    api.public.roster(event.rosterShareToken).then(setRoster).catch(() => setRoster(null));
+  }, [event?.rosterShareEnabled, event?.rosterShareToken]);
+
   async function submit(overrides?: { name: string; grade: string; gender: string; level?: string }) {
     if (!lineUserId) return;
     setError('');
@@ -292,17 +301,26 @@ function ReservePageInner() {
               <p className="font-semibold text-gray-900 text-sm">{event.title}</p>
               <p className="text-xs text-gray-500">📅 {formatDate(event.heldAt)}</p>
               <p className="text-xs text-gray-500">📍 {event.location}</p>
-              {event.rosterShareEnabled && event.rosterShareToken && (
-                <a
-                  href={`/roster/${event.rosterShareToken}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block text-xs text-[#06C755] hover:underline pt-1"
-                >
-                  参加者名簿を見る →
-                </a>
-              )}
             </div>
+            {event.rosterShareEnabled && roster && (
+              <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-4 text-left">
+                <p className="text-xs font-medium text-gray-500 mb-2">参加者名簿 ({roster.reservations.length}人)</p>
+                {roster.reservations.length === 0 ? (
+                  <p className="text-xs text-gray-400">まだ参加者はいません</p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {roster.reservations.map((r, i) => (
+                      <li key={i} className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-gray-900">{r.name ?? '未入力'}</span>
+                        <span className="text-gray-500">
+                          {[r.grade, r.gender, roster.event.levelEnabled ? r.level : null].filter(Boolean).join(' / ')}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
             <FriendInviteCard
               tenantId={tenantId}
               eventId={eventId}
@@ -445,17 +463,27 @@ function ReservePageInner() {
               >
                 情報を変更する →
               </button>
-              {event?.rosterShareEnabled && event.rosterShareToken && (
-                <a
-                  href={`/roster/${event.rosterShareToken}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block text-xs text-[#06C755] hover:underline pt-1"
-                >
-                  参加者名簿を見る →
-                </a>
-              )}
             </div>
+
+            {event?.rosterShareEnabled && roster && (
+              <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-4">
+                <p className="text-xs font-medium text-gray-500 mb-2">参加者名簿 ({roster.reservations.length}人)</p>
+                {roster.reservations.length === 0 ? (
+                  <p className="text-xs text-gray-400">まだ参加者はいません</p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {roster.reservations.map((r, i) => (
+                      <li key={i} className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-gray-900">{r.name ?? '未入力'}</span>
+                        <span className="text-gray-500">
+                          {[r.grade, r.gender, roster.event.levelEnabled ? r.level : null].filter(Boolean).join(' / ')}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
 
             <button
               onClick={() => submit()}
