@@ -149,7 +149,8 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
-      <div className="bg-[#06C755] text-white px-4 py-4">
+      <div className="bg-[#06C755] text-white px-4 py-4 flex items-center gap-3">
+        <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-white text-xl leading-none">‹</button>
         <h1 className="text-base font-bold">マイページ</h1>
       </div>
 
