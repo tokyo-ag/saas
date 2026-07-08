@@ -128,6 +128,11 @@ export class CreateEventDto {
   levelEnabled?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => Boolean(value))
+  rosterShareEnabled?: boolean;
+
+  @IsOptional()
   @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
   @MaxLength(500)
   imageUrl?: string;

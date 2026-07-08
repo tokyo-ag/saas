@@ -33,6 +33,7 @@ type EventFormData = {
   remindPreset: 'prev18' | 'day9' | 'custom';
   remindAt: string;
   levelEnabled: boolean;
+  rosterShareEnabled: boolean;
   imageUrl: string;
   iconUrl: string;
   category: string;
@@ -151,6 +152,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
     remindPreset: 'prev18',
     remindAt: toLocalDatetimeValue(initial?.remindAt),
     levelEnabled: initial?.levelEnabled ?? false,
+    rosterShareEnabled: initial?.rosterShareEnabled ?? false,
     imageUrl: initial?.imageUrl ?? '',
     iconUrl: initial?.iconUrl ?? '',
     category: initial?.category ?? '',
@@ -376,6 +378,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
       remindApp: form.remindApp,
       remindAt,
       levelEnabled: form.levelEnabled,
+      rosterShareEnabled: form.rosterShareEnabled,
       imageUrl: form.imageUrl || undefined,
       iconUrl: form.iconUrl || undefined,
       category: form.category || null,
@@ -623,6 +626,11 @@ export default function EventForm({ initial }: { initial?: Event }) {
           label="予約時にレベル（初心者・中級・上級）を確認する"
           checked={form.levelEnabled}
           onChange={(checked) => set('levelEnabled', checked)}
+        />
+        <Check
+          label="参加者名簿を公開する（ログイン不要の共有リンクを発行）"
+          checked={form.rosterShareEnabled}
+          onChange={(checked) => set('rosterShareEnabled', checked)}
         />
       </Section>
 

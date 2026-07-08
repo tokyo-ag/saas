@@ -153,6 +153,7 @@ export class EventsService {
         );
       }
     }
+    const rosterShareEnabled = dto.rosterShareEnabled ?? false;
     return this.prisma.event.create({
       data: {
         tenantId,
@@ -181,6 +182,10 @@ export class EventsService {
         category: dto.category ?? null,
         tags: normalizePortalCategoryTags(dto.tags),
         levelEnabled: dto.levelEnabled ?? false,
+        rosterShareEnabled,
+        rosterShareToken: rosterShareEnabled
+          ? this.generateRosterShareToken()
+          : null,
       },
     });
   }
@@ -202,6 +207,10 @@ export class EventsService {
         );
       }
     }
+    const rosterShareToken =
+      dto.rosterShareEnabled && !current.rosterShareToken
+        ? this.generateRosterShareToken()
+        : undefined;
     return this.prisma.event.update({
       where: { id },
       data: {
@@ -256,6 +265,10 @@ export class EventsService {
         }),
         ...(dto.levelEnabled !== undefined && {
           levelEnabled: dto.levelEnabled,
+        }),
+        ...(dto.rosterShareEnabled !== undefined && {
+          rosterShareEnabled: dto.rosterShareEnabled,
+          ...(rosterShareToken && { rosterShareToken }),
         }),
       },
     });
