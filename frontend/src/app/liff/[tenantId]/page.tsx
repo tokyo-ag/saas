@@ -42,7 +42,17 @@ function AvatarRow({ count, friends }: { count: number; friends?: { id: string; 
   );
 }
 
-function EventCard({ event, tenantId, accentColor, cardBg, reserveLineUrl }: { event: LiffEvent; tenantId: string; accentColor: string; cardBg: string; reserveLineUrl?: string | null }) {
+function ReservedBadge({ status, className = '' }: { status?: string; className?: string }) {
+  if (!status) return null;
+  const isWaitlisted = status === 'waitlisted';
+  return (
+    <span className={`${isWaitlisted ? 'bg-amber-400' : 'bg-[#06C755]'} text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full ${className}`}>
+      {isWaitlisted ? 'キャンセル待ち' : '予約済み'}
+    </span>
+  );
+}
+
+function EventCard({ event, tenantId, accentColor, cardBg, reserveLineUrl, myStatus }: { event: LiffEvent; tenantId: string; accentColor: string; cardBg: string; reserveLineUrl?: string | null; myStatus?: string }) {
   const img = imgUrl(event.imageUrl, API_URL);
   const remaining = event.capacity != null ? event.capacity - event.reservedCount : null;
 
@@ -64,6 +74,7 @@ function EventCard({ event, tenantId, accentColor, cardBg, reserveLineUrl }: { e
             {event.title}
           </p>
         </div>
+        {myStatus && <ReservedBadge status={myStatus} className="absolute top-2 left-2" />}
         {remaining !== null && remaining <= 0 && (
           <div className="absolute top-2 right-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">満席</div>
         )}
@@ -140,7 +151,7 @@ function threadStatusLabel(event: LiffEvent) {
   return '募集中';
 }
 
-function LiffThreadView({ events, tenantId, accentColor, cardBg, reserveLineUrl }: { events: LiffEvent[]; tenantId: string; accentColor: string; cardBg: string; reserveLineUrl?: string | null }) {
+function LiffThreadView({ events, tenantId, accentColor, cardBg, reserveLineUrl, myStatusByEvent }: { events: LiffEvent[]; tenantId: string; accentColor: string; cardBg: string; reserveLineUrl?: string | null; myStatusByEvent?: Record<string, string> }) {
   const groups = events.reduce<Record<string, LiffEvent[]>>((acc, event) => {
     const key = threadMonthLabel(event.heldAt);
     (acc[key] ??= []).push(event);
@@ -182,10 +193,13 @@ function LiffThreadView({ events, tenantId, accentColor, cardBg, reserveLineUrl 
                         <p className="mt-2 line-clamp-2 text-[12px] leading-5 text-gray-400">{event.description}</p>
                       )}
                     </div>
-                    <span className={`shrink-0 rounded-md px-2.5 py-1 text-[11px] font-bold ${isFull ? 'bg-gray-100 text-gray-400' : 'text-white'}`}
-                      style={isFull ? undefined : { backgroundColor: accentColor }}>
-                      {status}
-                    </span>
+                    <div className="shrink-0 flex flex-col items-end gap-1">
+                      <span className={`rounded-md px-2.5 py-1 text-[11px] font-bold ${isFull ? 'bg-gray-100 text-gray-400' : 'text-white'}`}
+                        style={isFull ? undefined : { backgroundColor: accentColor }}>
+                        {status}
+                      </span>
+                      <ReservedBadge status={myStatusByEvent?.[event.id]} />
+                    </div>
                   </div>
                 </Link>
               );
@@ -346,7 +360,7 @@ function LiffCalendarView({ events, tenantId, accentColor, cardBg, reserveLineUr
   );
 }
 
-function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl }: { events: LiffEvent[]; tenantId: string; accentColor: string; reserveLineUrl?: string | null }) {
+function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl, myStatusByEvent }: { events: LiffEvent[]; tenantId: string; accentColor: string; reserveLineUrl?: string | null; myStatusByEvent?: Record<string, string> }) {
   const firstEventDate = events[0]?.heldAt ?? null;
   const { year, month, prevMonth, nextMonth, cells, isToday } = useCalendarMonth(firstEventDate);
   const eventsByDate: Record<string, LiffEvent[]> = {};
@@ -441,12 +455,15 @@ function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl }: { e
                           <Link
                             key={event.id}
                             href={reserveHref(tenantId, event.id, reserveLineUrl)}
-                            className="block rounded-md px-1 py-1 active:opacity-80"
+                            className="relative block rounded-md px-1 py-1 active:opacity-80"
                             style={{ backgroundColor: eventChipBg, color: eventChipText }}
                           >
                             <p className="truncate text-[9px] font-bold leading-tight">{locationPreview}</p>
                             <p className="mt-0.5 truncate text-[8px] font-semibold leading-none opacity-95">{eventTimeRange(event).replace('-', '~')}</p>
                             <p className="mt-0.5 truncate text-[8px] font-semibold leading-none opacity-95">{eventPriceLabel(event).replace(',', '')}</p>
+                            {myStatusByEvent?.[event.id] && (
+                              <ReservedBadge status={myStatusByEvent[event.id]} className="absolute -top-1 -right-1 px-1 py-0 text-[6px] leading-tight" />
+                            )}
                           </Link>
                         );
                       })}
@@ -473,6 +490,7 @@ export default function LiffTopPage() {
   const [loading, setLoading] = useState(true);
   const [otherTenants, setOtherTenants] = useState<PublicTenant[]>([]);
   const [isOffline, setIsOffline] = useState(false);
+  const [myStatusByEvent, setMyStatusByEvent] = useState<Record<string, string>>({});
   const liffReserveLineUrl = tenant?.reserveActionStyle === 'line' ? tenant.reserveLineUrl : null;
 
   useEffect(() => {
@@ -517,6 +535,11 @@ export default function LiffTopPage() {
           .events(tenantId, true)
           .catch(() => null);
         if (eventsWithFriends) setEvents(eventsWithFriends);
+
+        const myReservations = await api.liff.myReservations(tenantId).catch(() => []);
+        setMyStatusByEvent(
+          Object.fromEntries(myReservations.map((r) => [r.event.id, r.status])),
+        );
       }
       if (lineProfile?.userId) {
         api.liff.syncLineProfile(tenantId, lineProfile.userId, {
@@ -575,12 +598,12 @@ export default function LiffTopPage() {
               <p className="text-gray-400 text-xs">新しいイベントをお待ちください</p>
             </div>
           ) : tenant?.liffEventView === 'calendar' ? (
-            <LiffCalendarCard events={events} tenantId={tenantId} accentColor={theme.accentColor} reserveLineUrl={liffReserveLineUrl} />
+            <LiffCalendarCard events={events} tenantId={tenantId} accentColor={theme.accentColor} reserveLineUrl={liffReserveLineUrl} myStatusByEvent={myStatusByEvent} />
           ) : tenant?.liffEventView === 'thread' ? (
-            <LiffThreadView events={events} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} reserveLineUrl={liffReserveLineUrl} />
+            <LiffThreadView events={events} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} reserveLineUrl={liffReserveLineUrl} myStatusByEvent={myStatusByEvent} />
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-              {events.map((ev) => <EventCard key={ev.id} event={ev} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} reserveLineUrl={liffReserveLineUrl} />)}
+              {events.map((ev) => <EventCard key={ev.id} event={ev} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} reserveLineUrl={liffReserveLineUrl} myStatus={myStatusByEvent[ev.id]} />)}
             </div>
           )}
 
