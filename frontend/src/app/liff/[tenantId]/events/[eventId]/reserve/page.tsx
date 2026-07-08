@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { api, LiffEvent, LiffProfile, LiffTenant, PublicRoster, setLiffToken, formatDate } from '@/lib/api';
+import { api, LiffEvent, LiffProfile, LiffReservation, LiffTenant, PublicRoster, setLiffToken, formatDate } from '@/lib/api';
 import {
   initLiff,
   getLiffProfile,
@@ -20,6 +20,13 @@ const CATEGORY_LABELS: Record<string, string> = {
   futsal: 'フットサル',
   basketball: 'バスケットボール',
   volleyball: 'バレー',
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  reserved: '予約済み',
+  attended: '参加済み',
+  waitlisted: 'キャンセル待ち',
+  waiting_payment: '支払待ち',
 };
 
 // auth状態を3値で管理
@@ -61,6 +68,8 @@ function ReservePageInner() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [roster, setRoster] = useState<PublicRoster | null>(null);
+  const [myReservation, setMyReservation] = useState<LiffReservation | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   const hasProfile = !!(profile && profile.name && profile.grade && profile.gender && (!event?.levelEnabled || profile.level));
 
@@ -158,12 +167,14 @@ function ReservePageInner() {
       setLineUserId(uid);
 
       // ── Step 4: データ取得 ──
-      const [ev, prof] = await Promise.allSettled([
+      const [ev, prof, myRes] = await Promise.allSettled([
         api.liff.event(tenantId, eventId),
         api.liff.profile(tenantId, uid).catch(() => null),
+        api.liff.myReservation(tenantId, eventId, uid).catch(() => null),
       ]);
       if (ev.status === 'fulfilled') setEvent(ev.value);
       if (prof.status === 'fulfilled') setProfile(prof.value);
+      if (myRes.status === 'fulfilled') setMyReservation(myRes.value);
 
       const profileComplete = prof.status === 'fulfilled' && prof.value?.name && prof.value?.grade && prof.value?.gender;
       const tenantLineId = tenantInfo?.lineChannelId ?? null;
@@ -242,6 +253,20 @@ function ReservePageInner() {
       alert(`予約エラー: ${msg}`);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleCancel() {
+    if (!myReservation) return;
+    if (!confirm('予約をキャンセルしますか？')) return;
+    setCancelling(true);
+    try {
+      await api.liff.cancel(tenantId, myReservation.id);
+      setMyReservation(null);
+    } catch {
+      alert('キャンセルに失敗しました');
+    } finally {
+      setCancelling(false);
     }
   }
 
@@ -440,13 +465,31 @@ function ReservePageInner() {
           </div>
         )}
 
-        <button
-          onClick={() => submit()}
-          disabled={submitting}
-          className="w-full bg-[#06C755] text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[#05a847] transition-colors shadow-sm"
-        >
-          {submitting ? '送信中...' : isWaitlist ? 'キャンセル待ちに登録する' : 'この情報で予約する'}
-        </button>
+        {myReservation ? (
+          <div className="space-y-2">
+            <p className="text-center text-sm font-semibold text-[#06C755]">
+              {STATUS_LABEL[myReservation.status] ?? myReservation.status}
+              {myReservation.status === 'waitlisted' && myReservation.waitlistOrder && (
+                <span className="text-gray-400 font-normal ml-1">（{myReservation.waitlistOrder}番目）</span>
+              )}
+            </p>
+            <button
+              onClick={handleCancel}
+              disabled={cancelling}
+              className="w-full border border-red-200 text-red-400 py-4 rounded-2xl text-sm font-medium disabled:opacity-50 active:bg-red-50"
+            >
+              {cancelling ? 'キャンセル中...' : 'キャンセルする'}
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => submit()}
+            disabled={submitting}
+            className="w-full bg-[#06C755] text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:bg-[#05a847] transition-colors shadow-sm"
+          >
+            {submitting ? '送信中...' : isWaitlist ? 'キャンセル待ちに登録する' : 'この情報で予約する'}
+          </button>
+        )}
       </div>
     </div>
   );
