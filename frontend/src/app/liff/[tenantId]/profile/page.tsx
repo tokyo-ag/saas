@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import { api, LiffMyReservation, LiffProfile } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded } from '@/lib/liff';
 
@@ -62,6 +61,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -115,6 +115,19 @@ export default function ProfilePage() {
       setError(err instanceof Error ? err.message : '更新に失敗しました');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleCancel(reservationId: string) {
+    if (!confirm('予約をキャンセルしますか？')) return;
+    setCancellingId(reservationId);
+    try {
+      await api.liff.cancel(tenantId, reservationId);
+      setReservations((prev) => prev.filter((r) => r.id !== reservationId));
+    } catch {
+      alert('キャンセルに失敗しました');
+    } finally {
+      setCancellingId(null);
     }
   }
 
@@ -222,10 +235,9 @@ export default function ProfilePage() {
                   <p className="text-xs font-bold text-gray-400 px-1 mb-2">{month}</p>
                   <div className="space-y-2">
                     {monthReservations.map((r) => (
-                      <Link
+                      <div
                         key={r.id}
-                        href={`/liff/${tenantId}/events/${r.event.id}`}
-                        className="block rounded-xl border border-gray-100 bg-white/85 px-4 py-3 shadow-sm active:opacity-80"
+                        className="rounded-xl border border-gray-100 bg-white/85 px-4 py-3 shadow-sm"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
@@ -241,7 +253,15 @@ export default function ProfilePage() {
                             {r.status === 'waitlisted' && r.waitlistOrder ? `（${r.waitlistOrder}番目）` : ''}
                           </span>
                         </div>
-                      </Link>
+                        <button
+                          type="button"
+                          onClick={() => handleCancel(r.id)}
+                          disabled={cancellingId === r.id}
+                          className="mt-2 text-xs text-red-400 disabled:opacity-50"
+                        >
+                          {cancellingId === r.id ? 'キャンセル中...' : 'キャンセルする'}
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </section>

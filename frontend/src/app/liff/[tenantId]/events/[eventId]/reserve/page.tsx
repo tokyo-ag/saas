@@ -235,7 +235,7 @@ function ReservePageInner() {
       const isDuplicate = msg.includes('予約済み') || msg.includes('同じ日');
       if (isDuplicate) {
         alert('既に予約済みです');
-        window.location.href = `/liff/${tenantId}/events/${eventId}`;
+        window.location.href = `/liff/${tenantId}/profile`;
         return;
       }
       setError(msg);
