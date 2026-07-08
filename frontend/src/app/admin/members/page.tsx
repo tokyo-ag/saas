@@ -4,10 +4,12 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, formatDateOnly, Member } from '@/lib/api';
+import { SITE_URL } from '@/lib/config';
 
 
 const grades = ['高校1年', '高校2年', '高校3年', '大学1年', '大学2年', '大学3年', '大学4年', '大学院生', '社会人', 'その他'];
 const genders = ['男性', '女性', 'その他・回答しない'];
+const levels = ['初心者', '中級', '上級'];
 
 export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>([]);
@@ -15,14 +17,29 @@ export default function MembersPage() {
   const [name, setName] = useState('');
   const [grade, setGrade] = useState('');
   const [gender, setGender] = useState('');
+  const [level, setLevel] = useState('');
+
+  const [rosterShareEnabled, setRosterShareEnabled] = useState(false);
+  const [rosterShareToken, setRosterShareToken] = useState<string | null>(null);
+  const [savingRosterShare, setSavingRosterShare] = useState(false);
+  const [rosterCopied, setRosterCopied] = useState(false);
 
   async function load() {
-    const data = await api.members.list({ name: name || undefined, grade: grade || undefined, gender: gender || undefined });
+    const data = await api.members.list({
+      name: name || undefined,
+      grade: grade || undefined,
+      gender: gender || undefined,
+      level: level || undefined,
+    });
     setMembers(data);
   }
 
   useEffect(() => {
     api.members.list().then(setMembers).catch(console.error).finally(() => setLoading(false));
+    api.tenant.get().then((t) => {
+      setRosterShareEnabled(!!t.memberRosterShareEnabled);
+      setRosterShareToken(t.memberRosterShareToken ?? null);
+    }).catch(() => {});
   }, []);
 
   async function handleSearch() {
@@ -30,17 +47,78 @@ export default function MembersPage() {
     await load().catch(console.error).finally(() => setLoading(false));
   }
 
+  async function toggleRosterShare(enabled: boolean) {
+    setSavingRosterShare(true);
+    try {
+      const updated = await api.tenant.toggleMemberRosterShare(enabled);
+      setRosterShareEnabled(!!updated.memberRosterShareEnabled);
+      setRosterShareToken(updated.memberRosterShareToken ?? null);
+    } catch {
+      alert('名簿共有設定の更新に失敗しました');
+    } finally {
+      setSavingRosterShare(false);
+    }
+  }
+
+  function copyRosterUrl() {
+    if (!rosterShareToken) return;
+    navigator.clipboard.writeText(`${SITE_URL}/member-roster/${rosterShareToken}`).then(() => {
+      setRosterCopied(true);
+      setTimeout(() => setRosterCopied(false), 2000);
+    });
+  }
+
   return (
     <div className="px-4 py-4 md:px-6 md:py-6">
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-gray-900">参加者名簿</h1>
           <p className="text-sm text-gray-500 mt-1">参加者情報、トーク、参加回数を確認できます。</p>
         </div>
+        {!loading && (
+          <span className="shrink-0 rounded-full bg-[#06C755]/10 px-3 py-1.5 text-xs font-bold text-[#06C755]">
+            登録者 {members.length}人
+          </span>
+        )}
       </div>
 
       <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-800">参加者名簿の共有</h2>
+            <p className="mt-1 text-xs leading-relaxed text-gray-400">ONにすると、ログイン不要で参加者名簿を閲覧できるリンクを発行できます。スタッフへの共有などにご活用ください。</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={rosterShareEnabled}
+            disabled={savingRosterShare}
+            onClick={() => toggleRosterShare(!rosterShareEnabled)}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${rosterShareEnabled ? 'bg-[#06C755]' : 'bg-gray-300'}`}
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${rosterShareEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+        </div>
+        {rosterShareEnabled && rosterShareToken && (
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <input
+              readOnly
+              value={`${SITE_URL}/member-roster/${rosterShareToken}`}
+              className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600"
+              onFocus={(e) => e.target.select()}
+            />
+            <button
+              onClick={copyRosterUrl}
+              className="shrink-0 rounded-lg border border-gray-300 px-4 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              {rosterCopied ? 'コピーしました' : 'コピー'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <input
             type="text"
             placeholder="名前で検索"
@@ -64,6 +142,14 @@ export default function MembersPage() {
             <option value="">性別 すべて</option>
             {genders.map((g) => <option key={g} value={g}>{g}</option>)}
           </select>
+          <select
+            value={level}
+            onChange={(e) => setLevel(e.target.value)}
+            className="min-h-11 rounded-lg border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+          >
+            <option value="">レベル すべて</option>
+            {levels.map((l) => <option key={l} value={l}>{l}</option>)}
+          </select>
           <button
             onClick={handleSearch}
             className="min-h-11 rounded-lg bg-[#06C755] px-4 text-sm font-bold text-white hover:bg-[#05a847]"
@@ -77,7 +163,10 @@ export default function MembersPage() {
         {loading ? (
           <div className="p-8 text-center text-gray-400">読み込み中...</div>
         ) : members.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">参加者がいません</div>
+          <div className="p-10 text-center text-gray-400">
+            <p className="text-3xl mb-2">👤</p>
+            <p className="text-sm">条件に一致する参加者がいません</p>
+          </div>
         ) : (
           <>
             <div className="md:hidden divide-y divide-gray-100">
@@ -106,6 +195,7 @@ export default function MembersPage() {
                       <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-500">
                         <span>学年: {member.grade ?? '-'}</span>
                         <span>性別: {member.gender ?? '-'}</span>
+                        {member.level && <span>レベル: {member.level}</span>}
                         <span>登録: {formatDateOnly(member.createdAt)}</span>
                         <span>参加: {member.eventCount ?? 0}回</span>
                       </div>
@@ -137,6 +227,7 @@ export default function MembersPage() {
                     <th className="px-6 py-3 text-left">名前 / LINE名</th>
                     <th className="px-6 py-3 text-left">学年</th>
                     <th className="px-6 py-3 text-left">性別</th>
+                    <th className="px-6 py-3 text-left">レベル</th>
                     <th className="px-6 py-3 text-left">登録日</th>
                     <th className="px-6 py-3 text-left">参加回数</th>
                     <th className="px-6 py-3 text-right">操作</th>
@@ -172,6 +263,7 @@ export default function MembersPage() {
                       </td>
                       <td className="px-6 py-4 text-gray-600">{member.grade ?? '-'}</td>
                       <td className="px-6 py-4 text-gray-600">{member.gender ?? '-'}</td>
+                      <td className="px-6 py-4 text-gray-600">{member.level ?? '-'}</td>
                       <td className="px-6 py-4 text-gray-500">{formatDateOnly(member.createdAt)}</td>
                       <td className="px-6 py-4 text-gray-600">{member.eventCount ?? 0}回</td>
                       <td className="px-6 py-4">

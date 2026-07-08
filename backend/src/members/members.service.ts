@@ -11,7 +11,7 @@ export class MembersService {
 
   async findAll(
     tenantId: string,
-    query: { name?: string; grade?: string; gender?: string },
+    query: { name?: string; grade?: string; gender?: string; level?: string },
   ) {
     const members = await this.prisma.member.findMany({
       where: {
@@ -19,6 +19,7 @@ export class MembersService {
         ...(query.name && { name: { contains: query.name } }),
         ...(query.grade && { grade: query.grade }),
         ...(query.gender && { gender: query.gender }),
+        ...(query.level && { level: query.level }),
       },
       include: {
         _count: {
@@ -40,6 +41,7 @@ export class MembersService {
       name: m.name,
       grade: m.grade,
       gender: m.gender,
+      level: m.level,
       blockedAt: m.blockedAt,
       createdAt: m.createdAt,
       eventCount: m._count.reservations,

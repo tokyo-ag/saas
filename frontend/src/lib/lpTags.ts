@@ -44,7 +44,6 @@ export const BLOG_TAG_GROUPS = [
 ] as const;
 
 export const EVENT_TAG_GROUPS = [
-  { label: '活動タグ', tags: ACTIVITY_TAGS, single: true },
   { label: '場所タグ', tags: LOCATION_TAGS, single: true },
   { label: '検索タグ', tags: SEARCH_TAGS, single: false },
 ] as const;

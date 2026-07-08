@@ -493,7 +493,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
               </div>
             ))}
           </div>
-          <p className="mt-2 text-xs text-gray-500">活動タグと場所タグは1つだけ選択できます。検索タグは地域LPや検索ページ整理に使います。</p>
+          <p className="mt-2 text-xs text-gray-500">場所タグは1つだけ選択できます。検索タグは地域LPや検索ページ整理に使います。</p>
         </Field>
         <Field label="説明">
           {DESCRIPTION_TEMPLATES[form.category] && (
@@ -620,7 +620,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
 
       <Section title="参加者情報">
         <Check
-          label="予約時にレベル（初心者・中級・上級）を聞く"
+          label="予約時にレベル（初心者・中級・上級）を確認する"
           checked={form.levelEnabled}
           onChange={(checked) => set('levelEnabled', checked)}
         />

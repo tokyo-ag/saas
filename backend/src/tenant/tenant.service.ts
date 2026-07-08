@@ -7,6 +7,7 @@ import {
   ForbiddenException,
   ConflictException,
 } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import Stripe from 'stripe';
 import { IsArray, IsOptional, IsString } from 'class-validator';
@@ -89,6 +90,22 @@ export class TenantService {
 
   async findOne(tenantId: string) {
     const tenant = await this.findRaw(tenantId);
+    return this.toSafeTenant(tenant);
+  }
+
+  async toggleMemberRosterShare(tenantId: string, enabled: boolean) {
+    const current = await this.findRaw(tenantId);
+    const memberRosterShareToken =
+      enabled && !current.memberRosterShareToken
+        ? randomBytes(24).toString('base64url')
+        : current.memberRosterShareToken;
+    const tenant = await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        memberRosterShareEnabled: enabled,
+        ...(memberRosterShareToken && { memberRosterShareToken }),
+      },
+    });
     return this.toSafeTenant(tenant);
   }
 

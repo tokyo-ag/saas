@@ -23,8 +23,9 @@ export class MembersController {
     @Query('name') name?: string,
     @Query('grade') grade?: string,
     @Query('gender') gender?: string,
+    @Query('level') level?: string,
   ) {
-    return this.membersService.findAll(tenantId, { name, grade, gender });
+    return this.membersService.findAll(tenantId, { name, grade, gender, level });
   }
 
   @Post('sync-line-profiles')
