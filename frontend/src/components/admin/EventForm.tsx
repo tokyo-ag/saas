@@ -39,11 +39,16 @@ type EventFormData = {
 };
 
 const inputClass = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]';
+const EVENT_TAG_VALUES: readonly string[] = EVENT_TAG_GROUPS.flatMap((group) => [...group.tags]);
 export const PORTAL_CATEGORY_TAGS = ['交流会', 'バドミントン', 'バスケ', 'フットサル', 'バレー'];
 
 function normalizePortalCategoryTags(tags: string[]) {
   const firstCategory = tags.find((tag) => PORTAL_CATEGORY_TAGS.includes(tag));
   return tags.filter((tag) => !PORTAL_CATEGORY_TAGS.includes(tag) || tag === firstCategory);
+}
+
+function normalizeEventTags(tags: string[]) {
+  return normalizePortalCategoryTags(tags.filter((tag) => EVENT_TAG_VALUES.includes(tag)));
 }
 
 function toLocalDatetimeValue(iso?: string | null): string {
@@ -147,7 +152,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
     imageUrl: initial?.imageUrl ?? '',
     iconUrl: initial?.iconUrl ?? '',
     category: initial?.category ?? '',
-    tags: normalizePortalCategoryTags(initial?.tags ?? []),
+    tags: normalizeEventTags(initial?.tags ?? []),
   });
 
   useEffect(() => {
@@ -277,17 +282,19 @@ export default function EventForm({ initial }: { initial?: Event }) {
     if (tmpl) set('description', tmpl);
   }
 
-  function toggleTag(tag: string) {
-    setForm((prev) => ({
-      ...prev,
-      tags: PORTAL_CATEGORY_TAGS.includes(tag)
-        ? prev.tags.includes(tag)
+  function toggleTag(tag: string, groupTags: readonly string[], single: boolean) {
+    setForm((prev) => {
+      const active = prev.tags.includes(tag);
+      const withoutGroup = prev.tags.filter((t) => !groupTags.includes(t));
+      return {
+        ...prev,
+        tags: active
           ? prev.tags.filter((t) => t !== tag)
-          : [...prev.tags.filter((t) => !PORTAL_CATEGORY_TAGS.includes(t)), tag]
-        : prev.tags.includes(tag)
-          ? prev.tags.filter((t) => t !== tag)
-          : [...prev.tags, tag],
-    }));
+          : single
+            ? [...withoutGroup, tag]
+            : [...prev.tags, tag],
+      };
+    });
   }
 
   function calcRemindAt(preset: string, heldAt: string): string {
@@ -369,7 +376,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
       imageUrl: form.imageUrl || undefined,
       iconUrl: form.iconUrl || undefined,
       category: form.category || null,
-      tags: normalizePortalCategoryTags(form.tags),
+      tags: normalizeEventTags(form.tags),
     };
 
     try {
@@ -469,7 +476,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
                     <button
                       key={tag}
                       type="button"
-                      onClick={() => toggleTag(tag)}
+                      onClick={() => toggleTag(tag, group.tags, group.single)}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                         form.tags.includes(tag)
                           ? 'bg-[#06C755] text-white border-[#06C755]'
@@ -483,7 +490,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
               </div>
             ))}
           </div>
-          <p className="mt-2 text-xs text-gray-500">活動タグはポータル分類用のため1つだけ選択できます。場所タグとLP補助タグは地域LPや検索ページ整理に使います。</p>
+          <p className="mt-2 text-xs text-gray-500">活動タグと場所タグは1つだけ選択できます。検索タグは地域LPや検索ページ整理に使います。</p>
         </Field>
         <Field label="説明">
           {DESCRIPTION_TEMPLATES[form.category] && (
