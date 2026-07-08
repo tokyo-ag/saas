@@ -12,6 +12,17 @@ import Stripe from 'stripe';
 import { IsArray, IsOptional, IsString } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 
+const TENANT_TYPE_TAGS = ['インカレサークル', '学生団体', 'イベント団体', '社会人サークル'];
+const TENANT_ACTIVITY_TAGS = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー'];
+
+function normalizeAllowedTags(tags: string[] | undefined, allowedTags: string[], limit: number) {
+  if (!tags) return [];
+  return tags
+    .map((tag) => tag.trim())
+    .filter((tag) => allowedTags.includes(tag))
+    .slice(0, limit);
+}
+
 export class UpdateTenantDto {
   @IsOptional() @IsString() name?: string;
   @IsOptional() @IsString() description?: string;
@@ -177,6 +188,18 @@ export class TenantService {
       Boolean(tenant.lineChannelAccessToken),
       reauthToken,
     );
+
+    const typeTags =
+      dto.typeTags !== undefined
+        ? normalizeAllowedTags(dto.typeTags, TENANT_TYPE_TAGS, 10)
+        : undefined;
+    const activityTags =
+      dto.activityTags !== undefined
+        ? normalizeAllowedTags(dto.activityTags, TENANT_ACTIVITY_TAGS, 20)
+        : undefined;
+    const legacyTags =
+      dto.tags !== undefined ? normalizeAllowedTags(dto.tags, TENANT_ACTIVITY_TAGS, 20) : undefined;
+
     const updated = await this.prisma.tenant.update({
       where: { id: tenantId },
       data: {
@@ -185,16 +208,9 @@ export class TenantService {
         ...(dto.publicBlogUrl !== undefined && {
           publicBlogUrl: dto.publicBlogUrl || null,
         }),
-        ...(dto.tags !== undefined && {
-          tags: dto.tags.map((tag) => tag.trim()).filter(Boolean).slice(0, 20),
-        }),
-        ...(dto.typeTags !== undefined && {
-          typeTags: dto.typeTags.map((tag) => tag.trim()).filter(Boolean).slice(0, 10),
-        }),
-        ...(dto.activityTags !== undefined && {
-          activityTags: dto.activityTags.map((tag) => tag.trim()).filter(Boolean).slice(0, 20),
-          tags: dto.activityTags.map((tag) => tag.trim()).filter(Boolean).slice(0, 20),
-        }),
+        ...(legacyTags !== undefined && { tags: legacyTags }),
+        ...(typeTags !== undefined && { typeTags }),
+        ...(activityTags !== undefined && { activityTags, tags: activityTags }),
         ...(dto.lineChannelId !== undefined && {
           lineChannelId: dto.lineChannelId.trim() || null,
         }),

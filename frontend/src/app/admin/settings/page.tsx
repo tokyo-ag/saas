@@ -16,7 +16,11 @@ const tabs = [
 ];
 
 const TENANT_TYPE_TAGS = ['インカレサークル', '学生団体', 'イベント団体', '社会人サークル'] as const;
-const TENANT_ACTIVITY_TAGS = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー', 'テニス', 'ランニング', '飲み会'] as const;
+const TENANT_ACTIVITY_TAGS = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー'] as const;
+
+function filterKnownTags(tags: string[] | undefined, allowedTags: readonly string[]) {
+  return (tags ?? []).filter((tag) => allowedTags.includes(tag));
+}
 
 function SettingsTabs() {
   return (
@@ -130,9 +134,9 @@ export default function SettingsPage() {
         name: tenantData.name,
         description: tenantData.description ?? '',
         iconUrl: tenantData.iconUrl ?? '',
-        tags: tenantData.tags ?? [],
-        typeTags: tenantData.typeTags ?? [],
-        activityTags: tenantData.activityTags ?? tenantData.tags ?? [],
+        tags: filterKnownTags(tenantData.tags, TENANT_ACTIVITY_TAGS),
+        typeTags: filterKnownTags(tenantData.typeTags, TENANT_TYPE_TAGS),
+        activityTags: filterKnownTags(tenantData.activityTags ?? tenantData.tags, TENANT_ACTIVITY_TAGS),
       });
     });
   }, []);
