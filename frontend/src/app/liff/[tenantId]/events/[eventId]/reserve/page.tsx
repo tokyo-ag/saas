@@ -482,8 +482,8 @@ function ReservePageInner() {
             <button
               onClick={() => setConfirmCancelOpen(true)}
               disabled={cancelling}
-              className="rounded-full px-6 py-2.5 text-sm font-bold transition-colors disabled:opacity-50"
-              style={cancelling ? { border: '1px solid #fecaca', color: '#ef4444', backgroundColor: '#fef2f2' } : { backgroundColor: hexToRgba(accentColor, 10), color: accentColor }}
+              className="rounded-full px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-colors disabled:opacity-50"
+              style={{ backgroundColor: cancelling ? '#ef4444' : accentColor }}
             >
               {cancelling ? 'キャンセル' : (
                 <>
