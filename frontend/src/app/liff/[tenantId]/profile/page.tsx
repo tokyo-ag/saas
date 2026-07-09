@@ -239,7 +239,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.backgroundColor, '--liff-accent': accentColor } as React.CSSProperties}>
-      <div className="mx-auto min-h-screen max-w-[480px] border-x" style={{ borderColor: theme.borderColor }}>
+      <div className="mx-auto min-h-screen max-w-[480px] border-x-0 sm:border-x" style={{ borderColor: theme.borderColor }}>
       <div className="border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
         <div className="px-4 py-4 flex items-center gap-3">
           <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-gray-900 text-xl leading-none">‹</button>

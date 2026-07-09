@@ -9,7 +9,7 @@ import { imgUrl } from '@/lib/imgUrl';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
 import { initLiff, getLiffProfile } from '@/lib/liff';
 import { EventCardSkeleton } from '@/components/liff/EventCardSkeleton';
-import { useLiffTheme } from '@/components/liff/LiffThemeProvider';
+import { useLiffTheme, readableTextColor } from '@/components/liff/LiffThemeProvider';
 
 const SHOW_FEATURED_TENANTS = false;
 
@@ -45,10 +45,11 @@ function AvatarRow({ count, friends }: { count: number; friends?: { id: string; 
 function ReservedBadge({ status, accentColor, className = '', style }: { status?: string; accentColor: string; className?: string; style?: React.CSSProperties }) {
   if (!status) return null;
   const isWaitlisted = status === 'waitlisted';
+  const bg = isWaitlisted ? '#fbbf24' : accentColor;
   return (
     <span
-      className={`text-white font-bold rounded-full whitespace-nowrap ${className}`}
-      style={{ backgroundColor: isWaitlisted ? '#fbbf24' : accentColor, fontSize: '9px', padding: '2px 6px', ...style }}
+      className={`font-bold rounded-full whitespace-nowrap ${className}`}
+      style={{ backgroundColor: bg, color: readableTextColor(bg), fontSize: '9px', padding: '2px 6px', ...style }}
     >
       {isWaitlisted ? 'キャンセル待ち' : '予約済み'}
     </span>
@@ -197,8 +198,8 @@ function LiffThreadView({ events, tenantId, accentColor, cardBg, reserveLineUrl,
                       )}
                     </div>
                     <div className="shrink-0 flex flex-col items-end gap-1">
-                      <span className={`rounded-md px-2.5 py-1 text-[11px] font-bold ${isFull ? 'bg-gray-100 text-gray-400' : 'text-white'}`}
-                        style={isFull ? undefined : { backgroundColor: accentColor }}>
+                      <span className={`rounded-md px-2.5 py-1 text-[11px] font-bold ${isFull ? 'bg-gray-100 text-gray-400' : ''}`}
+                        style={isFull ? undefined : { backgroundColor: accentColor, color: readableTextColor(accentColor) }}>
                         {status}
                       </span>
                       <ReservedBadge status={myStatusByEvent?.[event.id]} accentColor={accentColor} />
@@ -383,7 +384,7 @@ function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl, mySta
   }
 
   return (
-    <section className="mx-auto max-w-[480px] rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+    <section className="mx-auto max-w-[480px] rounded-2xl bg-white p-2 shadow-sm ring-1 ring-black/5">
       <div className="mb-4 flex items-center justify-between">
         <button
           type="button"
@@ -563,7 +564,7 @@ export default function LiffTopPage() {
   return (
     <>
       <div className="min-h-screen animate-page-in" style={{ backgroundColor: theme.backgroundColor }}>
-      <div className="mx-auto min-h-screen max-w-[480px] border-x" style={{ borderColor: theme.borderColor }}>
+      <div className="mx-auto min-h-screen max-w-[480px] border-x-0 sm:border-x" style={{ borderColor: theme.borderColor }}>
         {/* header */}
         <div className="sticky top-0 z-10 border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
           <div className="flex items-center gap-2.5 px-4 pt-12 pb-3 sm:pt-4">
