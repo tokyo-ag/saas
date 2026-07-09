@@ -658,7 +658,7 @@ export default function AdminPublicPage() {
   const reserveSectionTitle = form.reserveTitle?.trim() || '';
   const reserveSectionLead = form.reserveLead?.trim() || '';
   const reserveTitleColor = form.reserveTitleColor?.trim() || textColor;
-  const reserveLeadColor = form.reserveLeadColor?.trim() || '#6B7280';
+  const reserveLeadColor = form.reserveLeadColor?.trim() || bodyTextColor;
   const reserveEventTitleColor = form.reserveEventTitleColor?.trim() || '#111827';
   const reserveEventDateColor = form.reserveEventDateColor?.trim() || '#4B5563';
   const reserveEventMetaColor = form.reserveEventMetaColor?.trim() || '#6B7280';
@@ -672,7 +672,7 @@ export default function AdminPublicPage() {
   const blogSectionTitle = form.blogTitle?.trim() || '';
   const blogSectionLead = form.blogLead?.trim() || '';
   const blogTitleColor = form.blogTitleColor?.trim() || textColor;
-  const blogLeadColor = form.blogLeadColor?.trim() || '#6B7280';
+  const blogLeadColor = form.blogLeadColor?.trim() || bodyTextColor;
   const buttonStyle = form.buttonStyle ?? 'rounded';
   const buttonLayout = form.buttonLayout === 'row1x4' ? 'row1x4' : 'grid2x2';
   const buttonOpacity = clampPercent(form.buttonOpacity ?? 100);
@@ -1330,6 +1330,31 @@ export default function AdminPublicPage() {
                 className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
               <span className="text-[11px] text-gray-400">予約ボタン・お問い合わせボタンなど、サイト全体のボタンの外枠に使われます</span>
             </div>
+          </div>
+          {/* 全体の文字色 */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <span className="w-16 shrink-0 text-xs font-bold text-gray-500">文字色</span>
+              <input type="color" value={textColor}
+                onChange={(e) => setForm((p) => ({ ...p, textColor: e.target.value }))}
+                className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+              <span className="text-[11px] text-gray-400">個別に色指定していないタイトル・本文すべてに使われます</span>
+            </div>
+          </div>
+          {/* 全体のフォント */}
+          <div className="space-y-2">
+            <span className="w-16 shrink-0 text-xs font-bold text-gray-500">フォント</span>
+            <div className="flex flex-wrap gap-1.5">
+              {fontOptions.map((opt) => (
+                <button key={opt.value} type="button"
+                  onClick={() => setForm((p) => ({ ...p, fontFamily: opt.value }))}
+                  className={`rounded-full border px-3 py-1 text-xs font-bold transition ${form.fontFamily === opt.value ? 'text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                  style={form.fontFamily === opt.value ? { backgroundColor: accentColor, borderColor: accentColor, fontFamily: opt.family } : { fontFamily: opt.family }}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <span className="text-[11px] text-gray-400">個別にフォント指定していないタイトル・本文すべてに使われます</span>
           </div>
           </div>}
         </div>
@@ -2596,7 +2621,7 @@ export default function AdminPublicPage() {
                   </section>
                 )}
                 <div>
-                  <div className="flex w-full items-center justify-center rounded-xl border py-3 text-sm font-bold"
+                  <div className="flex w-full items-center justify-center rounded-xl border py-4 text-base font-bold shadow-sm"
                     style={{ backgroundColor: form.footerContactColor?.trim() || accentColor, color: form.footerContactTextColor?.trim() || '#111827', borderColor: globalBorderColor }}>
                     {navLabels.contact}
                   </div>

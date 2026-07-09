@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { api, LiffMyReservation, LiffProfile, setLiffToken } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded, liff, redirectToLiffApp } from '@/lib/liff';
-import { useLiffTheme, hexToRgba } from '@/components/liff/LiffThemeProvider';
+import { useLiffTheme, readableTextColor } from '@/components/liff/LiffThemeProvider';
 import { ConfirmDialog } from '@/components/liff/ConfirmDialog';
 
 const GRADES = ['大学生（18～22歳）', '社会人'];
@@ -222,8 +222,8 @@ export default function ProfilePage() {
         <p className="text-sm text-gray-500">LINEへのログインが必要です。</p>
         <button
           onClick={handleLoginRetry}
-          className="text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
-          style={{ backgroundColor: accentColor }}
+          className="font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
+          style={{ backgroundColor: accentColor, color: readableTextColor(accentColor) }}
         >
           LINEログインをやり直す
         </button>
@@ -310,8 +310,8 @@ export default function ProfilePage() {
 
           <button
             type="submit" disabled={saving}
-            className="w-full text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:opacity-90 transition-colors shadow-sm"
-            style={{ backgroundColor: accentColor }}
+            className="w-full py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:opacity-90 transition-colors shadow-sm"
+            style={{ backgroundColor: accentColor, color: readableTextColor(accentColor) }}
           >
             {saving ? '保存中...' : saved ? '保存しました' : '保存する'}
           </button>
@@ -348,7 +348,7 @@ export default function ProfilePage() {
                             onClick={() => setConfirmCancelId(r.id)}
                             disabled={cancellingId === r.id}
                             className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors disabled:opacity-50"
-                            style={cancellingId === r.id ? { color: '#ef4444', backgroundColor: '#fef2f2' } : { color: accentColor, backgroundColor: hexToRgba(accentColor, 10) }}
+                            style={cancellingId === r.id ? { color: '#ffffff', backgroundColor: '#ef4444' } : { color: readableTextColor(accentColor), backgroundColor: accentColor }}
                           >
                             {cancellingId === r.id ? 'キャンセル' : (
                               <>

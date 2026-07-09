@@ -495,7 +495,7 @@ export default async function ClubCmsPage({
   const reserveSectionTitle = sectionCopy.reserveTitle?.trim() || '';
   const reserveSectionLead = sectionCopy.reserveLead?.trim() || '';
   const reserveTitleColor = sectionCopy.reserveTitleColor?.trim() || textColor;
-  const reserveLeadColor = sectionCopy.reserveLeadColor?.trim() || '#6B7280';
+  const reserveLeadColor = sectionCopy.reserveLeadColor?.trim() || bodyTextColor;
   const reserveEventTitleColor = sectionCopy.reserveEventTitleColor?.trim() || '#111827';
   const reserveEventDateColor = sectionCopy.reserveEventDateColor?.trim() || '#4B5563';
   const reserveEventMetaColor = sectionCopy.reserveEventMetaColor?.trim() || '#6B7280';
@@ -533,7 +533,7 @@ export default async function ClubCmsPage({
   const blogSectionTitle = sectionCopy.blogTitle?.trim() || '';
   const blogSectionLead = sectionCopy.blogLead?.trim() || '';
   const blogTitleColor = sectionCopy.blogTitleColor?.trim() || textColor;
-  const blogLeadColor = sectionCopy.blogLeadColor?.trim() || '#6B7280';
+  const blogLeadColor = sectionCopy.blogLeadColor?.trim() || bodyTextColor;
   const contactMessageColorRaw = sectionCopy.contactMessageColor?.trim();
   const contactMessageColor =
     !contactMessageColorRaw || ['#6B7280', '#9CA3AF'].includes(contactMessageColorRaw.toUpperCase())

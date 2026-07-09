@@ -13,7 +13,7 @@ import {
   loginIfNeeded,
   redirectToLiffApp,
 } from '@/lib/liff';
-import { useLiffTheme, hexToRgba } from '@/components/liff/LiffThemeProvider';
+import { useLiffTheme, hexToRgba, readableTextColor } from '@/components/liff/LiffThemeProvider';
 import { ConfirmDialog } from '@/components/liff/ConfirmDialog';
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -289,8 +289,8 @@ function ReservePageInner() {
         </div>
         <button
           onClick={() => router.push(`/liff/${tenantId}`)}
-          className="text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
-          style={{ backgroundColor: accentColor }}
+          className="font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
+          style={{ backgroundColor: accentColor, color: readableTextColor(accentColor) }}
         >
           イベントページへ戻る
         </button>
@@ -331,16 +331,16 @@ function ReservePageInner() {
         {loginRequired ? (
           <button
             onClick={handleLoginRetry}
-            className="text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
-            style={{ backgroundColor: accentColor }}
+            className="font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
+            style={{ backgroundColor: accentColor, color: readableTextColor(accentColor) }}
           >
             LINEログインをやり直す
           </button>
         ) : (
           <button
             onClick={() => window.location.reload()}
-            className="text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
-            style={{ backgroundColor: accentColor }}
+            className="font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
+            style={{ backgroundColor: accentColor, color: readableTextColor(accentColor) }}
           >
             再試行する
           </button>
@@ -372,8 +372,8 @@ function ReservePageInner() {
             href={addFriendUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-white font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
-            style={{ backgroundColor: accentColor }}
+            className="font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
+            style={{ backgroundColor: accentColor, color: readableTextColor(accentColor) }}
           >
             友だち追加する
           </a>
@@ -487,8 +487,8 @@ function ReservePageInner() {
             <button
               onClick={() => setConfirmCancelOpen(true)}
               disabled={cancelling}
-              className="rounded-full px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-colors disabled:opacity-50"
-              style={{ backgroundColor: cancelling ? '#ef4444' : accentColor }}
+              className="rounded-full px-6 py-2.5 text-sm font-bold shadow-sm transition-colors disabled:opacity-50"
+              style={{ backgroundColor: cancelling ? '#ef4444' : accentColor, color: cancelling ? '#ffffff' : readableTextColor(accentColor) }}
             >
               {cancelling ? 'キャンセル' : (
                 <>
@@ -502,8 +502,8 @@ function ReservePageInner() {
           <button
             onClick={() => submit()}
             disabled={submitting}
-            className="w-full text-white py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:opacity-90 transition-colors shadow-sm"
-            style={{ backgroundColor: accentColor }}
+            className="w-full py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:opacity-90 transition-colors shadow-sm"
+            style={{ backgroundColor: accentColor, color: readableTextColor(accentColor) }}
           >
             {submitting ? '送信中...' : isWaitlist ? 'キャンセル待ちに登録する' : 'この情報で予約する'}
           </button>
