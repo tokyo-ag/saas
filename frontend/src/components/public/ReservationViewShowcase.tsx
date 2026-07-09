@@ -349,7 +349,7 @@ function CardMini({
                 className="block shrink-0 snap-start overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
                 style={{ backgroundColor: cardBg || '#ffffff', width: 'calc(50% - 6px)' }}
               >
-                <div className="relative aspect-[3/4] bg-gray-100">
+                <div className="relative aspect-[3/2] bg-gray-100">
                   {image ? (
                     <img src={image} alt={event.title} className="h-full w-full object-cover" />
                   ) : (
@@ -380,7 +380,7 @@ function CardMini({
     <div className="flex gap-3 overflow-hidden">
       {[0, 1].map((i) => (
         <div key={i} className="shrink-0 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm" style={{ width: 'calc(50% - 6px)' }}>
-          <div className="aspect-[3/4]" style={{ background: `linear-gradient(135deg, ${visible.accent}, #111827)` }} />
+          <div className="aspect-[3/2]" style={{ background: `linear-gradient(135deg, ${visible.accent}, #111827)` }} />
           <div className="space-y-1.5 p-3">
             <div className="h-2 w-5/6 rounded-full bg-gray-200" />
             <div className="h-1.5 w-2/3 rounded-full bg-gray-100" />
