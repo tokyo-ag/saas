@@ -469,7 +469,7 @@ function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl, mySta
                                 accentColor={accentColor}
                                 compact
                                 className="mb-0.5 leading-tight"
-                                style={{ fontSize: '8px', padding: '0px 3px' }}
+                                style={{ fontSize: '8px', padding: '2px 3px' }}
                               />
                             )}
                             <p className="truncate text-[9px] font-bold leading-tight">{locationPreview}</p>
