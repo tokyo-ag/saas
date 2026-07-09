@@ -344,14 +344,15 @@ export class LiffService {
       dto.linePictureUrl ?? lineProfile?.pictureUrl ?? null;
 
     if (!member) {
+      const requiresLevel = event.levelEnabled && event.category !== 'meetup';
       if (
         !dto.name ||
         !dto.grade ||
         !dto.gender ||
-        (event.levelEnabled && !dto.level)
+        (requiresLevel && !dto.level)
       ) {
         throw new BadRequestException(
-          event.levelEnabled
+          requiresLevel
             ? '初回予約時はお名前・年齢・性別・レベルを入力してください'
             : '初回予約時はお名前・年齢・性別を入力してください',
         );
