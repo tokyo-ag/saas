@@ -46,7 +46,7 @@ function ReservedBadge({ status, accentColor, className = '', style, compact = f
   if (!status) return null;
   const isWaitlisted = status === 'waitlisted';
   const bg = isWaitlisted ? '#fbbf24' : accentColor;
-  const label = compact ? (isWaitlisted ? '待ち' : '済') : (isWaitlisted ? 'キャンセル待ち' : '予約済み');
+  const label = compact ? (isWaitlisted ? 'キャン待ち' : '予約済') : (isWaitlisted ? 'キャンセル待ち' : '予約済み');
   return (
     <span
       className={`font-bold rounded-full whitespace-nowrap ${className}`}
@@ -469,7 +469,7 @@ function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl, mySta
                                 accentColor={accentColor}
                                 compact
                                 className="mb-0.5 inline-block leading-tight"
-                                style={{ fontSize: '8px', padding: '1px 4px' }}
+                                style={{ fontSize: '8px', padding: '0px 3px' }}
                               />
                             )}
                             <p className="truncate text-[9px] font-bold leading-tight">{locationPreview}</p>
