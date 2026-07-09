@@ -578,13 +578,15 @@ export default function LiffTopPage() {
             <h1 className="text-[18px] font-bold text-gray-900 tracking-tight truncate flex-1">
               {tenant?.lineDisplayName ?? tenant?.name ?? 'Home'}
             </h1>
-            <Link
-              href={`/liff/${tenantId}/profile`}
-              className="shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500"
-              aria-label="マイページ"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            </Link>
+            {tenant?.reserveActionStyle !== 'line' && (
+              <Link
+                href={`/liff/${tenantId}/profile`}
+                className="shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500"
+                aria-label="マイページ"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </Link>
+            )}
           </div>
         </div>
 
