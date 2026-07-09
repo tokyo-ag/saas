@@ -6,7 +6,7 @@ import type { CSSProperties } from 'react';
 import type { BlogPostSummary, LiffEvent, PublicCmsPage } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
-import { ReservationViewShowcase } from '@/components/public/ReservationViewShowcase';
+import { ReservationViewShowcase, ReservationButton } from '@/components/public/ReservationViewShowcase';
 import { SnsBlock } from '@/components/public/SnsBlock';
 
 export const revalidate = 60;
@@ -775,6 +775,7 @@ export default async function ClubCmsPage({
         </div>
 
         {hasReserveSection && (
+        <>
         <div id="reserve" className="relative mt-8 scroll-mt-6 rounded-xl px-5 py-6 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
           <div className="relative">
             {reserveSectionTitle && (
@@ -783,15 +784,7 @@ export default async function ClubCmsPage({
             {reserveSectionLead && (
               <p className="mt-2 text-sm leading-7" style={{ color: reserveLeadColor }}>{reserveSectionLead}</p>
             )}
-            {reserveActionStyle === 'line' && reserveEvents.length === 0 ? (
-              <Link
-                href={lineReserveUrl}
-                className="mt-4 inline-flex w-full items-center justify-center rounded-xl border px-4 py-4 text-base font-bold shadow-sm transition hover:opacity-90"
-                style={{ backgroundColor: reserveButtonBgColor, borderColor: reserveButtonBorderColor, color: reserveButtonTextColor }}
-              >
-                LINEで予約する
-              </Link>
-            ) : (
+            {reserveActionStyle !== 'line' || reserveEvents.length > 0 ? (
               <ReservationViewShowcase
                 accentColor={accentColor}
                 buttonLabel={reserveActionStyle === 'line' ? 'LINEで友達追加して予約する' : navLabels.reserve}
@@ -808,14 +801,32 @@ export default async function ClubCmsPage({
                 eventDateColor={reserveEventDateColor}
                 eventMetaColor={reserveEventMetaColor}
                 eventCardBg={reserveEventCardBg}
-                buttonBgColor={reserveButtonBgColor}
-                buttonTextColor={reserveButtonTextColor}
-                buttonBorderColor={reserveButtonBorderColor}
                 className="mt-4"
+                showButton={false}
               />
-            )}
+            ) : null}
           </div>
         </div>
+        {(reserveActionStyle === 'line' && reserveEvents.length === 0) ? (
+          <ReservationButton
+            buttonLabel="LINEで予約する"
+            href={lineReserveUrl}
+            buttonBgColor={reserveButtonBgColor}
+            buttonTextColor={reserveButtonTextColor}
+            buttonBorderColor={reserveButtonBorderColor}
+            className="mt-4"
+          />
+        ) : page.reserveViewStyle !== 'card' ? (
+          <ReservationButton
+            buttonLabel={reserveActionStyle === 'line' ? 'LINEで友達追加して予約する' : navLabels.reserve}
+            href={reserveActionStyle === 'line' ? lineReserveUrl : navReserveUrl}
+            buttonBgColor={reserveButtonBgColor}
+            buttonTextColor={reserveButtonTextColor}
+            buttonBorderColor={reserveButtonBorderColor}
+            className="mt-4"
+          />
+        ) : null}
+        </>
         )}
 
         {hasBlogSection && (

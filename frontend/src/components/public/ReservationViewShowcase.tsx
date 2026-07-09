@@ -41,7 +41,38 @@ type ReservationViewShowcaseProps = {
   buttonBgColor?: string;
   buttonTextColor?: string;
   buttonBorderColor?: string;
+  showButton?: boolean;
 };
+
+export function ReservationButton({
+  buttonLabel,
+  href,
+  buttonBgColor,
+  buttonTextColor,
+  buttonBorderColor,
+  className = '',
+}: {
+  buttonLabel: string;
+  href?: string;
+  buttonBgColor?: string;
+  buttonTextColor?: string;
+  buttonBorderColor?: string;
+  className?: string;
+}) {
+  const buttonClassName =
+    'inline-flex w-full items-center justify-center rounded-xl border px-4 py-4 text-base font-bold shadow-sm transition hover:opacity-90';
+  const resolvedButtonBg = buttonBgColor || DEFAULT_ACCENT;
+  const buttonStyle = { backgroundColor: resolvedButtonBg, borderColor: buttonBorderColor || resolvedButtonBg, color: buttonTextColor || '#111827' };
+  return href ? (
+    <Link href={href} className={`${buttonClassName} ${className}`} style={buttonStyle}>
+      {buttonLabel}
+    </Link>
+  ) : (
+    <button type="button" className={`${buttonClassName} ${className}`} style={buttonStyle}>
+      {buttonLabel}
+    </button>
+  );
+}
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 const DUMMY_EVENT_DAYS = new Set([5, 12]);
@@ -449,11 +480,8 @@ export function ReservationViewShowcase({
   buttonBgColor,
   buttonTextColor,
   buttonBorderColor,
+  showButton = true,
 }: ReservationViewShowcaseProps) {
-  const buttonClassName =
-    'inline-flex w-full items-center justify-center rounded-xl border px-4 py-4 text-base font-bold shadow-sm transition hover:opacity-90';
-  const resolvedButtonBg = buttonBgColor || DEFAULT_ACCENT;
-  const buttonStyle = { backgroundColor: resolvedButtonBg, borderColor: buttonBorderColor || resolvedButtonBg, color: buttonTextColor || '#111827' };
   const selectedView = viewStyle === 'card' || viewStyle === 'thread' ? viewStyle : 'calendar';
   const fieldProps = { showLocation, showPrice, showCapacity, showDescription };
 
@@ -467,15 +495,9 @@ export function ReservationViewShowcase({
           {selectedView === 'thread' && <ThreadMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} {...fieldProps} />}
         </div>
       )}
-      {selectedView !== 'card' && (href ? (
-        <Link href={href} className={buttonClassName} style={buttonStyle}>
-          {buttonLabel}
-        </Link>
-      ) : (
-        <button type="button" className={buttonClassName} style={buttonStyle}>
-          {buttonLabel}
-        </button>
-      ))}
+      {showButton && selectedView !== 'card' && (
+        <ReservationButton buttonLabel={buttonLabel} href={href} buttonBgColor={buttonBgColor} buttonTextColor={buttonTextColor} buttonBorderColor={buttonBorderColor} />
+      )}
     </div>
   );
 }
