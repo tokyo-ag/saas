@@ -199,12 +199,17 @@ function ReservePageInner() {
     init();
   }, [tenantId, eventId]);
 
+  function refetchRoster() {
+    if (!event?.rosterShareEnabled || !event.rosterShareToken) return;
+    api.public.roster(event.rosterShareToken).then(setRoster).catch(() => setRoster(null));
+  }
+
   useEffect(() => {
     if (!event?.rosterShareEnabled || !event.rosterShareToken) {
       setRoster(null);
       return;
     }
-    api.public.roster(event.rosterShareToken).then(setRoster).catch(() => setRoster(null));
+    refetchRoster();
   }, [event?.rosterShareEnabled, event?.rosterShareToken]);
 
   // プロフィール未入力ならマイページへ誘導し、入力後にこのページへ戻ってきてもらう
@@ -251,6 +256,7 @@ function ReservePageInner() {
         waitlistOrder: result.waitlistOrder,
         reservedAt: new Date().toISOString(),
       });
+      refetchRoster();
       return;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '予約に失敗しました';
@@ -278,6 +284,7 @@ function ReservePageInner() {
       setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
       await api.liff.cancel(tenantId, myReservation.id);
       setMyReservation(null);
+      refetchRoster();
     } catch {
       alert('キャンセルに失敗しました');
     } finally {
