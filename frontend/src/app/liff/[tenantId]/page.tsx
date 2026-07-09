@@ -598,7 +598,7 @@ export default function LiffTopPage() {
 
         <div className="p-2">
           {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)}
             </div>
           ) : events.length === 0 ? (
@@ -616,7 +616,7 @@ export default function LiffTopPage() {
           ) : tenant?.liffEventView === 'thread' ? (
             <LiffThreadView events={events} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} reserveLineUrl={liffReserveLineUrl} myStatusByEvent={myStatusByEvent} />
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {events.map((ev) => <EventCard key={ev.id} event={ev} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} reserveLineUrl={liffReserveLineUrl} myStatus={myStatusByEvent[ev.id]} />)}
             </div>
           )}
