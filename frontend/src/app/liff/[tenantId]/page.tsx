@@ -49,7 +49,7 @@ function ReservedBadge({ status, accentColor, className = '', style }: { status?
   return (
     <span
       className={`font-bold rounded-full whitespace-nowrap ${className}`}
-      style={{ backgroundColor: bg, color: readableTextColor(bg), fontSize: '9px', padding: '2px 6px', ...style }}
+      style={{ backgroundColor: bg, color: readableTextColor(bg), fontSize: '9px', lineHeight: 1.4, padding: '2px 6px', ...style }}
     >
       {isWaitlisted ? 'キャンセル待ち' : '予約済み'}
     </span>

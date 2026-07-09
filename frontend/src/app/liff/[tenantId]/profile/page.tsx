@@ -151,6 +151,10 @@ export default function ProfilePage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!gender) {
+      setError('性別を選択してください');
+      return;
+    }
     setError('');
     setSaving(true);
     try {
@@ -278,23 +282,29 @@ export default function ProfilePage() {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-2">性別 <span className="text-red-400">*</span></label>
-              <div className="flex gap-4">
+              <div className="flex gap-2">
                 {GENDERS.map((g) => (
-                  <label key={g} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
-                    <input type="radio" name="gender" value={g} required checked={gender === g} onChange={() => setGender(g)} className="accent-[var(--liff-accent)]" />
+                  <button key={g} type="button" onClick={() => setGender(g)}
+                    className="rounded-full border px-4 py-1.5 text-sm font-bold transition"
+                    style={gender === g
+                      ? { backgroundColor: accentColor, borderColor: accentColor, color: readableTextColor(accentColor) }
+                      : { borderColor: '#e5e7eb', color: '#374151' }}>
                     {g}
-                  </label>
+                  </button>
                 ))}
               </div>
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-2">レベル（任意）</label>
-              <div className="flex gap-4">
+              <div className="flex gap-2">
                 {LEVELS.map((l) => (
-                  <label key={l} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
-                    <input type="radio" name="level" value={l} checked={level === l} onChange={() => setLevel(l)} className="accent-[var(--liff-accent)]" />
+                  <button key={l} type="button" onClick={() => setLevel(level === l ? '' : l)}
+                    className="rounded-full border px-4 py-1.5 text-sm font-bold transition"
+                    style={level === l
+                      ? { backgroundColor: accentColor, borderColor: accentColor, color: readableTextColor(accentColor) }
+                      : { borderColor: '#e5e7eb', color: '#374151' }}>
                     {l}
-                  </label>
+                  </button>
                 ))}
               </div>
             </div>
