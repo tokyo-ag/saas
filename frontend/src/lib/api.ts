@@ -12,7 +12,7 @@ export function setLiffToken(token: string | null) {
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const isSuperadmin = path.startsWith('/superadmin');
   const isAdmin = path.startsWith('/admin');
-  const isLiff = path.startsWith('/liff/');
+  const isLiff = path.startsWith('/liff/') || path.startsWith('/public/roster/');
   const method = (options?.method ?? 'GET').toString().toUpperCase();
   const isLiffPublicEndpoint =
     isLiff &&
@@ -1190,6 +1190,7 @@ export interface PublicRoster {
     gender: string | null;
     level: string | null;
     comment: string | null;
+    linePictureUrl: string | null;
     status: ReservationStatus;
     waitlistOrder: number | null;
   }[];

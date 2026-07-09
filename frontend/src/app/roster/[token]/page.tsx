@@ -4,24 +4,57 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { api, formatDate, PublicRoster } from '@/lib/api';
 import { ReservationBadge } from '@/components/ui/StatusBadge';
+import { initLiff, loginIfNeeded, liff } from '@/lib/liff';
 
 export default function RosterSharePage() {
   const { token } = useParams<{ token: string }>();
   const [roster, setRoster] = useState<PublicRoster | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [loginRequired, setLoginRequired] = useState(false);
 
   useEffect(() => {
-    api.public.roster(token)
-      .then(setRoster)
-      .catch(() => setNotFound(true))
-      .finally(() => setLoading(false));
+    async function init() {
+      const ok = await initLiff();
+      if (!ok) {
+        setLoginRequired(true);
+        setLoading(false);
+        return;
+      }
+      if (!liff.isInClient()) {
+        const loggedIn = await loginIfNeeded();
+        if (!loggedIn) {
+          setLoginRequired(true);
+          setLoading(false);
+          return;
+        }
+      }
+      api.public.roster(token)
+        .then(setRoster)
+        .catch(() => setNotFound(true))
+        .finally(() => setLoading(false));
+    }
+    init();
   }, [token]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-[#06C755] text-sm">読み込み中...</div>
+      </div>
+    );
+  }
+
+  if (loginRequired) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center gap-4">
+        <p className="text-sm text-gray-600">この名簿を見るにはLINEへのログインが必要です。</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="font-bold px-8 py-3.5 rounded-2xl text-sm bg-[#06C755] text-white active:opacity-90"
+        >
+          もう一度試す
+        </button>
       </div>
     );
   }
@@ -59,12 +92,19 @@ export default function RosterSharePage() {
                 {reservations.map((r, i) => (
                   <div key={i} className="p-4">
                     <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">{r.name ?? '未入力'}</p>
-                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
-                          <span>{r.grade ?? '-'}</span>
-                          <span>{r.gender ?? '-'}</span>
-                          {event.levelEnabled && <span>{r.level ?? '-'}</span>}
+                      <div className="flex items-start gap-2">
+                        {r.linePictureUrl ? (
+                          <img src={r.linePictureUrl} alt="" className="mt-0.5 h-6 w-6 shrink-0 rounded-full object-cover" />
+                        ) : (
+                          <span className="mt-0.5 h-6 w-6 shrink-0 rounded-full bg-gray-200" />
+                        )}
+                        <div>
+                          <p className="text-sm font-bold text-gray-900">{r.name ?? '未入力'}</p>
+                          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
+                            <span>{r.grade ?? '-'}</span>
+                            <span>{r.gender ?? '-'}</span>
+                            {event.levelEnabled && <span>{r.level ?? '-'}</span>}
+                          </div>
                         </div>
                       </div>
                       <ReservationBadge status={r.status} />
@@ -87,7 +127,16 @@ export default function RosterSharePage() {
                   <tbody className="divide-y divide-gray-100">
                     {reservations.map((r, i) => (
                       <tr key={i}>
-                        <td className="px-6 py-4 font-medium text-gray-900">{r.name ?? '未入力'}</td>
+                        <td className="px-6 py-4 font-medium text-gray-900">
+                          <div className="flex items-center gap-2">
+                            {r.linePictureUrl ? (
+                              <img src={r.linePictureUrl} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
+                            ) : (
+                              <span className="h-6 w-6 shrink-0 rounded-full bg-gray-200" />
+                            )}
+                            {r.name ?? '未入力'}
+                          </div>
+                        </td>
                         <td className="px-6 py-4 text-gray-600">{r.grade ?? '-'}</td>
                         <td className="px-6 py-4 text-gray-600">{r.gender ?? '-'}</td>
                         {event.levelEnabled && <td className="px-6 py-4 text-gray-600">{r.level ?? '-'}</td>}

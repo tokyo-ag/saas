@@ -5,10 +5,12 @@ import {
   Param,
   Query,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BlogService } from '../blog/blog.service';
+import { LiffGuard } from '../auth/liff.guard';
 
 type OfficialSiteRow = {
   status: string;
@@ -57,6 +59,7 @@ export class PublicController {
     return endAt;
   }
 
+  @UseGuards(LiffGuard)
   @Get('roster/:token')
   async getRoster(@Param('token') token: string) {
     const event = await this.prisma.event.findFirst({
@@ -67,7 +70,7 @@ export class PublicController {
     const reservations = await this.prisma.reservation.findMany({
       where: { eventId: event.id, status: { not: 'cancelled' } },
       include: {
-        member: { select: { name: true, grade: true, gender: true, level: true, comment: true } },
+        member: { select: { name: true, grade: true, gender: true, level: true, comment: true, linePictureUrl: true } },
       },
       orderBy: [{ status: 'asc' }, { reservedAt: 'asc' }],
     });
@@ -85,6 +88,7 @@ export class PublicController {
         gender: r.member.gender,
         level: r.member.level,
         comment: r.member.comment,
+        linePictureUrl: r.member.linePictureUrl,
         status: r.status,
         waitlistOrder: r.waitlistOrder,
       })),

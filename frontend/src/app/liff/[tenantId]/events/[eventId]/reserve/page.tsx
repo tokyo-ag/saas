@@ -245,7 +245,12 @@ function ReservePageInner() {
         setError('Payment checkout is unavailable.');
         return;
       }
-      router.push(`/liff/${tenantId}/profile`);
+      setMyReservation({
+        id: result.id,
+        status: result.status,
+        waitlistOrder: result.waitlistOrder,
+        reservedAt: new Date().toISOString(),
+      });
       return;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '予約に失敗しました';
@@ -436,13 +441,19 @@ function ReservePageInner() {
               <ul className="space-y-2">
                 {roster.reservations.map((r, i) => (
                   <li key={i} className="text-xs">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                      <span className="text-gray-400">{i + 1}.</span>
+                      {r.linePictureUrl ? (
+                        <img src={r.linePictureUrl} alt="" className="h-4 w-4 shrink-0 rounded-full object-cover" />
+                      ) : (
+                        <span className="h-4 w-4 shrink-0 rounded-full bg-gray-200" />
+                      )}
                       <span className="font-medium text-gray-900">{r.name ?? '未入力'}</span>
+                      {r.comment && <span className="text-gray-400">{r.comment}</span>}
                       <span className="text-gray-500">
                         {[r.grade, r.gender, roster.event.levelEnabled ? r.level : null].filter(Boolean).join(' / ')}
                       </span>
                     </div>
-                    {r.comment && <p className="mt-0.5 text-gray-400">{r.comment}</p>}
                   </li>
                 ))}
               </ul>
@@ -488,21 +499,20 @@ function ReservePageInner() {
         )}
 
         {myReservation ? (
-          <div className="flex justify-center">
-            <button
-              onClick={() => setConfirmCancelOpen(true)}
-              disabled={cancelling}
-              className="rounded-full px-6 py-2.5 text-sm font-bold shadow-sm transition-colors disabled:opacity-50"
-              style={{ backgroundColor: cancelling ? '#ef4444' : solidAccentColor, color: cancelling ? '#ffffff' : readableTextColor(solidAccentColor) }}
-            >
-              {cancelling ? 'キャンセル' : (
-                <>
-                  {STATUS_LABEL[myReservation.status] ?? myReservation.status}
-                  {myReservation.status === 'waitlisted' && myReservation.waitlistOrder ? `（${myReservation.waitlistOrder}番目）` : ''}
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            onClick={() => setConfirmCancelOpen(true)}
+            disabled={cancelling}
+            className="w-full py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:opacity-90 transition-colors shadow-sm"
+            style={{ backgroundColor: cancelling ? '#ef4444' : '#10b981', color: '#ffffff' }}
+          >
+            {cancelling ? 'キャンセル中...' : (
+              <>
+                {STATUS_LABEL[myReservation.status] ?? myReservation.status}
+                {myReservation.status === 'waitlisted' && myReservation.waitlistOrder ? `（${myReservation.waitlistOrder}番目）` : ''}
+                {' / キャンセルする'}
+              </>
+            )}
+          </button>
         ) : (
           <button
             onClick={() => submit()}
