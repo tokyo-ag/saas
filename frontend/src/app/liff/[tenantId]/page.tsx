@@ -89,12 +89,12 @@ function EventCard({ event, tenantId, accentColor, cardBg, reserveLineUrl, mySta
       </div>
 
       {/* info */}
-      <div className="px-2.5 pt-2 pb-2.5 space-y-1">
-        <p className="text-[11px] text-gray-700 leading-snug line-clamp-2 font-medium">{event.title}</p>
-        <p className="text-[10px] text-gray-400">{formatDateShort(event.heldAt)}</p>
+      <div className="px-2.5 pt-2 pb-2.5 space-y-1" style={{ color: readableTextColor(cardBg) }}>
+        <p className="text-[11px] leading-snug line-clamp-2 font-medium">{event.title}</p>
+        <p className="text-[10px] opacity-60">{formatDateShort(event.heldAt)}</p>
         <AvatarRow count={event.reservedCount} friends={event.friendAttendees} />
         <div className="flex items-center gap-1 flex-wrap">
-          <span className="text-[9px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{event.location}</span>
+          <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">{event.location}</span>
           {event.priceMale != null && event.priceFemale != null ? (
             <>
               <span className="text-[9px] text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded-full">男¥{event.priceMale.toLocaleString()}</span>

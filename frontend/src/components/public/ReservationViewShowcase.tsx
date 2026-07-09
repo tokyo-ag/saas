@@ -326,6 +326,7 @@ function CardMini({
   cardBg?: string;
 } & FieldFlags) {
   const visible = readableAccent(accentColor);
+  const cardText = readableAccent(cardBg || '#ffffff').text;
   if (events) {
     if (events.length === 0) return <EmptyEvents accentColor={accentColor} />;
     return (
@@ -362,10 +363,10 @@ function CardMini({
                   </span>
                 </div>
                 <div className="space-y-1 p-3">
-                  <p className="line-clamp-2 text-sm font-bold leading-snug" style={{ color: eventTitleColor || '#111827' }}>{event.title}</p>
-                  <p className="text-xs font-medium" style={{ color: eventDateColor || '#4B5563' }}>{eventDate(event)} {eventTime(event)}</p>
-                  {showLocation && event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || '#9CA3AF' }}>{event.location}</p>}
-                  {metaLine && <p className="text-xs" style={{ color: eventMetaColor || '#6B7280' }}>{metaLine}</p>}
+                  <p className="line-clamp-2 text-sm font-bold leading-snug" style={{ color: eventTitleColor || cardText }}>{event.title}</p>
+                  <p className="text-xs font-medium" style={{ color: eventDateColor || cardText, opacity: eventDateColor ? 1 : 0.7 }}>{eventDate(event)} {eventTime(event)}</p>
+                  {showLocation && event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{event.location}</p>}
+                  {metaLine && <p className="text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{metaLine}</p>}
                 </div>
               </Link>
             );
@@ -405,6 +406,7 @@ function ThreadMini({
   cardBg?: string;
 } & FieldFlags) {
   const visible = readableAccent(accentColor);
+  const cardText = readableAccent(cardBg || '#ffffff').text;
   if (events) {
     if (events.length === 0) return <EmptyEvents accentColor={accentColor} />;
     const groups = events.reduce<Record<string, ReservationShowcaseEvent[]>>((acc, event) => {
@@ -440,12 +442,12 @@ function ThreadMini({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold" style={{ color: eventTitleColor || '#111827' }}>{event.title}</p>
-                        <p className="mt-1 text-xs" style={{ color: eventDateColor || '#6B7280' }}>{eventDate(event)}</p>
-                        {showLocation && event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || '#9CA3AF' }}>{event.location}</p>}
-                        {metaLine && <p className="text-xs" style={{ color: eventMetaColor || '#6B7280' }}>{metaLine}</p>}
+                        <p className="text-sm font-bold" style={{ color: eventTitleColor || cardText }}>{event.title}</p>
+                        <p className="mt-1 text-xs" style={{ color: eventDateColor || cardText, opacity: eventDateColor ? 1 : 0.7 }}>{eventDate(event)}</p>
+                        {showLocation && event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{event.location}</p>}
+                        {metaLine && <p className="text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{metaLine}</p>}
                         {showDescription && (event as any).description && (
-                          <p className="mt-1 line-clamp-2 text-xs leading-relaxed" style={{ color: eventMetaColor || '#9CA3AF' }}>{(event as any).description}</p>
+                          <p className="mt-1 line-clamp-2 text-xs leading-relaxed" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{(event as any).description}</p>
                         )}
                       </div>
                       <span className={`shrink-0 rounded-md px-2.5 py-1 text-[11px] font-bold ${full ? 'bg-gray-100 text-gray-400' : ''}`} style={full ? undefined : { backgroundColor: visible.accent, color: visible.text }}>
