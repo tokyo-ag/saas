@@ -21,7 +21,7 @@ export default function Sidebar() {
     setOpen(false);
   }, [pathname]);
 
-  const displayName = tenant?.lineDisplayName ?? tenant?.name ?? 'イベント管理';
+  const displayName = tenant?.name ?? tenant?.lineDisplayName ?? 'イベント管理';
 
   const links = [
     { href: '/admin/public-page', label: '公開サイト', icon: 'P' },
