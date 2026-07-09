@@ -116,17 +116,26 @@ export default function ProfilePage() {
       setLineUserId(uid);
       setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
 
-      const [prof, myReservations] = await Promise.all([
-        api.liff.profile(tenantId, uid).catch(() => null),
+      const [profResult, myReservations] = await Promise.all([
+        api.liff.profile(tenantId, uid).then((v) => ({ ok: true as const, v })).catch((e) => ({ ok: false as const, e })),
         api.liff.myReservations(tenantId).catch(() => []),
       ]);
-      if (prof) {
+      if (profResult.ok) {
+        const prof = profResult.v;
         setProfile(prof);
         setName(prof.name ?? '');
         setGrade(prof.grade ?? '');
         setGender(prof.gender ?? '');
         setLevel(prof.level ?? '');
         setComment(prof.comment ?? '');
+      } else {
+        // トークン関連の失敗は「プロフィール未登録」と誤認せず再認証させる。
+        // 本当に初回でプロフィールが無い場合（404）は空フォームのまま進める。
+        const msg = profResult.e instanceof Error ? profResult.e.message : String(profResult.e);
+        if (isLineAuthErrorMessage(msg)) {
+          restartLineAuth();
+          return;
+        }
       }
       setReservations(myReservations);
       setLoading(false);

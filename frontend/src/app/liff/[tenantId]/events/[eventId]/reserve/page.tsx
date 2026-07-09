@@ -193,11 +193,22 @@ function ReservePageInner() {
       // ── Step 4: データ取得 ──
       const [ev, prof, myRes] = await Promise.allSettled([
         api.liff.event(tenantId, eventId),
-        api.liff.profile(tenantId, uid).catch(() => null),
+        api.liff.profile(tenantId, uid),
         api.liff.myReservation(tenantId, eventId, uid).catch(() => null),
       ]);
       if (ev.status === 'fulfilled') setEvent(ev.value);
-      if (prof.status === 'fulfilled') setProfile(prof.value);
+      if (prof.status === 'fulfilled') {
+        setProfile(prof.value);
+      } else {
+        // トークン関連の失敗は「プロフィール未登録」と誤認せず再認証させる。
+        // 本当に初回でプロフィールが無い場合（404）はnullのまま進める。
+        const msg = prof.reason instanceof Error ? prof.reason.message : String(prof.reason);
+        if (isLineAuthErrorMessage(msg)) {
+          restartLineAuth();
+          return;
+        }
+        setProfile(null);
+      }
       if (myRes.status === 'fulfilled') setMyReservation(myRes.value);
 
       const profileComplete = prof.status === 'fulfilled' && prof.value?.name && prof.value?.grade && prof.value?.gender;
