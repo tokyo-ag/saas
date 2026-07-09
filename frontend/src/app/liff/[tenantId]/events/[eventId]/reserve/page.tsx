@@ -13,7 +13,7 @@ import {
   loginIfNeeded,
   redirectToLiffApp,
 } from '@/lib/liff';
-import { useLiffTheme, hexToRgba, readableTextColor } from '@/components/liff/LiffThemeProvider';
+import { useLiffTheme, hexToRgba, readableTextColor, isLightHexColor } from '@/components/liff/LiffThemeProvider';
 import { ConfirmDialog } from '@/components/liff/ConfirmDialog';
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -55,6 +55,9 @@ function ReservePageInner() {
   const router = useRouter();
   const theme = useLiffTheme();
   const accentColor = theme.accentColor;
+  // カード背景が白いため、テナントのアクセントカラーが白系だと塗りつぶしボタンが
+  // 背景に同化して見えなくなる。その場合は濃色にフォールバックする。
+  const solidAccentColor = isLightHexColor(accentColor) ? '#111827' : accentColor;
   const isWaitlist = searchParams.get('waitlist') === '1';
 
   const [authStatus, setAuthStatus] = useState<AuthStatus>('loading');
@@ -76,7 +79,8 @@ function ReservePageInner() {
   const [cancelling, setCancelling] = useState(false);
   const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
 
-  const hasProfile = !!(profile && profile.name && profile.grade && profile.gender && (!event?.levelEnabled || profile.level));
+  const requiresLevel = event?.levelEnabled && event.category !== 'meetup';
+  const hasProfile = !!(profile && profile.name && profile.grade && profile.gender && (!requiresLevel || profile.level));
 
   function restartLineAuth() {
     setError('LINE認証を更新しています。画面が切り替わらない場合は、LINEからもう一度開き直してください。');
@@ -208,9 +212,10 @@ function ReservePageInner() {
     if (authStatus !== 'ok' || isFriend !== true || !lineUserId) return;
     if (!hasProfile) {
       const returnTo = `/liff/${tenantId}/events/${eventId}/reserve`;
-      router.replace(`/liff/${tenantId}/profile?returnTo=${encodeURIComponent(returnTo)}`);
+      const categoryParam = event?.category ? `&category=${encodeURIComponent(event.category)}` : '';
+      router.replace(`/liff/${tenantId}/profile?returnTo=${encodeURIComponent(returnTo)}${categoryParam}`);
     }
-  }, [authStatus, isFriend, lineUserId, hasProfile, tenantId, eventId, router]);
+  }, [authStatus, isFriend, lineUserId, hasProfile, tenantId, eventId, router, event?.category]);
 
   async function submit() {
     if (!lineUserId || !profile) return;
@@ -290,7 +295,7 @@ function ReservePageInner() {
         <button
           onClick={() => router.push(`/liff/${tenantId}`)}
           className="font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
-          style={{ backgroundColor: accentColor, color: readableTextColor(accentColor) }}
+          style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
         >
           イベントページへ戻る
         </button>
@@ -332,7 +337,7 @@ function ReservePageInner() {
           <button
             onClick={handleLoginRetry}
             className="font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
-            style={{ backgroundColor: accentColor, color: readableTextColor(accentColor) }}
+            style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
           >
             LINEログインをやり直す
           </button>
@@ -340,7 +345,7 @@ function ReservePageInner() {
           <button
             onClick={() => window.location.reload()}
             className="font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
-            style={{ backgroundColor: accentColor, color: readableTextColor(accentColor) }}
+            style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
           >
             再試行する
           </button>
@@ -373,7 +378,7 @@ function ReservePageInner() {
             target="_blank"
             rel="noopener noreferrer"
             className="font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
-            style={{ backgroundColor: accentColor, color: readableTextColor(accentColor) }}
+            style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
           >
             友だち追加する
           </a>
@@ -460,7 +465,7 @@ function ReservePageInner() {
               <span className="text-gray-500">性別</span>
               <span className="font-medium text-gray-900">{profile.gender}</span>
             </div>
-            {event?.levelEnabled && profile.level && (
+            {requiresLevel && profile.level && (
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">レベル</span>
                 <span className="font-medium text-gray-900">{profile.level}</span>
@@ -473,7 +478,7 @@ function ReservePageInner() {
               </div>
             )}
             <Link
-              href={`/liff/${tenantId}/profile?returnTo=${encodeURIComponent(`/liff/${tenantId}/events/${eventId}/reserve`)}`}
+              href={`/liff/${tenantId}/profile?returnTo=${encodeURIComponent(`/liff/${tenantId}/events/${eventId}/reserve`)}${event?.category ? `&category=${encodeURIComponent(event.category)}` : ''}`}
               className="block text-xs hover:underline pt-1"
               style={{ color: accentColor }}
             >
@@ -488,7 +493,7 @@ function ReservePageInner() {
               onClick={() => setConfirmCancelOpen(true)}
               disabled={cancelling}
               className="rounded-full px-6 py-2.5 text-sm font-bold shadow-sm transition-colors disabled:opacity-50"
-              style={{ backgroundColor: cancelling ? '#ef4444' : accentColor, color: cancelling ? '#ffffff' : readableTextColor(accentColor) }}
+              style={{ backgroundColor: cancelling ? '#ef4444' : solidAccentColor, color: cancelling ? '#ffffff' : readableTextColor(solidAccentColor) }}
             >
               {cancelling ? 'キャンセル' : (
                 <>
@@ -503,7 +508,7 @@ function ReservePageInner() {
             onClick={() => submit()}
             disabled={submitting}
             className="w-full py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:opacity-90 transition-colors shadow-sm"
-            style={{ backgroundColor: accentColor, color: readableTextColor(accentColor) }}
+            style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
           >
             {submitting ? '送信中...' : isWaitlist ? 'キャンセル待ちに登録する' : 'この情報で予約する'}
           </button>

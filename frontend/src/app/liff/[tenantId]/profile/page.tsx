@@ -4,12 +4,19 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { api, LiffMyReservation, LiffProfile, setLiffToken } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded, liff, redirectToLiffApp } from '@/lib/liff';
-import { useLiffTheme, readableTextColor } from '@/components/liff/LiffThemeProvider';
+import { useLiffTheme, readableTextColor, isLightHexColor } from '@/components/liff/LiffThemeProvider';
 import { ConfirmDialog } from '@/components/liff/ConfirmDialog';
 
 const GRADES = ['大学生（18～22歳）', '社会人'];
 const GENDERS = ['男性', '女性'];
 const LEVELS = ['初心者', '中級', '上級'];
+
+const CATEGORY_LABELS: Record<string, string> = {
+  badminton: 'バドミントン',
+  futsal: 'フットサル',
+  basketball: 'バスケットボール',
+  volleyball: 'バレー',
+};
 
 const STATUS_LABEL: Record<string, string> = {
   reserved: '予約済み',
@@ -58,7 +65,13 @@ export default function ProfilePage() {
   const router = useRouter();
   const theme = useLiffTheme();
   const accentColor = theme.accentColor;
+  // カード背景が白いため、テナントのアクセントカラーが白系だと塗りつぶしボタンが
+  // 背景に同化して見えなくなる。その場合は濃色にフォールバックする。
+  const solidAccentColor = isLightHexColor(accentColor) ? '#111827' : accentColor;
   const returnTo = searchParams.get('returnTo');
+  const category = searchParams.get('category');
+  const hideLevel = category === 'meetup';
+  const levelLabel = category && CATEGORY_LABELS[category] ? `${CATEGORY_LABELS[category]}のレベル（任意）` : 'レベル（任意）';
 
   const [lineUserId, setLineUserId] = useState('');
   const [profile, setProfile] = useState<LiffProfile | null>(null);
@@ -227,7 +240,7 @@ export default function ProfilePage() {
         <button
           onClick={handleLoginRetry}
           className="font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
-          style={{ backgroundColor: accentColor, color: readableTextColor(accentColor) }}
+          style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
         >
           LINEログインをやり直す
         </button>
@@ -287,27 +300,29 @@ export default function ProfilePage() {
                   <button key={g} type="button" onClick={() => setGender(g)}
                     className="rounded-full border px-4 py-1.5 text-sm font-bold transition"
                     style={gender === g
-                      ? { backgroundColor: accentColor, borderColor: accentColor, color: readableTextColor(accentColor) }
+                      ? { backgroundColor: solidAccentColor, borderColor: solidAccentColor, color: readableTextColor(solidAccentColor) }
                       : { borderColor: '#e5e7eb', color: '#374151' }}>
                     {g}
                   </button>
                 ))}
               </div>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-2">レベル（任意）</label>
-              <div className="flex gap-2">
-                {LEVELS.map((l) => (
-                  <button key={l} type="button" onClick={() => setLevel(level === l ? '' : l)}
-                    className="rounded-full border px-4 py-1.5 text-sm font-bold transition"
-                    style={level === l
-                      ? { backgroundColor: accentColor, borderColor: accentColor, color: readableTextColor(accentColor) }
-                      : { borderColor: '#e5e7eb', color: '#374151' }}>
-                    {l}
-                  </button>
-                ))}
+            {!hideLevel && (
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-2">{levelLabel}</label>
+                <div className="flex gap-2">
+                  {LEVELS.map((l) => (
+                    <button key={l} type="button" onClick={() => setLevel(level === l ? '' : l)}
+                      className="rounded-full border px-4 py-1.5 text-sm font-bold transition"
+                      style={level === l
+                        ? { backgroundColor: solidAccentColor, borderColor: solidAccentColor, color: readableTextColor(solidAccentColor) }
+                        : { borderColor: '#e5e7eb', color: '#374151' }}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1.5">一言（任意）</label>
               <input maxLength={200}
@@ -321,7 +336,7 @@ export default function ProfilePage() {
           <button
             type="submit" disabled={saving}
             className="w-full py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:opacity-90 transition-colors shadow-sm"
-            style={{ backgroundColor: accentColor, color: readableTextColor(accentColor) }}
+            style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
           >
             {saving ? '保存中...' : saved ? '保存しました' : '保存する'}
           </button>
@@ -358,7 +373,7 @@ export default function ProfilePage() {
                             onClick={() => setConfirmCancelId(r.id)}
                             disabled={cancellingId === r.id}
                             className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors disabled:opacity-50"
-                            style={cancellingId === r.id ? { color: '#ffffff', backgroundColor: '#ef4444' } : { color: readableTextColor(accentColor), backgroundColor: accentColor }}
+                            style={cancellingId === r.id ? { color: '#ffffff', backgroundColor: '#ef4444' } : { color: readableTextColor(solidAccentColor), backgroundColor: solidAccentColor }}
                           >
                             {cancellingId === r.id ? 'キャンセル' : (
                               <>
