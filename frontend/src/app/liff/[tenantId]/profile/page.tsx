@@ -239,10 +239,10 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.backgroundColor, '--liff-accent': accentColor } as React.CSSProperties}>
-      <div className="text-white" style={{ backgroundColor: accentColor }}>
+      <div className="border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
         <div className="max-w-[480px] mx-auto px-4 py-4 flex items-center gap-3">
-          <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-white text-xl leading-none">‹</button>
-          <h1 className="text-base font-bold">マイページ</h1>
+          <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-gray-900 text-xl leading-none">‹</button>
+          <h1 className="text-base font-bold text-gray-900">マイページ</h1>
         </div>
       </div>
 
@@ -258,7 +258,7 @@ export default function ProfilePage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-4 space-y-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-4">
             <p className="text-xs font-medium text-gray-500">プロフィール</p>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1.5">お名前 <span className="text-red-400">*</span></label>
@@ -319,7 +319,7 @@ export default function ProfilePage() {
         <div>
           <p className="text-sm font-bold text-gray-800 px-1 mb-2">参加予定イベント</p>
           {reservations.length === 0 ? (
-            <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-6 text-center text-sm text-gray-400">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center text-sm text-gray-400">
               予約したイベントはまだありません
             </div>
           ) : (
@@ -331,7 +331,7 @@ export default function ProfilePage() {
                     {monthReservations.map((r) => (
                       <div
                         key={r.id}
-                        className="rounded-xl border border-gray-100 bg-white/85 px-4 py-3 shadow-sm"
+                        className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">

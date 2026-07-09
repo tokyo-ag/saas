@@ -389,11 +389,11 @@ function ReservePageInner() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.backgroundColor }}>
-      <div className="text-white" style={{ backgroundColor: accentColor }}>
+      <div className="border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
         <div className="max-w-[480px] mx-auto px-4 py-4 flex items-center gap-3">
-          <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-white text-xl leading-none">‹</button>
-          <h1 className="text-base font-bold flex-1">{isWaitlist ? 'キャンセル待ち登録' : '予約確認'}</h1>
-          <Link href={`/liff/${tenantId}/profile`} className="text-xs font-medium text-white/90 underline underline-offset-2">
+          <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-gray-900 text-xl leading-none">‹</button>
+          <h1 className="text-base font-bold flex-1 text-gray-900">{isWaitlist ? 'キャンセル待ち登録' : '予約確認'}</h1>
+          <Link href={`/liff/${tenantId}/profile`} className="text-xs font-medium underline underline-offset-2" style={{ color: accentColor }}>
             マイページ
           </Link>
         </div>
@@ -405,7 +405,7 @@ function ReservePageInner() {
         )}
 
         {event && (
-          <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-4 space-y-2.5">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-2.5">
             <p className="font-bold text-gray-900 text-base">{event.title}</p>
             <div className="space-y-1.5 text-sm text-gray-700">
               {categoryLabel && (
@@ -422,7 +422,7 @@ function ReservePageInner() {
         )}
 
         {event?.rosterShareEnabled && roster && (
-          <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
             <p className="text-xs font-medium text-gray-500 mb-2">参加者名簿 ({roster.reservations.length}人)</p>
             {roster.reservations.length === 0 ? (
               <p className="text-xs text-gray-400">まだ参加者はいません</p>
@@ -445,7 +445,7 @@ function ReservePageInner() {
         )}
 
         {profile && (
-          <div className="bg-white/85 rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
             <p className="text-xs font-medium text-gray-500 mb-1">この情報で予約します</p>
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">お名前</span>
