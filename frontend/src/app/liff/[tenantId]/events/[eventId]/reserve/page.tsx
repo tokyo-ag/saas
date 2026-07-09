@@ -12,6 +12,7 @@ import {
   getInitError,
   loginIfNeeded,
   redirectToLiffApp,
+  hasRecentLoginAttempt,
 } from '@/lib/liff';
 import { useLiffTheme, hexToRgba, readableTextColor, isLightHexColor } from '@/components/liff/LiffThemeProvider';
 import { ConfirmDialog } from '@/components/liff/ConfirmDialog';
@@ -137,11 +138,14 @@ function ReservePageInner() {
             return;
           }
 
+          const alreadyTried = hasRecentLoginAttempt();
           const loggedIn = await loginIfNeeded();
           if (!loggedIn) {
             setLoginRequired(true);
             setAuthError(
-              'LINEへのログインが必要です。ログインを完了すると予約を続行できます。'
+              alreadyTried
+                ? 'LINEログインが完了できませんでした。Safariなどのブラウザで直接開いている場合、LINEアプリ内でこのリンクを開き直してください。'
+                : 'LINEへのログインが必要です。ログインを完了すると予約を続行できます。'
             );
             setAuthStatus('error');
             return;

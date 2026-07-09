@@ -108,7 +108,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, errorMessage: string): 
   });
 }
 
-function hasRecentLoginAttempt(): boolean {
+export function hasRecentLoginAttempt(): boolean {
   if (typeof window === 'undefined') return false;
   const raw = window.localStorage.getItem(LIFF_LOGIN_TRY_KEY);
   if (!raw) return false;
