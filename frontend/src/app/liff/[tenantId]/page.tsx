@@ -502,6 +502,7 @@ export default function LiffTopPage() {
   const [isOffline, setIsOffline] = useState(false);
   const [myStatusByEvent, setMyStatusByEvent] = useState<Record<string, string>>({});
   const [myPictureUrl, setMyPictureUrl] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const liffReserveLineUrl = tenant?.reserveActionStyle === 'line' ? tenant.reserveLineUrl : null;
 
   useEffect(() => {
@@ -541,6 +542,7 @@ export default function LiffTopPage() {
       const ok = await initLiff();
       const lineProfile = ok ? await getLiffProfile().catch(() => null) : null;
       if (lineProfile?.pictureUrl) setMyPictureUrl(lineProfile.pictureUrl);
+      if (lineProfile?.userId) setIsLoggedIn(true);
       const uid = lineProfile?.userId ?? `demo-${tenantId}`;
       if (uid && lineProfile?.userId) {
         const eventsWithFriends = await api.liff
@@ -573,15 +575,15 @@ export default function LiffTopPage() {
           <div className="flex items-center justify-between gap-2 px-4 pt-12 pb-3 sm:pt-4">
             <Link href={`/clubs/${tenantId}`} className="flex min-w-0 items-center gap-2.5">
               {(tenant?.linePictureUrl ?? tenant?.iconUrl) ? (
-                <Image src={(tenant?.linePictureUrl ?? tenant?.iconUrl)!} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" alt="" unoptimized />
+                <Image src={(tenant?.linePictureUrl ?? tenant?.iconUrl)!} width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0" alt="" unoptimized />
               ) : (
-                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-sm" style={{ backgroundColor: `${theme.accentColor}30` }}>🎉</div>
+                <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base" style={{ backgroundColor: `${theme.accentColor}30` }}>🎉</div>
               )}
               <div className="min-w-0">
                 <p className="text-[18px] font-bold text-gray-900 tracking-tight truncate leading-tight">
                   {tenant?.name ?? tenant?.lineDisplayName ?? 'Home'}
                 </p>
-                <p className="text-[10px] text-gray-400 leading-tight">団体詳細ページ</p>
+                <p className="text-[10px] text-gray-800 leading-tight">団体説明</p>
               </div>
             </Link>
             {tenant?.reserveActionStyle !== 'line' && (
@@ -591,15 +593,15 @@ export default function LiffTopPage() {
                 aria-label="マイページ"
               >
                 {myPictureUrl ? (
-                  <Image src={myPictureUrl} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" alt="" unoptimized />
+                  <Image src={myPictureUrl} width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0" alt="" unoptimized />
                 ) : (
-                  <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 shrink-0">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 shrink-0">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                   </div>
                 )}
                 <div className="text-right">
-                  <p className="text-[13px] font-bold text-gray-900 leading-tight">マイページ</p>
-                  <p className="text-[10px] text-gray-400 leading-tight">予約の確認をする</p>
+                  <p className="text-[15px] font-bold text-gray-900 leading-tight">マイページ</p>
+                  <p className="text-[10px] text-gray-800 leading-tight">{isLoggedIn ? 'ログイン中' : 'ログインする'}</p>
                 </div>
               </Link>
             )}

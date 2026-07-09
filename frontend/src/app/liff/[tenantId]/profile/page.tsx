@@ -81,6 +81,7 @@ export default function ProfilePage() {
   const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
   const [loginRequired, setLoginRequired] = useState(false);
   const [showLoginToast, setShowLoginToast] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(!!returnTo);
 
   useEffect(() => {
     async function init() {
@@ -120,22 +121,30 @@ export default function ProfilePage() {
         api.liff.profile(tenantId, uid).then((v) => ({ ok: true as const, v })).catch((e) => ({ ok: false as const, e })),
         api.liff.myReservations(tenantId).catch(() => []),
       ]);
-      if (profResult.ok) {
-        const prof = profResult.v;
-        setProfile(prof);
-        setName(prof.name ?? '');
-        setGrade(prof.grade ?? '');
-        setGender(prof.gender ?? '');
-        setLevel(prof.level ?? '');
-        setComment(prof.comment ?? '');
-      } else {
-        // トークン関連の失敗は「プロフィール未登録」と誤認せず再認証させる。
-        // 本当に初回でプロフィールが無い場合（404）は空フォームのまま進める。
+      let resolvedProf: LiffProfile | null = profResult.ok ? profResult.v : null;
+      if (!profResult.ok) {
         const msg = profResult.e instanceof Error ? profResult.e.message : String(profResult.e);
         if (isLineAuthErrorMessage(msg)) {
-          restartLineAuth();
-          return;
+          // トークンが一時的に古い可能性があるので、取り直して一度だけ再試行する。
+          // それでも失敗する場合のみ再認証（ログイン画面）に進む＝二重ログイン要求を避ける。
+          setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
+          resolvedProf = await api.liff.profile(tenantId, uid).catch(() => null);
+          if (!resolvedProf) {
+            restartLineAuth();
+            return;
+          }
         }
+        // それ以外（本当に初回でプロフィールが無い＝404）は空フォームのまま進める。
+      }
+      if (resolvedProf) {
+        setProfile(resolvedProf);
+        setName(resolvedProf.name ?? '');
+        setGrade(resolvedProf.grade ?? '');
+        setGender(resolvedProf.gender ?? '');
+        setLevel(resolvedProf.level ?? '');
+        setComment(resolvedProf.comment ?? '');
+      } else {
+        setProfileOpen(true);
       }
       setReservations(myReservations);
       setLoading(false);
@@ -283,7 +292,18 @@ export default function ProfilePage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-4">
-            <p className="text-xs font-medium text-gray-500">プロフィール</p>
+            <button
+              type="button"
+              onClick={() => setProfileOpen((v) => !v)}
+              className="flex w-full items-center justify-between"
+            >
+              <span className="text-xs font-medium text-gray-500">
+                プロフィール{!profileOpen && name ? `：${name}` : ''}
+              </span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-gray-400 transition-transform ${profileOpen ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9" /></svg>
+            </button>
+            {profileOpen && (
+            <>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1.5">お名前 <span className="text-red-400">*</span></label>
               <input required minLength={1} maxLength={50}
@@ -335,8 +355,11 @@ export default function ProfilePage() {
                 className={inputClass}
               />
             </div>
+            </>
+            )}
           </div>
 
+          {profileOpen && (
           <button
             type="submit" disabled={saving}
             className="w-full py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:opacity-90 transition-colors shadow-sm"
@@ -344,6 +367,7 @@ export default function ProfilePage() {
           >
             {saving ? '保存中...' : saved ? '保存しました' : '保存する'}
           </button>
+          )}
         </form>
 
         <div>
@@ -361,7 +385,8 @@ export default function ProfilePage() {
                     {monthReservations.map((r) => (
                       <div
                         key={r.id}
-                        className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
+                        onClick={() => router.push(`/liff/${tenantId}/events/${r.event.id}/reserve`)}
+                        className="cursor-pointer rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
@@ -374,7 +399,7 @@ export default function ProfilePage() {
                           </div>
                           <button
                             type="button"
-                            onClick={() => setConfirmCancelId(r.id)}
+                            onClick={(e) => { e.stopPropagation(); setConfirmCancelId(r.id); }}
                             disabled={cancellingId === r.id}
                             className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors disabled:opacity-50"
                             style={cancellingId === r.id ? { color: '#ffffff', backgroundColor: '#ef4444' } : { color: readableTextColor(solidAccentColor), backgroundColor: solidAccentColor }}

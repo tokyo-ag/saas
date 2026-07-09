@@ -200,14 +200,22 @@ function ReservePageInner() {
       if (prof.status === 'fulfilled') {
         setProfile(prof.value);
       } else {
-        // トークン関連の失敗は「プロフィール未登録」と誤認せず再認証させる。
-        // 本当に初回でプロフィールが無い場合（404）はnullのまま進める。
         const msg = prof.reason instanceof Error ? prof.reason.message : String(prof.reason);
         if (isLineAuthErrorMessage(msg)) {
-          restartLineAuth();
-          return;
+          // トークンが一時的に古い可能性があるので、取り直して一度だけ再試行する。
+          // それでも失敗する場合のみ再認証（ログイン画面）に進む＝二重ログイン要求を避ける。
+          setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
+          const retryProf = await api.liff.profile(tenantId, uid).catch(() => null);
+          if (retryProf) {
+            setProfile(retryProf);
+          } else {
+            restartLineAuth();
+            return;
+          }
+        } else {
+          // 本当に初回でプロフィールが無い場合（404）はnullのまま進める。
+          setProfile(null);
         }
-        setProfile(null);
       }
       if (myRes.status === 'fulfilled') setMyReservation(myRes.value);
 
@@ -437,10 +445,7 @@ function ReservePageInner() {
       <div className="border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
         <div className="px-4 py-4 flex items-center gap-3">
           <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-gray-900 text-xl leading-none">‹</button>
-          <h1 className="text-base font-bold flex-1 text-gray-900">{isWaitlist ? 'キャンセル待ち登録' : '予約確認'}</h1>
-          <Link href={`/liff/${tenantId}/profile`} className="text-xs font-medium underline underline-offset-2" style={{ color: accentColor }}>
-            マイページ
-          </Link>
+          <h1 className="text-base font-bold flex-1 text-gray-900">{isWaitlist ? 'キャンセル待ち登録' : '一覧'}</h1>
         </div>
       </div>
 
