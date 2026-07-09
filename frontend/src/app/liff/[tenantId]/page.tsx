@@ -67,7 +67,7 @@ function EventCard({ event, tenantId, accentColor, cardBg, reserveLineUrl, mySta
       className="block rounded-xl overflow-hidden active:opacity-70"
       style={{ backgroundColor: cardBg, boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
     >
-      <div className="relative aspect-[4/5]">
+      <div className="relative aspect-square">
         {img ? (
           <Image src={img} alt={event.title} fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" unoptimized />
         ) : (
