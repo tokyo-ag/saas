@@ -76,6 +76,7 @@ function ReservePageInner() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [roster, setRoster] = useState<PublicRoster | null>(null);
+  const [expandedComment, setExpandedComment] = useState<number | null>(null);
   const [myReservation, setMyReservation] = useState<LiffReservation | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
@@ -457,19 +458,31 @@ function ReservePageInner() {
               <ul className="space-y-2">
                 {roster.reservations.map((r, i) => (
                   <li key={i} className="text-xs">
-                    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                      <span className="text-gray-400">{i + 1}.</span>
+                    <div className="flex items-center gap-1.5 overflow-hidden">
+                      <span className="shrink-0 text-gray-400">{i + 1}.</span>
                       {r.linePictureUrl ? (
                         <img src={r.linePictureUrl} alt="" className="h-4 w-4 shrink-0 rounded-full object-cover" />
                       ) : (
                         <span className="h-4 w-4 shrink-0 rounded-full bg-gray-200" />
                       )}
-                      <span className="font-medium text-gray-900">{r.name ?? '未入力'}</span>
-                      {r.comment && <span className="text-gray-400">{r.comment}</span>}
-                      <span className="text-gray-500">
+                      <span className="min-w-0 flex-1 truncate font-medium text-gray-900">{r.name ?? '未入力'}</span>
+                      {r.comment && (
+                        <button
+                          type="button"
+                          onClick={() => setExpandedComment(expandedComment === i ? null : i)}
+                          className="shrink-0 text-gray-300"
+                          aria-label="一言を表示"
+                        >
+                          💬
+                        </button>
+                      )}
+                      <span className="shrink-0 text-gray-500">
                         {[r.grade, r.gender, roster.event.levelEnabled ? r.level : null].filter(Boolean).join(' / ')}
                       </span>
                     </div>
+                    {r.comment && expandedComment === i && (
+                      <p className="mt-0.5 pl-5 text-gray-400">{r.comment}</p>
+                    )}
                   </li>
                 ))}
               </ul>
