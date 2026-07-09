@@ -6,17 +6,11 @@ import { api, LiffMyReservation, LiffProfile, setLiffToken } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded, liff, redirectToLiffApp } from '@/lib/liff';
 import { useLiffTheme, readableTextColor, isLightHexColor } from '@/components/liff/LiffThemeProvider';
 import { ConfirmDialog } from '@/components/liff/ConfirmDialog';
+import { LiffToast } from '@/components/liff/LiffToast';
 
 const GRADES = ['大学生（18～22歳）', '社会人'];
 const GENDERS = ['男性', '女性'];
 const LEVELS = ['初心者', '中級', '上級'];
-
-const CATEGORY_LABELS: Record<string, string> = {
-  badminton: 'バドミントン',
-  futsal: 'フットサル',
-  basketball: 'バスケットボール',
-  volleyball: 'バレー',
-};
 
 const STATUS_LABEL: Record<string, string> = {
   reserved: '予約済み',
@@ -69,9 +63,6 @@ export default function ProfilePage() {
   // 背景に同化して見えなくなる。その場合は濃色にフォールバックする。
   const solidAccentColor = isLightHexColor(accentColor) ? '#111827' : accentColor;
   const returnTo = searchParams.get('returnTo');
-  const category = searchParams.get('category');
-  const hideLevel = category === 'meetup';
-  const levelLabel = category && CATEGORY_LABELS[category] ? `${CATEGORY_LABELS[category]}のレベル（任意）` : 'レベル（任意）';
 
   const [lineUserId, setLineUserId] = useState('');
   const [profile, setProfile] = useState<LiffProfile | null>(null);
@@ -89,6 +80,7 @@ export default function ProfilePage() {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
   const [loginRequired, setLoginRequired] = useState(false);
+  const [showLoginToast, setShowLoginToast] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -115,6 +107,10 @@ export default function ProfilePage() {
         setLoginRequired(true);
         setLoading(false);
         return;
+      }
+      if (localStorage.getItem('liff-login-tried')) {
+        setShowLoginToast(true);
+        setTimeout(() => setShowLoginToast(false), 2000);
       }
       localStorage.removeItem('liff-login-tried');
       setLineUserId(uid);
@@ -256,6 +252,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.backgroundColor, '--liff-accent': accentColor } as React.CSSProperties}>
+      <LiffToast show={showLoginToast} message="ログインしました" />
       <div className="mx-auto min-h-screen max-w-[480px] border-x-0 sm:border-x" style={{ borderColor: theme.borderColor }}>
       <div className="border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
         <div className="px-4 py-4 flex items-center gap-3">
@@ -307,22 +304,20 @@ export default function ProfilePage() {
                 ))}
               </div>
             </div>
-            {!hideLevel && (
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2">{levelLabel}</label>
-                <div className="flex gap-2">
-                  {LEVELS.map((l) => (
-                    <button key={l} type="button" onClick={() => setLevel(level === l ? '' : l)}
-                      className="rounded-full border px-4 py-1.5 text-sm font-bold transition"
-                      style={level === l
-                        ? { backgroundColor: solidAccentColor, borderColor: solidAccentColor, color: readableTextColor(solidAccentColor) }
-                        : { borderColor: '#e5e7eb', color: '#374151' }}>
-                      {l}
-                    </button>
-                  ))}
-                </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-2">スポーツレベル（任意）</label>
+              <div className="flex gap-2">
+                {LEVELS.map((l) => (
+                  <button key={l} type="button" onClick={() => setLevel(level === l ? '' : l)}
+                    className="rounded-full border px-4 py-1.5 text-sm font-bold transition"
+                    style={level === l
+                      ? { backgroundColor: solidAccentColor, borderColor: solidAccentColor, color: readableTextColor(solidAccentColor) }
+                      : { borderColor: '#e5e7eb', color: '#374151' }}>
+                    {l}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1.5">一言（任意）</label>
               <input maxLength={200}

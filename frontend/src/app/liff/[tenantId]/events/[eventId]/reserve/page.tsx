@@ -16,6 +16,7 @@ import {
 } from '@/lib/liff';
 import { useLiffTheme, hexToRgba, readableTextColor, isLightHexColor } from '@/components/liff/LiffThemeProvider';
 import { ConfirmDialog } from '@/components/liff/ConfirmDialog';
+import { LiffToast } from '@/components/liff/LiffToast';
 
 const CATEGORY_LABELS: Record<string, string> = {
   meetup: '交流会',
@@ -70,6 +71,7 @@ function ReservePageInner() {
   const [profile, setProfile] = useState<LiffProfile | null>(null);
   const [isFriend, setIsFriend] = useState<boolean | null>(null);
   const [loginRequired, setLoginRequired] = useState(false);
+  const [showLoginToast, setShowLoginToast] = useState(false);
   const isPastEvent = event ? new Date(event.heldAt).getTime() < Date.now() : false;
   const isClosed = event ? event.status === 'closed' || isPastEvent : false;
 
@@ -81,7 +83,7 @@ function ReservePageInner() {
   const [cancelling, setCancelling] = useState(false);
   const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
 
-  const requiresLevel = event?.levelEnabled && event.category !== 'meetup';
+  const requiresLevel = event?.levelEnabled;
   const hasProfile = !!(profile && profile.name && profile.grade && profile.gender && (!requiresLevel || profile.level));
 
   function restartLineAuth() {
@@ -162,7 +164,11 @@ function ReservePageInner() {
         return;
       }
 
-      // 認証成功 → ループ防止フラグをクリア
+      // 認証成功 → ループ防止フラグをクリア（直前にログインを試みていた＝今回新規にログインできた合図）
+      if (localStorage.getItem('liff-login-tried')) {
+        setShowLoginToast(true);
+        setTimeout(() => setShowLoginToast(false), 2000);
+      }
       localStorage.removeItem('liff-login-tried');
       localStorage.removeItem('liff-pending-redirect');
 
@@ -226,10 +232,9 @@ function ReservePageInner() {
     if (authStatus !== 'ok' || isFriend !== true || !lineUserId) return;
     if (!hasProfile) {
       const returnTo = `/liff/${tenantId}/events/${eventId}/reserve`;
-      const categoryParam = event?.category ? `&category=${encodeURIComponent(event.category)}` : '';
-      router.replace(`/liff/${tenantId}/profile?returnTo=${encodeURIComponent(returnTo)}${categoryParam}`);
+      router.replace(`/liff/${tenantId}/profile?returnTo=${encodeURIComponent(returnTo)}`);
     }
-  }, [authStatus, isFriend, lineUserId, hasProfile, tenantId, eventId, router, event?.category]);
+  }, [authStatus, isFriend, lineUserId, hasProfile, tenantId, eventId, router]);
 
   async function submit() {
     if (!lineUserId || !profile) return;
@@ -416,6 +421,7 @@ function ReservePageInner() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.backgroundColor }}>
+      <LiffToast show={showLoginToast} message="ログインしました" />
       <div className="mx-auto min-h-screen max-w-[480px] border-x-0 sm:border-x" style={{ borderColor: theme.borderColor }}>
       <div className="border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
         <div className="px-4 py-4 flex items-center gap-3">
@@ -518,7 +524,7 @@ function ReservePageInner() {
               </div>
             )}
             <Link
-              href={`/liff/${tenantId}/profile?returnTo=${encodeURIComponent(`/liff/${tenantId}/events/${eventId}/reserve`)}${event?.category ? `&category=${encodeURIComponent(event.category)}` : ''}`}
+              href={`/liff/${tenantId}/profile?returnTo=${encodeURIComponent(`/liff/${tenantId}/events/${eventId}/reserve`)}`}
               className="block text-xs hover:underline pt-1"
               style={{ color: accentColor }}
             >

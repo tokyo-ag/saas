@@ -344,7 +344,7 @@ export class LiffService {
       dto.linePictureUrl ?? lineProfile?.pictureUrl ?? null;
 
     if (!member) {
-      const requiresLevel = event.levelEnabled && event.category !== 'meetup';
+      const requiresLevel = event.levelEnabled;
       if (
         !dto.name ||
         !dto.grade ||
