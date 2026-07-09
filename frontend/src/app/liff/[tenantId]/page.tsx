@@ -501,6 +501,7 @@ export default function LiffTopPage() {
   const [otherTenants, setOtherTenants] = useState<PublicTenant[]>([]);
   const [isOffline, setIsOffline] = useState(false);
   const [myStatusByEvent, setMyStatusByEvent] = useState<Record<string, string>>({});
+  const [myPictureUrl, setMyPictureUrl] = useState<string | null>(null);
   const liffReserveLineUrl = tenant?.reserveActionStyle === 'line' ? tenant.reserveLineUrl : null;
 
   useEffect(() => {
@@ -539,6 +540,7 @@ export default function LiffTopPage() {
 
       const ok = await initLiff();
       const lineProfile = ok ? await getLiffProfile().catch(() => null) : null;
+      if (lineProfile?.pictureUrl) setMyPictureUrl(lineProfile.pictureUrl);
       const uid = lineProfile?.userId ?? `demo-${tenantId}`;
       if (uid && lineProfile?.userId) {
         const eventsWithFriends = await api.liff
@@ -568,22 +570,37 @@ export default function LiffTopPage() {
       <div className="mx-auto min-h-screen max-w-[480px] border-x-0 sm:border-x" style={{ borderColor: theme.borderColor }}>
         {/* header */}
         <div className="sticky top-0 z-10 border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
-          <div className="flex items-center gap-2.5 px-4 pt-12 pb-3 sm:pt-4">
-            {(tenant?.linePictureUrl ?? tenant?.iconUrl) ? (
-              <Image src={(tenant?.linePictureUrl ?? tenant?.iconUrl)!} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" alt="" unoptimized />
-            ) : (
-              <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-sm" style={{ backgroundColor: `${theme.accentColor}30` }}>🎉</div>
-            )}
-            <h1 className="text-[18px] font-bold text-gray-900 tracking-tight truncate flex-1">
-              {tenant?.lineDisplayName ?? tenant?.name ?? 'Home'}
-            </h1>
+          <div className="flex items-center justify-between gap-2 px-4 pt-12 pb-3 sm:pt-4">
+            <Link href={`/clubs/${tenantId}`} className="flex min-w-0 items-center gap-2.5">
+              {(tenant?.linePictureUrl ?? tenant?.iconUrl) ? (
+                <Image src={(tenant?.linePictureUrl ?? tenant?.iconUrl)!} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" alt="" unoptimized />
+              ) : (
+                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-sm" style={{ backgroundColor: `${theme.accentColor}30` }}>🎉</div>
+              )}
+              <div className="min-w-0">
+                <p className="text-[18px] font-bold text-gray-900 tracking-tight truncate leading-tight">
+                  {tenant?.name ?? tenant?.lineDisplayName ?? 'Home'}
+                </p>
+                <p className="text-[10px] text-gray-400 leading-tight">団体詳細ページ</p>
+              </div>
+            </Link>
             {tenant?.reserveActionStyle !== 'line' && (
               <Link
                 href={`/liff/${tenantId}/profile`}
-                className="shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500"
+                className="flex shrink-0 items-center gap-1.5"
                 aria-label="マイページ"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                {myPictureUrl ? (
+                  <Image src={myPictureUrl} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" alt="" unoptimized />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 shrink-0">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </div>
+                )}
+                <div className="text-right">
+                  <p className="text-[13px] font-bold text-gray-900 leading-tight">マイページ</p>
+                  <p className="text-[10px] text-gray-400 leading-tight">予約の確認をする</p>
+                </div>
               </Link>
             )}
           </div>
