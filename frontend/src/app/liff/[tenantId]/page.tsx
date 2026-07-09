@@ -49,7 +49,7 @@ function ReservedBadge({ status, accentColor, className = '', style, compact = f
   const label = compact ? (isWaitlisted ? 'キャン待ち' : '予約済') : (isWaitlisted ? 'キャンセル待ち' : '予約済み');
   return (
     <span
-      className={`font-bold rounded-full whitespace-nowrap ${className}`}
+      className={`inline-flex items-center justify-center font-bold rounded-full whitespace-nowrap ${className}`}
       style={{ backgroundColor: bg, color: readableTextColor(bg), fontSize: '9px', lineHeight: 1.4, padding: '2px 6px', ...style }}
     >
       {label}
@@ -468,7 +468,7 @@ function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl, mySta
                                 status={myStatusByEvent[event.id]}
                                 accentColor={accentColor}
                                 compact
-                                className="mb-0.5 inline-block leading-tight"
+                                className="mb-0.5 leading-tight"
                                 style={{ fontSize: '8px', padding: '0px 3px' }}
                               />
                             )}
