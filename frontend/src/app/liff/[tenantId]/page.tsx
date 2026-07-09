@@ -67,7 +67,7 @@ function EventCard({ event, tenantId, accentColor, cardBg, reserveLineUrl, mySta
       className="block rounded-xl overflow-hidden active:opacity-70"
       style={{ backgroundColor: cardBg, boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
     >
-      <div className="relative aspect-square">
+      <div className="relative aspect-[1/1]">
         {img ? (
           <Image src={img} alt={event.title} fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" unoptimized />
         ) : (
@@ -90,7 +90,6 @@ function EventCard({ event, tenantId, accentColor, cardBg, reserveLineUrl, mySta
 
       {/* info */}
       <div className="px-2.5 pt-2 pb-2.5 space-y-1" style={{ color: readableTextColor(cardBg) }}>
-        <p className="text-[11px] leading-snug line-clamp-2 font-medium">{event.title}</p>
         <p className="text-[10px] opacity-60">{formatDateShort(event.heldAt)}</p>
         <AvatarRow count={event.reservedCount} friends={event.friendAttendees} />
         <div className="flex items-center gap-1 flex-wrap">
