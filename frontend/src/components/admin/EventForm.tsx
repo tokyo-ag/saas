@@ -175,6 +175,16 @@ export default function EventForm({ initial }: { initial?: Event }) {
 
   const set = (key: keyof EventFormData, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
+  function handleHeldDateChange(date: string) {
+    const time = timeFromLocalDatetime(form.heldAt) || '19:00';
+    handleHeldAtChange(date ? `${date}T${time}` : '');
+  }
+
+  function handleHeldTimeChange(time: string) {
+    const date = form.heldAt ? form.heldAt.slice(0, 10) : toLocalDatetimeValue(new Date().toISOString()).slice(0, 10);
+    handleHeldAtChange(time ? `${date}T${time}` : '');
+  }
+
   function handleHeldAtChange(newHeldAt: string) {
     if (form.endAt && newHeldAt) {
       const newDate = newHeldAt.slice(0, 10);
@@ -523,7 +533,10 @@ export default function EventForm({ initial }: { initial?: Event }) {
       <Section title="日時と場所">
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="開始日時" required>
-            <input required type="datetime-local" step={900} value={form.heldAt} onChange={(e) => handleHeldAtChange(e.target.value)} className={inputClass} />
+            <div className="grid grid-cols-[1fr_140px] gap-2">
+              <input required type="date" value={form.heldAt.slice(0, 10)} onChange={(e) => handleHeldDateChange(e.target.value)} className={inputClass} />
+              <input required type="time" step={900} value={timeFromLocalDatetime(form.heldAt)} onChange={(e) => handleHeldTimeChange(e.target.value)} className={inputClass} />
+            </div>
           </Field>
           <Field label="終了日時">
             <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
