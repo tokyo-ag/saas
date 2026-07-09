@@ -84,6 +84,20 @@ export class MembersService {
     });
   }
 
+  // 参加者情報を完全に削除する（予約履歴・チャット履歴含む、元に戻せない）。
+  // ReservationはMemberとcascade設定が無いため先に手動で削除する。
+  async remove(tenantId: string, id: string) {
+    const member = await this.prisma.member.findFirst({
+      where: { id, tenantId },
+    });
+    if (!member) throw new NotFoundException('Member not found');
+    await this.prisma.$transaction([
+      this.prisma.reservation.deleteMany({ where: { memberId: id } }),
+      this.prisma.member.delete({ where: { id } }),
+    ]);
+    return { success: true };
+  }
+
   async getMessages(tenantId: string, memberId: string) {
     const member = await this.prisma.member.findFirst({
       where: { id: memberId, tenantId },

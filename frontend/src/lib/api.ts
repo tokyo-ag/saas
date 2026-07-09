@@ -131,6 +131,7 @@ export const api = {
     messageThreads: () => request<AdminMessageThread[]>('/admin/members/messages/threads'),
     block: (id: string) => request<Member>(`/admin/members/${id}/block`, { method: 'PATCH' }),
     unblock: (id: string) => request<Member>(`/admin/members/${id}/unblock`, { method: 'PATCH' }),
+    remove: (id: string) => request<{ success: boolean }>(`/admin/members/${id}`, { method: 'DELETE' }),
     messages: (id: string) => request<AdminMessage[]>(`/admin/members/${id}/messages`),
     sendMessage: (id: string, content: string) =>
       request<AdminMessage>(`/admin/members/${id}/messages`, {

@@ -37,6 +37,13 @@ export default function MembersPage() {
     await load().catch(console.error).finally(() => setLoading(false));
   }
 
+  async function handleDelete(member: Member) {
+    const label = member.name ?? member.lineDisplayName ?? 'この参加者';
+    if (!window.confirm(`${label}を完全に削除します。予約履歴・チャット履歴もすべて削除され、元に戻せません。よろしいですか？`)) return;
+    await api.members.remove(member.id);
+    setMembers((prev) => prev.filter((m) => m.id !== member.id));
+  }
+
   return (
     <div className="px-4 py-4 md:px-6 md:py-6">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -135,7 +142,7 @@ export default function MembersPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="mt-3 grid grid-cols-3 gap-2">
                     <Link
                       href={`/admin/members/${member.id}/messages`}
                       className="rounded-lg bg-[#06C755]/10 px-3 py-2 text-center text-xs font-bold text-[#06C755]"
@@ -148,6 +155,13 @@ export default function MembersPage() {
                     >
                       詳細
                     </Link>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(member)}
+                      className="rounded-lg border border-red-200 px-3 py-2 text-center text-xs font-bold text-red-500"
+                    >
+                      削除
+                    </button>
                   </div>
                 </article>
               ))}
@@ -204,6 +218,13 @@ export default function MembersPage() {
                         <div className="flex justify-end gap-2">
                           <Link href={`/admin/members/${member.id}/messages`} className="rounded-lg bg-[#06C755]/10 px-3 py-1.5 text-xs font-medium text-[#06C755] hover:bg-[#06C755]/20">トーク</Link>
                           <Link href={`/admin/members/${member.id}`} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50">詳細</Link>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(member)}
+                            className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50"
+                          >
+                            削除
+                          </button>
                         </div>
                       </td>
                     </tr>

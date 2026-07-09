@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Param,
   Query,
   Body,
@@ -51,6 +52,11 @@ export class MembersController {
   @Patch(':memberId/unblock')
   unblock(@TenantId() tenantId: string, @Param('memberId') memberId: string) {
     return this.membersService.unblock(tenantId, memberId);
+  }
+
+  @Delete(':memberId')
+  remove(@TenantId() tenantId: string, @Param('memberId') memberId: string) {
+    return this.membersService.remove(tenantId, memberId);
   }
 
   @Get(':memberId/messages')
