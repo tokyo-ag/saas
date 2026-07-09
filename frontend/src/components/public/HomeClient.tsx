@@ -82,7 +82,7 @@ function EventCard({
         compact ? 'w-[92px] md:w-32' : 'w-[118px] md:w-44'
       } overflow-hidden rounded-xl block relative bg-white`}
     >
-      <div className="relative" style={{ aspectRatio: '3/2' }}>
+      <div className="relative" style={{ aspectRatio: '4/5' }}>
         {img ? (
           <Image
             src={img}
