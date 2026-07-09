@@ -737,11 +737,18 @@ export class LiffService {
     data: { name: string; grade: string; gender: string; level?: string; comment?: string },
   ) {
     tenantId = await this.resolveTenantId(tenantId);
-    const member = await this.findMember(tenantId, lineUserId);
-    if (!member) throw new NotFoundException('プロフィールが見つかりません');
-    const updated = await this.prisma.member.update({
-      where: { id: member.id },
-      data: {
+    const updated = await this.prisma.member.upsert({
+      where: { tenantId_lineUserId: { tenantId, lineUserId } },
+      create: {
+        tenantId,
+        lineUserId,
+        name: data.name,
+        grade: data.grade,
+        gender: data.gender,
+        level: data.level || null,
+        comment: data.comment || null,
+      },
+      update: {
         name: data.name,
         grade: data.grade,
         gender: data.gender,
