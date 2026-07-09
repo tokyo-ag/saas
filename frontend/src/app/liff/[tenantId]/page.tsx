@@ -42,16 +42,17 @@ function AvatarRow({ count, friends }: { count: number; friends?: { id: string; 
   );
 }
 
-function ReservedBadge({ status, accentColor, className = '', style }: { status?: string; accentColor: string; className?: string; style?: React.CSSProperties }) {
+function ReservedBadge({ status, accentColor, className = '', style, compact = false }: { status?: string; accentColor: string; className?: string; style?: React.CSSProperties; compact?: boolean }) {
   if (!status) return null;
   const isWaitlisted = status === 'waitlisted';
   const bg = isWaitlisted ? '#fbbf24' : accentColor;
+  const label = compact ? (isWaitlisted ? '待ち' : '済') : (isWaitlisted ? 'キャンセル待ち' : '予約済み');
   return (
     <span
       className={`font-bold rounded-full whitespace-nowrap ${className}`}
       style={{ backgroundColor: bg, color: readableTextColor(bg), fontSize: '9px', lineHeight: 1.4, padding: '2px 6px', ...style }}
     >
-      {isWaitlisted ? 'キャンセル待ち' : '予約済み'}
+      {label}
     </span>
   );
 }
@@ -459,13 +460,14 @@ function LiffCalendarCard({ events, tenantId, accentColor, reserveLineUrl, mySta
                           <Link
                             key={event.id}
                             href={reserveHref(tenantId, event.id, reserveLineUrl)}
-                            className="block rounded-md px-1 py-1 active:opacity-80"
+                            className="block overflow-hidden rounded-md px-1 py-1 active:opacity-80"
                             style={{ backgroundColor: eventChipBg, color: eventChipText }}
                           >
                             {myStatusByEvent?.[event.id] && (
                               <ReservedBadge
                                 status={myStatusByEvent[event.id]}
                                 accentColor={accentColor}
+                                compact
                                 className="mb-0.5 inline-block leading-tight"
                                 style={{ fontSize: '8px', padding: '1px 4px' }}
                               />
