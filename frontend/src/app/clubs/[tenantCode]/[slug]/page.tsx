@@ -469,6 +469,7 @@ export default async function ClubCmsPage({
         reserveButtonBgColor?: string;
         reserveButtonTextColor?: string;
         reserveButtonBorderColor?: string;
+        globalBorderColor?: string;
         reserveActionStyle?: string;
         displayFields?: { location?: boolean; price?: boolean; capacity?: boolean; description?: boolean };
         blogPostCardBg?: string;
@@ -501,7 +502,8 @@ export default async function ClubCmsPage({
   const reserveEventCardBg = sectionCopy.reserveEventCardBg?.trim() || '#ffffff';
   const reserveButtonBgColor = sectionCopy.reserveButtonBgColor?.trim() || '#06C755';
   const reserveButtonTextColor = sectionCopy.reserveButtonTextColor?.trim() || '#111827';
-  const reserveButtonBorderColor = sectionCopy.reserveButtonBorderColor?.trim() || reserveButtonBgColor;
+  const globalBorderColor = sectionCopy.globalBorderColor?.trim() || '#E5E7EB';
+  const reserveButtonBorderColor = globalBorderColor;
   const blogPostCardBg = sectionCopy.blogPostCardBg?.trim() || '#ffffff';
   const blogPostTitleColor = sectionCopy.blogPostTitleColor?.trim() || textColor;
   const reserveActionStyle = sectionCopy.reserveActionStyle === 'line' ? 'line' : 'comiu';
@@ -884,8 +886,8 @@ export default async function ClubCmsPage({
             return (
               <>
                 <Link href={contactLink}
-                  className="flex w-full items-center justify-center rounded-xl py-4 text-base font-bold shadow-sm transition hover:opacity-90"
-                  style={{ backgroundColor: btnColor, color: contactTextColor }}>
+                  className="flex w-full items-center justify-center rounded-xl border py-4 text-base font-bold shadow-sm transition hover:opacity-90"
+                  style={{ backgroundColor: btnColor, color: contactTextColor, borderColor: globalBorderColor }}>
                   {navLabels.contact}
                 </Link>
                 {subtitle && (

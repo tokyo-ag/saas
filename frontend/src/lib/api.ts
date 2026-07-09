@@ -910,6 +910,7 @@ export interface PublicPage {
   reserveButtonBgColor?: string | null;
   reserveButtonTextColor?: string | null;
   reserveButtonBorderColor?: string | null;
+  globalBorderColor?: string | null;
   fontFamily?: string | null;
   titleFont?: string | null;
   titleColor?: string | null;
@@ -1021,6 +1022,7 @@ export interface PublicPageInput {
   reserveButtonBgColor?: string;
   reserveButtonTextColor?: string;
   reserveButtonBorderColor?: string;
+  globalBorderColor?: string;
   reserveActionStyle?: 'comiu' | 'line';
   reserveLineUrl?: string;
   blogPostCardBg?: string;

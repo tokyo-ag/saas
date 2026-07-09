@@ -563,9 +563,10 @@ export default function LiffTopPage() {
   return (
     <>
       <div className="min-h-screen animate-page-in" style={{ backgroundColor: theme.backgroundColor }}>
+      <div className="mx-auto min-h-screen max-w-[480px] border-x" style={{ borderColor: theme.borderColor }}>
         {/* header */}
         <div className="sticky top-0 z-10 border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
-          <div className="flex items-center gap-2.5 px-4 pt-12 pb-3 sm:pt-4 max-w-[480px] mx-auto">
+          <div className="flex items-center gap-2.5 px-4 pt-12 pb-3 sm:pt-4">
             {(tenant?.linePictureUrl ?? tenant?.iconUrl) ? (
               <Image src={(tenant?.linePictureUrl ?? tenant?.iconUrl)!} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" alt="" unoptimized />
             ) : (
@@ -590,7 +591,7 @@ export default function LiffTopPage() {
           </div>
         )}
 
-        <div className="p-2 max-w-[480px] mx-auto">
+        <div className="p-2">
           {loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
               {Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)}
@@ -628,6 +629,7 @@ export default function LiffTopPage() {
             </div>
           )}
         </div>
+      </div>
       </div>
     </>
   );

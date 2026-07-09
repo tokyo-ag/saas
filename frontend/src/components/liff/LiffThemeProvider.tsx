@@ -7,6 +7,7 @@ export type LiffTheme = {
   backgroundColor: string;
   navBg: string;
   eventCardBg: string;
+  borderColor: string;
 };
 
 export const DEFAULT_LIFF_THEME: LiffTheme = {
@@ -14,6 +15,7 @@ export const DEFAULT_LIFF_THEME: LiffTheme = {
   backgroundColor: '#F5F5F5',
   navBg: '#ffffff',
   eventCardBg: '#ffffff',
+  borderColor: '#E5E7EB',
 };
 
 const LiffThemeContext = createContext<LiffTheme>(DEFAULT_LIFF_THEME);

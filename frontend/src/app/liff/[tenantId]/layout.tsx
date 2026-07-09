@@ -34,15 +34,17 @@ async function fetchTheme(tenantId: string): Promise<LiffTheme> {
     // 公開ページの「予約する」ボタン色（実際にWEBサイトで表示されている色）を最優先で使う
     let eventCardBg = DEFAULT_LIFF_THEME.eventCardBg;
     let reserveButtonColor: string | null = null;
+    let borderColor = DEFAULT_LIFF_THEME.borderColor;
     try {
       const fd = JSON.parse(data.footerText ?? '{}');
       eventCardBg = fd.reserveEventCardBg?.trim() || DEFAULT_LIFF_THEME.eventCardBg;
       reserveButtonColor = fd.reserveButtonBgColor?.trim() || null;
+      borderColor = fd.globalBorderColor?.trim() || DEFAULT_LIFF_THEME.borderColor;
     } catch { /* ignore */ }
 
     const accentColor = reserveButtonColor || data.accentColor?.trim() || DEFAULT_LIFF_THEME.accentColor;
 
-    return { accentColor, backgroundColor, navBg, eventCardBg };
+    return { accentColor, backgroundColor, navBg, eventCardBg, borderColor };
   } catch {
     return DEFAULT_LIFF_THEME;
   }

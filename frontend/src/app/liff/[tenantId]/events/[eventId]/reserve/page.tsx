@@ -389,8 +389,9 @@ function ReservePageInner() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.backgroundColor }}>
+      <div className="mx-auto min-h-screen max-w-[480px] border-x" style={{ borderColor: theme.borderColor }}>
       <div className="border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
-        <div className="max-w-[480px] mx-auto px-4 py-4 flex items-center gap-3">
+        <div className="px-4 py-4 flex items-center gap-3">
           <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-gray-900 text-xl leading-none">‹</button>
           <h1 className="text-base font-bold flex-1 text-gray-900">{isWaitlist ? 'キャンセル待ち登録' : '予約確認'}</h1>
           <Link href={`/liff/${tenantId}/profile`} className="text-xs font-medium underline underline-offset-2" style={{ color: accentColor }}>
@@ -399,7 +400,7 @@ function ReservePageInner() {
         </div>
       </div>
 
-      <div className="max-w-[480px] mx-auto px-4 py-5 space-y-4">
+      <div className="px-4 py-5 space-y-4">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>
         )}
@@ -519,6 +520,7 @@ function ReservePageInner() {
         onCancel={() => setConfirmCancelOpen(false)}
         onConfirm={() => { setConfirmCancelOpen(false); handleCancel(); }}
       />
+      </div>
     </div>
   );
 }

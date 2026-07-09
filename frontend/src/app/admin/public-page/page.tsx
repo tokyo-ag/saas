@@ -141,6 +141,7 @@ const emptyForm: PublicPageInput = {
   reserveButtonBgColor: '',
   reserveButtonTextColor: '',
   reserveButtonBorderColor: '',
+  globalBorderColor: '',
   reserveActionStyle: 'comiu',
   reserveLineUrl: '',
   blogPostCardBg: '',
@@ -664,7 +665,8 @@ export default function AdminPublicPage() {
   const reserveEventCardBg = form.reserveEventCardBg?.trim() || '#ffffff';
   const reserveButtonBgColor = form.reserveButtonBgColor?.trim() || '#06C755';
   const reserveButtonTextColor = form.reserveButtonTextColor?.trim() || '#111827';
-  const reserveButtonBorderColor = form.reserveButtonBorderColor?.trim() || reserveButtonBgColor;
+  const globalBorderColor = form.globalBorderColor?.trim() || '#E5E7EB';
+  const reserveButtonBorderColor = globalBorderColor;
   const blogPostCardBg = form.blogPostCardBg?.trim() || '#ffffff';
   const blogPostTitleColor = form.blogPostTitleColor?.trim() || textColor;
   const blogSectionTitle = form.blogTitle?.trim() || '';
@@ -827,6 +829,7 @@ export default function AdminPublicPage() {
                   reserveButtonBgColor: fd.reserveButtonBgColor ?? '',
                   reserveButtonTextColor: fd.reserveButtonTextColor ?? '',
                   reserveButtonBorderColor: fd.reserveButtonBorderColor ?? '',
+                  globalBorderColor: fd.globalBorderColor ?? '',
                   reserveActionStyle: fd.reserveActionStyle === 'line' ? 'line' : 'comiu',
                   reserveLineUrl: fd.reserveLineUrl ?? fd.line ?? '',
                   blogPostCardBg: fd.blogPostCardBg ?? '',
@@ -879,6 +882,7 @@ export default function AdminPublicPage() {
                   reserveButtonBgColor: '',
                   reserveButtonTextColor: '',
                   reserveButtonBorderColor: '',
+                  globalBorderColor: '',
                   reserveActionStyle: 'comiu',
                   reserveLineUrl: '',
                   blogPostCardBg: '',
@@ -1181,6 +1185,7 @@ export default function AdminPublicPage() {
         reserveButtonBgColor: form.reserveButtonBgColor?.trim() || '',
         reserveButtonTextColor: form.reserveButtonTextColor?.trim() || '',
         reserveButtonBorderColor: form.reserveButtonBorderColor?.trim() || '',
+        globalBorderColor: form.globalBorderColor?.trim() || '',
         reserveActionStyle,
         reserveLineUrl: form.reserveLineUrl?.trim() || '',
         blogPostCardBg: form.blogPostCardBg?.trim() || '',
@@ -1314,6 +1319,16 @@ export default function AdminPublicPage() {
                 onChange={(e) => setForm((p) => ({ ...p, navOpacity: Number(e.target.value) }))}
                 className="flex-1 accent-[#06C755]" />
               <span className="w-8 text-right text-xs text-gray-400">{navOpacity}%</span>
+            </div>
+          </div>
+          {/* 全体の外枠色 */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <span className="w-16 shrink-0 text-xs font-bold text-gray-500">外枠色</span>
+              <input type="color" value={globalBorderColor}
+                onChange={(e) => setForm((p) => ({ ...p, globalBorderColor: e.target.value }))}
+                className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+              <span className="text-[11px] text-gray-400">予約ボタン・お問い合わせボタンなど、サイト全体のボタンの外枠に使われます</span>
             </div>
           </div>
           </div>}
@@ -2114,15 +2129,7 @@ export default function AdminPublicPage() {
                     className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
                   />
                 </label>
-                <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
-                  <span className="text-[11px] font-bold text-gray-500">予約ボタンの外枠色</span>
-                  <input
-                    type="color"
-                    value={reserveButtonBorderColor}
-                    onChange={(e) => setForm((p) => ({ ...p, reserveButtonBorderColor: e.target.value }))}
-                    className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
-                  />
-                </label>
+                <p className="text-[11px] text-gray-400">外枠色は「全体の設定」で一括設定できます。</p>
                 <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-3">
                   <p className="text-[11px] font-bold text-gray-400">予約スタイル</p>
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -2589,8 +2596,8 @@ export default function AdminPublicPage() {
                   </section>
                 )}
                 <div>
-                  <div className="flex w-full items-center justify-center rounded-xl py-3 text-sm font-bold"
-                    style={{ backgroundColor: form.footerContactColor?.trim() || accentColor, color: form.footerContactTextColor?.trim() || '#111827' }}>
+                  <div className="flex w-full items-center justify-center rounded-xl border py-3 text-sm font-bold"
+                    style={{ backgroundColor: form.footerContactColor?.trim() || accentColor, color: form.footerContactTextColor?.trim() || '#111827', borderColor: globalBorderColor }}>
                     {navLabels.contact}
                   </div>
                   {form.contactMessage?.trim() && (
