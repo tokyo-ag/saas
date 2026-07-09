@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import PublicFooter from '@/components/public/PublicFooter';
+import { SmartLiffButton } from '@/components/public/SmartLiffButton';
 import { SITE_URL, API_URL, IMAGE_BASE_URL, buildLiffUrl } from '@/lib/config';
 
 type Review = {
@@ -299,10 +300,10 @@ export default async function PublicEventPage({
   })();
   const configuredLineUrl = footerSettings.reserveLineUrl?.trim() || footerSettings.line?.trim();
   const reservePath = `/liff/${event.tenantCode}/events/${event.id}/reserve`;
-  const reserveUrl =
-    footerSettings.reserveActionStyle === 'line' && configuredLineUrl
-      ? configuredLineUrl
-      : buildLiffUrl(reservePath) ?? reservePath;
+  const isExternalLineUrl = footerSettings.reserveActionStyle === 'line' && !!configuredLineUrl;
+  const reserveUrl = isExternalLineUrl
+    ? configuredLineUrl!
+    : buildLiffUrl(reservePath) ?? reservePath;
   const isFull =
     event.capacity != null && event.reservedCount >= event.capacity;
   const spotsLeft =
@@ -481,16 +482,30 @@ export default async function PublicEventPage({
             )}
 
             {!isEnded && (
-              <Link
-                href={reserveUrl}
-                className={`mt-5 block w-full rounded-xl py-3.5 text-center text-sm font-bold text-white transition-colors ${
-                  isFull
-                    ? 'bg-gray-400 pointer-events-none'
-                    : 'bg-[#06C755] hover:bg-[#05a847]'
-                }`}
-              >
-                {isFull ? '満席のため受付終了' : 'LINEで予約する'}
-              </Link>
+              isExternalLineUrl ? (
+                <Link
+                  href={reserveUrl}
+                  className={`mt-5 block w-full rounded-xl py-3.5 text-center text-sm font-bold text-white transition-colors ${
+                    isFull
+                      ? 'bg-gray-400 pointer-events-none'
+                      : 'bg-[#06C755] hover:bg-[#05a847]'
+                  }`}
+                >
+                  {isFull ? '満席のため受付終了' : 'LINEで予約する'}
+                </Link>
+              ) : (
+                <SmartLiffButton
+                  href={reserveUrl}
+                  directHref={`${SITE_URL}${reservePath}`}
+                  className={`mt-5 block w-full rounded-xl py-3.5 text-center text-sm font-bold text-white transition-colors ${
+                    isFull
+                      ? 'bg-gray-400 pointer-events-none'
+                      : 'bg-[#06C755] hover:bg-[#05a847]'
+                  }`}
+                >
+                  {isFull ? '満席のため受付終了' : 'LINEで予約する'}
+                </SmartLiffButton>
+              )
             )}
           </div>
         </section>

@@ -34,6 +34,14 @@ export function buildLiffUrl(
   return url.toString();
 }
 
+// LINEアプリ内ブラウザで既にliff.line.meリンクを開くと、LINEが確認ダイアログを
+// 挟んで新しいブラウザ画面を重ねて開いてしまう（元の画面の上に予約画面が
+// 積み重なって見える）。既にLINEアプリ内なら直接パスへ遷移させて回避する。
+export function isInLineInAppBrowser(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return /\bLine\//.test(navigator.userAgent);
+}
+
 export const DISCOVERY_LOCKED =
   process.env.NEXT_PUBLIC_DISCOVERY_LOCKED === 'true';
 

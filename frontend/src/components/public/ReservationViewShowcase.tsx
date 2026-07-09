@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { API_URL, formatDateShort } from '@/lib/api';
-import { buildLiffUrl } from '@/lib/config';
+import { buildLiffUrl, isInLineInAppBrowser } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
@@ -47,6 +47,7 @@ type ReservationViewShowcaseProps = {
 export function ReservationButton({
   buttonLabel,
   href,
+  directHref,
   buttonBgColor,
   buttonTextColor,
   buttonBorderColor,
@@ -54,6 +55,7 @@ export function ReservationButton({
 }: {
   buttonLabel: string;
   href?: string;
+  directHref?: string;
   buttonBgColor?: string;
   buttonTextColor?: string;
   buttonBorderColor?: string;
@@ -63,8 +65,14 @@ export function ReservationButton({
     'inline-flex w-full items-center justify-center rounded-xl border px-4 py-4 text-base font-bold shadow-sm transition hover:opacity-90';
   const resolvedButtonBg = buttonBgColor || DEFAULT_ACCENT;
   const buttonStyle = { backgroundColor: resolvedButtonBg, borderColor: buttonBorderColor || resolvedButtonBg, color: buttonTextColor || '#111827' };
+  function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
+    if (directHref && isInLineInAppBrowser()) {
+      e.preventDefault();
+      window.location.href = directHref;
+    }
+  }
   return href ? (
-    <Link href={href} className={`${buttonClassName} ${className}`} style={buttonStyle}>
+    <Link href={href} onClick={handleClick} className={`${buttonClassName} ${className}`} style={buttonStyle}>
       {buttonLabel}
     </Link>
   ) : (
@@ -105,10 +113,21 @@ function readableAccent(color: string | null | undefined) {
   };
 }
 
+function eventPath(event: ReservationShowcaseEvent, tenantCode: string) {
+  return `/liff/${tenantCode}/events/${event.id}/reserve`;
+}
+
 function eventHref(event: ReservationShowcaseEvent, tenantCode?: string, fallbackHref?: string) {
   if (!tenantCode) return fallbackHref || '#';
-  const path = `/liff/${tenantCode}/events/${event.id}/reserve`;
+  const path = eventPath(event, tenantCode);
   return buildLiffUrl(path) ?? path;
+}
+
+function handleEventLinkClick(e: React.MouseEvent<HTMLAnchorElement>, event: ReservationShowcaseEvent, tenantCode?: string) {
+  if (tenantCode && isInLineInAppBrowser()) {
+    e.preventDefault();
+    window.location.href = eventPath(event, tenantCode);
+  }
 }
 
 function eventTime(event: ReservationShowcaseEvent) {
@@ -251,6 +270,7 @@ function CalendarPreview({
                       <Link
                         key={event.id}
                         href={eventHref(event, tenantCode, fallbackHref)}
+                        onClick={(e) => handleEventLinkClick(e, event, tenantCode)}
                         className="mb-0.5 block rounded px-1 py-0.5"
                         style={{ backgroundColor: visible.accent }}
                       >
@@ -324,6 +344,7 @@ function CardMini({
               <Link
                 key={event.id}
                 href={eventHref(event, tenantCode, fallbackHref)}
+                onClick={(e) => handleEventLinkClick(e, event, tenantCode)}
                 className="block shrink-0 snap-start overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
                 style={{ backgroundColor: cardBg || '#ffffff', width: 'calc(50% - 6px)' }}
               >
@@ -413,6 +434,7 @@ function ThreadMini({
                   <Link
                     key={event.id}
                     href={eventHref(event, tenantCode, fallbackHref)}
+                    onClick={(e) => handleEventLinkClick(e, event, tenantCode)}
                     className="block rounded-xl border border-gray-200 px-4 py-3 shadow-sm transition hover:opacity-90"
                     style={{ backgroundColor: cardBg || '#ffffff' }}
                   >
