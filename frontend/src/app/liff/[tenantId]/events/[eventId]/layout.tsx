@@ -1,10 +1,13 @@
 import type { Metadata } from 'next';
 import { API_URL } from '@/lib/config';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function generateMetadata({ params }: { params: Promise<{ eventId: string }> }): Promise<Metadata> {
   try {
     const { eventId } = await params;
-    const event = await fetch(`${API_URL}/api/public/events/${eventId}`, { next: { revalidate: 60 } })
+    const event = await fetch(`${API_URL}/api/public/events/${eventId}`, { cache: 'no-store' })
       .then(r => r.ok ? r.json() : null);
     if (!event) return { robots: { index: false, follow: false } };
 

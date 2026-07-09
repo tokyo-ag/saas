@@ -204,6 +204,10 @@ export default function ProfilePage() {
   }
 
   async function handleLoginRetry() {
+    if (liff.isInClient()) {
+      window.location.reload();
+      return;
+    }
     if (redirectToLiffApp()) return;
     try {
       liff.login({ redirectUri: window.location.href });

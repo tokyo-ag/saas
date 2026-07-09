@@ -309,6 +309,10 @@ function ReservePageInner() {
 
   // ── 認証エラー（リダイレクトは一切しない・ループ防止） ──
   async function handleLoginRetry() {
+    if (liff.isInClient()) {
+      window.location.reload();
+      return;
+    }
     if (redirectToLiffApp()) return;
     try {
       liff.login({ redirectUri: window.location.href });

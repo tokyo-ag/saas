@@ -2,6 +2,11 @@ import type { Metadata } from 'next';
 import { API_URL } from '@/lib/config';
 import { LiffThemeProvider, DEFAULT_LIFF_THEME, type LiffTheme } from '@/components/liff/LiffThemeProvider';
 
+// LIFFはLINEアプリ内ブラウザで開かれることが多く、古いキャッシュ済みページが
+// 一瞬表示される事例があったため、この配下は一切キャッシュしない。
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const NO_INDEX = { robots: { index: false, follow: false } } satisfies Partial<Metadata>;
 
 function hexToRgba(hex: string, opacity: number): string {
@@ -15,7 +20,7 @@ function hexToRgba(hex: string, opacity: number): string {
 
 async function fetchTheme(tenantId: string): Promise<LiffTheme> {
   try {
-    const data = await fetch(`${API_URL}/api/public/tenant-theme/${tenantId}`, { next: { revalidate: 60 } })
+    const data = await fetch(`${API_URL}/api/public/tenant-theme/${tenantId}`, { cache: 'no-store' })
       .then(r => r.ok ? r.json() : null);
     if (!data) return DEFAULT_LIFF_THEME;
 
@@ -46,7 +51,7 @@ async function fetchTheme(tenantId: string): Promise<LiffTheme> {
 export async function generateMetadata({ params }: { params: Promise<{ tenantId: string }> }): Promise<Metadata> {
   try {
     const { tenantId } = await params;
-    const tenant = await fetch(`${API_URL}/api/liff/${tenantId}`, { next: { revalidate: 60 } })
+    const tenant = await fetch(`${API_URL}/api/liff/${tenantId}`, { cache: 'no-store' })
       .then(r => r.ok ? r.json() : null);
     if (!tenant) return NO_INDEX;
 

@@ -786,7 +786,7 @@ export default async function ClubCmsPage({
             {reserveActionStyle === 'line' && reserveEvents.length === 0 ? (
               <Link
                 href={lineReserveUrl}
-                className="mt-4 inline-flex w-full items-center justify-center rounded-lg border px-4 py-3 text-sm font-bold transition hover:opacity-80"
+                className="mt-4 inline-flex w-full items-center justify-center rounded-xl border px-4 py-4 text-base font-bold shadow-sm transition hover:opacity-90"
                 style={{ backgroundColor: reserveButtonBgColor, borderColor: reserveButtonBorderColor, color: reserveButtonTextColor }}
               >
                 LINEで予約する

@@ -451,14 +451,14 @@ export function ReservationViewShowcase({
   buttonBorderColor,
 }: ReservationViewShowcaseProps) {
   const buttonClassName =
-    'inline-flex w-full items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-bold transition hover:opacity-80';
+    'inline-flex w-full items-center justify-center rounded-xl border px-4 py-4 text-base font-bold shadow-sm transition hover:opacity-90';
   const resolvedButtonBg = buttonBgColor || DEFAULT_ACCENT;
   const buttonStyle = { backgroundColor: resolvedButtonBg, borderColor: buttonBorderColor || resolvedButtonBg, color: buttonTextColor || '#111827' };
   const selectedView = viewStyle === 'card' || viewStyle === 'thread' ? viewStyle : 'calendar';
   const fieldProps = { showLocation, showPrice, showCapacity, showDescription };
 
   return (
-    <div className={`space-y-3 ${className}`}>
+    <div className={`space-y-4 ${className}`}>
       {selectedView === 'calendar' ? (
         <CalendarPreview accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} cardBg={eventCardBg} lineMode={lineMode} />
       ) : (
