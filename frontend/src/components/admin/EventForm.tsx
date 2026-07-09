@@ -113,6 +113,19 @@ function sameDayDatetime(dateTime: string, time: string) {
   return `${dateTime.slice(0, 10)}T${time}`;
 }
 
+// ネイティブのtime入力はブラウザによって15分刻みの候補リストが効かないことがあるため、
+// selectで明示的に15分単位の選択肢のみを提示する。
+const TIME_OPTIONS_15MIN: string[] = Array.from({ length: 96 }, (_, i) => {
+  const h = Math.floor(i / 4);
+  const m = (i % 4) * 15;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+});
+
+function timeOptionsWith(value: string): string[] {
+  if (!value || TIME_OPTIONS_15MIN.includes(value)) return TIME_OPTIONS_15MIN;
+  return [...TIME_OPTIONS_15MIN, value].sort();
+}
+
 export default function EventForm({ initial }: { initial?: Event }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -535,20 +548,25 @@ export default function EventForm({ initial }: { initial?: Event }) {
           <Field label="開始日時" required>
             <div className="grid grid-cols-[1fr_140px] gap-2">
               <input required type="date" value={form.heldAt.slice(0, 10)} onChange={(e) => handleHeldDateChange(e.target.value)} className={inputClass} />
-              <input required type="time" step={900} value={timeFromLocalDatetime(form.heldAt)} onChange={(e) => handleHeldTimeChange(e.target.value)} className={inputClass} />
+              <select required value={timeFromLocalDatetime(form.heldAt)} onChange={(e) => handleHeldTimeChange(e.target.value)} className={inputClass}>
+                {!timeFromLocalDatetime(form.heldAt) && <option value="" />}
+                {timeOptionsWith(timeFromLocalDatetime(form.heldAt)).map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
             </div>
           </Field>
           <Field label="終了日時">
             <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
-              <input
-                type="time"
-                step={900}
-                min={timeFromLocalDatetime(form.heldAt) || undefined}
+              <select
                 disabled={!form.heldAt}
                 value={timeFromLocalDatetime(form.endAt)}
                 onChange={(e) => handleEndTimeChange(e.target.value)}
                 className={inputClass}
-              />
+              >
+                <option value="" />
+                {timeOptionsWith(timeFromLocalDatetime(form.endAt))
+                  .filter((t) => !timeFromLocalDatetime(form.heldAt) || t > timeFromLocalDatetime(form.heldAt))
+                  .map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
               <p className="text-xs leading-5 text-gray-500">
                 {form.heldAt ? `${form.heldAt.slice(0, 10)} と同じ日で保存されます。` : '開始日時を選ぶと入力できます。'}
               </p>
@@ -666,22 +684,13 @@ export default function EventForm({ initial }: { initial?: Event }) {
         {/* 予約完了時の通知 */}
         <div className="space-y-2">
           <p className="text-sm font-medium text-gray-700">予約完了時</p>
-          <div className="flex flex-wrap gap-3">
-            <Check label="Talk" checked={form.notifyOnReserveApp} onChange={(checked) => set('notifyOnReserveApp', checked)} />
-            <div className={`contents ${!isLineConfigured ? 'pointer-events-none opacity-35' : ''}`}>
-              <Check
-                label="LINE"
-                checked={form.notifyOnReserve}
-                disabled={!isLineConfigured || !isPro}
-                onChange={(checked) => set('notifyOnReserve', checked)}
-              />
-              <Check
-                label="両方"
-                checked={form.notifyOnReserveApp && form.notifyOnReserve}
-                disabled={!isLineConfigured || !isPro}
-                onChange={(checked) => { set('notifyOnReserveApp', checked); set('notifyOnReserve', checked); }}
-              />
-            </div>
+          <div className={`flex flex-wrap gap-3 ${!isLineConfigured ? 'pointer-events-none opacity-35' : ''}`}>
+            <Check
+              label="LINE"
+              checked={form.notifyOnReserve}
+              disabled={!isLineConfigured || !isPro}
+              onChange={(checked) => set('notifyOnReserve', checked)}
+            />
           </div>
           {!isLineConfigured && (
             <p className="mt-1 rounded-lg bg-gray-100 px-3 py-2 text-xs text-gray-400">
@@ -697,27 +706,13 @@ export default function EventForm({ initial }: { initial?: Event }) {
             事前リマインド
             {isFreePlan && <span className="ml-2 text-xs text-[#06C755]">スタンダード以上</span>}
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div className={`flex flex-wrap gap-3 ${!isLineConfigured || isFreePlan ? 'pointer-events-none opacity-35' : ''}`}>
             <Check
-              label="Talk"
-              checked={form.remindApp}
-              disabled={isFreePlan}
-              onChange={(checked) => set('remindApp', checked)}
+              label="LINE"
+              checked={form.remindEnabled}
+              disabled={isFreePlan || !isLineConfigured || !isPro}
+              onChange={(checked) => set('remindEnabled', checked)}
             />
-            <div className={`contents ${!isLineConfigured || isFreePlan ? 'pointer-events-none opacity-35' : ''}`}>
-              <Check
-                label="LINE"
-                checked={form.remindEnabled}
-                disabled={isFreePlan || !isLineConfigured || !isPro}
-                onChange={(checked) => set('remindEnabled', checked)}
-              />
-              <Check
-                label="両方"
-                checked={form.remindApp && form.remindEnabled}
-                disabled={isFreePlan || !isLineConfigured || !isPro}
-                onChange={(checked) => { set('remindApp', checked); set('remindEnabled', checked); }}
-              />
-            </div>
           </div>
           {!isLineConfigured && !isFreePlan && (
             <p className="rounded-lg bg-gray-100 px-3 py-2 text-xs text-gray-400">
