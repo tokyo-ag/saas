@@ -259,11 +259,13 @@ export async function generateMetadata({
   const description = descriptionFromPage(page);
   const image = imgUrl(page.imageUrls?.[0] ?? page.coverImageUrl ?? page.tenant.linePictureUrl, IMAGE_BASE_URL);
   const url = `${SITE_URL}/clubs/${page.tenant.code ?? tenantCode}/${page.slug}`;
+  const favicon = imgUrl(page.tenant.linePictureUrl ?? page.tenant.iconUrl, IMAGE_BASE_URL);
 
   return {
     title,
     description,
     alternates: { canonical: url },
+    ...(favicon ? { icons: { icon: favicon, apple: favicon } } : {}),
     openGraph: {
       title,
       description,
