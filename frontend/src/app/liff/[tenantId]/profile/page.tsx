@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { api, LiffMyReservation, LiffProfile, setLiffToken } from '@/lib/api';
-import { initLiff, getLiffUserId, loginIfNeeded, liff, redirectToLiffApp } from '@/lib/liff';
+import { initLiff, getLiffUserId, loginIfNeeded, liff, redirectToLiffApp, isLiffLoggedIn } from '@/lib/liff';
 import { useLiffTheme, readableTextColor, isLightHexColor } from '@/components/liff/LiffThemeProvider';
 import { ConfirmDialog } from '@/components/liff/ConfirmDialog';
 import { LiffToast } from '@/components/liff/LiffToast';
@@ -16,6 +16,14 @@ const STATUS_LABEL: Record<string, string> = {
   reserved: '予約済み',
   waitlisted: 'キャンセル待ち',
   waiting_payment: '支払待ち',
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  meetup: '交流会',
+  badminton: 'バドミントン',
+  futsal: 'フットサル',
+  basketball: 'バスケットボール',
+  volleyball: 'バレー',
 };
 
 function isLineAuthErrorMessage(message: string): boolean {
@@ -82,6 +90,8 @@ export default function ProfilePage() {
   const [loginRequired, setLoginRequired] = useState(false);
   const [showLoginToast, setShowLoginToast] = useState(false);
   const [profileOpen, setProfileOpen] = useState(!!returnTo);
+  const [eventsOpen, setEventsOpen] = useState(true);
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -115,7 +125,7 @@ export default function ProfilePage() {
       }
       localStorage.removeItem('liff-login-tried');
       setLineUserId(uid);
-      setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
+      setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
 
       const [profResult, myReservations] = await Promise.all([
         api.liff.profile(tenantId, uid).then((v) => ({ ok: true as const, v })).catch((e) => ({ ok: false as const, e })),
@@ -127,7 +137,7 @@ export default function ProfilePage() {
         if (isLineAuthErrorMessage(msg)) {
           // トークンが一時的に古い可能性があるので、取り直して一度だけ再試行する。
           // それでも失敗する場合のみ再認証（ログイン画面）に進む＝二重ログイン要求を避ける。
-          setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
+          setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
           resolvedProf = await api.liff.profile(tenantId, uid).catch(() => null);
           if (!resolvedProf) {
             restartLineAuth();
@@ -167,7 +177,7 @@ export default function ProfilePage() {
     }
 
     try {
-      if (liff.isLoggedIn()) liff.logout();
+      if (isLiffLoggedIn()) liff.logout();
     } catch {
       // ignore
     }
@@ -185,7 +195,7 @@ export default function ProfilePage() {
     setError('');
     setSaving(true);
     try {
-      setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
+      setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
       const updated = await api.liff.updateProfile(tenantId, lineUserId, { name, grade, gender, level, comment });
       setProfile(updated);
       if (returnTo) {
@@ -209,7 +219,7 @@ export default function ProfilePage() {
   async function handleCancel(reservationId: string) {
     setCancellingId(reservationId);
     try {
-      setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
+      setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
       await api.liff.cancel(tenantId, reservationId);
       setReservations((prev) => prev.filter((r) => r.id !== reservationId));
     } catch (err: unknown) {
@@ -262,7 +272,10 @@ export default function ProfilePage() {
     );
   }
 
-  const groups = reservations.reduce<Record<string, LiffMyReservation[]>>((acc, r) => {
+  const sortedReservations = [...reservations].sort(
+    (a, b) => new Date(a.event.heldAt).getTime() - new Date(b.event.heldAt).getTime(),
+  );
+  const groups = sortedReservations.reduce<Record<string, LiffMyReservation[]>>((acc, r) => {
     const key = threadMonthLabel(r.event.heldAt);
     (acc[key] ??= []).push(r);
     return acc;
@@ -274,8 +287,11 @@ export default function ProfilePage() {
       <div className="mx-auto min-h-screen max-w-[480px] border-x-0 sm:border-x" style={{ borderColor: theme.borderColor }}>
       <div className="border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
         <div className="px-4 py-4 flex items-center gap-3">
-          <button onClick={() => router.push(`/liff/${tenantId}`)} aria-label="戻る" className="-m-2 flex h-10 w-10 items-center justify-center rounded-full text-2xl leading-none text-gray-900 active:bg-black/5">‹</button>
-          <h1 className="text-base font-bold text-gray-900">マイページ</h1>
+          <button onClick={() => router.push(`/liff/${tenantId}`)} aria-label="戻る" className="-m-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-2xl leading-none text-gray-900 active:bg-black/5">‹</button>
+          <div className="min-w-0">
+            <h1 className="text-base font-bold leading-tight text-gray-900">マイページ</h1>
+            <p className="text-[11px] leading-tight text-gray-500">プロフィールの編集と参加予定のイベントを確認</p>
+          </div>
         </div>
       </div>
 
@@ -295,12 +311,12 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={() => setProfileOpen((v) => !v)}
-              className="flex w-full items-center justify-between"
+              className="-m-1 flex w-full items-center justify-between rounded-xl p-1 active:bg-black/5"
             >
-              <span className="text-xs font-medium text-gray-500">
-                プロフィール{!profileOpen && name ? `：${name}` : ''}
+              <span className="text-sm font-bold text-gray-800">
+                プロフィールを編集する{!profileOpen && name ? <span className="ml-1 font-medium text-gray-400">（{name}）</span> : null}
               </span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-gray-400 transition-transform ${profileOpen ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9" /></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`shrink-0 text-gray-400 transition-transform ${profileOpen ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9" /></svg>
             </button>
             {profileOpen && (
             <>
@@ -370,54 +386,85 @@ export default function ProfilePage() {
           )}
         </form>
 
-        <div>
-          <p className="text-sm font-bold text-gray-800 px-1 mb-2">参加予定イベント</p>
-          {reservations.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center text-sm text-gray-400">
-              予約したイベントはまだありません
-            </div>
-          ) : (
-            <div className="space-y-5">
-              {Object.entries(groups).map(([month, monthReservations]) => (
-                <section key={month}>
-                  <p className="text-xs font-bold text-gray-400 px-1 mb-2">{month}</p>
-                  <div className="space-y-2">
-                    {monthReservations.map((r) => (
-                      <div
-                        key={r.id}
-                        onClick={() => router.push(`/liff/${tenantId}/events/${r.event.id}/reserve`)}
-                        className="cursor-pointer rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-bold text-gray-900 truncate">{r.event.title}</p>
-                            <div className="mt-1 space-y-0.5 text-xs text-gray-500">
-                              <p>{threadDateLabel(r.event.heldAt)}</p>
-                              <p className="truncate">{r.event.location}</p>
-                              <p>{priceLabel(r)}</p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); setConfirmCancelId(r.id); }}
-                            disabled={cancellingId === r.id}
-                            className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors disabled:opacity-50"
-                            style={cancellingId === r.id ? { color: '#ffffff', backgroundColor: '#ef4444' } : { color: readableTextColor(solidAccentColor), backgroundColor: solidAccentColor }}
-                          >
-                            {cancellingId === r.id ? 'キャンセル' : (
-                              <>
-                                {STATUS_LABEL[r.status] ?? r.status}
-                                {r.status === 'waitlisted' && r.waitlistOrder ? `（${r.waitlistOrder}番目）` : ''}
-                              </>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+          <button
+            type="button"
+            onClick={() => setEventsOpen((v) => !v)}
+            className="-m-1 flex w-full items-center justify-between rounded-xl p-1 active:bg-black/5"
+          >
+            <span className="text-sm font-bold text-gray-800">
+              参加予定のイベントを確認{reservations.length > 0 ? `（${reservations.length}件）` : ''}
+            </span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`shrink-0 text-gray-400 transition-transform ${eventsOpen ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9" /></svg>
+          </button>
+          {eventsOpen && (
+            reservations.length === 0 ? (
+              <p className="mt-4 text-center text-sm text-gray-400">予約したイベントはまだありません</p>
+            ) : (
+              <div className="mt-4 space-y-5">
+                {Object.entries(groups).map(([month, monthReservations]) => (
+                  <section key={month}>
+                    <p className="text-xs font-bold text-gray-400 px-1 mb-2">{month}</p>
+                    <div className="space-y-2">
+                      {monthReservations.map((r) => {
+                        const expanded = expandedEventId === r.id;
+                        const categoryLabel = r.event.category ? (CATEGORY_LABELS[r.event.category] ?? r.event.category) : null;
+                        return (
+                          <div key={r.id} className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+                            <button
+                              type="button"
+                              onClick={() => setExpandedEventId(expanded ? null : r.id)}
+                              className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left active:bg-black/5"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-bold text-gray-900 truncate">{r.event.title}</p>
+                                <div className="mt-1 space-y-0.5 text-xs text-gray-500">
+                                  <p>{threadDateLabel(r.event.heldAt)}</p>
+                                  <p className="truncate">{r.event.location}</p>
+                                  <p>{priceLabel(r)}</p>
+                                </div>
+                              </div>
+                              <div className="flex shrink-0 flex-col items-end gap-1.5">
+                                <span
+                                  className="rounded-full px-2.5 py-1 text-[11px] font-bold"
+                                  style={{ color: readableTextColor(solidAccentColor), backgroundColor: solidAccentColor }}
+                                >
+                                  {STATUS_LABEL[r.status] ?? r.status}
+                                  {r.status === 'waitlisted' && r.waitlistOrder ? `（${r.waitlistOrder}番目）` : ''}
+                                </span>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9" /></svg>
+                              </div>
+                            </button>
+                            {expanded && (
+                              <div className="space-y-2 border-t border-gray-100 px-4 py-3 text-sm">
+                                {categoryLabel && (
+                                  <p><span className="text-gray-400">カテゴリ：</span>{categoryLabel}</p>
+                                )}
+                                <p><span className="text-gray-400">日時：</span>{threadDateLabel(r.event.heldAt)}</p>
+                                <p><span className="text-gray-400">場所：</span>{r.event.location}</p>
+                                <p><span className="text-gray-400">参加費：</span>{priceLabel(r)}</p>
+                                {r.event.description && (
+                                  <p className="whitespace-pre-wrap border-t border-gray-100 pt-2 text-xs leading-relaxed text-gray-500">{r.event.description}</p>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmCancelId(r.id)}
+                                  disabled={cancellingId === r.id}
+                                  className="mt-1 w-full rounded-xl py-2.5 text-sm font-bold text-white transition-colors disabled:opacity-50"
+                                  style={{ backgroundColor: '#ef4444' }}
+                                >
+                                  {cancellingId === r.id ? 'キャンセル中...' : 'キャンセルする'}
+                                </button>
+                              </div>
                             )}
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            )
           )}
         </div>
       </div>

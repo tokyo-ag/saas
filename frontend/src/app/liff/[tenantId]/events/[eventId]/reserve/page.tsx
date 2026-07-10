@@ -13,6 +13,7 @@ import {
   loginIfNeeded,
   redirectToLiffApp,
   hasRecentLoginAttempt,
+  isLiffLoggedIn,
 } from '@/lib/liff';
 import { useLiffTheme, hexToRgba, readableTextColor, isLightHexColor } from '@/components/liff/LiffThemeProvider';
 import { ConfirmDialog } from '@/components/liff/ConfirmDialog';
@@ -102,7 +103,7 @@ function ReservePageInner() {
     }
 
     try {
-      if (liff.isLoggedIn()) liff.logout();
+      if (isLiffLoggedIn()) liff.logout();
     } catch {
       // ignore
     }
@@ -136,7 +137,7 @@ function ReservePageInner() {
 
       // ── Step 2: ログイン確認 ──
       try {
-        if (!liff.isLoggedIn()) {
+        if (!isLiffLoggedIn()) {
           if (liff.isInClient()) {
             // LINEアプリ内で未認証 = LIFF設定エラー。
             // liff.login()を呼ぶとDISCOVERタブ→ループになるので呼ばない。
@@ -204,7 +205,7 @@ function ReservePageInner() {
         if (isLineAuthErrorMessage(msg)) {
           // トークンが一時的に古い可能性があるので、取り直して一度だけ再試行する。
           // それでも失敗する場合のみ再認証（ログイン画面）に進む＝二重ログイン要求を避ける。
-          setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
+          setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
           const retryProf = await api.liff.profile(tenantId, uid).catch(() => null);
           if (retryProf) {
             setProfile(retryProf);
@@ -260,7 +261,7 @@ function ReservePageInner() {
     setError('');
     setSubmitting(true);
     try {
-      setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
+      setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
       const body = {
         eventId,
         name: profile.name,
@@ -314,7 +315,7 @@ function ReservePageInner() {
     if (!myReservation) return;
     setCancelling(true);
     try {
-      setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
+      setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
       await api.liff.cancel(tenantId, myReservation.id);
       setMyReservation(null);
       refetchRoster();

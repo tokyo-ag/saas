@@ -23,12 +23,22 @@ export function getInitInfo() {
   return initInfo;
 }
 
+// liff.init()が未実行/失敗の状態でliff.isLoggedIn()を呼ぶとSDKが例外を投げるため、
+// 常にこちらを経由して呼び出す（呼び出し側でのtry/catchの重複を避ける）。
+export function isLiffLoggedIn(): boolean {
+  try {
+    return liff.isLoggedIn();
+  } catch {
+    return false;
+  }
+}
+
 export async function initLiff(): Promise<boolean> {
   const id = getLiffId();
   if (initialized && initializedLiffId === id) {
     // 既に初期化済みでも、ページ遷移や時間経過でトークンが古くなっている可能性があるため
     // liff.init()はスキップしつつ、トークンだけは毎回取り直す。
-    setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
+    setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
     return true;
   }
   if (!id) {
@@ -49,8 +59,8 @@ export async function initLiff(): Promise<boolean> {
     initialized = true;
     initializedLiffId = id;
     lastError = null;
-    setLiffToken(liff.isLoggedIn() ? liff.getIDToken() : null);
-    initInfo = { ok: true, hasId: Boolean(id), loggedIn: liff.isLoggedIn() };
+    setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
+    initInfo = { ok: true, hasId: Boolean(id), loggedIn: isLiffLoggedIn() };
     exposeDebugValue('__LIFF_INIT_INFO', initInfo);
     return true;
   } catch (err) {
@@ -129,7 +139,7 @@ function recordLoginAttempt(): void {
 }
 
 export async function loginIfNeeded(): Promise<boolean> {
-  if (liff.isLoggedIn()) return true;
+  if (isLiffLoggedIn()) return true;
 
   if (liff.isInClient()) {
     exposeDebugValue('__LIFF_LOGIN_SKIPPED', true);
@@ -145,13 +155,13 @@ export async function loginIfNeeded(): Promise<boolean> {
 }
 
 export async function getLiffUserId(): Promise<string | null> {
-  if (!liff.isLoggedIn()) return null;
+  if (!isLiffLoggedIn()) return null;
   const profile = await liff.getProfile();
   return profile.userId;
 }
 
 export async function getLiffProfile(): Promise<{ userId: string; displayName: string; pictureUrl?: string } | null> {
-  if (!liff.isLoggedIn()) return null;
+  if (!isLiffLoggedIn()) return null;
   const profile = await liff.getProfile();
   return { userId: profile.userId, displayName: profile.displayName, pictureUrl: profile.pictureUrl };
 }
