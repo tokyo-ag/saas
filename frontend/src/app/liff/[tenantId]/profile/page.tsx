@@ -274,7 +274,7 @@ export default function ProfilePage() {
       <div className="mx-auto min-h-screen max-w-[480px] border-x-0 sm:border-x" style={{ borderColor: theme.borderColor }}>
       <div className="border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
         <div className="px-4 py-4 flex items-center gap-3">
-          <button onClick={() => router.push(`/liff/${tenantId}`)} className="text-gray-900 text-xl leading-none">‹</button>
+          <button onClick={() => router.push(`/liff/${tenantId}`)} aria-label="戻る" className="-m-2 flex h-10 w-10 items-center justify-center rounded-full text-2xl leading-none text-gray-900 active:bg-black/5">‹</button>
           <h1 className="text-base font-bold text-gray-900">マイページ</h1>
         </div>
       </div>
