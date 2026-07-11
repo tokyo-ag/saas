@@ -20,7 +20,13 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 
 
-export default function ComiuLandingPage() {
+export type TrialBanner = {
+  heroTitle: string;
+  heroLead: string;
+  primaryCtaHref: string;
+};
+
+export default function ComiuLandingPage({ banner }: { banner?: TrialBanner | null }) {
   const [activePage, setActivePage] = useState(0);
 
   useEffect(() => {
@@ -391,6 +397,39 @@ export default function ComiuLandingPage() {
           position: relative;
           z-index: 5;
           max-width: 860px;
+        }
+
+        .hero-eyebrow {
+          display: inline-flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 10px;
+          margin: 0 0 18px;
+        }
+
+        .hero-eyebrow-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 7px 16px;
+          border-radius: 999px;
+          background: var(--lime);
+          color: var(--navy);
+          font-size: 13px;
+          font-weight: 900;
+          letter-spacing: 0.01em;
+          text-decoration: none;
+          box-shadow: 0 10px 24px rgba(223, 255, 79, 0.35);
+          transition: transform 0.18s ease;
+        }
+
+        .hero-eyebrow-badge:hover {
+          transform: translateY(-1px);
+        }
+
+        .hero-eyebrow-lead {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--muted);
         }
 
         .hero-basket {
@@ -2989,6 +3028,14 @@ export default function ComiuLandingPage() {
 
         <section className="lp-section hero hero-slide snap-page">
           <div className="hero-copy">
+            {banner?.heroTitle && (
+              <p className="hero-eyebrow hero-fade" style={{ "--fd": "0.4s" } as React.CSSProperties}>
+                <a className="hero-eyebrow-badge" href={banner.primaryCtaHref || "/register"}>
+                  {banner.heroTitle}
+                </a>
+                {banner.heroLead && <span className="hero-eyebrow-lead">{banner.heroLead}</span>}
+              </p>
+            )}
             <h1>
               <span className="hero-line-wrap"><span className="title-line">イベント・サークルの<br className="mobile-title-break" />集客なら<wbr /><span className="accent">COMIU</span></span></span>
             </h1>
