@@ -43,18 +43,27 @@ export class UpsertBlogPostDto {
 export class BlogService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private static readonly SLUG_MAX_LENGTH = 60;
+
   private async slugify(title: string) {
     const romaji = title.trim() ? await toRomaji(title) : title;
+    const full = romaji
+      .trim()
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .normalize('NFC');
+    if (!full) return `post-${Date.now()}`;
+    if (full.length <= BlogService.SLUG_MAX_LENGTH) return full;
+    // 文字数上限で単純に切ると単語の途中で終わってしまうため、
+    // 上限内に収まる最後のハイフン区切り位置で切る。
+    const truncated = full.slice(0, BlogService.SLUG_MAX_LENGTH);
+    const lastHyphen = truncated.lastIndexOf('-');
     return (
-      romaji
-        .trim()
-        .toLowerCase()
-        .normalize('NFKD')
-        .replace(/[̀-ͯ]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
-        .slice(0, 120)
-        .normalize('NFC') || `post-${Date.now()}`
+      (lastHyphen > 0 ? truncated.slice(0, lastHyphen) : truncated) ||
+      `post-${Date.now()}`
     );
   }
 

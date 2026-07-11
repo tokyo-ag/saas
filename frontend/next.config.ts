@@ -53,12 +53,23 @@ const nextConfig: NextConfig = {
     ];
   },
   async redirects() {
-    if (process.env.CANONICAL_REDIRECT_ENABLED !== "true") return [];
+    const redirects = [
+      {
+        // 旧スラッグ生成ロジックがタイトル全文をそのままURL化してしまい、
+        // 既にGoogleにインデックスされてしまったため、短縮後のスラッグへ301する。
+        source: "/clubs/36842231/blog/raketto-o-nigitta-koto-ga-naku-te-mo-dai-kangei-toshima-ku-no-shoshinsha-muke-badominton-sakuru-yuru-ba-do",
+        destination: "/clubs/36842231/blog/raketto-o-nigitta-koto-ga-naku-te-mo-dai-kangei-toshima-ku",
+        permanent: true,
+      },
+    ];
+
+    if (process.env.CANONICAL_REDIRECT_ENABLED !== "true") return redirects;
 
     const canonical = getCanonicalUrl();
-    if (!canonical || canonical.hostname === "comiu.vercel.app") return [];
+    if (!canonical || canonical.hostname === "comiu.vercel.app") return redirects;
 
     return [
+      ...redirects,
       {
         source: "/:path*",
         has: [{ type: "host", value: "comiu.vercel.app" }],
