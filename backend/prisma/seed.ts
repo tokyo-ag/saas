@@ -31,7 +31,6 @@ async function clearTenantData() {
 
   await prisma.eventReview.deleteMany({ where: { tenantId } });
   await prisma.eventLike.deleteMany({ where: { eventId: { in: eventIds } } });
-  await prisma.adminMemberMessage.deleteMany({ where: { tenantId } });
   await prisma.notification.deleteMany({ where: { memberId: { in: memberIds } } });
   await prisma.message.deleteMany({
     where: {
@@ -291,35 +290,6 @@ async function main() {
     ],
   });
 
-  await prisma.adminMemberMessage.createMany({
-    data: [
-      {
-        tenantId,
-        memberId: demo.id,
-        content: '次回のバドミントン会はラケット貸出ありますか？',
-        fromAdmin: false,
-      },
-      {
-        tenantId,
-        memberId: demo.id,
-        content: 'はい、数本だけ貸出できます。必要でしたら当日受付で声をかけてください。',
-        fromAdmin: true,
-      },
-      {
-        tenantId,
-        memberId: sato.id,
-        content: '友達を1人誘っても大丈夫ですか？',
-        fromAdmin: false,
-      },
-      {
-        tenantId,
-        memberId: sato.id,
-        content: 'もちろん大丈夫です。イベントページから予約してもらえれば参加できます。',
-        fromAdmin: true,
-      },
-    ],
-  });
-
   const [a1, b1] = sortedPair(demo.id, yamada.id);
   const connection1 = await prisma.connection.create({
     data: { tenantId, member1Id: a1, member2Id: b1 },
@@ -378,7 +348,6 @@ async function main() {
   console.log(`Members: ${members.length}`);
   console.log(`Reservations: ${reservations.length}`);
   console.log('Reviews: 4');
-  console.log('Admin messages: 4');
 }
 
 main()

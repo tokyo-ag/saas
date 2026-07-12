@@ -128,16 +128,9 @@ export const api = {
     },
     get: (id: string) => request<MemberDetail>(`/admin/members/${id}`),
     syncLineProfiles: () => request<{ updated: number }>('/admin/members/sync-line-profiles', { method: 'POST' }),
-    messageThreads: () => request<AdminMessageThread[]>('/admin/members/messages/threads'),
     block: (id: string) => request<Member>(`/admin/members/${id}/block`, { method: 'PATCH' }),
     unblock: (id: string) => request<Member>(`/admin/members/${id}/unblock`, { method: 'PATCH' }),
     remove: (id: string) => request<{ success: boolean }>(`/admin/members/${id}`, { method: 'DELETE' }),
-    messages: (id: string) => request<AdminMessage[]>(`/admin/members/${id}/messages`),
-    sendMessage: (id: string, content: string) =>
-      request<AdminMessage>(`/admin/members/${id}/messages`, {
-        method: 'POST',
-        body: JSON.stringify({ content }),
-      }),
   },
   reservations: {
     updateStatus: (id: string, status: string) =>
@@ -232,21 +225,6 @@ export const api = {
         `/liff/${tenantId}/profile/settings`,
         { method: 'PATCH', body: JSON.stringify(settings) },
       ),
-    adminMessages: (tenantId: string, lineUserId: string) => {
-      void lineUserId;
-      return request<AdminMessage[]>(`/liff/${tenantId}/admin-messages`);
-    },
-    sendToAdmin: (tenantId: string, lineUserId: string, content: string) => {
-      void lineUserId;
-      return request<AdminMessage>(`/liff/${tenantId}/admin-messages`, {
-        method: 'POST',
-        body: JSON.stringify({ content }),
-      });
-    },
-    markAdminMessagesRead: (tenantId: string, lineUserId: string) => {
-      void lineUserId;
-      return request<void>(`/liff/${tenantId}/admin-messages/read`, { method: 'PATCH' });
-    },
     supportMessages: (tenantId: string, lineUserId: string) => {
       void lineUserId;
       return request<SupportMessage[]>(`/liff/${tenantId}/support`);
@@ -501,28 +479,6 @@ export interface BannedUser {
   lineUserId: string;
   reason?: string;
   bannedAt: string;
-}
-
-export interface AdminMessage {
-  id: string;
-  content: string;
-  fromAdmin: boolean;
-  read: boolean;
-  createdAt: string;
-}
-
-export interface AdminMessageThread {
-  member: {
-    id: string;
-    name?: string | null;
-    grade?: string | null;
-    gender?: string | null;
-    lineUserId: string;
-    lineDisplayName?: string | null;
-    linePictureUrl?: string | null;
-  };
-  lastMessage: AdminMessage | null;
-  unreadCount: number;
 }
 
 export interface SupportMessage {
@@ -1175,6 +1131,7 @@ export interface PublicCmsPage {
     lineDisplayName?: string | null;
     linePictureUrl?: string | null;
     iconUrl?: string | null;
+    lineChannelId?: string | null;
   };
 }
 

@@ -70,13 +70,7 @@ export default function MemberDetailPage() {
           参加者名簿に戻る
         </Link>
 
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
-          <Link
-            href={`/admin/members/${memberId}/messages`}
-            className="rounded-lg bg-[#06C755]/10 px-4 py-2 text-center text-sm font-medium text-[#06C755] transition-colors hover:bg-[#06C755]/20"
-          >
-            トーク
-          </Link>
+        <div className="flex items-center">
           <button
             onClick={handleBlock}
             disabled={blocking}

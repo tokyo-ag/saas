@@ -34,6 +34,13 @@ export function buildLiffUrl(
   return url.toString();
 }
 
+// 団体の公式LINEチャットを開くリンク。友だち未追加なら追加を促す画面、
+// 追加済みならそのままトーク画面が開く（LINEの仕様）。
+export function buildOfficialLineChatUrl(lineChannelId?: string | null): string | null {
+  if (!lineChannelId) return null;
+  return `https://line.me/R/ti/p/@${lineChannelId}`;
+}
+
 // LINEアプリ内ブラウザで既にliff.line.meリンクを開くと、LINEが確認ダイアログを
 // 挟んで新しいブラウザ画面を重ねて開いてしまう（元の画面の上に予約画面が
 // 積み重なって見える）。既にLINEアプリ内なら直接パスへ遷移させて回避する。

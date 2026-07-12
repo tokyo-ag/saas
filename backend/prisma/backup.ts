@@ -5,16 +5,15 @@ import * as path from 'path';
 const prisma = new PrismaClient();
 
 async function main() {
-  const [tenants, members, events, reservations, adminMessages, notifications] = await Promise.all([
+  const [tenants, members, events, reservations, notifications] = await Promise.all([
     prisma.tenant.findMany(),
     prisma.member.findMany(),
     prisma.event.findMany(),
     prisma.reservation.findMany(),
-    prisma.adminMemberMessage.findMany(),
     prisma.notification.findMany(),
   ]);
 
-  const data = { tenants, members, events, reservations, adminMessages, notifications };
+  const data = { tenants, members, events, reservations, notifications };
 
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const file = path.join(__dirname, `../../backup_${date}.json`);
@@ -25,7 +24,6 @@ async function main() {
   console.log(`  メンバー: ${members.length}件`);
   console.log(`  イベント: ${events.length}件`);
   console.log(`  予約: ${reservations.length}件`);
-  console.log(`  メッセージ: ${adminMessages.length}件`);
   console.log(`  通知: ${notifications.length}件`);
 }
 

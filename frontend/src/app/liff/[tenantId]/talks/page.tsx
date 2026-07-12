@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api, LiffConnection, LiffTenant } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded } from '@/lib/liff';
+import { buildOfficialLineChatUrl } from '@/lib/config';
 import LiffBottomNav from '@/components/liff/LiffBottomNav';
 import { useLiffTheme } from '@/components/liff/LiffThemeProvider';
 
@@ -51,6 +52,7 @@ export default function TalksPage() {
 
   const organizerName = tenant?.lineDisplayName ?? tenant?.name ?? '主催者';
   const organizerPicture = tenant?.linePictureUrl ?? tenant?.iconUrl;
+  const officialLineChatUrl = buildOfficialLineChatUrl(tenant?.lineChannelId);
 
   return (
     <>
@@ -63,24 +65,28 @@ export default function TalksPage() {
 
         <div className="px-4 py-4">
           <div className="space-y-2 mb-4">
-            <button
-              onClick={() => router.push(`/liff/${tenantId}/admin-talk`)}
-              className="w-full rounded-2xl border p-4 flex items-center gap-3 text-left active:opacity-80"
-              style={{ backgroundColor: `${theme.accentColor}18`, borderColor: `${theme.accentColor}30` }}
-            >
-              {organizerPicture ? (
-                <Image src={organizerPicture} width={48} height={48} className="w-12 h-12 rounded-full object-cover shrink-0" alt="" unoptimized />
-              ) : (
-                <div className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style={{ backgroundColor: `${theme.accentColor}30`, color: theme.accentColor }}>
-                  {organizerName.slice(0, 1)}
+            {officialLineChatUrl && (
+              <a
+                href={officialLineChatUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full rounded-2xl border p-4 flex items-center gap-3 text-left active:opacity-80"
+                style={{ backgroundColor: `${theme.accentColor}18`, borderColor: `${theme.accentColor}30` }}
+              >
+                {organizerPicture ? (
+                  <Image src={organizerPicture} width={48} height={48} className="w-12 h-12 rounded-full object-cover shrink-0" alt="" unoptimized />
+                ) : (
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style={{ backgroundColor: `${theme.accentColor}30`, color: theme.accentColor }}>
+                    {organizerName.slice(0, 1)}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-900 text-sm truncate">{organizerName}</p>
+                  <p className="text-xs text-gray-400 truncate mt-0.5">公式LINEで団体・主催者へ連絡</p>
                 </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900 text-sm truncate">{organizerName}</p>
-                <p className="text-xs text-gray-400 truncate mt-0.5">団体・主催者へ連絡</p>
-              </div>
-              <span className="text-gray-300 text-lg">›</span>
-            </button>
+                <span className="text-gray-300 text-lg">›</span>
+              </a>
+            )}
 
             <button
               onClick={() => router.push(`/liff/${tenantId}/support`)}

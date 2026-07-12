@@ -541,69 +541,6 @@ export class LiffService {
       }
     }
 
-    // TALKに予約詳細を送信
-    if (event.notifyOnReserveApp && status !== 'waiting_payment') {
-      const dateStr = new Date(event.heldAt).toLocaleString('ja-JP', {
-        timeZone: 'Asia/Tokyo',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        weekday: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-      const descText = event.description
-        ? event.description.slice(0, 300) +
-          (event.description.length > 300 ? '…' : '')
-        : '';
-
-      // TALK（詳細・適切な改行）
-      const talkContent =
-        status === 'reserved'
-          ? [
-              `【予約完了】`,
-              ``,
-              `${event.title}`,
-              ``,
-              `📅 ${dateStr}`,
-              `📍 ${event.location}`,
-              ...(descText ? [``, `─────────────`, ``, descText] : []),
-            ].join('\n')
-          : [
-              `【キャンセル待ち登録】`,
-              ``,
-              `${event.title}`,
-              ``,
-              `📅 ${dateStr}`,
-              `📍 ${event.location}`,
-              ``,
-              `キャンセル待ち ${waitlistOrder} 番目に登録されました。`,
-            ].join('\n');
-      // 参加者向け（Talkに表示される予約詳細）
-      await this.prisma.adminMemberMessage.create({
-        data: {
-          tenantId,
-          memberId: member.id,
-          content: talkContent,
-          fromAdmin: true,
-        },
-      });
-      // 管理者向けバッジ用（システム通知・LIFF側には非表示）
-      const adminNotifContent =
-        status === 'reserved'
-          ? `✅ ${member.lineDisplayName ?? member.name ?? '参加者'}が「${event.title}」を予約しました`
-          : `⏳ ${member.lineDisplayName ?? member.name ?? '参加者'}が「${event.title}」キャンセル待ち${waitlistOrder}番目に登録しました`;
-      await this.prisma.adminMemberMessage.create({
-        data: {
-          tenantId,
-          memberId: member.id,
-          content: adminNotifContent,
-          fromAdmin: false,
-          isSystem: true,
-        },
-      });
-    }
-
     return { id: reservation.id, status, waitlistOrder, stripeCheckoutUrl };
   }
 
@@ -1076,37 +1013,6 @@ export class LiffService {
       where: { memberId: member.id, read: false },
       data: { read: true },
     });
-  }
-
-  // 管理者↔メンバー トーク（メンバー側）
-  async getAdminMessages(tenantId: string, lineUserId: string) {
-    tenantId = await this.resolveTenantId(tenantId);
-    const member = await this.findMember(tenantId, lineUserId);
-    if (!member) return [];
-    return this.prisma.adminMemberMessage.findMany({
-      where: { memberId: member.id, tenantId, isSystem: false },
-      orderBy: { createdAt: 'asc' },
-    });
-  }
-
-  async markAdminMessagesRead(tenantId: string, lineUserId: string) {
-    tenantId = await this.resolveTenantId(tenantId);
-    const member = await this.findMember(tenantId, lineUserId);
-    if (!member) return;
-    await this.prisma.adminMemberMessage.updateMany({
-      where: { memberId: member.id, tenantId, fromAdmin: true, read: false },
-      data: { read: true },
-    });
-  }
-
-  async sendToAdmin(tenantId: string, lineUserId: string, content: string) {
-    tenantId = await this.resolveTenantId(tenantId);
-    const member = await this.findMember(tenantId, lineUserId);
-    if (!member) throw new ForbiddenException('メンバー登録が必要です');
-    const message = await this.prisma.adminMemberMessage.create({
-      data: { tenantId, memberId: member.id, content, fromAdmin: false },
-    });
-    return message;
   }
 
   // サポートメッセージ（ユーザー↔COMIU）

@@ -307,7 +307,6 @@ model Member {
   connections2  Connection[]   @relation("ConnectionMember2")
   sentMessages    Message[]
   notifications   Notification[]
-  adminMessages   AdminMemberMessage[]
   eventReviews     EventReview[]
 
   @@unique([tenantId, lineUserId])
@@ -340,22 +339,6 @@ model Message {
   sender     Member     @relation(fields: [senderId], references: [id])
 
   @@map("messages")
-}
-
-model AdminMemberMessage {
-  id        String   @id @default(uuid())
-  tenantId  String   @map("tenant_id")
-  memberId  String   @map("member_id")
-  content   String   @db.Text
-  fromAdmin Boolean  @default(false) @map("from_admin")
-  read      Boolean  @default(false)
-  isSystem  Boolean  @default(false) @map("is_system")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-  @@index([tenantId, memberId])
-  @@map("admin_member_messages")
 }
 
 model SupportMessage {

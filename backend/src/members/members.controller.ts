@@ -6,7 +6,6 @@ import {
   Delete,
   Param,
   Query,
-  Body,
   UseGuards,
 } from '@nestjs/common';
 import { AdminGuard } from '../auth/admin.guard';
@@ -34,11 +33,6 @@ export class MembersController {
     return this.membersService.syncLineProfiles(tenantId);
   }
 
-  @Get('messages/threads')
-  getMessageThreads(@TenantId() tenantId: string) {
-    return this.membersService.getMessageThreads(tenantId);
-  }
-
   @Get(':memberId')
   findOne(@TenantId() tenantId: string, @Param('memberId') memberId: string) {
     return this.membersService.findOne(tenantId, memberId);
@@ -57,22 +51,5 @@ export class MembersController {
   @Delete(':memberId')
   remove(@TenantId() tenantId: string, @Param('memberId') memberId: string) {
     return this.membersService.remove(tenantId, memberId);
-  }
-
-  @Get(':memberId/messages')
-  getMessages(
-    @TenantId() tenantId: string,
-    @Param('memberId') memberId: string,
-  ) {
-    return this.membersService.getMessages(tenantId, memberId);
-  }
-
-  @Post(':memberId/messages')
-  sendMessage(
-    @TenantId() tenantId: string,
-    @Param('memberId') memberId: string,
-    @Body('content') content: string,
-  ) {
-    return this.membersService.sendMessage(tenantId, memberId, content);
   }
 }

@@ -5,6 +5,7 @@ import { usePathname, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { getLiffUserId, initLiff, liff } from '@/lib/liff';
+import { buildOfficialLineChatUrl } from '@/lib/config';
 
 function HomeIcon({ active }: { active: boolean }) {
   const s = active ? '#06C755' : '#BDBDBD';
@@ -50,7 +51,7 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
   const params = useParams();
   const [tid, setTid] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
-  const [talkUnread, setTalkUnread] = useState(0);
+  const [lineChatUrl, setLineChatUrl] = useState<string | null>(null);
   const linePad = useLineBrowserPad();
 
   useEffect(() => {
@@ -69,43 +70,22 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
       const ok = await initLiff();
       const uid = ok ? ((await getLiffUserId()) ?? '') : `demo-${tid}`;
       if (!uid) return;
-      const [notifs, msgs] = await Promise.all([
-        api.notifications.list(tid, uid).catch(() => []),
-        api.liff.adminMessages(tid, uid).catch(() => []),
-      ]);
+      const notifs = await api.notifications.list(tid, uid).catch(() => []);
       setUnreadCount(notifs.filter((n) => !n.read).length);
-      setTalkUnread(msgs.filter((m) => m.fromAdmin && !m.read).length);
     }
     fetchUnread();
   }, [tid, pathname]);
 
-  const base = tid ? `/liff/${tid}` : '';
-  const items = [
-    {
-      href: base || null,
-      label: '参加',
-      Icon: HomeIcon,
-      active: !!base && pathname === base,
-      badge: 0,
-    },
-    {
-      href: base ? `${base}/talks` : null,
-      label: '連絡',
-      Icon: ChatIcon,
-      active: !!base && pathname.startsWith(`${base}/talks`),
-      badge: talkUnread,
-    },
-    {
-      href: base ? `${base}/notifications` : null,
-      label: '通知',
-      Icon: BellIcon,
-      active: !!base && pathname.startsWith(`${base}/notifications`),
-      badge: unreadCount,
-    },
-  ];
+  useEffect(() => {
+    if (!tid) return;
+    api.liff.tenant(tid)
+      .then((tenant) => setLineChatUrl(buildOfficialLineChatUrl(tenant.lineChannelId)))
+      .catch(() => setLineChatUrl(null));
+  }, [tid]);
 
-  async function openComiuSite() {
-    const url = 'https://comiu.link';
+  const base = tid ? `/liff/${tid}` : '';
+
+  async function openExternal(url: string) {
     try {
       await initLiff();
       if (liff.isInClient()) {
@@ -117,6 +97,35 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
     }
     window.open(url, '_blank', 'noopener,noreferrer');
   }
+
+  function openComiuSite() {
+    return openExternal('https://comiu.link');
+  }
+
+  const items = [
+    {
+      href: base || null,
+      label: '参加',
+      Icon: HomeIcon,
+      active: !!base && pathname === base,
+      badge: 0,
+    },
+    {
+      href: lineChatUrl,
+      label: '連絡',
+      Icon: ChatIcon,
+      active: false,
+      badge: 0,
+      external: true,
+    },
+    {
+      href: base ? `${base}/notifications` : null,
+      label: '通知',
+      Icon: BellIcon,
+      active: !!base && pathname.startsWith(`${base}/notifications`),
+      badge: unreadCount,
+    },
+  ];
 
   return (
     <nav
@@ -130,7 +139,7 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
         </button>
       </p>
       <div className="flex">
-        {items.map(({ href, label, Icon, active, badge }) => {
+        {items.map(({ href, label, Icon, active, badge, external }) => {
           const cls = `flex-1 flex flex-col items-center py-2 gap-0.5 ${active ? 'text-[#06C755]' : 'text-gray-400'}`;
           const labelEl = <span className="text-[10px] font-medium tracking-wide">{label}</span>;
           const iconEl = (
@@ -150,6 +159,15 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
                 {iconEl}
                 {labelEl}
               </span>
+            );
+          }
+
+          if (external) {
+            return (
+              <button key={label} type="button" onClick={() => openExternal(href)} className={cls}>
+                {iconEl}
+                {labelEl}
+              </button>
             );
           }
 

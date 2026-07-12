@@ -39,7 +39,7 @@ export default function MembersPage() {
 
   async function handleDelete(member: Member) {
     const label = member.name ?? member.lineDisplayName ?? 'この参加者';
-    if (!window.confirm(`${label}を完全に削除します。予約履歴・チャット履歴もすべて削除され、元に戻せません。よろしいですか？`)) return;
+    if (!window.confirm(`${label}を完全に削除します。予約履歴もすべて削除され、元に戻せません。よろしいですか？`)) return;
     await api.members.remove(member.id);
     setMembers((prev) => prev.filter((m) => m.id !== member.id));
   }
@@ -49,7 +49,7 @@ export default function MembersPage() {
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-gray-900">参加者名簿</h1>
-          <p className="text-sm text-gray-500 mt-1">参加者情報、トーク、参加回数を確認できます。</p>
+          <p className="text-sm text-gray-500 mt-1">参加者情報、参加回数を確認できます。</p>
         </div>
         {!loading && (
           <span className="shrink-0 rounded-full bg-[#06C755]/10 px-3 py-1.5 text-xs font-bold text-[#06C755]">
@@ -142,13 +142,7 @@ export default function MembersPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="mt-3 grid grid-cols-3 gap-2">
-                    <Link
-                      href={`/admin/members/${member.id}/messages`}
-                      className="rounded-lg bg-[#06C755]/10 px-3 py-2 text-center text-xs font-bold text-[#06C755]"
-                    >
-                      トーク
-                    </Link>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
                     <Link
                       href={`/admin/members/${member.id}`}
                       className="rounded-lg border border-gray-200 px-3 py-2 text-center text-xs font-bold text-gray-600"
@@ -216,7 +210,6 @@ export default function MembersPage() {
                       <td className="px-6 py-4 text-gray-600">{member.eventCount ?? 0}回</td>
                       <td className="px-6 py-4">
                         <div className="flex justify-end gap-2">
-                          <Link href={`/admin/members/${member.id}/messages`} className="rounded-lg bg-[#06C755]/10 px-3 py-1.5 text-xs font-medium text-[#06C755] hover:bg-[#06C755]/20">トーク</Link>
                           <Link href={`/admin/members/${member.id}`} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50">詳細</Link>
                           <button
                             type="button"

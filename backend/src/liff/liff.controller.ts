@@ -280,34 +280,6 @@ export class LiffController {
   }
 
   @UseGuards(LiffGuard)
-  @Get('admin-messages')
-  getAdminMessages(
-    @Param('tenantId') tenantId: string,
-    @LiffUser() lineUserId: string,
-  ) {
-    return this.liffService.getAdminMessages(tenantId, lineUserId);
-  }
-
-  @UseGuards(LiffGuard)
-  @Post('admin-messages')
-  sendToAdmin(
-    @Param('tenantId') tenantId: string,
-    @LiffUser() lineUserId: string,
-    @Body() dto: SendMessageDto,
-  ) {
-    return this.liffService.sendToAdmin(tenantId, lineUserId, dto.content);
-  }
-
-  @UseGuards(LiffGuard)
-  @Patch('admin-messages/read')
-  markAdminMessagesRead(
-    @Param('tenantId') tenantId: string,
-    @LiffUser() lineUserId: string,
-  ) {
-    return this.liffService.markAdminMessagesRead(tenantId, lineUserId);
-  }
-
-  @UseGuards(LiffGuard)
   @Get('support')
   getSupportMessages(
     @Param('tenantId') tenantId: string,

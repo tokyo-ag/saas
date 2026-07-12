@@ -5,7 +5,7 @@ import Image from 'next/image';
 import type { CSSProperties } from 'react';
 import type { BlogPostSummary, LiffEvent, PublicCmsPage } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
-import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
+import { SITE_URL, API_URL, IMAGE_BASE_URL, buildOfficialLineChatUrl } from '@/lib/config';
 import { ReservationViewShowcase, ReservationButton } from '@/components/public/ReservationViewShowcase';
 import { SnsBlock } from '@/components/public/SnsBlock';
 
@@ -446,7 +446,7 @@ export default async function ClubCmsPage({
     })),
   } : null;
 
-  const contactHref = `/liff/${page.tenant.code ?? tenantCode}/admin-talk`;
+  const contactHref = buildOfficialLineChatUrl(page.tenant.lineChannelId) ?? '#contact';
   const sectionCopy = (() => {
     try {
       return JSON.parse(page.footerText ?? '{}') as {
