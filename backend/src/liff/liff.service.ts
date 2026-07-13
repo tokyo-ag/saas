@@ -97,10 +97,19 @@ export class LiffService {
     try {
       const parsed = JSON.parse(footerText ?? '{}');
       const reserveLineUrl =
-        typeof parsed.reserveLineUrl === 'string' && parsed.reserveLineUrl.trim()
+        typeof parsed.reserveLineUrl === 'string' &&
+        parsed.reserveLineUrl.trim()
           ? parsed.reserveLineUrl.trim()
           : typeof parsed.line === 'string' && parsed.line.trim()
             ? parsed.line.trim()
+            : null;
+      // 公開サイトの「お問い合わせ」リンク。contactUrlが現行フィールド名だが、
+      // リネーム前のcontactキーで保存された既存データも読めるようにする。
+      const contactUrl =
+        typeof parsed.contactUrl === 'string' && parsed.contactUrl.trim()
+          ? parsed.contactUrl.trim()
+          : typeof parsed.contact === 'string' && parsed.contact.trim()
+            ? parsed.contact.trim()
             : null;
       return {
         reserveActionStyle:
@@ -108,9 +117,14 @@ export class LiffService {
             ? parsed.reserveActionStyle
             : null,
         reserveLineUrl,
+        contactUrl,
       };
     } catch {
-      return { reserveActionStyle: null, reserveLineUrl: null };
+      return {
+        reserveActionStyle: null,
+        reserveLineUrl: null,
+        contactUrl: null,
+      };
     }
   }
 
@@ -671,7 +685,13 @@ export class LiffService {
   async updateProfile(
     tenantId: string,
     lineUserId: string,
-    data: { name: string; grade: string; gender: string; level?: string; comment?: string },
+    data: {
+      name: string;
+      grade: string;
+      gender: string;
+      level?: string;
+      comment?: string;
+    },
   ) {
     tenantId = await this.resolveTenantId(tenantId);
     const updated = await this.prisma.member.upsert({

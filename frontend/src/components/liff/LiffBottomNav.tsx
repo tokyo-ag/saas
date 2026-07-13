@@ -5,7 +5,6 @@ import { usePathname, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { getLiffUserId, initLiff, liff } from '@/lib/liff';
-import { buildOfficialLineChatUrl } from '@/lib/config';
 
 function HomeIcon({ active }: { active: boolean }) {
   const s = active ? '#06C755' : '#BDBDBD';
@@ -79,7 +78,7 @@ export default function LiffBottomNav({ tenantId: propId }: { tenantId?: string 
   useEffect(() => {
     if (!tid) return;
     api.liff.tenant(tid)
-      .then((tenant) => setLineChatUrl(buildOfficialLineChatUrl(tenant.lineChannelId)))
+      .then((tenant) => setLineChatUrl(tenant.contactUrl?.trim() || null))
       .catch(() => setLineChatUrl(null));
   }, [tid]);
 

@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api, LiffConnection, LiffTenant } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded } from '@/lib/liff';
-import { buildOfficialLineChatUrl } from '@/lib/config';
 import LiffBottomNav from '@/components/liff/LiffBottomNav';
 import { useLiffTheme } from '@/components/liff/LiffThemeProvider';
 
@@ -52,7 +51,7 @@ export default function TalksPage() {
 
   const organizerName = tenant?.lineDisplayName ?? tenant?.name ?? '主催者';
   const organizerPicture = tenant?.linePictureUrl ?? tenant?.iconUrl;
-  const officialLineChatUrl = buildOfficialLineChatUrl(tenant?.lineChannelId);
+  const officialLineChatUrl = tenant?.contactUrl?.trim() || null;
 
   return (
     <>

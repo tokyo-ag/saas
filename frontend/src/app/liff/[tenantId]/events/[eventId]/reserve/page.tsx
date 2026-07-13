@@ -403,9 +403,7 @@ function ReservePageInner() {
 
   // ── 友だち追加が必要 ──
   if (!isFriend) {
-    const addFriendUrl = tenant?.lineChannelId
-      ? `https://line.me/R/ti/p/@${tenant.lineChannelId}`
-      : null;
+    const addFriendUrl = tenant?.contactUrl?.trim() || null;
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center gap-6" style={{ backgroundColor: theme.backgroundColor }}>
         <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ backgroundColor: hexToRgba(accentColor, 10), color: accentColor }}>

@@ -718,6 +718,7 @@ export interface LiffTenant {
   themeColor?: string;
   reserveActionStyle?: string | null;
   reserveLineUrl?: string | null;
+  contactUrl?: string | null;
 }
 
 export interface LiffReservation {
@@ -1131,7 +1132,6 @@ export interface PublicCmsPage {
     lineDisplayName?: string | null;
     linePictureUrl?: string | null;
     iconUrl?: string | null;
-    lineChannelId?: string | null;
   };
 }
 

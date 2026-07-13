@@ -5,7 +5,7 @@ import Image from 'next/image';
 import type { CSSProperties } from 'react';
 import type { BlogPostSummary, LiffEvent, PublicCmsPage } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
-import { SITE_URL, API_URL, IMAGE_BASE_URL, buildOfficialLineChatUrl } from '@/lib/config';
+import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
 import { ReservationViewShowcase, ReservationButton } from '@/components/public/ReservationViewShowcase';
 import { SnsBlock } from '@/components/public/SnsBlock';
 
@@ -446,7 +446,6 @@ export default async function ClubCmsPage({
     })),
   } : null;
 
-  const contactHref = buildOfficialLineChatUrl(page.tenant.lineChannelId) ?? '#contact';
   const sectionCopy = (() => {
     try {
       return JSON.parse(page.footerText ?? '{}') as {
@@ -517,10 +516,10 @@ export default async function ClubCmsPage({
   const navAboutUrl = sectionCopy.aboutUrl?.trim() || '#about';
   const configuredReserveUrl = sectionCopy.reserveUrl?.trim();
   const configuredLineUrl = sectionCopy.reserveLineUrl?.trim() || sectionCopy.line?.trim();
-  const lineReserveUrl = configuredLineUrl || configuredReserveUrl || contactHref;
+  const lineReserveUrl = configuredLineUrl || configuredReserveUrl || '#contact';
   const navReserveUrl = reserveActionStyle === 'line' ? lineReserveUrl : (configuredReserveUrl || reserveHref);
   const navBlogUrl = sectionCopy.blogUrl?.trim() || '#blog';
-  const navContactUrl = sectionCopy.contactUrl?.trim() || contactHref;
+  const navContactUrl = sectionCopy.contactUrl?.trim() || '#contact';
   const hasReserveSection = reserveActionStyle === 'line' || reserveEvents.length > 0;
   const hasBlogSection = blogPosts.length > 0;
   const visibleNavItems = [
@@ -881,8 +880,8 @@ export default async function ClubCmsPage({
                   ? sectionCopy.contact
                   : /^\d/.test(sectionCopy.contact)
                     ? `tel:${sectionCopy.contact.replace(/[^\d+]/g, '')}`
-                    : contactHref
-              : (configuredLineUrl || contactHref);
+                    : '#contact'
+              : (configuredLineUrl || '#contact');
             const btnColor = sectionCopy.contactColor?.trim() || accentColor;
             const subtitle = sectionCopy.contactMessage?.trim();
             return (

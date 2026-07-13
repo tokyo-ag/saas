@@ -646,7 +646,6 @@ export class PublicController {
             lineDisplayName: true,
             linePictureUrl: true,
             iconUrl: true,
-            lineChannelId: true,
           },
         },
       },
