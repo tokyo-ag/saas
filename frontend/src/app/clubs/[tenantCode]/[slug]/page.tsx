@@ -352,7 +352,9 @@ export default async function ClubCmsPage({
   const imageCaptions = images.map((_, index) => (page.imageCaptions?.[index] ?? '').slice(0, 80));
   const image = images[0];
   const clubHref = `/clubs/${page.tenant.code ?? tenantCode}`;
-  const reserveHref = `/clubs/${page.tenant.code ?? tenantCode}/reserve`;
+  // ページ内に既にスタイル済みの予約セクション（#reserve）があるため、そちらへスクロールさせる。
+  // 未装飾の /clubs/{tenantCode}/reserve への遷移は、slugを持たないテナントのフォールバック用に別途残す。
+  const reserveHref = '#reserve';
   const textColor = page.textColor || '#111827';
   const bodyTextColor = typeof parsedFt.bodyTextColor === 'string' && parsedFt.bodyTextColor.trim()
     ? parsedFt.bodyTextColor.trim()
