@@ -154,16 +154,29 @@ export async function loginIfNeeded(): Promise<boolean> {
   return false;
 }
 
+// liff.getProfile()はLIFFアプリのスコープ設定不足などで例外を投げることがあり、
+// 呼び出し側の大半がtry/catch無しでuidを取得しているため、ここで吸収して
+// ページが「読み込み中...」のまま固まるのを防ぐ。
 export async function getLiffUserId(): Promise<string | null> {
   if (!isLiffLoggedIn()) return null;
-  const profile = await liff.getProfile();
-  return profile.userId;
+  try {
+    const profile = await liff.getProfile();
+    return profile.userId;
+  } catch (err) {
+    console.error('[LIFF] getProfile failed:', err);
+    return null;
+  }
 }
 
 export async function getLiffProfile(): Promise<{ userId: string; displayName: string; pictureUrl?: string } | null> {
   if (!isLiffLoggedIn()) return null;
-  const profile = await liff.getProfile();
-  return { userId: profile.userId, displayName: profile.displayName, pictureUrl: profile.pictureUrl };
+  try {
+    const profile = await liff.getProfile();
+    return { userId: profile.userId, displayName: profile.displayName, pictureUrl: profile.pictureUrl };
+  } catch (err) {
+    console.error('[LIFF] getProfile failed:', err);
+    return null;
+  }
 }
 
 export async function checkFriendship(): Promise<boolean> {

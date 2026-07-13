@@ -390,7 +390,7 @@ function ReservePageInner() {
           </button>
         ) : (
           <button
-            onClick={() => window.location.reload()}
+            onClick={restartLineAuth}
             className="font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
             style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
           >
