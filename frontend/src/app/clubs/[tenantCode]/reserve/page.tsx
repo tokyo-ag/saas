@@ -137,7 +137,7 @@ function CardView({ events, tenantCode }: { events: LiffEvent[]; tenantCode: str
         return (
           <Link key={ev.id} href={`/e/${tenantCode}/${ev.id}`}
             className="block rounded-xl overflow-hidden bg-white shadow-sm active:opacity-70">
-            <div className="relative aspect-[4/5]">
+            <div className="relative aspect-[3/2]">
               {img ? (
                 <Image src={img} alt={ev.title} fill className="object-cover" unoptimized />
               ) : (
