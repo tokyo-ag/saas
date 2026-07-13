@@ -1,4 +1,5 @@
-export function isLightHexColor(color: string): boolean {
+export function isLightHexColor(color: string | null | undefined): boolean {
+  if (!color) return false;
   const hex = color.trim().replace('#', '');
   if (!/^[0-9a-fA-F]{6}$/.test(hex)) return false;
   const r = parseInt(hex.slice(0, 2), 16);

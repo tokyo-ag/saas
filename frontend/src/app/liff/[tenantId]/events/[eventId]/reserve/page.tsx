@@ -1,9 +1,12 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { api, LiffEvent, LiffProfile, LiffReservation, LiffTenant, PublicRoster, setLiffToken, formatDate } from '@/lib/api';
+import { api, API_URL, LiffEvent, LiffProfile, LiffReservation, LiffTenant, PublicRoster, setLiffToken, formatDate } from '@/lib/api';
+import { imgUrl } from '@/lib/imgUrl';
+import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import {
   initLiff,
   getLiffProfile,
@@ -71,6 +74,7 @@ function ReservePageInner() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [roster, setRoster] = useState<PublicRoster | null>(null);
+  const [rosterOpen, setRosterOpen] = useState(false);
   const [expandedComment, setExpandedComment] = useState<number | null>(null);
   const [myReservation, setMyReservation] = useState<LiffReservation | null>(null);
   const [cancelling, setCancelling] = useState(false);
@@ -428,33 +432,103 @@ function ReservePageInner() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: theme.backgroundColor }}>
+    <div className="min-h-screen animate-page-in" style={{ backgroundColor: theme.backgroundColor }}>
       <LiffToast show={showLoginToast} message="ログインしました" />
       <div className="mx-auto min-h-screen max-w-[480px] border-x-0 sm:border-x" style={{ borderColor: theme.borderColor }}>
-      <div className="border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
-        <div className="px-4 py-4 flex items-center gap-3">
-          <button onClick={() => router.push(`/liff/${tenantId}`)} aria-label="戻る" className="-m-2 flex h-10 w-10 items-center justify-center rounded-full text-2xl leading-none text-gray-900 active:bg-black/5">‹</button>
-          <h1 className="text-base font-bold flex-1 text-gray-900">{isWaitlist ? 'キャンセル待ち登録' : '予約する'}</h1>
+      <div className="sticky top-0 z-10 border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
+        <div className="flex items-center justify-between gap-2 px-4 py-3">
+          <Link href={`/liff/${tenantId}`} className="flex min-w-0 items-center gap-2.5 -m-2 p-2 rounded-xl active:bg-black/5">
+            {(tenant?.linePictureUrl ?? tenant?.iconUrl) ? (
+              <Image src={(tenant?.linePictureUrl ?? tenant?.iconUrl)!} width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0" alt="" unoptimized />
+            ) : (
+              <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base" style={{ backgroundColor: `${accentColor}30` }}>🎉</div>
+            )}
+            <div className="min-w-0">
+              <p className="text-[15px] font-bold text-gray-900 tracking-tight truncate leading-tight">
+                {tenant?.name ?? tenant?.lineDisplayName ?? 'Home'}
+              </p>
+              <p className="text-[10px] text-gray-800 leading-tight">団体説明</p>
+            </div>
+          </Link>
+          <Link
+            href={`/liff/${tenantId}/profile`}
+            className="flex shrink-0 items-center gap-1.5 -m-2 p-2 rounded-xl active:bg-black/5"
+            aria-label="マイページ"
+          >
+            {liffProfile?.pictureUrl ? (
+              <Image src={liffProfile.pictureUrl} width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0" alt="" unoptimized />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 shrink-0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+            )}
+            <div className="text-right">
+              <p className="text-[13px] font-bold text-gray-900 leading-tight">マイページ</p>
+              <p className="text-[10px] text-gray-800 leading-tight">ログイン中</p>
+            </div>
+          </Link>
         </div>
       </div>
 
       <div className="px-4 py-5 space-y-4">
+        {isWaitlist && (
+          <div className="rounded-xl px-4 py-2.5 text-sm font-bold text-center" style={{ backgroundColor: hexToRgba(accentColor, 10), color: solidAccentColor }}>
+            キャンセル待ち登録
+          </div>
+        )}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>
         )}
 
         {event && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3">
-            <p className="font-bold text-gray-900 text-sm">{event.title}</p>
-            <p className="mt-0.5 text-xs text-gray-500">
-              {formatDate(event.heldAt)}・{event.location}・{eventPriceLabel(event)}
-            </p>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            {event.imageUrl && (
+              <div className="relative aspect-[4/5] w-full bg-gray-100">
+                <Image src={imgUrl(event.imageUrl, API_URL) ?? DEFAULT_EVENT_IMAGE} alt={event.title} fill className="object-cover" unoptimized />
+              </div>
+            )}
+            <div className="p-4 space-y-3">
+              {event.category && (
+                <span className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium" style={{ backgroundColor: hexToRgba(accentColor, 10), color: solidAccentColor }}>
+                  {event.category}
+                </span>
+              )}
+              <p className="font-bold text-gray-900 text-base leading-snug">{event.title}</p>
+              <div className="grid gap-2 rounded-2xl bg-gray-50 p-3 text-sm">
+                <div className="flex items-start gap-2">
+                  <span className="mt-0.5 shrink-0 text-xs text-gray-400">日時</span>
+                  <p className="text-gray-800">{formatDate(event.heldAt)}</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="mt-0.5 shrink-0 text-xs text-gray-400">場所</span>
+                  <p className="text-gray-800">{event.location}</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="mt-0.5 shrink-0 text-xs text-gray-400">参加費</span>
+                  <p className="font-semibold text-gray-900">{eventPriceLabel(event)}</p>
+                </div>
+              </div>
+              {event.description && (
+                <p className="text-xs text-gray-500 whitespace-pre-wrap leading-relaxed pt-1 border-t border-gray-100">{event.description}</p>
+              )}
+            </div>
           </div>
         )}
 
         {event?.rosterShareEnabled && roster && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-            <p className="text-xs font-medium text-gray-500 mb-2">参加者名簿 ({roster.reservations.length}人)</p>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setRosterOpen((v) => !v)}
+              className="w-full flex items-center justify-between px-4 py-3.5 text-left"
+            >
+              <span className="text-sm font-bold text-gray-900">参加者名簿をみる（{roster.reservations.length}人）</span>
+              <svg className={`w-4 h-4 text-gray-400 transition-transform ${rosterOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+            {rosterOpen && (
+            <div className="px-4 pb-4">
             {roster.reservations.length === 0 ? (
               <p className="text-xs text-gray-400">まだ参加者はいません</p>
             ) : (
@@ -489,6 +563,8 @@ function ReservePageInner() {
                   </li>
                 ))}
               </ul>
+            )}
+            </div>
             )}
           </div>
         )}

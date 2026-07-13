@@ -53,19 +53,19 @@ async function fetchEvent(eventId: string): Promise<EventDetail | null> {
   }
 }
 
-async function fetchTenantStyling(tenantCode: string): Promise<{ backgroundColor: string | null; accentColor: string | null }> {
+async function fetchTenantStyling(tenantCode: string): Promise<{ accentColor: string | null }> {
   try {
     const tenantRes = await fetch(`${API_URL}/api/public/tenants/${tenantCode}`, { next: { revalidate: 60 } });
-    if (!tenantRes.ok) return { backgroundColor: null, accentColor: null };
+    if (!tenantRes.ok) return { accentColor: null };
     const tenant = (await tenantRes.json()) as { pages?: Array<{ slug: string }> };
     const slug = tenant.pages?.[0]?.slug;
-    if (!slug) return { backgroundColor: null, accentColor: null };
+    if (!slug) return { accentColor: null };
     const pageRes = await fetch(`${API_URL}/api/public/tenants/${tenantCode}/pages/${slug}`, { next: { revalidate: 60 } });
-    if (!pageRes.ok) return { backgroundColor: null, accentColor: null };
-    const page = (await pageRes.json()) as { backgroundColor?: string | null; accentColor?: string | null };
-    return { backgroundColor: page.backgroundColor ?? null, accentColor: page.accentColor ?? null };
+    if (!pageRes.ok) return { accentColor: null };
+    const page = (await pageRes.json()) as { accentColor?: string | null };
+    return { accentColor: page.accentColor ?? null };
   } catch {
-    return { backgroundColor: null, accentColor: null };
+    return { accentColor: null };
   }
 }
 
@@ -303,7 +303,7 @@ export default async function PublicEventPage({
 
   if (!event || !event.tenantCode || event.tenantCode !== tenantCode) notFound();
 
-  const { backgroundColor, accentColor: tenantAccentColor } = await fetchTenantStyling(tenantCode);
+  const { accentColor: tenantAccentColor } = await fetchTenantStyling(tenantCode);
   const rawAccentColor = tenantAccentColor || '#06C755';
   // アクセントカラーが白系だと、カード上のバッジやボタンの塗りに使うと文字ごと
   // 見えなくなるため、その場合は濃色にフォールバックする。
@@ -336,7 +336,7 @@ export default async function PublicEventPage({
   const endAt = validEndAt(event);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: backgroundColor || '#F9FAFB' }}>
+    <div className="min-h-screen bg-white">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

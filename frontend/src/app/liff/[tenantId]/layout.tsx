@@ -24,9 +24,8 @@ async function fetchTheme(tenantId: string): Promise<LiffTheme> {
       .then(r => r.ok ? r.json() : null);
     if (!data) return DEFAULT_LIFF_THEME;
 
-    const bgBase = data.backgroundColor?.trim() || DEFAULT_LIFF_THEME.backgroundColor;
-    const bgOpacity = typeof data.backgroundOpacity === 'number' ? data.backgroundOpacity : 100;
-    const backgroundColor = hexToRgba(bgBase, bgOpacity);
+    // LIFFアプリ全体は白背景に統一し、テナントカラーはアクセント（ボタン・バッジ等）のみに使う。
+    const backgroundColor = '#ffffff';
     const navColor = data.navColor?.trim() || '#ffffff';
     const navOpacity = typeof data.navOpacity === 'number' ? data.navOpacity : 100;
     const navBg = hexToRgba(navColor, navOpacity);
