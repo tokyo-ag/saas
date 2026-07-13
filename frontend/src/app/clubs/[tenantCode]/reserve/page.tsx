@@ -217,8 +217,8 @@ export default function ReservePage() {
   const accentColor = page?.accentColor || '#06C755';
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="mx-auto min-h-screen w-full max-w-md md:shadow-xl" style={{ backgroundColor }}>
+    <main className="min-h-screen sm:bg-gray-200" style={{ backgroundColor }}>
+      <div className="mx-auto w-full max-w-[480px] sm:my-8 sm:overflow-hidden sm:rounded-3xl sm:shadow-2xl" style={{ backgroundColor, minHeight: '100dvh' }}>
         <div className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-2.5">
           <Link href={`/clubs/${tenantCode}`} className="text-gray-400 text-lg mr-1">‹</Link>
           {icon && <Image src={icon} alt={tenantName} width={28} height={28} className="w-7 h-7 rounded-full object-cover" unoptimized />}
@@ -242,6 +242,6 @@ export default function ReservePage() {
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }
