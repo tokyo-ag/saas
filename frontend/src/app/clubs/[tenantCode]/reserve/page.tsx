@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { api, API_URL, formatDateShort, LiffEvent, LiffTenant, PublicCmsPage } from '@/lib/api';
+import { api, API_URL, formatDateShort, LiffEvent, LiffTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
@@ -27,7 +27,7 @@ function statusLabel(event: LiffEvent) {
   return '募集中';
 }
 
-function CalendarView({ events, tenantCode, accentColor }: { events: LiffEvent[]; tenantCode: string; accentColor: string }) {
+function CalendarView({ events, tenantCode }: { events: LiffEvent[]; tenantCode: string }) {
   const { year, month, prevMonth, nextMonth, cells, isToday } = useCalendarMonth();
   const byDate: Record<string, LiffEvent[]> = {};
   for (const ev of events) {
@@ -39,7 +39,7 @@ function CalendarView({ events, tenantCode, accentColor }: { events: LiffEvent[]
   }
   return (
     <div className="rounded-2xl overflow-hidden shadow-md">
-      <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: accentColor }}>
+      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#06C755] to-[#047a35]">
         <button onClick={prevMonth} className="w-7 h-7 flex items-center justify-center rounded-full bg-white/20"><span className="text-white text-sm">‹</span></button>
         <span className="text-sm font-bold text-white">{year}年 {month + 1}月</span>
         <button onClick={nextMonth} className="w-7 h-7 flex items-center justify-center rounded-full bg-white/20"><span className="text-white text-sm">›</span></button>
@@ -55,19 +55,14 @@ function CalendarView({ events, tenantCode, accentColor }: { events: LiffEvent[]
           const dayEvents = day ? (byDate[day.toString()] ?? []) : [];
           const today = day ? isToday(day) : false;
           return (
-            <div key={i} className={`border-b border-r border-gray-100 p-1 min-h-[72px] ${!day ? 'bg-gray-50/60' : ''}`} style={today ? { backgroundColor: `${accentColor}0d` } : undefined}>
+            <div key={i} className={`border-b border-r border-gray-100 p-1 min-h-[72px] ${!day ? 'bg-gray-50/60' : today ? 'bg-[#06C755]/5' : ''}`}>
               {day && (
                 <>
-                  <span
-                    className={`flex w-6 h-6 items-center justify-center rounded-full text-[11px] font-semibold mx-auto mb-1 ${today ? 'text-white' : col === 0 ? 'text-red-400' : col === 6 ? 'text-blue-400' : 'text-gray-600'}`}
-                    style={today ? { backgroundColor: accentColor } : undefined}
-                  >
-                    {day}
-                  </span>
+                  <span className={`flex w-6 h-6 items-center justify-center rounded-full text-[11px] font-semibold mx-auto mb-1 ${today ? 'bg-[#06C755] text-white' : col === 0 ? 'text-red-400' : col === 6 ? 'text-blue-400' : 'text-gray-600'}`}>{day}</span>
                   {dayEvents.map((ev) => {
                     const t = new Date(ev.heldAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
                     return (
-                      <Link key={ev.id} href={`/e/${tenantCode}/${ev.id}`} className="block rounded-sm px-1 py-0.5 mb-0.5" style={{ backgroundColor: accentColor }}>
+                      <Link key={ev.id} href={`/e/${tenantCode}/${ev.id}`} className="block rounded-sm bg-[#06C755] px-1 py-0.5 mb-0.5">
                         <p className="text-[8px] font-bold text-white truncate">{ev.title}</p>
                         <p className="text-[8px] text-white/80">{t}</p>
                       </Link>
@@ -83,7 +78,7 @@ function CalendarView({ events, tenantCode, accentColor }: { events: LiffEvent[]
   );
 }
 
-function ThreadView({ events, tenantCode, accentColor }: { events: LiffEvent[]; tenantCode: string; accentColor: string }) {
+function ThreadView({ events, tenantCode }: { events: LiffEvent[]; tenantCode: string }) {
   const groups = events.reduce<Record<string, LiffEvent[]>>((acc, ev) => {
     const key = threadMonthLabel(ev.heldAt);
     (acc[key] ??= []).push(ev);
@@ -94,7 +89,7 @@ function ThreadView({ events, tenantCode, accentColor }: { events: LiffEvent[]; 
       {Object.entries(groups).map(([month, evs]) => (
         <section key={month}>
           <div className="mb-2 flex items-center gap-2 px-1">
-            <span className="h-4 w-1 rounded-full" style={{ backgroundColor: accentColor }} />
+            <span className="h-4 w-1 rounded-full bg-[#06C755]" />
             <h2 className="text-[15px] font-bold text-gray-800">{month}のスケジュール</h2>
           </div>
           <div className="space-y-2">
@@ -111,12 +106,7 @@ function ThreadView({ events, tenantCode, accentColor }: { events: LiffEvent[]; 
                       <p className="text-xs text-gray-400 truncate">{ev.location}</p>
                       <p className="text-xs text-gray-500">{ev.capacity ? `${ev.reservedCount}/${ev.capacity}人` : `${ev.reservedCount}人予約`} / {threadPriceLabel(ev)}</p>
                     </div>
-                    <span
-                      className={`shrink-0 rounded-md px-2.5 py-1 text-[11px] font-bold ${full ? 'bg-gray-100 text-gray-400' : 'text-white'}`}
-                      style={full ? undefined : { backgroundColor: accentColor }}
-                    >
-                      {st}
-                    </span>
+                    <span className={`shrink-0 rounded-md px-2.5 py-1 text-[11px] font-bold ${full ? 'bg-gray-100 text-gray-400' : 'bg-[#06C755] text-white'}`}>{st}</span>
                   </div>
                 </Link>
               );
@@ -160,21 +150,9 @@ function CardView({ events, tenantCode }: { events: LiffEvent[]; tenantCode: str
   );
 }
 
-async function fetchPublicPage(tenantCode: string): Promise<PublicCmsPage | null> {
-  try {
-    const publicTenant = await api.public.tenant(tenantCode);
-    const slug = publicTenant.pages?.[0]?.slug;
-    if (!slug) return null;
-    return await api.public.tenantPage(tenantCode, slug);
-  } catch {
-    return null;
-  }
-}
-
 export default function ReservePage() {
   const { tenantCode } = useParams<{ tenantCode: string }>();
   const [tenant, setTenant] = useState<LiffTenant | null>(null);
-  const [page, setPage] = useState<PublicCmsPage | null>(null);
   const [events, setEvents] = useState<LiffEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -182,22 +160,18 @@ export default function ReservePage() {
     Promise.all([
       api.liff.tenant(tenantCode),
       api.liff.events(tenantCode),
-      fetchPublicPage(tenantCode),
-    ]).then(([t, evs, p]) => {
+    ]).then(([t, evs]) => {
       setTenant(t);
       setEvents(evs);
-      setPage(p);
     }).catch(() => {}).finally(() => setLoading(false));
   }, [tenantCode]);
 
   const tenantName = tenant?.lineDisplayName ?? tenant?.name ?? '';
   const icon = tenant?.linePictureUrl ?? tenant?.iconUrl;
   const view = tenant?.liffEventView ?? 'thread';
-  const backgroundColor = page?.backgroundColor || '#F5F5F5';
-  const accentColor = page?.accentColor || '#06C755';
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor }}>
+    <div className="min-h-screen bg-[#F5F5F5]">
       <div className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-2.5">
         <Link href={`/clubs/${tenantCode}`} className="text-gray-400 text-lg mr-1">‹</Link>
         {icon && <Image src={icon} alt={tenantName} width={28} height={28} className="w-7 h-7 rounded-full object-cover" unoptimized />}
@@ -206,18 +180,18 @@ export default function ReservePage() {
 
       <div className="p-3 max-w-2xl mx-auto">
         {loading ? (
-          <div className="flex justify-center py-16"><div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200" style={{ borderTopColor: accentColor }} /></div>
+          <div className="flex justify-center py-16"><div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-[#06C755]" /></div>
         ) : events.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <p className="text-gray-500 font-semibold text-sm">現在募集中のイベントはありません</p>
             <p className="text-gray-400 text-xs mt-1">新しいイベントをお待ちください</p>
           </div>
         ) : view === 'calendar' ? (
-          <CalendarView events={events} tenantCode={tenantCode} accentColor={accentColor} />
+          <CalendarView events={events} tenantCode={tenantCode} />
         ) : view === 'card' ? (
           <CardView events={events} tenantCode={tenantCode} />
         ) : (
-          <ThreadView events={events} tenantCode={tenantCode} accentColor={accentColor} />
+          <ThreadView events={events} tenantCode={tenantCode} />
         )}
       </div>
     </div>
