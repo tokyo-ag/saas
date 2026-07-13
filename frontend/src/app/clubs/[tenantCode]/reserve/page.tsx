@@ -151,6 +151,7 @@ function CardView({ events, tenantCode }: { events: LiffEvent[]; tenantCode: str
             <div className="px-2.5 py-2 space-y-0.5">
               <p className="text-[10px] text-gray-400">{formatDateShort(ev.heldAt)}</p>
               <p className="text-[9px] text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5 inline-block">{ev.location}</p>
+              <p className="text-[10px] font-semibold text-gray-600">{threadPriceLabel(ev)}</p>
             </div>
           </Link>
         );
