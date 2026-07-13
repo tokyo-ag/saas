@@ -61,6 +61,14 @@ body {
   animation: page-fade-in 0.22s ease-out both;
 }
 
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.animate-ticker {
+  animation: ticker-scroll 22s linear infinite;
+}
+
 .organizer-lp {
   --lp-bg: #f8fafc;
   --lp-navy: #071126;

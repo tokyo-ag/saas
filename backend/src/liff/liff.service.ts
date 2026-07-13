@@ -206,6 +206,28 @@ export class LiffService {
     }));
   }
 
+  // ヘッダー下に流す「最近の予約」テロップ用
+  async getRecentActivity(tenantId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
+    const reservations = await this.prisma.reservation.findMany({
+      where: { tenantId, status: { in: ['reserved', 'attended'] } },
+      orderBy: { reservedAt: 'desc' },
+      take: 15,
+      include: {
+        member: { select: { name: true } },
+        event: { select: { title: true } },
+      },
+    });
+    return reservations
+      .filter((r) => r.member.name)
+      .map((r) => ({
+        id: r.id,
+        name: r.member.name!,
+        eventTitle: r.event.title,
+        reservedAt: r.reservedAt,
+      }));
+  }
+
   // イベント詳細1件
   async getEvent(tenantId: string, eventId: string) {
     tenantId = await this.resolveTenantId(tenantId);

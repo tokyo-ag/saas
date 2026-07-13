@@ -53,19 +53,19 @@ async function fetchEvent(eventId: string): Promise<EventDetail | null> {
   }
 }
 
-async function fetchTenantStyling(tenantCode: string): Promise<{ accentColor: string | null }> {
+async function fetchTenantStyling(tenantCode: string): Promise<{ backgroundColor: string | null; accentColor: string | null }> {
   try {
     const tenantRes = await fetch(`${API_URL}/api/public/tenants/${tenantCode}`, { next: { revalidate: 60 } });
-    if (!tenantRes.ok) return { accentColor: null };
+    if (!tenantRes.ok) return { backgroundColor: null, accentColor: null };
     const tenant = (await tenantRes.json()) as { pages?: Array<{ slug: string }> };
     const slug = tenant.pages?.[0]?.slug;
-    if (!slug) return { accentColor: null };
+    if (!slug) return { backgroundColor: null, accentColor: null };
     const pageRes = await fetch(`${API_URL}/api/public/tenants/${tenantCode}/pages/${slug}`, { next: { revalidate: 60 } });
-    if (!pageRes.ok) return { accentColor: null };
-    const page = (await pageRes.json()) as { accentColor?: string | null };
-    return { accentColor: page.accentColor ?? null };
+    if (!pageRes.ok) return { backgroundColor: null, accentColor: null };
+    const page = (await pageRes.json()) as { backgroundColor?: string | null; accentColor?: string | null };
+    return { backgroundColor: page.backgroundColor ?? null, accentColor: page.accentColor ?? null };
   } catch {
-    return { accentColor: null };
+    return { backgroundColor: null, accentColor: null };
   }
 }
 
@@ -303,7 +303,7 @@ export default async function PublicEventPage({
 
   if (!event || !event.tenantCode || event.tenantCode !== tenantCode) notFound();
 
-  const { accentColor: tenantAccentColor } = await fetchTenantStyling(tenantCode);
+  const { backgroundColor, accentColor: tenantAccentColor } = await fetchTenantStyling(tenantCode);
   const rawAccentColor = tenantAccentColor || '#06C755';
   // アクセントカラーが白系だと、カード上のバッジやボタンの塗りに使うと文字ごと
   // 見えなくなるため、その場合は濃色にフォールバックする。
@@ -336,7 +336,8 @@ export default async function PublicEventPage({
   const endAt = validEndAt(event);
 
   return (
-    <div className="min-h-screen bg-white">
+    <main className="min-h-screen sm:bg-gray-200" style={{ backgroundColor: backgroundColor || '#F9FAFB' }}>
+    <div className="mx-auto w-full max-w-[480px] sm:my-8 sm:overflow-hidden sm:rounded-3xl sm:shadow-2xl" style={{ backgroundColor: backgroundColor || '#F9FAFB', minHeight: '100dvh' }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -359,21 +360,21 @@ export default async function PublicEventPage({
         )}
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-6 md:py-10 space-y-5">
+      <div className="px-4 py-5 space-y-4">
         {isEnded && (
-          <div className="mx-auto max-w-3xl rounded-2xl bg-gray-100 border border-gray-200 px-4 py-3 text-center text-sm text-gray-500">
+          <div className="rounded-2xl bg-gray-100 border border-gray-200 px-4 py-3 text-center text-sm text-gray-500">
             このイベントは終了しました
           </div>
         )}
 
-        <section className={`rounded-3xl border border-gray-200 bg-white p-4 shadow-sm md:p-5 ${event.imageUrl ? 'md:grid md:grid-cols-[minmax(280px,42%)_1fr] md:gap-6' : 'mx-auto max-w-3xl'}`}>
+        <section className="rounded-3xl border border-gray-200 bg-white p-4 shadow-sm">
           {event.imageUrl && (
-            <div className="relative mb-4 aspect-[4/5] w-full overflow-hidden rounded-2xl bg-gray-100 md:mb-0">
+            <div className="relative mb-4 aspect-[4/5] w-full overflow-hidden rounded-2xl bg-gray-100">
               <Image
                 src={imgSrc(event.imageUrl)!}
                 alt={event.title}
                 fill
-                sizes="(min-width: 768px) 420px, calc(100vw - 48px)"
+                sizes="calc(100vw - 48px)"
                 className="object-cover"
                 priority
               />
@@ -390,7 +391,7 @@ export default async function PublicEventPage({
                   {event.category}
                 </span>
               )}
-              <h1 className="text-xl font-bold text-gray-900 leading-snug md:text-2xl">
+              <h1 className="text-xl font-bold text-gray-900 leading-snug">
                 {event.title}
               </h1>
               <div className="mt-2 flex items-center gap-2">
@@ -567,8 +568,9 @@ export default async function PublicEventPage({
           </div>
         )}
 
-      </main>
+      </div>
       <PublicFooter />
     </div>
+    </main>
   );
 }

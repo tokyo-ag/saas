@@ -10,6 +10,7 @@ import { useCalendarMonth } from '@/lib/useCalendarMonth';
 import { initLiff, getLiffProfile } from '@/lib/liff';
 import { EventCardSkeleton } from '@/components/liff/EventCardSkeleton';
 import { useLiffTheme, readableTextColor } from '@/components/liff/LiffThemeProvider';
+import { ActivityTicker } from '@/components/liff/ActivityTicker';
 
 const SHOW_FEATURED_TENANTS = false;
 
@@ -568,8 +569,8 @@ export default function LiffTopPage() {
 
   return (
     <>
-      <div className="min-h-screen animate-page-in" style={{ backgroundColor: theme.backgroundColor }}>
-      <div className="mx-auto min-h-screen max-w-[480px] border-x-0 sm:border-x" style={{ borderColor: theme.borderColor }}>
+      <div className="min-h-screen sm:bg-gray-200 animate-page-in" style={{ backgroundColor: theme.backgroundColor }}>
+      <div className="mx-auto w-full max-w-[480px] sm:my-8 sm:overflow-hidden sm:rounded-3xl sm:shadow-2xl" style={{ backgroundColor: theme.backgroundColor, minHeight: '100dvh' }}>
         {/* header */}
         <div className="sticky top-0 z-10 border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
           <div className="flex items-center justify-between gap-2 px-4 pt-12 pb-3 sm:pt-4">
@@ -613,6 +614,8 @@ export default function LiffTopPage() {
             現在サーバーに接続できません。以前に読み込んだ情報を表示しています。
           </div>
         )}
+
+        <ActivityTicker tenantId={tenantId} accentColor={theme.accentColor} />
 
         <div className="p-2">
           {loading ? (

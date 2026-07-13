@@ -432,9 +432,9 @@ function ReservePageInner() {
   }
 
   return (
-    <div className="min-h-screen animate-page-in" style={{ backgroundColor: theme.backgroundColor }}>
+    <div className="min-h-screen sm:bg-gray-200 animate-page-in" style={{ backgroundColor: theme.backgroundColor }}>
       <LiffToast show={showLoginToast} message="ログインしました" />
-      <div className="mx-auto min-h-screen max-w-[480px] border-x-0 sm:border-x" style={{ borderColor: theme.borderColor }}>
+      <div className="mx-auto w-full max-w-[480px] sm:my-8 sm:overflow-hidden sm:rounded-3xl sm:shadow-2xl" style={{ backgroundColor: theme.backgroundColor, minHeight: '100dvh' }}>
       <div className="sticky top-0 z-10 border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
         <div className="flex items-center justify-between gap-2 px-4 py-3">
           <Link href={`/liff/${tenantId}`} className="flex min-w-0 items-center gap-2.5 -m-2 p-2 rounded-xl active:bg-black/5">
@@ -628,7 +628,7 @@ function ReservePageInner() {
             className="w-full py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:opacity-90 transition-colors shadow-sm"
             style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
           >
-            {submitting ? '送信中...' : isWaitlist ? 'キャンセル待ちに登録する' : 'この情報で予約する'}
+            {submitting ? '送信中...' : isWaitlist ? 'キャンセル待ちに登録する' : 'この情報で予約を確定する'}
           </button>
         )}
       </div>
