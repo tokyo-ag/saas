@@ -2566,7 +2566,6 @@ export default function AdminPublicPage() {
                         viewStyle={form.reserveViewStyle}
                         events={reserveEvents}
                         href={reserveActionStyle === 'line' ? (form.reserveLineUrl?.trim() || form.navContactUrl?.trim() || '#') : undefined}
-                        tenantCode={reserveActionStyle === 'line' ? undefined : tenantCode}
                         lineMode={reserveActionStyle === 'line'}
                         eventTitleColor={reserveEventTitleColor}
                         eventDateColor={reserveEventDateColor}

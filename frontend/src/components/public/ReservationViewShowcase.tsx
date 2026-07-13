@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { API_URL, formatDateShort } from '@/lib/api';
-import { buildLiffUrl, isInLineInAppBrowser } from '@/lib/config';
+import { isInLineInAppBrowser } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
@@ -28,7 +28,6 @@ type ReservationViewShowcaseProps = {
   className?: string;
   viewStyle?: string | null;
   events?: ReservationShowcaseEvent[];
-  tenantCode?: string;
   lineMode?: boolean;
   showLocation?: boolean;
   showPrice?: boolean;
@@ -111,23 +110,6 @@ function readableAccent(color: string | null | undefined) {
     text: isLight ? '#111827' : '#FFFFFF',
     border: isLight ? 'rgba(17,24,39,0.22)' : accent,
   };
-}
-
-function eventPath(event: ReservationShowcaseEvent, tenantCode: string) {
-  return `/liff/${tenantCode}/events/${event.id}/reserve`;
-}
-
-function eventHref(event: ReservationShowcaseEvent, tenantCode?: string, fallbackHref?: string) {
-  if (!tenantCode) return fallbackHref || '#';
-  const path = eventPath(event, tenantCode);
-  return buildLiffUrl(path) ?? path;
-}
-
-function handleEventLinkClick(e: React.MouseEvent<HTMLAnchorElement>, event: ReservationShowcaseEvent, tenantCode?: string) {
-  if (tenantCode && isInLineInAppBrowser()) {
-    e.preventDefault();
-    window.location.href = eventPath(event, tenantCode);
-  }
 }
 
 function eventTime(event: ReservationShowcaseEvent) {
@@ -309,13 +291,12 @@ function CalendarPreview({
 type FieldFlags = { showLocation?: boolean; showPrice?: boolean; showCapacity?: boolean; showDescription?: boolean };
 
 function CardMini({
-  accentColor, events, tenantCode, fallbackHref,
+  accentColor, events, fallbackHref,
   eventTitleColor, eventDateColor, eventMetaColor, cardBg,
   showLocation = true, showPrice = true, showCapacity = true,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
-  tenantCode?: string;
   fallbackHref?: string;
   eventTitleColor?: string;
   eventDateColor?: string;
@@ -341,8 +322,7 @@ function CardMini({
             return (
               <Link
                 key={event.id}
-                href={eventHref(event, tenantCode, fallbackHref)}
-                onClick={(e) => handleEventLinkClick(e, event, tenantCode)}
+                href={fallbackHref || '#'}
                 className="block shrink-0 snap-start overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
                 style={{ backgroundColor: cardBg || '#ffffff', width: 'calc(50% - 6px)' }}
               >
@@ -389,13 +369,12 @@ function CardMini({
 }
 
 function ThreadMini({
-  accentColor, events, tenantCode, fallbackHref,
+  accentColor, events, fallbackHref,
   eventTitleColor, eventDateColor, eventMetaColor, cardBg,
   showLocation = true, showPrice = true, showCapacity = true, showDescription = true,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
-  tenantCode?: string;
   fallbackHref?: string;
   eventTitleColor?: string;
   eventDateColor?: string;
@@ -432,8 +411,7 @@ function ThreadMini({
                 return (
                   <Link
                     key={event.id}
-                    href={eventHref(event, tenantCode, fallbackHref)}
-                    onClick={(e) => handleEventLinkClick(e, event, tenantCode)}
+                    href={fallbackHref || '#'}
                     className="block rounded-xl border border-gray-200 px-4 py-3 shadow-sm transition hover:opacity-90"
                     style={{ backgroundColor: cardBg || '#ffffff' }}
                   >
@@ -488,7 +466,6 @@ export function ReservationViewShowcase({
   className = '',
   viewStyle = 'calendar',
   events,
-  tenantCode,
   lineMode,
   showLocation,
   showPrice,
@@ -512,8 +489,8 @@ export function ReservationViewShowcase({
         <CalendarPreview accentColor={accentColor} events={events} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} cardBg={eventCardBg} lineMode={lineMode} />
       ) : (
         <div className="rounded-xl">
-          {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} {...fieldProps} />}
-          {selectedView === 'thread' && <ThreadMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} {...fieldProps} />}
+          {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} {...fieldProps} />}
+          {selectedView === 'thread' && <ThreadMini accentColor={accentColor} events={events} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} {...fieldProps} />}
         </div>
       )}
       {showButton && selectedView !== 'card' && (

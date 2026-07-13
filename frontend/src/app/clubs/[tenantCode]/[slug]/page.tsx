@@ -794,7 +794,6 @@ export default async function ClubCmsPage({
                 href={reserveActionStyle === 'line' ? lineReserveUrl : navReserveUrl}
                 viewStyle={page.reserveViewStyle}
                 events={reserveEvents}
-                tenantCode={reserveActionStyle === 'line' ? undefined : (page.tenant.code ?? tenantCode)}
                 lineMode={reserveActionStyle === 'line'}
                 showLocation={showLocation}
                 showPrice={showPrice}
