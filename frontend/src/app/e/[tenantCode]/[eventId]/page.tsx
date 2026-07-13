@@ -6,6 +6,7 @@ import Link from 'next/link';
 import PublicFooter from '@/components/public/PublicFooter';
 import { SmartLiffButton } from '@/components/public/SmartLiffButton';
 import { SITE_URL, API_URL, IMAGE_BASE_URL, buildLiffUrl } from '@/lib/config';
+import { isLightHexColor, readableTextColor } from '@/lib/color';
 
 type Review = {
   id: string;
@@ -49,6 +50,22 @@ async function fetchEvent(eventId: string): Promise<EventDetail | null> {
     return res.json();
   } catch {
     return null;
+  }
+}
+
+async function fetchTenantStyling(tenantCode: string): Promise<{ backgroundColor: string | null; accentColor: string | null }> {
+  try {
+    const tenantRes = await fetch(`${API_URL}/api/public/tenants/${tenantCode}`, { next: { revalidate: 60 } });
+    if (!tenantRes.ok) return { backgroundColor: null, accentColor: null };
+    const tenant = (await tenantRes.json()) as { pages?: Array<{ slug: string }> };
+    const slug = tenant.pages?.[0]?.slug;
+    if (!slug) return { backgroundColor: null, accentColor: null };
+    const pageRes = await fetch(`${API_URL}/api/public/tenants/${tenantCode}/pages/${slug}`, { next: { revalidate: 60 } });
+    if (!pageRes.ok) return { backgroundColor: null, accentColor: null };
+    const page = (await pageRes.json()) as { backgroundColor?: string | null; accentColor?: string | null };
+    return { backgroundColor: page.backgroundColor ?? null, accentColor: page.accentColor ?? null };
+  } catch {
+    return { backgroundColor: null, accentColor: null };
   }
 }
 
@@ -286,6 +303,12 @@ export default async function PublicEventPage({
 
   if (!event || !event.tenantCode || event.tenantCode !== tenantCode) notFound();
 
+  const { backgroundColor, accentColor: tenantAccentColor } = await fetchTenantStyling(tenantCode);
+  const rawAccentColor = tenantAccentColor || '#06C755';
+  // アクセントカラーが白系だと、カード上のバッジやボタンの塗りに使うと文字ごと
+  // 見えなくなるため、その場合は濃色にフォールバックする。
+  const accentColor = isLightHexColor(rawAccentColor) ? '#111827' : rawAccentColor;
+
   const footerSettings = (() => {
     try {
       return JSON.parse(event.footerText ?? '{}') as {
@@ -313,7 +336,7 @@ export default async function PublicEventPage({
   const endAt = validEndAt(event);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ backgroundColor: backgroundColor || '#F9FAFB' }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -328,7 +351,8 @@ export default async function PublicEventPage({
         {!isEnded && (
           <Link
             href={reserveUrl}
-            className="rounded-full bg-[#06C755] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#05a847]"
+            className="rounded-full px-4 py-1.5 text-sm font-semibold hover:opacity-90"
+            style={{ backgroundColor: accentColor, color: readableTextColor(accentColor) }}
           >
             LINEで予約
           </Link>
@@ -359,7 +383,10 @@ export default async function PublicEventPage({
           <div className="min-w-0">
             <div>
               {event.category && (
-                <span className="inline-block mb-2 rounded-full bg-[#06C755]/10 px-2.5 py-0.5 text-xs font-medium text-[#06C755]">
+                <span
+                  className="inline-block mb-2 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                  style={{ backgroundColor: `${accentColor}1a`, color: accentColor }}
+                >
                   {event.category}
                 </span>
               )}
@@ -423,7 +450,8 @@ export default async function PublicEventPage({
                         href={event.locationUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#06C755] underline"
+                        className="underline"
+                        style={{ color: accentColor }}
                       >
                         {event.location}
                       </a>
@@ -485,11 +513,10 @@ export default async function PublicEventPage({
               isExternalLineUrl ? (
                 <Link
                   href={reserveUrl}
-                  className={`mt-5 block w-full rounded-xl py-3.5 text-center text-sm font-bold text-white transition-colors ${
-                    isFull
-                      ? 'bg-gray-400 pointer-events-none'
-                      : 'bg-[#06C755] hover:bg-[#05a847]'
+                  className={`mt-5 block w-full rounded-xl py-3.5 text-center text-sm font-bold transition-colors ${
+                    isFull ? 'bg-gray-400 text-white pointer-events-none' : 'hover:opacity-90'
                   }`}
+                  style={isFull ? undefined : { backgroundColor: accentColor, color: readableTextColor(accentColor) }}
                 >
                   {isFull ? '満席のため受付終了' : 'LINEで予約する'}
                 </Link>
@@ -497,11 +524,10 @@ export default async function PublicEventPage({
                 <SmartLiffButton
                   href={reserveUrl}
                   directHref={`${SITE_URL}${reservePath}`}
-                  className={`mt-5 block w-full rounded-xl py-3.5 text-center text-sm font-bold text-white transition-colors ${
-                    isFull
-                      ? 'bg-gray-400 pointer-events-none'
-                      : 'bg-[#06C755] hover:bg-[#05a847]'
+                  className={`mt-5 block w-full rounded-xl py-3.5 text-center text-sm font-bold transition-colors ${
+                    isFull ? 'bg-gray-400 text-white pointer-events-none' : 'hover:opacity-90'
                   }`}
+                  style={isFull ? undefined : { backgroundColor: accentColor, color: readableTextColor(accentColor) }}
                 >
                   {isFull ? '満席のため受付終了' : 'LINEで予約する'}
                 </SmartLiffButton>

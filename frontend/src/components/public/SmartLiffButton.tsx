@@ -10,11 +10,13 @@ export function SmartLiffButton({
   href,
   directHref,
   className,
+  style,
   children,
 }: {
   href: string;
   directHref: string;
   className?: string;
+  style?: React.CSSProperties;
   children: React.ReactNode;
 }) {
   function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
@@ -24,7 +26,7 @@ export function SmartLiffButton({
     }
   }
   return (
-    <Link href={href} onClick={handleClick} className={className}>
+    <Link href={href} onClick={handleClick} className={className} style={style}>
       {children}
     </Link>
   );
