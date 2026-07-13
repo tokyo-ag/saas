@@ -33,5 +33,5 @@ export default async function ClubRedirectPage({
 }) {
   const { tenantCode } = await params;
   const slug = await fetchPrimaryPage(tenantCode);
-  redirect(slug ? `/clubs/${tenantCode}/${slug}` : `/clubs/${tenantCode}/reserve`);
+  redirect(slug ? `/clubs/${tenantCode}/${slug}` : '/');
 }

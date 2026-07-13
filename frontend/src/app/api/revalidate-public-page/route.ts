@@ -42,7 +42,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     revalidatePath(`/clubs/${tenantCode}/blog/${blogSlug}`);
   }
   revalidatePath(`/clubs/${tenantCode}/blog`);
-  revalidatePath(`/clubs/${tenantCode}/reserve`);
   revalidatePath('/sitemap.xml');
 
   return NextResponse.json({ ok: true });

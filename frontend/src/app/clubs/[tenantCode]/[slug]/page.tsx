@@ -352,7 +352,7 @@ export default async function ClubCmsPage({
   const imageCaptions = images.map((_, index) => (page.imageCaptions?.[index] ?? '').slice(0, 80));
   const image = images[0];
   const clubHref = `/clubs/${page.tenant.code ?? tenantCode}`;
-  const reserveHref = `/clubs/${page.tenant.code ?? tenantCode}/reserve`;
+  const reserveHref = '#reserve';
   const textColor = page.textColor || '#111827';
   const bodyTextColor = typeof parsedFt.bodyTextColor === 'string' && parsedFt.bodyTextColor.trim()
     ? parsedFt.bodyTextColor.trim()
@@ -792,6 +792,7 @@ export default async function ClubCmsPage({
                 accentColor={accentColor}
                 buttonLabel={reserveActionStyle === 'line' ? 'LINEで友達追加して予約する' : navLabels.reserve}
                 href={reserveActionStyle === 'line' ? lineReserveUrl : navReserveUrl}
+                tenantCode={page.tenant.code ?? tenantCode}
                 viewStyle={page.reserveViewStyle}
                 events={reserveEvents}
                 lineMode={reserveActionStyle === 'line'}
