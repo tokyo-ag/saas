@@ -180,7 +180,6 @@ function EmptyEvents({ accentColor }: { accentColor: string }) {
 function CalendarPreview({
   accentColor,
   events,
-  tenantCode,
   fallbackHref,
   eventTitleColor,
   eventDateColor,
@@ -189,7 +188,6 @@ function CalendarPreview({
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
-  tenantCode?: string;
   fallbackHref?: string;
   eventTitleColor?: string;
   eventDateColor?: string;
@@ -269,8 +267,7 @@ function CalendarPreview({
                     ) : (
                       <Link
                         key={event.id}
-                        href={eventHref(event, tenantCode, fallbackHref)}
-                        onClick={(e) => handleEventLinkClick(e, event, tenantCode)}
+                        href={fallbackHref || '#'}
                         className="mb-0.5 block rounded px-1 py-0.5"
                         style={{ backgroundColor: visible.accent }}
                       >
@@ -512,7 +509,7 @@ export function ReservationViewShowcase({
   return (
     <div className={`space-y-4 ${className}`}>
       {selectedView === 'calendar' ? (
-        <CalendarPreview accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} cardBg={eventCardBg} lineMode={lineMode} />
+        <CalendarPreview accentColor={accentColor} events={events} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} cardBg={eventCardBg} lineMode={lineMode} />
       ) : (
         <div className="rounded-xl">
           {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} tenantCode={tenantCode} fallbackHref={href} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} {...fieldProps} />}
