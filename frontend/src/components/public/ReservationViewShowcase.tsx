@@ -172,7 +172,6 @@ function CalendarPreview({
   eventTitleColor,
   eventDateColor,
   cardBg,
-  lineMode,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
@@ -181,7 +180,6 @@ function CalendarPreview({
   eventTitleColor?: string;
   eventDateColor?: string;
   cardBg?: string;
-  lineMode?: boolean;
 }) {
   const visible = readableAccent(accentColor);
   const actualEvents = events ?? [];
@@ -244,26 +242,15 @@ function CalendarPreview({
                     {day}
                   </span>
                   {dayEvents.map((event) => (
-                    lineMode ? (
-                      <div
-                        key={event.id}
-                        className="mb-0.5 block rounded px-1 py-0.5"
-                        style={{ backgroundColor: visible.accent }}
-                      >
-                        <p className="truncate text-[8px] font-bold leading-tight" style={{ color: eventTitleColor || visible.text }}>{event.title}</p>
-                        <p className="text-[7px] leading-none opacity-75" style={{ color: eventDateColor || visible.text }}>{eventTime(event)}</p>
-                      </div>
-                    ) : (
-                      <Link
-                        key={event.id}
-                        href={eventDetailHref(tenantCode, event.id, fallbackHref)}
-                        className="mb-0.5 block rounded px-1 py-0.5"
-                        style={{ backgroundColor: visible.accent }}
-                      >
-                        <p className="truncate text-[8px] font-bold leading-tight" style={{ color: eventTitleColor || visible.text }}>{event.title}</p>
-                        <p className="text-[7px] leading-none opacity-75" style={{ color: eventDateColor || visible.text }}>{eventTime(event)}</p>
-                      </Link>
-                    )
+                    <Link
+                      key={event.id}
+                      href={eventDetailHref(tenantCode, event.id, fallbackHref)}
+                      className="mb-0.5 block rounded px-1 py-0.5"
+                      style={{ backgroundColor: visible.accent }}
+                    >
+                      <p className="truncate text-[8px] font-bold leading-tight" style={{ color: eventTitleColor || visible.text }}>{event.title}</p>
+                      <p className="text-[7px] leading-none opacity-75" style={{ color: eventDateColor || visible.text }}>{eventTime(event)}</p>
+                    </Link>
                   ))}
                   {hasDummyEvent && (
                     <div className="rounded px-1 py-0.5" style={{ backgroundColor: visible.accent }}>
@@ -279,14 +266,6 @@ function CalendarPreview({
       </div>
     </>
   );
-
-  if (lineMode && fallbackHref) {
-    return (
-      <Link href={fallbackHref} className="block rounded-2xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.10)' }}>
-        {calendarBody}
-      </Link>
-    );
-  }
 
   return (
     <div className="rounded-2xl overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.10)' }}>
@@ -476,7 +455,6 @@ export function ReservationViewShowcase({
   className = '',
   viewStyle = 'calendar',
   events,
-  lineMode,
   showLocation,
   showPrice,
   showCapacity,
@@ -496,7 +474,7 @@ export function ReservationViewShowcase({
   return (
     <div className={`space-y-4 ${className}`}>
       {selectedView === 'calendar' ? (
-        <CalendarPreview accentColor={accentColor} events={events} fallbackHref={href} tenantCode={tenantCode} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} cardBg={eventCardBg} lineMode={lineMode} />
+        <CalendarPreview accentColor={accentColor} events={events} fallbackHref={href} tenantCode={tenantCode} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} cardBg={eventCardBg} />
       ) : (
         <div className="rounded-xl">
           {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} fallbackHref={href} tenantCode={tenantCode} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} {...fieldProps} />}
