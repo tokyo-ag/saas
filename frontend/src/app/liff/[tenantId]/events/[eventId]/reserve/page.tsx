@@ -19,14 +19,6 @@ import { useLiffTheme, hexToRgba, readableTextColor, isLightHexColor } from '@/c
 import { ConfirmDialog } from '@/components/liff/ConfirmDialog';
 import { LiffToast } from '@/components/liff/LiffToast';
 
-const CATEGORY_LABELS: Record<string, string> = {
-  meetup: '交流会',
-  badminton: 'バドミントン',
-  futsal: 'フットサル',
-  basketball: 'バスケットボール',
-  volleyball: 'バレー',
-};
-
 const STATUS_LABEL: Record<string, string> = {
   reserved: '予約済み',
   attended: '参加済み',
@@ -435,8 +427,6 @@ function ReservePageInner() {
     );
   }
 
-  const categoryLabel = event?.category ? (CATEGORY_LABELS[event.category] ?? event.category) : null;
-
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.backgroundColor }}>
       <LiffToast show={showLoginToast} message="ログインしました" />
@@ -444,7 +434,7 @@ function ReservePageInner() {
       <div className="border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
         <div className="px-4 py-4 flex items-center gap-3">
           <button onClick={() => router.push(`/liff/${tenantId}`)} aria-label="戻る" className="-m-2 flex h-10 w-10 items-center justify-center rounded-full text-2xl leading-none text-gray-900 active:bg-black/5">‹</button>
-          <h1 className="text-base font-bold flex-1 text-gray-900">{isWaitlist ? 'キャンセル待ち登録' : '一覧'}</h1>
+          <h1 className="text-base font-bold flex-1 text-gray-900">{isWaitlist ? 'キャンセル待ち登録' : '予約する'}</h1>
         </div>
       </div>
 
@@ -454,19 +444,11 @@ function ReservePageInner() {
         )}
 
         {event && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-2.5">
-            <p className="font-bold text-gray-900 text-base">{event.title}</p>
-            <div className="space-y-1.5 text-sm text-gray-700">
-              {categoryLabel && (
-                <p><span className="text-gray-400">カテゴリ：</span>{categoryLabel}</p>
-              )}
-              <p><span className="text-gray-400">日時：</span>{formatDate(event.heldAt)}</p>
-              <p><span className="text-gray-400">場所：</span>{event.location}</p>
-              <p><span className="text-gray-400">参加費：</span>{eventPriceLabel(event)}</p>
-            </div>
-            {event.description && (
-              <p className="text-xs text-gray-500 whitespace-pre-wrap leading-relaxed pt-1 border-t border-gray-100">{event.description}</p>
-            )}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3">
+            <p className="font-bold text-gray-900 text-sm">{event.title}</p>
+            <p className="mt-0.5 text-xs text-gray-500">
+              {formatDate(event.heldAt)}・{event.location}・{eventPriceLabel(event)}
+            </p>
           </div>
         )}
 
