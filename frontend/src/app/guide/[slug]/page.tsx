@@ -60,16 +60,27 @@ async function fetchArticleSummaries(): Promise<OfficialArticleSummary[]> {
   }
 }
 
-async function fetchCategoryEvents(category?: string | null): Promise<PublicArticleEvent[]> {
+async function fetchCategoryEvents(category?: string | null, tag?: string): Promise<PublicArticleEvent[]> {
   const eventCategory = category ? ACTIVITY_TAG_EVENT_CATEGORY[category] : undefined;
   if (!eventCategory) return [];
   try {
-    const res = await fetch(`${API_URL}/api/public/events?category=${encodeURIComponent(eventCategory)}`, { next: { revalidate } });
+    const params = new URLSearchParams({ category: eventCategory });
+    if (tag) params.set('tag', tag);
+    const res = await fetch(`${API_URL}/api/public/events?${params.toString()}`, { next: { revalidate } });
     if (!res.ok) return [];
     return res.json();
   } catch {
     return [];
   }
+}
+
+function extractEventsTags(body: string): (string | undefined)[] {
+  const tags = new Set<string | undefined>();
+  for (const raw of body.split('\n')) {
+    const match = EVENTS_RE.exec(raw.trim());
+    if (match) tags.add(match[2] || undefined);
+  }
+  return Array.from(tags);
 }
 
 function imgSrc(url: string | null | undefined) {
@@ -253,7 +264,7 @@ export async function generateMetadata({
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
-const EVENTS_RE = /^\{\{events(?::(.*))?\}\}$/;
+const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|(.*))?)?\}\}$/;
 
 function CheckBullet() {
   return (
@@ -264,24 +275,67 @@ function CheckBullet() {
   );
 }
 
-function BodyRenderer({ body, categoryEvents }: { body: string; categoryEvents: PublicArticleEvent[] }) {
+type ListStyle = 'check' | 'bullet' | 'number';
+
+function ListMarker({ listStyle, index }: { listStyle: ListStyle; index: number }) {
+  if (listStyle === 'bullet') {
+    return <span className="mt-[1px] w-[18px] shrink-0 text-center text-lg leading-none text-[#06C755]">・</span>;
+  }
+  if (listStyle === 'number') {
+    return (
+      <span className="mt-[1px] flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-[#06C755]/15 text-[11px] font-bold text-[#06C755]">
+        {index}
+      </span>
+    );
+  }
+  return <CheckBullet />;
+}
+
+const LIST_LINE_RE = /^-(b|n)? (.*)$/;
+
+function BodyRenderer({ body, eventsByTag }: { body: string; eventsByTag: Map<string, PublicArticleEvent[]> }) {
   const lines = body.split('\n');
   const nodes: ReactNode[] = [];
   let i = 0;
+  let paragraphBuffer: string[] = [];
+
+  const flushParagraph = () => {
+    if (paragraphBuffer.length > 0) {
+      nodes.push(
+        <p key={`p-${i}`} className="mb-6 whitespace-pre-wrap text-[15px] leading-[1.75] text-[#333333] sm:text-base">
+          {paragraphBuffer.join('\n')}
+        </p>,
+      );
+      paragraphBuffer = [];
+    }
+  };
+
   while (i < lines.length) {
     const line = lines[i].trim();
-    if (line.startsWith('- ')) {
-      const group: string[] = [];
-      while (i < lines.length && lines[i].trim().startsWith('- ')) {
-        group.push(lines[i].trim().replace(/^- /, ''));
+
+    if (!line) {
+      flushParagraph();
+      i++;
+      continue;
+    }
+
+    const list = LIST_LINE_RE.exec(line);
+    if (list) {
+      flushParagraph();
+      const group: { text: string; listStyle: ListStyle }[] = [];
+      while (i < lines.length) {
+        const itemMatch = LIST_LINE_RE.exec(lines[i].trim());
+        if (!itemMatch) break;
+        const listStyle: ListStyle = itemMatch[1] === 'b' ? 'bullet' : itemMatch[1] === 'n' ? 'number' : 'check';
+        group.push({ text: itemMatch[2], listStyle });
         i++;
       }
       nodes.push(
         <ul key={i} className="my-4 space-y-2">
           {group.map((item, itemIndex) => (
             <li key={itemIndex} className="flex items-start gap-2 pl-1 text-[15px] leading-[1.75] text-[#333333] sm:text-base">
-              <CheckBullet />
-              <span className="whitespace-pre-wrap">{item}</span>
+              <ListMarker listStyle={item.listStyle} index={itemIndex + 1} />
+              <span className="whitespace-pre-wrap">{item.text}</span>
             </li>
           ))}
         </ul>,
@@ -290,18 +344,22 @@ function BodyRenderer({ body, categoryEvents }: { body: string; categoryEvents: 
     }
     const events = EVENTS_RE.exec(line);
     if (events) {
-      nodes.push(<EventsBlock key={i} events={categoryEvents} heading={events[1] ?? ''} />);
+      flushParagraph();
+      const eventsTag = events[2] || undefined;
+      nodes.push(<EventsBlock key={i} events={eventsByTag.get(eventsTag ?? '') ?? []} heading={events[1] ?? ''} />);
       i++;
       continue;
     }
     const cta = CTA_RE.exec(line);
     if (cta) {
+      flushParagraph();
       nodes.push(<CtaBlock key={i} label={cta[1]} href={cta[2]} />);
       i++;
       continue;
     }
     const image = IMAGE_RE.exec(line);
     if (image) {
+      flushParagraph();
       nodes.push(
         // eslint-disable-next-line @next/next/no-img-element
         <img key={i} src={image[2]} alt={image[1]} className="my-6 w-full rounded-xl border border-gray-100 object-cover" />,
@@ -310,11 +368,13 @@ function BodyRenderer({ body, categoryEvents }: { body: string; categoryEvents: 
       continue;
     }
     if (line.startsWith('### ')) {
+      flushParagraph();
       nodes.push(<h3 key={i} className="pt-4 text-lg font-bold text-gray-950">{line.replace(/^### /, '')}</h3>);
       i++;
       continue;
     }
     if (line.startsWith('## ')) {
+      flushParagraph();
       nodes.push(
         <h2 key={i} className="my-6 border-l-[5px] border-[#06C755] py-1 pl-4 text-2xl font-bold text-gray-950">
           {line.replace(/^## /, '')}
@@ -323,17 +383,10 @@ function BodyRenderer({ body, categoryEvents }: { body: string; categoryEvents: 
       i++;
       continue;
     }
-    if (!line) {
-      i++;
-      continue;
-    }
-    nodes.push(
-      <p key={i} className="mb-6 whitespace-pre-wrap text-[15px] leading-[1.75] text-[#333333] sm:text-base">
-        {line}
-      </p>,
-    );
+    paragraphBuffer.push(line);
     i++;
   }
+  flushParagraph();
   return <div>{nodes}</div>;
 }
 
@@ -348,7 +401,12 @@ export default async function GuideArticlePage({
     fetchArticleSummaries(),
   ]);
   if (!article) notFound();
-  const categoryEvents = await fetchCategoryEvents(article.category);
+  const eventsTags = extractEventsTags(article.body);
+  const eventsByTag = new Map<string, PublicArticleEvent[]>(
+    await Promise.all(
+      eventsTags.map(async (tag) => [tag ?? '', await fetchCategoryEvents(article.category, tag)] as const),
+    ),
+  );
   const hasInlineCta = /\{\{cta:/.test(article.body);
 
   const articleUrl = `${SITE_URL}/guide/${slug}`;
@@ -446,7 +504,7 @@ export default async function GuideArticlePage({
             <h1 className="mt-4 text-3xl font-bold leading-tight text-gray-950">{article.title}</h1>
             {article.excerpt && <p className="mt-4 text-sm leading-7 text-gray-500">{article.excerpt}</p>}
             <div className="my-8 h-px bg-gray-100" />
-            <BodyRenderer body={article.body} categoryEvents={categoryEvents} />
+            <BodyRenderer body={article.body} eventsByTag={eventsByTag} />
           </div>
 
           {!hasInlineCta && (

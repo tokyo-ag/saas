@@ -1,8 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { SEARCH_TAGS } from '@/lib/lpTags';
 
 export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'cta' | 'events';
+
+export type ListStyle = 'check' | 'bullet' | 'number';
 
 export type Block = {
   id: string;
@@ -10,6 +13,8 @@ export type Block = {
   text: string;
   imageUrl?: string;
   href?: string;
+  tag?: string;
+  listStyle?: ListStyle;
 };
 
 const BLOCK_LABELS: Record<BlockType, string> = {
@@ -24,23 +29,26 @@ const BLOCK_LABELS: Record<BlockType, string> = {
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
-const EVENTS_RE = /^\{\{events(?::(.*))?\}\}$/;
+const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|(.*))?)?\}\}$/;
 
 function newId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
+const LIST_PREFIX: Record<ListStyle, string> = { check: '- ', bullet: '-b ', number: '-n ' };
+
 export function parseBodyToBlocks(body: string): Block[] {
   const lines = body.split('\n');
   const blocks: Block[] = [];
+  let blankBefore = true;
   for (const raw of lines) {
     const line = raw.trim();
-    if (!line) continue;
+    if (!line) { blankBefore = true; continue; }
     const image = IMAGE_RE.exec(line);
     const cta = CTA_RE.exec(line);
     const events = EVENTS_RE.exec(line);
     if (events) {
-      blocks.push({ id: newId(), type: 'events', text: events[1] ?? '' });
+      blocks.push({ id: newId(), type: 'events', text: events[1] ?? '', tag: events[2] || undefined });
     } else if (cta) {
       blocks.push({ id: newId(), type: 'cta', text: cta[1], href: cta[2] });
     } else if (image) {
@@ -49,11 +57,21 @@ export function parseBodyToBlocks(body: string): Block[] {
       blocks.push({ id: newId(), type: 'h3', text: line.replace(/^###\s+/, '') });
     } else if (line.startsWith('## ')) {
       blocks.push({ id: newId(), type: 'h2', text: line.replace(/^##\s+/, '') });
+    } else if (line.startsWith('-b ')) {
+      blocks.push({ id: newId(), type: 'list', text: line.replace(/^-b\s+/, ''), listStyle: 'bullet' });
+    } else if (line.startsWith('-n ')) {
+      blocks.push({ id: newId(), type: 'list', text: line.replace(/^-n\s+/, ''), listStyle: 'number' });
     } else if (line.startsWith('- ')) {
-      blocks.push({ id: newId(), type: 'list', text: line.replace(/^-\s+/, '') });
+      blocks.push({ id: newId(), type: 'list', text: line.replace(/^-\s+/, ''), listStyle: 'check' });
     } else {
-      blocks.push({ id: newId(), type: 'paragraph', text: line });
+      const prevBlock = blocks[blocks.length - 1];
+      if (!blankBefore && prevBlock?.type === 'paragraph') {
+        prevBlock.text += `\n${line}`;
+      } else {
+        blocks.push({ id: newId(), type: 'paragraph', text: line });
+      }
     }
+    blankBefore = false;
   }
   return blocks;
 }
@@ -67,10 +85,12 @@ export function blocksToBody(blocks: Block[]): string {
     let line = '';
     if (block.type === 'h2') line = `## ${block.text}`;
     else if (block.type === 'h3') line = `### ${block.text}`;
-    else if (block.type === 'list') line = `- ${block.text}`;
+    else if (block.type === 'list') line = `${LIST_PREFIX[block.listStyle ?? 'check']}${block.text}`;
     else if (block.type === 'image') line = `![${block.text}](${block.imageUrl ?? ''})`;
     else if (block.type === 'cta') line = `{{cta:${block.text}|${block.href ?? ''}}}`;
-    else if (block.type === 'events') line = block.text ? `{{events:${block.text}}}` : '{{events}}';
+    else if (block.type === 'events') {
+      line = (block.text || block.tag) ? `{{events:${block.text ?? ''}${block.tag ? `|${block.tag}` : ''}}}` : '{{events}}';
+    }
     else line = block.text;
     parts.push(line);
   });
@@ -196,8 +216,34 @@ export default function BlockEditor({
                   placeholder="見出し・説明（任意） 例: 東京の人気バドミントンサークル"
                   className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
                 />
+                <div>
+                  <p className="mb-1 text-xs font-medium text-gray-500">絞り込みタグ（任意）</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => updateBlock(block.id, { tag: undefined })}
+                      className={`rounded-full px-3 py-1 text-xs font-bold transition ${
+                        !block.tag ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      指定なし
+                    </button>
+                    {SEARCH_TAGS.map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => updateBlock(block.id, { tag })}
+                        className={`rounded-full px-3 py-1 text-xs font-bold transition ${
+                          block.tag === tag ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <p className="rounded-md bg-gray-50 px-2.5 py-2 text-xs text-gray-500">
-                  記事のカテゴリに応じて、COMIUに掲載中のイベントカードをここに自動で表示します。
+                  記事のカテゴリ（と選んだタグ）に応じて、COMIUに掲載中のイベントカードをここに自動で表示します。
                 </p>
               </div>
             ) : block.type === 'paragraph' ? (
@@ -208,13 +254,40 @@ export default function BlockEditor({
                 placeholder="本文テキスト"
                 className="w-full resize-y rounded-md border border-gray-200 px-2.5 py-1.5 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
               />
+            ) : block.type === 'list' ? (
+              <div className="space-y-2">
+                <input
+                  value={block.text}
+                  onChange={(e) => updateBlock(block.id, { text: e.target.value })}
+                  placeholder="リスト項目のテキスト"
+                  className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                />
+                <div className="flex gap-1.5">
+                  {([
+                    { style: 'check' as const, label: '✓ チェック' },
+                    { style: 'bullet' as const, label: '・ 中黒' },
+                    { style: 'number' as const, label: '1,2,3 番号' },
+                  ]).map(({ style, label }) => (
+                    <button
+                      key={style}
+                      type="button"
+                      onClick={() => updateBlock(block.id, { listStyle: style })}
+                      className={`rounded-full px-2.5 py-1 text-xs font-bold transition ${
+                        (block.listStyle ?? 'check') === style ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ) : (
               <input
                 value={block.text}
                 onChange={(e) => updateBlock(block.id, { text: e.target.value })}
-                placeholder={block.type === 'h2' ? '見出しテキスト' : block.type === 'h3' ? '小見出しテキスト' : 'リスト項目のテキスト'}
+                placeholder={block.type === 'h2' ? '見出しテキスト' : '小見出しテキスト'}
                 className={`w-full rounded-md border border-gray-200 px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#06C755] ${
-                  block.type === 'h2' ? 'text-lg font-bold' : block.type === 'h3' ? 'text-base font-bold' : 'text-sm'
+                  block.type === 'h2' ? 'text-lg font-bold' : 'text-base font-bold'
                 }`}
               />
             )}

@@ -39,16 +39,16 @@ function priceLabel(event: PublicEvent) {
   return event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
 }
 
-function EventsBlockPreview({ category, heading }: { category: string; heading: string }) {
+function EventsBlockPreview({ category, heading, tag }: { category: string; heading: string; tag?: string }) {
   const [events, setEvents] = useState<PublicEvent[]>([]);
   const eventCategory = ACTIVITY_TAG_EVENT_CATEGORY[category];
 
   useEffect(() => {
     if (!eventCategory) { setEvents([]); return; }
     let active = true;
-    api.public.events(eventCategory).then((list) => { if (active) setEvents(list.slice(0, 6)); }).catch(() => { if (active) setEvents([]); });
+    api.public.events(eventCategory, tag).then((list) => { if (active) setEvents(list.slice(0, 6)); }).catch(() => { if (active) setEvents([]); });
     return () => { active = false; };
-  }, [eventCategory]);
+  }, [eventCategory, tag]);
 
   if (!category) {
     return <p className="rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">カテゴリを選択すると、該当イベントのプレビューが表示されます。</p>;
@@ -57,7 +57,7 @@ function EventsBlockPreview({ category, heading }: { category: string; heading: 
     return <p className="rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」は活動種目カテゴリではないため、対象イベントがありません。</p>;
   }
   if (events.length === 0) {
-    return <p className="rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」に一致する公開中のイベントが見つかりませんでした。</p>;
+    return <p className="rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」{tag ? `・「${tag}」` : ''}に一致する公開中のイベントが見つかりませんでした。</p>;
   }
   return (
     <div>
@@ -96,6 +96,20 @@ function CheckBullet() {
   );
 }
 
+function ListMarker({ listStyle, index }: { listStyle?: Block['listStyle']; index: number }) {
+  if (listStyle === 'bullet') {
+    return <span className="mt-[1px] w-[18px] shrink-0 text-center text-lg leading-none text-[#06C755]">・</span>;
+  }
+  if (listStyle === 'number') {
+    return (
+      <span className="mt-[1px] flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-[#06C755]/15 text-[11px] font-bold text-[#06C755]">
+        {index}
+      </span>
+    );
+  }
+  return <CheckBullet />;
+}
+
 function ParagraphText({ text }: { text: string }) {
   return (
     <p className="mb-6 whitespace-pre-wrap text-[15px] leading-[1.75] text-[#333333] sm:text-base">
@@ -130,7 +144,7 @@ function BlockView({ block, category }: { block: Block; category: string }) {
     );
   }
   if (block.type === 'events') {
-    return <EventsBlockPreview category={category} heading={block.text} />;
+    return <EventsBlockPreview category={category} heading={block.text} tag={block.tag} />;
   }
   return <ParagraphText text={block.text} />;
 }
@@ -148,9 +162,9 @@ function renderBlocks(blocks: Block[], category: string) {
       }
       nodes.push(
         <ul key={group[0].id} className="my-4 space-y-2">
-          {group.map((b) => (
+          {group.map((b, idx) => (
             <li key={b.id} className="flex items-start gap-2 pl-1 text-[15px] leading-[1.75] text-[#333333] sm:text-base">
-              <CheckBullet />
+              <ListMarker listStyle={b.listStyle} index={idx + 1} />
               <span className="whitespace-pre-wrap">{b.text || 'リスト項目'}</span>
             </li>
           ))}
