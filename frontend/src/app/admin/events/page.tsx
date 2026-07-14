@@ -93,6 +93,7 @@ export default function EventsPage() {
   const [reservationActionStyle, setReservationActionStyle] = useState<ReservationActionStyle>('comiu');
   const [reservationLineUrl, setReservationLineUrl] = useState('');
   const [displayFields, setDisplayFields] = useState<DisplayFields>(DEFAULT_DISPLAY_FIELDS);
+  const [activityTickerEnabled, setActivityTickerEnabled] = useState(true);
   const [savingStyle, setSavingStyle] = useState(false);
   const [reflected, setReflected] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
@@ -106,6 +107,7 @@ export default function EventsPage() {
     load();
     api.tenant.get().then((t) => {
       setTenantId(t.code ?? t.id);
+      setActivityTickerEnabled(t.activityTickerEnabled !== false);
     }).catch(() => {});
     api.publicPages.list().then((pages) => {
       const first = pages[0];
@@ -148,6 +150,14 @@ export default function EventsPage() {
       setSavingStyle(false);
       setIframeKey((k) => k + 1);
     }
+  }
+
+  async function toggleActivityTicker() {
+    const next = !activityTickerEnabled;
+    setActivityTickerEnabled(next);
+    try {
+      await api.tenant.update({ activityTickerEnabled: next });
+    } catch { /* silent */ }
   }
 
   async function toggleDisplayField(key: keyof DisplayFields) {
@@ -339,6 +349,27 @@ export default function EventsPage() {
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+          {/* ライブフィード */}
+          <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold text-gray-500">ライブフィード</p>
+                <p className="mt-0.5 text-[11px] text-gray-400">LIFFホーム画面のヘッダー下に、最近の予約状況を流すテロップを表示します</p>
+              </div>
+              <button
+                type="button"
+                onClick={toggleActivityTicker}
+                className={`shrink-0 rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
+                  activityTickerEnabled
+                    ? 'border-[#06C755] bg-[#06C755]/8 text-[#06C755]'
+                    : 'border-gray-200 bg-gray-50 text-gray-400'
+                }`}
+              >
+                {activityTickerEnabled ? 'ON' : 'OFF'}
+              </button>
             </div>
           </div>
 

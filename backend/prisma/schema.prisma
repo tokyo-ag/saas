@@ -47,6 +47,7 @@ model Tenant {
   stripeCustomerId       String?   @map("stripe_customer_id") @db.VarChar(100)
   stripeSubscriptionId   String?   @map("stripe_subscription_id") @db.VarChar(100)
   liffEventView          String    @default("card") @map("liff_event_view") @db.VarChar(20)
+  activityTickerEnabled  Boolean   @default(true) @map("activity_ticker_enabled")
   themeColor             String    @default("green") @map("theme_color") @db.VarChar(20)
   iconUrl                String?   @map("icon_url") @db.Text
   publicBlogUrl          String?   @map("public_blog_url") @db.VarChar(500)

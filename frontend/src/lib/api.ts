@@ -672,6 +672,7 @@ export interface Tenant {
   plan: 'free' | 'standard' | 'pro';
   planStartedAt?: string | null;
   liffEventView?: string;
+  activityTickerEnabled?: boolean;
   themeColor?: string;
   iconUrl?: string | null;
   createdAt: string;
@@ -700,6 +701,7 @@ export interface TenantInput {
   stripeSecretKey?: string;
   stripeWebhookSecret?: string;
   liffEventView?: string;
+  activityTickerEnabled?: boolean;
   themeColor?: string;
   iconUrl?: string;
   code?: string;
@@ -717,6 +719,7 @@ export interface LiffTenant {
   iconUrl?: string;
   lineChannelId?: string;
   liffEventView?: string;
+  activityTickerEnabled?: boolean;
   themeColor?: string;
   reserveActionStyle?: string | null;
   reserveLineUrl?: string | null;

@@ -615,7 +615,9 @@ export default function LiffTopPage() {
           </div>
         )}
 
-        <ActivityTicker tenantId={tenantId} accentColor={theme.accentColor} />
+        {tenant?.activityTickerEnabled !== false && (
+          <ActivityTicker tenantId={tenantId} accentColor={theme.accentColor} />
+        )}
 
         <div className="p-2">
           {loading ? (

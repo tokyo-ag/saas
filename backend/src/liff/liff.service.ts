@@ -89,6 +89,7 @@ export class LiffService {
       lineChannelId: tenant.lineChannelId,
       liffEventView: tenant.liffEventView,
       themeColor: tenant.themeColor,
+      activityTickerEnabled: tenant.activityTickerEnabled,
       ...reserveSettings,
     };
   }

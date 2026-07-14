@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import Stripe from 'stripe';
-import { IsArray, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 
 const TENANT_TYPE_TAGS = ['インカレサークル', '学生団体', 'イベント団体', '社会人サークル'];
@@ -38,6 +38,7 @@ export class UpdateTenantDto {
   @IsOptional() @IsString() stripeSecretKey?: string;
   @IsOptional() @IsString() stripeWebhookSecret?: string;
   @IsOptional() @IsString() liffEventView?: string;
+  @IsOptional() @IsBoolean() activityTickerEnabled?: boolean;
   @IsOptional() @IsString() themeColor?: string;
   @IsOptional() @IsString() iconUrl?: string;
   @IsOptional() @IsString() code?: string;
@@ -234,6 +235,9 @@ export class TenantService {
         }),
         ...(dto.liffEventView !== undefined && {
           liffEventView: dto.liffEventView,
+        }),
+        ...(dto.activityTickerEnabled !== undefined && {
+          activityTickerEnabled: dto.activityTickerEnabled,
         }),
         ...(dto.themeColor !== undefined && { themeColor: dto.themeColor }),
         ...(dto.iconUrl !== undefined && { iconUrl: dto.iconUrl || null }),
