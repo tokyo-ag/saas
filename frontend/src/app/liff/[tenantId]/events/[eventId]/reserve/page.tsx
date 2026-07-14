@@ -117,11 +117,6 @@ function ReservePageInner() {
       const tenantInfo = await api.liff.tenant(tenantId).catch(() => null);
       if (tenantInfo) setTenant(tenantInfo);
 
-      if (tenantInfo?.reserveActionStyle === 'line' && tenantInfo.reserveLineUrl) {
-        window.location.href = tenantInfo.reserveLineUrl;
-        return;
-      }
-
       // ── Step 1: LIFF初期化 ──
       const initOk = await initLiff();
 
@@ -621,6 +616,14 @@ function ReservePageInner() {
               </>
             )}
           </button>
+        ) : tenant?.reserveActionStyle === 'line' && tenant.reserveLineUrl ? (
+          <a
+            href={tenant.reserveLineUrl}
+            className="block w-full py-4 rounded-2xl font-bold text-base text-center active:opacity-90 transition-colors shadow-sm"
+            style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
+          >
+            LINEで友達追加して予約する
+          </a>
         ) : (
           <button
             onClick={() => submit()}
