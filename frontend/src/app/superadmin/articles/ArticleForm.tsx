@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { api, OfficialArticle, OfficialArticleInput } from '@/lib/api';
+import { useState } from 'react';
+import { OfficialArticle, OfficialArticleInput } from '@/lib/api';
+import { LOCATION_TAGS } from '@/lib/lpTags';
 import BlockEditor, { Block, parseBodyToBlocks, blocksToBody } from './BlockEditor';
 import ArticlePreview from './ArticlePreview';
 
@@ -25,17 +26,6 @@ export default function ArticleForm({
   const [blocks, setBlocks] = useState<Block[]>(() => parseBodyToBlocks(initial?.body ?? ''));
   const [category, setCategory] = useState(initial?.category ?? '');
   const [areaTags, setAreaTags] = useState<string[]>(initial?.areaTags ?? []);
-  const [areaInput, setAreaInput] = useState('');
-  const [existingAreaTags, setExistingAreaTags] = useState<string[]>([]);
-
-  useEffect(() => {
-    api.superadmin.officialArticles()
-      .then((list) => {
-        const tags = Array.from(new Set(list.flatMap((a) => a.areaTags ?? [])));
-        setExistingAreaTags(tags.sort());
-      })
-      .catch(() => {});
-  }, []);
   const isPillar = initial?.isPillar ?? false;
   const pillarSlug = initial?.pillarSlug ?? '';
   const targetKeyword = initial?.targetKeyword ?? '';
@@ -43,16 +33,6 @@ export default function ArticleForm({
   const [status, setStatus] = useState<'draft' | 'published'>(initial?.status ?? 'draft');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-
-  function addAreaTag() {
-    const value = areaInput.trim();
-    if (value && !areaTags.includes(value)) setAreaTags([...areaTags, value]);
-    setAreaInput('');
-  }
-
-  function removeAreaTag(tag: string) {
-    setAreaTags(areaTags.filter((t) => t !== tag));
-  }
 
   function toggleAreaTag(tag: string) {
     setAreaTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
@@ -112,46 +92,24 @@ export default function ArticleForm({
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">エリアタグ</label>
-        <p className="text-xs text-gray-400 mb-1.5">/guide/area/〇〇 のハブページ生成に使われます。既存のエリアから選ぶか、無ければ新規追加してください。</p>
-        {existingAreaTags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {existingAreaTags.map((tag) => {
-              const selected = areaTags.includes(tag);
-              return (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => toggleAreaTag(tag)}
-                  className={`rounded-full px-3 py-1 text-xs font-bold transition ${
-                    selected ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {tag}
-                </button>
-              );
-            })}
-          </div>
-        )}
-        <div className="mt-2 flex gap-2">
-          <input
-            value={areaInput}
-            onChange={(e) => setAreaInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addAreaTag(); } }}
-            className={inputClass}
-            placeholder="新しいエリア名を入力してEnter"
-          />
-          <button type="button" onClick={addAreaTag} className="shrink-0 rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-600 hover:bg-gray-50">追加</button>
+        <p className="text-xs text-gray-400 mb-1.5">/guide/area/〇〇 のハブページ生成に使われます。イベント作成時の場所タグと同じ一覧から選択します。</p>
+        <div className="flex flex-wrap gap-1.5">
+          {LOCATION_TAGS.map((tag) => {
+            const selected = areaTags.includes(tag);
+            return (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggleAreaTag(tag)}
+                className={`rounded-full px-3 py-1 text-xs font-bold transition ${
+                  selected ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {tag}
+              </button>
+            );
+          })}
         </div>
-        {areaTags.filter((t) => !existingAreaTags.includes(t)).length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {areaTags.filter((t) => !existingAreaTags.includes(t)).map((tag) => (
-              <span key={tag} className="flex items-center gap-1 rounded-full bg-[#06C755]/10 px-2.5 py-1 text-xs font-bold text-[#06C755]">
-                {tag}（新規）
-                <button type="button" onClick={() => removeAreaTag(tag)} className="text-[#06C755]/60 hover:text-[#06C755]">×</button>
-              </span>
-            ))}
-          </div>
-        )}
       </div>
 
       <div>
