@@ -58,6 +58,7 @@ export default function ArticleForm({
       });
     } catch (err: any) {
       setError(err.message ?? '保存に失敗しました');
+    } finally {
       setSaving(false);
     }
   }

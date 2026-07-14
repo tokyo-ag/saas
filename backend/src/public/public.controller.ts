@@ -57,24 +57,33 @@ export class PublicController {
     return match?.[1] ?? null;
   }
 
+  private isNonParagraphLine(line: string): boolean {
+    return (
+      /^#{1,6}\s/.test(line) || // heading
+      /^\{\{/.test(line) || // cta/events/circles block markers
+      /^!\[.*?\]\(.*?\)$/.test(line) || // image
+      /^\[!\[.*?\]\(.*?\)\]\(.*?\)$/.test(line) || // linked image
+      /^-(?:b|n)?\s/.test(line) // list item
+    );
+  }
+
   private deriveExcerpt(body: string | null | undefined): string {
-    const text = (body ?? '')
-      .split('\n')
-      .map((raw) => {
-        let line = raw.trim();
-        if (!line) return '';
-        if (/^#{1,6}\s/.test(line)) return ''; // heading lines shouldn't duplicate as excerpt/lead text
-        if (/^\{\{/.test(line)) return ''; // cta/events/circles block markers
-        if (/^!\[.*?\]\(.*?\)$/.test(line)) return ''; // image lines
-        if (/^\[!\[.*?\]\(.*?\)\]\(.*?\)$/.test(line)) return ''; // linked image lines
-        if (/^-(?:b|n)?\s/.test(line)) return ''; // list item fragments don't read as a coherent excerpt
-        line = line.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-        line = line.replace(/[*_~`>|\\]/g, '');
-        return line;
-      })
-      .filter(Boolean)
-      .join(' ');
-    return text.replace(/\s+/g, ' ').trim().slice(0, 120);
+    // Only the first paragraph is used, never concatenated with later paragraphs -
+    // otherwise the excerpt ends up repeating content that also appears in full further down.
+    const collected: string[] = [];
+    for (const raw of (body ?? '').split('\n')) {
+      const line = raw.trim();
+      if (!line || this.isNonParagraphLine(line)) {
+        if (collected.length > 0) break;
+        continue;
+      }
+      collected.push(
+        line
+          .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+          .replace(/[*_~`>|\\]/g, ''),
+      );
+    }
+    return collected.join(' ').replace(/\s+/g, ' ').trim().slice(0, 120);
   }
 
   private publicEndAt(heldAt: Date, endAt: Date | null) {

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api, OfficialArticle, OfficialArticleInput } from '@/lib/api';
+import { SaveToast } from '@/components/ui/SaveToast';
 import ArticleForm from '../ArticleForm';
 
 export default function EditArticlePage() {
@@ -12,6 +13,7 @@ export default function EditArticlePage() {
   const [article, setArticle] = useState<OfficialArticle | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     api.superadmin.officialArticles()
@@ -25,8 +27,10 @@ export default function EditArticlePage() {
   }, [params.id]);
 
   async function handleSubmit(data: OfficialArticleInput) {
-    await api.superadmin.updateOfficialArticle(params.id, data);
-    router.push('/superadmin/articles');
+    const updated = await api.superadmin.updateOfficialArticle(params.id, data);
+    setArticle(updated);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
   }
 
   async function handleDelete() {
@@ -60,6 +64,7 @@ export default function EditArticlePage() {
           <ArticleForm initial={article} onSubmit={handleSubmit} submitLabel="保存する" />
         )}
       </div>
+      <SaveToast show={saved} />
     </div>
   );
 }
