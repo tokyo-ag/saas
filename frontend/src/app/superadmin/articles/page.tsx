@@ -12,6 +12,8 @@ export default function SuperadminArticlesPage() {
   const [articles, setArticles] = useState<OfficialArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('すべて');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   function load() {
     setLoading(true);
@@ -24,6 +26,29 @@ export default function SuperadminArticlesPage() {
     if (!confirm(`「${a.title}」を削除しますか？この操作は取り消せません。`)) return;
     await api.superadmin.deleteOfficialArticle(a.id);
     load();
+  }
+
+  function toggleSelected(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  async function handleBulkDelete() {
+    if (selected.size === 0) return;
+    if (!confirm(`選択した${selected.size}件を削除しますか？この操作は取り消せません。`)) return;
+    setDeleting(true);
+    try {
+      for (const id of selected) {
+        await api.superadmin.deleteOfficialArticle(id);
+      }
+      setSelected(new Set());
+      load();
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
@@ -78,6 +103,36 @@ export default function SuperadminArticlesPage() {
                   </button>
                 ))}
               </div>
+              {shown.length > 0 && (
+                <div className="flex items-center gap-3 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelected(new Set(shown.map((a) => a.id)))}
+                    className="text-xs text-gray-500 hover:underline"
+                  >
+                    このタブを全選択
+                  </button>
+                  {selected.size > 0 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setSelected(new Set())}
+                        className="text-xs text-gray-500 hover:underline"
+                      >
+                        選択解除
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleBulkDelete}
+                        disabled={deleting}
+                        className="text-xs font-bold text-white bg-red-500 hover:bg-red-600 disabled:opacity-50 rounded-full px-3 py-1.5 ml-auto"
+                      >
+                        {deleting ? '削除中...' : `選択した${selected.size}件を削除`}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
               {loading ? (
                 <p className="text-gray-400 text-sm">読み込み中...</p>
               ) : shown.length === 0 ? (
@@ -89,6 +144,13 @@ export default function SuperadminArticlesPage() {
                   {shown.map((a) => (
                     <div key={a.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-5">
                       <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(a.id)}
+                          onChange={() => toggleSelected(a.id)}
+                          className="mt-1 shrink-0 accent-[#06C755]"
+                        />
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${a.status === 'published' ? 'bg-[#06C755]/10 text-[#06C755]' : 'bg-gray-100 text-gray-500'}`}>
@@ -99,6 +161,7 @@ export default function SuperadminArticlesPage() {
                           <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">{a.title}</p>
                           <p className="text-xs font-mono text-gray-400 mt-0.5 truncate">/guide/{a.slug}</p>
                           {a.targetKeyword && <p className="text-xs text-gray-400 mt-1">狙うKW: {a.targetKeyword}</p>}
+                        </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100 flex-wrap">
