@@ -24,7 +24,7 @@ const BLOCK_LABELS: Record<BlockType, string> = {
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
-const EVENTS_MARKER = '{{events}}';
+const EVENTS_RE = /^\{\{events(?::(.*))?\}\}$/;
 
 function newId() {
   return Math.random().toString(36).slice(2, 10);
@@ -38,8 +38,9 @@ export function parseBodyToBlocks(body: string): Block[] {
     if (!line) continue;
     const image = IMAGE_RE.exec(line);
     const cta = CTA_RE.exec(line);
-    if (line === EVENTS_MARKER) {
-      blocks.push({ id: newId(), type: 'events', text: '' });
+    const events = EVENTS_RE.exec(line);
+    if (events) {
+      blocks.push({ id: newId(), type: 'events', text: events[1] ?? '' });
     } else if (cta) {
       blocks.push({ id: newId(), type: 'cta', text: cta[1], href: cta[2] });
     } else if (image) {
@@ -69,7 +70,7 @@ export function blocksToBody(blocks: Block[]): string {
     else if (block.type === 'list') line = `- ${block.text}`;
     else if (block.type === 'image') line = `![${block.text}](${block.imageUrl ?? ''})`;
     else if (block.type === 'cta') line = `{{cta:${block.text}|${block.href ?? ''}}}`;
-    else if (block.type === 'events') line = EVENTS_MARKER;
+    else if (block.type === 'events') line = block.text ? `{{events:${block.text}}}` : '{{events}}';
     else line = block.text;
     parts.push(line);
   });
@@ -188,9 +189,17 @@ export default function BlockEditor({
                 />
               </div>
             ) : block.type === 'events' ? (
-              <p className="rounded-md bg-gray-50 px-2.5 py-2 text-xs text-gray-500">
-                記事のカテゴリに応じて、COMIUに掲載中のイベントカードをここに自動で表示します。
-              </p>
+              <div className="space-y-2">
+                <input
+                  value={block.text}
+                  onChange={(e) => updateBlock(block.id, { text: e.target.value })}
+                  placeholder="見出し・説明（任意） 例: 東京の人気バドミントンサークル"
+                  className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                />
+                <p className="rounded-md bg-gray-50 px-2.5 py-2 text-xs text-gray-500">
+                  記事のカテゴリに応じて、COMIUに掲載中のイベントカードをここに自動で表示します。
+                </p>
+              </div>
             ) : block.type === 'paragraph' ? (
               <textarea
                 value={block.text}

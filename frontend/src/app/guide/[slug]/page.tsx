@@ -114,11 +114,14 @@ function EventCardMini({ event }: { event: PublicArticleEvent }) {
   );
 }
 
-function EventsBlock({ events }: { events: PublicArticleEvent[] }) {
+function EventsBlock({ events, heading }: { events: PublicArticleEvent[]; heading: string }) {
   if (events.length === 0) return null;
   return (
-    <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {events.map((event) => <EventCardMini key={event.id} event={event} />)}
+    <div>
+      {heading && <h2 className="mb-3 text-lg font-bold text-gray-950">{heading}</h2>}
+      <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {events.map((event) => <EventCardMini key={event.id} event={event} />)}
+      </div>
     </div>
   );
 }
@@ -261,15 +264,16 @@ export async function generateMetadata({
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
-const EVENTS_MARKER = '{{events}}';
+const EVENTS_RE = /^\{\{events(?::(.*))?\}\}$/;
 
 function BodyRenderer({ body, categoryEvents }: { body: string; categoryEvents: PublicArticleEvent[] }) {
   return (
     <div className="space-y-4 text-[15px] leading-8 text-gray-700">
       {body.split('\n').map((raw, index) => {
         const line = raw.trim();
-        if (line === EVENTS_MARKER) {
-          return <EventsBlock key={index} events={categoryEvents} />;
+        const events = EVENTS_RE.exec(line);
+        if (events) {
+          return <EventsBlock key={index} events={categoryEvents} heading={events[1] ?? ''} />;
         }
         const cta = CTA_RE.exec(line);
         if (cta) {

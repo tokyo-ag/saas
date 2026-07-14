@@ -25,7 +25,7 @@ function priceLabel(event: PublicEvent) {
   return event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
 }
 
-function EventsBlockPreview({ category }: { category: string }) {
+function EventsBlockPreview({ category, heading }: { category: string; heading: string }) {
   const [events, setEvents] = useState<PublicEvent[]>([]);
   const eventCategory = ACTIVITY_TAG_EVENT_CATEGORY[category];
 
@@ -46,7 +46,9 @@ function EventsBlockPreview({ category }: { category: string }) {
     return <p className="rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」に一致する公開中のイベントが見つかりませんでした。</p>;
   }
   return (
-    <div className="flex gap-3 overflow-x-auto pb-1">
+    <div>
+      {heading && <p className="mb-2 text-base font-bold text-gray-950">{heading}</p>}
+      <div className="flex gap-3 overflow-x-auto pb-1">
       {events.map((event) => {
         const img = imgUrl(event.imageUrl, API_URL) ?? DEFAULT_EVENT_IMAGE;
         return (
@@ -66,6 +68,7 @@ function EventsBlockPreview({ category }: { category: string }) {
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
@@ -95,7 +98,7 @@ function BlockView({ block, category }: { block: Block; category: string }) {
     );
   }
   if (block.type === 'events') {
-    return <EventsBlockPreview category={category} />;
+    return <EventsBlockPreview category={category} heading={block.text} />;
   }
   return <p>{block.text || ' '}</p>;
 }
