@@ -136,18 +136,6 @@ function CtaBlock({ label, href }: { label: string; href: string }) {
   );
 }
 
-function cleanDescription(text: string) {
-  return text
-    .replace(/!\[.*?\]\(.*?\)/g, '')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/#{1,6}\s*/g, '')
-    .replace(/[*_~`>|\\]/g, '')
-    .replace(/^[-*+]\s+/gm, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 150);
-}
-
 function plainMarkdown(text: string) {
   return text
     .replace(/!\[.*?\]\(.*?\)/g, '')
@@ -237,7 +225,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const article = await fetchArticle(slug);
   if (!article) return {};
-  const description = article.excerpt || cleanDescription(article.body);
+  const description = article.excerpt ?? undefined;
   const image = ogImageFor(article);
   return {
     title: article.title,
@@ -320,7 +308,7 @@ export default async function GuideArticlePage({
   const articleImage = ogImageFor(article);
   const faqItems = extractFaqItems(article.body);
   const relatedArticles = pickRelatedArticles(articleSummaries, article);
-  const articleDescription = article.excerpt || cleanDescription(article.body);
+  const articleDescription = article.excerpt;
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [

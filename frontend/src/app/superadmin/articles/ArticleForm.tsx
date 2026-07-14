@@ -22,7 +22,7 @@ export default function ArticleForm({
 }) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [slug, setSlug] = useState(initial?.slug ?? '');
-  const [excerpt, setExcerpt] = useState(initial?.excerpt ?? '');
+  const excerpt = initial?.excerpt ?? '';
   const [blocks, setBlocks] = useState<Block[]>(() => parseBodyToBlocks(initial?.body ?? ''));
   const [category, setCategory] = useState(initial?.category ?? '');
   const [areaTags, setAreaTags] = useState<string[]>(initial?.areaTags ?? []);
@@ -110,11 +110,6 @@ export default function ArticleForm({
             );
           })}
         </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">抜粋（記事一覧・description用）</label>
-        <textarea rows={2} maxLength={300} value={excerpt} onChange={(e) => setExcerpt(e.target.value)} className={inputClass} placeholder="検索結果やSNSに表示される説明文" />
       </div>
 
       <div>

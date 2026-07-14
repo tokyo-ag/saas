@@ -5,7 +5,21 @@ import { api, API_URL, PublicEvent } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import { ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
-import { Block } from './BlockEditor';
+import { Block, blocksToBody } from './BlockEditor';
+
+function deriveExcerpt(body: string): string {
+  return body
+    .replace(/\{\{cta:[^}]*\}\}/g, '')
+    .replace(/\{\{events(?::[^}]*)?\}\}/g, '')
+    .replace(/!\[.*?\]\(.*?\)/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/#{1,6}\s*/g, '')
+    .replace(/[*_~`>|\\]/g, '')
+    .replace(/^[-*+]\s+/gm, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 120);
+}
 
 function fmtDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('ja-JP', {
@@ -118,6 +132,7 @@ export default function ArticlePreview({
   excerpt: string;
   blocks: Block[];
 }) {
+  const effectiveExcerpt = excerpt || deriveExcerpt(blocksToBody(blocks));
   return (
     <div className="rounded-xl border border-gray-200 bg-white px-6 py-8 shadow-sm sm:px-9">
       <div className="flex flex-wrap items-center gap-2">
@@ -128,7 +143,7 @@ export default function ArticlePreview({
         {targetKeyword && <span className="text-xs text-gray-400">{targetKeyword}</span>}
       </div>
       <h1 className="mt-4 text-3xl font-bold leading-tight text-gray-950">{title || '（タイトル未入力）'}</h1>
-      {excerpt && <p className="mt-4 text-sm leading-7 text-gray-500">{excerpt}</p>}
+      {effectiveExcerpt && <p className="mt-4 text-sm leading-7 text-gray-500">{effectiveExcerpt}</p>}
       <div className="my-8 h-px bg-gray-100" />
       <div className="space-y-4 text-[15px] leading-8 text-gray-700">
         {blocks.length === 0 ? (

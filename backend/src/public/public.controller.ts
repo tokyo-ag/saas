@@ -57,6 +57,20 @@ export class PublicController {
     return match?.[1] ?? null;
   }
 
+  private deriveExcerpt(body: string | null | undefined): string {
+    return (body ?? '')
+      .replace(/\{\{cta:[^}]*\}\}/g, '')
+      .replace(/\{\{events(?::[^}]*)?\}\}/g, '')
+      .replace(/!\[.*?\]\(.*?\)/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/#{1,6}\s*/g, '')
+      .replace(/[*_~`>|\\]/g, '')
+      .replace(/^[-*+]\s+/gm, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 120);
+  }
+
   private publicEndAt(heldAt: Date, endAt: Date | null) {
     if (!endAt || endAt <= heldAt) return null;
     return endAt;
@@ -118,7 +132,7 @@ export class PublicController {
       id: row.id,
       title: row.title,
       slug: row.slug,
-      excerpt: row.excerpt,
+      excerpt: row.excerpt || this.deriveExcerpt(row.body),
       ...(includeBody ? { body: row.body } : {}),
       category: row.category,
       areaTags: row.area_tags ?? [],
