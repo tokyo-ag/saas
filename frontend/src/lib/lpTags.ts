@@ -37,6 +37,17 @@ export const ARTICLE_THEME_TAGS = ['選び方', '初心者向け', '費用', '�
 
 export const PORTAL_CATEGORY_TAGS = [...ACTIVITY_TAGS];
 
+// Event.category is stored as an English slug (see EventForm's category <select>),
+// while article/portal category tags use the Japanese label. Map one to the other
+// so article-side category filters can query the events API correctly.
+export const ACTIVITY_TAG_EVENT_CATEGORY: Record<string, string> = {
+  '交流会': 'meetup',
+  'バドミントン': 'badminton',
+  'フットサル': 'futsal',
+  'バスケ': 'basketball',
+  'バレー': 'volleyball',
+};
+
 export const BLOG_TAG_GROUPS = [
   { label: '団体種別タグ', tags: TENANT_TYPE_TAGS },
   { label: '活動タグ', tags: ACTIVITY_TAGS },

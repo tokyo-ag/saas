@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { API_URL, SITE_URL } from '@/lib/config';
+import { ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
 
 export const revalidate = 60;
 
@@ -59,9 +60,10 @@ async function fetchArticleSummaries(): Promise<OfficialArticleSummary[]> {
 }
 
 async function fetchCategoryEvents(category?: string | null): Promise<PublicArticleEvent[]> {
-  if (!category) return [];
+  const eventCategory = category ? ACTIVITY_TAG_EVENT_CATEGORY[category] : undefined;
+  if (!eventCategory) return [];
   try {
-    const res = await fetch(`${API_URL}/api/public/events?category=${encodeURIComponent(category)}`, { next: { revalidate } });
+    const res = await fetch(`${API_URL}/api/public/events?category=${encodeURIComponent(eventCategory)}`, { next: { revalidate } });
     if (!res.ok) return [];
     return res.json();
   } catch {

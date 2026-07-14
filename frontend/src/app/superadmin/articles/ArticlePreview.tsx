@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { api, API_URL, PublicEvent } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
+import { ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
 import { Block } from './BlockEditor';
 
 function fmtDate(dateStr: string) {
@@ -26,16 +27,20 @@ function priceLabel(event: PublicEvent) {
 
 function EventsBlockPreview({ category }: { category: string }) {
   const [events, setEvents] = useState<PublicEvent[]>([]);
+  const eventCategory = ACTIVITY_TAG_EVENT_CATEGORY[category];
 
   useEffect(() => {
-    if (!category) { setEvents([]); return; }
+    if (!eventCategory) { setEvents([]); return; }
     let active = true;
-    api.public.events(category).then((list) => { if (active) setEvents(list.slice(0, 6)); }).catch(() => { if (active) setEvents([]); });
+    api.public.events(eventCategory).then((list) => { if (active) setEvents(list.slice(0, 6)); }).catch(() => { if (active) setEvents([]); });
     return () => { active = false; };
-  }, [category]);
+  }, [eventCategory]);
 
   if (!category) {
     return <p className="rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">カテゴリを選択すると、該当イベントのプレビューが表示されます。</p>;
+  }
+  if (!eventCategory) {
+    return <p className="rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」は活動種目カテゴリではないため、対象イベントがありません。</p>;
   }
   if (events.length === 0) {
     return <p className="rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」に一致する公開中のイベントが見つかりませんでした。</p>;
