@@ -314,7 +314,9 @@ export async function generateMetadata({
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 const LINKED_IMAGE_RE = /^\[!\[([^\]]*)\]\(([^)]+)\)\]\(([^)]+)\)$/;
-const IMAGE_TEXT_RE = /^\{\{imagetext:([^|]*)\|([^|]*)\|(.*)\}\}$/;
+const IMAGE_TEXT_RE_V2 = /^\{\{imagetext:([^|]*)\|([^|]*)\|(small|medium|large)\|(.*)\}\}$/;
+const IMAGE_TEXT_RE_V1 = /^\{\{imagetext:([^|]*)\|([^|]*)\|(.*)\}\}$/;
+const IMAGE_SIZE_PX: Record<string, number> = { small: 80, medium: 128, large: 200 };
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
 const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|(.*))?)?\}\}$/;
 const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
@@ -417,13 +419,17 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
       i++;
       continue;
     }
-    const imageText = IMAGE_TEXT_RE.exec(line);
-    if (imageText) {
+    const imageTextV2 = IMAGE_TEXT_RE_V2.exec(line);
+    const imageTextV1 = IMAGE_TEXT_RE_V1.exec(line);
+    if (imageTextV2 || imageTextV1) {
       flushParagraph();
-      const [, url, href, encodedText] = imageText;
+      const [url, href, size, encodedText] = imageTextV2
+        ? [imageTextV2[1], imageTextV2[2], imageTextV2[3], imageTextV2[4]]
+        : [imageTextV1![1], imageTextV1![2], 'medium', imageTextV1![3]];
+      const px = IMAGE_SIZE_PX[size] ?? IMAGE_SIZE_PX.medium;
       const imgEl = url && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={url} alt="" className="h-32 w-32 shrink-0 rounded-xl object-cover" />
+        <img src={url} alt="" className="shrink-0 rounded-xl object-contain" style={{ maxWidth: px, maxHeight: px }} />
       );
       nodes.push(
         <div key={i} className="my-6 flex flex-col items-center gap-4 sm:flex-row sm:items-start">

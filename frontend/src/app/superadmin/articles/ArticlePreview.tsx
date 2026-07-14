@@ -5,7 +5,7 @@ import { api, API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import { ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
-import { Block } from './BlockEditor';
+import { Block, IMAGE_SIZE_PX } from './BlockEditor';
 
 function fmtDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('ja-JP', {
@@ -166,9 +166,10 @@ function BlockView({ block, category }: { block: Block; category: string }) {
     return <div className="my-6 text-center">{block.href ? <a href={block.href} target="_blank" rel="noopener noreferrer">{img}</a> : img}</div>;
   }
   if (block.type === 'imageText') {
+    const size = IMAGE_SIZE_PX[block.imageSize ?? 'medium'];
     const img = block.imageUrl && (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={block.imageUrl} alt="" className="h-32 w-32 shrink-0 rounded-xl object-cover" />
+      <img src={block.imageUrl} alt="" className="shrink-0 rounded-xl object-contain" style={{ maxWidth: size, maxHeight: size }} />
     );
     return (
       <div className="my-6 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
