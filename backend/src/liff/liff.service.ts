@@ -207,26 +207,40 @@ export class LiffService {
     }));
   }
 
-  // ヘッダー下に流す「最近の予約」テロップ用
+  // ヘッダー下に流す「最近のログイン・予約」テロップ用
   async getRecentActivity(tenantId: string) {
     tenantId = await this.resolveTenantId(tenantId);
-    const reservations = await this.prisma.reservation.findMany({
-      where: { tenantId, status: { in: ['reserved', 'attended'] } },
-      orderBy: { reservedAt: 'desc' },
-      take: 15,
-      include: {
-        member: { select: { name: true } },
-        event: { select: { title: true } },
-      },
-    });
-    return reservations
-      .filter((r) => r.member.name)
-      .map((r) => ({
-        id: r.id,
-        name: r.member.name!,
-        eventTitle: r.event.title,
-        reservedAt: r.reservedAt,
-      }));
+    const [reservations, newMembers] = await Promise.all([
+      this.prisma.reservation.findMany({
+        where: { tenantId, status: { in: ['reserved', 'attended'] } },
+        orderBy: { reservedAt: 'desc' },
+        take: 15,
+        select: { id: true, reservedAt: true },
+      }),
+      this.prisma.member.findMany({
+        where: { tenantId },
+        orderBy: { createdAt: 'desc' },
+        take: 15,
+        select: { id: true, createdAt: true },
+      }),
+    ]);
+
+    const items = [
+      ...reservations.map((r) => ({
+        id: `r-${r.id}`,
+        type: 'reservation' as const,
+        at: r.reservedAt,
+      })),
+      ...newMembers.map((m) => ({
+        id: `l-${m.id}`,
+        type: 'login' as const,
+        at: m.createdAt,
+      })),
+    ];
+
+    return items
+      .sort((a, b) => b.at.getTime() - a.at.getTime())
+      .slice(0, 15);
   }
 
   // イベント詳細1件
