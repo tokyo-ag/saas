@@ -819,10 +819,10 @@ export default async function ClubCmsPage({
             buttonBorderColor={reserveButtonBorderColor}
             className="mt-4"
           />
-        ) : page.reserveViewStyle !== 'card' ? (
+        ) : reserveActionStyle !== 'line' && page.reserveViewStyle !== 'card' ? (
           <ReservationButton
-            buttonLabel={reserveActionStyle === 'line' ? 'LINEで友達追加して予約する' : navLabels.reserve}
-            href={reserveActionStyle === 'line' ? lineReserveUrl : navReserveUrl}
+            buttonLabel={navLabels.reserve}
+            href={navReserveUrl}
             buttonBgColor={reserveButtonBgColor}
             buttonTextColor={reserveButtonTextColor}
             buttonBorderColor={reserveButtonBorderColor}
