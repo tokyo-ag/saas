@@ -36,8 +36,8 @@ export default function ArticleForm({
       })
       .catch(() => {});
   }, []);
-  const [isPillar, setIsPillar] = useState(initial?.isPillar ?? false);
-  const [pillarSlug, setPillarSlug] = useState(initial?.pillarSlug ?? '');
+  const isPillar = initial?.isPillar ?? false;
+  const pillarSlug = initial?.pillarSlug ?? '';
   const [targetKeyword, setTargetKeyword] = useState(initial?.targetKeyword ?? '');
   const [ctaLabel, setCtaLabel] = useState(initial?.ctaLabel ?? '');
   const [ctaHref, setCtaHref] = useState(initial?.ctaHref ?? '');
@@ -160,19 +160,6 @@ export default function ArticleForm({
                 <button type="button" onClick={() => removeAreaTag(tag)} className="text-[#06C755]/60 hover:text-[#06C755]">×</button>
               </span>
             ))}
-          </div>
-        )}
-      </div>
-
-      <div className="rounded-lg border border-gray-200 p-3 space-y-3">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" checked={isPillar} onChange={(e) => setIsPillar(e.target.checked)} className="accent-[#06C755]" />
-          <span className="text-sm font-medium text-gray-700">この記事をピラー（完全網羅記事）にする</span>
-        </label>
-        {!isPillar && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">所属するピラー記事のスラッグ</label>
-            <input value={pillarSlug} onChange={(e) => setPillarSlug(e.target.value)} className={`${inputClass} font-mono`} placeholder="例: tokyo-badminton-guide（任意）" />
           </div>
         )}
       </div>
