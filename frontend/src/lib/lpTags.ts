@@ -3,6 +3,7 @@ export const TENANT_TYPE_TAGS = ['インカレサークル', '学生団体', '�
 export const ACTIVITY_TAGS = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー'] as const;
 
 export const LOCATION_TAGS = [
+  '東京',
   '千代田区',
   '中央区',
   '港区',
