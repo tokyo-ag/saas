@@ -82,6 +82,7 @@ function ReservePageInner() {
 
   const requiresLevel = event?.levelEnabled;
   const hasProfile = !!(profile && profile.name && profile.grade && profile.gender && (!requiresLevel || profile.level));
+  const isLineMode = tenant?.reserveActionStyle === 'line' && !!tenant.reserveLineUrl;
 
   function restartLineAuth() {
     setError('LINE認証を更新しています。画面が切り替わらない場合は、LINEからもう一度開き直してください。');
@@ -116,6 +117,16 @@ function ReservePageInner() {
     async function init() {
       const tenantInfo = await api.liff.tenant(tenantId).catch(() => null);
       if (tenantInfo) setTenant(tenantInfo);
+
+      // LINE直通テナントはLIFFログイン自体が不要。認証なしで詳細だけ見せて、
+      // 最後のボタンでLINEに送る。
+      if (tenantInfo?.reserveActionStyle === 'line' && tenantInfo.reserveLineUrl) {
+        const ev = await api.liff.event(tenantId, eventId).catch(() => null);
+        if (ev) setEvent(ev);
+        setIsFriend(true);
+        setAuthStatus('ok');
+        return;
+      }
 
       // ── Step 1: LIFF初期化 ──
       const initOk = await initLiff();
@@ -341,7 +352,7 @@ function ReservePageInner() {
   }
 
   // ── ローディング / プロフィール未入力でのマイページ誘導中 ──
-  if (authStatus === 'loading' || (authStatus === 'ok' && isFriend === true && !hasProfile)) {
+  if (authStatus === 'loading' || (authStatus === 'ok' && isFriend === true && !hasProfile && !isLineMode)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-sm" style={{ color: accentColor }}>読み込み中...</div>
