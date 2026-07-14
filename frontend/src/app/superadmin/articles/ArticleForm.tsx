@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { OfficialArticle, OfficialArticleInput } from '@/lib/api';
 import BlockEditor, { Block, parseBodyToBlocks, blocksToBody } from './BlockEditor';
+import ArticlePreview from './ArticlePreview';
 
 const inputClass = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]';
 
@@ -72,6 +73,7 @@ export default function ArticleForm({
   }
 
   return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
     <form onSubmit={handleSubmit} className="space-y-5">
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">{error}</div>}
 
@@ -191,5 +193,18 @@ export default function ArticleForm({
         </button>
       </div>
     </form>
+
+    <div className="lg:sticky lg:top-4">
+      <p className="mb-2 text-xs font-bold text-gray-400">プレビュー</p>
+      <ArticlePreview
+        title={title}
+        category={category}
+        areaTags={areaTags}
+        targetKeyword={targetKeyword}
+        excerpt={excerpt}
+        blocks={blocks}
+      />
+    </div>
+    </div>
   );
 }
