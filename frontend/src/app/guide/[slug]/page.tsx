@@ -313,6 +313,7 @@ export async function generateMetadata({
 }
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
+const IMAGE_TEXT_RE = /^\{\{imagetext:([^|]*)\|(.*)\}\}$/;
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
 const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|(.*))?)?\}\}$/;
 const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
@@ -412,6 +413,22 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
     if (cta) {
       flushParagraph();
       nodes.push(<CtaBlock key={i} label={cta[1]} href={cta[2]} />);
+      i++;
+      continue;
+    }
+    const imageText = IMAGE_TEXT_RE.exec(line);
+    if (imageText) {
+      flushParagraph();
+      const [, url, encodedText] = imageText;
+      nodes.push(
+        <div key={i} className="my-6 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+          {url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={url} alt="" className="h-32 w-32 shrink-0 rounded-xl object-cover" />
+          )}
+          <p className="whitespace-pre-wrap text-[15px] leading-[1.75] text-[#333333] sm:text-base">{encodedText.replace(/\\n/g, '\n')}</p>
+        </div>,
+      );
       i++;
       continue;
     }

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { SEARCH_TAGS } from '@/lib/lpTags';
 
-export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'cta' | 'events' | 'circles';
+export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'imageText' | 'cta' | 'events' | 'circles';
 
 export type ListStyle = 'check' | 'bullet' | 'number';
 
@@ -23,12 +23,14 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   h3: '小見出し',
   list: 'リスト項目',
   image: '画像',
+  imageText: '画像＋テキスト（左画像）',
   cta: 'CTAボタン',
   events: 'サークルカード',
   circles: '団体カード',
 };
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
+const IMAGE_TEXT_RE = /^\{\{imagetext:([^|]*)\|(.*)\}\}$/;
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
 const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|(.*))?)?\}\}$/;
 const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
@@ -47,6 +49,7 @@ export function parseBodyToBlocks(body: string): Block[] {
     const line = raw.trim();
     if (!line) { blankBefore = true; continue; }
     const image = IMAGE_RE.exec(line);
+    const imageText = IMAGE_TEXT_RE.exec(line);
     const cta = CTA_RE.exec(line);
     const events = EVENTS_RE.exec(line);
     const circles = CIRCLES_RE.exec(line);
@@ -54,6 +57,8 @@ export function parseBodyToBlocks(body: string): Block[] {
       blocks.push({ id: newId(), type: 'events', text: events[1] ?? '', tag: events[2] || undefined });
     } else if (circles) {
       blocks.push({ id: newId(), type: 'circles', text: circles[1] ?? '' });
+    } else if (imageText) {
+      blocks.push({ id: newId(), type: 'imageText', text: imageText[2].replace(/\\n/g, '\n'), imageUrl: imageText[1] });
     } else if (cta) {
       blocks.push({ id: newId(), type: 'cta', text: cta[1], href: cta[2] });
     } else if (image) {
@@ -92,6 +97,7 @@ export function blocksToBody(blocks: Block[]): string {
     else if (block.type === 'h3') line = `### ${block.text}`;
     else if (block.type === 'list') line = `${LIST_PREFIX[block.listStyle ?? 'check']}${block.text}`;
     else if (block.type === 'image') line = `![${block.text}](${block.imageUrl ?? ''})`;
+    else if (block.type === 'imageText') line = `{{imagetext:${block.imageUrl ?? ''}|${block.text.replace(/\n/g, '\\n')}}}`;
     else if (block.type === 'cta') line = `{{cta:${block.text}|${block.href ?? ''}}}`;
     else if (block.type === 'events') {
       line = (block.text || block.tag) ? `{{events:${block.text ?? ''}${block.tag ? `|${block.tag}` : ''}}}` : '{{events}}';
@@ -155,7 +161,7 @@ export default function BlockEditor({
   }, [focusId, blocks]);
 
   function insertAt(index: number, type: BlockType) {
-    const block: Block = { id: newId(), type, text: '', imageUrl: type === 'image' ? '' : undefined };
+    const block: Block = { id: newId(), type, text: '', imageUrl: (type === 'image' || type === 'imageText') ? '' : undefined };
     const next = [...blocks];
     next.splice(index, 0, block);
     onChange(next);
@@ -224,6 +230,29 @@ export default function BlockEditor({
                 />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 {block.imageUrl && <img src={block.imageUrl} alt={block.text} className="max-h-32 rounded-md border border-gray-100 object-cover" />}
+              </div>
+            ) : block.type === 'imageText' ? (
+              <div className="space-y-2">
+                <input
+                  value={block.imageUrl ?? ''}
+                  onChange={(e) => updateBlock(block.id, { imageUrl: e.target.value })}
+                  placeholder="画像URL（左側に表示）"
+                  className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                />
+                <textarea
+                  value={block.text}
+                  onChange={(e) => updateBlock(block.id, { text: e.target.value })}
+                  rows={3}
+                  placeholder="右側に表示するテキスト"
+                  className="w-full resize-y rounded-md border border-gray-200 px-2.5 py-1.5 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                />
+                {block.imageUrl && (
+                  <div className="flex items-center gap-3 rounded-md border border-gray-100 bg-gray-50 p-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={block.imageUrl} alt="" className="h-16 w-16 shrink-0 rounded-md object-cover" />
+                    <p className="whitespace-pre-wrap text-xs text-gray-500">{block.text || '（テキスト未入力）'}</p>
+                  </div>
+                )}
               </div>
             ) : block.type === 'cta' ? (
               <div className="space-y-2">

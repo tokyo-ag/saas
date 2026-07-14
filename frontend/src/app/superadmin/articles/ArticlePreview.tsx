@@ -14,9 +14,9 @@ function deriveExcerpt(body: string): string {
       let line = raw.trim();
       if (!line) return '';
       if (/^#{1,6}\s/.test(line)) return ''; // heading lines shouldn't duplicate as excerpt/lead text
-      if (/^\{\{/.test(line)) return ''; // cta/events block markers
+      if (/^\{\{/.test(line)) return ''; // cta/events/circles block markers
       if (/^!\[.*?\]\(.*?\)$/.test(line)) return ''; // image lines
-      line = line.replace(/^-(?:b|n)?\s+/, '');
+      if (/^-(?:b|n)?\s/.test(line)) return ''; // list item fragments don't read as a coherent excerpt
       line = line.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
       line = line.replace(/[*_~`>|\\]/g, '');
       return line;
@@ -180,6 +180,17 @@ function BlockView({ block, category }: { block: Block; category: string }) {
     if (!block.imageUrl) return null;
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={block.imageUrl} alt={block.text} className="my-6 w-full rounded-xl border border-gray-100 object-cover" />;
+  }
+  if (block.type === 'imageText') {
+    return (
+      <div className="my-6 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+        {block.imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={block.imageUrl} alt="" className="h-32 w-32 shrink-0 rounded-xl object-cover" />
+        )}
+        <p className="whitespace-pre-wrap text-[15px] leading-[1.75] text-[#333333] sm:text-base">{block.text || ' '}</p>
+      </div>
+    );
   }
   if (block.type === 'cta') {
     return (

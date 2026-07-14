@@ -64,9 +64,9 @@ export class PublicController {
         let line = raw.trim();
         if (!line) return '';
         if (/^#{1,6}\s/.test(line)) return ''; // heading lines shouldn't duplicate as excerpt/lead text
-        if (/^\{\{/.test(line)) return ''; // cta/events block markers
+        if (/^\{\{/.test(line)) return ''; // cta/events/circles block markers
         if (/^!\[.*?\]\(.*?\)$/.test(line)) return ''; // image lines
-        line = line.replace(/^-(?:b|n)?\s+/, '');
+        if (/^-(?:b|n)?\s/.test(line)) return ''; // list item fragments don't read as a coherent excerpt
         line = line.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
         line = line.replace(/[*_~`>|\\]/g, '');
         return line;
