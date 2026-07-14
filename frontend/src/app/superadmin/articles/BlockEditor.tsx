@@ -2,6 +2,39 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { SEARCH_TAGS } from '@/lib/lpTags';
+import { UploadButton } from '@/components/admin/EventFormPrimitives';
+
+async function compressImage(file: File, maxBytes = 4 * 1024 * 1024): Promise<Blob> {
+  if (file.size <= maxBytes) return file;
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const quality = 0.8;
+      const canvas = document.createElement('canvas');
+      let { width, height } = img;
+      if (width > 1920) { height = Math.round(height * 1920 / width); width = 1920; }
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+      canvas.toBlob((blob) => resolve(blob ?? file), 'image/jpeg', quality);
+    };
+    img.src = url;
+  });
+}
+
+async function uploadFile(file: File): Promise<string> {
+  const compressed = await compressImage(file);
+  const ext = file.name.split('.').pop() ?? 'jpg';
+  const filename = `${Date.now()}.${ext}`;
+  const res = await fetch(`/api/upload?filename=${encodeURIComponent(filename)}`, {
+    method: 'POST',
+    body: compressed,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? 'アップロードに失敗しました');
+  return data.url as string;
+}
 
 export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'imageText' | 'cta' | 'events' | 'circles';
 
@@ -30,7 +63,8 @@ const BLOCK_LABELS: Record<BlockType, string> = {
 };
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
-const IMAGE_TEXT_RE = /^\{\{imagetext:([^|]*)\|(.*)\}\}$/;
+const LINKED_IMAGE_RE = /^\[!\[([^\]]*)\]\(([^)]+)\)\]\(([^)]+)\)$/;
+const IMAGE_TEXT_RE = /^\{\{imagetext:([^|]*)\|([^|]*)\|(.*)\}\}$/;
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
 const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|(.*))?)?\}\}$/;
 const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
@@ -48,6 +82,7 @@ export function parseBodyToBlocks(body: string): Block[] {
   for (const raw of lines) {
     const line = raw.trim();
     if (!line) { blankBefore = true; continue; }
+    const linkedImage = LINKED_IMAGE_RE.exec(line);
     const image = IMAGE_RE.exec(line);
     const imageText = IMAGE_TEXT_RE.exec(line);
     const cta = CTA_RE.exec(line);
@@ -58,7 +93,9 @@ export function parseBodyToBlocks(body: string): Block[] {
     } else if (circles) {
       blocks.push({ id: newId(), type: 'circles', text: circles[1] ?? '' });
     } else if (imageText) {
-      blocks.push({ id: newId(), type: 'imageText', text: imageText[2].replace(/\\n/g, '\n'), imageUrl: imageText[1] });
+      blocks.push({ id: newId(), type: 'imageText', text: imageText[3].replace(/\\n/g, '\n'), imageUrl: imageText[1], href: imageText[2] || undefined });
+    } else if (linkedImage) {
+      blocks.push({ id: newId(), type: 'image', text: linkedImage[1], imageUrl: linkedImage[2], href: linkedImage[3] });
     } else if (cta) {
       blocks.push({ id: newId(), type: 'cta', text: cta[1], href: cta[2] });
     } else if (image) {
@@ -96,8 +133,14 @@ export function blocksToBody(blocks: Block[]): string {
     if (block.type === 'h2') line = `## ${block.text}`;
     else if (block.type === 'h3') line = `### ${block.text}`;
     else if (block.type === 'list') line = `${LIST_PREFIX[block.listStyle ?? 'check']}${block.text}`;
-    else if (block.type === 'image') line = `![${block.text}](${block.imageUrl ?? ''})`;
-    else if (block.type === 'imageText') line = `{{imagetext:${block.imageUrl ?? ''}|${block.text.replace(/\n/g, '\\n')}}}`;
+    else if (block.type === 'image') {
+      line = block.href
+        ? `[![${block.text}](${block.imageUrl ?? ''})](${block.href})`
+        : `![${block.text}](${block.imageUrl ?? ''})`;
+    }
+    else if (block.type === 'imageText') {
+      line = `{{imagetext:${block.imageUrl ?? ''}|${block.href ?? ''}|${block.text.replace(/\n/g, '\\n')}}}`;
+    }
     else if (block.type === 'cta') line = `{{cta:${block.text}|${block.href ?? ''}}}`;
     else if (block.type === 'events') {
       line = (block.text || block.tag) ? `{{events:${block.text ?? ''}${block.tag ? `|${block.tag}` : ''}}}` : '{{events}}';
@@ -152,6 +195,8 @@ export default function BlockEditor({
 }) {
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [focusId, setFocusId] = useState<string | null>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState('');
 
   useEffect(() => {
     if (focusId && inputRefs.current[focusId]) {
@@ -201,6 +246,7 @@ export default function BlockEditor({
 
   return (
     <div className="space-y-2">
+      {uploadError && <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-600">{uploadError}</p>}
       <AddBlockButton onAdd={(type) => insertAt(0, type)} />
       {blocks.map((block, index) => (
         <div key={block.id}>
@@ -216,29 +262,47 @@ export default function BlockEditor({
 
             {block.type === 'image' ? (
               <div className="space-y-2">
-                <input
-                  value={block.imageUrl ?? ''}
-                  onChange={(e) => updateBlock(block.id, { imageUrl: e.target.value })}
-                  placeholder="画像URL"
-                  className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                {block.imageUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={block.imageUrl} alt={block.text} className="max-h-48 w-full rounded-md border border-gray-100 object-cover" />
+                )}
+                <UploadButton
+                  uploading={uploadingId === block.id}
+                  onUpload={async (file) => { const url = await uploadFile(file); updateBlock(block.id, { imageUrl: url }); }}
+                  setUploading={(v) => setUploadingId(v ? block.id : null)}
+                  setError={setUploadError}
                 />
+                {block.imageUrl && (
+                  <button type="button" onClick={() => updateBlock(block.id, { imageUrl: '' })} className="text-xs text-red-500 hover:underline">画像を削除</button>
+                )}
                 <input
                   value={block.text}
                   onChange={(e) => updateBlock(block.id, { text: e.target.value })}
                   placeholder="alt（画像の説明）"
                   className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
                 />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                {block.imageUrl && <img src={block.imageUrl} alt={block.text} className="max-h-32 rounded-md border border-gray-100 object-cover" />}
+                <input
+                  value={block.href ?? ''}
+                  onChange={(e) => updateBlock(block.id, { href: e.target.value })}
+                  placeholder="タップ時のリンク先URL（任意）"
+                  className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                />
               </div>
             ) : block.type === 'imageText' ? (
               <div className="space-y-2">
-                <input
-                  value={block.imageUrl ?? ''}
-                  onChange={(e) => updateBlock(block.id, { imageUrl: e.target.value })}
-                  placeholder="画像URL（左側に表示）"
-                  className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                {block.imageUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={block.imageUrl} alt="" className="h-32 w-32 rounded-md border border-gray-100 object-cover" />
+                )}
+                <UploadButton
+                  uploading={uploadingId === block.id}
+                  onUpload={async (file) => { const url = await uploadFile(file); updateBlock(block.id, { imageUrl: url }); }}
+                  setUploading={(v) => setUploadingId(v ? block.id : null)}
+                  setError={setUploadError}
                 />
+                {block.imageUrl && (
+                  <button type="button" onClick={() => updateBlock(block.id, { imageUrl: '' })} className="text-xs text-red-500 hover:underline">画像を削除</button>
+                )}
                 <textarea
                   value={block.text}
                   onChange={(e) => updateBlock(block.id, { text: e.target.value })}
@@ -246,13 +310,12 @@ export default function BlockEditor({
                   placeholder="右側に表示するテキスト"
                   className="w-full resize-y rounded-md border border-gray-200 px-2.5 py-1.5 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
                 />
-                {block.imageUrl && (
-                  <div className="flex items-center gap-3 rounded-md border border-gray-100 bg-gray-50 p-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={block.imageUrl} alt="" className="h-16 w-16 shrink-0 rounded-md object-cover" />
-                    <p className="whitespace-pre-wrap text-xs text-gray-500">{block.text || '（テキスト未入力）'}</p>
-                  </div>
-                )}
+                <input
+                  value={block.href ?? ''}
+                  onChange={(e) => updateBlock(block.id, { href: e.target.value })}
+                  placeholder="タップ時のリンク先URL（任意）"
+                  className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                />
               </div>
             ) : block.type === 'cta' ? (
               <div className="space-y-2">

@@ -313,7 +313,8 @@ export async function generateMetadata({
 }
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
-const IMAGE_TEXT_RE = /^\{\{imagetext:([^|]*)\|(.*)\}\}$/;
+const LINKED_IMAGE_RE = /^\[!\[([^\]]*)\]\(([^)]+)\)\]\(([^)]+)\)$/;
+const IMAGE_TEXT_RE = /^\{\{imagetext:([^|]*)\|([^|]*)\|(.*)\}\}$/;
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
 const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|(.*))?)?\}\}$/;
 const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
@@ -419,14 +420,29 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
     const imageText = IMAGE_TEXT_RE.exec(line);
     if (imageText) {
       flushParagraph();
-      const [, url, encodedText] = imageText;
+      const [, url, href, encodedText] = imageText;
+      const imgEl = url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={url} alt="" className="h-32 w-32 shrink-0 rounded-xl object-cover" />
+      );
       nodes.push(
         <div key={i} className="my-6 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-          {url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={url} alt="" className="h-32 w-32 shrink-0 rounded-xl object-cover" />
-          )}
+          {href ? <Link href={href}>{imgEl}</Link> : imgEl}
           <p className="whitespace-pre-wrap text-[15px] leading-[1.75] text-[#333333] sm:text-base">{encodedText.replace(/\\n/g, '\n')}</p>
+        </div>,
+      );
+      i++;
+      continue;
+    }
+    const linkedImage = LINKED_IMAGE_RE.exec(line);
+    if (linkedImage) {
+      flushParagraph();
+      nodes.push(
+        <div key={i} className="my-6">
+          <Link href={linkedImage[3]}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={linkedImage[2]} alt={linkedImage[1]} className="w-full rounded-xl border border-gray-100 object-cover" />
+          </Link>
         </div>,
       );
       i++;
