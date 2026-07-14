@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SEARCH_TAGS } from '@/lib/lpTags';
 
 export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'cta' | 'events' | 'circles';
@@ -144,11 +144,37 @@ export default function BlockEditor({
   blocks: Block[];
   onChange: (blocks: Block[]) => void;
 }) {
+  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [focusId, setFocusId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (focusId && inputRefs.current[focusId]) {
+      inputRefs.current[focusId]?.focus();
+      setFocusId(null);
+    }
+  }, [focusId, blocks]);
+
   function insertAt(index: number, type: BlockType) {
     const block: Block = { id: newId(), type, text: '', imageUrl: type === 'image' ? '' : undefined };
     const next = [...blocks];
     next.splice(index, 0, block);
     onChange(next);
+  }
+
+  function insertAfterOnEnter(e: React.KeyboardEvent, block: Block) {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const index = blocks.findIndex((b) => b.id === block.id);
+    const newBlock: Block = {
+      id: newId(),
+      type: block.type,
+      text: '',
+      listStyle: block.type === 'list' ? (block.listStyle ?? 'check') : undefined,
+    };
+    const next = [...blocks];
+    next.splice(index + 1, 0, newBlock);
+    onChange(next);
+    setFocusId(newBlock.id);
   }
 
   function updateBlock(id: string, patch: Partial<Block>) {
@@ -275,9 +301,11 @@ export default function BlockEditor({
             ) : block.type === 'list' ? (
               <div className="space-y-2">
                 <input
+                  ref={(el) => { inputRefs.current[block.id] = el; }}
                   value={block.text}
                   onChange={(e) => updateBlock(block.id, { text: e.target.value })}
-                  placeholder="リスト項目のテキスト"
+                  onKeyDown={(e) => insertAfterOnEnter(e, block)}
+                  placeholder="リスト項目のテキスト（Enterで次の項目を追加）"
                   className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
                 />
                 <div className="flex gap-1.5">
@@ -301,9 +329,11 @@ export default function BlockEditor({
               </div>
             ) : (
               <input
+                ref={(el) => { inputRefs.current[block.id] = el; }}
                 value={block.text}
                 onChange={(e) => updateBlock(block.id, { text: e.target.value })}
-                placeholder={block.type === 'h2' ? '見出しテキスト' : '小見出しテキスト'}
+                onKeyDown={(e) => insertAfterOnEnter(e, block)}
+                placeholder={block.type === 'h2' ? '見出しテキスト（Enterで次の見出しを追加）' : '小見出しテキスト（Enterで次の小見出しを追加）'}
                 className={`w-full rounded-md border border-gray-200 px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#06C755] ${
                   block.type === 'h2' ? 'text-lg font-bold' : 'text-base font-bold'
                 }`}
