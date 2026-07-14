@@ -56,16 +56,16 @@ function EventsBlockPreview({ category, heading, tag }: { category: string; head
   }, [eventCategory, tag]);
 
   if (!category) {
-    return <p className="rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">カテゴリを選択すると、該当イベントのプレビューが表示されます。</p>;
+    return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">カテゴリを選択すると、該当イベントのプレビューが表示されます。</p>;
   }
   if (!eventCategory) {
-    return <p className="rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」は活動種目カテゴリではないため、対象イベントがありません。</p>;
+    return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」は活動種目カテゴリではないため、対象イベントがありません。</p>;
   }
   if (events.length === 0) {
-    return <p className="rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」{tag ? `・「${tag}」` : ''}に一致する公開中のイベントが見つかりませんでした。</p>;
+    return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」{tag ? `・「${tag}」` : ''}に一致する公開中のイベントが見つかりませんでした。</p>;
   }
   return (
-    <div>
+    <div className="my-6">
       {heading && <p className="mb-2 text-base font-bold text-gray-950">{heading}</p>}
       <div className="flex gap-3 overflow-x-auto pb-1">
       {events.map((event) => {
@@ -103,13 +103,13 @@ function CirclesBlockPreview({ category, heading }: { category: string; heading:
   }, [category]);
 
   if (!category) {
-    return <p className="rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">カテゴリを選択すると、該当団体のプレビューが表示されます。</p>;
+    return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">カテゴリを選択すると、該当団体のプレビューが表示されます。</p>;
   }
   if (tenants.length === 0) {
-    return <p className="rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」に一致する団体が見つかりませんでした。</p>;
+    return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」に一致する団体が見つかりませんでした。</p>;
   }
   return (
-    <div>
+    <div className="my-6">
       {heading && <p className="mb-2 text-base font-bold text-gray-950">{heading}</p>}
       <div className="flex gap-2 overflow-x-auto pb-1">
         {tenants.map((tenant, index) => {
@@ -183,7 +183,7 @@ function BlockView({ block, category }: { block: Block; category: string }) {
   }
   if (block.type === 'cta') {
     return (
-      <div className="rounded-xl border border-[#06C755]/20 bg-[#06C755]/5 px-6 py-6">
+      <div className="my-6 rounded-xl border border-[#06C755]/20 bg-[#06C755]/5 px-6 py-6">
         <span className="inline-flex rounded-lg bg-[#06C755] px-5 py-3 text-sm font-bold text-white">
           {block.text || 'COMIUを見る'}
         </span>

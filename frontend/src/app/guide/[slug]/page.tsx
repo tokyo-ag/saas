@@ -148,7 +148,7 @@ function EventCardMini({ event }: { event: PublicArticleEvent }) {
 function EventsBlock({ events, heading }: { events: PublicArticleEvent[]; heading: string }) {
   if (events.length === 0) return null;
   return (
-    <div>
+    <div className="my-6">
       {heading && <h2 className="mb-3 text-lg font-bold text-gray-950">{heading}</h2>}
       <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {events.map((event) => <EventCardMini key={event.id} event={event} />)}
@@ -179,7 +179,7 @@ function CircleCardMini({ tenant, index }: { tenant: PublicArticleTenant; index:
 function CirclesBlock({ tenants, heading }: { tenants: PublicArticleTenant[]; heading: string }) {
   if (tenants.length === 0) return null;
   return (
-    <div>
+    <div className="my-6">
       {heading && <h2 className="mb-3 text-lg font-bold text-gray-950">{heading}</h2>}
       <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {tenants.map((tenant, index) => <CircleCardMini key={tenant.id} tenant={tenant} index={index} />)}
@@ -190,7 +190,7 @@ function CirclesBlock({ tenants, heading }: { tenants: PublicArticleTenant[]; he
 
 function CtaBlock({ label, href }: { label: string; href: string }) {
   return (
-    <div className="rounded-xl border border-[#06C755]/20 bg-[#06C755]/5 px-6 py-6">
+    <div className="my-6 rounded-xl border border-[#06C755]/20 bg-[#06C755]/5 px-6 py-6">
       <Link href={href || '/organizers'} className="inline-flex rounded-lg bg-[#06C755] px-5 py-3 text-sm font-bold text-white hover:opacity-90">
         {label || 'COMIUを見る'}
       </Link>
