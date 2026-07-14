@@ -71,7 +71,6 @@ export default function SuperadminPage() {
             <p className="text-xs sm:text-sm text-gray-500 mt-0.5">団体・ユーザーの管理</p>
           </div>
           <div className="flex items-center gap-3">
-          <Link href="/superadmin/lp-analytics" className="text-sm text-gray-500 hover:text-gray-700 shrink-0">LP分析</Link>
           <Link href="/superadmin/articles" className="text-sm text-gray-500 hover:text-gray-700 shrink-0">記事管理</Link>
           <Link href="/superadmin/support" className="text-sm text-gray-500 hover:text-gray-700 shrink-0">COMIU サポート</Link>
           {tab === 'tenants' ? (
