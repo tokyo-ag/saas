@@ -141,18 +141,20 @@ export default function SuperadminArticlesPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {shown.map((a) => (
-                    <div key={a.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-5">
+                  {shown.map((a) => {
+                    const isSelected = selected.has(a.id);
+                    return (
+                    <div
+                      key={a.id}
+                      onClick={() => toggleSelected(a.id)}
+                      className={`cursor-pointer rounded-xl border shadow-sm p-4 sm:p-5 transition ${
+                        isSelected ? 'border-[#06C755] bg-[#06C755]/5 ring-1 ring-[#06C755]' : 'bg-white border-gray-200'
+                      }`}
+                    >
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3 min-w-0">
-                        <input
-                          type="checkbox"
-                          checked={selected.has(a.id)}
-                          onChange={() => toggleSelected(a.id)}
-                          className="mt-1 shrink-0 accent-[#06C755]"
-                        />
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
+                            {isSelected && <span className="text-[#06C755] text-xs font-bold">✓ 選択中</span>}
                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${a.status === 'published' ? 'bg-[#06C755]/10 text-[#06C755]' : 'bg-gray-100 text-gray-500'}`}>
                               {a.status === 'published' ? '公開中' : '下書き'}
                             </span>
@@ -162,9 +164,8 @@ export default function SuperadminArticlesPage() {
                           <p className="text-xs font-mono text-gray-400 mt-0.5 truncate">/guide/{a.slug}</p>
                           {a.targetKeyword && <p className="text-xs text-gray-400 mt-1">狙うKW: {a.targetKeyword}</p>}
                         </div>
-                        </div>
                       </div>
-                      <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100 flex-wrap">
+                      <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100 flex-wrap" onClick={(e) => e.stopPropagation()}>
                         {a.status === 'published' && (
                           <a href={`/guide/${a.slug}`} target="_blank" rel="noreferrer" className="text-sm text-[#06C755] hover:underline">記事を見る →</a>
                         )}
@@ -173,7 +174,8 @@ export default function SuperadminArticlesPage() {
                         <span className="text-xs text-gray-300 ml-auto">更新: {new Date(a.updatedAt).toLocaleDateString('ja-JP')}</span>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </>
