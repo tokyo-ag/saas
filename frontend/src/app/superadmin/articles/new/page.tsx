@@ -14,18 +14,16 @@ export default function NewArticlePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA]">
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-4 sm:py-5">
-        <div className="max-w-3xl mx-auto flex items-center gap-3">
+    <div className="flex min-h-screen flex-col bg-[#F7F8FA] lg:h-screen">
+      <div className="shrink-0 bg-white border-b border-gray-200 px-4 sm:px-8 py-4 sm:py-5">
+        <div className="flex items-center gap-3">
           <Link href="/superadmin/articles" className="text-gray-400 hover:text-gray-600 text-sm">← 戻る</Link>
           <h1 className="text-lg sm:text-xl font-bold text-gray-900">新規記事を作成</h1>
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-8 py-4 sm:py-6">
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 sm:p-7">
-          <ArticleForm onSubmit={handleSubmit} submitLabel="作成する" />
-        </div>
+      <div className="lg:min-h-0 lg:flex-1">
+        <ArticleForm onSubmit={handleSubmit} submitLabel="作成する" />
       </div>
     </div>
   );

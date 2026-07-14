@@ -73,8 +73,8 @@ export default function ArticleForm({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <div className="flex flex-col lg:h-full lg:flex-row">
+    <form onSubmit={handleSubmit} className="space-y-5 bg-white px-4 py-6 sm:px-8 lg:h-full lg:w-1/2 lg:overflow-y-auto">
       {error && <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">{error}</div>}
 
       <div>
@@ -194,7 +194,7 @@ export default function ArticleForm({
       </div>
     </form>
 
-    <div className="lg:sticky lg:top-4">
+    <div className="border-t border-gray-200 bg-[#F7F8FA] px-4 py-6 sm:px-8 lg:h-full lg:w-1/2 lg:overflow-y-auto lg:border-l lg:border-t-0">
       <p className="mb-2 text-xs font-bold text-gray-400">プレビュー</p>
       <ArticlePreview
         title={title}
