@@ -8,17 +8,22 @@ import { ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
 import { Block, blocksToBody } from './BlockEditor';
 
 function deriveExcerpt(body: string): string {
-  return body
-    .replace(/\{\{cta:[^}]*\}\}/g, '')
-    .replace(/\{\{events(?::[^}]*)?\}\}/g, '')
-    .replace(/!\[.*?\]\(.*?\)/g, '')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/#{1,6}\s*/g, '')
-    .replace(/[*_~`>|\\]/g, '')
-    .replace(/^[-*+]\s+/gm, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 120);
+  const text = body
+    .split('\n')
+    .map((raw) => {
+      let line = raw.trim();
+      if (!line) return '';
+      if (/^#{1,6}\s/.test(line)) return ''; // heading lines shouldn't duplicate as excerpt/lead text
+      if (/^\{\{/.test(line)) return ''; // cta/events block markers
+      if (/^!\[.*?\]\(.*?\)$/.test(line)) return ''; // image lines
+      line = line.replace(/^-(?:b|n)?\s+/, '');
+      line = line.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+      line = line.replace(/[*_~`>|\\]/g, '');
+      return line;
+    })
+    .filter(Boolean)
+    .join(' ');
+  return text.replace(/\s+/g, ' ').trim().slice(0, 120);
 }
 
 function fmtDate(dateStr: string) {
