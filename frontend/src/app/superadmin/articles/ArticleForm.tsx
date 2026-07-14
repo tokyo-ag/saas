@@ -154,7 +154,6 @@ export default function ArticleForm({
         category={category}
         areaTags={areaTags}
         targetKeyword={targetKeyword}
-        excerpt={excerpt}
         blocks={blocks}
       />
     </div>

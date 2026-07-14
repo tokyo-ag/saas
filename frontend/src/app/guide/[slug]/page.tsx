@@ -321,7 +321,7 @@ const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
 
 function CheckBullet() {
   return (
-    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className="mt-[3px] shrink-0">
+    <svg width="24" height="24" viewBox="0 0 20 20" fill="none" className="mt-[1px] shrink-0">
       <circle cx="10" cy="10" r="10" fill="#06C755" fillOpacity="0.15" />
       <path d="M6 10.2l2.6 2.6L14 7.2" stroke="#06C755" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
@@ -332,11 +332,11 @@ type ListStyle = 'check' | 'bullet' | 'number';
 
 function ListMarker({ listStyle, index }: { listStyle: ListStyle; index: number }) {
   if (listStyle === 'bullet') {
-    return <span className="mt-[1px] w-[18px] shrink-0 text-center text-lg leading-none text-[#06C755]">・</span>;
+    return <span className="w-[24px] shrink-0 text-center text-2xl leading-none text-[#06C755]">・</span>;
   }
   if (listStyle === 'number') {
     return (
-      <span className="mt-[1px] flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-[#06C755]/15 text-[11px] font-bold text-[#06C755]">
+      <span className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full bg-[#06C755]/15 text-sm font-bold text-[#06C755]">
         {index}
       </span>
     );
@@ -386,7 +386,7 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
       nodes.push(
         <ul key={i} className="my-4 space-y-2">
           {group.map((item, itemIndex) => (
-            <li key={itemIndex} className="flex items-start gap-2 pl-1 text-[15px] leading-[1.75] text-[#333333] sm:text-base">
+            <li key={itemIndex} className="flex items-center gap-2.5 pl-1 text-[15px] font-bold leading-[1.75] text-[#333333] sm:text-base">
               <ListMarker listStyle={item.listStyle} index={itemIndex + 1} />
               <span className="whitespace-pre-wrap">{item.text}</span>
             </li>
@@ -594,7 +594,6 @@ export default async function GuideArticlePage({
               {article.targetKeyword && <span className="text-xs text-gray-400">{article.targetKeyword}</span>}
             </div>
             <h1 className="mt-4 text-3xl font-bold leading-tight text-gray-950">{article.title}</h1>
-            {article.excerpt && <p className="mt-4 text-sm leading-7 text-gray-500">{article.excerpt}</p>}
             <div className="my-8 h-px bg-gray-100" />
             <BodyRenderer body={article.body} eventsByTag={eventsByTag} circles={circles} />
           </div>

@@ -5,32 +5,7 @@ import { api, API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import { ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
-import { Block, blocksToBody } from './BlockEditor';
-
-function isNonParagraphLine(line: string): boolean {
-  return (
-    /^#{1,6}\s/.test(line) || // heading
-    /^\{\{/.test(line) || // cta/events/circles block markers
-    /^!\[.*?\]\(.*?\)$/.test(line) || // image
-    /^\[!\[.*?\]\(.*?\)\]\(.*?\)$/.test(line) || // linked image
-    /^-(?:b|n)?\s/.test(line) // list item
-  );
-}
-
-function deriveExcerpt(body: string): string {
-  // Only the first paragraph is used, never concatenated with later paragraphs -
-  // otherwise the excerpt ends up repeating content that also appears in full further down.
-  const collected: string[] = [];
-  for (const raw of body.split('\n')) {
-    const line = raw.trim();
-    if (!line || isNonParagraphLine(line)) {
-      if (collected.length > 0) break;
-      continue;
-    }
-    collected.push(line.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[*_~`>|\\]/g, ''));
-  }
-  return collected.join(' ').replace(/\s+/g, ' ').trim().slice(0, 120);
-}
+import { Block } from './BlockEditor';
 
 function fmtDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('ja-JP', {
@@ -142,7 +117,7 @@ function CirclesBlockPreview({ category, heading }: { category: string; heading:
 
 function CheckBullet() {
   return (
-    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className="mt-[3px] shrink-0">
+    <svg width="24" height="24" viewBox="0 0 20 20" fill="none" className="mt-[1px] shrink-0">
       <circle cx="10" cy="10" r="10" fill="#06C755" fillOpacity="0.15" />
       <path d="M6 10.2l2.6 2.6L14 7.2" stroke="#06C755" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
@@ -151,11 +126,11 @@ function CheckBullet() {
 
 function ListMarker({ listStyle, index }: { listStyle?: Block['listStyle']; index: number }) {
   if (listStyle === 'bullet') {
-    return <span className="mt-[1px] w-[18px] shrink-0 text-center text-lg leading-none text-[#06C755]">・</span>;
+    return <span className="w-[24px] shrink-0 text-center text-2xl leading-none text-[#06C755]">・</span>;
   }
   if (listStyle === 'number') {
     return (
-      <span className="mt-[1px] flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-[#06C755]/15 text-[11px] font-bold text-[#06C755]">
+      <span className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full bg-[#06C755]/15 text-sm font-bold text-[#06C755]">
         {index}
       </span>
     );
@@ -234,7 +209,7 @@ function renderBlocks(blocks: Block[], category: string) {
       nodes.push(
         <ul key={group[0].id} className="my-4 space-y-2">
           {group.map((b, idx) => (
-            <li key={b.id} className="flex items-start gap-2 pl-1 text-[15px] leading-[1.75] text-[#333333] sm:text-base">
+            <li key={b.id} className="flex items-center gap-2.5 pl-1 text-[15px] font-bold leading-[1.75] text-[#333333] sm:text-base">
               <ListMarker listStyle={b.listStyle} index={idx + 1} />
               <span className="whitespace-pre-wrap">{b.text || 'リスト項目'}</span>
             </li>
@@ -254,17 +229,14 @@ export default function ArticlePreview({
   category,
   areaTags,
   targetKeyword,
-  excerpt,
   blocks,
 }: {
   title: string;
   category: string;
   areaTags: string[];
   targetKeyword: string;
-  excerpt: string;
   blocks: Block[];
 }) {
-  const effectiveExcerpt = excerpt || deriveExcerpt(blocksToBody(blocks));
   return (
     <div className="rounded-xl border border-gray-200 bg-white px-6 py-8 shadow-sm sm:px-9">
       <div className="flex flex-wrap items-center gap-2">
@@ -275,7 +247,6 @@ export default function ArticlePreview({
         {targetKeyword && <span className="text-xs text-gray-400">{targetKeyword}</span>}
       </div>
       <h1 className="mt-4 text-3xl font-bold leading-tight text-gray-950">{title || '（タイトル未入力）'}</h1>
-      {effectiveExcerpt && <p className="mt-4 text-sm leading-7 text-gray-500">{effectiveExcerpt}</p>}
       <div className="my-8 h-px bg-gray-100" />
       <div>
         {blocks.length === 0 ? (
