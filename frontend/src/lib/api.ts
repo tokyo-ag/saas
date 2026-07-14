@@ -259,7 +259,8 @@ export const api = {
       const qs = params.toString();
       return request<PublicEvent[]>(`/public/events${qs ? `?${qs}` : ''}`);
     },
-    tenants: () => request<PublicTenant[]>('/public/tenants'),
+    tenants: (activityTag?: string) =>
+      request<PublicTenant[]>(`/public/tenants${activityTag ? `?activityTag=${encodeURIComponent(activityTag)}` : ''}`),
     tenant: (tenantCode: string) => request<PublicTenant>(`/public/tenants/${tenantCode}`),
     sitemapPages: () =>
       request<PublicSitemapPage[]>(`/public/sitemap-pages?t=${Date.now()}`, {

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { SEARCH_TAGS } from '@/lib/lpTags';
 
-export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'cta' | 'events';
+export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'cta' | 'events' | 'circles';
 
 export type ListStyle = 'check' | 'bullet' | 'number';
 
@@ -25,11 +25,13 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   image: '画像',
   cta: 'CTAボタン',
   events: 'サークルカード',
+  circles: '団体カード',
 };
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
 const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|(.*))?)?\}\}$/;
+const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
 
 function newId() {
   return Math.random().toString(36).slice(2, 10);
@@ -47,8 +49,11 @@ export function parseBodyToBlocks(body: string): Block[] {
     const image = IMAGE_RE.exec(line);
     const cta = CTA_RE.exec(line);
     const events = EVENTS_RE.exec(line);
+    const circles = CIRCLES_RE.exec(line);
     if (events) {
       blocks.push({ id: newId(), type: 'events', text: events[1] ?? '', tag: events[2] || undefined });
+    } else if (circles) {
+      blocks.push({ id: newId(), type: 'circles', text: circles[1] ?? '' });
     } else if (cta) {
       blocks.push({ id: newId(), type: 'cta', text: cta[1], href: cta[2] });
     } else if (image) {
@@ -91,6 +96,7 @@ export function blocksToBody(blocks: Block[]): string {
     else if (block.type === 'events') {
       line = (block.text || block.tag) ? `{{events:${block.text ?? ''}${block.tag ? `|${block.tag}` : ''}}}` : '{{events}}';
     }
+    else if (block.type === 'circles') line = block.text ? `{{circles:${block.text}}}` : '{{circles}}';
     else line = block.text;
     parts.push(line);
   });
@@ -244,6 +250,18 @@ export default function BlockEditor({
                 </div>
                 <p className="rounded-md bg-gray-50 px-2.5 py-2 text-xs text-gray-500">
                   記事のカテゴリ（と選んだタグ）に応じて、COMIUに掲載中のイベントカードをここに自動で表示します。
+                </p>
+              </div>
+            ) : block.type === 'circles' ? (
+              <div className="space-y-2">
+                <input
+                  value={block.text}
+                  onChange={(e) => updateBlock(block.id, { text: e.target.value })}
+                  placeholder="見出し・説明（任意） 例: 東京の注目バドミントン団体"
+                  className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                />
+                <p className="rounded-md bg-gray-50 px-2.5 py-2 text-xs text-gray-500">
+                  記事のカテゴリに応じて、COMIUに登録されている団体をアクセス数順にここに自動で表示します。
                 </p>
               </div>
             ) : block.type === 'paragraph' ? (

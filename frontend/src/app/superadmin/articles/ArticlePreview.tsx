@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { api, API_URL, PublicEvent } from '@/lib/api';
+import { api, API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import { ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
@@ -92,6 +92,48 @@ function EventsBlockPreview({ category, heading, tag }: { category: string; head
   );
 }
 
+function CirclesBlockPreview({ category, heading }: { category: string; heading: string }) {
+  const [tenants, setTenants] = useState<PublicTenant[]>([]);
+
+  useEffect(() => {
+    if (!category) { setTenants([]); return; }
+    let active = true;
+    api.public.tenants(category).then((list) => { if (active) setTenants(list.slice(0, 8)); }).catch(() => { if (active) setTenants([]); });
+    return () => { active = false; };
+  }, [category]);
+
+  if (!category) {
+    return <p className="rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">カテゴリを選択すると、該当団体のプレビューが表示されます。</p>;
+  }
+  if (tenants.length === 0) {
+    return <p className="rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」に一致する団体が見つかりませんでした。</p>;
+  }
+  return (
+    <div>
+      {heading && <p className="mb-2 text-base font-bold text-gray-950">{heading}</p>}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {tenants.map((tenant, index) => {
+          const displayName = tenant.lineDisplayName ?? tenant.name;
+          return (
+            <div key={tenant.id} className="relative flex w-36 shrink-0 flex-col items-center gap-2 rounded-xl bg-white p-3" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+              <span className="absolute left-3 top-2 text-xs font-bold text-[#06C755]">No.{index + 1}</span>
+              {tenant.linePictureUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={tenant.linePictureUrl} alt={displayName} className="mt-3 h-14 w-14 rounded-full border-2 border-gray-100 object-cover" />
+              ) : (
+                <div className="mt-3 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#06C755] to-[#047a35]">
+                  <span className="text-lg font-bold text-white">{displayName.slice(0, 1)}</span>
+                </div>
+              )}
+              <p className="line-clamp-2 text-center text-[12px] font-semibold leading-snug text-gray-800">{displayName}</p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function CheckBullet() {
   return (
     <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className="mt-[3px] shrink-0">
@@ -150,6 +192,9 @@ function BlockView({ block, category }: { block: Block; category: string }) {
   }
   if (block.type === 'events') {
     return <EventsBlockPreview category={category} heading={block.text} tag={block.tag} />;
+  }
+  if (block.type === 'circles') {
+    return <CirclesBlockPreview category={category} heading={block.text} />;
   }
   return <ParagraphText text={block.text} />;
 }

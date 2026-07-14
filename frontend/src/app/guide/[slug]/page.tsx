@@ -40,6 +40,14 @@ type PublicArticleEvent = {
   imageUrl?: string | null;
 };
 
+type PublicArticleTenant = {
+  id: string;
+  code?: string | null;
+  name: string;
+  lineDisplayName?: string | null;
+  linePictureUrl?: string | null;
+};
+
 async function fetchArticle(slug: string): Promise<OfficialArticle | null> {
   try {
     const res = await fetch(`${API_URL}/api/public/official-articles/${slug}`, { next: { revalidate } });
@@ -81,6 +89,17 @@ function extractEventsTags(body: string): (string | undefined)[] {
     if (match) tags.add(match[2] || undefined);
   }
   return Array.from(tags);
+}
+
+async function fetchCircles(category?: string | null): Promise<PublicArticleTenant[]> {
+  if (!category) return [];
+  try {
+    const res = await fetch(`${API_URL}/api/public/tenants?activityTag=${encodeURIComponent(category)}`, { next: { revalidate } });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
 }
 
 function imgSrc(url: string | null | undefined) {
@@ -133,6 +152,37 @@ function EventsBlock({ events, heading }: { events: PublicArticleEvent[]; headin
       {heading && <h2 className="mb-3 text-lg font-bold text-gray-950">{heading}</h2>}
       <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {events.map((event) => <EventCardMini key={event.id} event={event} />)}
+      </div>
+    </div>
+  );
+}
+
+function CircleCardMini({ tenant, index }: { tenant: PublicArticleTenant; index: number }) {
+  const displayName = tenant.lineDisplayName ?? tenant.name;
+  const href = tenant.code ? `/clubs/${tenant.code}` : `/liff/${tenant.id}`;
+  return (
+    <Link href={href} className="relative flex w-36 shrink-0 flex-col items-center gap-2 rounded-xl bg-white p-3" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+      <span className="absolute left-3 top-2 text-xs font-bold text-[#06C755]">No.{index + 1}</span>
+      {tenant.linePictureUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={tenant.linePictureUrl} alt={displayName} className="mt-3 h-14 w-14 rounded-full border-2 border-gray-100 object-cover" />
+      ) : (
+        <div className="mt-3 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#06C755] to-[#047a35]">
+          <span className="text-lg font-bold text-white">{displayName.slice(0, 1)}</span>
+        </div>
+      )}
+      <p className="line-clamp-2 text-center text-[12px] font-semibold leading-snug text-gray-800">{displayName}</p>
+    </Link>
+  );
+}
+
+function CirclesBlock({ tenants, heading }: { tenants: PublicArticleTenant[]; heading: string }) {
+  if (tenants.length === 0) return null;
+  return (
+    <div>
+      {heading && <h2 className="mb-3 text-lg font-bold text-gray-950">{heading}</h2>}
+      <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {tenants.map((tenant, index) => <CircleCardMini key={tenant.id} tenant={tenant} index={index} />)}
       </div>
     </div>
   );
@@ -265,6 +315,7 @@ export async function generateMetadata({
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
 const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|(.*))?)?\}\}$/;
+const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
 
 function CheckBullet() {
   return (
@@ -293,7 +344,7 @@ function ListMarker({ listStyle, index }: { listStyle: ListStyle; index: number 
 
 const LIST_LINE_RE = /^-(b|n)? (.*)$/;
 
-function BodyRenderer({ body, eventsByTag }: { body: string; eventsByTag: Map<string, PublicArticleEvent[]> }) {
+function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTag: Map<string, PublicArticleEvent[]>; circles: PublicArticleTenant[] }) {
   const lines = body.split('\n');
   const nodes: ReactNode[] = [];
   let i = 0;
@@ -350,6 +401,13 @@ function BodyRenderer({ body, eventsByTag }: { body: string; eventsByTag: Map<st
       i++;
       continue;
     }
+    const circlesMatch = CIRCLES_RE.exec(line);
+    if (circlesMatch) {
+      flushParagraph();
+      nodes.push(<CirclesBlock key={i} tenants={circles} heading={circlesMatch[1] ?? ''} />);
+      i++;
+      continue;
+    }
     const cta = CTA_RE.exec(line);
     if (cta) {
       flushParagraph();
@@ -402,11 +460,12 @@ export default async function GuideArticlePage({
   ]);
   if (!article) notFound();
   const eventsTags = extractEventsTags(article.body);
-  const eventsByTag = new Map<string, PublicArticleEvent[]>(
-    await Promise.all(
-      eventsTags.map(async (tag) => [tag ?? '', await fetchCategoryEvents(article.category, tag)] as const),
-    ),
-  );
+  const hasCirclesBlock = /\{\{circles/.test(article.body);
+  const [eventsByTagEntries, circles] = await Promise.all([
+    Promise.all(eventsTags.map(async (tag) => [tag ?? '', await fetchCategoryEvents(article.category, tag)] as const)),
+    hasCirclesBlock ? fetchCircles(article.category) : Promise.resolve([]),
+  ]);
+  const eventsByTag = new Map<string, PublicArticleEvent[]>(eventsByTagEntries);
   const hasInlineCta = /\{\{cta:/.test(article.body);
 
   const articleUrl = `${SITE_URL}/guide/${slug}`;
@@ -504,7 +563,7 @@ export default async function GuideArticlePage({
             <h1 className="mt-4 text-3xl font-bold leading-tight text-gray-950">{article.title}</h1>
             {article.excerpt && <p className="mt-4 text-sm leading-7 text-gray-500">{article.excerpt}</p>}
             <div className="my-8 h-px bg-gray-100" />
-            <BodyRenderer body={article.body} eventsByTag={eventsByTag} />
+            <BodyRenderer body={article.body} eventsByTag={eventsByTag} circles={circles} />
           </div>
 
           {!hasInlineCta && (
