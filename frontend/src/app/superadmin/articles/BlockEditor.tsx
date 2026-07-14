@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 
-export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image';
+export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'cta' | 'events';
 
 export type Block = {
   id: string;
   type: BlockType;
   text: string;
   imageUrl?: string;
+  href?: string;
 };
 
 const BLOCK_LABELS: Record<BlockType, string> = {
@@ -17,9 +18,13 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   h3: '小見出し',
   list: 'リスト項目',
   image: '画像',
+  cta: 'CTAボタン',
+  events: 'サークルカード',
 };
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
+const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
+const EVENTS_MARKER = '{{events}}';
 
 function newId() {
   return Math.random().toString(36).slice(2, 10);
@@ -32,7 +37,12 @@ export function parseBodyToBlocks(body: string): Block[] {
     const line = raw.trim();
     if (!line) continue;
     const image = IMAGE_RE.exec(line);
-    if (image) {
+    const cta = CTA_RE.exec(line);
+    if (line === EVENTS_MARKER) {
+      blocks.push({ id: newId(), type: 'events', text: '' });
+    } else if (cta) {
+      blocks.push({ id: newId(), type: 'cta', text: cta[1], href: cta[2] });
+    } else if (image) {
       blocks.push({ id: newId(), type: 'image', text: image[1], imageUrl: image[2] });
     } else if (line.startsWith('### ')) {
       blocks.push({ id: newId(), type: 'h3', text: line.replace(/^###\s+/, '') });
@@ -58,6 +68,8 @@ export function blocksToBody(blocks: Block[]): string {
     else if (block.type === 'h3') line = `### ${block.text}`;
     else if (block.type === 'list') line = `- ${block.text}`;
     else if (block.type === 'image') line = `![${block.text}](${block.imageUrl ?? ''})`;
+    else if (block.type === 'cta') line = `{{cta:${block.text}|${block.href ?? ''}}}`;
+    else if (block.type === 'events') line = EVENTS_MARKER;
     else line = block.text;
     parts.push(line);
   });
@@ -160,6 +172,25 @@ export default function BlockEditor({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 {block.imageUrl && <img src={block.imageUrl} alt={block.text} className="max-h-32 rounded-md border border-gray-100 object-cover" />}
               </div>
+            ) : block.type === 'cta' ? (
+              <div className="space-y-2">
+                <input
+                  value={block.text}
+                  onChange={(e) => updateBlock(block.id, { text: e.target.value })}
+                  placeholder="ボタンラベル 例: COMIUを無料で試す"
+                  className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                />
+                <input
+                  value={block.href ?? ''}
+                  onChange={(e) => updateBlock(block.id, { href: e.target.value })}
+                  placeholder="リンク先 例: /register"
+                  className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                />
+              </div>
+            ) : block.type === 'events' ? (
+              <p className="rounded-md bg-gray-50 px-2.5 py-2 text-xs text-gray-500">
+                記事のカテゴリに応じて、COMIUに掲載中のイベントカードをここに自動で表示します。
+              </p>
             ) : block.type === 'paragraph' ? (
               <textarea
                 value={block.text}

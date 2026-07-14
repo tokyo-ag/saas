@@ -38,9 +38,7 @@ export default function ArticleForm({
   }, []);
   const isPillar = initial?.isPillar ?? false;
   const pillarSlug = initial?.pillarSlug ?? '';
-  const [targetKeyword, setTargetKeyword] = useState(initial?.targetKeyword ?? '');
-  const [ctaLabel, setCtaLabel] = useState(initial?.ctaLabel ?? '');
-  const [ctaHref, setCtaHref] = useState(initial?.ctaHref ?? '');
+  const targetKeyword = initial?.targetKeyword ?? '';
   const [ogImageUrl, setOgImageUrl] = useState(initial?.ogImageUrl ?? '');
   const [status, setStatus] = useState<'draft' | 'published'>(initial?.status ?? 'draft');
   const [saving, setSaving] = useState(false);
@@ -75,8 +73,6 @@ export default function ArticleForm({
         isPillar,
         pillarSlug: isPillar ? undefined : pillarSlug.trim() || undefined,
         targetKeyword: targetKeyword.trim() || undefined,
-        ctaLabel: ctaLabel.trim() || undefined,
-        ctaHref: ctaHref.trim() || undefined,
         ogImageUrl: ogImageUrl.trim() || undefined,
         status,
       });
@@ -101,23 +97,17 @@ export default function ArticleForm({
         <input maxLength={120} value={slug} onChange={(e) => setSlug(e.target.value)} className={`${inputClass} font-mono`} placeholder="空欄でタイトルから自動生成" />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">カテゴリ</label>
-          <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputClass}>
-            <option value="">未選択</option>
-            <optgroup label="活動種目">
-              {ACTIVITY_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </optgroup>
-            <optgroup label="団体タイプ">
-              {TYPE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </optgroup>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">狙うキーワード</label>
-          <input maxLength={120} value={targetKeyword} onChange={(e) => setTargetKeyword(e.target.value)} className={inputClass} placeholder="例: 東京 バドミントンサークル" />
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">カテゴリ</label>
+        <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputClass}>
+          <option value="">未選択</option>
+          <optgroup label="活動種目">
+            {ACTIVITY_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </optgroup>
+          <optgroup label="団体タイプ">
+            {TYPE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </optgroup>
+        </select>
       </div>
 
       <div>
@@ -171,19 +161,8 @@ export default function ArticleForm({
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">本文 <span className="text-red-500">*</span></label>
-        <p className="text-xs text-gray-400 mb-1.5">「＋」でブロックを追加し、見出し・段落・リスト・画像を組み立てます。</p>
+        <p className="text-xs text-gray-400 mb-1.5">「＋」でブロックを追加し、見出し・段落・リスト・画像・CTAボタン・サークルカードを組み立てます。</p>
         <BlockEditor blocks={blocks} onChange={setBlocks} />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">CTAラベル</label>
-          <input maxLength={80} value={ctaLabel} onChange={(e) => setCtaLabel(e.target.value)} className={inputClass} placeholder="例: COMIUを無料で試す" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">CTAリンク先</label>
-          <input maxLength={500} value={ctaHref} onChange={(e) => setCtaHref(e.target.value)} className={inputClass} placeholder="/register" />
-        </div>
       </div>
 
       <div>

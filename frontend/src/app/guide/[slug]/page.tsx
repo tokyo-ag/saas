@@ -27,12 +27,15 @@ type OfficialArticle = {
 
 type OfficialArticleSummary = Omit<OfficialArticle, 'body'>;
 
-type PublicCircle = {
+type PublicArticleEvent = {
   id: string;
-  code: string | null;
-  name: string;
-  lineDisplayName?: string | null;
-  linePictureUrl?: string | null;
+  tenantCode?: string | null;
+  title: string;
+  heldAt: string;
+  price: number;
+  priceMale?: number | null;
+  priceFemale?: number | null;
+  imageUrl?: string | null;
 };
 
 async function fetchArticle(slug: string): Promise<OfficialArticle | null> {
@@ -55,15 +58,77 @@ async function fetchArticleSummaries(): Promise<OfficialArticleSummary[]> {
   }
 }
 
-async function fetchMatchingCircles(category?: string | null): Promise<PublicCircle[]> {
+async function fetchCategoryEvents(category?: string | null): Promise<PublicArticleEvent[]> {
   if (!category) return [];
   try {
-    const res = await fetch(`${API_URL}/api/public/tenants?activityTag=${encodeURIComponent(category)}`, { next: { revalidate } });
+    const res = await fetch(`${API_URL}/api/public/events?category=${encodeURIComponent(category)}`, { next: { revalidate } });
     if (!res.ok) return [];
     return res.json();
   } catch {
     return [];
   }
+}
+
+function imgSrc(url: string | null | undefined) {
+  if (!url) return '/defaults/events/default.webp';
+  return url.startsWith('http') ? url : `${API_URL}${url}`;
+}
+
+function eventPriceLabel(event: PublicArticleEvent) {
+  if (event.priceMale != null && event.priceFemale != null) {
+    return `¥${Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜`;
+  }
+  return event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
+}
+
+function eventDateLabel(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('ja-JP', {
+    month: 'numeric',
+    day: 'numeric',
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Tokyo',
+  });
+}
+
+function EventCardMini({ event }: { event: PublicArticleEvent }) {
+  const href = event.tenantCode ? `/e/${event.tenantCode}/${event.id}` : '/';
+  return (
+    <Link href={href} className="relative w-28 shrink-0 overflow-hidden rounded-xl bg-white" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+      <div className="relative" style={{ aspectRatio: '4/5' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={imgSrc(event.imageUrl)} alt={event.title} className="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 px-2 pb-2">
+          <p className="mb-1 line-clamp-2 text-[11px] font-bold leading-snug text-white" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>{event.title}</p>
+          <div className="flex items-center justify-between gap-1">
+            <span className="truncate text-[9px] text-white/80">{eventDateLabel(event.heldAt)}</span>
+            <span className="shrink-0 text-[9px] font-semibold text-white/95">{eventPriceLabel(event)}</span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function EventsBlock({ events }: { events: PublicArticleEvent[] }) {
+  if (events.length === 0) return null;
+  return (
+    <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {events.map((event) => <EventCardMini key={event.id} event={event} />)}
+    </div>
+  );
+}
+
+function CtaBlock({ label, href }: { label: string; href: string }) {
+  return (
+    <div className="rounded-xl border border-[#06C755]/20 bg-[#06C755]/5 px-6 py-6">
+      <Link href={href || '/organizers'} className="inline-flex rounded-lg bg-[#06C755] px-5 py-3 text-sm font-bold text-white hover:opacity-90">
+        {label || 'COMIUを見る'}
+      </Link>
+    </div>
+  );
 }
 
 function cleanDescription(text: string) {
@@ -193,12 +258,21 @@ export async function generateMetadata({
 }
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
+const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
+const EVENTS_MARKER = '{{events}}';
 
-function BodyRenderer({ body }: { body: string }) {
+function BodyRenderer({ body, categoryEvents }: { body: string; categoryEvents: PublicArticleEvent[] }) {
   return (
     <div className="space-y-4 text-[15px] leading-8 text-gray-700">
       {body.split('\n').map((raw, index) => {
         const line = raw.trim();
+        if (line === EVENTS_MARKER) {
+          return <EventsBlock key={index} events={categoryEvents} />;
+        }
+        const cta = CTA_RE.exec(line);
+        if (cta) {
+          return <CtaBlock key={index} label={cta[1]} href={cta[2]} />;
+        }
         const image = IMAGE_RE.exec(line);
         if (image) {
           return (
@@ -233,7 +307,8 @@ export default async function GuideArticlePage({
     fetchArticleSummaries(),
   ]);
   if (!article) notFound();
-  const circles = await fetchMatchingCircles(article.category);
+  const categoryEvents = await fetchCategoryEvents(article.category);
+  const hasInlineCta = /\{\{cta:/.test(article.body);
 
   const articleUrl = `${SITE_URL}/guide/${slug}`;
   const articleImage = ogImageFor(article);
@@ -330,48 +405,19 @@ export default async function GuideArticlePage({
             <h1 className="mt-4 text-3xl font-bold leading-tight text-gray-950">{article.title}</h1>
             {article.excerpt && <p className="mt-4 text-sm leading-7 text-gray-500">{article.excerpt}</p>}
             <div className="my-8 h-px bg-gray-100" />
-            <BodyRenderer body={article.body} />
+            <BodyRenderer body={article.body} categoryEvents={categoryEvents} />
           </div>
 
-          <div className="mt-6 rounded-xl border border-[#06C755]/20 bg-[#06C755]/5 px-6 py-6">
-            <p className="text-sm font-bold text-gray-950">COMIUで主催者向けWEBサイトと予約管理をまとめる</p>
-            <p className="mt-2 text-sm leading-7 text-gray-600">
-              団体紹介、記事導線、予約画面、参加者管理をひとつにつなげられます。
-            </p>
-            <Link href={article.ctaHref || '/organizers'} className="mt-4 inline-flex rounded-lg bg-[#06C755] px-5 py-3 text-sm font-bold text-white hover:opacity-90">
-              {article.ctaLabel || 'COMIUを見る'}
-            </Link>
-          </div>
-
-          {circles.length > 0 && (
-            <section className="mt-6 rounded-xl border border-gray-200 bg-white px-6 py-6 shadow-sm">
-              <h2 className="text-base font-bold text-gray-950">{article.category}のサークル・団体</h2>
-              <p className="mt-1 text-xs text-gray-500">COMIUに実際に登録されている団体です。</p>
-              <div className="mt-4 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {circles.map((circle) => {
-                  const displayName = circle.lineDisplayName ?? circle.name;
-                  const href = circle.code ? `/clubs/${circle.code}` : `/liff/${circle.id}`;
-                  return (
-                    <Link
-                      key={circle.id}
-                      href={href}
-                      className="flex w-32 shrink-0 flex-col items-center gap-2 rounded-xl bg-white p-3"
-                      style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
-                    >
-                      {circle.linePictureUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={circle.linePictureUrl} alt={displayName} className="h-14 w-14 rounded-full border-2 border-gray-100 object-cover" />
-                      ) : (
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#06C755] to-[#047a35]">
-                          <span className="text-lg font-bold text-white">{displayName.slice(0, 1)}</span>
-                        </div>
-                      )}
-                      <p className="line-clamp-2 text-center text-[12px] font-semibold leading-snug text-gray-800">{displayName}</p>
-                    </Link>
-                  );
-                })}
-              </div>
-            </section>
+          {!hasInlineCta && (
+            <div className="mt-6 rounded-xl border border-[#06C755]/20 bg-[#06C755]/5 px-6 py-6">
+              <p className="text-sm font-bold text-gray-950">COMIUで主催者向けWEBサイトと予約管理をまとめる</p>
+              <p className="mt-2 text-sm leading-7 text-gray-600">
+                団体紹介、記事導線、予約画面、参加者管理をひとつにつなげられます。
+              </p>
+              <Link href={article.ctaHref || '/organizers'} className="mt-4 inline-flex rounded-lg bg-[#06C755] px-5 py-3 text-sm font-bold text-white hover:opacity-90">
+                {article.ctaLabel || 'COMIUを見る'}
+              </Link>
+            </div>
           )}
 
           {relatedArticles.length > 0 && (
