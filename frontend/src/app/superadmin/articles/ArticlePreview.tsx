@@ -161,9 +161,9 @@ function BlockView({ block, category }: { block: Block; category: string }) {
     if (!block.imageUrl) return null;
     const img = (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={block.imageUrl} alt={block.text} className="w-full rounded-xl border border-gray-100 object-cover" />
+      <img src={block.imageUrl} alt={block.text} className="mx-auto max-w-full rounded-xl border border-gray-100" />
     );
-    return <div className="my-6">{block.href ? <a href={block.href} target="_blank" rel="noopener noreferrer">{img}</a> : img}</div>;
+    return <div className="my-6 text-center">{block.href ? <a href={block.href} target="_blank" rel="noopener noreferrer">{img}</a> : img}</div>;
   }
   if (block.type === 'imageText') {
     const img = block.imageUrl && (

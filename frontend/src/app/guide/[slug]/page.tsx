@@ -438,10 +438,10 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
     if (linkedImage) {
       flushParagraph();
       nodes.push(
-        <div key={i} className="my-6">
+        <div key={i} className="my-6 text-center">
           <Link href={linkedImage[3]}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={linkedImage[2]} alt={linkedImage[1]} className="w-full rounded-xl border border-gray-100 object-cover" />
+            <img src={linkedImage[2]} alt={linkedImage[1]} className="mx-auto max-w-full rounded-xl border border-gray-100" />
           </Link>
         </div>,
       );
@@ -452,8 +452,10 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
     if (image) {
       flushParagraph();
       nodes.push(
-        // eslint-disable-next-line @next/next/no-img-element
-        <img key={i} src={image[2]} alt={image[1]} className="my-6 w-full rounded-xl border border-gray-100 object-cover" />,
+        <div key={i} className="my-6 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={image[2]} alt={image[1]} className="mx-auto max-w-full rounded-xl border border-gray-100" />
+        </div>,
       );
       i++;
       continue;

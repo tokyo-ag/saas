@@ -6,6 +6,8 @@ import { UploadButton } from '@/components/admin/EventFormPrimitives';
 
 async function compressImage(file: File, maxBytes = 4 * 1024 * 1024): Promise<Blob> {
   if (file.size <= maxBytes) return file;
+  // Keep PNG output for PNG input so transparency survives compression - JPEG has no alpha channel.
+  const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
   return new Promise((resolve) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
@@ -17,7 +19,7 @@ async function compressImage(file: File, maxBytes = 4 * 1024 * 1024): Promise<Bl
       if (width > 1920) { height = Math.round(height * 1920 / width); width = 1920; }
       canvas.width = width; canvas.height = height;
       canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
-      canvas.toBlob((blob) => resolve(blob ?? file), 'image/jpeg', quality);
+      canvas.toBlob((blob) => resolve(blob ?? file), outputType, quality);
     };
     img.src = url;
   });
