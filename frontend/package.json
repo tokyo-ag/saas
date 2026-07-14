@@ -12,6 +12,7 @@
     "test:prod:seo": "node ../scripts/smoke-production.mjs --suite=seo"
   },
   "dependencies": {
+    "@imgly/background-removal": "^1.7.0",
     "@line/liff": "^2.28.0",
     "@vercel/blob": "^2.3.3",
     "next": "16.2.6",

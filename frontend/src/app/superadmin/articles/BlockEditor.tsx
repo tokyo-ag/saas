@@ -214,6 +214,7 @@ export default function BlockEditor({
   const [focusId, setFocusId] = useState<string | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState('');
+  const [removingBgId, setRemovingBgId] = useState<string | null>(null);
 
   useEffect(() => {
     if (focusId && inputRefs.current[focusId]) {
@@ -221,6 +222,23 @@ export default function BlockEditor({
       setFocusId(null);
     }
   }, [focusId, blocks]);
+
+  async function handleRemoveBackground(block: Block) {
+    if (!block.imageUrl) return;
+    setRemovingBgId(block.id);
+    setUploadError('');
+    try {
+      const { removeBackground } = await import('@imgly/background-removal');
+      const resultBlob = await removeBackground(block.imageUrl);
+      const file = new File([resultBlob], `bg-removed-${Date.now()}.png`, { type: 'image/png' });
+      const url = await uploadFile(file);
+      updateBlock(block.id, { imageUrl: url });
+    } catch (err: any) {
+      setUploadError(err?.message ?? '背景の削除に失敗しました');
+    } finally {
+      setRemovingBgId(null);
+    }
+  }
 
   function insertAt(index: number, type: BlockType) {
     const block: Block = { id: newId(), type, text: '', imageUrl: (type === 'image' || type === 'imageText') ? '' : undefined };
@@ -281,7 +299,7 @@ export default function BlockEditor({
               <div className="space-y-2">
                 {block.imageUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={block.imageUrl} alt={block.text} className="max-h-48 w-full rounded-md border border-gray-100 object-cover" />
+                  <img src={block.imageUrl} alt={block.text} className="mx-auto max-h-64 max-w-full rounded-md border border-gray-100 object-contain" />
                 )}
                 <UploadButton
                   uploading={uploadingId === block.id}
@@ -290,7 +308,17 @@ export default function BlockEditor({
                   setError={setUploadError}
                 />
                 {block.imageUrl && (
-                  <button type="button" onClick={() => updateBlock(block.id, { imageUrl: '' })} className="text-xs text-red-500 hover:underline">画像を削除</button>
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => updateBlock(block.id, { imageUrl: '' })} className="text-xs text-red-500 hover:underline">画像を削除</button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveBackground(block)}
+                      disabled={removingBgId === block.id}
+                      className="text-xs text-gray-500 hover:text-gray-700 hover:underline disabled:opacity-50"
+                    >
+                      {removingBgId === block.id ? '背景を削除中…（数秒かかります）' : '背景を削除'}
+                    </button>
+                  </div>
                 )}
                 <input
                   value={block.text}
@@ -323,7 +351,17 @@ export default function BlockEditor({
                   setError={setUploadError}
                 />
                 {block.imageUrl && (
-                  <button type="button" onClick={() => updateBlock(block.id, { imageUrl: '' })} className="text-xs text-red-500 hover:underline">画像を削除</button>
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => updateBlock(block.id, { imageUrl: '' })} className="text-xs text-red-500 hover:underline">画像を削除</button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveBackground(block)}
+                      disabled={removingBgId === block.id}
+                      className="text-xs text-gray-500 hover:text-gray-700 hover:underline disabled:opacity-50"
+                    >
+                      {removingBgId === block.id ? '背景を削除中…（数秒かかります）' : '背景を削除'}
+                    </button>
+                  </div>
                 )}
                 <div>
                   <p className="mb-1 text-xs font-medium text-gray-500">画像サイズ</p>
