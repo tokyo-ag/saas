@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { api, API_URL, PublicEvent } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
@@ -87,15 +87,33 @@ function EventsBlockPreview({ category, heading }: { category: string; heading: 
   );
 }
 
+function CheckBullet() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className="mt-[3px] shrink-0">
+      <circle cx="10" cy="10" r="10" fill="#06C755" fillOpacity="0.15" />
+      <path d="M6 10.2l2.6 2.6L14 7.2" stroke="#06C755" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ParagraphText({ text }: { text: string }) {
+  return (
+    <p className="mb-6 whitespace-pre-wrap text-[15px] leading-[1.75] text-[#333333] sm:text-base">
+      {text || ' '}
+    </p>
+  );
+}
+
 function BlockView({ block, category }: { block: Block; category: string }) {
   if (block.type === 'h2') {
-    return <h2 className="pt-6 text-2xl font-bold text-gray-950">{block.text || '見出し'}</h2>;
+    return (
+      <h2 className="my-6 border-l-[5px] border-[#06C755] py-1 pl-4 text-2xl font-bold text-gray-950">
+        {block.text || '見出し'}
+      </h2>
+    );
   }
   if (block.type === 'h3') {
     return <h3 className="pt-4 text-lg font-bold text-gray-950">{block.text || '小見出し'}</h3>;
-  }
-  if (block.type === 'list') {
-    return <p className="rounded-lg bg-gray-50 px-4 py-3 text-sm">{block.text || 'リスト項目'}</p>;
   }
   if (block.type === 'image') {
     if (!block.imageUrl) return null;
@@ -114,7 +132,36 @@ function BlockView({ block, category }: { block: Block; category: string }) {
   if (block.type === 'events') {
     return <EventsBlockPreview category={category} heading={block.text} />;
   }
-  return <p>{block.text || ' '}</p>;
+  return <ParagraphText text={block.text} />;
+}
+
+function renderBlocks(blocks: Block[], category: string) {
+  const nodes: ReactNode[] = [];
+  let i = 0;
+  while (i < blocks.length) {
+    const block = blocks[i];
+    if (block.type === 'list') {
+      const group: Block[] = [];
+      while (i < blocks.length && blocks[i].type === 'list') {
+        group.push(blocks[i]);
+        i++;
+      }
+      nodes.push(
+        <ul key={group[0].id} className="my-4 space-y-2">
+          {group.map((b) => (
+            <li key={b.id} className="flex items-start gap-2 pl-1 text-[15px] leading-[1.75] text-[#333333] sm:text-base">
+              <CheckBullet />
+              <span className="whitespace-pre-wrap">{b.text || 'リスト項目'}</span>
+            </li>
+          ))}
+        </ul>,
+      );
+    } else {
+      nodes.push(<BlockView key={block.id} block={block} category={category} />);
+      i++;
+    }
+  }
+  return nodes;
 }
 
 export default function ArticlePreview({
@@ -145,11 +192,11 @@ export default function ArticlePreview({
       <h1 className="mt-4 text-3xl font-bold leading-tight text-gray-950">{title || '（タイトル未入力）'}</h1>
       {effectiveExcerpt && <p className="mt-4 text-sm leading-7 text-gray-500">{effectiveExcerpt}</p>}
       <div className="my-8 h-px bg-gray-100" />
-      <div className="space-y-4 text-[15px] leading-8 text-gray-700">
+      <div>
         {blocks.length === 0 ? (
           <p className="text-sm text-gray-300">ブロックを追加すると、ここにプレビューが表示されます。</p>
         ) : (
-          blocks.map((block) => <BlockView key={block.id} block={block} category={category} />)
+          renderBlocks(blocks, category)
         )}
       </div>
     </div>

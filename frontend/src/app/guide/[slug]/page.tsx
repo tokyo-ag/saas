@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -254,40 +255,86 @@ const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
 const EVENTS_RE = /^\{\{events(?::(.*))?\}\}$/;
 
-function BodyRenderer({ body, categoryEvents }: { body: string; categoryEvents: PublicArticleEvent[] }) {
+function CheckBullet() {
   return (
-    <div className="space-y-4 text-[15px] leading-8 text-gray-700">
-      {body.split('\n').map((raw, index) => {
-        const line = raw.trim();
-        const events = EVENTS_RE.exec(line);
-        if (events) {
-          return <EventsBlock key={index} events={categoryEvents} heading={events[1] ?? ''} />;
-        }
-        const cta = CTA_RE.exec(line);
-        if (cta) {
-          return <CtaBlock key={index} label={cta[1]} href={cta[2]} />;
-        }
-        const image = IMAGE_RE.exec(line);
-        if (image) {
-          return (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={index} src={image[2]} alt={image[1]} className="my-6 w-full rounded-xl border border-gray-100 object-cover" />
-          );
-        }
-        if (line.startsWith('### ')) {
-          return <h3 key={index} className="pt-4 text-lg font-bold text-gray-950">{line.replace(/^### /, '')}</h3>;
-        }
-        if (line.startsWith('## ')) {
-          return <h2 key={index} className="pt-6 text-2xl font-bold text-gray-950">{line.replace(/^## /, '')}</h2>;
-        }
-        if (line.startsWith('- ')) {
-          return <p key={index} className="rounded-lg bg-gray-50 px-4 py-3 text-sm">{line.replace(/^- /, '')}</p>;
-        }
-        if (!line) return <div key={index} className="h-2" />;
-        return <p key={index}>{line}</p>;
-      })}
-    </div>
+    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className="mt-[3px] shrink-0">
+      <circle cx="10" cy="10" r="10" fill="#06C755" fillOpacity="0.15" />
+      <path d="M6 10.2l2.6 2.6L14 7.2" stroke="#06C755" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
+}
+
+function BodyRenderer({ body, categoryEvents }: { body: string; categoryEvents: PublicArticleEvent[] }) {
+  const lines = body.split('\n');
+  const nodes: ReactNode[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    if (line.startsWith('- ')) {
+      const group: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith('- ')) {
+        group.push(lines[i].trim().replace(/^- /, ''));
+        i++;
+      }
+      nodes.push(
+        <ul key={i} className="my-4 space-y-2">
+          {group.map((item, itemIndex) => (
+            <li key={itemIndex} className="flex items-start gap-2 pl-1 text-[15px] leading-[1.75] text-[#333333] sm:text-base">
+              <CheckBullet />
+              <span className="whitespace-pre-wrap">{item}</span>
+            </li>
+          ))}
+        </ul>,
+      );
+      continue;
+    }
+    const events = EVENTS_RE.exec(line);
+    if (events) {
+      nodes.push(<EventsBlock key={i} events={categoryEvents} heading={events[1] ?? ''} />);
+      i++;
+      continue;
+    }
+    const cta = CTA_RE.exec(line);
+    if (cta) {
+      nodes.push(<CtaBlock key={i} label={cta[1]} href={cta[2]} />);
+      i++;
+      continue;
+    }
+    const image = IMAGE_RE.exec(line);
+    if (image) {
+      nodes.push(
+        // eslint-disable-next-line @next/next/no-img-element
+        <img key={i} src={image[2]} alt={image[1]} className="my-6 w-full rounded-xl border border-gray-100 object-cover" />,
+      );
+      i++;
+      continue;
+    }
+    if (line.startsWith('### ')) {
+      nodes.push(<h3 key={i} className="pt-4 text-lg font-bold text-gray-950">{line.replace(/^### /, '')}</h3>);
+      i++;
+      continue;
+    }
+    if (line.startsWith('## ')) {
+      nodes.push(
+        <h2 key={i} className="my-6 border-l-[5px] border-[#06C755] py-1 pl-4 text-2xl font-bold text-gray-950">
+          {line.replace(/^## /, '')}
+        </h2>,
+      );
+      i++;
+      continue;
+    }
+    if (!line) {
+      i++;
+      continue;
+    }
+    nodes.push(
+      <p key={i} className="mb-6 whitespace-pre-wrap text-[15px] leading-[1.75] text-[#333333] sm:text-base">
+        {line}
+      </p>,
+    );
+    i++;
+  }
+  return <div>{nodes}</div>;
 }
 
 export default async function GuideArticlePage({
