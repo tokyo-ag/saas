@@ -8,7 +8,7 @@ export const revalidate = 0;
 type SitemapEvent = { id: string; tenantCode: string; updatedAt: string };
 type SitemapPage = { tenantCode: string; slug: string; updatedAt: string };
 type SitemapBlogPost = { tenantCode: string; slug: string; updatedAt: string };
-type SitemapOfficialArticle = { slug: string; updatedAt: string };
+type SitemapOfficialArticle = { slug: string; category?: string | null; areaTags?: string[]; updatedAt: string };
 
 let lastSuccessfulEvents: SitemapEvent[] = [];
 let lastSuccessfulPages: SitemapPage[] = [];
@@ -155,5 +155,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.75,
   }));
 
-  return [...staticPages, ...officialArticlePages, ...cmsPages, ...blogIndexPages, ...blogPostPages, ...eventPages];
+  const categories = Array.from(new Set(officialArticles.map((a) => a.category).filter(Boolean))) as string[];
+  const areas = Array.from(new Set(officialArticles.flatMap((a) => a.areaTags ?? [])));
+  const guideHubPages: MetadataRoute.Sitemap = [
+    ...categories.map((category) => ({
+      url: `${SITE_URL}/guide/tag/${encodeURIComponent(category)}`,
+      lastModified: STATIC_LAST_MODIFIED,
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    })),
+    ...areas.map((area) => ({
+      url: `${SITE_URL}/guide/area/${encodeURIComponent(area)}`,
+      lastModified: STATIC_LAST_MODIFIED,
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    })),
+  ];
+
+  return [...staticPages, ...officialArticlePages, ...guideHubPages, ...cmsPages, ...blogIndexPages, ...blogPostPages, ...eventPages];
 }

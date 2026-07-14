@@ -14,6 +14,9 @@ type OfficialArticle = {
   excerpt?: string | null;
   body: string;
   category?: string | null;
+  areaTags?: string[];
+  isPillar?: boolean;
+  pillarSlug?: string | null;
   targetKeyword?: string | null;
   ctaLabel?: string | null;
   ctaHref?: string | null;
@@ -23,6 +26,14 @@ type OfficialArticle = {
 };
 
 type OfficialArticleSummary = Omit<OfficialArticle, 'body'>;
+
+type PublicCircle = {
+  id: string;
+  code: string | null;
+  name: string;
+  lineDisplayName?: string | null;
+  linePictureUrl?: string | null;
+};
 
 async function fetchArticle(slug: string): Promise<OfficialArticle | null> {
   try {
@@ -37,6 +48,17 @@ async function fetchArticle(slug: string): Promise<OfficialArticle | null> {
 async function fetchArticleSummaries(): Promise<OfficialArticleSummary[]> {
   try {
     const res = await fetch(`${API_URL}/api/public/official-articles?limit=120`, { next: { revalidate } });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+async function fetchMatchingCircles(category?: string | null): Promise<PublicCircle[]> {
+  if (!category) return [];
+  try {
+    const res = await fetch(`${API_URL}/api/public/tenants?activityTag=${encodeURIComponent(category)}`, { next: { revalidate } });
     if (!res.ok) return [];
     return res.json();
   } catch {
@@ -110,7 +132,12 @@ function extractFaqItems(body: string) {
 function relatedScore(article: OfficialArticleSummary, current: OfficialArticle) {
   if (article.slug === current.slug) return -1;
   let score = 0;
+  const currentCluster = current.isPillar ? current.slug : current.pillarSlug;
+  const articleCluster = article.isPillar ? article.slug : article.pillarSlug;
+  if (currentCluster && articleCluster && currentCluster === articleCluster) score += 20;
   if (article.category && article.category === current.category) score += 6;
+  const areaOverlap = (article.areaTags ?? []).some((tag) => (current.areaTags ?? []).includes(tag));
+  if (areaOverlap) score += 4;
   const haystack = `${article.title} ${article.excerpt ?? ''} ${article.targetKeyword ?? ''}`.toLowerCase();
   const terms = `${current.targetKeyword ?? ''} ${current.title}`
     .toLowerCase()
@@ -206,6 +233,7 @@ export default async function GuideArticlePage({
     fetchArticleSummaries(),
   ]);
   if (!article) notFound();
+  const circles = await fetchMatchingCircles(article.category);
 
   const articleUrl = `${SITE_URL}/guide/${slug}`;
   const articleImage = ogImageFor(article);
@@ -287,7 +315,16 @@ export default async function GuideArticlePage({
         <article className="mx-auto max-w-3xl px-5 py-10">
           <div className="rounded-xl border border-gray-200 bg-white px-6 py-8 shadow-sm sm:px-9">
             <div className="flex flex-wrap items-center gap-2">
-              {article.category && <span className="rounded-full bg-[#06C755]/10 px-3 py-1 text-xs font-bold text-[#06C755]">{article.category}</span>}
+              {article.category && (
+                <Link href={`/guide/tag/${encodeURIComponent(article.category)}`} className="rounded-full bg-[#06C755]/10 px-3 py-1 text-xs font-bold text-[#06C755] hover:bg-[#06C755]/20">
+                  {article.category}
+                </Link>
+              )}
+              {(article.areaTags ?? []).map((area) => (
+                <Link key={area} href={`/guide/area/${encodeURIComponent(area)}`} className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600 hover:bg-gray-200">
+                  {area}
+                </Link>
+              ))}
               {article.targetKeyword && <span className="text-xs text-gray-400">{article.targetKeyword}</span>}
             </div>
             <h1 className="mt-4 text-3xl font-bold leading-tight text-gray-950">{article.title}</h1>
@@ -305,6 +342,37 @@ export default async function GuideArticlePage({
               {article.ctaLabel || 'COMIUを見る'}
             </Link>
           </div>
+
+          {circles.length > 0 && (
+            <section className="mt-6 rounded-xl border border-gray-200 bg-white px-6 py-6 shadow-sm">
+              <h2 className="text-base font-bold text-gray-950">{article.category}のサークル・団体</h2>
+              <p className="mt-1 text-xs text-gray-500">COMIUに実際に登録されている団体です。</p>
+              <div className="mt-4 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {circles.map((circle) => {
+                  const displayName = circle.lineDisplayName ?? circle.name;
+                  const href = circle.code ? `/clubs/${circle.code}` : `/liff/${circle.id}`;
+                  return (
+                    <Link
+                      key={circle.id}
+                      href={href}
+                      className="flex w-32 shrink-0 flex-col items-center gap-2 rounded-xl bg-white p-3"
+                      style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
+                    >
+                      {circle.linePictureUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={circle.linePictureUrl} alt={displayName} className="h-14 w-14 rounded-full border-2 border-gray-100 object-cover" />
+                      ) : (
+                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#06C755] to-[#047a35]">
+                          <span className="text-lg font-bold text-white">{displayName.slice(0, 1)}</span>
+                        </div>
+                      )}
+                      <p className="line-clamp-2 text-center text-[12px] font-semibold leading-snug text-gray-800">{displayName}</p>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
           {relatedArticles.length > 0 && (
             <section className="mt-6 rounded-xl border border-gray-200 bg-white px-6 py-6 shadow-sm">

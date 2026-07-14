@@ -32,6 +32,9 @@ type OfficialArticleRow = {
   excerpt: string | null;
   body: string;
   category: string | null;
+  area_tags: string[];
+  is_pillar: boolean;
+  pillar_slug: string | null;
   target_keyword: string | null;
   cta_label: string | null;
   cta_href: string | null;
@@ -118,6 +121,9 @@ export class PublicController {
       excerpt: row.excerpt,
       ...(includeBody ? { body: row.body } : {}),
       category: row.category,
+      areaTags: row.area_tags ?? [],
+      isPillar: row.is_pillar,
+      pillarSlug: row.pillar_slug,
       targetKeyword: row.target_keyword,
       ctaLabel: row.cta_label,
       ctaHref: row.cta_href,
@@ -136,6 +142,9 @@ export class PublicController {
         excerpt,
         body,
         category,
+        area_tags,
+        is_pillar,
+        pillar_slug,
         target_keyword,
         cta_label,
         cta_href,
@@ -368,6 +377,8 @@ export class PublicController {
     `);
     return rows.map((row) => ({
       slug: row.slug,
+      category: row.category,
+      areaTags: row.area_tags ?? [],
       updatedAt: row.updated_at,
     }));
   }
@@ -395,7 +406,11 @@ export class PublicController {
   }
 
   @Get('official-articles')
-  async listOfficialArticles(@Query('limit') limitParam?: string) {
+  async listOfficialArticles(
+    @Query('limit') limitParam?: string,
+    @Query('category') category?: string,
+    @Query('area') area?: string,
+  ) {
     const requestedLimit = parseInt(limitParam ?? '20', 10);
     const limit = Math.min(
       Math.max(Number.isFinite(requestedLimit) ? requestedLimit : 20, 1),
@@ -404,6 +419,8 @@ export class PublicController {
     const rows = await this.prisma.$queryRaw<OfficialArticleRow[]>(Prisma.sql`
       ${this.officialArticleSelect()}
       WHERE status = 'published'
+        ${category ? Prisma.sql`AND category = ${category}` : Prisma.empty}
+        ${area ? Prisma.sql`AND ${area} = ANY(area_tags)` : Prisma.empty}
       ORDER BY COALESCE(published_at, updated_at) DESC
       LIMIT ${limit}
     `);
@@ -499,11 +516,16 @@ export class PublicController {
   }
 
   @Get('tenants')
-  async getTenants() {
+  async getTenants(@Query('activityTag') activityTag?: string) {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     const tenants = await this.prisma.tenant.findMany({
-      where: { deletedAt: null, bannedAt: null, code: { not: null } },
+      where: {
+        deletedAt: null,
+        bannedAt: null,
+        code: { not: null },
+        ...(activityTag ? { activityTags: { has: activityTag } } : {}),
+      },
       include: {
         _count: {
           select: {

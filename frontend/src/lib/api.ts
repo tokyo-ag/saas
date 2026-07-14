@@ -536,6 +536,9 @@ export interface OfficialArticle {
   excerpt?: string | null;
   body: string;
   category?: string | null;
+  areaTags?: string[];
+  isPillar?: boolean;
+  pillarSlug?: string | null;
   targetKeyword?: string | null;
   ctaLabel?: string | null;
   ctaHref?: string | null;
@@ -552,6 +555,9 @@ export interface OfficialArticleInput {
   excerpt?: string;
   body: string;
   category?: string;
+  areaTags?: string[];
+  isPillar?: boolean;
+  pillarSlug?: string;
   targetKeyword?: string;
   ctaLabel?: string;
   ctaHref?: string;

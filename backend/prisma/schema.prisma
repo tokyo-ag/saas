@@ -185,6 +185,9 @@ model OfficialArticle {
   excerpt       String?   @db.VarChar(300)
   body          String    @db.Text
   category      String?   @db.VarChar(60)
+  areaTags      String[]  @default([]) @map("area_tags")
+  isPillar      Boolean   @default(false) @map("is_pillar")
+  pillarSlug    String?   @map("pillar_slug") @db.VarChar(120)
   targetKeyword String?   @map("target_keyword") @db.VarChar(120)
   ctaLabel      String?   @map("cta_label") @db.VarChar(80)
   ctaHref       String?   @map("cta_href") @db.VarChar(500)
@@ -196,6 +199,7 @@ model OfficialArticle {
 
   @@index([status, publishedAt(sort: Desc)])
   @@index([category])
+  @@index([pillarSlug])
   @@map("official_articles")
 }
 

@@ -5,6 +5,9 @@ import { OfficialArticle, OfficialArticleInput } from '@/lib/api';
 
 const inputClass = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]';
 
+const ACTIVITY_CATEGORIES = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー'];
+const TYPE_CATEGORIES = ['インカレサークル', '学生団体', 'イベント団体', '社会人サークル'];
+
 export default function ArticleForm({
   initial,
   onSubmit,
@@ -19,6 +22,10 @@ export default function ArticleForm({
   const [excerpt, setExcerpt] = useState(initial?.excerpt ?? '');
   const [body, setBody] = useState(initial?.body ?? '');
   const [category, setCategory] = useState(initial?.category ?? '');
+  const [areaTags, setAreaTags] = useState<string[]>(initial?.areaTags ?? []);
+  const [areaInput, setAreaInput] = useState('');
+  const [isPillar, setIsPillar] = useState(initial?.isPillar ?? false);
+  const [pillarSlug, setPillarSlug] = useState(initial?.pillarSlug ?? '');
   const [targetKeyword, setTargetKeyword] = useState(initial?.targetKeyword ?? '');
   const [ctaLabel, setCtaLabel] = useState(initial?.ctaLabel ?? '');
   const [ctaHref, setCtaHref] = useState(initial?.ctaHref ?? '');
@@ -26,6 +33,16 @@ export default function ArticleForm({
   const [status, setStatus] = useState<'draft' | 'published'>(initial?.status ?? 'draft');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  function addAreaTag() {
+    const value = areaInput.trim();
+    if (value && !areaTags.includes(value)) setAreaTags([...areaTags, value]);
+    setAreaInput('');
+  }
+
+  function removeAreaTag(tag: string) {
+    setAreaTags(areaTags.filter((t) => t !== tag));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,6 +55,9 @@ export default function ArticleForm({
         excerpt: excerpt.trim() || undefined,
         body,
         category: category.trim() || undefined,
+        areaTags,
+        isPillar,
+        pillarSlug: isPillar ? undefined : pillarSlug.trim() || undefined,
         targetKeyword: targetKeyword.trim() || undefined,
         ctaLabel: ctaLabel.trim() || undefined,
         ctaHref: ctaHref.trim() || undefined,
@@ -67,12 +87,58 @@ export default function ArticleForm({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">カテゴリ</label>
-          <input maxLength={60} value={category} onChange={(e) => setCategory(e.target.value)} className={inputClass} placeholder="例: 管理 / 集客 / 運営" />
+          <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputClass}>
+            <option value="">未選択</option>
+            <optgroup label="活動種目">
+              {ACTIVITY_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </optgroup>
+            <optgroup label="団体タイプ">
+              {TYPE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </optgroup>
+          </select>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">狙うキーワード</label>
-          <input maxLength={120} value={targetKeyword} onChange={(e) => setTargetKeyword(e.target.value)} className={inputClass} placeholder="例: サークル 参加者 管理" />
+          <input maxLength={120} value={targetKeyword} onChange={(e) => setTargetKeyword(e.target.value)} className={inputClass} placeholder="例: 東京 バドミントンサークル" />
         </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">エリアタグ</label>
+        <p className="text-xs text-gray-400 mb-1.5">例: 東京、渋谷区、池袋 など。/guide/area/〇〇 のハブページ生成に使われます。</p>
+        <div className="flex gap-2">
+          <input
+            value={areaInput}
+            onChange={(e) => setAreaInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addAreaTag(); } }}
+            className={inputClass}
+            placeholder="エリア名を入力してEnter"
+          />
+          <button type="button" onClick={addAreaTag} className="shrink-0 rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-600 hover:bg-gray-50">追加</button>
+        </div>
+        {areaTags.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {areaTags.map((tag) => (
+              <span key={tag} className="flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-600">
+                {tag}
+                <button type="button" onClick={() => removeAreaTag(tag)} className="text-gray-400 hover:text-gray-700">×</button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-lg border border-gray-200 p-3 space-y-3">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={isPillar} onChange={(e) => setIsPillar(e.target.checked)} className="accent-[#06C755]" />
+          <span className="text-sm font-medium text-gray-700">この記事をピラー（完全網羅記事）にする</span>
+        </label>
+        {!isPillar && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">所属するピラー記事のスラッグ</label>
+            <input value={pillarSlug} onChange={(e) => setPillarSlug(e.target.value)} className={`${inputClass} font-mono`} placeholder="例: tokyo-badminton-guide（任意）" />
+          </div>
+        )}
       </div>
 
       <div>

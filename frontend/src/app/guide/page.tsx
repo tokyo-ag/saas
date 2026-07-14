@@ -12,6 +12,7 @@ type OfficialArticle = {
   slug: string;
   excerpt?: string | null;
   category?: string | null;
+  areaTags?: string[];
   targetKeyword?: string | null;
   publishedAt?: string | null;
 };
@@ -42,6 +43,7 @@ async function fetchArticles(): Promise<OfficialArticle[]> {
 export default async function GuidePage() {
   const articles = await fetchArticles();
   const categories = Array.from(new Set(articles.map((a) => a.category).filter(Boolean))) as string[];
+  const areas = Array.from(new Set(articles.flatMap((a) => a.areaTags ?? [])));
   const guideUrl = `${SITE_URL}/guide`;
   const description = metadata.description as string;
   const jsonLd = {
@@ -111,12 +113,17 @@ export default async function GuidePage() {
           <p className="mt-4 max-w-2xl text-sm leading-7 text-gray-500">
             ブログを毎日更新する場所ではなく、検索から主催者に届く記事を丁寧にストックしていく場所です。
           </p>
-          {categories.length > 0 && (
+          {(categories.length > 0 || areas.length > 0) && (
             <div className="mt-6 flex flex-wrap gap-2">
               {categories.map((category) => (
-                <span key={category} className="rounded-full bg-[#06C755]/10 px-3 py-1 text-xs font-bold text-[#06C755]">
+                <Link key={category} href={`/guide/tag/${encodeURIComponent(category)}`} className="rounded-full bg-[#06C755]/10 px-3 py-1 text-xs font-bold text-[#06C755] hover:bg-[#06C755]/20">
                   {category}
-                </span>
+                </Link>
+              ))}
+              {areas.map((area) => (
+                <Link key={area} href={`/guide/area/${encodeURIComponent(area)}`} className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600 hover:bg-gray-200">
+                  {area}
+                </Link>
               ))}
             </div>
           )}
@@ -132,8 +139,11 @@ export default async function GuidePage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {articles.map((article) => (
               <Link key={article.id} href={`/guide/${article.slug}`} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {article.category && <span className="rounded-full bg-[#06C755]/10 px-2 py-0.5 text-[11px] font-bold text-[#06C755]">{article.category}</span>}
+                  {(article.areaTags ?? []).map((area) => (
+                    <span key={area} className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-bold text-gray-600">{area}</span>
+                  ))}
                   {article.targetKeyword && <span className="truncate text-[11px] text-gray-400">{article.targetKeyword}</span>}
                 </div>
                 <h2 className="mt-3 line-clamp-2 text-lg font-bold leading-7">{article.title}</h2>

@@ -12,6 +12,8 @@ import {
   IsEnum,
   IsEmail,
   MinLength,
+  IsArray,
+  IsBoolean,
 } from 'class-validator';
 import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
@@ -62,6 +64,9 @@ export class UpsertOfficialArticleDto {
   @IsOptional() @IsString() excerpt?: string;
   @IsString() body: string;
   @IsOptional() @IsString() category?: string;
+  @IsOptional() @IsArray() @IsString({ each: true }) areaTags?: string[];
+  @IsOptional() @IsBoolean() isPillar?: boolean;
+  @IsOptional() @IsString() pillarSlug?: string;
   @IsOptional() @IsString() targetKeyword?: string;
   @IsOptional() @IsString() ctaLabel?: string;
   @IsOptional() @IsString() ctaHref?: string;
@@ -90,6 +95,9 @@ type OfficialArticleRow = {
   excerpt: string | null;
   body: string;
   category: string | null;
+  area_tags: string[];
+  is_pillar: boolean;
+  pillar_slug: string | null;
   target_keyword: string | null;
   cta_label: string | null;
   cta_href: string | null;
@@ -379,6 +387,9 @@ export class SuperadminService implements OnApplicationBootstrap {
       excerpt: row.excerpt,
       body: row.body,
       category: row.category,
+      areaTags: row.area_tags ?? [],
+      isPillar: row.is_pillar,
+      pillarSlug: row.pillar_slug,
       targetKeyword: row.target_keyword,
       ctaLabel: row.cta_label,
       ctaHref: row.cta_href,
@@ -399,6 +410,9 @@ export class SuperadminService implements OnApplicationBootstrap {
         excerpt,
         body,
         category,
+        area_tags,
+        is_pillar,
+        pillar_slug,
         target_keyword,
         cta_label,
         cta_href,
@@ -533,6 +547,7 @@ export class SuperadminService implements OnApplicationBootstrap {
     const slug = await this.uniqueOfficialArticleSlug(
       this.slugify(dto.slug?.trim() || dto.title),
     );
+    const areaTags = (dto.areaTags ?? []).map((t) => t.trim()).filter(Boolean);
     const rows = await this.prisma.$queryRaw<OfficialArticleRow[]>(Prisma.sql`
       INSERT INTO official_articles (
         id,
@@ -541,6 +556,9 @@ export class SuperadminService implements OnApplicationBootstrap {
         excerpt,
         body,
         category,
+        area_tags,
+        is_pillar,
+        pillar_slug,
         target_keyword,
         cta_label,
         cta_href,
@@ -557,6 +575,9 @@ export class SuperadminService implements OnApplicationBootstrap {
         ${dto.excerpt?.trim() || null},
         ${dto.body.trim()},
         ${dto.category?.trim() || null},
+        ${areaTags},
+        ${dto.isPillar ?? false},
+        ${dto.pillarSlug?.trim() || null},
         ${dto.targetKeyword?.trim() || null},
         ${dto.ctaLabel?.trim() || null},
         ${dto.ctaHref?.trim() || null},
@@ -573,6 +594,9 @@ export class SuperadminService implements OnApplicationBootstrap {
         excerpt,
         body,
         category,
+        area_tags,
+        is_pillar,
+        pillar_slug,
         target_keyword,
         cta_label,
         cta_href,
@@ -603,6 +627,9 @@ export class SuperadminService implements OnApplicationBootstrap {
     const publishedAt =
       status === 'draft' ? null : (current.published_at ?? new Date());
 
+    const areaTags = dto.areaTags
+      ? dto.areaTags.map((t) => t.trim()).filter(Boolean)
+      : current.area_tags;
     const rows = await this.prisma.$queryRaw<OfficialArticleRow[]>(Prisma.sql`
       UPDATE official_articles
       SET
@@ -611,6 +638,9 @@ export class SuperadminService implements OnApplicationBootstrap {
         excerpt = ${dto.excerpt?.trim() || null},
         body = ${dto.body?.trim() || current.body},
         category = ${dto.category?.trim() || null},
+        area_tags = ${areaTags},
+        is_pillar = ${dto.isPillar ?? current.is_pillar},
+        pillar_slug = ${dto.pillarSlug?.trim() || null},
         target_keyword = ${dto.targetKeyword?.trim() || null},
         cta_label = ${dto.ctaLabel?.trim() || null},
         cta_href = ${dto.ctaHref?.trim() || null},
@@ -626,6 +656,9 @@ export class SuperadminService implements OnApplicationBootstrap {
         excerpt,
         body,
         category,
+        area_tags,
+        is_pillar,
+        pillar_slug,
         target_keyword,
         cta_label,
         cta_href,
