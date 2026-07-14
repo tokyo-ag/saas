@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { OfficialArticle, OfficialArticleInput } from '@/lib/api';
+import BlockEditor, { Block, parseBodyToBlocks, blocksToBody } from './BlockEditor';
 
 const inputClass = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]';
 
@@ -20,7 +21,7 @@ export default function ArticleForm({
   const [title, setTitle] = useState(initial?.title ?? '');
   const [slug, setSlug] = useState(initial?.slug ?? '');
   const [excerpt, setExcerpt] = useState(initial?.excerpt ?? '');
-  const [body, setBody] = useState(initial?.body ?? '');
+  const [blocks, setBlocks] = useState<Block[]>(() => parseBodyToBlocks(initial?.body ?? ''));
   const [category, setCategory] = useState(initial?.category ?? '');
   const [areaTags, setAreaTags] = useState<string[]>(initial?.areaTags ?? []);
   const [areaInput, setAreaInput] = useState('');
@@ -53,7 +54,7 @@ export default function ArticleForm({
         title,
         slug: slug.trim() || undefined,
         excerpt: excerpt.trim() || undefined,
-        body,
+        body: blocksToBody(blocks),
         category: category.trim() || undefined,
         areaTags,
         isPillar,
@@ -147,9 +148,9 @@ export default function ArticleForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">本文（Markdown） <span className="text-red-500">*</span></label>
-        <p className="text-xs text-gray-400 mb-1.5">対応記法: <code className="font-mono">## 見出し</code> / <code className="font-mono">### 小見出し</code> / <code className="font-mono">- 強調文</code> / <code className="font-mono">![alt](画像URL)</code> / 空行で段落区切り</p>
-        <textarea required rows={22} value={body} onChange={(e) => setBody(e.target.value)} className={`${inputClass} font-mono leading-6`} placeholder={'## 見出し\n\n本文テキスト。\n\n- 強調したいポイント\n\n### 小見出し\n\n![説明](https://example.com/image.png)'} />
+        <label className="block text-sm font-medium text-gray-700 mb-1">本文 <span className="text-red-500">*</span></label>
+        <p className="text-xs text-gray-400 mb-1.5">「＋」でブロックを追加し、見出し・段落・リスト・画像を組み立てます。</p>
+        <BlockEditor blocks={blocks} onChange={setBlocks} />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -183,7 +184,7 @@ export default function ArticleForm({
       <div className="flex gap-3 pt-2">
         <button
           type="submit"
-          disabled={saving || !title.trim() || !body.trim()}
+          disabled={saving || !title.trim() || blocks.length === 0}
           className="bg-[#06C755] text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-[#05a847] disabled:opacity-50 transition-colors"
         >
           {saving ? '保存中...' : submitLabel}
