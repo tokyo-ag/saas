@@ -5,7 +5,7 @@ import { api, API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import { ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
-import { Block, IMAGE_SIZE_PX, TEXT_SIZE_CLASS } from './BlockEditor';
+import { Block, IMAGE_SIZE_CLASS, TEXT_SIZE_CLASS } from './BlockEditor';
 
 const CELL_LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]*)\)/g;
 
@@ -188,15 +188,14 @@ function BlockView({ block, category }: { block: Block; category: string }) {
     return <div className="my-6 text-center">{block.href ? <a href={block.href} target="_blank" rel="noopener noreferrer">{img}</a> : img}</div>;
   }
   if (block.type === 'imageText' || block.type === 'textImage') {
-    const size = IMAGE_SIZE_PX[block.imageSize ?? 'medium'];
     const img = block.imageUrl && (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={block.imageUrl} alt="" className="shrink-0 rounded-xl object-contain" style={{ maxWidth: size, maxHeight: size }} />
+      <img src={block.imageUrl} alt="" className={`shrink-0 rounded-xl object-contain ${IMAGE_SIZE_CLASS[block.imageSize ?? 'medium']}`} />
     );
     const imgEl = block.href ? <a href={block.href} target="_blank" rel="noopener noreferrer">{img}</a> : img;
     const textEl = <p className={`whitespace-pre-wrap leading-[1.75] text-[#333333] ${TEXT_SIZE_CLASS[block.textSize ?? 'medium']}`}>{block.text || ' '}</p>;
     return (
-      <div className="my-6 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+      <div className="my-6 flex flex-row items-start gap-3 sm:gap-4">
         {block.type === 'imageText' ? (
           <>
             {imgEl}
@@ -246,8 +245,8 @@ function BlockView({ block, category }: { block: Block; category: string }) {
             {body.map((row, r) => (
               <tr key={r} className={r % 2 === 1 ? 'bg-gray-50' : ''}>
                 {row.map((cell, c) => (
-                  <td key={c} className="max-w-[200px] min-w-[110px] border border-gray-200 p-0 align-top text-[#333333]">
-                    <div className="overflow-x-auto whitespace-nowrap px-3 py-2.5 leading-relaxed">{renderCellContent(cell)}</div>
+                  <td key={c} className="max-w-[240px] min-w-[110px] border border-gray-200 p-0 align-top text-[#333333]">
+                    <div className="line-clamp-2 whitespace-normal break-words px-3 py-2.5 leading-snug">{renderCellContent(cell)}</div>
                   </td>
                 ))}
               </tr>

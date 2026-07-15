@@ -73,6 +73,12 @@ export function decodeTable(encoded: string): string[][] {
 }
 
 export const IMAGE_SIZE_PX: Record<ImageSize, number> = { small: 80, medium: 128, large: 200 };
+// Smaller cap below sm: so image+text blocks stay side-by-side (not stacked) on narrow phones.
+export const IMAGE_SIZE_CLASS: Record<ImageSize, string> = {
+  small: 'max-w-14 max-h-14 sm:max-w-[80px] sm:max-h-[80px]',
+  medium: 'max-w-20 max-h-20 sm:max-w-[128px] sm:max-h-[128px]',
+  large: 'max-w-28 max-h-28 sm:max-w-[200px] sm:max-h-[200px]',
+};
 export const TEXT_SIZE_CLASS: Record<TextSize, string> = {
   small: 'text-[13px] sm:text-sm',
   medium: 'text-[15px] sm:text-base',

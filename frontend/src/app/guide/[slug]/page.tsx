@@ -320,7 +320,11 @@ const IMAGE_TEXT_RE_V3 = /^\{\{imagetext:([^|]*)\|([^|]*)\|(small|medium|large)\
 const IMAGE_TEXT_RE_V2 = /^\{\{imagetext:([^|]*)\|([^|]*)\|(small|medium|large)\|(.*)\}\}$/;
 const IMAGE_TEXT_RE_V1 = /^\{\{imagetext:([^|]*)\|([^|]*)\|(.*)\}\}$/;
 const TEXT_IMAGE_RE = /^\{\{textimage:([^|]*)\|([^|]*)\|(small|medium|large)\|(small|medium|large)\|(.*)\}\}$/;
-const IMAGE_SIZE_PX: Record<string, number> = { small: 80, medium: 128, large: 200 };
+const IMAGE_SIZE_CLASS: Record<string, string> = {
+  small: 'max-w-14 max-h-14 sm:max-w-[80px] sm:max-h-[80px]',
+  medium: 'max-w-20 max-h-20 sm:max-w-[128px] sm:max-h-[128px]',
+  large: 'max-w-28 max-h-28 sm:max-w-[200px] sm:max-h-[200px]',
+};
 const TEXT_SIZE_CLASS: Record<string, string> = {
   small: 'text-[13px] sm:text-sm',
   medium: 'text-[15px] sm:text-base',
@@ -487,8 +491,8 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
                 {body.map((row, ri) => (
                   <tr key={ri} className={ri % 2 === 1 ? 'bg-gray-50' : ''}>
                     {row.map((cell, ci) => (
-                      <td key={ci} className="max-w-[200px] min-w-[110px] border border-gray-200 p-0 align-top text-[#333333]">
-                        <div className="overflow-x-auto whitespace-nowrap px-3 py-2.5 leading-relaxed">{renderCellContent(cell)}</div>
+                      <td key={ci} className="max-w-[240px] min-w-[110px] border border-gray-200 p-0 align-top text-[#333333]">
+                        <div className="line-clamp-2 whitespace-normal break-words px-3 py-2.5 leading-snug">{renderCellContent(cell)}</div>
                       </td>
                     ))}
                   </tr>
@@ -515,16 +519,16 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
         : imageTextV2
         ? [imageTextV2[1], imageTextV2[2], imageTextV2[3], 'medium', imageTextV2[4]]
         : [imageTextV1![1], imageTextV1![2], 'medium', 'medium', imageTextV1![3]];
-      const px = IMAGE_SIZE_PX[imgSize] ?? IMAGE_SIZE_PX.medium;
+      const sizeClass = IMAGE_SIZE_CLASS[imgSize] ?? IMAGE_SIZE_CLASS.medium;
       const textClass = TEXT_SIZE_CLASS[txtSize] ?? TEXT_SIZE_CLASS.medium;
       const imgEl = url && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={url} alt="" className="shrink-0 rounded-xl object-contain" style={{ maxWidth: px, maxHeight: px }} />
+        <img src={url} alt="" className={`shrink-0 rounded-xl object-contain ${sizeClass}`} />
       );
       const imgNode = href ? <Link href={href}>{imgEl}</Link> : imgEl;
       const textNode = <p className={`whitespace-pre-wrap leading-[1.75] text-[#333333] ${textClass}`}>{encodedText.replace(/\\n/g, '\n')}</p>;
       nodes.push(
-        <div key={i} className="my-6 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+        <div key={i} className="my-6 flex flex-row items-start gap-3 sm:gap-4">
           {textImage ? (
             <>
               {textNode}
