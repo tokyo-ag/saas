@@ -181,9 +181,9 @@ function CardSliderBlockView({ items }: { items: NonNullable<Block['cardItems']>
             style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
           >
             {item.imageUrl && (
-              <a href={item.href || undefined} target="_blank" rel="noopener noreferrer">
+              <a href={item.href || undefined} target="_blank" rel="noopener noreferrer" className="flex justify-center pt-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.imageUrl} alt={item.name} className="block h-auto w-full" />
+                <img src={item.imageUrl} alt={item.name} className="h-auto w-1/3" />
               </a>
             )}
             <div className="flex flex-1 flex-col p-4">
