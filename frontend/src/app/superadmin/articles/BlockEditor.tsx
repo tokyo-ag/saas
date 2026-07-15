@@ -334,6 +334,7 @@ function TableFields({ block, updateBlock }: { block: Block; updateBlock: (id: s
 
   function removeRow(r: number) {
     if (rows.length <= 1) return;
+    if (!confirm('この行を削除しますか？')) return;
     updateBlock(block.id, { tableRows: rows.filter((_, i) => i !== r) });
   }
 
@@ -343,6 +344,7 @@ function TableFields({ block, updateBlock }: { block: Block; updateBlock: (id: s
 
   function removeColumn(c: number) {
     if (colCount <= 1) return;
+    if (!confirm('この列を削除しますか？')) return;
     updateBlock(block.id, { tableRows: rows.map((row) => row.filter((_, i) => i !== c)) });
   }
 
@@ -499,6 +501,7 @@ export default function BlockEditor({
   }
 
   function removeBlock(id: string) {
+    if (!confirm('このブロックを削除しますか？')) return;
     onChange(blocks.filter((b) => b.id !== id));
   }
 

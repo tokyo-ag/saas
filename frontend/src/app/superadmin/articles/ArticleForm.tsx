@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { OfficialArticle, OfficialArticleInput } from '@/lib/api';
 import { SITE_URL } from '@/lib/config';
 import { LOCATION_TAGS } from '@/lib/lpTags';
@@ -17,10 +17,12 @@ export default function ArticleForm({
   initial,
   onSubmit,
   submitLabel,
+  autosave = false,
 }: {
   initial?: OfficialArticle;
   onSubmit: (data: OfficialArticleInput) => Promise<void>;
   submitLabel: string;
+  autosave?: boolean;
 }) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [slug, setSlug] = useState(initial?.slug ?? '');
@@ -52,30 +54,51 @@ export default function ArticleForm({
     setAreaTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function buildPayload(): OfficialArticleInput {
+    return {
+      title,
+      slug: slug.trim() || undefined,
+      excerpt: excerpt.trim() || undefined,
+      body: blocksToBody(blocks),
+      category: category.trim() || undefined,
+      areaTags,
+      isPillar,
+      pillarSlug: isPillar ? undefined : pillarSlug.trim() || undefined,
+      targetKeyword: targetKeyword.trim() || undefined,
+      ogImageUrl: ogImageUrl.trim() || undefined,
+      status,
+    };
+  }
+
+  async function save() {
     setSaving(true);
     setError('');
     try {
-      await onSubmit({
-        title,
-        slug: slug.trim() || undefined,
-        excerpt: excerpt.trim() || undefined,
-        body: blocksToBody(blocks),
-        category: category.trim() || undefined,
-        areaTags,
-        isPillar,
-        pillarSlug: isPillar ? undefined : pillarSlug.trim() || undefined,
-        targetKeyword: targetKeyword.trim() || undefined,
-        ogImageUrl: ogImageUrl.trim() || undefined,
-        status,
-      });
+      await onSubmit(buildPayload());
     } catch (err: any) {
       setError(err.message ?? '保存に失敗しました');
     } finally {
       setSaving(false);
     }
   }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await save();
+  }
+
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (!autosave) return;
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (!title.trim() || blocks.length === 0) return;
+    const timer = setTimeout(() => { save(); }, 4000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autosave, title, slug, category, areaTags, blocks, ogImageUrl, status]);
 
   return (
     <div className="flex flex-col lg:h-full lg:flex-row">

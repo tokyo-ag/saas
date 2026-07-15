@@ -61,7 +61,7 @@ export default function EditArticlePage() {
             記事が見つかりませんでした。
           </div>
         ) : (
-          <ArticleForm initial={article} onSubmit={handleSubmit} submitLabel="保存する" />
+          <ArticleForm initial={article} onSubmit={handleSubmit} submitLabel="保存する" autosave />
         )}
       </div>
       <SaveToast show={saved} />
