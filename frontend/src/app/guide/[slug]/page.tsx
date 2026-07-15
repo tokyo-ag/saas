@@ -314,9 +314,16 @@ export async function generateMetadata({
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 const LINKED_IMAGE_RE = /^\[!\[([^\]]*)\]\(([^)]+)\)\]\(([^)]+)\)$/;
+const IMAGE_TEXT_RE_V3 = /^\{\{imagetext:([^|]*)\|([^|]*)\|(small|medium|large)\|(small|medium|large)\|(.*)\}\}$/;
 const IMAGE_TEXT_RE_V2 = /^\{\{imagetext:([^|]*)\|([^|]*)\|(small|medium|large)\|(.*)\}\}$/;
 const IMAGE_TEXT_RE_V1 = /^\{\{imagetext:([^|]*)\|([^|]*)\|(.*)\}\}$/;
+const TEXT_IMAGE_RE = /^\{\{textimage:([^|]*)\|([^|]*)\|(small|medium|large)\|(small|medium|large)\|(.*)\}\}$/;
 const IMAGE_SIZE_PX: Record<string, number> = { small: 80, medium: 128, large: 200 };
+const TEXT_SIZE_CLASS: Record<string, string> = {
+  small: 'text-[13px] sm:text-sm',
+  medium: 'text-[15px] sm:text-base',
+  large: 'text-lg sm:text-xl',
+};
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
 const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|(.*))?)?\}\}$/;
 const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
@@ -419,22 +426,40 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
       i++;
       continue;
     }
+    const imageTextV3 = IMAGE_TEXT_RE_V3.exec(line);
     const imageTextV2 = IMAGE_TEXT_RE_V2.exec(line);
     const imageTextV1 = IMAGE_TEXT_RE_V1.exec(line);
-    if (imageTextV2 || imageTextV1) {
+    const textImage = TEXT_IMAGE_RE.exec(line);
+    if (imageTextV3 || imageTextV2 || imageTextV1 || textImage) {
       flushParagraph();
-      const [url, href, size, encodedText] = imageTextV2
-        ? [imageTextV2[1], imageTextV2[2], imageTextV2[3], imageTextV2[4]]
-        : [imageTextV1![1], imageTextV1![2], 'medium', imageTextV1![3]];
-      const px = IMAGE_SIZE_PX[size] ?? IMAGE_SIZE_PX.medium;
+      const [url, href, imgSize, txtSize, encodedText] = textImage
+        ? [textImage[1], textImage[2], textImage[3], textImage[4], textImage[5]]
+        : imageTextV3
+        ? [imageTextV3[1], imageTextV3[2], imageTextV3[3], imageTextV3[4], imageTextV3[5]]
+        : imageTextV2
+        ? [imageTextV2[1], imageTextV2[2], imageTextV2[3], 'medium', imageTextV2[4]]
+        : [imageTextV1![1], imageTextV1![2], 'medium', 'medium', imageTextV1![3]];
+      const px = IMAGE_SIZE_PX[imgSize] ?? IMAGE_SIZE_PX.medium;
+      const textClass = TEXT_SIZE_CLASS[txtSize] ?? TEXT_SIZE_CLASS.medium;
       const imgEl = url && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={url} alt="" className="shrink-0 rounded-xl object-contain" style={{ maxWidth: px, maxHeight: px }} />
       );
+      const imgNode = href ? <Link href={href}>{imgEl}</Link> : imgEl;
+      const textNode = <p className={`whitespace-pre-wrap leading-[1.75] text-[#333333] ${textClass}`}>{encodedText.replace(/\\n/g, '\n')}</p>;
       nodes.push(
         <div key={i} className="my-6 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-          {href ? <Link href={href}>{imgEl}</Link> : imgEl}
-          <p className="whitespace-pre-wrap text-[15px] leading-[1.75] text-[#333333] sm:text-base">{encodedText.replace(/\\n/g, '\n')}</p>
+          {textImage ? (
+            <>
+              {textNode}
+              {imgNode}
+            </>
+          ) : (
+            <>
+              {imgNode}
+              {textNode}
+            </>
+          )}
         </div>,
       );
       i++;

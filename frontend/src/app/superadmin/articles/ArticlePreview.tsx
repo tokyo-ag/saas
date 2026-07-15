@@ -5,7 +5,7 @@ import { api, API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import { ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
-import { Block, IMAGE_SIZE_PX } from './BlockEditor';
+import { Block, IMAGE_SIZE_PX, TEXT_SIZE_CLASS } from './BlockEditor';
 
 function fmtDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('ja-JP', {
@@ -165,16 +165,27 @@ function BlockView({ block, category }: { block: Block; category: string }) {
     );
     return <div className="my-6 text-center">{block.href ? <a href={block.href} target="_blank" rel="noopener noreferrer">{img}</a> : img}</div>;
   }
-  if (block.type === 'imageText') {
+  if (block.type === 'imageText' || block.type === 'textImage') {
     const size = IMAGE_SIZE_PX[block.imageSize ?? 'medium'];
     const img = block.imageUrl && (
       // eslint-disable-next-line @next/next/no-img-element
       <img src={block.imageUrl} alt="" className="shrink-0 rounded-xl object-contain" style={{ maxWidth: size, maxHeight: size }} />
     );
+    const imgEl = block.href ? <a href={block.href} target="_blank" rel="noopener noreferrer">{img}</a> : img;
+    const textEl = <p className={`whitespace-pre-wrap leading-[1.75] text-[#333333] ${TEXT_SIZE_CLASS[block.textSize ?? 'medium']}`}>{block.text || ' '}</p>;
     return (
       <div className="my-6 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-        {block.href ? <a href={block.href} target="_blank" rel="noopener noreferrer">{img}</a> : img}
-        <p className="whitespace-pre-wrap text-[15px] leading-[1.75] text-[#333333] sm:text-base">{block.text || ' '}</p>
+        {block.type === 'imageText' ? (
+          <>
+            {imgEl}
+            {textEl}
+          </>
+        ) : (
+          <>
+            {textEl}
+            {imgEl}
+          </>
+        )}
       </div>
     );
   }

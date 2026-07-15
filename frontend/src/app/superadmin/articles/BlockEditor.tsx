@@ -38,10 +38,11 @@ export async function uploadFile(file: File): Promise<string> {
   return data.url as string;
 }
 
-export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'imageText' | 'cta' | 'events' | 'circles';
+export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'imageText' | 'textImage' | 'cta' | 'events' | 'circles';
 
 export type ListStyle = 'check' | 'bullet' | 'number';
 export type ImageSize = 'small' | 'medium' | 'large';
+export type TextSize = 'small' | 'medium' | 'large';
 
 export type Block = {
   id: string;
@@ -52,9 +53,15 @@ export type Block = {
   tag?: string;
   listStyle?: ListStyle;
   imageSize?: ImageSize;
+  textSize?: TextSize;
 };
 
 export const IMAGE_SIZE_PX: Record<ImageSize, number> = { small: 80, medium: 128, large: 200 };
+export const TEXT_SIZE_CLASS: Record<TextSize, string> = {
+  small: 'text-[13px] sm:text-sm',
+  medium: 'text-[15px] sm:text-base',
+  large: 'text-lg sm:text-xl',
+};
 
 const BLOCK_LABELS: Record<BlockType, string> = {
   paragraph: '段落',
@@ -63,6 +70,7 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   list: 'リスト項目',
   image: '画像',
   imageText: '画像＋テキスト（左画像）',
+  textImage: 'テキスト＋画像（右画像）',
   cta: 'CTAボタン',
   events: 'サークルカード',
   circles: '団体カード',
@@ -70,8 +78,10 @@ const BLOCK_LABELS: Record<BlockType, string> = {
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 const LINKED_IMAGE_RE = /^\[!\[([^\]]*)\]\(([^)]+)\)\]\(([^)]+)\)$/;
+const IMAGE_TEXT_RE_V3 = /^\{\{imagetext:([^|]*)\|([^|]*)\|(small|medium|large)\|(small|medium|large)\|(.*)\}\}$/;
 const IMAGE_TEXT_RE_V2 = /^\{\{imagetext:([^|]*)\|([^|]*)\|(small|medium|large)\|(.*)\}\}$/;
 const IMAGE_TEXT_RE_V1 = /^\{\{imagetext:([^|]*)\|([^|]*)\|(.*)\}\}$/;
+const TEXT_IMAGE_RE = /^\{\{textimage:([^|]*)\|([^|]*)\|(small|medium|large)\|(small|medium|large)\|(.*)\}\}$/;
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
 const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|(.*))?)?\}\}$/;
 const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
@@ -91,8 +101,10 @@ export function parseBodyToBlocks(body: string): Block[] {
     if (!line) { blankBefore = true; continue; }
     const linkedImage = LINKED_IMAGE_RE.exec(line);
     const image = IMAGE_RE.exec(line);
+    const imageTextV3 = IMAGE_TEXT_RE_V3.exec(line);
     const imageTextV2 = IMAGE_TEXT_RE_V2.exec(line);
     const imageTextV1 = IMAGE_TEXT_RE_V1.exec(line);
+    const textImage = TEXT_IMAGE_RE.exec(line);
     const cta = CTA_RE.exec(line);
     const events = EVENTS_RE.exec(line);
     const circles = CIRCLES_RE.exec(line);
@@ -100,6 +112,26 @@ export function parseBodyToBlocks(body: string): Block[] {
       blocks.push({ id: newId(), type: 'events', text: events[1] ?? '', tag: events[2] || undefined });
     } else if (circles) {
       blocks.push({ id: newId(), type: 'circles', text: circles[1] ?? '' });
+    } else if (textImage) {
+      blocks.push({
+        id: newId(),
+        type: 'textImage',
+        text: textImage[5].replace(/\\n/g, '\n'),
+        imageUrl: textImage[1],
+        href: textImage[2] || undefined,
+        imageSize: textImage[3] as ImageSize,
+        textSize: textImage[4] as TextSize,
+      });
+    } else if (imageTextV3) {
+      blocks.push({
+        id: newId(),
+        type: 'imageText',
+        text: imageTextV3[5].replace(/\\n/g, '\n'),
+        imageUrl: imageTextV3[1],
+        href: imageTextV3[2] || undefined,
+        imageSize: imageTextV3[3] as ImageSize,
+        textSize: imageTextV3[4] as TextSize,
+      });
     } else if (imageTextV2) {
       blocks.push({
         id: newId(),
@@ -156,7 +188,10 @@ export function blocksToBody(blocks: Block[]): string {
         : `![${block.text}](${block.imageUrl ?? ''})`;
     }
     else if (block.type === 'imageText') {
-      line = `{{imagetext:${block.imageUrl ?? ''}|${block.href ?? ''}|${block.imageSize ?? 'medium'}|${block.text.replace(/\n/g, '\\n')}}}`;
+      line = `{{imagetext:${block.imageUrl ?? ''}|${block.href ?? ''}|${block.imageSize ?? 'medium'}|${block.textSize ?? 'medium'}|${block.text.replace(/\n/g, '\\n')}}}`;
+    }
+    else if (block.type === 'textImage') {
+      line = `{{textimage:${block.imageUrl ?? ''}|${block.href ?? ''}|${block.imageSize ?? 'medium'}|${block.textSize ?? 'medium'}|${block.text.replace(/\n/g, '\\n')}}}`;
     }
     else if (block.type === 'cta') line = `{{cta:${block.text}|${block.href ?? ''}}}`;
     else if (block.type === 'events') {
@@ -167,6 +202,98 @@ export function blocksToBody(blocks: Block[]): string {
     parts.push(line);
   });
   return parts.join('\n');
+}
+
+function SizePicker({ label, value, onChange }: { label: string; value: ImageSize | TextSize; onChange: (size: 'small' | 'medium' | 'large') => void }) {
+  return (
+    <div>
+      <p className="mb-1 text-xs font-medium text-gray-500">{label}</p>
+      <div className="flex gap-1.5">
+        {([
+          { size: 'small' as const, label: '小' },
+          { size: 'medium' as const, label: '中' },
+          { size: 'large' as const, label: '大' },
+        ]).map(({ size, label: sizeLabel }) => (
+          <button
+            key={size}
+            type="button"
+            onClick={() => onChange(size)}
+            className={`rounded-full px-3 py-1 text-xs font-bold transition ${
+              value === size ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {sizeLabel}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ImageTextFields({
+  block,
+  updateBlock,
+  uploadingId,
+  setUploadingId,
+  setUploadError,
+  removingBgId,
+  handleRemoveBackground,
+}: {
+  block: Block;
+  updateBlock: (id: string, patch: Partial<Block>) => void;
+  uploadingId: string | null;
+  setUploadingId: (id: string | null) => void;
+  setUploadError: (message: string) => void;
+  removingBgId: string | null;
+  handleRemoveBackground: (block: Block) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      {block.imageUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={block.imageUrl}
+          alt=""
+          className="rounded-md border border-gray-100 object-contain"
+          style={{ maxWidth: IMAGE_SIZE_PX[block.imageSize ?? 'medium'], maxHeight: IMAGE_SIZE_PX[block.imageSize ?? 'medium'] }}
+        />
+      )}
+      <UploadButton
+        uploading={uploadingId === block.id}
+        onUpload={async (file) => { const url = await uploadFile(file); updateBlock(block.id, { imageUrl: url }); }}
+        setUploading={(v) => setUploadingId(v ? block.id : null)}
+        setError={setUploadError}
+      />
+      {block.imageUrl && (
+        <div className="flex gap-3">
+          <button type="button" onClick={() => updateBlock(block.id, { imageUrl: '' })} className="text-xs text-red-500 hover:underline">画像を削除</button>
+          <button
+            type="button"
+            onClick={() => handleRemoveBackground(block)}
+            disabled={removingBgId === block.id}
+            className="text-xs text-gray-500 hover:text-gray-700 hover:underline disabled:opacity-50"
+          >
+            {removingBgId === block.id ? '背景を削除中…（数秒かかります）' : '背景を削除'}
+          </button>
+        </div>
+      )}
+      <SizePicker label="画像サイズ" value={block.imageSize ?? 'medium'} onChange={(size) => updateBlock(block.id, { imageSize: size })} />
+      <SizePicker label="文字サイズ" value={block.textSize ?? 'medium'} onChange={(size) => updateBlock(block.id, { textSize: size })} />
+      <textarea
+        value={block.text}
+        onChange={(e) => updateBlock(block.id, { text: e.target.value })}
+        rows={3}
+        placeholder="テキスト"
+        className="w-full resize-y rounded-md border border-gray-200 px-2.5 py-1.5 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+      />
+      <input
+        value={block.href ?? ''}
+        onChange={(e) => updateBlock(block.id, { href: e.target.value })}
+        placeholder="タップ時のリンク先URL（任意）"
+        className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+      />
+    </div>
+  );
 }
 
 function BlockTypePicker({ onPick, onClose }: { onPick: (type: BlockType) => void; onClose: () => void }) {
@@ -241,7 +368,7 @@ export default function BlockEditor({
   }
 
   function insertAt(index: number, type: BlockType) {
-    const block: Block = { id: newId(), type, text: '', imageUrl: (type === 'image' || type === 'imageText') ? '' : undefined };
+    const block: Block = { id: newId(), type, text: '', imageUrl: (type === 'image' || type === 'imageText' || type === 'textImage') ? '' : undefined };
     const next = [...blocks];
     next.splice(index, 0, block);
     onChange(next);
@@ -333,71 +460,16 @@ export default function BlockEditor({
                   className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#06C755]"
                 />
               </div>
-            ) : block.type === 'imageText' ? (
-              <div className="space-y-2">
-                {block.imageUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={block.imageUrl}
-                    alt=""
-                    className="rounded-md border border-gray-100 object-contain"
-                    style={{ maxWidth: IMAGE_SIZE_PX[block.imageSize ?? 'medium'], maxHeight: IMAGE_SIZE_PX[block.imageSize ?? 'medium'] }}
-                  />
-                )}
-                <UploadButton
-                  uploading={uploadingId === block.id}
-                  onUpload={async (file) => { const url = await uploadFile(file); updateBlock(block.id, { imageUrl: url }); }}
-                  setUploading={(v) => setUploadingId(v ? block.id : null)}
-                  setError={setUploadError}
-                />
-                {block.imageUrl && (
-                  <div className="flex gap-3">
-                    <button type="button" onClick={() => updateBlock(block.id, { imageUrl: '' })} className="text-xs text-red-500 hover:underline">画像を削除</button>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveBackground(block)}
-                      disabled={removingBgId === block.id}
-                      className="text-xs text-gray-500 hover:text-gray-700 hover:underline disabled:opacity-50"
-                    >
-                      {removingBgId === block.id ? '背景を削除中…（数秒かかります）' : '背景を削除'}
-                    </button>
-                  </div>
-                )}
-                <div>
-                  <p className="mb-1 text-xs font-medium text-gray-500">画像サイズ</p>
-                  <div className="flex gap-1.5">
-                    {([
-                      { size: 'small' as const, label: '小' },
-                      { size: 'medium' as const, label: '中' },
-                      { size: 'large' as const, label: '大' },
-                    ]).map(({ size, label }) => (
-                      <button
-                        key={size}
-                        type="button"
-                        onClick={() => updateBlock(block.id, { imageSize: size })}
-                        className={`rounded-full px-3 py-1 text-xs font-bold transition ${
-                          (block.imageSize ?? 'medium') === size ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <textarea
-                  value={block.text}
-                  onChange={(e) => updateBlock(block.id, { text: e.target.value })}
-                  rows={3}
-                  placeholder="右側に表示するテキスト"
-                  className="w-full resize-y rounded-md border border-gray-200 px-2.5 py-1.5 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-                />
-                <input
-                  value={block.href ?? ''}
-                  onChange={(e) => updateBlock(block.id, { href: e.target.value })}
-                  placeholder="タップ時のリンク先URL（任意）"
-                  className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-                />
-              </div>
+            ) : block.type === 'imageText' || block.type === 'textImage' ? (
+              <ImageTextFields
+                block={block}
+                updateBlock={updateBlock}
+                uploadingId={uploadingId}
+                setUploadingId={setUploadingId}
+                setUploadError={setUploadError}
+                removingBgId={removingBgId}
+                handleRemoveBackground={handleRemoveBackground}
+              />
             ) : block.type === 'cta' ? (
               <div className="space-y-2">
                 <input
