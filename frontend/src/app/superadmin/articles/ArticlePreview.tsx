@@ -236,7 +236,7 @@ function BlockView({ block, category }: { block: Block; category: string }) {
             <tr>
               {header.map((cell, i) => (
                 <th key={i} className="sticky top-0 z-10 max-w-[200px] min-w-[110px] border border-gray-200 bg-[#e6f9ee] p-0 text-left align-top font-bold text-gray-950">
-                  <div className="overflow-x-auto whitespace-nowrap px-3 py-2.5 leading-relaxed">{renderCellContent(cell)}</div>
+                  <div className="overflow-x-auto whitespace-nowrap px-3 py-2.5 leading-relaxed [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-button]:hidden [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent">{renderCellContent(cell)}</div>
                 </th>
               ))}
             </tr>
@@ -246,7 +246,7 @@ function BlockView({ block, category }: { block: Block; category: string }) {
               <tr key={r} className={r % 2 === 1 ? 'bg-gray-50' : ''}>
                 {row.map((cell, c) => (
                   <td key={c} className="max-w-[240px] min-w-[110px] border border-gray-200 p-0 align-top text-[#333333]">
-                    <div className="max-h-[2.8em] overflow-y-auto whitespace-normal break-words px-3 py-2.5 leading-snug [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent">{renderCellContent(cell)}</div>
+                    <div className="overflow-x-auto whitespace-nowrap px-3 py-2.5 leading-relaxed [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-button]:hidden [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent">{renderCellContent(cell)}</div>
                   </td>
                 ))}
               </tr>
