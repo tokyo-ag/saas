@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { API_URL, SITE_URL } from '@/lib/config';
+import { API_URL, SITE_URL, IMAGE_BASE_URL } from '@/lib/config';
+import { imgUrl } from '@/lib/imgUrl';
 import type { BlogPost } from '@/lib/api';
 
 export const revalidate = 60;
@@ -46,7 +47,10 @@ export async function generateMetadata({
   if (!post) return {};
   const tenantName = post.tenant?.lineDisplayName ?? post.tenant?.name ?? tenantCode;
   const description = post.excerpt ?? cleanDescription(post.body);
-  const image = firstImageFromBody(post.body);
+  const image =
+    firstImageFromBody(post.body) ??
+    imgUrl(post.tenant?.linePictureUrl ?? post.tenant?.iconUrl, IMAGE_BASE_URL) ??
+    `${SITE_URL}/opengraph-image`;
   return {
     title: `${post.title} | ${tenantName}`,
     description,
@@ -58,13 +62,13 @@ export async function generateMetadata({
       publishedTime: post.publishedAt ?? undefined,
       url: `${SITE_URL}/clubs/${tenantCode}/blog/${slug}`,
       locale: 'ja_JP',
-      ...(image ? { images: [{ url: image, width: 1200, height: 630 }] } : {}),
+      images: [{ url: image, width: 1200, height: 630 }],
     },
     twitter: {
-      card: image ? 'summary_large_image' : 'summary',
+      card: 'summary_large_image',
       title: `${post.title} | ${tenantName}`,
       description,
-      ...(image ? { images: [image] } : {}),
+      images: [image],
     },
     robots: { index: true, follow: true },
   };

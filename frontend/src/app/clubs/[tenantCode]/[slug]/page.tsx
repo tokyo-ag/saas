@@ -257,7 +257,9 @@ export async function generateMetadata({
   const tenantName = page.title?.trim() || page.tenant.lineDisplayName || page.tenant.name;
   const title = page.seoTitle || `${page.title} | ${tenantName}`;
   const description = descriptionFromPage(page);
-  const image = imgUrl(page.imageUrls?.[0] ?? page.coverImageUrl ?? page.tenant.linePictureUrl, IMAGE_BASE_URL);
+  const image =
+    imgUrl(page.imageUrls?.[0] ?? page.coverImageUrl ?? page.tenant.linePictureUrl ?? page.tenant.iconUrl, IMAGE_BASE_URL) ??
+    `${SITE_URL}/opengraph-image`;
   const url = `${SITE_URL}/clubs/${page.tenant.code ?? tenantCode}/${page.slug}`;
   const favicon = imgUrl(page.tenant.linePictureUrl ?? page.tenant.iconUrl, IMAGE_BASE_URL);
 
@@ -272,13 +274,13 @@ export async function generateMetadata({
       locale: 'ja_JP',
       type: 'article',
       url,
-      ...(image ? { images: [{ url: image, width: 1200, height: 630 }] } : {}),
+      images: [{ url: image, width: 1200, height: 630 }],
     },
     twitter: {
-      card: image ? 'summary_large_image' : 'summary',
+      card: 'summary_large_image',
       title,
       description,
-      ...(image ? { images: [image] } : {}),
+      images: [image],
     },
   };
 }
