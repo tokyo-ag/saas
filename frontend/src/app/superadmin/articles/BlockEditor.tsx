@@ -38,11 +38,18 @@ export async function uploadFile(file: File): Promise<string> {
   return data.url as string;
 }
 
-export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'imageText' | 'textImage' | 'cta' | 'events' | 'circles' | 'table';
+export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'imageText' | 'textImage' | 'cta' | 'events' | 'circles' | 'table' | 'cardSlider';
 
 export type ListStyle = 'check' | 'bullet' | 'number';
 export type ImageSize = 'small' | 'medium' | 'large';
 export type TextSize = 'small' | 'medium' | 'large';
+
+export type CardItem = {
+  imageUrl: string;
+  name: string;
+  description: string;
+  href: string;
+};
 
 export type Block = {
   id: string;
@@ -55,21 +62,40 @@ export type Block = {
   imageSize?: ImageSize;
   textSize?: TextSize;
   tableRows?: string[][];
+  cardItems?: CardItem[];
 };
 
-// UTF-8-safe base64 so table cell text (Japanese, symbols) survives embedding in the single-line marker.
+// UTF-8-safe base64 so embedded Japanese/symbol text survives being placed in a single-line marker.
+function encodeJsonB64(value: unknown): string {
+  return btoa(unescape(encodeURIComponent(JSON.stringify(value))));
+}
+
+function decodeJsonB64<T>(encoded: string, fallback: T): T {
+  try {
+    return JSON.parse(decodeURIComponent(escape(atob(encoded))));
+  } catch {
+    return fallback;
+  }
+}
+
 export function encodeTable(rows: string[][]): string {
-  return btoa(unescape(encodeURIComponent(JSON.stringify(rows))));
+  return encodeJsonB64(rows);
 }
 
 export function decodeTable(encoded: string): string[][] {
-  try {
-    const parsed = JSON.parse(decodeURIComponent(escape(atob(encoded))));
-    if (Array.isArray(parsed) && parsed.every((row) => Array.isArray(row))) return parsed;
-  } catch {
-    // fall through to default
-  }
+  const parsed = decodeJsonB64<string[][]>(encoded, [['', ''], ['', '']]);
+  if (Array.isArray(parsed) && parsed.every((row) => Array.isArray(row))) return parsed;
   return [['', ''], ['', '']];
+}
+
+export function encodeCardItems(items: CardItem[]): string {
+  return encodeJsonB64(items);
+}
+
+export function decodeCardItems(encoded: string): CardItem[] {
+  const parsed = decodeJsonB64<CardItem[]>(encoded, []);
+  if (Array.isArray(parsed)) return parsed;
+  return [];
 }
 
 export const IMAGE_SIZE_PX: Record<ImageSize, number> = { small: 80, medium: 128, large: 200 };
@@ -97,6 +123,7 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   events: 'サークルカード',
   circles: '団体カード',
   table: '表（比較表）',
+  cardSlider: 'カードスライド（横スクロール）',
 };
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
@@ -109,6 +136,7 @@ const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
 const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|(.*))?)?\}\}$/;
 const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
 const TABLE_RE = /^\{\{table:(.+)\}\}$/;
+const CARD_SLIDER_RE = /^\{\{cardslider:(.+)\}\}$/;
 
 function newId() {
   return Math.random().toString(36).slice(2, 10);
@@ -133,8 +161,11 @@ export function parseBodyToBlocks(body: string): Block[] {
     const events = EVENTS_RE.exec(line);
     const circles = CIRCLES_RE.exec(line);
     const table = TABLE_RE.exec(line);
+    const cardSlider = CARD_SLIDER_RE.exec(line);
     if (table) {
       blocks.push({ id: newId(), type: 'table', text: '', tableRows: decodeTable(table[1]) });
+    } else if (cardSlider) {
+      blocks.push({ id: newId(), type: 'cardSlider', text: '', cardItems: decodeCardItems(cardSlider[1]) });
     } else if (events) {
       blocks.push({ id: newId(), type: 'events', text: events[1] ?? '', tag: events[2] || undefined });
     } else if (circles) {
@@ -226,6 +257,7 @@ export function blocksToBody(blocks: Block[]): string {
     }
     else if (block.type === 'circles') line = block.text ? `{{circles:${block.text}}}` : '{{circles}}';
     else if (block.type === 'table') line = `{{table:${encodeTable(block.tableRows ?? [['', ''], ['', '']])}}}`;
+    else if (block.type === 'cardSlider') line = `{{cardslider:${encodeCardItems(block.cardItems ?? [])}}}`;
     else line = block.text;
     parts.push(line);
   });
@@ -426,6 +458,98 @@ function TableFields({ block, updateBlock }: { block: Block; updateBlock: (id: s
   );
 }
 
+function CardSliderFields({
+  block,
+  updateBlock,
+  uploadingId,
+  setUploadingId,
+  setUploadError,
+}: {
+  block: Block;
+  updateBlock: (id: string, patch: Partial<Block>) => void;
+  uploadingId: string | null;
+  setUploadingId: (id: string | null) => void;
+  setUploadError: (message: string) => void;
+}) {
+  const items = block.cardItems ?? [];
+
+  function updateItem(index: number, patch: Partial<CardItem>) {
+    const next = items.map((item, i) => (i === index ? { ...item, ...patch } : item));
+    updateBlock(block.id, { cardItems: next });
+  }
+
+  function addItem() {
+    updateBlock(block.id, { cardItems: [...items, { imageUrl: '', name: '', description: '', href: '' }] });
+  }
+
+  function removeItem(index: number) {
+    if (items.length <= 1) return;
+    if (!confirm('このカードを削除しますか？')) return;
+    updateBlock(block.id, { cardItems: items.filter((_, i) => i !== index) });
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-gray-400">団体を横スクロールカードで並べて紹介します。1枚につき画像・団体名・説明文・リンク先を入力してください。</p>
+      {items.map((item, index) => {
+        const uploadKey = `${block.id}-${index}`;
+        return (
+          <div key={index} className="space-y-2 rounded-md border border-gray-200 p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-gray-500">カード{index + 1}</span>
+              <button
+                type="button"
+                onClick={() => removeItem(index)}
+                disabled={items.length <= 1}
+                className="text-xs text-red-400 hover:text-red-600 disabled:opacity-30"
+              >
+                削除
+              </button>
+            </div>
+            {item.imageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={item.imageUrl} alt="" className="mx-auto max-h-32 rounded-md border border-gray-100 object-contain" />
+            )}
+            <UploadButton
+              uploading={uploadingId === uploadKey}
+              onUpload={async (file) => { const url = await uploadFile(file); updateItem(index, { imageUrl: url }); }}
+              setUploading={(v) => setUploadingId(v ? uploadKey : null)}
+              setError={setUploadError}
+            />
+            {item.imageUrl && (
+              <button type="button" onClick={() => updateItem(index, { imageUrl: '' })} className="text-xs text-red-500 hover:underline">
+                画像を削除
+              </button>
+            )}
+            <input
+              value={item.name}
+              onChange={(e) => updateItem(index, { name: e.target.value })}
+              placeholder="団体名 例: ゆるばど"
+              className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+            />
+            <textarea
+              value={item.description}
+              onChange={(e) => updateItem(index, { description: e.target.value.replace(/\n/g, ' ') })}
+              rows={2}
+              placeholder="短い説明文（改行なしで自然に折り返されます）"
+              className="w-full resize-y rounded-md border border-gray-200 px-2.5 py-1.5 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+            />
+            <input
+              value={item.href}
+              onChange={(e) => updateItem(index, { href: e.target.value })}
+              placeholder="団体ページのURL"
+              className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+            />
+          </div>
+        );
+      })}
+      <button type="button" onClick={addItem} className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50">
+        ＋カードを追加
+      </button>
+    </div>
+  );
+}
+
 function BlockTypePicker({ onPick, onClose }: { onPick: (type: BlockType) => void; onClose: () => void }) {
   return (
     <div className="absolute z-10 mt-1 w-48 rounded-lg border border-gray-200 bg-white shadow-lg">
@@ -504,6 +628,7 @@ export default function BlockEditor({
       text: '',
       imageUrl: (type === 'image' || type === 'imageText' || type === 'textImage') ? '' : undefined,
       tableRows: type === 'table' ? [['見出し1', '見出し2'], ['', '']] : undefined,
+      cardItems: type === 'cardSlider' ? [{ imageUrl: '', name: '', description: '', href: '' }] : undefined,
     };
     const next = [...blocks];
     next.splice(index, 0, block);
@@ -662,6 +787,14 @@ export default function BlockEditor({
               </div>
             ) : block.type === 'table' ? (
               <TableFields block={block} updateBlock={updateBlock} />
+            ) : block.type === 'cardSlider' ? (
+              <CardSliderFields
+                block={block}
+                updateBlock={updateBlock}
+                uploadingId={uploadingId}
+                setUploadingId={setUploadingId}
+                setUploadError={setUploadError}
+              />
             ) : block.type === 'circles' ? (
               <div className="space-y-2">
                 <input

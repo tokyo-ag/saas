@@ -334,6 +334,7 @@ const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
 const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|(.*))?)?\}\}$/;
 const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
 const TABLE_RE = /^\{\{table:(.+)\}\}$/;
+const CARD_SLIDER_RE = /^\{\{cardslider:(.+)\}\}$/;
 
 function decodeTable(encoded: string): string[][] {
   try {
@@ -343,6 +344,50 @@ function decodeTable(encoded: string): string[][] {
     // fall through to default
   }
   return [];
+}
+
+type CardItem = { imageUrl: string; name: string; description: string; href: string };
+
+function decodeCardItems(encoded: string): CardItem[] {
+  try {
+    const parsed = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    if (Array.isArray(parsed)) return parsed;
+  } catch {
+    // fall through to default
+  }
+  return [];
+}
+
+function CardSliderBlock({ items }: { items: CardItem[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="my-6">
+      <p className="mb-1.5 text-[11px] text-gray-400">→ 横にスワイプ</p>
+      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-button]:hidden [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent">
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className="flex w-[88%] shrink-0 snap-start flex-col rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:w-[340px]"
+            style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
+          >
+            {item.imageUrl && (
+              <Link href={item.href || '#'} className="mx-auto">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={item.imageUrl} alt={item.name} className="mx-auto max-h-40 rounded-lg object-contain" />
+              </Link>
+            )}
+            <p className="mt-3 text-center text-base font-bold text-gray-950">{item.name}</p>
+            <p className="mt-2 flex-1 text-[15px] leading-[1.75] text-[#333333]">{item.description}</p>
+            {item.href && (
+              <Link href={item.href} className="mt-3 inline-flex text-sm font-bold text-[#06C755] hover:underline">
+                {item.name}の活動を見る →
+              </Link>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 const CELL_LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]*)\)/g;
@@ -503,6 +548,13 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
           </div>,
         );
       }
+      i++;
+      continue;
+    }
+    const cardSlider = CARD_SLIDER_RE.exec(line);
+    if (cardSlider) {
+      flushParagraph();
+      nodes.push(<CardSliderBlock key={i} items={decodeCardItems(cardSlider[1])} />);
       i++;
       continue;
     }

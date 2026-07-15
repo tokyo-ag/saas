@@ -168,6 +168,38 @@ function ParagraphText({ text }: { text: string }) {
   );
 }
 
+function CardSliderBlockView({ items }: { items: NonNullable<Block['cardItems']> }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="my-6">
+      <p className="mb-1.5 text-[11px] text-gray-400">→ 横にスワイプ</p>
+      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-button]:hidden [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent">
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className="flex w-[88%] shrink-0 snap-start flex-col rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:w-[340px]"
+            style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
+          >
+            {item.imageUrl && (
+              <a href={item.href || undefined} target="_blank" rel="noopener noreferrer" className="mx-auto">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={item.imageUrl} alt={item.name} className="mx-auto max-h-40 rounded-lg object-contain" />
+              </a>
+            )}
+            <p className="mt-3 text-center text-base font-bold text-gray-950">{item.name}</p>
+            <p className="mt-2 flex-1 text-[15px] leading-[1.75] text-[#333333]">{item.description}</p>
+            {item.href && (
+              <a href={item.href} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex text-sm font-bold text-[#06C755] hover:underline">
+                {item.name}の活動を見る →
+              </a>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function BlockView({ block, category }: { block: Block; category: string }) {
   if (block.type === 'h2') {
     return (
@@ -255,6 +287,9 @@ function BlockView({ block, category }: { block: Block; category: string }) {
         </table>
       </div>
     );
+  }
+  if (block.type === 'cardSlider') {
+    return <CardSliderBlockView items={block.cardItems ?? []} />;
   }
   return <ParagraphText text={block.text} />;
 }
