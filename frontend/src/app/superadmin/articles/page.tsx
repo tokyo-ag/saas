@@ -7,6 +7,9 @@ import { api, OfficialArticle } from '@/lib/api';
 const ACTIVITY_CATEGORIES = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー'];
 const TYPE_CATEGORIES = ['インカレサークル', '学生団体', 'イベント団体', '社会人サークル'];
 const KNOWN_CATEGORIES = [...ACTIVITY_CATEGORIES, ...TYPE_CATEGORIES];
+const DELETE_PASSPHRASE = 'comiu.link';
+
+type PendingDelete = { type: 'single'; article: OfficialArticle } | { type: 'bulk'; count: number };
 
 export default function SuperadminArticlesPage() {
   const [articles, setArticles] = useState<OfficialArticle[]>([]);
@@ -14,6 +17,8 @@ export default function SuperadminArticlesPage() {
   const [tab, setTab] = useState('すべて');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+  const [passphraseInput, setPassphraseInput] = useState('');
 
   function load() {
     setLoading(true);
@@ -22,10 +27,28 @@ export default function SuperadminArticlesPage() {
 
   useEffect(() => { load(); }, []);
 
-  async function handleDelete(a: OfficialArticle) {
-    if (!confirm(`「${a.title}」を削除しますか？この操作は取り消せません。`)) return;
-    await api.superadmin.deleteOfficialArticle(a.id);
-    load();
+  function closeDeleteModal() {
+    setPendingDelete(null);
+    setPassphraseInput('');
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete || passphraseInput !== DELETE_PASSPHRASE) return;
+    setDeleting(true);
+    try {
+      if (pendingDelete.type === 'single') {
+        await api.superadmin.deleteOfficialArticle(pendingDelete.article.id);
+      } else {
+        for (const id of selected) {
+          await api.superadmin.deleteOfficialArticle(id);
+        }
+        setSelected(new Set());
+      }
+      load();
+    } finally {
+      setDeleting(false);
+      closeDeleteModal();
+    }
   }
 
   function toggleSelected(id: string) {
@@ -34,21 +57,6 @@ export default function SuperadminArticlesPage() {
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
-  }
-
-  async function handleBulkDelete() {
-    if (selected.size === 0) return;
-    if (!confirm(`選択した${selected.size}件を削除しますか？この操作は取り消せません。`)) return;
-    setDeleting(true);
-    try {
-      for (const id of selected) {
-        await api.superadmin.deleteOfficialArticle(id);
-      }
-      setSelected(new Set());
-      load();
-    } finally {
-      setDeleting(false);
-    }
   }
 
   return (
@@ -123,7 +131,7 @@ export default function SuperadminArticlesPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={handleBulkDelete}
+                        onClick={() => setPendingDelete({ type: 'bulk', count: selected.size })}
                         disabled={deleting}
                         className="text-xs font-bold text-white bg-red-500 hover:bg-red-600 disabled:opacity-50 rounded-full px-3 py-1.5 ml-auto"
                       >
@@ -170,7 +178,7 @@ export default function SuperadminArticlesPage() {
                           <a href={`/guide/${a.slug}`} target="_blank" rel="noreferrer" className="text-sm text-[#06C755] hover:underline">記事を見る →</a>
                         )}
                         <Link href={`/superadmin/articles/${a.id}`} className="text-sm text-gray-600 hover:underline">編集</Link>
-                        <button onClick={() => handleDelete(a)} className="text-sm text-red-500 hover:underline">削除</button>
+                        <button onClick={() => setPendingDelete({ type: 'single', article: a })} className="text-sm text-red-500 hover:underline">削除</button>
                         <span className="text-xs text-gray-300 ml-auto">更新: {new Date(a.updatedAt).toLocaleDateString('ja-JP')}</span>
                       </div>
                     </div>
@@ -182,6 +190,38 @@ export default function SuperadminArticlesPage() {
           );
         })()}
       </div>
+
+      {pendingDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={closeDeleteModal}>
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <p className="font-bold text-gray-900">
+              {pendingDelete.type === 'single' ? `「${pendingDelete.article.title}」を削除しますか？` : `選択した${pendingDelete.count}件を削除しますか？`}
+            </p>
+            <p className="mt-2 text-sm text-gray-500">この操作は取り消せません。続けるには合言葉「{DELETE_PASSPHRASE}」を入力してください。</p>
+            <input
+              autoFocus
+              value={passphraseInput}
+              onChange={(e) => setPassphraseInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && passphraseInput === DELETE_PASSPHRASE) confirmDelete(); }}
+              placeholder={DELETE_PASSPHRASE}
+              className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-red-400"
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" onClick={closeDeleteModal} className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
+                キャンセル
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={passphraseInput !== DELETE_PASSPHRASE || deleting}
+                className="rounded-lg bg-red-500 px-4 py-2 text-sm font-bold text-white hover:bg-red-600 disabled:opacity-40"
+              >
+                {deleting ? '削除中...' : '削除する'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
