@@ -449,8 +449,8 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
               <thead>
                 <tr>
                   {header.map((cell, ci) => (
-                    <th key={ci} className="sticky top-0 z-10 max-w-[200px] min-w-[110px] border border-gray-200 bg-[#e6f9ee] px-3 py-2 text-left align-top font-bold text-gray-950">
-                      {cell}
+                    <th key={ci} className="sticky top-0 z-10 max-w-[200px] min-w-[110px] border border-gray-200 bg-[#e6f9ee] p-0 text-left align-top font-bold text-gray-950">
+                      <div className="max-h-[3.4em] overflow-y-auto whitespace-pre-wrap break-words px-3 py-2 leading-relaxed">{cell}</div>
                     </th>
                   ))}
                 </tr>
@@ -459,8 +459,8 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
                 {body.map((row, ri) => (
                   <tr key={ri} className={ri % 2 === 1 ? 'bg-gray-50' : ''}>
                     {row.map((cell, ci) => (
-                      <td key={ci} className="max-w-[200px] min-w-[110px] border border-gray-200 px-3 py-2 align-top leading-relaxed text-[#333333]">
-                        {cell}
+                      <td key={ci} className="max-w-[200px] min-w-[110px] border border-gray-200 p-0 align-top text-[#333333]">
+                        <div className="max-h-[3.4em] overflow-y-auto whitespace-pre-wrap break-words px-3 py-2 leading-relaxed">{cell}</div>
                       </td>
                     ))}
                   </tr>
