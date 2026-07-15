@@ -339,6 +339,28 @@ function decodeTable(encoded: string): string[][] {
   return [];
 }
 
+const CELL_LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]*)\)/g;
+
+function renderCellContent(text: string): ReactNode {
+  if (!text.includes('](')) return text;
+  const parts: ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+  CELL_LINK_RE.lastIndex = 0;
+  while ((match = CELL_LINK_RE.exec(text))) {
+    if (match.index > lastIndex) parts.push(text.slice(lastIndex, match.index));
+    parts.push(
+      <Link key={key++} href={match[2]} target="_blank" rel="noopener noreferrer" className="font-semibold text-[#06C755] hover:underline">
+        {match[1]}
+      </Link>,
+    );
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) parts.push(text.slice(lastIndex));
+  return parts;
+}
+
 function CheckBullet() {
   return (
     <svg width="24" height="24" viewBox="0 0 20 20" fill="none" className="mt-[1px] shrink-0">
@@ -450,7 +472,7 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
                 <tr>
                   {header.map((cell, ci) => (
                     <th key={ci} className="sticky top-0 z-10 max-w-[200px] min-w-[110px] border border-gray-200 bg-[#e6f9ee] p-0 text-left align-top font-bold text-gray-950">
-                      <div className="overflow-x-auto whitespace-nowrap px-3 py-2.5 leading-relaxed">{cell}</div>
+                      <div className="overflow-x-auto whitespace-nowrap px-3 py-2.5 leading-relaxed">{renderCellContent(cell)}</div>
                     </th>
                   ))}
                 </tr>
@@ -460,7 +482,7 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
                   <tr key={ri} className={ri % 2 === 1 ? 'bg-gray-50' : ''}>
                     {row.map((cell, ci) => (
                       <td key={ci} className="max-w-[200px] min-w-[110px] border border-gray-200 p-0 align-top text-[#333333]">
-                        <div className="overflow-x-auto whitespace-nowrap px-3 py-2.5 leading-relaxed">{cell}</div>
+                        <div className="overflow-x-auto whitespace-nowrap px-3 py-2.5 leading-relaxed">{renderCellContent(cell)}</div>
                       </td>
                     ))}
                   </tr>

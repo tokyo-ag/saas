@@ -350,7 +350,9 @@ function TableFields({ block, updateBlock }: { block: Block; updateBlock: (id: s
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-gray-400">1行目が見出し行として表示されます。</p>
+      <p className="text-xs text-gray-400">
+        1行目が見出し行として表示されます。セルに <code className="rounded bg-gray-100 px-1">[団体名](URL)</code> の形式で入力すると、緑色のテキストリンクになります。
+      </p>
       <div className="overflow-x-auto rounded-md border border-gray-200">
         <table className="border-collapse">
           <tbody>
