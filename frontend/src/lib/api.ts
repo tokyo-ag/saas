@@ -262,6 +262,8 @@ export const api = {
     tenants: (activityTag?: string) =>
       request<PublicTenant[]>(`/public/tenants${activityTag ? `?activityTag=${encodeURIComponent(activityTag)}` : ''}`),
     tenant: (tenantCode: string) => request<PublicTenant>(`/public/tenants/${tenantCode}`),
+    areaTagCounts: (category: string) =>
+      request<{ area: string; count: number }[]>(`/public/tenants/area-tag-counts?category=${encodeURIComponent(category)}`),
     sitemapPages: () =>
       request<PublicSitemapPage[]>(`/public/sitemap-pages?t=${Date.now()}`, {
         cache: 'no-store',

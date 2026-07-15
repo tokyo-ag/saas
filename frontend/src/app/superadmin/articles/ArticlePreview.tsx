@@ -137,6 +137,75 @@ function CirclesBlockPreview({ category, heading }: { category: string; heading:
   );
 }
 
+const TOKYO_WARDS_SET = new Set([
+  '千代田区', '中央区', '港区', '新宿区', '文京区', '台東区', '墨田区', '江東区',
+  '品川区', '目黒区', '大田区', '世田谷区', '渋谷区', '中野区', '杉並区', '豊島区',
+  '北区', '荒川区', '板橋区', '練馬区', '足立区', '葛飾区', '江戸川区',
+]);
+
+function matchesPrefecture(area: string, prefecture?: string): boolean {
+  if (!prefecture) return true;
+  if (prefecture === '東京') return area === '東京' || TOKYO_WARDS_SET.has(area);
+  return area === prefecture;
+}
+
+function AreaTagsBlockPreview({
+  category,
+  heading,
+  maxCount,
+  prefecture,
+  showCount,
+}: {
+  category: string;
+  heading: string;
+  maxCount: number;
+  prefecture?: string;
+  showCount: boolean;
+}) {
+  const [areas, setAreas] = useState<{ area: string; count: number }[]>([]);
+
+  useEffect(() => {
+    if (!category) { setAreas([]); return; }
+    let active = true;
+    api.public.areaTagCounts(category).then((list) => { if (active) setAreas(list); }).catch(() => { if (active) setAreas([]); });
+    return () => { active = false; };
+  }, [category]);
+
+  if (!category) {
+    return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">カテゴリを選択すると、地域タグ一覧のプレビューが表示されます。</p>;
+  }
+  const filtered = areas.filter((a) => matchesPrefecture(a.area, prefecture));
+  if (filtered.length < 2) {
+    return (
+      <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">
+        地域タグが2件未満のため、実際の記事では非表示になります（現在{filtered.length}件）。
+      </p>
+    );
+  }
+  const shown = filtered.slice(0, maxCount);
+  return (
+    <div className="my-6">
+      {heading && (
+        <h2 className="my-6 border-l-[5px] border-[#06C755] py-1 pl-4 text-2xl font-bold text-gray-950">{heading}</h2>
+      )}
+      <div className="flex flex-wrap gap-2">
+        {shown.map((item) => (
+          <a
+            key={item.area}
+            href={`/guide/tag/${encodeURIComponent(category)}?area=${encodeURIComponent(item.area)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full bg-gray-100 px-4 py-2 text-sm font-bold text-gray-700 hover:bg-[#06C755]/10 hover:text-[#06C755]"
+          >
+            {item.area}
+            {showCount ? `（${item.count}）` : ''}
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function CheckBullet() {
   return (
     <svg width="24" height="24" viewBox="0 0 20 20" fill="none" className="mt-[1px] shrink-0">
@@ -260,6 +329,18 @@ function BlockView({ block, category }: { block: Block; category: string }) {
   }
   if (block.type === 'circles') {
     return <CirclesBlockPreview category={category} heading={block.text} />;
+  }
+  if (block.type === 'areaTags') {
+    if (block.areaTagsEnabled === false) return null;
+    return (
+      <AreaTagsBlockPreview
+        category={category}
+        heading={block.text}
+        maxCount={block.areaTagsMaxCount ?? 10}
+        prefecture={block.areaTagsPrefecture}
+        showCount={block.areaTagsShowCount ?? false}
+      />
+    );
   }
   if (block.type === 'table') {
     const rows = block.tableRows ?? [];

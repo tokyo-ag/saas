@@ -12,6 +12,16 @@ import { PrismaService } from '../prisma/prisma.service';
 import { BlogService } from '../blog/blog.service';
 import { LiffGuard } from '../auth/liff.guard';
 
+// Mirrors frontend/src/lib/lpTags.ts LOCATION_TAGS - kept in sync manually since Event.tags
+// mixes location tags together with other tag groups (search tags etc.) in one flat array.
+const LOCATION_TAG_SET = new Set([
+  '東京',
+  '千代田区', '中央区', '港区', '新宿区', '文京区', '台東区', '墨田区', '江東区',
+  '品川区', '目黒区', '大田区', '世田谷区', '渋谷区', '中野区', '杉並区', '豊島区',
+  '北区', '荒川区', '板橋区', '練馬区', '足立区', '葛飾区', '江戸川区',
+  '埼玉', '千葉', '神奈川',
+]);
+
 type OfficialSiteRow = {
   status: string;
   hero_title: string;
@@ -551,7 +561,10 @@ export class PublicController {
   }
 
   @Get('tenants')
-  async getTenants(@Query('activityTag') activityTag?: string) {
+  async getTenants(
+    @Query('activityTag') activityTag?: string,
+    @Query('area') area?: string,
+  ) {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     const tenants = await this.prisma.tenant.findMany({
@@ -560,6 +573,7 @@ export class PublicController {
         bannedAt: null,
         code: { not: null },
         ...(activityTag ? { activityTags: { has: activityTag } } : {}),
+        ...(area ? { events: { some: { tags: { has: area }, status: { not: 'draft' } } } } : {}),
       },
       include: {
         _count: {
@@ -590,6 +604,44 @@ export class PublicController {
       .sort((a, b) => b.accessCount - a.accessCount);
 
     return ranked.slice(0, 10);
+  }
+
+  @Get('tenants/area-tag-counts')
+  async getTenantAreaTagCounts(@Query('category') category?: string) {
+    if (!category) return [];
+
+    const tenants = await this.prisma.tenant.findMany({
+      where: {
+        deletedAt: null,
+        bannedAt: null,
+        code: { not: null },
+        activityTags: { has: category },
+      },
+      select: {
+        id: true,
+        events: {
+          where: { status: { not: 'draft' } },
+          select: { tags: true },
+        },
+      },
+    });
+
+    const tenantCountByArea = new Map<string, number>();
+    for (const tenant of tenants) {
+      const areasForTenant = new Set<string>();
+      for (const event of tenant.events) {
+        for (const tag of event.tags) {
+          if (LOCATION_TAG_SET.has(tag)) areasForTenant.add(tag);
+        }
+      }
+      for (const area of areasForTenant) {
+        tenantCountByArea.set(area, (tenantCountByArea.get(area) ?? 0) + 1);
+      }
+    }
+
+    return Array.from(tenantCountByArea.entries())
+      .map(([area, count]) => ({ area, count }))
+      .sort((a, b) => b.count - a.count || a.area.localeCompare(b.area, 'ja'));
   }
 
   @Get('tenants/:tenantCode')

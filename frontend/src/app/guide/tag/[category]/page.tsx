@@ -35,9 +35,11 @@ async function fetchArticlesByCategory(category: string): Promise<OfficialArticl
   }
 }
 
-async function fetchCircles(category: string): Promise<PublicCircle[]> {
+async function fetchCircles(category: string, area?: string): Promise<PublicCircle[]> {
   try {
-    const res = await fetch(`${API_URL}/api/public/tenants?activityTag=${encodeURIComponent(category)}`, { next: { revalidate } });
+    const params = new URLSearchParams({ activityTag: category });
+    if (area) params.set('area', area);
+    const res = await fetch(`${API_URL}/api/public/tenants?${params.toString()}`, { next: { revalidate } });
     if (!res.ok) return [];
     return res.json();
   } catch {
@@ -47,14 +49,21 @@ async function fetchCircles(category: string): Promise<PublicCircle[]> {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ category: string }>;
+  searchParams: Promise<{ area?: string }>;
 }): Promise<Metadata> {
   const { category: raw } = await params;
+  const { area } = await searchParams;
   const category = decodeURIComponent(raw);
-  const title = `${category}のサークル・イベント情報`;
-  const description = `${category}のサークル・団体・イベントに関する情報とCOMIU掲載団体をまとめて紹介します。`;
-  const url = `${SITE_URL}/guide/tag/${encodeURIComponent(category)}`;
+  const title = area ? `${area}の${category}サークル・団体一覧` : `${category}のサークル・イベント情報`;
+  const description = area
+    ? `${area}で活動している${category}のサークル・団体をCOMIUからまとめて紹介します。`
+    : `${category}のサークル・団体・イベントに関する情報とCOMIU掲載団体をまとめて紹介します。`;
+  const url = area
+    ? `${SITE_URL}/guide/tag/${encodeURIComponent(category)}?area=${encodeURIComponent(area)}`
+    : `${SITE_URL}/guide/tag/${encodeURIComponent(category)}`;
   return {
     title,
     description,
@@ -65,14 +74,17 @@ export async function generateMetadata({
 
 export default async function GuideCategoryHubPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ category: string }>;
+  searchParams: Promise<{ area?: string }>;
 }) {
   const { category: raw } = await params;
+  const { area } = await searchParams;
   const category = decodeURIComponent(raw);
   const [articles, circles] = await Promise.all([
     fetchArticlesByCategory(category),
-    fetchCircles(category),
+    fetchCircles(category, area),
   ]);
   if (articles.length === 0 && circles.length === 0) notFound();
 
@@ -115,16 +127,20 @@ export default async function GuideCategoryHubPage({
         <section className="border-b border-gray-200 bg-white">
           <div className="mx-auto max-w-6xl px-5 py-10">
             <p className="text-sm font-bold text-[#06C755]">CATEGORY</p>
-            <h1 className="mt-3 text-3xl font-bold">{category}のサークル・イベント情報</h1>
+            <h1 className="mt-3 text-3xl font-bold">
+              {area ? `${area}の${category}サークル・団体一覧` : `${category}のサークル・イベント情報`}
+            </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-gray-500">
-              {category}に関する記事と、COMIUに実際に登録されている団体をまとめて紹介しています。
+              {area
+                ? `${area}で活動している${category}の記事と、COMIUに実際に登録されている団体をまとめて紹介しています。`
+                : `${category}に関する記事と、COMIUに実際に登録されている団体をまとめて紹介しています。`}
             </p>
           </div>
         </section>
 
         {circles.length > 0 && (
           <section className="mx-auto max-w-6xl px-5 py-8">
-            <h2 className="text-lg font-bold text-gray-950">{category}の団体</h2>
+            <h2 className="text-lg font-bold text-gray-950">{area ? `${area}の${category}の団体` : `${category}の団体`}</h2>
             <div className="mt-4 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {circles.map((circle) => {
                 const displayName = circle.lineDisplayName ?? circle.name;

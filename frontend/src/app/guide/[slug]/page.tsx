@@ -104,6 +104,19 @@ async function fetchCircles(category?: string | null): Promise<PublicArticleTena
   }
 }
 
+type AreaTagCount = { area: string; count: number };
+
+async function fetchAreaTagCounts(category?: string | null): Promise<AreaTagCount[]> {
+  if (!category) return [];
+  try {
+    const res = await fetch(`${API_URL}/api/public/tenants/area-tag-counts?category=${encodeURIComponent(category)}`, { next: { revalidate } });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
 function imgSrc(url: string | null | undefined) {
   if (!url) return '/defaults/events/default.webp';
   return url.startsWith('http') ? url : `${API_URL}${url}`;
@@ -185,6 +198,45 @@ function CirclesBlock({ tenants, heading }: { tenants: PublicArticleTenant[]; he
       {heading && <h2 className="mb-3 text-lg font-bold text-gray-950">{heading}</h2>}
       <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {tenants.map((tenant, index) => <CircleCardMini key={tenant.id} tenant={tenant} index={index} />)}
+      </div>
+    </div>
+  );
+}
+
+function AreaTagsBlock({
+  areas,
+  heading,
+  category,
+  maxCount,
+  prefecture,
+  showCount,
+}: {
+  areas: AreaTagCount[];
+  heading: string;
+  category: string;
+  maxCount: number;
+  prefecture?: string;
+  showCount: boolean;
+}) {
+  const filtered = areas.filter((a) => matchesPrefecture(a.area, prefecture));
+  if (filtered.length < 2) return null;
+  const shown = filtered.slice(0, maxCount);
+  return (
+    <div className="my-6">
+      {heading && (
+        <h2 className="my-6 border-l-[5px] border-[#06C755] py-1 pl-4 text-xl font-bold text-gray-950 sm:text-2xl">{heading}</h2>
+      )}
+      <div className="flex flex-wrap gap-2">
+        {shown.map((item) => (
+          <Link
+            key={item.area}
+            href={`/guide/tag/${encodeURIComponent(category)}?area=${encodeURIComponent(item.area)}`}
+            className="rounded-full bg-gray-100 px-4 py-2 text-sm font-bold text-gray-700 hover:bg-[#06C755]/10 hover:text-[#06C755]"
+          >
+            {item.area}
+            {showCount ? `（${item.count}）` : ''}
+          </Link>
+        ))}
       </div>
     </div>
   );
@@ -335,6 +387,19 @@ const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|(.*))?)?\}\}$/;
 const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
 const TABLE_RE = /^\{\{table:(.+)\}\}$/;
 const CARD_SLIDER_RE = /^\{\{cardslider:(.+)\}\}$/;
+const AREA_TAGS_RE = /^\{\{areatags:(true|false)\|(\d+)\|([^|]*)\|(true|false)\|(.*)\}\}$/;
+
+const TOKYO_WARDS_SET = new Set([
+  '千代田区', '中央区', '港区', '新宿区', '文京区', '台東区', '墨田区', '江東区',
+  '品川区', '目黒区', '大田区', '世田谷区', '渋谷区', '中野区', '杉並区', '豊島区',
+  '北区', '荒川区', '板橋区', '練馬区', '足立区', '葛飾区', '江戸川区',
+]);
+
+function matchesPrefecture(area: string, prefecture?: string): boolean {
+  if (!prefecture) return true;
+  if (prefecture === '東京') return area === '東京' || TOKYO_WARDS_SET.has(area);
+  return area === prefecture;
+}
 
 function decodeTable(encoded: string): string[][] {
   try {
@@ -453,7 +518,19 @@ function ListMarker({ listStyle, index }: { listStyle: ListStyle; index: number 
 
 const LIST_LINE_RE = /^-(b|n)? (.*)$/;
 
-function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTag: Map<string, PublicArticleEvent[]>; circles: PublicArticleTenant[] }) {
+function BodyRenderer({
+  body,
+  eventsByTag,
+  circles,
+  areaTagCounts,
+  category,
+}: {
+  body: string;
+  eventsByTag: Map<string, PublicArticleEvent[]>;
+  circles: PublicArticleTenant[];
+  areaTagCounts: AreaTagCount[];
+  category?: string | null;
+}) {
   const lines = body.split('\n');
   const nodes: ReactNode[] = [];
   let i = 0;
@@ -514,6 +591,26 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
     if (circlesMatch) {
       flushParagraph();
       nodes.push(<CirclesBlock key={i} tenants={circles} heading={circlesMatch[1] ?? ''} />);
+      i++;
+      continue;
+    }
+    const areaTagsMatch = AREA_TAGS_RE.exec(line);
+    if (areaTagsMatch) {
+      flushParagraph();
+      const enabled = areaTagsMatch[1] === 'true';
+      if (enabled && category) {
+        nodes.push(
+          <AreaTagsBlock
+            key={i}
+            areas={areaTagCounts}
+            heading={areaTagsMatch[5]}
+            category={category}
+            maxCount={parseInt(areaTagsMatch[2], 10)}
+            prefecture={areaTagsMatch[3] || undefined}
+            showCount={areaTagsMatch[4] === 'true'}
+          />,
+        );
+      }
       i++;
       continue;
     }
@@ -673,9 +770,11 @@ export default async function GuideArticlePage({
   if (!article) notFound();
   const eventsTags = extractEventsTags(article.body);
   const hasCirclesBlock = /\{\{circles/.test(article.body);
-  const [eventsByTagEntries, circles] = await Promise.all([
+  const hasAreaTagsBlock = /\{\{areatags:/.test(article.body);
+  const [eventsByTagEntries, circles, areaTagCounts] = await Promise.all([
     Promise.all(eventsTags.map(async (tag) => [tag ?? '', await fetchCategoryEvents(article.category, tag)] as const)),
     hasCirclesBlock ? fetchCircles(article.category) : Promise.resolve([]),
+    hasAreaTagsBlock ? fetchAreaTagCounts(article.category) : Promise.resolve([]),
   ]);
   const eventsByTag = new Map<string, PublicArticleEvent[]>(eventsByTagEntries);
   const hasInlineCta = /\{\{cta:/.test(article.body);
@@ -774,7 +873,7 @@ export default async function GuideArticlePage({
             </div>
             <h1 className="mt-4 text-2xl font-bold leading-tight text-gray-950 sm:text-3xl">{article.title}</h1>
             <div className="my-8 h-px bg-gray-100" />
-            <BodyRenderer body={article.body} eventsByTag={eventsByTag} circles={circles} />
+            <BodyRenderer body={article.body} eventsByTag={eventsByTag} circles={circles} areaTagCounts={areaTagCounts} category={article.category} />
           </div>
 
           {!hasInlineCta && (
