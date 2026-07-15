@@ -445,11 +445,11 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
         const [header, ...body] = rows;
         nodes.push(
           <div key={i} className="my-6 max-h-96 overflow-auto rounded-md border border-gray-200">
-            <table className="w-full min-w-[480px] border-collapse text-sm">
+            <table className="w-full border-collapse text-xs sm:text-sm" style={{ minWidth: Math.max(480, header.length * 150) }}>
               <thead>
                 <tr>
                   {header.map((cell, ci) => (
-                    <th key={ci} className="sticky top-0 z-10 border border-gray-200 bg-[#e6f9ee] px-3 py-2 text-left font-bold text-gray-950">
+                    <th key={ci} className="sticky top-0 z-10 max-w-[200px] min-w-[110px] border border-gray-200 bg-[#e6f9ee] px-3 py-2 text-left align-top font-bold text-gray-950">
                       {cell}
                     </th>
                   ))}
@@ -459,7 +459,7 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
                 {body.map((row, ri) => (
                   <tr key={ri} className={ri % 2 === 1 ? 'bg-gray-50' : ''}>
                     {row.map((cell, ci) => (
-                      <td key={ci} className="border border-gray-200 px-3 py-2 text-[#333333]">
+                      <td key={ci} className="max-w-[200px] min-w-[110px] border border-gray-200 px-3 py-2 align-top leading-relaxed text-[#333333]">
                         {cell}
                       </td>
                     ))}
