@@ -373,7 +373,7 @@ function CardSliderBlock({ items }: { items: CardItem[] }) {
             {item.imageUrl && (
               // eslint-disable-next-line @next/next/no-img-element
               (() => {
-                const img = <img src={item.imageUrl} alt={item.name} className="aspect-[16/10] w-full object-cover object-top" />;
+                const img = <img src={item.imageUrl} alt={item.name} className="block h-auto w-full" />;
                 return item.href ? <Link href={item.href}>{img}</Link> : img;
               })()
             )}

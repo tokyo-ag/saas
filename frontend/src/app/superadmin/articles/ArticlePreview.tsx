@@ -183,7 +183,7 @@ function CardSliderBlockView({ items }: { items: NonNullable<Block['cardItems']>
             {item.imageUrl && (
               <a href={item.href || undefined} target="_blank" rel="noopener noreferrer">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.imageUrl} alt={item.name} className="aspect-[16/10] w-full object-cover object-top" />
+                <img src={item.imageUrl} alt={item.name} className="block h-auto w-full" />
               </a>
             )}
             <div className="flex flex-1 flex-col p-4">
