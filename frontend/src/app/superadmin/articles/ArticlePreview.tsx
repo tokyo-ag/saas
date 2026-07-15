@@ -177,7 +177,7 @@ function CardSliderBlockView({ items }: { items: NonNullable<Block['cardItems']>
         {items.map((item, i) => (
           <div
             key={i}
-            className="flex w-[88%] shrink-0 snap-start flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm sm:w-[340px]"
+            className="flex w-[62%] shrink-0 snap-start flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm sm:w-[220px]"
             style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
           >
             {item.imageUrl && (
