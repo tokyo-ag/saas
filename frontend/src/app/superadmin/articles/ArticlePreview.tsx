@@ -246,7 +246,7 @@ function BlockView({ block, category }: { block: Block; category: string }) {
               <tr key={r} className={r % 2 === 1 ? 'bg-gray-50' : ''}>
                 {row.map((cell, c) => (
                   <td key={c} className="max-w-[240px] min-w-[110px] border border-gray-200 p-0 align-top text-[#333333]">
-                    <div className="line-clamp-2 whitespace-normal break-words px-3 py-2.5 leading-snug">{renderCellContent(cell)}</div>
+                    <div className="max-h-[2.8em] overflow-y-auto whitespace-normal break-words px-3 py-2.5 leading-snug [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent">{renderCellContent(cell)}</div>
                   </td>
                 ))}
               </tr>
