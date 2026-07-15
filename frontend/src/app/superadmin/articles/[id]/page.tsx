@@ -14,6 +14,7 @@ export default function EditArticlePage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     api.superadmin.officialArticles()
@@ -44,7 +45,15 @@ export default function EditArticlePage() {
       <div className="shrink-0 bg-white border-b border-gray-200 px-4 sm:px-8 py-4 sm:py-5">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <Link href="/superadmin/articles" className="text-gray-400 hover:text-gray-600 text-sm shrink-0">← 戻る</Link>
+            <Link
+              href="/superadmin/articles"
+              onClick={(e) => {
+                if (dirty && !confirm('保存されていない変更があります。このページを離れますか？')) e.preventDefault();
+              }}
+              className="text-gray-400 hover:text-gray-600 text-sm shrink-0"
+            >
+              ← 戻る
+            </Link>
             <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">記事を編集</h1>
           </div>
           {article && (
@@ -61,7 +70,7 @@ export default function EditArticlePage() {
             記事が見つかりませんでした。
           </div>
         ) : (
-          <ArticleForm initial={article} onSubmit={handleSubmit} submitLabel="保存する" autosave />
+          <ArticleForm initial={article} onSubmit={handleSubmit} submitLabel="保存する" autosave onDirtyChange={setDirty} />
         )}
       </div>
       <SaveToast show={saved} />

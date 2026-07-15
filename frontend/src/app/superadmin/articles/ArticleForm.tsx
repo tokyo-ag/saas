@@ -18,11 +18,13 @@ export default function ArticleForm({
   onSubmit,
   submitLabel,
   autosave = false,
+  onDirtyChange,
 }: {
   initial?: OfficialArticle;
   onSubmit: (data: OfficialArticleInput) => Promise<void>;
   submitLabel: string;
   autosave?: boolean;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [slug, setSlug] = useState(initial?.slug ?? '');
@@ -40,6 +42,7 @@ export default function ArticleForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [dirty, setDirty] = useState(false);
 
   const publicUrl = slug.trim() ? `${SITE_URL}/guide/${slug.trim()}` : '';
 
@@ -75,6 +78,7 @@ export default function ArticleForm({
     setError('');
     try {
       await onSubmit(buildPayload());
+      setDirty(false);
     } catch (err: any) {
       setError(err.message ?? '保存に失敗しました');
     } finally {
@@ -87,11 +91,11 @@ export default function ArticleForm({
     await save();
   }
 
-  const isFirstRender = useRef(true);
+  const isFirstAutosaveRun = useRef(true);
   useEffect(() => {
     if (!autosave) return;
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
+    if (isFirstAutosaveRun.current) {
+      isFirstAutosaveRun.current = false;
       return;
     }
     if (!title.trim() || blocks.length === 0) return;
@@ -99,6 +103,30 @@ export default function ArticleForm({
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autosave, title, slug, category, areaTags, blocks, ogImageUrl, status]);
+
+  const isFirstDirtyRun = useRef(true);
+  useEffect(() => {
+    if (isFirstDirtyRun.current) {
+      isFirstDirtyRun.current = false;
+      return;
+    }
+    setDirty(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, slug, category, areaTags, blocks, ogImageUrl, status]);
+
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
+
+  useEffect(() => {
+    if (!dirty) return;
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [dirty]);
 
   return (
     <div className="flex flex-col lg:h-full lg:flex-row">
