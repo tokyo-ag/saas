@@ -49,6 +49,15 @@ export type CardItem = {
   name: string;
   description: string;
   href: string;
+  imageSize?: ImageSize;
+};
+
+// Width of the card image as a fraction of the card's own width (kept uncropped; only the display size changes).
+// "large" fills the card edge-to-edge (zero side margin); smaller sizes leave proportionally more margin.
+export const CARD_IMAGE_SIZE_CLASS: Record<ImageSize, string> = {
+  small: 'w-1/3',
+  medium: 'w-2/3',
+  large: 'w-full',
 };
 
 export type Block = {
@@ -521,6 +530,7 @@ function CardSliderFields({
                 画像を削除
               </button>
             )}
+            <SizePicker label="画像サイズ" value={item.imageSize ?? 'medium'} onChange={(size) => updateItem(index, { imageSize: size })} />
             <input
               value={item.name}
               onChange={(e) => updateItem(index, { name: e.target.value })}

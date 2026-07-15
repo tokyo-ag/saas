@@ -346,7 +346,12 @@ function decodeTable(encoded: string): string[][] {
   return [];
 }
 
-type CardItem = { imageUrl: string; name: string; description: string; href: string };
+type CardItem = { imageUrl: string; name: string; description: string; href: string; imageSize?: 'small' | 'medium' | 'large' };
+const CARD_IMAGE_SIZE_CLASS: Record<string, string> = {
+  small: 'w-1/3',
+  medium: 'w-2/3',
+  large: 'w-full',
+};
 
 function decodeCardItems(encoded: string): CardItem[] {
   try {
@@ -373,7 +378,7 @@ function CardSliderBlock({ items }: { items: CardItem[] }) {
             {item.imageUrl && (
               // eslint-disable-next-line @next/next/no-img-element
               (() => {
-                const img = <img src={item.imageUrl} alt={item.name} className="h-auto w-1/3" />;
+                const img = <img src={item.imageUrl} alt={item.name} className={`h-auto ${CARD_IMAGE_SIZE_CLASS[item.imageSize ?? 'medium']}`} />;
                 return (
                   <div className="flex justify-center pt-4">
                     {item.href ? <Link href={item.href}>{img}</Link> : img}

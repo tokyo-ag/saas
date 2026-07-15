@@ -5,7 +5,7 @@ import { api, API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import { ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
-import { Block, IMAGE_SIZE_CLASS, TEXT_SIZE_CLASS } from './BlockEditor';
+import { Block, CARD_IMAGE_SIZE_CLASS, IMAGE_SIZE_CLASS, TEXT_SIZE_CLASS } from './BlockEditor';
 
 const CELL_LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]*)\)/g;
 
@@ -183,7 +183,7 @@ function CardSliderBlockView({ items }: { items: NonNullable<Block['cardItems']>
             {item.imageUrl && (
               <a href={item.href || undefined} target="_blank" rel="noopener noreferrer" className="flex justify-center pt-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.imageUrl} alt={item.name} className="h-auto w-1/3" />
+                <img src={item.imageUrl} alt={item.name} className={`h-auto ${CARD_IMAGE_SIZE_CLASS[item.imageSize ?? 'medium']}`} />
               </a>
             )}
             <div className="flex flex-1 flex-col p-4">
