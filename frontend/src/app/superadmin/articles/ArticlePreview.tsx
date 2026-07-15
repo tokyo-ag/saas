@@ -177,22 +177,24 @@ function CardSliderBlockView({ items }: { items: NonNullable<Block['cardItems']>
         {items.map((item, i) => (
           <div
             key={i}
-            className="flex w-[88%] shrink-0 snap-start flex-col rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:w-[340px]"
+            className="flex w-[88%] shrink-0 snap-start flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm sm:w-[340px]"
             style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
           >
             {item.imageUrl && (
-              <a href={item.href || undefined} target="_blank" rel="noopener noreferrer" className="mx-auto">
+              <a href={item.href || undefined} target="_blank" rel="noopener noreferrer">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.imageUrl} alt={item.name} className="mx-auto max-h-40 rounded-lg object-contain" />
+                <img src={item.imageUrl} alt={item.name} className="aspect-[16/10] w-full object-cover object-top" />
               </a>
             )}
-            <p className="mt-3 text-center text-base font-bold text-gray-950">{item.name}</p>
-            <p className="mt-2 flex-1 text-[15px] leading-[1.75] text-[#333333]">{item.description}</p>
-            {item.href && (
-              <a href={item.href} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex text-sm font-bold text-[#06C755] hover:underline">
-                {item.name}の活動を見る →
-              </a>
-            )}
+            <div className="flex flex-1 flex-col p-4">
+              <p className="text-center text-base font-bold text-gray-950">{item.name}</p>
+              <p className="mt-2 flex-1 text-[15px] leading-[1.75] text-[#333333]">{item.description}</p>
+              {item.href && (
+                <a href={item.href} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex text-sm font-bold text-[#06C755] hover:underline">
+                  {item.name}の活動を見る →
+                </a>
+              )}
+            </div>
           </div>
         ))}
       </div>
