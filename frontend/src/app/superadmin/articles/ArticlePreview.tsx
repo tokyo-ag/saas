@@ -295,13 +295,22 @@ export default function ArticlePreview({
   areaTags,
   targetKeyword,
   blocks,
+  ctaTitle,
+  ctaDescription,
+  ctaLabel,
+  ctaHref,
 }: {
   title: string;
   category: string;
   areaTags: string[];
   targetKeyword: string;
   blocks: Block[];
+  ctaTitle?: string;
+  ctaDescription?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
 }) {
+  const hasInlineCta = blocks.some((b) => b.type === 'cta');
   return (
     <div className="rounded-xl border border-gray-200 bg-white px-6 py-8 shadow-sm sm:px-9">
       <div className="flex flex-wrap items-center gap-2">
@@ -320,6 +329,17 @@ export default function ArticlePreview({
           renderBlocks(blocks, category)
         )}
       </div>
+      {!hasInlineCta && (
+        <div className="mt-6 rounded-xl border border-[#06C755]/20 bg-[#06C755]/5 px-6 py-6">
+          <p className="text-sm font-bold text-gray-950">{ctaTitle || 'COMIUで主催者向けWEBサイトと予約管理をまとめる'}</p>
+          <p className="mt-2 text-sm leading-7 text-gray-600">
+            {ctaDescription || '団体紹介、記事導線、予約画面、参加者管理をひとつにつなげられます。'}
+          </p>
+          <span className="mt-4 inline-flex rounded-lg bg-[#06C755] px-5 py-3 text-sm font-bold text-white">
+            {ctaLabel || 'COMIUを見る'}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

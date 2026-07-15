@@ -35,6 +35,10 @@ export default function ArticleForm({
   const isPillar = initial?.isPillar ?? false;
   const pillarSlug = initial?.pillarSlug ?? '';
   const targetKeyword = initial?.targetKeyword ?? '';
+  const [ctaTitle, setCtaTitle] = useState(initial?.ctaTitle ?? '');
+  const [ctaDescription, setCtaDescription] = useState(initial?.ctaDescription ?? '');
+  const [ctaLabel, setCtaLabel] = useState(initial?.ctaLabel ?? '');
+  const [ctaHref, setCtaHref] = useState(initial?.ctaHref ?? '');
   const [ogImageUrl, setOgImageUrl] = useState(initial?.ogImageUrl ?? '');
   const [ogImageUploading, setOgImageUploading] = useState(false);
   const [ogImageError, setOgImageError] = useState('');
@@ -68,6 +72,10 @@ export default function ArticleForm({
       isPillar,
       pillarSlug: isPillar ? undefined : pillarSlug.trim() || undefined,
       targetKeyword: targetKeyword.trim() || undefined,
+      ctaTitle: ctaTitle.trim() || undefined,
+      ctaDescription: ctaDescription.trim() || undefined,
+      ctaLabel: ctaLabel.trim() || undefined,
+      ctaHref: ctaHref.trim() || undefined,
       ogImageUrl: ogImageUrl.trim() || undefined,
       status,
     };
@@ -102,7 +110,7 @@ export default function ArticleForm({
     const timer = setTimeout(() => { save(); }, 4000);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autosave, title, slug, category, areaTags, blocks, ogImageUrl, status]);
+  }, [autosave, title, slug, category, areaTags, blocks, ctaTitle, ctaDescription, ctaLabel, ctaHref, ogImageUrl, status]);
 
   const isFirstDirtyRun = useRef(true);
   useEffect(() => {
@@ -112,7 +120,7 @@ export default function ArticleForm({
     }
     setDirty(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, slug, category, areaTags, blocks, ogImageUrl, status]);
+  }, [title, slug, category, areaTags, blocks, ctaTitle, ctaDescription, ctaLabel, ctaHref, ogImageUrl, status]);
 
   useEffect(() => {
     onDirtyChange?.(dirty);
@@ -185,6 +193,44 @@ export default function ArticleForm({
       </div>
 
       <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">記事末尾のCTA（本文に「CTAボタン」ブロックがない場合に表示）</label>
+        <p className="text-xs text-gray-400 mb-1.5">空欄の場合は「COMIUで主催者向けWEBサイトと予約管理をまとめる」の既定文が表示されます。</p>
+        <div className="space-y-2">
+          <input
+            maxLength={160}
+            value={ctaTitle}
+            onChange={(e) => setCtaTitle(e.target.value)}
+            className={inputClass}
+            placeholder="例: COMIUで主催者向けWEBサイトと予約管理をまとめる"
+          />
+          <textarea
+            maxLength={300}
+            value={ctaDescription}
+            onChange={(e) => setCtaDescription(e.target.value)}
+            rows={2}
+            className={`${inputClass} resize-y`}
+            placeholder="例: 団体紹介、記事導線、予約画面、参加者管理をひとつにつなげられます。"
+          />
+          <div className="flex gap-2">
+            <input
+              maxLength={80}
+              value={ctaLabel}
+              onChange={(e) => setCtaLabel(e.target.value)}
+              className={inputClass}
+              placeholder="ボタンラベル 例: COMIUを見る"
+            />
+            <input
+              maxLength={500}
+              value={ctaHref}
+              onChange={(e) => setCtaHref(e.target.value)}
+              className={`${inputClass} font-mono`}
+              placeholder="リンク先 例: /organizers"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">OGP画像（SNSシェア時に表示される画像）</label>
         {ogImageError && <p className="mb-1.5 text-xs text-red-500">{ogImageError}</p>}
         {ogImageUrl && (
@@ -247,6 +293,10 @@ export default function ArticleForm({
         areaTags={areaTags}
         targetKeyword={targetKeyword}
         blocks={blocks}
+        ctaTitle={ctaTitle}
+        ctaDescription={ctaDescription}
+        ctaLabel={ctaLabel}
+        ctaHref={ctaHref}
       />
     </div>
     </div>

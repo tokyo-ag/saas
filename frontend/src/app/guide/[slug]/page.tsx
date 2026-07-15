@@ -20,6 +20,8 @@ type OfficialArticle = {
   isPillar?: boolean;
   pillarSlug?: string | null;
   targetKeyword?: string | null;
+  ctaTitle?: string | null;
+  ctaDescription?: string | null;
   ctaLabel?: string | null;
   ctaHref?: string | null;
   ogImageUrl?: string | null;
@@ -702,9 +704,9 @@ export default async function GuideArticlePage({
 
           {!hasInlineCta && (
             <div className="mt-6 rounded-xl border border-[#06C755]/20 bg-[#06C755]/5 px-6 py-6">
-              <p className="text-sm font-bold text-gray-950">COMIUで主催者向けWEBサイトと予約管理をまとめる</p>
+              <p className="text-sm font-bold text-gray-950">{article.ctaTitle || 'COMIUで主催者向けWEBサイトと予約管理をまとめる'}</p>
               <p className="mt-2 text-sm leading-7 text-gray-600">
-                団体紹介、記事導線、予約画面、参加者管理をひとつにつなげられます。
+                {article.ctaDescription || '団体紹介、記事導線、予約画面、参加者管理をひとつにつなげられます。'}
               </p>
               <Link href={article.ctaHref || '/organizers'} className="mt-4 inline-flex rounded-lg bg-[#06C755] px-5 py-3 text-sm font-bold text-white hover:opacity-90">
                 {article.ctaLabel || 'COMIUを見る'}

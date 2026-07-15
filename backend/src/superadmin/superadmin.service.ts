@@ -68,6 +68,8 @@ export class UpsertOfficialArticleDto {
   @IsOptional() @IsBoolean() isPillar?: boolean;
   @IsOptional() @IsString() pillarSlug?: string;
   @IsOptional() @IsString() targetKeyword?: string;
+  @IsOptional() @IsString() ctaTitle?: string;
+  @IsOptional() @IsString() ctaDescription?: string;
   @IsOptional() @IsString() ctaLabel?: string;
   @IsOptional() @IsString() ctaHref?: string;
   @IsOptional() @IsString() ogImageUrl?: string;
@@ -99,6 +101,8 @@ type OfficialArticleRow = {
   is_pillar: boolean;
   pillar_slug: string | null;
   target_keyword: string | null;
+  cta_title: string | null;
+  cta_description: string | null;
   cta_label: string | null;
   cta_href: string | null;
   og_image_url: string | null;
@@ -391,6 +395,8 @@ export class SuperadminService implements OnApplicationBootstrap {
       isPillar: row.is_pillar,
       pillarSlug: row.pillar_slug,
       targetKeyword: row.target_keyword,
+      ctaTitle: row.cta_title,
+      ctaDescription: row.cta_description,
       ctaLabel: row.cta_label,
       ctaHref: row.cta_href,
       ogImageUrl: row.og_image_url,
@@ -414,6 +420,8 @@ export class SuperadminService implements OnApplicationBootstrap {
         is_pillar,
         pillar_slug,
         target_keyword,
+        cta_title,
+        cta_description,
         cta_label,
         cta_href,
         og_image_url,
@@ -560,6 +568,8 @@ export class SuperadminService implements OnApplicationBootstrap {
         is_pillar,
         pillar_slug,
         target_keyword,
+        cta_title,
+        cta_description,
         cta_label,
         cta_href,
         og_image_url,
@@ -579,6 +589,8 @@ export class SuperadminService implements OnApplicationBootstrap {
         ${dto.isPillar ?? false},
         ${dto.pillarSlug?.trim() || null},
         ${dto.targetKeyword?.trim() || null},
+        ${dto.ctaTitle?.trim() || null},
+        ${dto.ctaDescription?.trim() || null},
         ${dto.ctaLabel?.trim() || null},
         ${dto.ctaHref?.trim() || null},
         ${dto.ogImageUrl?.trim() || null},
@@ -598,6 +610,8 @@ export class SuperadminService implements OnApplicationBootstrap {
         is_pillar,
         pillar_slug,
         target_keyword,
+        cta_title,
+        cta_description,
         cta_label,
         cta_href,
         og_image_url,
@@ -642,6 +656,8 @@ export class SuperadminService implements OnApplicationBootstrap {
         is_pillar = ${dto.isPillar ?? current.is_pillar},
         pillar_slug = ${dto.pillarSlug?.trim() || null},
         target_keyword = ${dto.targetKeyword?.trim() || null},
+        cta_title = ${dto.ctaTitle?.trim() || null},
+        cta_description = ${dto.ctaDescription?.trim() || null},
         cta_label = ${dto.ctaLabel?.trim() || null},
         cta_href = ${dto.ctaHref?.trim() || null},
         og_image_url = ${dto.ogImageUrl?.trim() || null},
@@ -660,6 +676,8 @@ export class SuperadminService implements OnApplicationBootstrap {
         is_pillar,
         pillar_slug,
         target_keyword,
+        cta_title,
+        cta_description,
         cta_label,
         cta_href,
         og_image_url,

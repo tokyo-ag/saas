@@ -36,6 +36,8 @@ type OfficialArticleRow = {
   is_pillar: boolean;
   pillar_slug: string | null;
   target_keyword: string | null;
+  cta_title: string | null;
+  cta_description: string | null;
   cta_label: string | null;
   cta_href: string | null;
   og_image_url: string | null;
@@ -154,6 +156,8 @@ export class PublicController {
       isPillar: row.is_pillar,
       pillarSlug: row.pillar_slug,
       targetKeyword: row.target_keyword,
+      ctaTitle: row.cta_title,
+      ctaDescription: row.cta_description,
       ctaLabel: row.cta_label,
       ctaHref: row.cta_href,
       ogImageUrl: row.og_image_url,
@@ -175,6 +179,8 @@ export class PublicController {
         is_pillar,
         pillar_slug,
         target_keyword,
+        cta_title,
+        cta_description,
         cta_label,
         cta_href,
         og_image_url,

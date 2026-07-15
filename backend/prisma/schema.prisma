@@ -189,6 +189,8 @@ model OfficialArticle {
   isPillar      Boolean   @default(false) @map("is_pillar")
   pillarSlug    String?   @map("pillar_slug") @db.VarChar(120)
   targetKeyword String?   @map("target_keyword") @db.VarChar(120)
+  ctaTitle      String?   @map("cta_title") @db.VarChar(160)
+  ctaDescription String?  @map("cta_description") @db.VarChar(300)
   ctaLabel      String?   @map("cta_label") @db.VarChar(80)
   ctaHref       String?   @map("cta_href") @db.VarChar(500)
   ogImageUrl    String?   @map("og_image_url") @db.Text

@@ -541,6 +541,8 @@ export interface OfficialArticle {
   isPillar?: boolean;
   pillarSlug?: string | null;
   targetKeyword?: string | null;
+  ctaTitle?: string | null;
+  ctaDescription?: string | null;
   ctaLabel?: string | null;
   ctaHref?: string | null;
   ogImageUrl?: string | null;
@@ -560,6 +562,8 @@ export interface OfficialArticleInput {
   isPillar?: boolean;
   pillarSlug?: string;
   targetKeyword?: string;
+  ctaTitle?: string;
+  ctaDescription?: string;
   ctaLabel?: string;
   ctaHref?: string;
   ogImageUrl?: string;
