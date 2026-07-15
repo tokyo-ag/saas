@@ -468,8 +468,12 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
       if (rows.length > 0) {
         const [header, ...body] = rows;
         nodes.push(
-          <div key={i} className="my-6 max-h-96 overflow-auto rounded-md border border-gray-200">
-            <table className="w-full border-collapse text-xs sm:text-sm" style={{ minWidth: Math.max(480, header.length * 150) }}>
+          <div key={i} className="my-6">
+            {header.length > 2 && (
+              <p className="mb-1 text-[11px] text-gray-400 sm:hidden">← 横にスクロールできます →</p>
+            )}
+            <div className="max-h-96 overflow-auto rounded-md border border-gray-200">
+              <table className="w-full border-collapse text-xs sm:text-sm" style={{ minWidth: Math.max(480, header.length * 150) }}>
               <thead>
                 <tr>
                   {header.map((cell, ci) => (
@@ -490,7 +494,8 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
                   </tr>
                 ))}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>,
         );
       }
@@ -571,7 +576,7 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
     if (line.startsWith('## ')) {
       flushParagraph();
       nodes.push(
-        <h2 key={i} className="my-6 border-l-[5px] border-[#06C755] py-1 pl-4 text-2xl font-bold text-gray-950">
+        <h2 key={i} className="my-6 border-l-[5px] border-[#06C755] py-1 pl-4 text-xl font-bold text-gray-950 sm:text-2xl">
           {line.replace(/^## /, '')}
         </h2>,
       );
@@ -682,8 +687,8 @@ export default async function GuideArticlePage({
           </div>
         </header>
 
-        <article className="mx-auto max-w-3xl px-5 py-10">
-          <div className="rounded-xl border border-gray-200 bg-white px-6 py-8 shadow-sm sm:px-9">
+        <article className="mx-auto max-w-3xl px-3 py-10 sm:px-5">
+          <div className="rounded-xl border border-gray-200 bg-white px-4 py-8 shadow-sm sm:px-9">
             <div className="flex flex-wrap items-center gap-2">
               {article.category && (
                 <Link href={`/guide/tag/${encodeURIComponent(article.category)}`} className="rounded-full bg-[#06C755]/10 px-3 py-1 text-xs font-bold text-[#06C755] hover:bg-[#06C755]/20">
@@ -697,7 +702,7 @@ export default async function GuideArticlePage({
               ))}
               {article.targetKeyword && <span className="text-xs text-gray-400">{article.targetKeyword}</span>}
             </div>
-            <h1 className="mt-4 text-3xl font-bold leading-tight text-gray-950">{article.title}</h1>
+            <h1 className="mt-4 text-2xl font-bold leading-tight text-gray-950 sm:text-3xl">{article.title}</h1>
             <div className="my-8 h-px bg-gray-100" />
             <BodyRenderer body={article.body} eventsByTag={eventsByTag} circles={circles} />
           </div>
