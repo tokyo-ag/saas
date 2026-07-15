@@ -25,7 +25,7 @@ async function compressImage(file: File, maxBytes = 4 * 1024 * 1024): Promise<Bl
   });
 }
 
-async function uploadFile(file: File): Promise<string> {
+export async function uploadFile(file: File): Promise<string> {
   const compressed = await compressImage(file);
   const ext = file.name.split('.').pop() ?? 'jpg';
   const filename = `${Date.now()}.${ext}`;

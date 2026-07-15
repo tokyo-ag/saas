@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { OfficialArticle, OfficialArticleInput } from '@/lib/api';
+import { SITE_URL } from '@/lib/config';
 import { LOCATION_TAGS } from '@/lib/lpTags';
-import BlockEditor, { Block, parseBodyToBlocks, blocksToBody } from './BlockEditor';
+import { UploadButton } from '@/components/admin/EventFormPrimitives';
+import BlockEditor, { Block, parseBodyToBlocks, blocksToBody, uploadFile } from './BlockEditor';
 import ArticlePreview from './ArticlePreview';
 
 const inputClass = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]';
@@ -30,9 +32,21 @@ export default function ArticleForm({
   const pillarSlug = initial?.pillarSlug ?? '';
   const targetKeyword = initial?.targetKeyword ?? '';
   const [ogImageUrl, setOgImageUrl] = useState(initial?.ogImageUrl ?? '');
+  const [ogImageUploading, setOgImageUploading] = useState(false);
+  const [ogImageError, setOgImageError] = useState('');
   const [status, setStatus] = useState<'draft' | 'published'>(initial?.status ?? 'draft');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const publicUrl = slug.trim() ? `${SITE_URL}/guide/${slug.trim()}` : '';
+
+  async function handleCopyUrl() {
+    if (!publicUrl) return;
+    await navigator.clipboard.writeText(publicUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   function toggleAreaTag(tag: string) {
     setAreaTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
@@ -120,8 +134,35 @@ export default function ArticleForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">OGP画像URL</label>
-        <input value={ogImageUrl} onChange={(e) => setOgImageUrl(e.target.value)} className={inputClass} placeholder="https://..." />
+        <label className="block text-sm font-medium text-gray-700 mb-1">OGP画像（SNSシェア時に表示される画像）</label>
+        {ogImageError && <p className="mb-1.5 text-xs text-red-500">{ogImageError}</p>}
+        {ogImageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={ogImageUrl} alt="" className="mb-2 h-32 w-full rounded-md border border-gray-100 object-cover" />
+        )}
+        <UploadButton
+          uploading={ogImageUploading}
+          onUpload={async (file) => { const url = await uploadFile(file); setOgImageUrl(url); }}
+          setUploading={setOgImageUploading}
+          setError={setOgImageError}
+        />
+        {ogImageUrl && (
+          <button type="button" onClick={() => setOgImageUrl('')} className="mt-2 text-xs text-red-500 hover:underline">画像を削除</button>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">公開URL</label>
+        {publicUrl ? (
+          <div className="flex gap-2">
+            <input readOnly value={publicUrl} className={`${inputClass} font-mono text-gray-500`} onFocus={(e) => e.target.select()} />
+            <button type="button" onClick={handleCopyUrl} className="shrink-0 rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-600 hover:bg-gray-50">
+              {copied ? 'コピー済み' : 'コピー'}
+            </button>
+          </div>
+        ) : (
+          <p className="text-xs text-gray-400">スラッグ（URL）を入力すると、公開URLが表示されます。</p>
+        )}
       </div>
 
       <div>
