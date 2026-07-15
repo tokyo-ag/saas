@@ -187,8 +187,10 @@ function CardSliderBlockView({ items }: { items: NonNullable<Block['cardItems']>
               </a>
             )}
             <div className="flex flex-1 flex-col p-4">
-              <p className="text-center text-base font-bold text-gray-950">{item.name}</p>
-              <p className="mt-2 flex-1 text-[15px] leading-[1.75] text-[#333333]">{item.description}</p>
+              {item.name && <p className="text-center text-base font-bold text-gray-950">{item.name}</p>}
+              {item.description && (
+                <p className="mt-2 flex-1 text-[15px] leading-[1.75] text-[#333333]">{item.description}</p>
+              )}
               {item.href && (
                 <a href={item.href} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex text-sm font-bold text-[#06C755] hover:underline">
                   {item.name}の活動を見る →
