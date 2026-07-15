@@ -204,6 +204,37 @@ function BlockView({ block, category }: { block: Block; category: string }) {
   if (block.type === 'circles') {
     return <CirclesBlockPreview category={category} heading={block.text} />;
   }
+  if (block.type === 'table') {
+    const rows = block.tableRows ?? [];
+    if (rows.length === 0) return null;
+    const [header, ...body] = rows;
+    return (
+      <div className="my-6 overflow-x-auto">
+        <table className="w-full min-w-[480px] border-collapse text-sm">
+          <thead>
+            <tr>
+              {header.map((cell, i) => (
+                <th key={i} className="border border-gray-200 bg-[#06C755]/10 px-3 py-2 text-left font-bold text-gray-950">
+                  {cell}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {body.map((row, r) => (
+              <tr key={r} className={r % 2 === 1 ? 'bg-gray-50' : ''}>
+                {row.map((cell, c) => (
+                  <td key={c} className="border border-gray-200 px-3 py-2 text-[#333333]">
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
   return <ParagraphText text={block.text} />;
 }
 

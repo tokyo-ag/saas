@@ -327,6 +327,17 @@ const TEXT_SIZE_CLASS: Record<string, string> = {
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
 const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|(.*))?)?\}\}$/;
 const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
+const TABLE_RE = /^\{\{table:(.+)\}\}$/;
+
+function decodeTable(encoded: string): string[][] {
+  try {
+    const parsed = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    if (Array.isArray(parsed) && parsed.every((row) => Array.isArray(row))) return parsed;
+  } catch {
+    // fall through to default
+  }
+  return [];
+}
 
 function CheckBullet() {
   return (
@@ -423,6 +434,42 @@ function BodyRenderer({ body, eventsByTag, circles }: { body: string; eventsByTa
     if (cta) {
       flushParagraph();
       nodes.push(<CtaBlock key={i} label={cta[1]} href={cta[2]} />);
+      i++;
+      continue;
+    }
+    const table = TABLE_RE.exec(line);
+    if (table) {
+      flushParagraph();
+      const rows = decodeTable(table[1]);
+      if (rows.length > 0) {
+        const [header, ...body] = rows;
+        nodes.push(
+          <div key={i} className="my-6 overflow-x-auto">
+            <table className="w-full min-w-[480px] border-collapse text-sm">
+              <thead>
+                <tr>
+                  {header.map((cell, ci) => (
+                    <th key={ci} className="border border-gray-200 bg-[#06C755]/10 px-3 py-2 text-left font-bold text-gray-950">
+                      {cell}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {body.map((row, ri) => (
+                  <tr key={ri} className={ri % 2 === 1 ? 'bg-gray-50' : ''}>
+                    {row.map((cell, ci) => (
+                      <td key={ci} className="border border-gray-200 px-3 py-2 text-[#333333]">
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>,
+        );
+      }
       i++;
       continue;
     }

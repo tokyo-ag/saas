@@ -38,7 +38,7 @@ export async function uploadFile(file: File): Promise<string> {
   return data.url as string;
 }
 
-export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'imageText' | 'textImage' | 'cta' | 'events' | 'circles';
+export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'imageText' | 'textImage' | 'cta' | 'events' | 'circles' | 'table';
 
 export type ListStyle = 'check' | 'bullet' | 'number';
 export type ImageSize = 'small' | 'medium' | 'large';
@@ -54,7 +54,23 @@ export type Block = {
   listStyle?: ListStyle;
   imageSize?: ImageSize;
   textSize?: TextSize;
+  tableRows?: string[][];
 };
+
+// UTF-8-safe base64 so table cell text (Japanese, symbols) survives embedding in the single-line marker.
+export function encodeTable(rows: string[][]): string {
+  return btoa(unescape(encodeURIComponent(JSON.stringify(rows))));
+}
+
+export function decodeTable(encoded: string): string[][] {
+  try {
+    const parsed = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    if (Array.isArray(parsed) && parsed.every((row) => Array.isArray(row))) return parsed;
+  } catch {
+    // fall through to default
+  }
+  return [['', ''], ['', '']];
+}
 
 export const IMAGE_SIZE_PX: Record<ImageSize, number> = { small: 80, medium: 128, large: 200 };
 export const TEXT_SIZE_CLASS: Record<TextSize, string> = {
@@ -74,6 +90,7 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   cta: 'CTAボタン',
   events: 'サークルカード',
   circles: '団体カード',
+  table: '表（比較表）',
 };
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
@@ -85,6 +102,7 @@ const TEXT_IMAGE_RE = /^\{\{textimage:([^|]*)\|([^|]*)\|(small|medium|large)\|(s
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
 const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|(.*))?)?\}\}$/;
 const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
+const TABLE_RE = /^\{\{table:(.+)\}\}$/;
 
 function newId() {
   return Math.random().toString(36).slice(2, 10);
@@ -108,7 +126,10 @@ export function parseBodyToBlocks(body: string): Block[] {
     const cta = CTA_RE.exec(line);
     const events = EVENTS_RE.exec(line);
     const circles = CIRCLES_RE.exec(line);
-    if (events) {
+    const table = TABLE_RE.exec(line);
+    if (table) {
+      blocks.push({ id: newId(), type: 'table', text: '', tableRows: decodeTable(table[1]) });
+    } else if (events) {
       blocks.push({ id: newId(), type: 'events', text: events[1] ?? '', tag: events[2] || undefined });
     } else if (circles) {
       blocks.push({ id: newId(), type: 'circles', text: circles[1] ?? '' });
@@ -198,6 +219,7 @@ export function blocksToBody(blocks: Block[]): string {
       line = (block.text || block.tag) ? `{{events:${block.text ?? ''}${block.tag ? `|${block.tag}` : ''}}}` : '{{events}}';
     }
     else if (block.type === 'circles') line = block.text ? `{{circles:${block.text}}}` : '{{circles}}';
+    else if (block.type === 'table') line = `{{table:${encodeTable(block.tableRows ?? [['', ''], ['', '']])}}}`;
     else line = block.text;
     parts.push(line);
   });
@@ -296,6 +318,82 @@ function ImageTextFields({
   );
 }
 
+function TableFields({ block, updateBlock }: { block: Block; updateBlock: (id: string, patch: Partial<Block>) => void }) {
+  const rows = block.tableRows ?? [['', '']];
+  const colCount = rows[0]?.length ?? 0;
+
+  function setCell(r: number, c: number, value: string) {
+    const next = rows.map((row) => [...row]);
+    next[r][c] = value;
+    updateBlock(block.id, { tableRows: next });
+  }
+
+  function addRow() {
+    updateBlock(block.id, { tableRows: [...rows, Array(colCount).fill('')] });
+  }
+
+  function removeRow(r: number) {
+    if (rows.length <= 1) return;
+    updateBlock(block.id, { tableRows: rows.filter((_, i) => i !== r) });
+  }
+
+  function addColumn() {
+    updateBlock(block.id, { tableRows: rows.map((row) => [...row, '']) });
+  }
+
+  function removeColumn(c: number) {
+    if (colCount <= 1) return;
+    updateBlock(block.id, { tableRows: rows.map((row) => row.filter((_, i) => i !== c)) });
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-gray-400">1行目が見出し行として表示されます。</p>
+      <div className="overflow-x-auto rounded-md border border-gray-200">
+        <table className="border-collapse">
+          <tbody>
+            {rows.map((row, r) => (
+              <tr key={r}>
+                {row.map((cell, c) => (
+                  <td key={c} className="border border-gray-200 p-0.5">
+                    <input
+                      value={cell}
+                      onChange={(e) => setCell(r, c, e.target.value)}
+                      className={`w-28 border-0 px-1.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755] ${r === 0 ? 'bg-gray-50 font-bold' : ''}`}
+                    />
+                  </td>
+                ))}
+                <td className="p-0.5">
+                  <button type="button" onClick={() => removeRow(r)} disabled={rows.length <= 1} className="text-xs text-red-400 hover:text-red-600 disabled:opacity-30">
+                    行削除
+                  </button>
+                </td>
+              </tr>
+            ))}
+            <tr>
+              {rows[0]?.map((_, c) => (
+                <td key={c} className="p-0.5 text-center">
+                  <button type="button" onClick={() => removeColumn(c)} disabled={colCount <= 1} className="text-[10px] text-red-400 hover:text-red-600 disabled:opacity-30">
+                    列削除
+                  </button>
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div className="flex gap-2">
+        <button type="button" onClick={addRow} className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50">
+          ＋行を追加
+        </button>
+        <button type="button" onClick={addColumn} className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50">
+          ＋列を追加
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function BlockTypePicker({ onPick, onClose }: { onPick: (type: BlockType) => void; onClose: () => void }) {
   return (
     <div className="absolute z-10 mt-1 w-48 rounded-lg border border-gray-200 bg-white shadow-lg">
@@ -368,7 +466,13 @@ export default function BlockEditor({
   }
 
   function insertAt(index: number, type: BlockType) {
-    const block: Block = { id: newId(), type, text: '', imageUrl: (type === 'image' || type === 'imageText' || type === 'textImage') ? '' : undefined };
+    const block: Block = {
+      id: newId(),
+      type,
+      text: '',
+      imageUrl: (type === 'image' || type === 'imageText' || type === 'textImage') ? '' : undefined,
+      tableRows: type === 'table' ? [['見出し1', '見出し2'], ['', '']] : undefined,
+    };
     const next = [...blocks];
     next.splice(index, 0, block);
     onChange(next);
@@ -523,6 +627,8 @@ export default function BlockEditor({
                   記事のカテゴリ（と選んだタグ）に応じて、COMIUに掲載中のイベントカードをここに自動で表示します。
                 </p>
               </div>
+            ) : block.type === 'table' ? (
+              <TableFields block={block} updateBlock={updateBlock} />
             ) : block.type === 'circles' ? (
               <div className="space-y-2">
                 <input
