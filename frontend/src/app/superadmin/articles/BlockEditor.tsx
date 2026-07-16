@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useRef, useState } from 'react';
-import { SEARCH_TAGS, LOCATION_TAGS, ACTIVITY_TAGS, TENANT_TYPE_TAGS } from '@/lib/lpTags';
+import { SEARCH_TAGS } from '@/lib/lpTags';
 import { UploadButton } from '@/components/admin/EventFormPrimitives';
 
 async function compressImage(file: File, maxBytes = 4 * 1024 * 1024): Promise<Blob> {
@@ -38,7 +38,7 @@ export async function uploadFile(file: File): Promise<string> {
   return data.url as string;
 }
 
-export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'imageText' | 'textImage' | 'cta' | 'events' | 'circles' | 'table' | 'cardSlider' | 'areaTags' | 'regionCards';
+export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'imageText' | 'textImage' | 'cta' | 'events' | 'circles' | 'table' | 'cardSlider';
 
 export type ListStyle = 'check' | 'bullet' | 'number';
 export type ImageSize = 'small' | 'medium' | 'large';
@@ -60,28 +60,6 @@ export const CARD_IMAGE_SIZE_CLASS: Record<ImageSize, string> = {
   large: 'w-full',
 };
 
-export type RegionCardsConfig = {
-  area: string;
-  category: string;
-  heading: string;
-  description: string;
-  tenantLimit: number;
-  articleLimit: number;
-  showTenants: boolean;
-  showArticles: boolean;
-};
-
-export const DEFAULT_REGION_CARDS: RegionCardsConfig = {
-  area: '',
-  category: '',
-  heading: '',
-  description: '',
-  tenantLimit: 4,
-  articleLimit: 3,
-  showTenants: true,
-  showArticles: true,
-};
-
 export type Block = {
   id: string;
   type: BlockType;
@@ -94,11 +72,6 @@ export type Block = {
   textSize?: TextSize;
   tableRows?: string[][];
   cardItems?: CardItem[];
-  areaTagsEnabled?: boolean;
-  areaTagsMaxCount?: number;
-  areaTagsPrefecture?: string;
-  areaTagsShowCount?: boolean;
-  regionCards?: RegionCardsConfig;
 };
 
 // UTF-8-safe base64 so embedded Japanese/symbol text survives being placed in a single-line marker.
@@ -134,15 +107,6 @@ export function decodeCardItems(encoded: string): CardItem[] {
   return [];
 }
 
-export function encodeRegionCards(config: RegionCardsConfig): string {
-  return encodeJsonB64(config);
-}
-
-export function decodeRegionCards(encoded: string): RegionCardsConfig {
-  const parsed = decodeJsonB64<Partial<RegionCardsConfig>>(encoded, {});
-  return { ...DEFAULT_REGION_CARDS, ...parsed };
-}
-
 export const IMAGE_SIZE_PX: Record<ImageSize, number> = { small: 80, medium: 128, large: 200 };
 // Smaller cap below sm: so image+text blocks stay side-by-side (not stacked) on narrow phones.
 export const IMAGE_SIZE_CLASS: Record<ImageSize, string> = {
@@ -169,8 +133,6 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   circles: '団体カード',
   table: '表（比較表）',
   cardSlider: 'カードスライド（横スクロール）',
-  areaTags: '地域タグ一覧',
-  regionCards: '地域別コンテンツカード',
 };
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
@@ -184,8 +146,6 @@ const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|(.*))?)?\}\}$/;
 const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
 const TABLE_RE = /^\{\{table:(.+)\}\}$/;
 const CARD_SLIDER_RE = /^\{\{cardslider:(.+)\}\}$/;
-const AREA_TAGS_RE = /^\{\{areatags:(true|false)\|(\d+)\|([^|]*)\|(true|false)\|(.*)\}\}$/;
-const REGION_CARDS_RE = /^\{\{regioncards:(.+)\}\}$/;
 
 function newId() {
   return Math.random().toString(36).slice(2, 10);
@@ -211,24 +171,10 @@ export function parseBodyToBlocks(body: string): Block[] {
     const circles = CIRCLES_RE.exec(line);
     const table = TABLE_RE.exec(line);
     const cardSlider = CARD_SLIDER_RE.exec(line);
-    const areaTags = AREA_TAGS_RE.exec(line);
-    const regionCards = REGION_CARDS_RE.exec(line);
     if (table) {
       blocks.push({ id: newId(), type: 'table', text: '', tableRows: decodeTable(table[1]) });
     } else if (cardSlider) {
       blocks.push({ id: newId(), type: 'cardSlider', text: '', cardItems: decodeCardItems(cardSlider[1]) });
-    } else if (areaTags) {
-      blocks.push({
-        id: newId(),
-        type: 'areaTags',
-        text: areaTags[5],
-        areaTagsEnabled: areaTags[1] === 'true',
-        areaTagsMaxCount: parseInt(areaTags[2], 10),
-        areaTagsPrefecture: areaTags[3] || undefined,
-        areaTagsShowCount: areaTags[4] === 'true',
-      });
-    } else if (regionCards) {
-      blocks.push({ id: newId(), type: 'regionCards', text: '', regionCards: decodeRegionCards(regionCards[1]) });
     } else if (events) {
       blocks.push({ id: newId(), type: 'events', text: events[1] ?? '', tag: events[2] || undefined });
     } else if (circles) {
@@ -321,16 +267,6 @@ export function blocksToBody(blocks: Block[]): string {
     else if (block.type === 'circles') line = block.text ? `{{circles:${block.text}}}` : '{{circles}}';
     else if (block.type === 'table') line = `{{table:${encodeTable(block.tableRows ?? [['', ''], ['', '']])}}}`;
     else if (block.type === 'cardSlider') line = `{{cardslider:${encodeCardItems(block.cardItems ?? [])}}}`;
-    else if (block.type === 'areaTags') {
-      const enabled = block.areaTagsEnabled ?? true;
-      const maxCount = block.areaTagsMaxCount ?? 10;
-      const prefecture = block.areaTagsPrefecture ?? '';
-      const showCount = block.areaTagsShowCount ?? false;
-      line = `{{areatags:${enabled}|${maxCount}|${prefecture}|${showCount}|${block.text}}}`;
-    }
-    else if (block.type === 'regionCards') {
-      line = `{{regioncards:${encodeRegionCards(block.regionCards ?? DEFAULT_REGION_CARDS)}}}`;
-    }
     else line = block.text;
     parts.push(line);
   });
@@ -624,177 +560,6 @@ function CardSliderFields({
   );
 }
 
-const AREA_TAGS_PREFECTURE_OPTIONS = [
-  { value: '', label: 'すべて' },
-  { value: '東京', label: '東京（23区含む）' },
-  { value: '埼玉', label: '埼玉' },
-  { value: '千葉', label: '千葉' },
-  { value: '神奈川', label: '神奈川' },
-];
-
-function AreaTagsFields({ block, updateBlock }: { block: Block; updateBlock: (id: string, patch: Partial<Block>) => void }) {
-  return (
-    <div className="space-y-3">
-      <p className="text-xs text-gray-400">
-        この記事のカテゴリで活動している公開中の団体から、実際に使われている地域タグを自動集計して一覧表示します（地域タグが2件未満の場合は自動的に非表示になります）。
-      </p>
-      <label className="flex items-center gap-2 text-sm text-gray-700">
-        <input
-          type="checkbox"
-          checked={block.areaTagsEnabled ?? true}
-          onChange={(e) => updateBlock(block.id, { areaTagsEnabled: e.target.checked })}
-          className="accent-[#06C755]"
-        />
-        表示する
-      </label>
-      <div>
-        <p className="mb-1 text-xs font-medium text-gray-500">見出し文</p>
-        <input
-          value={block.text}
-          onChange={(e) => updateBlock(block.id, { text: e.target.value })}
-          placeholder="地域からサークルを探す"
-          className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-        />
-      </div>
-      <div>
-        <p className="mb-1 text-xs font-medium text-gray-500">最大表示数</p>
-        <input
-          type="number"
-          min={1}
-          max={30}
-          value={block.areaTagsMaxCount ?? 10}
-          onChange={(e) => updateBlock(block.id, { areaTagsMaxCount: Math.max(1, parseInt(e.target.value, 10) || 10) })}
-          className="w-24 rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-        />
-      </div>
-      <div>
-        <p className="mb-1 text-xs font-medium text-gray-500">都道府県による絞り込み</p>
-        <select
-          value={block.areaTagsPrefecture ?? ''}
-          onChange={(e) => updateBlock(block.id, { areaTagsPrefecture: e.target.value || undefined })}
-          className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-        >
-          {AREA_TAGS_PREFECTURE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-      </div>
-      <label className="flex items-center gap-2 text-sm text-gray-700">
-        <input
-          type="checkbox"
-          checked={block.areaTagsShowCount ?? false}
-          onChange={(e) => updateBlock(block.id, { areaTagsShowCount: e.target.checked })}
-          className="accent-[#06C755]"
-        />
-        件数を表示する（例: 豊島区（8））
-      </label>
-    </div>
-  );
-}
-
-function RegionCardsFields({ block, updateBlock }: { block: Block; updateBlock: (id: string, patch: Partial<Block>) => void }) {
-  const config = block.regionCards ?? DEFAULT_REGION_CARDS;
-  function patch(p: Partial<RegionCardsConfig>) {
-    updateBlock(block.id, { regionCards: { ...config, ...p } });
-  }
-  return (
-    <div className="space-y-3">
-      <p className="text-xs text-gray-400">
-        指定した地域タグ（＋カテゴリ）に一致する公開中の団体と、関連する公開記事をまとめて表示します。
-      </p>
-      <div>
-        <p className="mb-1 text-xs font-medium text-gray-500">地域タグ <span className="text-red-500">*</span></p>
-        <select
-          value={config.area}
-          onChange={(e) => patch({ area: e.target.value })}
-          className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-        >
-          <option value="">選択してください</option>
-          {LOCATION_TAGS.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
-        </select>
-      </div>
-      <div>
-        <p className="mb-1 text-xs font-medium text-gray-500">カテゴリ（絞り込み・任意）</p>
-        <select
-          value={config.category}
-          onChange={(e) => patch({ category: e.target.value })}
-          className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-        >
-          <option value="">すべて</option>
-          <optgroup label="活動種目">
-            {ACTIVITY_TAGS.map((c) => <option key={c} value={c}>{c}</option>)}
-          </optgroup>
-          <optgroup label="団体タイプ">
-            {TENANT_TYPE_TAGS.map((c) => <option key={c} value={c}>{c}</option>)}
-          </optgroup>
-        </select>
-      </div>
-      <div>
-        <p className="mb-1 text-xs font-medium text-gray-500">見出し</p>
-        <input
-          value={config.heading}
-          onChange={(e) => patch({ heading: e.target.value })}
-          placeholder="例: 世田谷区のバドミントンサークル"
-          className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-        />
-      </div>
-      <div>
-        <p className="mb-1 text-xs font-medium text-gray-500">説明文</p>
-        <textarea
-          value={config.description}
-          onChange={(e) => patch({ description: e.target.value })}
-          rows={2}
-          placeholder="例: 世田谷区で活動しているバドミントンサークルと、関連する記事を紹介します。"
-          className="w-full resize-y rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-        />
-      </div>
-      <div className="flex gap-3">
-        <div className="flex-1">
-          <p className="mb-1 text-xs font-medium text-gray-500">団体の表示件数</p>
-          <input
-            type="number"
-            min={1}
-            max={8}
-            value={config.tenantLimit}
-            onChange={(e) => patch({ tenantLimit: Math.max(1, Math.min(8, parseInt(e.target.value, 10) || 1)) })}
-            className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-          />
-        </div>
-        <div className="flex-1">
-          <p className="mb-1 text-xs font-medium text-gray-500">記事の表示件数</p>
-          <input
-            type="number"
-            min={1}
-            max={6}
-            value={config.articleLimit}
-            onChange={(e) => patch({ articleLimit: Math.max(1, Math.min(6, parseInt(e.target.value, 10) || 1)) })}
-            className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-          />
-        </div>
-      </div>
-      <div className="flex gap-4">
-        <label className="flex items-center gap-1.5 text-sm text-gray-700">
-          <input
-            type="checkbox"
-            checked={config.showTenants}
-            onChange={(e) => patch({ showTenants: e.target.checked })}
-            className="accent-[#06C755]"
-          />
-          団体を表示する
-        </label>
-        <label className="flex items-center gap-1.5 text-sm text-gray-700">
-          <input
-            type="checkbox"
-            checked={config.showArticles}
-            onChange={(e) => patch({ showArticles: e.target.checked })}
-            className="accent-[#06C755]"
-          />
-          記事を表示する
-        </label>
-      </div>
-    </div>
-  );
-}
 
 function BlockTypePicker({ onPick, onClose }: { onPick: (type: BlockType) => void; onClose: () => void }) {
   return (
@@ -871,14 +636,10 @@ export default function BlockEditor({
     const block: Block = {
       id: newId(),
       type,
-      text: type === 'areaTags' ? '地域からサークルを探す' : '',
+      text: '',
       imageUrl: (type === 'image' || type === 'imageText' || type === 'textImage') ? '' : undefined,
       tableRows: type === 'table' ? [['見出し1', '見出し2'], ['', '']] : undefined,
       cardItems: type === 'cardSlider' ? [{ imageUrl: '', name: '', description: '', href: '' }] : undefined,
-      areaTagsEnabled: type === 'areaTags' ? true : undefined,
-      areaTagsMaxCount: type === 'areaTags' ? 10 : undefined,
-      areaTagsShowCount: type === 'areaTags' ? false : undefined,
-      regionCards: type === 'regionCards' ? { ...DEFAULT_REGION_CARDS } : undefined,
     };
     const next = [...blocks];
     next.splice(index, 0, block);
@@ -1045,10 +806,6 @@ export default function BlockEditor({
                 setUploadingId={setUploadingId}
                 setUploadError={setUploadError}
               />
-            ) : block.type === 'areaTags' ? (
-              <AreaTagsFields block={block} updateBlock={updateBlock} />
-            ) : block.type === 'regionCards' ? (
-              <RegionCardsFields block={block} updateBlock={updateBlock} />
             ) : block.type === 'circles' ? (
               <div className="space-y-2">
                 <input

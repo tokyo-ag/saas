@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { api, API_URL, OfficialArticle, PublicEvent, PublicTenant } from '@/lib/api';
+import { api, API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import { ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
-import { Block, CARD_IMAGE_SIZE_CLASS, DEFAULT_REGION_CARDS, IMAGE_SIZE_CLASS, TEXT_SIZE_CLASS } from './BlockEditor';
+import { Block, CARD_IMAGE_SIZE_CLASS, IMAGE_SIZE_CLASS, TEXT_SIZE_CLASS } from './BlockEditor';
 
 const CELL_LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]*)\)/g;
 
@@ -137,181 +137,6 @@ function CirclesBlockPreview({ category, heading }: { category: string; heading:
   );
 }
 
-const TOKYO_WARDS_SET = new Set([
-  '千代田区', '中央区', '港区', '新宿区', '文京区', '台東区', '墨田区', '江東区',
-  '品川区', '目黒区', '大田区', '世田谷区', '渋谷区', '中野区', '杉並区', '豊島区',
-  '北区', '荒川区', '板橋区', '練馬区', '足立区', '葛飾区', '江戸川区',
-]);
-
-function matchesPrefecture(area: string, prefecture?: string): boolean {
-  if (!prefecture) return true;
-  if (prefecture === '東京') return area === '東京' || TOKYO_WARDS_SET.has(area);
-  return area === prefecture;
-}
-
-function AreaTagsBlockPreview({
-  category,
-  heading,
-  maxCount,
-  prefecture,
-  showCount,
-}: {
-  category: string;
-  heading: string;
-  maxCount: number;
-  prefecture?: string;
-  showCount: boolean;
-}) {
-  const [areas, setAreas] = useState<{ area: string; count: number }[]>([]);
-
-  useEffect(() => {
-    if (!category) { setAreas([]); return; }
-    let active = true;
-    api.public.areaTagCounts(category).then((list) => { if (active) setAreas(list); }).catch(() => { if (active) setAreas([]); });
-    return () => { active = false; };
-  }, [category]);
-
-  if (!category) {
-    return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">カテゴリを選択すると、地域タグ一覧のプレビューが表示されます。</p>;
-  }
-  const filtered = areas.filter((a) => matchesPrefecture(a.area, prefecture));
-  if (filtered.length < 2) {
-    return (
-      <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">
-        地域タグが2件未満のため、実際の記事では非表示になります（現在{filtered.length}件）。
-      </p>
-    );
-  }
-  const shown = filtered.slice(0, maxCount);
-  return (
-    <div className="my-6">
-      {heading && (
-        <h2 className="my-6 border-l-[5px] border-[#06C755] py-1 pl-4 text-2xl font-bold text-gray-950">{heading}</h2>
-      )}
-      <div className="flex flex-wrap gap-2">
-        {shown.map((item) => (
-          <a
-            key={item.area}
-            href={`/guide/tag/${encodeURIComponent(category)}?area=${encodeURIComponent(item.area)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full bg-gray-100 px-4 py-2 text-sm font-bold text-gray-700 hover:bg-[#06C755]/10 hover:text-[#06C755]"
-          >
-            {item.area}
-            {showCount ? `（${item.count}）` : ''}
-          </a>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function RegionTenantCard({ tenant, area, category }: { tenant: PublicTenant; area: string; category?: string }) {
-  const displayName = tenant.lineDisplayName ?? tenant.name;
-  const resolvedCategory = category || tenant.activityTags?.[0];
-  return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="relative aspect-[4/3] w-full bg-gray-100">
-        {tenant.linePictureUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={tenant.linePictureUrl} alt={displayName} className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#06C755] to-[#047a35]">
-            <span className="text-2xl font-bold text-white">{displayName.slice(0, 1)}</span>
-          </div>
-        )}
-      </div>
-      <div className="flex flex-1 flex-col p-3">
-        <p className="line-clamp-1 text-sm font-bold text-gray-950">{displayName}</p>
-        {tenant.description && <p className="mt-1 line-clamp-2 flex-1 text-[11px] leading-5 text-gray-500">{tenant.description}</p>}
-        <div className="mt-2 flex flex-wrap gap-1">
-          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-600">{area}</span>
-          {resolvedCategory && <span className="rounded-full bg-[#06C755]/10 px-2 py-0.5 text-[10px] font-bold text-[#06C755]">{resolvedCategory}</span>}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function RegionArticleCard({ article }: { article: OfficialArticle }) {
-  return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      {article.ogImageUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={article.ogImageUrl} alt="" className="aspect-[16/9] w-full object-cover" />
-      )}
-      <div className="flex flex-1 flex-col p-3">
-        <div className="flex flex-wrap items-center gap-1.5">
-          {article.category && <span className="rounded-full bg-[#06C755]/10 px-2 py-0.5 text-[10px] font-bold text-[#06C755]">{article.category}</span>}
-          {(article.areaTags ?? []).slice(0, 2).map((tag) => (
-            <span key={tag} className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-600">{tag}</span>
-          ))}
-        </div>
-        <p className="mt-2 line-clamp-2 text-sm font-bold leading-6 text-gray-950">{article.title}</p>
-        {article.excerpt && <p className="mt-1 line-clamp-2 flex-1 text-[11px] leading-5 text-gray-500">{article.excerpt}</p>}
-      </div>
-    </div>
-  );
-}
-
-function RegionCardsBlockPreview({ config }: { config: NonNullable<Block['regionCards']> }) {
-  const [tenants, setTenants] = useState<PublicTenant[]>([]);
-  const [articles, setArticles] = useState<OfficialArticle[]>([]);
-
-  useEffect(() => {
-    if (!config.area || !config.showTenants) { setTenants([]); return; }
-    let active = true;
-    api.public.tenants(config.category || undefined, config.area)
-      .then((list) => { if (active) setTenants(list.slice(0, config.tenantLimit)); })
-      .catch(() => { if (active) setTenants([]); });
-    return () => { active = false; };
-  }, [config.area, config.category, config.showTenants, config.tenantLimit]);
-
-  useEffect(() => {
-    if (!config.area || !config.showArticles) { setArticles([]); return; }
-    let active = true;
-    api.public.officialArticlesByRegion({ area: config.area, category: config.category || undefined, limit: config.articleLimit })
-      .then((list) => { if (active) setArticles(list); })
-      .catch(() => { if (active) setArticles([]); });
-    return () => { active = false; };
-  }, [config.area, config.category, config.showArticles, config.articleLimit]);
-
-  if (!config.area) {
-    return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">地域タグを選択すると、地域別コンテンツカードのプレビューが表示されます。</p>;
-  }
-  if (tenants.length === 0 && articles.length === 0) {
-    return (
-      <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">
-        「{config.area}」{config.category ? `・「${config.category}」` : ''}に一致する公開中のデータが見つかりませんでした。
-      </p>
-    );
-  }
-  return (
-    <div className="my-6">
-      {config.heading && <h2 className="my-6 border-l-[5px] border-[#06C755] py-1 pl-4 text-2xl font-bold text-gray-950">{config.heading}</h2>}
-      {config.description && <p className="mb-4 text-sm leading-7 text-gray-500">{config.description}</p>}
-      {tenants.length > 0 && (
-        <div className="mb-6">
-          <h3 className="mb-3 text-base font-bold text-gray-950">団体一覧</h3>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-            {tenants.map((tenant) => (
-              <RegionTenantCard key={tenant.id} tenant={tenant} area={config.area} category={config.category || undefined} />
-            ))}
-          </div>
-        </div>
-      )}
-      {articles.length > 0 && (
-        <div>
-          <h3 className="mb-3 text-base font-bold text-gray-950">関連記事</h3>
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {articles.map((article) => <RegionArticleCard key={article.id} article={article} />)}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function CheckBullet() {
   return (
     <svg width="24" height="24" viewBox="0 0 20 20" fill="none" className="mt-[1px] shrink-0">
@@ -435,21 +260,6 @@ function BlockView({ block, category }: { block: Block; category: string }) {
   }
   if (block.type === 'circles') {
     return <CirclesBlockPreview category={category} heading={block.text} />;
-  }
-  if (block.type === 'areaTags') {
-    if (block.areaTagsEnabled === false) return null;
-    return (
-      <AreaTagsBlockPreview
-        category={category}
-        heading={block.text}
-        maxCount={block.areaTagsMaxCount ?? 10}
-        prefecture={block.areaTagsPrefecture}
-        showCount={block.areaTagsShowCount ?? false}
-      />
-    );
-  }
-  if (block.type === 'regionCards') {
-    return <RegionCardsBlockPreview config={block.regionCards ?? DEFAULT_REGION_CARDS} />;
   }
   if (block.type === 'table') {
     const rows = block.tableRows ?? [];
