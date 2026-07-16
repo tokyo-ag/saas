@@ -89,7 +89,7 @@ function EventsBlockPreview({ category, heading, tag, areaSearchEnabled }: { cat
   useEffect(() => {
     if (!eventCategory) { setEvents([]); return; }
     let active = true;
-    api.public.events(eventCategory, tag).then((list) => { if (active) setEvents(list.slice(0, 6)); }).catch(() => { if (active) setEvents([]); });
+    api.public.events(eventCategory, tag).then((list) => { if (active) setEvents(list); }).catch(() => { if (active) setEvents([]); });
     return () => { active = false; };
   }, [eventCategory, tag]);
 
@@ -107,7 +107,8 @@ function EventsBlockPreview({ category, heading, tag, areaSearchEnabled }: { cat
     return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」{tag ? `・「${tag}」` : ''}に一致する公開中のイベントが見つかりませんでした。</p>;
   }
   const areas = areaSearchEnabled ? computeEventAreas(events) : [];
-  const shownEvents = selectedArea ? events.filter((e) => (e.tags ?? []).includes(selectedArea)) : events;
+  const filteredEvents = selectedArea ? events.filter((e) => (e.tags ?? []).includes(selectedArea)) : events;
+  const shownEvents = filteredEvents.slice(0, 6);
   return (
     <div className="my-6">
       {heading && <p className="mb-2 text-base font-bold text-gray-950">{heading}</p>}
