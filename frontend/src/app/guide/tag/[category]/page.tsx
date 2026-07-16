@@ -203,37 +203,26 @@ function buildTeamRelated(blogPosts: PortalBlogPost[], limit: number): RelatedAr
 }
 
 type FaqItem = { question: string; answer: string };
-const FAQ_FALLBACK = '団体ごとに異なるため、詳細ページで確認してください。';
 
-function buildFaqItems(category: string, area: string, circles: PublicCircle[]): FaqItem[] {
+function buildFaqItems(category: string, area: string): FaqItem[] {
   const areaLabel = area || '東京';
-  const hasBeginnerFriendly = circles.some((c) => (c.tags ?? []).includes('初心者大歓迎'));
-  const hasSoloFriendly = circles.some((c) => (c.tags ?? []).includes('1人参加歓迎'));
-  const audienceTags = new Set(circles.flatMap((c) => c.typeTags ?? []));
-  const hasWorkingOrStudent = ['社会人サークル', '学生団体', 'インカレサークル'].some((t) => audienceTags.has(t));
 
   return [
     {
       question: `${areaLabel}で初心者でも参加できる${category}サークルはありますか？`,
-      answer: hasBeginnerFriendly
-        ? `はい。${areaLabel}で活動している${category}団体の中に、初心者歓迎の団体があります。`
-        : FAQ_FALLBACK,
+      answer: '現在COMIUには、初心者歓迎の団体も掲載されています。団体によって経験者向け・初心者向けの割合が異なるため、「初心者歓迎」タグや活動内容を確認して参加するのがおすすめです。',
     },
     {
       question: `${areaLabel}で1人参加できる${category}活動はありますか？`,
-      answer: hasSoloFriendly
-        ? '1人参加歓迎の団体が掲載されています。'
-        : FAQ_FALLBACK,
+      answer: '1人で参加できる団体も掲載されています。初参加歓迎や1人参加歓迎の記載がある団体を選ぶと、初めてでも参加しやすくなります。',
     },
     {
       question: `${category}に必要な道具を持っていなくても参加できますか？`,
-      answer: FAQ_FALLBACK,
+      answer: '団体によっては、道具の貸し出しを行っている場合があります。レンタルの有無や当日の持ち物は、団体ページで確認してください。',
     },
     {
       question: '社会人や大学生でも参加できますか？',
-      answer: hasWorkingOrStudent
-        ? '社会人・学生どちらも参加しやすい団体が掲載されています。'
-        : FAQ_FALLBACK,
+      answer: 'COMIUには社会人向け、大学生向け、学生・社会人合同などさまざまな団体が掲載されています。対象年齢や参加条件は団体ごとに異なるため、詳細ページをご確認ください。',
     },
   ];
 }
@@ -353,7 +342,7 @@ export default async function GuideCategoryHubPage({
   const officialRelated = buildOfficialRelated(officialArticles, category, area, relatedLimit);
   const teamRelated = buildTeamRelated(blogPosts, relatedLimit);
   const faqEnabled = setting?.faqEnabled ?? true;
-  const faqItems = faqEnabled ? buildFaqItems(category, area, circles) : [];
+  const faqItems = faqEnabled ? buildFaqItems(category, area) : [];
   const nearbyAreas = await resolveNearbyAreas(category, area, setting?.nearbyAreas ?? []);
 
   const h1 = area ? `${area}の${category}サークル・活動一覧` : `${category}のサークル・イベント情報`;
