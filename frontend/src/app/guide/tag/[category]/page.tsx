@@ -483,10 +483,14 @@ export default async function GuideCategoryHubPage({
 
         <section className="mx-auto max-w-6xl px-5 pb-10">
           <div className="rounded-xl border border-[#06C755]/20 bg-[#06C755]/5 px-6 py-6">
-            <p className="text-sm font-bold text-gray-950">COMIUで団体のWEBサイトを無料作成。</p>
-            <p className="mt-2 text-sm leading-7 text-gray-600">活動情報を掲載して、新しい参加者を募集できます。</p>
+            <p className="text-base font-bold text-gray-950">サークル・イベントの参加者を増やしませんか？</p>
+            <p className="mt-2 text-sm leading-7 text-gray-600">
+              COMIUなら、団体専用のWEBサイトを無料で作成できます。
+              <br />
+              活動予定や募集情報を掲載して、地域やジャンルから新しい参加者を集められます。
+            </p>
             <Link href="/organizers" className="mt-4 inline-flex rounded-lg bg-[#06C755] px-5 py-3 text-sm font-bold text-white hover:opacity-90">
-              サークルを無料掲載
+              無料で団体サイトを作成
             </Link>
           </div>
         </section>
