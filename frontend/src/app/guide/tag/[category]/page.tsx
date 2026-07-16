@@ -37,6 +37,23 @@ type PublicEvent = {
   imageUrl?: string | null;
 };
 
+type PortalBlogPost = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  tags: string[];
+  coverImageUrl?: string | null;
+  publishedAt?: string | null;
+  tenant: {
+    code?: string | null;
+    name: string;
+    lineDisplayName?: string | null;
+    linePictureUrl?: string | null;
+    iconUrl?: string | null;
+  };
+};
+
 async function fetchArticlesByCategory(category: string): Promise<OfficialArticle[]> {
   try {
     const res = await fetch(`${API_URL}/api/public/official-articles?limit=120&category=${encodeURIComponent(category)}`, { next: { revalidate } });
@@ -71,6 +88,40 @@ async function fetchEvents(category: string, area?: string): Promise<PublicEvent
   } catch {
     return [];
   }
+}
+
+async function fetchBlogPostsByCategory(category: string, limit = 6): Promise<PortalBlogPost[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/blog?tags=${encodeURIComponent(category)}&limit=${limit}`, { next: { revalidate } });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+function BlogPostCard({ post }: { post: PortalBlogPost }) {
+  const href = post.tenant.code ? `/clubs/${post.tenant.code}/blog/${post.slug}` : '#';
+  const displayName = post.tenant.lineDisplayName ?? post.tenant.name;
+  const avatar = post.tenant.linePictureUrl ?? post.tenant.iconUrl;
+  return (
+    <Link href={href} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      <div className="flex items-center gap-2">
+        {avatar ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={avatar} alt="" className="h-6 w-6 rounded-full object-cover" />
+        ) : (
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[#06C755] to-[#047a35] text-[10px] font-bold text-white">
+            {displayName.slice(0, 1)}
+          </div>
+        )}
+        <span className="truncate text-xs font-bold text-gray-500">{displayName}</span>
+      </div>
+      <h3 className="mt-3 line-clamp-2 text-lg font-bold leading-7">{post.title}</h3>
+      {post.excerpt && <p className="mt-3 line-clamp-3 text-sm leading-7 text-gray-500">{post.excerpt}</p>}
+      <p className="mt-5 text-xs font-bold text-gray-400">記事を読む</p>
+    </Link>
+  );
 }
 
 function imgSrc(url: string | null | undefined) {
@@ -151,12 +202,13 @@ export default async function GuideCategoryHubPage({
   const { category: raw } = await params;
   const { area } = await searchParams;
   const category = decodeURIComponent(raw);
-  const [articles, circles, events] = await Promise.all([
+  const [articles, circles, events, blogPosts] = await Promise.all([
     fetchArticlesByCategory(category),
     fetchCircles(category, area),
     fetchEvents(category, area),
+    fetchBlogPostsByCategory(category),
   ]);
-  if (articles.length === 0 && circles.length === 0 && events.length === 0) notFound();
+  if (articles.length === 0 && circles.length === 0 && events.length === 0 && blogPosts.length === 0) notFound();
 
   const hubUrl = `${SITE_URL}/guide/tag/${encodeURIComponent(category)}`;
   const jsonLd = {
@@ -210,7 +262,7 @@ export default async function GuideCategoryHubPage({
 
         {circles.length > 0 && (
           <section className="mx-auto max-w-6xl px-5 py-8">
-            <h2 className="text-lg font-bold text-gray-950">{area ? `${area}の${category}の団体` : `${category}の団体`}</h2>
+            <h2 className="text-lg font-bold text-gray-950">{area ? `${area}で、活動実績のある${category}団体` : `${category}の団体`}</h2>
             <div className="mt-4 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {circles.map((circle) => {
                 const displayName = circle.lineDisplayName ?? circle.name;
@@ -240,15 +292,24 @@ export default async function GuideCategoryHubPage({
 
         {events.length > 0 && (
           <section className="mx-auto max-w-6xl px-5 py-8">
-            <h2 className="text-lg font-bold text-gray-950">{area ? `${area}の${category}サークル` : `${category}のサークル`}</h2>
+            <h2 className="text-lg font-bold text-gray-950">{area ? `${area}周辺で、すぐ参加できる${category}サークル` : `${category}のサークル`}</h2>
             <div className="mt-4 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {events.map((event) => <EventCardMini key={event.id} event={event} />)}
             </div>
           </section>
         )}
 
+        {blogPosts.length > 0 && (
+          <section className="mx-auto max-w-6xl px-5 py-8">
+            <h2 className="text-lg font-bold text-gray-950">団体の{category}記事</h2>
+            <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {blogPosts.map((post) => <BlogPostCard key={post.id} post={post} />)}
+            </div>
+          </section>
+        )}
+
         <section className="mx-auto max-w-6xl px-5 py-8">
-          <h2 className="text-lg font-bold text-gray-950">{category}の記事</h2>
+          <h2 className="text-lg font-bold text-gray-950">COMIUの{category}記事</h2>
           {articles.length === 0 ? (
             <div className="mt-4 rounded-xl border border-gray-200 bg-white px-5 py-14 text-center text-sm text-gray-400">
               このカテゴリの記事はまだありません。
