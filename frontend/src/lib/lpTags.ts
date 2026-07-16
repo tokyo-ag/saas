@@ -20,7 +20,6 @@ export const LOCATION_TAGS = [
   '中野区',
   '杉並区',
   '豊島区',
-  '千川',
   '北区',
   '荒川区',
   '板橋区',
@@ -32,6 +31,18 @@ export const LOCATION_TAGS = [
   '千葉',
   '神奈川',
 ] as const;
+
+// Finer-grained areas within a ward. Selecting the ward reveals these as additional options;
+// picking one is saved alongside the ward tag (not instead of it). Only wards with a confirmed
+// list are populated here - unlisted wards simply have no sub-area options yet.
+export const WARD_SUBAREAS: Record<string, readonly string[]> = {
+  '豊島区': ['千川', '要町', '小竹向原'],
+};
+
+export const ALL_LOCATION_TAGS: readonly string[] = [
+  ...LOCATION_TAGS,
+  ...Object.values(WARD_SUBAREAS).flat(),
+];
 
 export const SEARCH_TAGS = ['初心者大歓迎', '経験者大歓迎', '20代歓迎', '30代歓迎', '1人参加歓迎'] as const;
 

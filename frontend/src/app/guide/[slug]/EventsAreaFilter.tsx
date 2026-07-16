@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { API_URL } from '@/lib/config';
-import { LOCATION_TAGS } from '@/lib/lpTags';
+import { ALL_LOCATION_TAGS } from '@/lib/lpTags';
 
 type PublicArticleEvent = {
   id: string;
@@ -17,7 +17,7 @@ type PublicArticleEvent = {
   tags?: string[];
 };
 
-const LOCATION_TAG_SET = new Set<string>(LOCATION_TAGS);
+const LOCATION_TAG_SET = new Set<string>(ALL_LOCATION_TAGS);
 
 function computeEventAreas(events: PublicArticleEvent[]): string[] {
   const countByArea = new Map<string, number>();

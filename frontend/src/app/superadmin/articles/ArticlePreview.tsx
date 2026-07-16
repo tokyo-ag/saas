@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { api, API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
-import { ACTIVITY_TAG_EVENT_CATEGORY, LOCATION_TAGS } from '@/lib/lpTags';
+import { ACTIVITY_TAG_EVENT_CATEGORY, ALL_LOCATION_TAGS } from '@/lib/lpTags';
 import { Block, CARD_IMAGE_SIZE_CLASS, IMAGE_SIZE_CLASS, TEXT_SIZE_CLASS } from './BlockEditor';
 
 const CELL_LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]*)\)/g;
@@ -47,7 +47,7 @@ function priceLabel(event: PublicEvent) {
   return event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
 }
 
-const LOCATION_TAG_SET = new Set<string>(LOCATION_TAGS);
+const LOCATION_TAG_SET = new Set<string>(ALL_LOCATION_TAGS);
 
 function computeEventAreas(events: PublicEvent[]): string[] {
   const countByArea = new Map<string, number>();

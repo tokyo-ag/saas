@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, API_URL, Event, Tenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
-import { EVENT_TAG_GROUPS } from '@/lib/lpTags';
+import { EVENT_TAG_GROUPS, LOCATION_TAGS, WARD_SUBAREAS } from '@/lib/lpTags';
 import { Section, Field, RadioGroup, Check, UploadButton } from './EventFormPrimitives';
 
 type EventFormData = {
@@ -41,7 +41,11 @@ type EventFormData = {
 };
 
 const inputClass = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]';
-const EVENT_TAG_VALUES: readonly string[] = EVENT_TAG_GROUPS.flatMap((group) => [...group.tags]);
+const ALL_SUBAREAS: readonly string[] = Object.values(WARD_SUBAREAS).flat();
+const EVENT_TAG_VALUES: readonly string[] = [
+  ...EVENT_TAG_GROUPS.flatMap((group) => [...group.tags]),
+  ...ALL_SUBAREAS,
+];
 export const PORTAL_CATEGORY_TAGS = ['交流会', 'バドミントン', 'バスケ', 'フットサル', 'バレー'];
 
 function normalizePortalCategoryTags(tags: string[]) {
@@ -324,6 +328,27 @@ export default function EventForm({ initial }: { initial?: Event }) {
     });
   }
 
+  // Ward selection is single-choice among LOCATION_TAGS, same as toggleTag(..., single: true) -
+  // but also clears any previously selected sub-area, since a sub-area from a different (or the
+  // same, on deselect) ward no longer makes sense once the ward itself changes.
+  function selectWard(ward: string) {
+    setForm((prev) => {
+      const active = prev.tags.includes(ward);
+      const withoutLocation = prev.tags.filter((t) => !LOCATION_TAGS.includes(t as never) && !ALL_SUBAREAS.includes(t));
+      return { ...prev, tags: active ? withoutLocation : [...withoutLocation, ward] };
+    });
+  }
+
+  // Sub-area selection: single-choice among the current ward's sub-areas, kept alongside the
+  // ward tag (not replacing it).
+  function selectSubarea(subarea: string) {
+    setForm((prev) => {
+      const active = prev.tags.includes(subarea);
+      const withoutSubareas = prev.tags.filter((t) => !ALL_SUBAREAS.includes(t));
+      return { ...prev, tags: active ? withoutSubareas : [...withoutSubareas, subarea] };
+    });
+  }
+
   function calcRemindAt(preset: string, heldAt: string): string {
     if (!heldAt) return '';
     const d = new Date(heldAt);
@@ -497,29 +522,55 @@ export default function EventForm({ initial }: { initial?: Event }) {
         </Field>
         <Field label="LP用タグ">
           <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
-            {EVENT_TAG_GROUPS.map((group) => (
-              <div key={group.label}>
-                <p className="mb-1.5 text-xs font-bold text-gray-500">{group.label}</p>
-                <div className="flex flex-wrap gap-2">
-                  {group.tags.map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => toggleTag(tag, group.tags, group.single)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                        form.tags.includes(tag)
-                          ? 'bg-[#06C755] text-white border-[#06C755]'
-                          : 'bg-white text-gray-600 border-gray-300 hover:border-[#06C755]'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
+            {EVENT_TAG_GROUPS.map((group) => {
+              const isLocationGroup = group.label === '場所タグ';
+              const selectedWard = isLocationGroup ? LOCATION_TAGS.find((t) => form.tags.includes(t)) : undefined;
+              const subareaOptions = selectedWard ? WARD_SUBAREAS[selectedWard] ?? [] : [];
+              return (
+                <div key={group.label}>
+                  <p className="mb-1.5 text-xs font-bold text-gray-500">{group.label}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {group.tags.map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => (isLocationGroup ? selectWard(tag) : toggleTag(tag, group.tags, group.single))}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                          form.tags.includes(tag)
+                            ? 'bg-[#06C755] text-white border-[#06C755]'
+                            : 'bg-white text-gray-600 border-gray-300 hover:border-[#06C755]'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                  {subareaOptions.length > 0 && (
+                    <div className="mt-2 pl-3 border-l-2 border-[#06C755]/30">
+                      <p className="mb-1.5 text-xs text-gray-400">{selectedWard}の細かいエリア（任意）</p>
+                      <div className="flex flex-wrap gap-2">
+                        {subareaOptions.map((subarea) => (
+                          <button
+                            key={subarea}
+                            type="button"
+                            onClick={() => selectSubarea(subarea)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                              form.tags.includes(subarea)
+                                ? 'bg-[#06C755] text-white border-[#06C755]'
+                                : 'bg-white text-gray-600 border-gray-300 hover:border-[#06C755]'
+                            }`}
+                          >
+                            {subarea}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
-          <p className="mt-2 text-xs text-gray-500">場所タグは1つだけ選択できます。検索タグは地域LPや検索ページ整理に使います。</p>
+          <p className="mt-2 text-xs text-gray-500">場所タグは1つだけ選択できます。区を選ぶと、細かいエリアが選べる場合があります。検索タグは地域LPや検索ページ整理に使います。</p>
         </Field>
         <Field label="説明">
           {DESCRIPTION_TEMPLATES[form.category] && (
