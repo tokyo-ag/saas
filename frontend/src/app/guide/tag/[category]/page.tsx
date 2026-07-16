@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { API_URL, SITE_URL } from '@/lib/config';
+import { ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
 
 export const revalidate = 60;
 
@@ -23,6 +24,17 @@ type PublicCircle = {
   name: string;
   lineDisplayName?: string | null;
   linePictureUrl?: string | null;
+};
+
+type PublicEvent = {
+  id: string;
+  tenantCode?: string | null;
+  title: string;
+  heldAt: string;
+  price: number;
+  priceMale?: number | null;
+  priceFemale?: number | null;
+  imageUrl?: string | null;
 };
 
 async function fetchArticlesByCategory(category: string): Promise<OfficialArticle[]> {
@@ -45,6 +57,63 @@ async function fetchCircles(category: string, area?: string): Promise<PublicCirc
   } catch {
     return [];
   }
+}
+
+async function fetchEvents(category: string, area?: string): Promise<PublicEvent[]> {
+  const eventCategory = ACTIVITY_TAG_EVENT_CATEGORY[category];
+  if (!eventCategory) return [];
+  try {
+    const params = new URLSearchParams({ category: eventCategory });
+    if (area) params.set('tag', area);
+    const res = await fetch(`${API_URL}/api/public/events?${params.toString()}`, { next: { revalidate } });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+function imgSrc(url: string | null | undefined) {
+  if (!url) return '/defaults/events/default.webp';
+  return url.startsWith('http') ? url : `${API_URL}${url}`;
+}
+
+function eventPriceLabel(event: PublicEvent) {
+  if (event.priceMale != null && event.priceFemale != null) {
+    return `¥${Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜`;
+  }
+  return event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
+}
+
+function eventDateLabel(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('ja-JP', {
+    month: 'numeric',
+    day: 'numeric',
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Tokyo',
+  });
+}
+
+function EventCardMini({ event }: { event: PublicEvent }) {
+  const href = event.tenantCode ? `/e/${event.tenantCode}/${event.id}` : '/';
+  return (
+    <Link href={href} className="relative w-28 shrink-0 overflow-hidden rounded-xl bg-white" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+      <div className="relative" style={{ aspectRatio: '4/5' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={imgSrc(event.imageUrl)} alt={event.title} className="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 px-2 pb-2">
+          <p className="mb-1 line-clamp-2 text-[11px] font-bold leading-snug text-white" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>{event.title}</p>
+          <div className="flex items-center justify-between gap-1">
+            <span className="truncate text-[9px] text-white/80">{eventDateLabel(event.heldAt)}</span>
+            <span className="shrink-0 text-[9px] font-semibold text-white/95">{eventPriceLabel(event)}</span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
 }
 
 export async function generateMetadata({
@@ -82,11 +151,12 @@ export default async function GuideCategoryHubPage({
   const { category: raw } = await params;
   const { area } = await searchParams;
   const category = decodeURIComponent(raw);
-  const [articles, circles] = await Promise.all([
+  const [articles, circles, events] = await Promise.all([
     fetchArticlesByCategory(category),
     fetchCircles(category, area),
+    fetchEvents(category, area),
   ]);
-  if (articles.length === 0 && circles.length === 0) notFound();
+  if (articles.length === 0 && circles.length === 0 && events.length === 0) notFound();
 
   const hubUrl = `${SITE_URL}/guide/tag/${encodeURIComponent(category)}`;
   const jsonLd = {
@@ -164,6 +234,15 @@ export default async function GuideCategoryHubPage({
                   </Link>
                 );
               })}
+            </div>
+          </section>
+        )}
+
+        {events.length > 0 && (
+          <section className="mx-auto max-w-6xl px-5 py-8">
+            <h2 className="text-lg font-bold text-gray-950">{area ? `${area}の${category}サークル` : `${category}のサークル`}</h2>
+            <div className="mt-4 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {events.map((event) => <EventCardMini key={event.id} event={event} />)}
             </div>
           </section>
         )}
