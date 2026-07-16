@@ -197,27 +197,82 @@ function buildTeamRelated(blogPosts: PortalBlogPost[], limit: number): RelatedAr
 
 type FaqItem = { question: string; answer: string };
 
-function buildFaqItems(category: string, area: string): FaqItem[] {
+// Tag literals mirror lpTags.ts's SEARCH_TAGS / TENANT_TYPE_TAGS - kept in sync manually,
+// same pattern as the other duplicated tag lists in this codebase.
+type FaqCandidate = {
+  // Core topics are always shown (with a "掲載準備中" fallback when count is 0); the
+  // remaining topics only appear when there's real matching data to back them up.
+  alwaysEligible: boolean;
+  count: (circles: PublicCircle[]) => number;
+  question: (category: string, areaLabel: string) => string;
+  answerWithData: (areaLabel: string, count: number) => string;
+  answerNoData?: (areaLabel: string) => string;
+};
+
+const FAQ_CANDIDATES: FaqCandidate[] = [
+  {
+    alwaysEligible: true,
+    count: (circles) => circles.filter((c) => (c.tags ?? []).includes('初心者大歓迎')).length,
+    question: (category, areaLabel) => `${areaLabel}で初心者でも参加できる${category}サークルはありますか？`,
+    answerWithData: (areaLabel, count) => `現在、${areaLabel}エリアでは初心者歓迎の団体を${count}件掲載しています。団体ごとに参加者のレベルや活動内容が異なるため、詳細ページを確認して参加先を選んでください。`,
+    answerNoData: (areaLabel) => `現在、${areaLabel}エリアで初心者歓迎を明記している団体は掲載準備中です。新しい団体が登録されると自動で反映されます。`,
+  },
+  {
+    alwaysEligible: true,
+    count: (circles) => circles.filter((c) => (c.tags ?? []).includes('1人参加歓迎')).length,
+    question: (category, areaLabel) => `${areaLabel}で1人参加できる${category}活動はありますか？`,
+    answerWithData: (areaLabel, count) => `現在、${areaLabel}エリアでは1人参加歓迎の団体を${count}件掲載しています。初参加者向けの案内や交流の雰囲気は、各団体ページで確認できます。`,
+    answerNoData: (areaLabel) => `現在、${areaLabel}エリアで1人参加歓迎を明記している団体は掲載準備中です。`,
+  },
+  {
+    alwaysEligible: true,
+    count: (circles) => circles.filter((c) => (c.typeTags ?? []).includes('社会人サークル')).length,
+    question: (category, areaLabel) => `${areaLabel}で社会人が参加できる${category}サークルはありますか？`,
+    answerWithData: (areaLabel, count) => `現在、${areaLabel}エリアでは社会人向けの団体を${count}件掲載しています。対象年齢や開催曜日は団体ごとに異なるため、詳細ページを確認してください。`,
+    answerNoData: (areaLabel) => `現在、${areaLabel}エリアで社会人向けを明記している団体は掲載準備中です。`,
+  },
+  {
+    alwaysEligible: true,
+    // "大学生向け" = 学生団体・インカレサークルのどちらも大学生向けの団体タイプなので合算する
+    count: (circles) => circles.filter((c) => (c.typeTags ?? []).some((t) => t === '学生団体' || t === 'インカレサークル')).length,
+    question: (category, areaLabel) => `${areaLabel}で大学生が参加できる${category}サークルはありますか？`,
+    answerWithData: (areaLabel, count) => `現在、${areaLabel}エリアでは大学生向けの団体を${count}件掲載しています。大学生限定か、社会人との合同参加かは団体ごとに異なります。`,
+    answerNoData: (areaLabel) => `現在、${areaLabel}エリアで大学生向けを明記している団体は掲載準備中です。`,
+  },
+  {
+    alwaysEligible: false,
+    count: (circles) => circles.filter((c) => (c.tags ?? []).includes('経験者大歓迎')).length,
+    question: (category, areaLabel) => `${areaLabel}で経験者が参加できる${category}サークルはありますか？`,
+    answerWithData: (areaLabel, count) => `現在、${areaLabel}エリアでは経験者歓迎の団体を${count}件掲載しています。レベルや活動頻度は団体ごとに異なるため、詳細ページを確認してください。`,
+  },
+  {
+    alwaysEligible: false,
+    count: (circles) => circles.filter((c) => (c.tags ?? []).includes('20代歓迎')).length,
+    question: (category, areaLabel) => `${areaLabel}で20代が参加しやすい${category}サークルはありますか？`,
+    answerWithData: (areaLabel, count) => `現在、${areaLabel}エリアでは20代歓迎の団体を${count}件掲載しています。参加者の年齢層は団体ページで確認できます。`,
+  },
+  {
+    alwaysEligible: false,
+    count: (circles) => circles.filter((c) => (c.tags ?? []).includes('30代歓迎')).length,
+    question: (category, areaLabel) => `${areaLabel}で30代が参加しやすい${category}サークルはありますか？`,
+    answerWithData: (areaLabel, count) => `現在、${areaLabel}エリアでは30代歓迎の団体を${count}件掲載しています。参加者の年齢層は団体ページで確認できます。`,
+  },
+];
+
+function buildFaqItems(category: string, area: string, circles: PublicCircle[]): FaqItem[] {
   const areaLabel = area || '東京';
 
-  return [
-    {
-      question: `${areaLabel}で初心者でも参加できる${category}サークルはありますか？`,
-      answer: '現在COMIUには、初心者歓迎の団体も掲載されています。団体によって経験者向け・初心者向けの割合が異なるため、「初心者歓迎」タグや活動内容を確認して参加するのがおすすめです。',
-    },
-    {
-      question: `${areaLabel}で1人参加できる${category}活動はありますか？`,
-      answer: '1人で参加できる団体も掲載されています。初参加歓迎や1人参加歓迎の記載がある団体を選ぶと、初めてでも参加しやすくなります。',
-    },
-    {
-      question: `${category}に必要な道具を持っていなくても参加できますか？`,
-      answer: '団体によっては、道具の貸し出しを行っている場合があります。レンタルの有無や当日の持ち物は、団体ページで確認してください。',
-    },
-    {
-      question: '社会人や大学生でも参加できますか？',
-      answer: 'COMIUには社会人向け、大学生向け、学生・社会人合同などさまざまな団体が掲載されています。対象年齢や参加条件は団体ごとに異なるため、詳細ページをご確認ください。',
-    },
-  ];
+  const eligible = FAQ_CANDIDATES
+    .map((candidate) => ({ candidate, count: candidate.count(circles) }))
+    .filter(({ candidate, count }) => candidate.alwaysEligible || count > 0);
+
+  // Prefer questions backed by real data; ties keep their original priority order (stable sort).
+  const sorted = [...eligible].sort((a, b) => (a.count > 0 ? 0 : 1) - (b.count > 0 ? 0 : 1));
+
+  return sorted.slice(0, 4).map(({ candidate, count }) => ({
+    question: candidate.question(category, areaLabel),
+    answer: count > 0 ? candidate.answerWithData(areaLabel, count) : candidate.answerNoData!(areaLabel),
+  }));
 }
 
 function CircleCard({ circle, area }: { circle: PublicCircle; area: string }) {
@@ -312,7 +367,7 @@ export async function HubPage({ category, area }: { category: string; area: stri
   const officialRelated = buildOfficialRelated(officialArticles, category, area, relatedLimit);
   const teamRelated = buildTeamRelated(blogPosts, relatedLimit);
   const faqEnabled = setting?.faqEnabled ?? true;
-  const faqItems = faqEnabled ? buildFaqItems(category, area) : [];
+  const faqItems = faqEnabled ? buildFaqItems(category, area, circles) : [];
   const nearbyAreas = await resolveNearbyAreas(category, area, setting?.nearbyAreas ?? []);
 
   const h1 = area ? `${area}の${category}サークル・活動一覧` : `${category}のサークル・イベント情報`;
