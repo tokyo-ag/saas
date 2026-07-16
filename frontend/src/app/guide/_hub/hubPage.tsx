@@ -460,7 +460,10 @@ export async function HubPage({
 
   const relatedLimit = setting?.relatedArticleLimit ?? 3;
   const officialRelated = buildOfficialRelated(officialArticles, category, area, relatedLimit);
-  const teamRelated = buildTeamRelated(blogPosts, relatedLimit);
+  // Team articles are already capped at 2-per-tenant by fetchBlogPostsByCategory's own limit
+  // (10) above - show all of what that fetch returns instead of the smaller relatedLimit, so
+  // this horizontally-scrolling section actually has enough cards to scroll through.
+  const teamRelated = buildTeamRelated(blogPosts, 10);
   const faqEnabled = setting?.faqEnabled ?? true;
   const faqItems = faqEnabled ? buildFaqItems(category, area, circles) : [];
   const nearbyAreas = await resolveNearbyAreas(category, area, setting?.nearbyAreas ?? []);
