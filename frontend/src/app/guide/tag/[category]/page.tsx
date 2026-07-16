@@ -163,38 +163,42 @@ function dedupeArticles(...lists: OfficialArticle[][]): OfficialArticle[] {
   return Array.from(byId.values());
 }
 
-function buildRelatedArticles(
+function buildOfficialRelated(
   officialArticles: OfficialArticle[],
-  blogPosts: PortalBlogPost[],
   category: string,
   area: string,
   limit: number,
 ): RelatedArticle[] {
-  const officialItems: RelatedArticle[] = officialArticles.map((a) => ({
-    id: `official-${a.id}`,
-    title: a.title,
-    excerpt: a.excerpt,
-    imageUrl: a.ogImageUrl ?? null,
-    href: `/guide/${a.slug}`,
-    matchesBoth: !!area && a.category === category && (a.areaTags ?? []).includes(area),
-    publishedAt: a.publishedAt ?? null,
-  }));
-  const blogItems: RelatedArticle[] = blogPosts.map((p) => ({
-    id: `blog-${p.id}`,
-    title: p.title,
-    excerpt: p.excerpt,
-    imageUrl: p.coverImageUrl ?? null,
-    href: p.tenant.code ? `/clubs/${p.tenant.code}/blog/${p.slug}` : '#',
-    matchesBoth: false,
-    publishedAt: p.publishedAt ?? null,
-  }));
-  return [...officialItems, ...blogItems]
+  return officialArticles
+    .map((a) => ({
+      id: `official-${a.id}`,
+      title: a.title,
+      excerpt: a.excerpt,
+      imageUrl: a.ogImageUrl ?? null,
+      href: `/guide/${a.slug}`,
+      matchesBoth: !!area && a.category === category && (a.areaTags ?? []).includes(area),
+      publishedAt: a.publishedAt ?? null,
+    }))
     .sort((a, b) => {
       if (a.matchesBoth !== b.matchesBoth) return a.matchesBoth ? -1 : 1;
       const aTime = a.publishedAt ? Date.parse(a.publishedAt) : 0;
       const bTime = b.publishedAt ? Date.parse(b.publishedAt) : 0;
       return bTime - aTime;
     })
+    .slice(0, limit);
+}
+
+function buildTeamRelated(blogPosts: PortalBlogPost[], limit: number): RelatedArticle[] {
+  return blogPosts
+    .map((p) => ({
+      id: `blog-${p.id}`,
+      title: p.title,
+      excerpt: p.excerpt,
+      imageUrl: p.coverImageUrl ?? null,
+      href: p.tenant.code ? `/clubs/${p.tenant.code}/blog/${p.slug}` : '#',
+      matchesBoth: false,
+      publishedAt: p.publishedAt ?? null,
+    }))
     .slice(0, limit);
 }
 
@@ -346,7 +350,8 @@ export default async function GuideCategoryHubPage({
   if (circles.length === 0 && officialArticles.length === 0 && blogPosts.length === 0) notFound();
 
   const relatedLimit = setting?.relatedArticleLimit ?? 3;
-  const relatedArticles = buildRelatedArticles(officialArticles, blogPosts, category, area, relatedLimit);
+  const officialRelated = buildOfficialRelated(officialArticles, category, area, relatedLimit);
+  const teamRelated = buildTeamRelated(blogPosts, relatedLimit);
   const faqEnabled = setting?.faqEnabled ?? true;
   const faqItems = faqEnabled ? buildFaqItems(category, area, circles) : [];
   const nearbyAreas = await resolveNearbyAreas(category, area, setting?.nearbyAreas ?? []);
@@ -438,11 +443,20 @@ export default async function GuideCategoryHubPage({
           )}
         </section>
 
-        {relatedArticles.length > 0 && (
+        {officialRelated.length > 0 && (
           <section className="mx-auto max-w-6xl px-5 py-8">
-            <h2 className="text-lg font-bold text-gray-950">関連記事</h2>
+            <h2 className="text-lg font-bold text-gray-950">COMIUの{category}記事</h2>
             <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {relatedArticles.map((item) => <RelatedArticleCard key={item.id} item={item} />)}
+              {officialRelated.map((item) => <RelatedArticleCard key={item.id} item={item} />)}
+            </div>
+          </section>
+        )}
+
+        {teamRelated.length > 0 && (
+          <section className="mx-auto max-w-6xl px-5 py-8">
+            <h2 className="text-lg font-bold text-gray-950">団体の{category}記事</h2>
+            <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {teamRelated.map((item) => <RelatedArticleCard key={item.id} item={item} />)}
             </div>
           </section>
         )}
