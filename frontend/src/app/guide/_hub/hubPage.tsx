@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { AreaHubSetting } from '@/lib/api';
+import PublicFooter from '@/components/public/PublicFooter';
 
 import { API_URL, SITE_URL } from '@/lib/config';
 import { TOKYO_WARDS, WARD_SUBAREAS, buildCategoryAreaPath } from '@/lib/lpTags';
@@ -362,9 +364,28 @@ export async function buildHubMetadata(category: string, area: string): Promise<
   };
 }
 
-export async function HubPage({ category, area }: { category: string; area: string }) {
+export async function HubPage({
+  category,
+  area,
+  eventsSection,
+  skipEmptyCheck,
+  canonicalPathOverride,
+}: {
+  category: string;
+  area: string;
+  // Extra section rendered between 団体一覧 and the article sections - used by pages like
+  // /sports/[category] that share this exact layout but also show a live event list.
+  eventsSection?: ReactNode;
+  // /sports/[category] is statically generated for a fixed set of categories and should never
+  // 404 just because circles/articles/blog posts happen to be empty at the moment.
+  skipEmptyCheck?: boolean;
+  // Callers that render this layout at a different URL than the standard /guide hub path (e.g.
+  // /sports/[category]) must override the breadcrumb link + canonical/jsonld URL to match their
+  // own actual URL, since buildCategoryAreaPath() always points back at the /guide hub page.
+  canonicalPathOverride?: string;
+}) {
   const { setting, circles, officialArticles, blogPosts } = await loadHubData(category, area);
-  if (circles.length === 0 && officialArticles.length === 0 && blogPosts.length === 0) notFound();
+  if (!skipEmptyCheck && circles.length === 0 && officialArticles.length === 0 && blogPosts.length === 0) notFound();
 
   const relatedLimit = setting?.relatedArticleLimit ?? 3;
   const officialRelated = buildOfficialRelated(officialArticles, category, area, relatedLimit);
@@ -381,8 +402,8 @@ export async function HubPage({ category, area }: { category: string; area: stri
     ? (circles.length > 0 ? `${area}で現在${circles.length}団体を掲載しています。` : '現在、掲載団体を準備中です。')
     : (circles.length > 0 ? `現在${circles.length}団体を掲載しています。` : '現在、掲載団体を準備中です。');
 
-  const categoryHref = buildCategoryAreaPath(category);
-  const hubUrl = `${SITE_URL}${buildCategoryAreaPath(category, area || undefined)}`;
+  const categoryHref = canonicalPathOverride ?? buildCategoryAreaPath(category);
+  const hubUrl = `${SITE_URL}${canonicalPathOverride ?? buildCategoryAreaPath(category, area || undefined)}`;
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -461,6 +482,8 @@ export async function HubPage({ category, area }: { category: string; area: stri
           )}
         </section>
 
+        {eventsSection}
+
         {officialRelated.length > 0 && (
           <section className="mx-auto max-w-6xl px-5 py-8">
             <h2 className="text-lg font-bold text-gray-950">COMIUの{category}記事</h2>
@@ -524,6 +547,7 @@ export async function HubPage({ category, area }: { category: string; area: stri
           </div>
         </section>
       </main>
+      <PublicFooter />
     </>
   );
 }
