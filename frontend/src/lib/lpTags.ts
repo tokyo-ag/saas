@@ -2,8 +2,9 @@ export const TENANT_TYPE_TAGS = ['インカレサークル', '学生団体', '�
 
 export const ACTIVITY_TAGS = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー'] as const;
 
-export const LOCATION_TAGS = [
-  '東京',
+// The 23 wards, shown as a group of children once "東京23区" (a pure UI grouping, not itself
+// a savable tag) is picked - mirrors how a ward's own sub-areas appear once the ward is picked.
+export const TOKYO_WARDS = [
   '千代田区',
   '中央区',
   '港区',
@@ -27,10 +28,10 @@ export const LOCATION_TAGS = [
   '足立区',
   '葛飾区',
   '江戸川区',
-  '埼玉',
-  '千葉',
-  '神奈川',
 ] as const;
+
+// Other prefecture-level tags, selected directly (no ward breakdown for these yet).
+export const OTHER_PREFECTURE_TAGS = ['埼玉', '千葉', '神奈川'] as const;
 
 // Finer-grained areas within a ward. Selecting the ward reveals these as additional options;
 // picking one is saved alongside the ward tag (not instead of it). Only wards with a confirmed
@@ -38,6 +39,10 @@ export const LOCATION_TAGS = [
 export const WARD_SUBAREAS: Record<string, readonly string[]> = {
   '豊島区': ['千川', '要町', '小竹向原'],
 };
+
+// Every real, savable location value (wards + other prefectures) - excludes the "東京23区"
+// grouping label itself, which is a UI-only parent, never a tag value on its own.
+export const LOCATION_TAGS = [...TOKYO_WARDS, ...OTHER_PREFECTURE_TAGS] as const;
 
 export const ALL_LOCATION_TAGS: readonly string[] = [
   ...LOCATION_TAGS,

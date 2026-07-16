@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, API_URL, Event, Tenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
-import { EVENT_TAG_GROUPS, LOCATION_TAGS, WARD_SUBAREAS } from '@/lib/lpTags';
+import { EVENT_TAG_GROUPS, LOCATION_TAGS, TOKYO_WARDS, OTHER_PREFECTURE_TAGS, WARD_SUBAREAS } from '@/lib/lpTags';
 import { Section, Field, RadioGroup, Check, UploadButton } from './EventFormPrimitives';
 
 type EventFormData = {
@@ -139,6 +139,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
   const [isFreePlan, setIsFreePlan] = useState(false);
   const [isPro, setIsPro] = useState(false);
   const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [tokyoExpanded, setTokyoExpanded] = useState(false);
   const isLineConfigured = !!tenant?.lineConfigured;
   const initialHeldAt = toLocalDatetimeValue(initial?.heldAt);
   const initialEndAt = initial?.endAt
@@ -523,9 +524,85 @@ export default function EventForm({ initial }: { initial?: Event }) {
         <Field label="LP用タグ">
           <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
             {EVENT_TAG_GROUPS.map((group) => {
-              const isLocationGroup = group.label === '場所タグ';
-              const selectedWard = isLocationGroup ? LOCATION_TAGS.find((t) => form.tags.includes(t)) : undefined;
-              const subareaOptions = selectedWard ? WARD_SUBAREAS[selectedWard] ?? [] : [];
+              if (group.label === '場所タグ') {
+                const selectedWard = TOKYO_WARDS.find((t) => form.tags.includes(t));
+                const showWards = tokyoExpanded || !!selectedWard;
+                const subareaOptions = selectedWard ? WARD_SUBAREAS[selectedWard] ?? [] : [];
+                return (
+                  <div key={group.label}>
+                    <p className="mb-1.5 text-xs font-bold text-gray-500">{group.label}</p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setTokyoExpanded((v) => !v)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                          showWards
+                            ? 'bg-[#06C755] text-white border-[#06C755]'
+                            : 'bg-white text-gray-600 border-gray-300 hover:border-[#06C755]'
+                        }`}
+                      >
+                        東京23区
+                      </button>
+                      {OTHER_PREFECTURE_TAGS.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => selectWard(tag)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                            form.tags.includes(tag)
+                              ? 'bg-[#06C755] text-white border-[#06C755]'
+                              : 'bg-white text-gray-600 border-gray-300 hover:border-[#06C755]'
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                    {showWards && (
+                      <div className="mt-2 pl-3 border-l-2 border-[#06C755]/30">
+                        <p className="mb-1.5 text-xs text-gray-400">東京23区（任意で1つ選択）</p>
+                        <div className="flex flex-wrap gap-2">
+                          {TOKYO_WARDS.map((ward) => (
+                            <button
+                              key={ward}
+                              type="button"
+                              onClick={() => selectWard(ward)}
+                              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                                form.tags.includes(ward)
+                                  ? 'bg-[#06C755] text-white border-[#06C755]'
+                                  : 'bg-white text-gray-600 border-gray-300 hover:border-[#06C755]'
+                              }`}
+                            >
+                              {ward}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {subareaOptions.length > 0 && (
+                      <div className="mt-2 pl-6 border-l-2 border-[#06C755]/30">
+                        <p className="mb-1.5 text-xs text-gray-400">{selectedWard}の細かいエリア（任意）</p>
+                        <div className="flex flex-wrap gap-2">
+                          {subareaOptions.map((subarea) => (
+                            <button
+                              key={subarea}
+                              type="button"
+                              onClick={() => selectSubarea(subarea)}
+                              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                                form.tags.includes(subarea)
+                                  ? 'bg-[#06C755] text-white border-[#06C755]'
+                                  : 'bg-white text-gray-600 border-gray-300 hover:border-[#06C755]'
+                              }`}
+                            >
+                              {subarea}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
               return (
                 <div key={group.label}>
                   <p className="mb-1.5 text-xs font-bold text-gray-500">{group.label}</p>
@@ -534,7 +611,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
                       <button
                         key={tag}
                         type="button"
-                        onClick={() => (isLocationGroup ? selectWard(tag) : toggleTag(tag, group.tags, group.single))}
+                        onClick={() => toggleTag(tag, group.tags, group.single)}
                         className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                           form.tags.includes(tag)
                             ? 'bg-[#06C755] text-white border-[#06C755]'
@@ -545,32 +622,11 @@ export default function EventForm({ initial }: { initial?: Event }) {
                       </button>
                     ))}
                   </div>
-                  {subareaOptions.length > 0 && (
-                    <div className="mt-2 pl-3 border-l-2 border-[#06C755]/30">
-                      <p className="mb-1.5 text-xs text-gray-400">{selectedWard}の細かいエリア（任意）</p>
-                      <div className="flex flex-wrap gap-2">
-                        {subareaOptions.map((subarea) => (
-                          <button
-                            key={subarea}
-                            type="button"
-                            onClick={() => selectSubarea(subarea)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                              form.tags.includes(subarea)
-                                ? 'bg-[#06C755] text-white border-[#06C755]'
-                                : 'bg-white text-gray-600 border-gray-300 hover:border-[#06C755]'
-                            }`}
-                          >
-                            {subarea}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               );
             })}
           </div>
-          <p className="mt-2 text-xs text-gray-500">場所タグは1つだけ選択できます。区を選ぶと、細かいエリアが選べる場合があります。検索タグは地域LPや検索ページ整理に使います。</p>
+          <p className="mt-2 text-xs text-gray-500">場所タグは1つだけ選択できます。「東京23区」を選ぶと区の一覧が、区によっては更に細かいエリアが選べます。検索タグは地域LPや検索ページ整理に使います。</p>
         </Field>
         <Field label="説明">
           {DESCRIPTION_TEMPLATES[form.category] && (
