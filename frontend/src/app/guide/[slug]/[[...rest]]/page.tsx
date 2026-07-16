@@ -5,10 +5,47 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { API_URL, SITE_URL } from '@/lib/config';
-import { ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
-import EventsAreaFilter from './EventsAreaFilter';
+import { ACTIVITY_TAG_EVENT_CATEGORY, AREA_SLUG_TO_JAPANESE, CATEGORY_SLUG_TO_JAPANESE, WARD_SUBAREAS, buildCategoryAreaPath } from '@/lib/lpTags';
+import { HubPage, buildHubMetadata } from '../../_hub/hubPage';
+import EventsAreaFilter from '../EventsAreaFilter';
 
 export const revalidate = 60;
+
+// This route doubles as both the article-detail page (/guide/[slug]) and, for the 5 activity
+// categories, the path-based category(+area) hub page (/guide/[categorySlug]/[ward]/[subarea]).
+// Next.js can't have two differently-named dynamic segments as siblings under /guide/, so both
+// live in this one optional-catch-all file instead of separate routes.
+type HubResolution =
+  | { kind: 'hub'; category: string; area: string }
+  | { kind: 'invalid' }
+  | { kind: 'article' };
+
+function resolveRoute(slug: string, rest?: string[]): HubResolution {
+  const category = CATEGORY_SLUG_TO_JAPANESE[slug];
+  if (!category) {
+    if (rest && rest.length > 0) return { kind: 'invalid' };
+    return { kind: 'article' };
+  }
+  const segments = rest ?? [];
+  if (segments.length === 0) return { kind: 'hub', category, area: '' };
+  if (segments.length === 1) {
+    const area = AREA_SLUG_TO_JAPANESE[segments[0]];
+    if (!area) return { kind: 'invalid' };
+    // Sub-areas (千川 etc.) only exist nested under their ward - no standalone /guide/x/senkawa.
+    const isSubarea = Object.values(WARD_SUBAREAS).some((subs) => (subs as readonly string[]).includes(area));
+    if (isSubarea) return { kind: 'invalid' };
+    return { kind: 'hub', category, area };
+  }
+  if (segments.length === 2) {
+    const ward = AREA_SLUG_TO_JAPANESE[segments[0]];
+    const subarea = AREA_SLUG_TO_JAPANESE[segments[1]];
+    if (!ward || !subarea) return { kind: 'invalid' };
+    const validSubareas = WARD_SUBAREAS[ward];
+    if (!validSubareas || !validSubareas.includes(subarea)) return { kind: 'invalid' };
+    return { kind: 'hub', category, area: subarea };
+  }
+  return { kind: 'invalid' };
+}
 
 type OfficialArticle = {
   id: string;
@@ -290,9 +327,13 @@ function pickRelatedArticles(articles: OfficialArticleSummary[], current: Offici
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; rest?: string[] }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug, rest } = await params;
+  const resolution = resolveRoute(slug, rest);
+  if (resolution.kind === 'hub') return buildHubMetadata(resolution.category, resolution.area);
+  if (resolution.kind === 'invalid') return {};
+
   const article = await fetchArticle(slug);
   if (!article) return {};
   const description = article.excerpt ?? undefined;
@@ -679,9 +720,13 @@ function BodyRenderer({
 export default async function GuideArticlePage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; rest?: string[] }>;
 }) {
-  const { slug } = await params;
+  const { slug, rest } = await params;
+  const resolution = resolveRoute(slug, rest);
+  if (resolution.kind === 'invalid') notFound();
+  if (resolution.kind === 'hub') return <HubPage category={resolution.category} area={resolution.area} />;
+
   const [article, articleSummaries] = await Promise.all([
     fetchArticle(slug),
     fetchArticleSummaries(),
@@ -777,7 +822,7 @@ export default async function GuideArticlePage({
           <div className="rounded-xl border border-gray-200 bg-white px-4 py-8 shadow-sm sm:px-9">
             <div className="flex flex-wrap items-center gap-2">
               {article.category && (
-                <Link href={`/guide/tag/${encodeURIComponent(article.category)}`} className="rounded-full bg-[#06C755]/10 px-3 py-1 text-xs font-bold text-[#06C755] hover:bg-[#06C755]/20">
+                <Link href={buildCategoryAreaPath(article.category)} className="rounded-full bg-[#06C755]/10 px-3 py-1 text-xs font-bold text-[#06C755] hover:bg-[#06C755]/20">
                   {article.category}
                 </Link>
               )}

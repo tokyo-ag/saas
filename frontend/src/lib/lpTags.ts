@@ -66,6 +66,43 @@ export const ACTIVITY_TAG_EVENT_CATEGORY: Record<string, string> = {
   'バレー': 'volleyball',
 };
 
+// Reverse of ACTIVITY_TAG_EVENT_CATEGORY: English category slug -> Japanese label.
+// Also doubles as the "is this an activity category" check for path-based hub URLs.
+export const CATEGORY_SLUG_TO_JAPANESE: Record<string, string> = Object.fromEntries(
+  Object.entries(ACTIVITY_TAG_EVENT_CATEGORY).map(([ja, slug]) => [slug, ja]),
+);
+
+// Romanized slugs for the 23 wards + other prefectures + confirmed sub-areas, used in the
+// path-based hub URLs (/guide/[category]/[ward]/[subarea]). Only areas listed here get a
+// path-based URL; anything else falls back to the legacy ?area= query-string form.
+export const AREA_SLUGS: Record<string, string> = {
+  '千代田区': 'chiyoda', '中央区': 'chuo', '港区': 'minato', '新宿区': 'shinjuku',
+  '文京区': 'bunkyo', '台東区': 'taito', '墨田区': 'sumida', '江東区': 'koto',
+  '品川区': 'shinagawa', '目黒区': 'meguro', '大田区': 'ota', '世田谷区': 'setagaya',
+  '渋谷区': 'shibuya', '中野区': 'nakano', '杉並区': 'suginami', '豊島区': 'toshima',
+  '北区': 'kita', '荒川区': 'arakawa', '板橋区': 'itabashi', '練馬区': 'nerima',
+  '足立区': 'adachi', '葛飾区': 'katsushika', '江戸川区': 'edogawa',
+  '埼玉': 'saitama', '千葉': 'chiba', '神奈川': 'kanagawa',
+  '千川': 'senkawa', '要町': 'kanamecho', '小竹向原': 'kotakemukaihara',
+};
+export const AREA_SLUG_TO_JAPANESE: Record<string, string> = Object.fromEntries(
+  Object.entries(AREA_SLUGS).map(([ja, slug]) => [slug, ja]),
+);
+
+// Builds the canonical link for a category(+area) hub page. Activity categories (the 5 with a
+// known event-category slug) get the new path-based URL; everything else (team-type categories)
+// keeps the legacy ?area= query-string form.
+export function buildCategoryAreaPath(category: string, area?: string): string {
+  const categorySlug = ACTIVITY_TAG_EVENT_CATEGORY[category];
+  if (!categorySlug) {
+    return `/guide/tag/${encodeURIComponent(category)}${area ? `?area=${encodeURIComponent(area)}` : ''}`;
+  }
+  if (!area) return `/guide/${categorySlug}`;
+  const wardOfSubarea = Object.entries(WARD_SUBAREAS).find(([, subs]) => subs.includes(area))?.[0];
+  const parts = wardOfSubarea ? [wardOfSubarea, area] : [area];
+  return `/guide/${categorySlug}/${parts.map((p) => AREA_SLUGS[p] ?? p).join('/')}`;
+}
+
 export const BLOG_TAG_GROUPS = [
   { label: '団体種別タグ', tags: TENANT_TYPE_TAGS },
   { label: '活動タグ', tags: ACTIVITY_TAGS },

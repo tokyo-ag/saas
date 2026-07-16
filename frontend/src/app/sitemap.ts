@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 import { SITE_URL, API_URL } from '@/lib/config';
+import { buildCategoryAreaPath } from '@/lib/lpTags';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -159,7 +160,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const areas = Array.from(new Set(officialArticles.flatMap((a) => a.areaTags ?? [])));
   const guideHubPages: MetadataRoute.Sitemap = [
     ...categories.map((category) => ({
-      url: `${SITE_URL}/guide/tag/${encodeURIComponent(category)}`,
+      url: `${SITE_URL}${buildCategoryAreaPath(category)}`,
       lastModified: STATIC_LAST_MODIFIED,
       changeFrequency: 'weekly' as const,
       priority: 0.8,

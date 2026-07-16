@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { API_URL, SITE_URL } from '@/lib/config';
+import { buildCategoryAreaPath } from '@/lib/lpTags';
 
 export const revalidate = 60;
 
@@ -116,7 +117,7 @@ export default async function GuidePage() {
           {(categories.length > 0 || areas.length > 0) && (
             <div className="mt-6 flex flex-wrap gap-2">
               {categories.map((category) => (
-                <Link key={category} href={`/guide/tag/${encodeURIComponent(category)}`} className="rounded-full bg-[#06C755]/10 px-3 py-1 text-xs font-bold text-[#06C755] hover:bg-[#06C755]/20">
+                <Link key={category} href={buildCategoryAreaPath(category)} className="rounded-full bg-[#06C755]/10 px-3 py-1 text-xs font-bold text-[#06C755] hover:bg-[#06C755]/20">
                   {category}
                 </Link>
               ))}

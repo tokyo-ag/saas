@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, AreaHubSummaryRow } from '@/lib/api';
 import { SITE_URL } from '@/lib/config';
+import { buildCategoryAreaPath } from '@/lib/lpTags';
 
 type SortKey = 'category' | 'area' | 'circleCount' | 'articleCount' | 'eventCount';
 const TEXT_SORT_KEYS: SortKey[] = ['category', 'area'];
@@ -104,7 +105,7 @@ export default function AreaHubSummaryPage() {
                     <td className="px-4 py-3 text-right text-gray-600">{row.eventCount}</td>
                     <td className="px-4 py-3 text-right">
                       <a
-                        href={`${SITE_URL}/guide/tag/${encodeURIComponent(row.category)}?area=${encodeURIComponent(row.area)}`}
+                        href={`${SITE_URL}${buildCategoryAreaPath(row.category, row.area)}`}
                         target="_blank"
                         rel="noreferrer"
                         className="text-[#06C755] hover:underline"
