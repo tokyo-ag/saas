@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { api, API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
-import { ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
+import { ACTIVITY_TAG_EVENT_CATEGORY, LOCATION_TAGS } from '@/lib/lpTags';
 import { Block, CARD_IMAGE_SIZE_CLASS, IMAGE_SIZE_CLASS, TEXT_SIZE_CLASS } from './BlockEditor';
 
 const CELL_LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]*)\)/g;
@@ -47,8 +47,43 @@ function priceLabel(event: PublicEvent) {
   return event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
 }
 
-function EventsBlockPreview({ category, heading, tag }: { category: string; heading: string; tag?: string }) {
+const LOCATION_TAG_SET = new Set<string>(LOCATION_TAGS);
+
+function computeEventAreas(events: PublicEvent[]): string[] {
+  const countByArea = new Map<string, number>();
+  for (const event of events) {
+    for (const eventTag of event.tags ?? []) {
+      if (LOCATION_TAG_SET.has(eventTag)) countByArea.set(eventTag, (countByArea.get(eventTag) ?? 0) + 1);
+    }
+  }
+  return Array.from(countByArea.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'ja'))
+    .map(([area]) => area);
+}
+
+function EventCardMini({ event }: { event: PublicEvent }) {
+  const img = imgUrl(event.imageUrl, API_URL) ?? DEFAULT_EVENT_IMAGE;
+  return (
+    <div className="w-28 shrink-0 overflow-hidden rounded-xl relative bg-white">
+      <div className="relative" style={{ aspectRatio: '4/5' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={img} alt={event.title} className="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 px-2 pb-2">
+          <p className="mb-1 line-clamp-2 text-[11px] font-bold leading-snug text-white" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>{event.title}</p>
+          <div className="flex items-center justify-between gap-1">
+            <span className="truncate text-[9px] text-white/80">{fmtDate(event.heldAt)}</span>
+            <span className="shrink-0 text-[9px] font-semibold text-white/95">{priceLabel(event)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EventsBlockPreview({ category, heading, tag, areaSearchEnabled }: { category: string; heading: string; tag?: string; areaSearchEnabled?: boolean }) {
   const [events, setEvents] = useState<PublicEvent[]>([]);
+  const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const eventCategory = ACTIVITY_TAG_EVENT_CATEGORY[category];
 
   useEffect(() => {
@@ -56,6 +91,10 @@ function EventsBlockPreview({ category, heading, tag }: { category: string; head
     let active = true;
     api.public.events(eventCategory, tag).then((list) => { if (active) setEvents(list.slice(0, 6)); }).catch(() => { if (active) setEvents([]); });
     return () => { active = false; };
+  }, [eventCategory, tag]);
+
+  useEffect(() => {
+    setSelectedArea(null);
   }, [eventCategory, tag]);
 
   if (!category) {
@@ -67,29 +106,34 @@ function EventsBlockPreview({ category, heading, tag }: { category: string; head
   if (events.length === 0) {
     return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」{tag ? `・「${tag}」` : ''}に一致する公開中のイベントが見つかりませんでした。</p>;
   }
+  const areas = areaSearchEnabled ? computeEventAreas(events) : [];
+  const shownEvents = selectedArea ? events.filter((e) => (e.tags ?? []).includes(selectedArea)) : events;
   return (
     <div className="my-6">
       {heading && <p className="mb-2 text-base font-bold text-gray-950">{heading}</p>}
+      {areas.length >= 2 && (
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          <button
+            type="button"
+            onClick={() => setSelectedArea(null)}
+            className={`rounded-full px-3 py-1 text-xs font-bold transition ${!selectedArea ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+          >
+            すべて
+          </button>
+          {areas.map((area) => (
+            <button
+              key={area}
+              type="button"
+              onClick={() => setSelectedArea(area)}
+              className={`rounded-full px-3 py-1 text-xs font-bold transition ${selectedArea === area ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              {area}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="flex gap-3 overflow-x-auto pb-1">
-      {events.map((event) => {
-        const img = imgUrl(event.imageUrl, API_URL) ?? DEFAULT_EVENT_IMAGE;
-        return (
-          <div key={event.id} className="w-28 shrink-0 overflow-hidden rounded-xl relative bg-white">
-            <div className="relative" style={{ aspectRatio: '4/5' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img} alt={event.title} className="h-full w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 px-2 pb-2">
-                <p className="mb-1 line-clamp-2 text-[11px] font-bold leading-snug text-white" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>{event.title}</p>
-                <div className="flex items-center justify-between gap-1">
-                  <span className="truncate text-[9px] text-white/80">{fmtDate(event.heldAt)}</span>
-                  <span className="shrink-0 text-[9px] font-semibold text-white/95">{priceLabel(event)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })}
+        {shownEvents.map((event) => <EventCardMini key={event.id} event={event} />)}
       </div>
     </div>
   );
@@ -256,7 +300,7 @@ function BlockView({ block, category }: { block: Block; category: string }) {
     );
   }
   if (block.type === 'events') {
-    return <EventsBlockPreview category={category} heading={block.text} tag={block.tag} />;
+    return <EventsBlockPreview category={category} heading={block.text} tag={block.tag} areaSearchEnabled={block.eventsAreaSearchEnabled} />;
   }
   if (block.type === 'circles') {
     return <CirclesBlockPreview category={category} heading={block.text} />;

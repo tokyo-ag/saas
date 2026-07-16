@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 
 import { API_URL, SITE_URL } from '@/lib/config';
 import { ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
+import EventsAreaFilter from './EventsAreaFilter';
 
 export const revalidate = 60;
 
@@ -40,6 +41,7 @@ type PublicArticleEvent = {
   priceMale?: number | null;
   priceFemale?: number | null;
   imageUrl?: string | null;
+  tags?: string[];
 };
 
 type PublicArticleTenant = {
@@ -147,14 +149,18 @@ function EventCardMini({ event }: { event: PublicArticleEvent }) {
   );
 }
 
-function EventsBlock({ events, heading }: { events: PublicArticleEvent[]; heading: string }) {
+function EventsBlock({ events, heading, areaSearchEnabled }: { events: PublicArticleEvent[]; heading: string; areaSearchEnabled?: boolean }) {
   if (events.length === 0) return null;
   return (
     <div className="my-6">
       {heading && <h2 className="mb-3 text-lg font-bold text-gray-950">{heading}</h2>}
-      <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {events.map((event) => <EventCardMini key={event.id} event={event} />)}
-      </div>
+      {areaSearchEnabled ? (
+        <EventsAreaFilter events={events} />
+      ) : (
+        <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {events.map((event) => <EventCardMini key={event.id} event={event} />)}
+        </div>
+      )}
     </div>
   );
 }
@@ -331,7 +337,7 @@ const TEXT_SIZE_CLASS: Record<string, string> = {
   large: 'text-lg sm:text-xl',
 };
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
-const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|(.*))?)?\}\}$/;
+const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|([^|}]*)(?:\|(true|false))?)?)?\}\}$/;
 const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
 const TABLE_RE = /^\{\{table:(.+)\}\}$/;
 const CARD_SLIDER_RE = /^\{\{cardslider:(.+)\}\}$/;
@@ -516,7 +522,7 @@ function BodyRenderer({
     if (events) {
       flushParagraph();
       const eventsTag = events[2] || undefined;
-      nodes.push(<EventsBlock key={i} events={eventsByTag.get(eventsTag ?? '') ?? []} heading={events[1] ?? ''} />);
+      nodes.push(<EventsBlock key={i} events={eventsByTag.get(eventsTag ?? '') ?? []} heading={events[1] ?? ''} areaSearchEnabled={events[3] === 'true'} />);
       i++;
       continue;
     }
