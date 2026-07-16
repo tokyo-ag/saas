@@ -393,6 +393,13 @@ export const api = {
       request<{ ok: boolean }>(`/superadmin/official-articles/${id}`, { method: 'DELETE' }),
     areaHubSummary: () =>
       request<AreaHubSummaryRow[]>('/superadmin/area-hub-summary'),
+    getAreaHubSetting: (category: string, area: string) =>
+      request<AreaHubSetting | null>(`/superadmin/area-hub-settings?category=${encodeURIComponent(category)}&area=${encodeURIComponent(area)}`),
+    updateAreaHubSetting: (category: string, area: string, data: AreaHubSettingInput) =>
+      request<AreaHubSetting>(`/superadmin/area-hub-settings?category=${encodeURIComponent(category)}&area=${encodeURIComponent(area)}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
   },
 };
 
@@ -579,6 +586,30 @@ export interface AreaHubSummaryRow {
   circleCount: number;
   eventCount: number;
   total: number;
+}
+
+export interface AreaHubSetting {
+  id: string;
+  category: string;
+  area: string;
+  description?: string | null;
+  faqEnabled?: boolean | null;
+  relatedArticleLimit?: number | null;
+  nearbyAreas: string[];
+  indexable?: boolean | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  updatedAt: string;
+}
+
+export interface AreaHubSettingInput {
+  description?: string;
+  faqEnabled?: boolean;
+  relatedArticleLimit?: number;
+  nearbyAreas?: string[];
+  indexable?: boolean;
+  seoTitle?: string;
+  seoDescription?: string;
 }
 
 export interface SupportThread {

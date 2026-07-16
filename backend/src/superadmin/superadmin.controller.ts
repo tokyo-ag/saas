@@ -7,6 +7,7 @@ import {
   Patch,
   Body,
   Param,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { SuperadminGuard } from '../auth/superadmin.guard';
@@ -17,6 +18,7 @@ import {
   BanUserDto,
   UpdateOfficialSiteDto,
   UpsertOfficialArticleDto,
+  UpsertAreaHubSettingDto,
 } from './superadmin.service';
 
 @UseGuards(SuperadminGuard)
@@ -125,6 +127,23 @@ export class SuperadminController {
   @Get('area-hub-summary')
   getAreaHubSummary() {
     return this.service.getAreaHubSummary();
+  }
+
+  @Get('area-hub-settings')
+  getAreaHubSetting(
+    @Query('category') category: string,
+    @Query('area') area?: string,
+  ) {
+    return this.service.getAreaHubSetting(category, area ?? '');
+  }
+
+  @Put('area-hub-settings')
+  upsertAreaHubSetting(
+    @Query('category') category: string,
+    @Query('area') area: string | undefined,
+    @Body() dto: UpsertAreaHubSettingDto,
+  ) {
+    return this.service.upsertAreaHubSetting(category, area ?? '', dto);
   }
 
   @Post('official-articles')

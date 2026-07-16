@@ -205,6 +205,26 @@ model OfficialArticle {
   @@map("official_articles")
 }
 
+// Optional per-(category, area) overrides for the auto-generated /guide/tag/[category]?area=
+// hub pages. A missing row (or a null field within one) means "use the auto-generated default".
+model AreaHubSetting {
+  id                  String   @id @default(uuid())
+  category            String   @db.VarChar(60)
+  area                String   @default("") @db.VarChar(60)
+  description         String?  @db.Text
+  faqEnabled          Boolean? @map("faq_enabled")
+  relatedArticleLimit Int?     @map("related_article_limit")
+  nearbyAreas         String[] @default([]) @map("nearby_areas")
+  indexable           Boolean?
+  seoTitle            String?  @map("seo_title") @db.VarChar(160)
+  seoDescription      String?  @map("seo_description") @db.VarChar(300)
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@unique([category, area])
+  @@map("area_hub_settings")
+}
+
 model TenantLiffAccess {
   id         String   @id @default(uuid())
   tenantId   String   @map("tenant_id")

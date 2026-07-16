@@ -564,8 +564,11 @@ export class PublicController {
   async getTenants(
     @Query('activityTag') activityTag?: string,
     @Query('area') area?: string,
+    @Query('limit') limitParam?: string,
   ) {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const requestedLimit = parseInt(limitParam ?? '10', 10);
+    const limit = Math.min(Math.max(Number.isFinite(requestedLimit) ? requestedLimit : 10, 1), 50);
 
     const tenants = await this.prisma.tenant.findMany({
       where: {
@@ -600,10 +603,11 @@ export class PublicController {
         memberCount: t._count.members,
         eventCount: t._count.events,
         accessCount: t._count.liffAccesses,
+        updatedAt: t.updatedAt,
       }))
       .sort((a, b) => b.accessCount - a.accessCount);
 
-    return ranked.slice(0, 10);
+    return ranked.slice(0, limit);
   }
 
   @Get('tenants/area-tag-counts')
@@ -642,6 +646,17 @@ export class PublicController {
     return Array.from(tenantCountByArea.entries())
       .map(([area, count]) => ({ area, count }))
       .sort((a, b) => b.count - a.count || a.area.localeCompare(b.area, 'ja'));
+  }
+
+  @Get('area-hub-settings')
+  async getAreaHubSetting(
+    @Query('category') category?: string,
+    @Query('area') area?: string,
+  ) {
+    if (!category) return null;
+    return this.prisma.areaHubSetting.findUnique({
+      where: { category_area: { category, area: area ?? '' } },
+    });
   }
 
   @Get('tenants/:tenantCode')

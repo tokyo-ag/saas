@@ -21,7 +21,7 @@ export default function AreaHubSummaryPage() {
           <div>
             <h1 className="text-lg sm:text-xl font-bold text-gray-900">地域×カテゴリ ハブページ一覧</h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-              /guide/tag/[カテゴリ]?area=... は記事として保存されていない自動生成ページです。実際にデータがある組み合わせだけをここに一覧表示します（閲覧のみ・編集不可）。
+              /guide/tag/[カテゴリ]?area=... は記事として保存されていない自動生成ページです。実際にデータがある組み合わせだけをここに一覧表示します。「設定」から説明文・FAQ・近隣地域・index設定などを個別に上書きできます。
             </p>
           </div>
         </div>
@@ -45,6 +45,7 @@ export default function AreaHubSummaryPage() {
                   <th className="px-4 py-2.5 text-right">記事</th>
                   <th className="px-4 py-2.5 text-right">イベント</th>
                   <th className="px-4 py-2.5"></th>
+                  <th className="px-4 py-2.5"></th>
                 </tr>
               </thead>
               <tbody>
@@ -64,6 +65,14 @@ export default function AreaHubSummaryPage() {
                       >
                         開く →
                       </a>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        href={`/superadmin/articles/area-hubs/edit?category=${encodeURIComponent(row.category)}&area=${encodeURIComponent(row.area)}`}
+                        className="text-gray-500 hover:underline"
+                      >
+                        設定
+                      </Link>
                     </td>
                   </tr>
                 ))}

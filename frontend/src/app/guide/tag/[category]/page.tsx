@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import type { AreaHubSetting } from '@/lib/api';
 
 import { API_URL, SITE_URL } from '@/lib/config';
-import { ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
 
 export const revalidate = 60;
 
@@ -15,26 +15,20 @@ type OfficialArticle = {
   excerpt?: string | null;
   category?: string | null;
   areaTags?: string[];
-  targetKeyword?: string | null;
+  ogImageUrl?: string | null;
+  publishedAt?: string | null;
 };
 
 type PublicCircle = {
   id: string;
   code: string | null;
   name: string;
+  description?: string | null;
+  tags?: string[];
+  typeTags?: string[];
   lineDisplayName?: string | null;
   linePictureUrl?: string | null;
-};
-
-type PublicEvent = {
-  id: string;
-  tenantCode?: string | null;
-  title: string;
-  heldAt: string;
-  price: number;
-  priceMale?: number | null;
-  priceFemale?: number | null;
-  imageUrl?: string | null;
+  updatedAt: string;
 };
 
 type PortalBlogPost = {
@@ -42,55 +36,73 @@ type PortalBlogPost = {
   title: string;
   slug: string;
   excerpt?: string | null;
-  tags: string[];
   coverImageUrl?: string | null;
   publishedAt?: string | null;
   tenant: {
     code?: string | null;
     name: string;
-    lineDisplayName?: string | null;
-    linePictureUrl?: string | null;
-    iconUrl?: string | null;
   };
 };
+
+type RelatedArticle = {
+  id: string;
+  title: string;
+  excerpt?: string | null;
+  imageUrl?: string | null;
+  href: string;
+  matchesBoth: boolean;
+  publishedAt?: string | null;
+};
+
+type AreaCount = { area: string; count: number };
+
+// Same 23-ward roster used elsewhere for location-tag classification (public.controller.ts's
+// LOCATION_TAG_SET, ArticlePreview.tsx's TOKYO_WARDS_SET) - kept local since it's just a
+// geographic grouping fact, not per-page content.
+const TOKYO_WARDS = [
+  '千代田区', '中央区', '港区', '新宿区', '文京区', '台東区', '墨田区', '江東区',
+  '品川区', '目黒区', '大田区', '世田谷区', '渋谷区', '中野区', '杉並区', '豊島区',
+  '北区', '荒川区', '板橋区', '練馬区', '足立区', '葛飾区', '江戸川区',
+];
+const TOKYO_GROUP = new Set(['東京', ...TOKYO_WARDS]);
+
+function prefectureGroupOf(area: string): Set<string> {
+  return TOKYO_GROUP.has(area) ? TOKYO_GROUP : new Set([area]);
+}
 
 async function fetchArticlesByCategory(category: string): Promise<OfficialArticle[]> {
   try {
     const res = await fetch(`${API_URL}/api/public/official-articles?limit=120&category=${encodeURIComponent(category)}`, { next: { revalidate } });
     if (!res.ok) return [];
-    return res.json();
+    return await res.json();
   } catch {
     return [];
   }
 }
 
-async function fetchCircles(category: string, area?: string): Promise<PublicCircle[]> {
+async function fetchArticlesByArea(area: string): Promise<OfficialArticle[]> {
   try {
-    const params = new URLSearchParams({ activityTag: category });
+    const res = await fetch(`${API_URL}/api/public/official-articles?limit=120&area=${encodeURIComponent(area)}`, { next: { revalidate } });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+async function fetchCircles(category: string, area: string | undefined, limit: number): Promise<PublicCircle[]> {
+  try {
+    const params = new URLSearchParams({ activityTag: category, limit: String(limit) });
     if (area) params.set('area', area);
     const res = await fetch(`${API_URL}/api/public/tenants?${params.toString()}`, { next: { revalidate } });
     if (!res.ok) return [];
-    return res.json();
+    return await res.json();
   } catch {
     return [];
   }
 }
 
-async function fetchEvents(category: string, area?: string): Promise<PublicEvent[]> {
-  const eventCategory = ACTIVITY_TAG_EVENT_CATEGORY[category];
-  if (!eventCategory) return [];
-  try {
-    const params = new URLSearchParams({ category: eventCategory });
-    if (area) params.set('tag', area);
-    const res = await fetch(`${API_URL}/api/public/events?${params.toString()}`, { next: { revalidate } });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
-}
-
-async function fetchBlogPostsByCategory(category: string, limit = 6, maxPerTenant = 2): Promise<PortalBlogPost[]> {
+async function fetchBlogPostsByCategory(category: string, limit: number, maxPerTenant = 2): Promise<PortalBlogPost[]> {
   try {
     const res = await fetch(`${API_URL}/api/public/blog?tags=${encodeURIComponent(category)}&limit=30`, { next: { revalidate } });
     if (!res.ok) return [];
@@ -111,71 +123,176 @@ async function fetchBlogPostsByCategory(category: string, limit = 6, maxPerTenan
   }
 }
 
-function BlogPostCard({ post }: { post: PortalBlogPost }) {
-  const href = post.tenant.code ? `/clubs/${post.tenant.code}/blog/${post.slug}` : '#';
-  const displayName = post.tenant.lineDisplayName ?? post.tenant.name;
-  const avatar = post.tenant.linePictureUrl ?? post.tenant.iconUrl;
+async function fetchAreaHubSetting(category: string, area: string): Promise<AreaHubSetting | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/area-hub-settings?category=${encodeURIComponent(category)}&area=${encodeURIComponent(area)}`, { next: { revalidate } });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+async function fetchAreaCounts(category: string): Promise<AreaCount[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/tenants/area-tag-counts?category=${encodeURIComponent(category)}`, { next: { revalidate } });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+async function resolveNearbyAreas(category: string, area: string, configured: string[]): Promise<string[]> {
+  if (configured.length > 0) return configured.slice(0, 5);
+  if (!area) return [];
+  const counts = await fetchAreaCounts(category);
+  const group = prefectureGroupOf(area);
+  return counts
+    .filter((c) => c.area !== area && group.has(c.area))
+    .sort((a, b) => b.count - a.count || a.area.localeCompare(b.area, 'ja'))
+    .slice(0, 5)
+    .map((c) => c.area);
+}
+
+function dedupeArticles(...lists: OfficialArticle[][]): OfficialArticle[] {
+  const byId = new Map<string, OfficialArticle>();
+  for (const list of lists) {
+    for (const article of list) byId.set(article.id, article);
+  }
+  return Array.from(byId.values());
+}
+
+function buildRelatedArticles(
+  officialArticles: OfficialArticle[],
+  blogPosts: PortalBlogPost[],
+  category: string,
+  area: string,
+  limit: number,
+): RelatedArticle[] {
+  const officialItems: RelatedArticle[] = officialArticles.map((a) => ({
+    id: `official-${a.id}`,
+    title: a.title,
+    excerpt: a.excerpt,
+    imageUrl: a.ogImageUrl ?? null,
+    href: `/guide/${a.slug}`,
+    matchesBoth: !!area && a.category === category && (a.areaTags ?? []).includes(area),
+    publishedAt: a.publishedAt ?? null,
+  }));
+  const blogItems: RelatedArticle[] = blogPosts.map((p) => ({
+    id: `blog-${p.id}`,
+    title: p.title,
+    excerpt: p.excerpt,
+    imageUrl: p.coverImageUrl ?? null,
+    href: p.tenant.code ? `/clubs/${p.tenant.code}/blog/${p.slug}` : '#',
+    matchesBoth: false,
+    publishedAt: p.publishedAt ?? null,
+  }));
+  return [...officialItems, ...blogItems]
+    .sort((a, b) => {
+      if (a.matchesBoth !== b.matchesBoth) return a.matchesBoth ? -1 : 1;
+      const aTime = a.publishedAt ? Date.parse(a.publishedAt) : 0;
+      const bTime = b.publishedAt ? Date.parse(b.publishedAt) : 0;
+      return bTime - aTime;
+    })
+    .slice(0, limit);
+}
+
+type FaqItem = { question: string; answer: string };
+const FAQ_FALLBACK = '団体ごとに異なるため、詳細ページで確認してください。';
+
+function buildFaqItems(category: string, area: string, circles: PublicCircle[]): FaqItem[] {
+  const areaLabel = area || '東京';
+  const hasBeginnerFriendly = circles.some((c) => (c.tags ?? []).includes('初心者大歓迎'));
+  const hasSoloFriendly = circles.some((c) => (c.tags ?? []).includes('1人参加歓迎'));
+  const audienceTags = new Set(circles.flatMap((c) => c.typeTags ?? []));
+  const hasWorkingOrStudent = ['社会人サークル', '学生団体', 'インカレサークル'].some((t) => audienceTags.has(t));
+
+  return [
+    {
+      question: `${areaLabel}で初心者でも参加できる${category}サークルはありますか？`,
+      answer: hasBeginnerFriendly
+        ? `はい。${areaLabel}で活動している${category}団体の中に、初心者歓迎の団体があります。`
+        : FAQ_FALLBACK,
+    },
+    {
+      question: `${areaLabel}で1人参加できる${category}活動はありますか？`,
+      answer: hasSoloFriendly
+        ? '1人参加歓迎の団体が掲載されています。'
+        : FAQ_FALLBACK,
+    },
+    {
+      question: `${category}に必要な道具を持っていなくても参加できますか？`,
+      answer: FAQ_FALLBACK,
+    },
+    {
+      question: '社会人や大学生でも参加できますか？',
+      answer: hasWorkingOrStudent
+        ? '社会人・学生どちらも参加しやすい団体が掲載されています。'
+        : FAQ_FALLBACK,
+    },
+  ];
+}
+
+function CircleCard({ circle, area }: { circle: PublicCircle; area: string }) {
+  const displayName = circle.lineDisplayName ?? circle.name;
+  const href = circle.code ? `/clubs/${circle.code}` : `/liff/${circle.id}`;
+  const audience = (circle.typeTags ?? []).join('・');
   return (
-    <Link href={href} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="flex items-center gap-2">
-        {avatar ? (
+    <Link href={href} className="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      <div className="relative aspect-[4/3] w-full bg-gray-100">
+        {circle.linePictureUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={avatar} alt="" className="h-6 w-6 rounded-full object-cover" />
+          <img src={circle.linePictureUrl} alt={displayName} className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[#06C755] to-[#047a35] text-[10px] font-bold text-white">
-            {displayName.slice(0, 1)}
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#06C755] to-[#047a35]">
+            <span className="text-2xl font-bold text-white">{displayName.slice(0, 1)}</span>
           </div>
         )}
-        <span className="truncate text-xs font-bold text-gray-500">{displayName}</span>
       </div>
-      <h3 className="mt-3 line-clamp-2 text-lg font-bold leading-7">{post.title}</h3>
-      {post.excerpt && <p className="mt-3 line-clamp-3 text-sm leading-7 text-gray-500">{post.excerpt}</p>}
-      <p className="mt-5 text-xs font-bold text-gray-400">記事を読む</p>
-    </Link>
-  );
-}
-
-function imgSrc(url: string | null | undefined) {
-  if (!url) return '/defaults/events/default.webp';
-  return url.startsWith('http') ? url : `${API_URL}${url}`;
-}
-
-function eventPriceLabel(event: PublicEvent) {
-  if (event.priceMale != null && event.priceFemale != null) {
-    return `¥${Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜`;
-  }
-  return event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
-}
-
-function eventDateLabel(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('ja-JP', {
-    month: 'numeric',
-    day: 'numeric',
-    weekday: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Asia/Tokyo',
-  });
-}
-
-function EventCardMini({ event }: { event: PublicEvent }) {
-  const href = event.tenantCode ? `/e/${event.tenantCode}/${event.id}` : '/';
-  return (
-    <Link href={href} className="relative w-28 shrink-0 overflow-hidden rounded-xl bg-white" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
-      <div className="relative" style={{ aspectRatio: '4/5' }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={imgSrc(event.imageUrl)} alt={event.title} className="h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 px-2 pb-2">
-          <p className="mb-1 line-clamp-2 text-[11px] font-bold leading-snug text-white" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>{event.title}</p>
-          <div className="flex items-center justify-between gap-1">
-            <span className="truncate text-[9px] text-white/80">{eventDateLabel(event.heldAt)}</span>
-            <span className="shrink-0 text-[9px] font-semibold text-white/95">{eventPriceLabel(event)}</span>
-          </div>
+      <div className="flex flex-1 flex-col p-4">
+        <p className="text-base font-bold text-gray-950">{displayName}</p>
+        {circle.description && <p className="mt-1 line-clamp-2 flex-1 text-xs leading-5 text-gray-500">{circle.description}</p>}
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {area && <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-bold text-gray-600">{area}</span>}
+          {audience && <span className="rounded-full bg-[#06C755]/10 px-2 py-0.5 text-[11px] font-bold text-[#06C755]">{audience}</span>}
         </div>
       </div>
     </Link>
   );
+}
+
+function RelatedArticleCard({ item }: { item: RelatedArticle }) {
+  return (
+    <Link href={item.href} className="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      {item.imageUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={item.imageUrl} alt="" className="aspect-[16/9] w-full object-cover" />
+      )}
+      <div className="flex flex-1 flex-col p-5">
+        <h3 className="line-clamp-2 text-lg font-bold leading-7">{item.title}</h3>
+        {item.excerpt && <p className="mt-3 line-clamp-3 text-sm leading-7 text-gray-500">{item.excerpt}</p>}
+        <p className="mt-5 text-xs font-bold text-gray-400">記事を読む</p>
+      </div>
+    </Link>
+  );
+}
+
+async function loadHubData(category: string, area: string) {
+  const setting = await fetchAreaHubSetting(category, area);
+  const [circlesRaw, articlesByCategory, articlesByArea, blogPosts] = await Promise.all([
+    fetchCircles(category, area || undefined, 30),
+    fetchArticlesByCategory(category),
+    area ? fetchArticlesByArea(area) : Promise.resolve([]),
+    fetchBlogPostsByCategory(category, 10, 2),
+  ]);
+  const circles = [...circlesRaw].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+  const officialArticles = dedupeArticles(articlesByCategory, articlesByArea);
+  // For "does this specific area page have real local relevance" (used for notFound/noindex),
+  // a category-wide article that merely exists somewhere isn't enough - it must actually be
+  // tagged for this area (or, on the category-only page, just match the category).
+  const hasAreaRelevantArticle = area ? articlesByArea.length > 0 : articlesByCategory.length > 0;
+  return { setting, circles, officialArticles, hasAreaRelevantArticle, blogPosts };
 }
 
 export async function generateMetadata({
@@ -186,19 +303,29 @@ export async function generateMetadata({
   searchParams: Promise<{ area?: string }>;
 }): Promise<Metadata> {
   const { category: raw } = await params;
-  const { area } = await searchParams;
+  const { area: rawArea } = await searchParams;
   const category = decodeURIComponent(raw);
-  const title = area ? `${area}の${category}サークル・団体一覧` : `${category}のサークル・イベント情報`;
-  const description = area
-    ? `${area}で活動している${category}のサークル・団体をCOMIUからまとめて紹介します。`
-    : `${category}のサークル・団体・イベントに関する情報とCOMIU掲載団体をまとめて紹介します。`;
+  const area = rawArea ? decodeURIComponent(rawArea) : '';
+  const { setting, circles, hasAreaRelevantArticle } = await loadHubData(category, area);
+
+  const title = setting?.seoTitle || (area
+    ? `${area}の${category}サークル一覧｜初心者・社会人向け活動を検索`
+    : `${category}のサークル・イベント情報`);
+  const description = setting?.seoDescription || (area
+    ? `${area}で参加者を募集している${category}サークルや活動を紹介。初心者歓迎、1人参加、社会人・大学生向けなど、地域や参加条件から比較できます。`
+    : `${category}に関する記事と、COMIUに実際に登録されている団体をまとめて紹介しています。`);
   const url = area
     ? `${SITE_URL}/guide/tag/${encodeURIComponent(category)}?area=${encodeURIComponent(area)}`
     : `${SITE_URL}/guide/tag/${encodeURIComponent(category)}`;
+
+  const hasContent = circles.length > 0 || hasAreaRelevantArticle;
+  const indexable = setting?.indexable ?? hasContent;
+
   return {
     title,
     description,
     alternates: { canonical: url },
+    robots: indexable ? undefined : { index: false, follow: false },
     openGraph: { title: `${title} | COMIU`, description, url, type: 'website', locale: 'ja_JP' },
   };
 }
@@ -211,17 +338,28 @@ export default async function GuideCategoryHubPage({
   searchParams: Promise<{ area?: string }>;
 }) {
   const { category: raw } = await params;
-  const { area } = await searchParams;
+  const { area: rawArea } = await searchParams;
   const category = decodeURIComponent(raw);
-  const [articles, circles, events, blogPosts] = await Promise.all([
-    fetchArticlesByCategory(category),
-    fetchCircles(category, area),
-    fetchEvents(category, area),
-    fetchBlogPostsByCategory(category),
-  ]);
-  if (articles.length === 0 && circles.length === 0 && events.length === 0 && blogPosts.length === 0) notFound();
+  const area = rawArea ? decodeURIComponent(rawArea) : '';
 
-  const hubUrl = `${SITE_URL}/guide/tag/${encodeURIComponent(category)}`;
+  const { setting, circles, officialArticles, blogPosts } = await loadHubData(category, area);
+  if (circles.length === 0 && officialArticles.length === 0 && blogPosts.length === 0) notFound();
+
+  const relatedLimit = setting?.relatedArticleLimit ?? 3;
+  const relatedArticles = buildRelatedArticles(officialArticles, blogPosts, category, area, relatedLimit);
+  const faqEnabled = setting?.faqEnabled ?? true;
+  const faqItems = faqEnabled ? buildFaqItems(category, area, circles) : [];
+  const nearbyAreas = await resolveNearbyAreas(category, area, setting?.nearbyAreas ?? []);
+
+  const h1 = area ? `${area}の${category}サークル・活動一覧` : `${category}のサークル・イベント情報`;
+  const description = setting?.description || (area
+    ? `${area}で活動している${category}サークルや、参加者を募集している活動を紹介します。初心者向け、社会人向け、大学生向けなど、自分に合う団体を比較しながら探せます。`
+    : `${category}に関する記事と、COMIUに実際に登録されている団体をまとめて紹介しています。`);
+  const countLabel = area
+    ? (circles.length > 0 ? `${area}で現在${circles.length}団体を掲載しています。` : '現在、掲載団体を準備中です。')
+    : (circles.length > 0 ? `現在${circles.length}団体を掲載しています。` : '現在、掲載団体を準備中です。');
+
+  const hubUrl = `${SITE_URL}/guide/tag/${encodeURIComponent(category)}${area ? `?area=${encodeURIComponent(area)}` : ''}`;
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -229,17 +367,26 @@ export default async function GuideCategoryHubPage({
         '@type': 'CollectionPage',
         '@id': `${hubUrl}#webpage`,
         url: hubUrl,
-        name: `${category}のサークル・イベント情報`,
+        name: h1,
         inLanguage: 'ja',
       },
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'COMIU', item: SITE_URL },
-          { '@type': 'ListItem', position: 2, name: 'ガイド', item: `${SITE_URL}/guide` },
-          { '@type': 'ListItem', position: 3, name: category, item: hubUrl },
+          { '@type': 'ListItem', position: 2, name: category, item: `${SITE_URL}/guide/tag/${encodeURIComponent(category)}` },
+          ...(area ? [{ '@type': 'ListItem', position: 3, name: area, item: hubUrl }] : []),
         ],
       },
+      ...(faqItems.length > 0 ? [{
+        '@type': 'FAQPage',
+        '@id': `${hubUrl}#faq`,
+        mainEntity: faqItems.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: { '@type': 'Answer', text: item.answer },
+        })),
+      }] : []),
     ],
   };
 
@@ -257,89 +404,76 @@ export default async function GuideCategoryHubPage({
           </div>
         </header>
 
+        <nav className="mx-auto max-w-6xl px-5 pt-4 text-xs text-gray-400">
+          <Link href="/guide" className="hover:text-gray-600">ホーム</Link>
+          <span className="mx-1.5">→</span>
+          <Link href={`/guide/tag/${encodeURIComponent(category)}`} className="hover:text-gray-600">{category}</Link>
+          {area && (
+            <>
+              <span className="mx-1.5">→</span>
+              <span className="text-gray-600">{area}</span>
+            </>
+          )}
+        </nav>
+
         <section className="border-b border-gray-200 bg-white">
           <div className="mx-auto max-w-6xl px-5 py-10">
             <p className="text-sm font-bold text-[#06C755]">CATEGORY</p>
-            <h1 className="mt-3 text-3xl font-bold">
-              {area ? `${area}の${category}サークル・団体一覧` : `${category}のサークル・イベント情報`}
-            </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-gray-500">
-              {area
-                ? `${area}で活動している${category}の記事と、COMIUに実際に登録されている団体をまとめて紹介しています。`
-                : `${category}に関する記事と、COMIUに実際に登録されている団体をまとめて紹介しています。`}
-            </p>
+            <h1 className="mt-3 text-3xl font-bold">{h1}</h1>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-gray-500">{description}</p>
+            <p className="mt-4 text-sm font-bold text-gray-700">{countLabel}</p>
           </div>
         </section>
 
-        {circles.length > 0 && (
-          <section className="mx-auto max-w-6xl px-5 py-8">
-            <h2 className="text-lg font-bold text-gray-950">{area ? `${area}で、活動実績のある${category}団体` : `${category}の団体`}</h2>
-            <div className="mt-4 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {circles.map((circle) => {
-                const displayName = circle.lineDisplayName ?? circle.name;
-                const href = circle.code ? `/clubs/${circle.code}` : `/liff/${circle.id}`;
-                return (
-                  <Link
-                    key={circle.id}
-                    href={href}
-                    className="flex w-32 shrink-0 flex-col items-center gap-2 rounded-xl bg-white p-3"
-                    style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
-                  >
-                    {circle.linePictureUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={circle.linePictureUrl} alt={displayName} className="h-14 w-14 rounded-full border-2 border-gray-100 object-cover" />
-                    ) : (
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#06C755] to-[#047a35]">
-                        <span className="text-lg font-bold text-white">{displayName.slice(0, 1)}</span>
-                      </div>
-                    )}
-                    <p className="line-clamp-2 text-center text-[12px] font-semibold leading-snug text-gray-800">{displayName}</p>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {events.length > 0 && (
-          <section className="mx-auto max-w-6xl px-5 py-8">
-            <h2 className="text-lg font-bold text-gray-950">{area ? `${area}周辺で、すぐ参加できる${category}サークル` : `${category}のサークル`}</h2>
-            <div className="mt-4 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {events.map((event) => <EventCardMini key={event.id} event={event} />)}
-            </div>
-          </section>
-        )}
-
         <section className="mx-auto max-w-6xl px-5 py-8">
-          <h2 className="text-lg font-bold text-gray-950">COMIUの{category}記事</h2>
-          {articles.length === 0 ? (
+          <h2 className="text-lg font-bold text-gray-950">{area ? `${area}で、活動実績のある${category}団体` : `${category}の団体`}</h2>
+          {circles.length === 0 ? (
             <div className="mt-4 rounded-xl border border-gray-200 bg-white px-5 py-14 text-center text-sm text-gray-400">
-              このカテゴリの記事はまだありません。
+              現在、掲載団体を準備中です。
             </div>
           ) : (
-            <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {articles.map((article) => (
-                <Link key={article.id} href={`/guide/${article.slug}`} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {article.category && <span className="rounded-full bg-[#06C755]/10 px-2 py-0.5 text-[11px] font-bold text-[#06C755]">{article.category}</span>}
-                    {(article.areaTags ?? []).map((area) => (
-                      <span key={area} className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-bold text-gray-600">{area}</span>
-                    ))}
-                  </div>
-                  <h3 className="mt-3 line-clamp-2 text-lg font-bold leading-7">{article.title}</h3>
-                  {article.excerpt && <p className="mt-3 line-clamp-3 text-sm leading-7 text-gray-500">{article.excerpt}</p>}
-                  <p className="mt-5 text-xs font-bold text-gray-400">記事を読む</p>
-                </Link>
-              ))}
+            <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {circles.map((circle) => <CircleCard key={circle.id} circle={circle} area={area} />)}
             </div>
           )}
         </section>
 
-        {blogPosts.length > 0 && (
+        {relatedArticles.length > 0 && (
           <section className="mx-auto max-w-6xl px-5 py-8">
-            <h2 className="text-lg font-bold text-gray-950">団体の{category}記事</h2>
+            <h2 className="text-lg font-bold text-gray-950">関連記事</h2>
             <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {blogPosts.map((post) => <BlogPostCard key={post.id} post={post} />)}
+              {relatedArticles.map((item) => <RelatedArticleCard key={item.id} item={item} />)}
+            </div>
+          </section>
+        )}
+
+        {faqItems.length > 0 && (
+          <section className="mx-auto max-w-6xl px-5 py-8">
+            <h2 className="text-lg font-bold text-gray-950">よくある質問</h2>
+            <div className="mt-4 space-y-3">
+              {faqItems.map((item) => (
+                <div key={item.question} className="rounded-xl border border-gray-200 bg-white p-5">
+                  <p className="font-bold text-gray-900">Q. {item.question}</p>
+                  <p className="mt-2 text-sm leading-7 text-gray-600">A. {item.answer}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {nearbyAreas.length > 0 && (
+          <section className="mx-auto max-w-6xl px-5 py-8">
+            <h2 className="text-lg font-bold text-gray-950">近隣地域から探す</h2>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {nearbyAreas.map((nearbyArea) => (
+                <Link
+                  key={nearbyArea}
+                  href={`/guide/tag/${encodeURIComponent(category)}?area=${encodeURIComponent(nearbyArea)}`}
+                  className="rounded-full bg-gray-100 px-4 py-2 text-sm font-bold text-gray-700 hover:bg-[#06C755]/10 hover:text-[#06C755]"
+                >
+                  {nearbyArea}
+                </Link>
+              ))}
             </div>
           </section>
         )}

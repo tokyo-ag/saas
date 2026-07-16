@@ -14,6 +14,7 @@ import {
   MinLength,
   IsArray,
   IsBoolean,
+  IsInt,
 } from 'class-validator';
 import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
@@ -95,6 +96,16 @@ export class UpsertOfficialArticleDto {
   @IsOptional() @IsString() ctaHref?: string;
   @IsOptional() @IsString() ogImageUrl?: string;
   @IsOptional() @IsString() status?: string;
+}
+
+export class UpsertAreaHubSettingDto {
+  @IsOptional() @IsString() description?: string;
+  @IsOptional() @IsBoolean() faqEnabled?: boolean;
+  @IsOptional() @IsInt() relatedArticleLimit?: number;
+  @IsOptional() @IsArray() @IsString({ each: true }) nearbyAreas?: string[];
+  @IsOptional() @IsBoolean() indexable?: boolean;
+  @IsOptional() @IsString() seoTitle?: string;
+  @IsOptional() @IsString() seoDescription?: string;
 }
 
 type OfficialSiteRow = {
@@ -647,6 +658,29 @@ export class SuperadminService implements OnApplicationBootstrap {
       .flatMap((byArea) => Array.from(byArea.values()))
       .map((bucket) => ({ ...bucket, total: bucket.articleCount + bucket.circleCount + bucket.eventCount }))
       .sort((a, b) => b.total - a.total || a.category.localeCompare(b.category, 'ja') || a.area.localeCompare(b.area, 'ja'));
+  }
+
+  async getAreaHubSetting(category: string, area: string) {
+    return this.prisma.areaHubSetting.findUnique({
+      where: { category_area: { category, area } },
+    });
+  }
+
+  async upsertAreaHubSetting(category: string, area: string, dto: UpsertAreaHubSettingDto) {
+    const data = {
+      description: dto.description?.trim() || null,
+      faqEnabled: dto.faqEnabled ?? null,
+      relatedArticleLimit: dto.relatedArticleLimit ?? null,
+      nearbyAreas: (dto.nearbyAreas ?? []).filter(Boolean),
+      indexable: dto.indexable ?? null,
+      seoTitle: dto.seoTitle?.trim() || null,
+      seoDescription: dto.seoDescription?.trim() || null,
+    };
+    return this.prisma.areaHubSetting.upsert({
+      where: { category_area: { category, area } },
+      create: { category, area, ...data },
+      update: data,
+    });
   }
 
   async createOfficialArticle(dto: UpsertOfficialArticleDto) {
