@@ -8,7 +8,7 @@ import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 
 import { API_URL, SITE_URL, IMAGE_BASE_URL } from '@/lib/config';
-import { TOKYO_WARDS, WARD_SUBAREAS, buildCategoryAreaPath, ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
+import { WARD_SUBAREAS, buildCategoryAreaPath, ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
 
 const REVALIDATE_SECONDS = 60;
 
@@ -61,12 +61,48 @@ export type RelatedArticle = {
   publishedAt?: string | null;
 };
 
-type AreaCount = { area: string; count: number };
+// Real ward-to-ward adjacency (not exhaustive border-by-border, but geographically sound) used
+// to pick "近隣地域" candidates. Order within each list is the priority when picking which
+// neighbors to show first - closer/more-similar-character wards first.
+const WARD_NEIGHBORS: Record<string, readonly string[]> = {
+  '千代田区': ['中央区', '港区', '新宿区', '文京区', '台東区'],
+  '中央区': ['千代田区', '港区', '江東区'],
+  '港区': ['千代田区', '中央区', '新宿区', '渋谷区', '品川区'],
+  '新宿区': ['豊島区', '文京区', '渋谷区', '中野区', '千代田区', '港区'],
+  '文京区': ['豊島区', '北区', '新宿区', '千代田区', '台東区'],
+  '台東区': ['千代田区', '文京区', '荒川区', '墨田区'],
+  '墨田区': ['台東区', '荒川区', '江東区', '葛飾区'],
+  '江東区': ['中央区', '墨田区', '葛飾区'],
+  '品川区': ['大田区', '目黒区', '港区', '渋谷区'],
+  '目黒区': ['世田谷区', '品川区', '渋谷区', '大田区'],
+  '大田区': ['品川区', '目黒区', '世田谷区'],
+  '世田谷区': ['目黒区', '杉並区', '渋谷区', '大田区'],
+  '渋谷区': ['新宿区', '世田谷区', '目黒区', '中野区', '港区', '品川区'],
+  '中野区': ['杉並区', '練馬区', '豊島区', '新宿区', '渋谷区'],
+  '杉並区': ['練馬区', '中野区', '世田谷区'],
+  '豊島区': ['板橋区', '練馬区', '北区', '中野区', '新宿区', '文京区'],
+  '北区': ['板橋区', '豊島区', '文京区', '荒川区', '足立区'],
+  '荒川区': ['北区', '台東区', '墨田区', '足立区'],
+  '板橋区': ['豊島区', '北区', '練馬区'],
+  '練馬区': ['豊島区', '板橋区', '中野区', '杉並区'],
+  '足立区': ['荒川区', '北区', '葛飾区'],
+  '葛飾区': ['足立区', '墨田区', '江東区', '江戸川区'],
+  '江戸川区': ['葛飾区', '江東区'],
+};
 
-const TOKYO_GROUP = new Set<string>([...TOKYO_WARDS, ...Object.values(WARD_SUBAREAS).flat()]);
+function findWardOfSubarea(area: string): string | undefined {
+  return Object.entries(WARD_SUBAREAS).find(([, subs]) => (subs as readonly string[]).includes(area))?.[0];
+}
 
-function prefectureGroupOf(area: string): Set<string> {
-  return TOKYO_GROUP.has(area) ? TOKYO_GROUP : new Set([area]);
+// A subarea's neighbors are its sibling subareas, then its own ward, then that ward's
+// neighboring wards. A ward's neighbors are its own subareas (if any), then neighboring wards.
+function geographicNeighborsOf(area: string): string[] {
+  const parentWard = findWardOfSubarea(area);
+  if (parentWard) {
+    const siblings = (WARD_SUBAREAS[parentWard] ?? []).filter((s) => s !== area);
+    return [...siblings, parentWard, ...(WARD_NEIGHBORS[parentWard] ?? [])];
+  }
+  return [...(WARD_SUBAREAS[area] ?? []), ...(WARD_NEIGHBORS[area] ?? [])];
 }
 
 export async function fetchArticlesByCategory(category: string): Promise<OfficialArticle[]> {
@@ -203,26 +239,10 @@ async function fetchAreaHubSetting(category: string, area: string): Promise<Area
   }
 }
 
-async function fetchAreaCounts(category: string): Promise<AreaCount[]> {
-  try {
-    const res = await fetch(`${API_URL}/api/public/tenants/area-tag-counts?category=${encodeURIComponent(category)}`, { next: { revalidate: REVALIDATE_SECONDS } });
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
-    return [];
-  }
-}
-
 async function resolveNearbyAreas(category: string, area: string, configured: string[]): Promise<string[]> {
   if (configured.length > 0) return configured.slice(0, 5);
   if (!area) return [];
-  const counts = await fetchAreaCounts(category);
-  const group = prefectureGroupOf(area);
-  return counts
-    .filter((c) => c.area !== area && group.has(c.area))
-    .sort((a, b) => b.count - a.count || a.area.localeCompare(b.area, 'ja'))
-    .slice(0, 5)
-    .map((c) => c.area);
+  return geographicNeighborsOf(area).slice(0, 5);
 }
 
 function dedupeArticles(...lists: OfficialArticle[][]): OfficialArticle[] {
@@ -352,6 +372,13 @@ export function buildFaqItems(category: string, area: string, circles: PublicCir
   }));
 }
 
+// Card-list context should only tease the description, not reproduce it in full - the detail
+// page is where the whole thing belongs.
+function truncateDescription(text: string, maxLength = 100): string {
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength).trimEnd()}…`;
+}
+
 export function CircleCard({ circle, area }: { circle: PublicCircle; area: string }) {
   const displayName = circle.lineDisplayName ?? circle.name;
   const href = circle.code ? `/clubs/${circle.code}` : `/liff/${circle.id}`;
@@ -370,7 +397,7 @@ export function CircleCard({ circle, area }: { circle: PublicCircle; area: strin
       </div>
       <div className="flex flex-1 flex-col p-3">
         <p className="line-clamp-1 text-sm font-bold text-gray-950">{displayName}</p>
-        {circle.description && <p className="mt-1 line-clamp-2 flex-1 text-[11px] leading-4 text-gray-500">{circle.description}</p>}
+        {circle.description && <p className="mt-1 line-clamp-2 flex-1 text-[11px] leading-4 text-gray-500">{truncateDescription(circle.description)}</p>}
         <div className="mt-2 flex flex-wrap gap-1">
           {area && <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-600">{area}</span>}
           {audience && <span className="line-clamp-1 rounded-full bg-[#06C755]/10 px-1.5 py-0.5 text-[10px] font-bold text-[#06C755]">{audience}</span>}
@@ -558,7 +585,7 @@ export async function HubPage({
 
         {events.length > 0 && (
           <section className="mx-auto max-w-6xl px-5 py-8">
-            <h2 className="text-lg font-bold text-gray-950">📅 {area || '東京'}で、直近開催される{category}サークル</h2>
+            <h2 className="text-lg font-bold text-gray-950">{`📅 ${area || '東京'}で直近開催される${category}活動`}</h2>
             <div className="mt-4 flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {events.map((event) => <EventCardMini key={event.id} event={event} />)}
             </div>
@@ -567,7 +594,7 @@ export async function HubPage({
 
         {officialRelated.length > 0 && (
           <section className="mx-auto max-w-6xl px-5 py-8">
-            <h2 className="text-lg font-bold text-gray-950">COMIUの{category}記事</h2>
+            <h2 className="text-lg font-bold text-gray-950">{`COMIUの${category}記事`}</h2>
             <div className="mt-4 flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {officialRelated.map((item) => <RelatedArticleCard key={item.id} item={item} />)}
             </div>
@@ -576,7 +603,7 @@ export async function HubPage({
 
         {teamRelated.length > 0 && (
           <section className="mx-auto max-w-6xl px-5 py-8">
-            <h2 className="text-lg font-bold text-gray-950">団体の{category}記事</h2>
+            <h2 className="text-lg font-bold text-gray-950">{`団体の${category}記事`}</h2>
             <div className="mt-4 flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {teamRelated.map((item) => <RelatedArticleCard key={item.id} item={item} />)}
             </div>
