@@ -283,7 +283,7 @@ function CircleCard({ circle, area }: { circle: PublicCircle; area: string }) {
   const href = circle.code ? `/clubs/${circle.code}` : `/liff/${circle.id}`;
   const audience = (circle.typeTags ?? []).join('・');
   return (
-    <Link href={href} className="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+    <Link href={href} className="flex w-36 shrink-0 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:w-44">
       <div className="relative aspect-[4/3] w-full bg-gray-100">
         {circle.linePictureUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -294,12 +294,12 @@ function CircleCard({ circle, area }: { circle: PublicCircle; area: string }) {
           </div>
         )}
       </div>
-      <div className="flex flex-1 flex-col p-4">
-        <p className="text-base font-bold text-gray-950">{displayName}</p>
-        {circle.description && <p className="mt-1 line-clamp-2 flex-1 text-xs leading-5 text-gray-500">{circle.description}</p>}
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {area && <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-bold text-gray-600">{area}</span>}
-          {audience && <span className="rounded-full bg-[#06C755]/10 px-2 py-0.5 text-[11px] font-bold text-[#06C755]">{audience}</span>}
+      <div className="flex flex-1 flex-col p-3">
+        <p className="line-clamp-1 text-sm font-bold text-gray-950">{displayName}</p>
+        {circle.description && <p className="mt-1 line-clamp-2 flex-1 text-[11px] leading-4 text-gray-500">{circle.description}</p>}
+        <div className="mt-2 flex flex-wrap gap-1">
+          {area && <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-600">{area}</span>}
+          {audience && <span className="line-clamp-1 rounded-full bg-[#06C755]/10 px-1.5 py-0.5 text-[10px] font-bold text-[#06C755]">{audience}</span>}
         </div>
       </div>
     </Link>
@@ -308,15 +308,15 @@ function CircleCard({ circle, area }: { circle: PublicCircle; area: string }) {
 
 function RelatedArticleCard({ item }: { item: RelatedArticle }) {
   return (
-    <Link href={item.href} className="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+    <Link href={item.href} className="flex w-56 shrink-0 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:w-64">
       {item.imageUrl && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={item.imageUrl} alt="" className="aspect-[16/9] w-full object-cover" />
       )}
-      <div className="flex flex-1 flex-col p-5">
-        <h3 className="line-clamp-2 text-lg font-bold leading-7">{item.title}</h3>
-        {item.excerpt && <p className="mt-3 line-clamp-3 text-sm leading-7 text-gray-500">{item.excerpt}</p>}
-        <p className="mt-5 text-xs font-bold text-gray-400">記事を読む</p>
+      <div className="flex flex-1 flex-col p-4">
+        <h3 className="line-clamp-2 text-sm font-bold leading-5">{item.title}</h3>
+        {item.excerpt && <p className="mt-2 line-clamp-2 text-xs leading-5 text-gray-500">{item.excerpt}</p>}
+        <p className="mt-3 text-[11px] font-bold text-gray-400">記事を読む</p>
       </div>
     </Link>
   );
@@ -455,7 +455,7 @@ export async function HubPage({ category, area }: { category: string; area: stri
               現在、掲載団体を準備中です。
             </div>
           ) : (
-            <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            <div className="mt-4 flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {circles.map((circle) => <CircleCard key={circle.id} circle={circle} area={area} />)}
             </div>
           )}
@@ -464,7 +464,7 @@ export async function HubPage({ category, area }: { category: string; area: stri
         {officialRelated.length > 0 && (
           <section className="mx-auto max-w-6xl px-5 py-8">
             <h2 className="text-lg font-bold text-gray-950">COMIUの{category}記事</h2>
-            <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-4 flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {officialRelated.map((item) => <RelatedArticleCard key={item.id} item={item} />)}
             </div>
           </section>
@@ -473,7 +473,7 @@ export async function HubPage({ category, area }: { category: string; area: stri
         {teamRelated.length > 0 && (
           <section className="mx-auto max-w-6xl px-5 py-8">
             <h2 className="text-lg font-bold text-gray-950">団体の{category}記事</h2>
-            <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-4 flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {teamRelated.map((item) => <RelatedArticleCard key={item.id} item={item} />)}
             </div>
           </section>
