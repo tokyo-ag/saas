@@ -83,7 +83,7 @@ export default async function GuideAreaHubPage({
       <main className="min-h-screen bg-[#F7F8FA] text-gray-900">
         <header className="border-b border-gray-200 bg-white">
           <div className="mx-auto flex max-w-6xl items-center gap-4 px-5 py-4">
-            <Link href="/organizers" className="flex items-center gap-2 font-bold">
+            <Link href="/" className="flex items-center gap-2 font-bold">
               <Image src="/icon.png" alt="" width={32} height={32} className="rounded-lg" />
               COMIU
             </Link>

@@ -390,7 +390,7 @@ export default async function GuideCategoryHubPage({
       <main className="min-h-screen bg-[#F7F8FA] text-gray-900">
         <header className="border-b border-gray-200 bg-white">
           <div className="mx-auto flex max-w-6xl items-center gap-4 px-5 py-4">
-            <Link href="/organizers" className="flex items-center gap-2 font-bold">
+            <Link href="/" className="flex items-center gap-2 font-bold">
               <Image src="/icon.png" alt="" width={32} height={32} className="rounded-lg" />
               COMIU
             </Link>
@@ -480,6 +480,16 @@ export default async function GuideCategoryHubPage({
             </div>
           </section>
         )}
+
+        <section className="mx-auto max-w-6xl px-5 pb-10">
+          <div className="rounded-xl border border-[#06C755]/20 bg-[#06C755]/5 px-6 py-6">
+            <p className="text-sm font-bold text-gray-950">COMIUで団体のWEBサイトを無料作成。</p>
+            <p className="mt-2 text-sm leading-7 text-gray-600">活動情報を掲載して、新しい参加者を募集できます。</p>
+            <Link href="/organizers" className="mt-4 inline-flex rounded-lg bg-[#06C755] px-5 py-3 text-sm font-bold text-white hover:opacity-90">
+              サークルを無料掲載
+            </Link>
+          </div>
+        </section>
       </main>
     </>
   );
