@@ -299,15 +299,6 @@ export default async function GuideCategoryHubPage({
           </section>
         )}
 
-        {blogPosts.length > 0 && (
-          <section className="mx-auto max-w-6xl px-5 py-8">
-            <h2 className="text-lg font-bold text-gray-950">団体の{category}記事</h2>
-            <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {blogPosts.map((post) => <BlogPostCard key={post.id} post={post} />)}
-            </div>
-          </section>
-        )}
-
         <section className="mx-auto max-w-6xl px-5 py-8">
           <h2 className="text-lg font-bold text-gray-950">COMIUの{category}記事</h2>
           {articles.length === 0 ? (
@@ -332,6 +323,15 @@ export default async function GuideCategoryHubPage({
             </div>
           )}
         </section>
+
+        {blogPosts.length > 0 && (
+          <section className="mx-auto max-w-6xl px-5 py-8">
+            <h2 className="text-lg font-bold text-gray-950">団体の{category}記事</h2>
+            <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {blogPosts.map((post) => <BlogPostCard key={post.id} post={post} />)}
+            </div>
+          </section>
+        )}
       </main>
     </>
   );
