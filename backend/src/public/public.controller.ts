@@ -586,6 +586,16 @@ export class PublicController {
             liffAccesses: { where: { accessedAt: { gte: since } } },
           },
         },
+        // Search tags (初心者大歓迎 etc.) live on Event, not Tenant - collect them from the
+        // same events that qualify this tenant for the current area, so callers (e.g. the
+        // area-hub FAQ) can tell what the tenant's local activity actually offers.
+        events: {
+          where: {
+            status: { not: 'draft' },
+            ...(area ? { tags: { has: area } } : {}),
+          },
+          select: { tags: true },
+        },
       },
     });
 
@@ -598,6 +608,7 @@ export class PublicController {
         tags: t.tags,
         typeTags: t.typeTags,
         activityTags: t.activityTags,
+        eventTags: Array.from(new Set(t.events.flatMap((e) => e.tags))),
         lineDisplayName: t.lineDisplayName,
         linePictureUrl: t.linePictureUrl ?? t.iconUrl,
         memberCount: t._count.members,

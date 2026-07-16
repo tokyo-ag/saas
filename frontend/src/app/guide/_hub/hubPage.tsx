@@ -27,6 +27,9 @@ type PublicCircle = {
   description?: string | null;
   tags?: string[];
   typeTags?: string[];
+  // Search tags (初心者大歓迎 etc.) live on Event, not Tenant - this is the union of tags from
+  // the tenant's events that qualified it for the current category+area, sent by the backend.
+  eventTags?: string[];
   lineDisplayName?: string | null;
   linePictureUrl?: string | null;
   updatedAt: string;
@@ -212,14 +215,14 @@ type FaqCandidate = {
 const FAQ_CANDIDATES: FaqCandidate[] = [
   {
     alwaysEligible: true,
-    count: (circles) => circles.filter((c) => (c.tags ?? []).includes('初心者大歓迎')).length,
+    count: (circles) => circles.filter((c) => (c.eventTags ?? []).includes('初心者大歓迎')).length,
     question: (category, areaLabel) => `${areaLabel}で初心者でも参加できる${category}サークルはありますか？`,
     answerWithData: (areaLabel, count) => `現在、${areaLabel}エリアでは初心者歓迎の団体を${count}件掲載しています。団体ごとに参加者のレベルや活動内容が異なるため、詳細ページを確認して参加先を選んでください。`,
     answerNoData: (areaLabel) => `現在、${areaLabel}エリアで初心者歓迎を明記している団体は掲載準備中です。新しい団体が登録されると自動で反映されます。`,
   },
   {
     alwaysEligible: true,
-    count: (circles) => circles.filter((c) => (c.tags ?? []).includes('1人参加歓迎')).length,
+    count: (circles) => circles.filter((c) => (c.eventTags ?? []).includes('1人参加歓迎')).length,
     question: (category, areaLabel) => `${areaLabel}で1人参加できる${category}活動はありますか？`,
     answerWithData: (areaLabel, count) => `現在、${areaLabel}エリアでは1人参加歓迎の団体を${count}件掲載しています。初参加者向けの案内や交流の雰囲気は、各団体ページで確認できます。`,
     answerNoData: (areaLabel) => `現在、${areaLabel}エリアで1人参加歓迎を明記している団体は掲載準備中です。`,
@@ -241,19 +244,19 @@ const FAQ_CANDIDATES: FaqCandidate[] = [
   },
   {
     alwaysEligible: false,
-    count: (circles) => circles.filter((c) => (c.tags ?? []).includes('経験者大歓迎')).length,
+    count: (circles) => circles.filter((c) => (c.eventTags ?? []).includes('経験者大歓迎')).length,
     question: (category, areaLabel) => `${areaLabel}で経験者が参加できる${category}サークルはありますか？`,
     answerWithData: (areaLabel, count) => `現在、${areaLabel}エリアでは経験者歓迎の団体を${count}件掲載しています。レベルや活動頻度は団体ごとに異なるため、詳細ページを確認してください。`,
   },
   {
     alwaysEligible: false,
-    count: (circles) => circles.filter((c) => (c.tags ?? []).includes('20代歓迎')).length,
+    count: (circles) => circles.filter((c) => (c.eventTags ?? []).includes('20代歓迎')).length,
     question: (category, areaLabel) => `${areaLabel}で20代が参加しやすい${category}サークルはありますか？`,
     answerWithData: (areaLabel, count) => `現在、${areaLabel}エリアでは20代歓迎の団体を${count}件掲載しています。参加者の年齢層は団体ページで確認できます。`,
   },
   {
     alwaysEligible: false,
-    count: (circles) => circles.filter((c) => (c.tags ?? []).includes('30代歓迎')).length,
+    count: (circles) => circles.filter((c) => (c.eventTags ?? []).includes('30代歓迎')).length,
     question: (category, areaLabel) => `${areaLabel}で30代が参加しやすい${category}サークルはありますか？`,
     answerWithData: (areaLabel, count) => `現在、${areaLabel}エリアでは30代歓迎の団体を${count}件掲載しています。参加者の年齢層は団体ページで確認できます。`,
   },
