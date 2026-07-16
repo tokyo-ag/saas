@@ -111,7 +111,7 @@ function EventsBlockPreview({ category, heading, tag, areaSearchEnabled }: { cat
   return (
     <div className="my-6">
       {heading && <p className="mb-2 text-base font-bold text-gray-950">{heading}</p>}
-      {areas.length >= 2 && (
+      {areas.length >= 1 && (
         <div className="mb-2 flex flex-wrap gap-1.5">
           <button
             type="button"

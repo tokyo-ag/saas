@@ -86,7 +86,7 @@ export default function EventsAreaFilter({ events }: { events: PublicArticleEven
 
   return (
     <>
-      {areas.length >= 2 && (
+      {areas.length >= 1 && (
         <div className="mb-2 flex flex-wrap gap-1.5">
           <button
             type="button"
