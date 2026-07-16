@@ -90,11 +90,22 @@ async function fetchEvents(category: string, area?: string): Promise<PublicEvent
   }
 }
 
-async function fetchBlogPostsByCategory(category: string, limit = 6): Promise<PortalBlogPost[]> {
+async function fetchBlogPostsByCategory(category: string, limit = 6, maxPerTenant = 2): Promise<PortalBlogPost[]> {
   try {
-    const res = await fetch(`${API_URL}/api/public/blog?tags=${encodeURIComponent(category)}&limit=${limit}`, { next: { revalidate } });
+    const res = await fetch(`${API_URL}/api/public/blog?tags=${encodeURIComponent(category)}&limit=30`, { next: { revalidate } });
     if (!res.ok) return [];
-    return res.json();
+    const posts: PortalBlogPost[] = await res.json();
+    const countByTenant = new Map<string, number>();
+    const result: PortalBlogPost[] = [];
+    for (const post of posts) {
+      const tenantKey = post.tenant.code ?? post.tenant.name;
+      const count = countByTenant.get(tenantKey) ?? 0;
+      if (count >= maxPerTenant) continue;
+      countByTenant.set(tenantKey, count + 1);
+      result.push(post);
+      if (result.length >= limit) break;
+    }
+    return result;
   } catch {
     return [];
   }
