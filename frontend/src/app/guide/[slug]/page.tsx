@@ -50,6 +50,48 @@ type PublicArticleTenant = {
   linePictureUrl?: string | null;
 };
 
+type PublicRegionTenant = {
+  id: string;
+  code?: string | null;
+  name: string;
+  description?: string | null;
+  activityTags?: string[];
+  lineDisplayName?: string | null;
+  linePictureUrl?: string | null;
+};
+
+type RegionCardsConfig = {
+  area: string;
+  category: string;
+  heading: string;
+  description: string;
+  tenantLimit: number;
+  articleLimit: number;
+  showTenants: boolean;
+  showArticles: boolean;
+};
+
+const DEFAULT_REGION_CARDS: RegionCardsConfig = {
+  area: '',
+  category: '',
+  heading: '',
+  description: '',
+  tenantLimit: 4,
+  articleLimit: 3,
+  showTenants: true,
+  showArticles: true,
+};
+
+function decodeRegionCards(encoded: string): RegionCardsConfig {
+  try {
+    const parsed = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    if (parsed && typeof parsed === 'object') return { ...DEFAULT_REGION_CARDS, ...parsed };
+  } catch {
+    // fall through to default
+  }
+  return DEFAULT_REGION_CARDS;
+}
+
 async function fetchArticle(slug: string): Promise<OfficialArticle | null> {
   try {
     const res = await fetch(`${API_URL}/api/public/official-articles/${slug}`, { next: { revalidate } });
@@ -115,6 +157,59 @@ async function fetchAreaTagCounts(category?: string | null): Promise<AreaTagCoun
   } catch {
     return [];
   }
+}
+
+async function fetchRegionTenants(area: string, category?: string): Promise<PublicRegionTenant[]> {
+  try {
+    const params = new URLSearchParams({ area });
+    if (category) params.set('activityTag', category);
+    const res = await fetch(`${API_URL}/api/public/tenants?${params.toString()}`, { next: { revalidate } });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+async function fetchRegionArticles(area: string, category: string | undefined, limit: number): Promise<OfficialArticleSummary[]> {
+  try {
+    const params = new URLSearchParams({ area, limit: String(limit) });
+    if (category) params.set('category', category);
+    const res = await fetch(`${API_URL}/api/public/official-articles?${params.toString()}`, { next: { revalidate } });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+function extractRegionCardsConfigs(body: string): Map<number, RegionCardsConfig> {
+  const map = new Map<number, RegionCardsConfig>();
+  body.split('\n').forEach((raw, idx) => {
+    const match = REGION_CARDS_RE.exec(raw.trim());
+    if (match) map.set(idx, decodeRegionCards(match[1]));
+  });
+  return map;
+}
+
+type RegionCardsData = { tenants: PublicRegionTenant[]; articles: OfficialArticleSummary[] };
+
+async function fetchRegionCardsData(configs: Map<number, RegionCardsConfig>): Promise<Map<number, RegionCardsData>> {
+  const result = new Map<number, RegionCardsData>();
+  await Promise.all(
+    Array.from(configs.entries()).map(async ([idx, cfg]) => {
+      if (!cfg.area) {
+        result.set(idx, { tenants: [], articles: [] });
+        return;
+      }
+      const [tenants, articles] = await Promise.all([
+        cfg.showTenants ? fetchRegionTenants(cfg.area, cfg.category || undefined) : Promise.resolve([]),
+        cfg.showArticles ? fetchRegionArticles(cfg.area, cfg.category || undefined, cfg.articleLimit) : Promise.resolve([]),
+      ]);
+      result.set(idx, { tenants: tenants.slice(0, cfg.tenantLimit), articles });
+    }),
+  );
+  return result;
 }
 
 function imgSrc(url: string | null | undefined) {
@@ -238,6 +333,85 @@ function AreaTagsBlock({
           </Link>
         ))}
       </div>
+    </div>
+  );
+}
+
+function RegionTenantCard({ tenant, area, category }: { tenant: PublicRegionTenant; area: string; category?: string }) {
+  const displayName = tenant.lineDisplayName ?? tenant.name;
+  const href = tenant.code ? `/clubs/${tenant.code}` : `/liff/${tenant.id}`;
+  const resolvedCategory = category || tenant.activityTags?.[0];
+  return (
+    <Link href={href} className="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      <div className="relative aspect-[4/3] w-full bg-gray-100">
+        {tenant.linePictureUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={tenant.linePictureUrl} alt={displayName} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#06C755] to-[#047a35]">
+            <span className="text-2xl font-bold text-white">{displayName.slice(0, 1)}</span>
+          </div>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col p-3">
+        <p className="line-clamp-1 text-sm font-bold text-gray-950">{displayName}</p>
+        {tenant.description && <p className="mt-1 line-clamp-2 flex-1 text-[11px] leading-5 text-gray-500">{tenant.description}</p>}
+        <div className="mt-2 flex flex-wrap gap-1">
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-600">{area}</span>
+          {resolvedCategory && <span className="rounded-full bg-[#06C755]/10 px-2 py-0.5 text-[10px] font-bold text-[#06C755]">{resolvedCategory}</span>}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function RegionArticleCard({ article }: { article: OfficialArticleSummary }) {
+  return (
+    <Link href={`/guide/${article.slug}`} className="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      {article.ogImageUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={article.ogImageUrl} alt="" className="aspect-[16/9] w-full object-cover" />
+      )}
+      <div className="flex flex-1 flex-col p-3">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {article.category && <span className="rounded-full bg-[#06C755]/10 px-2 py-0.5 text-[10px] font-bold text-[#06C755]">{article.category}</span>}
+          {(article.areaTags ?? []).slice(0, 2).map((tag) => (
+            <span key={tag} className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-600">{tag}</span>
+          ))}
+        </div>
+        <p className="mt-2 line-clamp-2 text-sm font-bold leading-6 text-gray-950">{article.title}</p>
+        {article.excerpt && <p className="mt-1 line-clamp-2 flex-1 text-[11px] leading-5 text-gray-500">{article.excerpt}</p>}
+      </div>
+    </Link>
+  );
+}
+
+function RegionCardsBlock({ config, tenants, articles }: { config: RegionCardsConfig; tenants: PublicRegionTenant[]; articles: OfficialArticleSummary[] }) {
+  if (tenants.length === 0 && articles.length === 0) return null;
+  return (
+    <div className="my-6">
+      {config.heading && (
+        <h2 className="my-6 border-l-[5px] border-[#06C755] py-1 pl-4 text-xl font-bold text-gray-950 sm:text-2xl">{config.heading}</h2>
+      )}
+      {config.description && <p className="mb-4 text-sm leading-7 text-gray-500">{config.description}</p>}
+      {tenants.length > 0 && (
+        <div className="mb-6">
+          <h3 className="mb-3 text-lg font-bold text-gray-950">団体一覧</h3>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+            {tenants.map((tenant) => (
+              <RegionTenantCard key={tenant.id} tenant={tenant} area={config.area} category={config.category || undefined} />
+            ))}
+          </div>
+        </div>
+      )}
+      {articles.length > 0 && (
+        <div>
+          <h3 className="mb-3 text-lg font-bold text-gray-950">関連記事</h3>
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {articles.map((article) => <RegionArticleCard key={article.id} article={article} />)}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -388,6 +562,7 @@ const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
 const TABLE_RE = /^\{\{table:(.+)\}\}$/;
 const CARD_SLIDER_RE = /^\{\{cardslider:(.+)\}\}$/;
 const AREA_TAGS_RE = /^\{\{areatags:(true|false)\|(\d+)\|([^|]*)\|(true|false)\|(.*)\}\}$/;
+const REGION_CARDS_RE = /^\{\{regioncards:(.+)\}\}$/;
 
 const TOKYO_WARDS_SET = new Set([
   '千代田区', '中央区', '港区', '新宿区', '文京区', '台東区', '墨田区', '江東区',
@@ -523,12 +698,14 @@ function BodyRenderer({
   eventsByTag,
   circles,
   areaTagCounts,
+  regionCardsData,
   category,
 }: {
   body: string;
   eventsByTag: Map<string, PublicArticleEvent[]>;
   circles: PublicArticleTenant[];
   areaTagCounts: AreaTagCount[];
+  regionCardsData: Map<number, RegionCardsData>;
   category?: string | null;
 }) {
   const lines = body.split('\n');
@@ -611,6 +788,15 @@ function BodyRenderer({
           />,
         );
       }
+      i++;
+      continue;
+    }
+    const regionCardsMatch = REGION_CARDS_RE.exec(line);
+    if (regionCardsMatch) {
+      flushParagraph();
+      const cfg = decodeRegionCards(regionCardsMatch[1]);
+      const data = regionCardsData.get(i) ?? { tenants: [], articles: [] };
+      nodes.push(<RegionCardsBlock key={i} config={cfg} tenants={data.tenants} articles={data.articles} />);
       i++;
       continue;
     }
@@ -771,10 +957,12 @@ export default async function GuideArticlePage({
   const eventsTags = extractEventsTags(article.body);
   const hasCirclesBlock = /\{\{circles/.test(article.body);
   const hasAreaTagsBlock = /\{\{areatags:/.test(article.body);
-  const [eventsByTagEntries, circles, areaTagCounts] = await Promise.all([
+  const regionCardsConfigs = extractRegionCardsConfigs(article.body);
+  const [eventsByTagEntries, circles, areaTagCounts, regionCardsData] = await Promise.all([
     Promise.all(eventsTags.map(async (tag) => [tag ?? '', await fetchCategoryEvents(article.category, tag)] as const)),
     hasCirclesBlock ? fetchCircles(article.category) : Promise.resolve([]),
     hasAreaTagsBlock ? fetchAreaTagCounts(article.category) : Promise.resolve([]),
+    regionCardsConfigs.size > 0 ? fetchRegionCardsData(regionCardsConfigs) : Promise.resolve(new Map<number, RegionCardsData>()),
   ]);
   const eventsByTag = new Map<string, PublicArticleEvent[]>(eventsByTagEntries);
   const hasInlineCta = /\{\{cta:/.test(article.body);
@@ -873,7 +1061,7 @@ export default async function GuideArticlePage({
             </div>
             <h1 className="mt-4 text-2xl font-bold leading-tight text-gray-950 sm:text-3xl">{article.title}</h1>
             <div className="my-8 h-px bg-gray-100" />
-            <BodyRenderer body={article.body} eventsByTag={eventsByTag} circles={circles} areaTagCounts={areaTagCounts} category={article.category} />
+            <BodyRenderer body={article.body} eventsByTag={eventsByTag} circles={circles} areaTagCounts={areaTagCounts} regionCardsData={regionCardsData} category={article.category} />
           </div>
 
           {!hasInlineCta && (

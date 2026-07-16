@@ -259,11 +259,22 @@ export const api = {
       const qs = params.toString();
       return request<PublicEvent[]>(`/public/events${qs ? `?${qs}` : ''}`);
     },
-    tenants: (activityTag?: string) =>
-      request<PublicTenant[]>(`/public/tenants${activityTag ? `?activityTag=${encodeURIComponent(activityTag)}` : ''}`),
+    tenants: (activityTag?: string, area?: string) => {
+      const params = new URLSearchParams();
+      if (activityTag) params.set('activityTag', activityTag);
+      if (area) params.set('area', area);
+      const qs = params.toString();
+      return request<PublicTenant[]>(`/public/tenants${qs ? `?${qs}` : ''}`);
+    },
     tenant: (tenantCode: string) => request<PublicTenant>(`/public/tenants/${tenantCode}`),
     areaTagCounts: (category: string) =>
       request<{ area: string; count: number }[]>(`/public/tenants/area-tag-counts?category=${encodeURIComponent(category)}`),
+    officialArticlesByRegion: (params: { area: string; category?: string; limit?: number }) => {
+      const q = new URLSearchParams({ area: params.area });
+      if (params.category) q.set('category', params.category);
+      if (params.limit) q.set('limit', String(params.limit));
+      return request<OfficialArticle[]>(`/public/official-articles?${q.toString()}`);
+    },
     sitemapPages: () =>
       request<PublicSitemapPage[]>(`/public/sitemap-pages?t=${Date.now()}`, {
         cache: 'no-store',
