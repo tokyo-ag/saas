@@ -621,6 +621,14 @@ export class SuperadminService implements OnApplicationBootstrap {
       return bucket;
     };
 
+    // Seed every known category x area combination up front (0/0/0) so pages that don't have
+    // real data yet still show up here and can be pre-configured, not just ones already in use.
+    for (const category of ACTIVITY_TAGS) {
+      for (const area of LOCATION_TAG_SET) {
+        bucketFor(category, area);
+      }
+    }
+
     for (const article of articles) {
       if (!article.category) continue;
       for (const area of article.areaTags) {
