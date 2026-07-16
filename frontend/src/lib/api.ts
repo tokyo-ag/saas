@@ -391,6 +391,8 @@ export const api = {
       }),
     deleteOfficialArticle: (id: string) =>
       request<{ ok: boolean }>(`/superadmin/official-articles/${id}`, { method: 'DELETE' }),
+    areaHubSummary: () =>
+      request<AreaHubSummaryRow[]>('/superadmin/area-hub-summary'),
   },
 };
 
@@ -568,6 +570,15 @@ export interface OfficialArticleInput {
   ctaHref?: string;
   ogImageUrl?: string;
   status?: 'draft' | 'published';
+}
+
+export interface AreaHubSummaryRow {
+  category: string;
+  area: string;
+  articleCount: number;
+  circleCount: number;
+  eventCount: number;
+  total: number;
 }
 
 export interface SupportThread {

@@ -20,6 +20,27 @@ import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 
+// Mirrors frontend/src/lib/lpTags.ts ACTIVITY_TAGS/ACTIVITY_TAG_EVENT_CATEGORY/LOCATION_TAGS -
+// kept in sync manually since the backend has no access to frontend constants.
+const ACTIVITY_TAGS = new Set(['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー']);
+const ACTIVITY_TAG_EVENT_CATEGORY: Record<string, string> = {
+  '交流会': 'meetup',
+  'バドミントン': 'badminton',
+  'フットサル': 'futsal',
+  'バスケ': 'basketball',
+  'バレー': 'volleyball',
+};
+const EVENT_CATEGORY_TO_ACTIVITY_TAG: Record<string, string> = Object.fromEntries(
+  Object.entries(ACTIVITY_TAG_EVENT_CATEGORY).map(([tag, eventCategory]) => [eventCategory, tag]),
+);
+const LOCATION_TAG_SET = new Set([
+  '東京',
+  '千代田区', '中央区', '港区', '新宿区', '文京区', '台東区', '墨田区', '江東区',
+  '品川区', '目黒区', '大田区', '世田谷区', '渋谷区', '中野区', '杉並区', '豊島区',
+  '北区', '荒川区', '板橋区', '練馬区', '足立区', '葛飾区', '江戸川区',
+  '埼玉', '千葉', '神奈川',
+]);
+
 export class CreateTenantDto {
   @IsString() name: string;
   @IsOptional() @IsString() description?: string;
@@ -545,6 +566,87 @@ export class SuperadminService implements OnApplicationBootstrap {
       ORDER BY updated_at DESC
     `);
     return rows.map((row) => this.mapOfficialArticle(row));
+  }
+
+  // Read-only summary of which /guide/tag/[category]?area=... hub pages actually have
+  // real content behind them, since those pages are auto-generated from live data
+  // (not stored as articles) and are otherwise invisible from the admin side.
+  async getAreaHubSummary() {
+    const [articles, tenants, events] = await Promise.all([
+      this.prisma.officialArticle.findMany({
+        where: { status: 'published' },
+        select: { category: true, areaTags: true },
+      }),
+      this.prisma.tenant.findMany({
+        where: { deletedAt: null, bannedAt: null, code: { not: null } },
+        select: {
+          activityTags: true,
+          events: { where: { status: { not: 'draft' } }, select: { tags: true } },
+        },
+      }),
+      this.prisma.event.findMany({
+        where: {
+          status: 'open',
+          heldAt: { gte: new Date() },
+          tenant: { deletedAt: null, bannedAt: null, code: { not: null } },
+        },
+        select: { category: true, tags: true },
+      }),
+    ]);
+
+    type Bucket = { category: string; area: string; articleCount: number; circleCount: number; eventCount: number };
+    const buckets = new Map<string, Map<string, Bucket>>();
+    const bucketFor = (category: string, area: string) => {
+      let byArea = buckets.get(category);
+      if (!byArea) {
+        byArea = new Map<string, Bucket>();
+        buckets.set(category, byArea);
+      }
+      let bucket = byArea.get(area);
+      if (!bucket) {
+        bucket = { category, area, articleCount: 0, circleCount: 0, eventCount: 0 };
+        byArea.set(area, bucket);
+      }
+      return bucket;
+    };
+
+    for (const article of articles) {
+      if (!article.category) continue;
+      for (const area of article.areaTags) {
+        if (!LOCATION_TAG_SET.has(area)) continue;
+        bucketFor(article.category, area).articleCount += 1;
+      }
+    }
+
+    for (const tenant of tenants) {
+      const categories = tenant.activityTags.filter((tag) => ACTIVITY_TAGS.has(tag));
+      if (categories.length === 0) continue;
+      const areasForTenant = new Set<string>();
+      for (const event of tenant.events) {
+        for (const tag of event.tags) {
+          if (LOCATION_TAG_SET.has(tag)) areasForTenant.add(tag);
+        }
+      }
+      for (const category of categories) {
+        for (const area of areasForTenant) {
+          bucketFor(category, area).circleCount += 1;
+        }
+      }
+    }
+
+    for (const event of events) {
+      const category = event.category ? EVENT_CATEGORY_TO_ACTIVITY_TAG[event.category] : undefined;
+      if (!category) continue;
+      for (const tag of event.tags) {
+        if (!LOCATION_TAG_SET.has(tag)) continue;
+        bucketFor(category, tag).eventCount += 1;
+      }
+    }
+
+    return Array.from(buckets.values())
+      .flatMap((byArea) => Array.from(byArea.values()))
+      .map((bucket) => ({ ...bucket, total: bucket.articleCount + bucket.circleCount + bucket.eventCount }))
+      .sort((a, b) => b.total - a.total || a.category.localeCompare(b.category, 'ja') || a.area.localeCompare(b.area, 'ja'));
   }
 
   async createOfficialArticle(dto: UpsertOfficialArticleDto) {

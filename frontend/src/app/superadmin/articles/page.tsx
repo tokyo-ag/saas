@@ -70,12 +70,20 @@ export default function SuperadminArticlesPage() {
               <p className="text-xs sm:text-sm text-gray-500 mt-0.5">comiu.link/guide に掲載するSEO記事</p>
             </div>
           </div>
-          <Link
-            href="/superadmin/articles/new"
-            className="bg-[#06C755] text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#05a847] transition-colors shrink-0"
-          >
-            ＋ 新規記事
-          </Link>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href="/superadmin/articles/area-hubs"
+              className="border border-gray-300 text-gray-600 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+            >
+              地域×カテゴリ一覧
+            </Link>
+            <Link
+              href="/superadmin/articles/new"
+              className="bg-[#06C755] text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#05a847] transition-colors"
+            >
+              ＋ 新規記事
+            </Link>
+          </div>
         </div>
       </div>
 

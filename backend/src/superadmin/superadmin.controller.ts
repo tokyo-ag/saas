@@ -122,6 +122,11 @@ export class SuperadminController {
     return this.service.listOfficialArticles();
   }
 
+  @Get('area-hub-summary')
+  getAreaHubSummary() {
+    return this.service.getAreaHubSummary();
+  }
+
   @Post('official-articles')
   createOfficialArticle(@Body() dto: UpsertOfficialArticleDto) {
     return this.service.createOfficialArticle(dto);
