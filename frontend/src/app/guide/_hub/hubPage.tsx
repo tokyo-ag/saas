@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
-import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import type { AreaHubSetting } from '@/lib/api';
+import type { AreaHubSetting, PublicEvent } from '@/lib/api';
 import PublicFooter from '@/components/public/PublicFooter';
+import { imgUrl } from '@/lib/imgUrl';
+import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 
-import { API_URL, SITE_URL } from '@/lib/config';
-import { TOKYO_WARDS, WARD_SUBAREAS, buildCategoryAreaPath } from '@/lib/lpTags';
+import { API_URL, SITE_URL, IMAGE_BASE_URL } from '@/lib/config';
+import { TOKYO_WARDS, WARD_SUBAREAS, buildCategoryAreaPath, ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
 
 const REVALIDATE_SECONDS = 60;
 
@@ -119,6 +120,77 @@ export async function fetchBlogPostsByCategory(category: string, limit: number, 
   } catch {
     return [];
   }
+}
+
+async function fetchUpcomingEvents(category: string, area: string, limit: number): Promise<PublicEvent[]> {
+  const eventCategory = ACTIVITY_TAG_EVENT_CATEGORY[category];
+  if (!eventCategory) return [];
+  try {
+    const params = new URLSearchParams({ category: eventCategory });
+    if (area) params.set('tag', area);
+    const res = await fetch(`${API_URL}/api/public/events?${params.toString()}`, { next: { revalidate: REVALIDATE_SECONDS } });
+    if (!res.ok) return [];
+    const events: PublicEvent[] = await res.json();
+    return events.filter((ev) => ev.tenantCode).slice(0, limit);
+  } catch {
+    return [];
+  }
+}
+
+function eventHref(event: PublicEvent) {
+  return event.tenantCode ? `/e/${event.tenantCode}/${event.id}` : '/';
+}
+
+function eventDateLabel(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('ja-JP', {
+    month: 'numeric',
+    day: 'numeric',
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Tokyo',
+  });
+}
+
+function eventPriceLabel(event: PublicEvent) {
+  if (event.priceMale != null && event.priceFemale != null) {
+    return `¥${Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜`;
+  }
+  return event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
+}
+
+// Same 4:5 overlay-text mini card used for events on comiu.link's top page (HomeClient's
+// EventCard) - kept visually identical.
+function EventCardMini({ event }: { event: PublicEvent }) {
+  const image = imgUrl(event.imageUrl, IMAGE_BASE_URL);
+  const remaining = event.capacity != null ? event.capacity - event.reservedCount : null;
+
+  return (
+    <Link href={eventHref(event)} className="relative w-[118px] shrink-0 overflow-hidden rounded-xl bg-white md:w-44">
+      <div className="relative" style={{ aspectRatio: '4/5' }}>
+        {image ? (
+          <Image src={image} alt={event.title} fill sizes="176px" className="object-cover" />
+        ) : (
+          <Image src={DEFAULT_EVENT_IMAGE} alt={event.title} fill sizes="176px" className="object-cover" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+        {remaining !== null && remaining <= 0 && (
+          <div className="absolute top-1 right-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] font-bold text-white">
+            満席
+          </div>
+        )}
+        <div className="absolute bottom-0 left-0 right-0 px-2 pb-2">
+          <p className="mb-1 line-clamp-2 text-[11px] font-bold leading-snug text-white" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>
+            {event.title}
+          </p>
+          <div className="flex items-center justify-between gap-1">
+            <span className="truncate text-[9px] text-white/80">{eventDateLabel(event.heldAt)}</span>
+            <span className="shrink-0 text-[9px] font-semibold text-white/95">{eventPriceLabel(event)}</span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
 }
 
 async function fetchAreaHubSetting(category: string, area: string): Promise<AreaHubSetting | null> {
@@ -367,25 +439,24 @@ export async function buildHubMetadata(category: string, area: string): Promise<
 export async function HubPage({
   category,
   area,
-  eventsSection,
   skipEmptyCheck,
   canonicalPathOverride,
 }: {
   category: string;
   area: string;
-  // Extra section rendered between 団体一覧 and the article sections - used by pages like
-  // /sports/[category] that share this exact layout but also show a live event list.
-  eventsSection?: ReactNode;
   // /sports/[category] is statically generated for a fixed set of categories and should never
-  // 404 just because circles/articles/blog posts happen to be empty at the moment.
+  // 404 just because circles/articles/blog posts/events happen to be empty at the moment.
   skipEmptyCheck?: boolean;
   // Callers that render this layout at a different URL than the standard /guide hub path (e.g.
   // /sports/[category]) must override the breadcrumb link + canonical/jsonld URL to match their
   // own actual URL, since buildCategoryAreaPath() always points back at the /guide hub page.
   canonicalPathOverride?: string;
 }) {
-  const { setting, circles, officialArticles, blogPosts } = await loadHubData(category, area);
-  if (!skipEmptyCheck && circles.length === 0 && officialArticles.length === 0 && blogPosts.length === 0) notFound();
+  const [{ setting, circles, officialArticles, blogPosts }, events] = await Promise.all([
+    loadHubData(category, area),
+    fetchUpcomingEvents(category, area, 10),
+  ]);
+  if (!skipEmptyCheck && circles.length === 0 && officialArticles.length === 0 && blogPosts.length === 0 && events.length === 0) notFound();
 
   const relatedLimit = setting?.relatedArticleLimit ?? 3;
   const officialRelated = buildOfficialRelated(officialArticles, category, area, relatedLimit);
@@ -482,7 +553,14 @@ export async function HubPage({
           )}
         </section>
 
-        {eventsSection}
+        {events.length > 0 && (
+          <section className="mx-auto max-w-6xl px-5 py-8">
+            <h2 className="text-lg font-bold text-gray-950">📅 {area || '東京'}で、直近開催される{category}サークル</h2>
+            <div className="mt-4 flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {events.map((event) => <EventCardMini key={event.id} event={event} />)}
+            </div>
+          </section>
+        )}
 
         {officialRelated.length > 0 && (
           <section className="mx-auto max-w-6xl px-5 py-8">
