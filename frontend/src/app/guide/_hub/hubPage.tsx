@@ -9,7 +9,7 @@ import { TOKYO_WARDS, WARD_SUBAREAS, buildCategoryAreaPath } from '@/lib/lpTags'
 
 const REVALIDATE_SECONDS = 60;
 
-type OfficialArticle = {
+export type OfficialArticle = {
   id: string;
   title: string;
   slug: string;
@@ -20,7 +20,7 @@ type OfficialArticle = {
   publishedAt?: string | null;
 };
 
-type PublicCircle = {
+export type PublicCircle = {
   id: string;
   code: string | null;
   name: string;
@@ -35,7 +35,7 @@ type PublicCircle = {
   updatedAt: string;
 };
 
-type PortalBlogPost = {
+export type PortalBlogPost = {
   id: string;
   title: string;
   slug: string;
@@ -48,7 +48,7 @@ type PortalBlogPost = {
   };
 };
 
-type RelatedArticle = {
+export type RelatedArticle = {
   id: string;
   title: string;
   excerpt?: string | null;
@@ -66,7 +66,7 @@ function prefectureGroupOf(area: string): Set<string> {
   return TOKYO_GROUP.has(area) ? TOKYO_GROUP : new Set([area]);
 }
 
-async function fetchArticlesByCategory(category: string): Promise<OfficialArticle[]> {
+export async function fetchArticlesByCategory(category: string): Promise<OfficialArticle[]> {
   try {
     const res = await fetch(`${API_URL}/api/public/official-articles?limit=120&category=${encodeURIComponent(category)}`, { next: { revalidate: REVALIDATE_SECONDS } });
     if (!res.ok) return [];
@@ -86,7 +86,7 @@ async function fetchArticlesByArea(area: string): Promise<OfficialArticle[]> {
   }
 }
 
-async function fetchCircles(category: string, area: string | undefined, limit: number): Promise<PublicCircle[]> {
+export async function fetchCircles(category: string, area: string | undefined, limit: number): Promise<PublicCircle[]> {
   try {
     const params = new URLSearchParams({ activityTag: category, limit: String(limit) });
     if (area) params.set('area', area);
@@ -98,7 +98,7 @@ async function fetchCircles(category: string, area: string | undefined, limit: n
   }
 }
 
-async function fetchBlogPostsByCategory(category: string, limit: number, maxPerTenant = 2): Promise<PortalBlogPost[]> {
+export async function fetchBlogPostsByCategory(category: string, limit: number, maxPerTenant = 2): Promise<PortalBlogPost[]> {
   try {
     const res = await fetch(`${API_URL}/api/public/blog?tags=${encodeURIComponent(category)}&limit=30`, { next: { revalidate: REVALIDATE_SECONDS } });
     if (!res.ok) return [];
@@ -159,7 +159,7 @@ function dedupeArticles(...lists: OfficialArticle[][]): OfficialArticle[] {
   return Array.from(byId.values());
 }
 
-function buildOfficialRelated(
+export function buildOfficialRelated(
   officialArticles: OfficialArticle[],
   category: string,
   area: string,
@@ -184,7 +184,7 @@ function buildOfficialRelated(
     .slice(0, limit);
 }
 
-function buildTeamRelated(blogPosts: PortalBlogPost[], limit: number): RelatedArticle[] {
+export function buildTeamRelated(blogPosts: PortalBlogPost[], limit: number): RelatedArticle[] {
   return blogPosts
     .map((p) => ({
       id: `blog-${p.id}`,
@@ -198,7 +198,7 @@ function buildTeamRelated(blogPosts: PortalBlogPost[], limit: number): RelatedAr
     .slice(0, limit);
 }
 
-type FaqItem = { question: string; answer: string };
+export type FaqItem = { question: string; answer: string };
 
 // Tag literals mirror lpTags.ts's SEARCH_TAGS / TENANT_TYPE_TAGS - kept in sync manually,
 // same pattern as the other duplicated tag lists in this codebase.
@@ -262,7 +262,7 @@ const FAQ_CANDIDATES: FaqCandidate[] = [
   },
 ];
 
-function buildFaqItems(category: string, area: string, circles: PublicCircle[]): FaqItem[] {
+export function buildFaqItems(category: string, area: string, circles: PublicCircle[]): FaqItem[] {
   const areaLabel = area || '東京';
 
   const eligible = FAQ_CANDIDATES
@@ -278,7 +278,7 @@ function buildFaqItems(category: string, area: string, circles: PublicCircle[]):
   }));
 }
 
-function CircleCard({ circle, area }: { circle: PublicCircle; area: string }) {
+export function CircleCard({ circle, area }: { circle: PublicCircle; area: string }) {
   const displayName = circle.lineDisplayName ?? circle.name;
   const href = circle.code ? `/clubs/${circle.code}` : `/liff/${circle.id}`;
   const audience = (circle.typeTags ?? []).join('・');
@@ -306,7 +306,7 @@ function CircleCard({ circle, area }: { circle: PublicCircle; area: string }) {
   );
 }
 
-function RelatedArticleCard({ item }: { item: RelatedArticle }) {
+export function RelatedArticleCard({ item }: { item: RelatedArticle }) {
   return (
     <Link href={item.href} className="flex w-56 shrink-0 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:w-64">
       {item.imageUrl && (
