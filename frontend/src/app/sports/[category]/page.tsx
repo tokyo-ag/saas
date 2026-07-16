@@ -116,8 +116,42 @@ function priceLabel(event: PublicEvent) {
   return event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
 }
 
+// Same 4:5 overlay-text mini card used for events on comiu.link's top page (HomeClient's
+// EventCard) - kept visually identical, just reused here in its own titled section.
+function EventCardMini({ event }: { event: PublicEvent }) {
+  const image = imgUrl(event.imageUrl, IMAGE_BASE_URL);
+  const remaining = event.capacity != null ? event.capacity - event.reservedCount : null;
+
+  return (
+    <Link href={eventHref(event)} className="relative w-[118px] shrink-0 overflow-hidden rounded-xl bg-white md:w-44">
+      <div className="relative" style={{ aspectRatio: '4/5' }}>
+        {image ? (
+          <Image src={image} alt={event.title} fill sizes="176px" className="object-cover" />
+        ) : (
+          <Image src={DEFAULT_EVENT_IMAGE} alt={event.title} fill sizes="176px" className="object-cover" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+        {remaining !== null && remaining <= 0 && (
+          <div className="absolute top-1 right-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] font-bold text-white">
+            満席
+          </div>
+        )}
+        <div className="absolute bottom-0 left-0 right-0 px-2 pb-2">
+          <p className="mb-1 line-clamp-2 text-[11px] font-bold leading-snug text-white" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>
+            {event.title}
+          </p>
+          <div className="flex items-center justify-between gap-1">
+            <span className="truncate text-[9px] text-white/80">{fmtDate(event.heldAt)}</span>
+            <span className="shrink-0 text-[9px] font-semibold text-white/95">{priceLabel(event)}</span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 // Renders in the same "mx-auto max-w-6xl px-5 py-8" section rhythm as the rest of HubPage's
-// body, between 団体一覧 and the article sections - the event cards themselves are unchanged.
+// body, between 団体一覧 and the article sections.
 function EventsSection({ events, meta }: { events: PublicEvent[]; meta: CategoryMeta }) {
   return (
     <section className="mx-auto max-w-6xl px-5 py-8">
@@ -127,55 +161,8 @@ function EventsSection({ events, meta }: { events: PublicEvent[]; meta: Category
           現在、{meta.label}のイベントはありません。主催者がイベントを公開すると、ここに表示されます。
         </div>
       ) : (
-        <div className="mt-4 space-y-3">
-          {events.map((ev) => {
-            const image = imgUrl(ev.imageUrl, IMAGE_BASE_URL);
-            const org = ev.tenant.lineDisplayName ?? ev.tenant.name;
-            const remaining = ev.capacity != null ? ev.capacity - ev.reservedCount : null;
-
-            return (
-              <Link
-                key={ev.id}
-                href={eventHref(ev)}
-                className="bg-white rounded-2xl overflow-hidden flex gap-3 p-3 block"
-                style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
-              >
-                <div className="relative w-20 rounded-xl overflow-hidden shrink-0 bg-gray-100 aspect-[4/5]">
-                  {image ? (
-                    <Image src={image} alt={ev.title} fill sizes="80px" className="object-cover" />
-                  ) : (
-                    <Image src={DEFAULT_EVENT_IMAGE} alt={ev.title} fill sizes="80px" className="object-cover" />
-                  )}
-                  {remaining !== null && remaining <= 0 && (
-                    <div className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full">
-                      満席
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0 py-0.5">
-                  <p className="text-[13px] font-bold text-gray-900 line-clamp-2 leading-snug">
-                    {ev.title}
-                  </p>
-                  <p className="text-[11px] text-gray-400 mt-1">{fmtDate(ev.heldAt)}</p>
-                  <p className="text-[11px] text-gray-400 truncate">{ev.location}</p>
-                  <div className="flex items-center justify-between mt-1.5">
-                    <div className="flex items-center gap-1 min-w-0">
-                      <span className="text-[10px] text-gray-400 truncate max-w-[80px]">{org}</span>
-                      {ev.tags?.[0] && (
-                        <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500 shrink-0">{ev.tags[0]}</span>
-                      )}
-                    </div>
-                    <span className="text-[11px] text-gray-600 font-medium shrink-0">{priceLabel(ev)}</span>
-                  </div>
-                  {ev.viewCount > 0 && (
-                    <p className="text-[10px] text-gray-400 mt-1">
-                      閲覧数: {ev.viewCount.toLocaleString()}
-                    </p>
-                  )}
-                </div>
-              </Link>
-            );
-          })}
+        <div className="mt-4 flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {events.map((ev) => <EventCardMini key={ev.id} event={ev} />)}
         </div>
       )}
     </section>
