@@ -813,15 +813,21 @@ export default function BlockEditor({
                   />
                   地域検索タブを表示する（カード一覧を地域で絞り込めるようにする）
                 </label>
-                <label className="flex items-center gap-2 text-sm text-gray-700">
+                <label className={`flex items-center gap-2 text-sm ${block.tag ? 'text-gray-700' : 'text-gray-400'}`}>
                   <input
                     type="checkbox"
                     checked={block.eventsShowFilterTagEnabled ?? false}
+                    disabled={!block.tag}
                     onChange={(e) => updateBlock(block.id, { eventsShowFilterTagEnabled: e.target.checked })}
-                    className="accent-[#06C755]"
+                    className="accent-[#06C755] disabled:opacity-50"
                   />
                   絞り込みタグを表示する（選んだタグを見出しの横にバッジ表示する）
                 </label>
+                {!block.tag && (
+                  <p className="pl-6 text-xs text-gray-400">
+                    上の「絞り込みタグ」で「指定なし」以外のタグを選ぶと有効になります。
+                  </p>
+                )}
               </div>
             ) : block.type === 'table' ? (
               <TableFields block={block} updateBlock={updateBlock} />
