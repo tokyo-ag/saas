@@ -73,6 +73,7 @@ export type Block = {
   tableRows?: string[][];
   cardItems?: CardItem[];
   eventsAreaSearchEnabled?: boolean;
+  eventsShowFilterTagEnabled?: boolean;
 };
 
 // UTF-8-safe base64 so embedded Japanese/symbol text survives being placed in a single-line marker.
@@ -143,7 +144,7 @@ const IMAGE_TEXT_RE_V2 = /^\{\{imagetext:([^|]*)\|([^|]*)\|(small|medium|large)\
 const IMAGE_TEXT_RE_V1 = /^\{\{imagetext:([^|]*)\|([^|]*)\|(.*)\}\}$/;
 const TEXT_IMAGE_RE = /^\{\{textimage:([^|]*)\|([^|]*)\|(small|medium|large)\|(small|medium|large)\|(.*)\}\}$/;
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
-const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|([^|}]*)(?:\|(true|false))?)?)?\}\}$/;
+const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|([^|}]*)(?:\|(true|false)(?:\|(true|false))?)?)?)?\}\}$/;
 const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
 const TABLE_RE = /^\{\{table:(.+)\}\}$/;
 const CARD_SLIDER_RE = /^\{\{cardslider:(.+)\}\}$/;
@@ -177,7 +178,7 @@ export function parseBodyToBlocks(body: string): Block[] {
     } else if (cardSlider) {
       blocks.push({ id: newId(), type: 'cardSlider', text: '', cardItems: decodeCardItems(cardSlider[1]) });
     } else if (events) {
-      blocks.push({ id: newId(), type: 'events', text: events[1] ?? '', tag: events[2] || undefined, eventsAreaSearchEnabled: events[3] === 'true' });
+      blocks.push({ id: newId(), type: 'events', text: events[1] ?? '', tag: events[2] || undefined, eventsAreaSearchEnabled: events[3] === 'true', eventsShowFilterTagEnabled: events[4] === 'true' });
     } else if (circles) {
       blocks.push({ id: newId(), type: 'circles', text: circles[1] ?? '' });
     } else if (textImage) {
@@ -264,8 +265,10 @@ export function blocksToBody(blocks: Block[]): string {
     else if (block.type === 'cta') line = `{{cta:${block.text}|${block.href ?? ''}}}`;
     else if (block.type === 'events') {
       const areaSearch = block.eventsAreaSearchEnabled ?? false;
-      line = (block.text || block.tag || areaSearch)
-        ? `{{events:${block.text ?? ''}|${block.tag ?? ''}${areaSearch ? '|true' : ''}}}`
+      const showFilterTag = block.eventsShowFilterTagEnabled ?? false;
+      const extra = (areaSearch || showFilterTag) ? `|${areaSearch}${showFilterTag ? '|true' : ''}` : '';
+      line = (block.text || block.tag || areaSearch || showFilterTag)
+        ? `{{events:${block.text ?? ''}|${block.tag ?? ''}${extra}}}`
         : '{{events}}';
     }
     else if (block.type === 'circles') line = block.text ? `{{circles:${block.text}}}` : '{{circles}}';
@@ -645,6 +648,7 @@ export default function BlockEditor({
       tableRows: type === 'table' ? [['見出し1', '見出し2'], ['', '']] : undefined,
       cardItems: type === 'cardSlider' ? [{ imageUrl: '', name: '', description: '', href: '' }] : undefined,
       eventsAreaSearchEnabled: type === 'events' ? false : undefined,
+      eventsShowFilterTagEnabled: type === 'events' ? false : undefined,
     };
     const next = [...blocks];
     next.splice(index, 0, block);
@@ -808,6 +812,15 @@ export default function BlockEditor({
                     className="accent-[#06C755]"
                   />
                   地域検索タブを表示する（カード一覧を地域で絞り込めるようにする）
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={block.eventsShowFilterTagEnabled ?? false}
+                    onChange={(e) => updateBlock(block.id, { eventsShowFilterTagEnabled: e.target.checked })}
+                    className="accent-[#06C755]"
+                  />
+                  絞り込みタグを表示する（選んだタグを見出しの横にバッジ表示する）
                 </label>
               </div>
             ) : block.type === 'table' ? (

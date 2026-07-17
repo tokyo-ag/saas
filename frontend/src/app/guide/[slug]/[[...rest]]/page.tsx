@@ -186,11 +186,30 @@ function EventCardMini({ event }: { event: PublicArticleEvent }) {
   );
 }
 
-function EventsBlock({ events, heading, areaSearchEnabled }: { events: PublicArticleEvent[]; heading: string; areaSearchEnabled?: boolean }) {
+function EventsBlock({
+  events,
+  heading,
+  tag,
+  showFilterTag,
+  areaSearchEnabled,
+}: {
+  events: PublicArticleEvent[];
+  heading: string;
+  tag?: string;
+  showFilterTag?: boolean;
+  areaSearchEnabled?: boolean;
+}) {
   if (events.length === 0) return null;
   return (
     <div className="my-6">
-      {heading && <h2 className="mb-3 text-lg font-bold text-gray-950">{heading}</h2>}
+      {(heading || (showFilterTag && tag)) && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          {heading && <h2 className="text-lg font-bold text-gray-950">{heading}</h2>}
+          {showFilterTag && tag && (
+            <span className="rounded-full bg-[#06C755]/10 px-2.5 py-1 text-xs font-bold text-[#06C755]">{tag}</span>
+          )}
+        </div>
+      )}
       {areaSearchEnabled ? (
         <EventsAreaFilter events={events} />
       ) : (
@@ -378,7 +397,7 @@ const TEXT_SIZE_CLASS: Record<string, string> = {
   large: 'text-lg sm:text-xl',
 };
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
-const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|([^|}]*)(?:\|(true|false))?)?)?\}\}$/;
+const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|([^|}]*)(?:\|(true|false)(?:\|(true|false))?)?)?)?\}\}$/;
 const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
 const TABLE_RE = /^\{\{table:(.+)\}\}$/;
 const CARD_SLIDER_RE = /^\{\{cardslider:(.+)\}\}$/;
@@ -573,7 +592,16 @@ function BodyRenderer({
     if (events) {
       flushParagraph();
       const eventsTag = events[2] || undefined;
-      nodes.push(<EventsBlock key={i} events={eventsByTag.get(eventsTag ?? '') ?? []} heading={events[1] ?? ''} areaSearchEnabled={events[3] === 'true'} />);
+      nodes.push(
+        <EventsBlock
+          key={i}
+          events={eventsByTag.get(eventsTag ?? '') ?? []}
+          heading={events[1] ?? ''}
+          tag={eventsTag}
+          showFilterTag={events[4] === 'true'}
+          areaSearchEnabled={events[3] === 'true'}
+        />,
+      );
       i++;
       continue;
     }
