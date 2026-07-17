@@ -8,6 +8,7 @@ import { API_URL, SITE_URL } from '@/lib/config';
 import { ACTIVITY_TAG_EVENT_CATEGORY, AREA_SLUG_TO_JAPANESE, CATEGORY_SLUG_TO_JAPANESE, WARD_SUBAREAS, buildCategoryAreaPath } from '@/lib/lpTags';
 import { HubPage, buildHubMetadata } from '../../_hub/hubPage';
 import EventsAreaFilter from '../EventsAreaFilter';
+import EventsTagFilter from '../EventsTagFilter';
 
 export const revalidate = 60;
 
@@ -123,13 +124,16 @@ async function fetchCategoryEvents(category?: string | null, tag?: string): Prom
   }
 }
 
-function extractEventsTags(body: string): (string | undefined)[] {
-  const tags = new Set<string | undefined>();
+// Each {{events}} marker needs its own fetch keyed by tag - except blocks with the tag-tab
+// filter enabled, which always need the unfiltered category-wide list (tags[4]) so every tag
+// among that category's events can be offered as a tab, regardless of the block's own picker.
+function extractEventsFetchKeys(body: string): (string | undefined)[] {
+  const keys = new Set<string | undefined>();
   for (const raw of body.split('\n')) {
     const match = EVENTS_RE.exec(raw.trim());
-    if (match) tags.add(match[2] || undefined);
+    if (match) keys.add(match[4] === 'true' ? undefined : (match[2] || undefined));
   }
-  return Array.from(tags);
+  return Array.from(keys);
 }
 
 async function fetchCircles(category?: string | null): Promise<PublicArticleTenant[]> {
@@ -189,28 +193,21 @@ function EventCardMini({ event }: { event: PublicArticleEvent }) {
 function EventsBlock({
   events,
   heading,
-  tag,
   showFilterTag,
   areaSearchEnabled,
 }: {
   events: PublicArticleEvent[];
   heading: string;
-  tag?: string;
   showFilterTag?: boolean;
   areaSearchEnabled?: boolean;
 }) {
   if (events.length === 0) return null;
   return (
     <div className="my-6">
-      {(heading || (showFilterTag && tag)) && (
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          {heading && <h2 className="text-lg font-bold text-gray-950">{heading}</h2>}
-          {showFilterTag && tag && (
-            <span className="rounded-full bg-[#06C755]/10 px-2.5 py-1 text-xs font-bold text-[#06C755]">{tag}</span>
-          )}
-        </div>
-      )}
-      {areaSearchEnabled ? (
+      {heading && <h2 className="mb-3 text-lg font-bold text-gray-950">{heading}</h2>}
+      {showFilterTag ? (
+        <EventsTagFilter events={events} />
+      ) : areaSearchEnabled ? (
         <EventsAreaFilter events={events} />
       ) : (
         <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -592,13 +589,14 @@ function BodyRenderer({
     if (events) {
       flushParagraph();
       const eventsTag = events[2] || undefined;
+      const showFilterTag = events[4] === 'true';
+      const fetchKey = showFilterTag ? undefined : eventsTag;
       nodes.push(
         <EventsBlock
           key={i}
-          events={eventsByTag.get(eventsTag ?? '') ?? []}
+          events={eventsByTag.get(fetchKey ?? '') ?? []}
           heading={events[1] ?? ''}
-          tag={eventsTag}
-          showFilterTag={events[4] === 'true'}
+          showFilterTag={showFilterTag}
           areaSearchEnabled={events[3] === 'true'}
         />,
       );
@@ -770,10 +768,10 @@ export default async function GuideArticlePage({
     fetchArticleSummaries(),
   ]);
   if (!article) notFound();
-  const eventsTags = extractEventsTags(article.body);
+  const eventsFetchKeys = extractEventsFetchKeys(article.body);
   const hasCirclesBlock = /\{\{circles/.test(article.body);
   const [eventsByTagEntries, circles] = await Promise.all([
-    Promise.all(eventsTags.map(async (tag) => [tag ?? '', await fetchCategoryEvents(article.category, tag)] as const)),
+    Promise.all(eventsFetchKeys.map(async (tag) => [tag ?? '', await fetchCategoryEvents(article.category, tag)] as const)),
     hasCirclesBlock ? fetchCircles(article.category) : Promise.resolve([]),
   ]);
   const eventsByTag = new Map<string, PublicArticleEvent[]>(eventsByTagEntries);

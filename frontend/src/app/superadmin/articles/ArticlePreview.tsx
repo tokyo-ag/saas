@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { api, API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
-import { ACTIVITY_TAG_EVENT_CATEGORY, ALL_LOCATION_TAGS } from '@/lib/lpTags';
+import { ACTIVITY_TAG_EVENT_CATEGORY, ALL_LOCATION_TAGS, SEARCH_TAGS } from '@/lib/lpTags';
 import { Block, CARD_IMAGE_SIZE_CLASS, IMAGE_SIZE_CLASS, TEXT_SIZE_CLASS } from './BlockEditor';
 
 const CELL_LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]*)\)/g;
@@ -48,6 +48,7 @@ function priceLabel(event: PublicEvent) {
 }
 
 const LOCATION_TAG_SET = new Set<string>(ALL_LOCATION_TAGS);
+const SEARCH_TAG_SET = new Set<string>(SEARCH_TAGS);
 
 function computeEventAreas(events: PublicEvent[]): string[] {
   const countByArea = new Map<string, number>();
@@ -59,6 +60,18 @@ function computeEventAreas(events: PublicEvent[]): string[] {
   return Array.from(countByArea.entries())
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'ja'))
     .map(([area]) => area);
+}
+
+function computeEventTags(events: PublicEvent[]): string[] {
+  const countByTag = new Map<string, number>();
+  for (const event of events) {
+    for (const eventTag of event.tags ?? []) {
+      if (SEARCH_TAG_SET.has(eventTag)) countByTag.set(eventTag, (countByTag.get(eventTag) ?? 0) + 1);
+    }
+  }
+  return Array.from(countByTag.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'ja'))
+    .map(([tag]) => tag);
 }
 
 function EventCardMini({ event }: { event: PublicEvent }) {
@@ -84,18 +97,23 @@ function EventCardMini({ event }: { event: PublicEvent }) {
 function EventsBlockPreview({ category, heading, tag, areaSearchEnabled, showFilterTag }: { category: string; heading: string; tag?: string; areaSearchEnabled?: boolean; showFilterTag?: boolean }) {
   const [events, setEvents] = useState<PublicEvent[]>([]);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const eventCategory = ACTIVITY_TAG_EVENT_CATEGORY[category];
+  // showFilterTag turns this into an interactive tag-tab filter (like the area tabs) over every
+  // tag present in the category's events, so the fetch must ignore the single picked tag.
+  const fetchTag = showFilterTag ? undefined : tag;
 
   useEffect(() => {
     if (!eventCategory) { setEvents([]); return; }
     let active = true;
-    api.public.events(eventCategory, tag).then((list) => { if (active) setEvents(list); }).catch(() => { if (active) setEvents([]); });
+    api.public.events(eventCategory, fetchTag).then((list) => { if (active) setEvents(list); }).catch(() => { if (active) setEvents([]); });
     return () => { active = false; };
-  }, [eventCategory, tag]);
+  }, [eventCategory, fetchTag]);
 
   useEffect(() => {
     setSelectedArea(null);
-  }, [eventCategory, tag]);
+    setSelectedTag(null);
+  }, [eventCategory, fetchTag]);
 
   if (!category) {
     return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">カテゴリを選択すると、該当イベントのプレビューが表示されます。</p>;
@@ -104,19 +122,36 @@ function EventsBlockPreview({ category, heading, tag, areaSearchEnabled, showFil
     return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」は活動種目カテゴリではないため、対象イベントがありません。</p>;
   }
   if (events.length === 0) {
-    return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」{tag ? `・「${tag}」` : ''}に一致する公開中のイベントが見つかりませんでした。</p>;
+    return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」{fetchTag ? `・「${fetchTag}」` : ''}に一致する公開中のイベントが見つかりませんでした。</p>;
   }
-  const areas = areaSearchEnabled ? computeEventAreas(events) : [];
-  const filteredEvents = selectedArea ? events.filter((e) => (e.tags ?? []).includes(selectedArea)) : events;
+  const areas = !showFilterTag && areaSearchEnabled ? computeEventAreas(events) : [];
+  const tags = showFilterTag ? computeEventTags(events) : [];
+  const filteredEvents = showFilterTag
+    ? (selectedTag ? events.filter((e) => (e.tags ?? []).includes(selectedTag)) : events)
+    : (selectedArea ? events.filter((e) => (e.tags ?? []).includes(selectedArea)) : events);
   const shownEvents = filteredEvents.slice(0, 6);
   return (
     <div className="my-6">
-      {(heading || (showFilterTag && tag)) && (
-        <div className="mb-2 flex flex-wrap items-center gap-2">
-          {heading && <p className="text-base font-bold text-gray-950">{heading}</p>}
-          {showFilterTag && tag && (
-            <span className="rounded-full bg-[#06C755]/10 px-2.5 py-1 text-xs font-bold text-[#06C755]">{tag}</span>
-          )}
+      {heading && <p className="mb-2 text-base font-bold text-gray-950">{heading}</p>}
+      {tags.length >= 1 && (
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          <button
+            type="button"
+            onClick={() => setSelectedTag(null)}
+            className={`rounded-full px-3 py-1 text-xs font-bold transition ${!selectedTag ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+          >
+            すべて
+          </button>
+          {tags.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setSelectedTag(t)}
+              className={`rounded-full px-3 py-1 text-xs font-bold transition ${selectedTag === t ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              {t}
+            </button>
+          ))}
         </div>
       )}
       {areas.length >= 1 && (

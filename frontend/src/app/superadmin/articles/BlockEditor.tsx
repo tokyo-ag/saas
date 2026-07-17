@@ -775,11 +775,12 @@ export default function BlockEditor({
                   placeholder="見出し・説明（任意） 例: 東京の人気バドミントンサークル"
                   className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
                 />
-                <div>
+                <div className={block.eventsShowFilterTagEnabled ? 'opacity-40' : ''}>
                   <p className="mb-1 text-xs font-medium text-gray-500">絞り込みタグ（任意）</p>
                   <div className="flex flex-wrap gap-1.5">
                     <button
                       type="button"
+                      disabled={block.eventsShowFilterTagEnabled}
                       onClick={() => updateBlock(block.id, { tag: undefined })}
                       className={`rounded-full px-3 py-1 text-xs font-bold transition ${
                         !block.tag ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -791,6 +792,7 @@ export default function BlockEditor({
                       <button
                         key={tag}
                         type="button"
+                        disabled={block.eventsShowFilterTagEnabled}
                         onClick={() => updateBlock(block.id, { tag })}
                         className={`rounded-full px-3 py-1 text-xs font-bold transition ${
                           block.tag === tag ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -800,6 +802,9 @@ export default function BlockEditor({
                       </button>
                     ))}
                   </div>
+                  {block.eventsShowFilterTagEnabled && (
+                    <p className="mt-1 text-xs text-gray-400">下の「タブで絞り込む」がONの間は使いません。</p>
+                  )}
                 </div>
                 <p className="rounded-md bg-gray-50 px-2.5 py-2 text-xs text-gray-500">
                   記事のカテゴリ（と選んだタグ）に応じて、COMIUに掲載中のイベントカードをここに自動で表示します。
@@ -813,21 +818,15 @@ export default function BlockEditor({
                   />
                   地域検索タブを表示する（カード一覧を地域で絞り込めるようにする）
                 </label>
-                <label className={`flex items-center gap-2 text-sm ${block.tag ? 'text-gray-700' : 'text-gray-400'}`}>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
                   <input
                     type="checkbox"
                     checked={block.eventsShowFilterTagEnabled ?? false}
-                    disabled={!block.tag}
                     onChange={(e) => updateBlock(block.id, { eventsShowFilterTagEnabled: e.target.checked })}
-                    className="accent-[#06C755] disabled:opacity-50"
+                    className="accent-[#06C755]"
                   />
-                  絞り込みタグを表示する（選んだタグを見出しの横にバッジ表示する）
+                  絞り込みタグをタブで表示する（読者がタグを切り替えてカードを絞り込めるようにする）
                 </label>
-                {!block.tag && (
-                  <p className="pl-6 text-xs text-gray-400">
-                    上の「絞り込みタグ」で「指定なし」以外のタグを選ぶと有効になります。
-                  </p>
-                )}
               </div>
             ) : block.type === 'table' ? (
               <TableFields block={block} updateBlock={updateBlock} />
