@@ -81,7 +81,7 @@ function EventCardMini({ event }: { event: PublicEvent }) {
   );
 }
 
-function EventsBlockPreview({ category, heading, tag, areaSearchEnabled }: { category: string; heading: string; tag?: string; areaSearchEnabled?: boolean }) {
+function EventsBlockPreview({ category, heading, tag, areaSearchEnabled, showFilterTag }: { category: string; heading: string; tag?: string; areaSearchEnabled?: boolean; showFilterTag?: boolean }) {
   const [events, setEvents] = useState<PublicEvent[]>([]);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const eventCategory = ACTIVITY_TAG_EVENT_CATEGORY[category];
@@ -111,7 +111,14 @@ function EventsBlockPreview({ category, heading, tag, areaSearchEnabled }: { cat
   const shownEvents = filteredEvents.slice(0, 6);
   return (
     <div className="my-6">
-      {heading && <p className="mb-2 text-base font-bold text-gray-950">{heading}</p>}
+      {(heading || (showFilterTag && tag)) && (
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          {heading && <p className="text-base font-bold text-gray-950">{heading}</p>}
+          {showFilterTag && tag && (
+            <span className="rounded-full bg-[#06C755]/10 px-2.5 py-1 text-xs font-bold text-[#06C755]">{tag}</span>
+          )}
+        </div>
+      )}
       {areas.length >= 1 && (
         <div className="mb-2 flex flex-wrap gap-1.5">
           <button
@@ -301,7 +308,7 @@ function BlockView({ block, category }: { block: Block; category: string }) {
     );
   }
   if (block.type === 'events') {
-    return <EventsBlockPreview category={category} heading={block.text} tag={block.tag} areaSearchEnabled={block.eventsAreaSearchEnabled} />;
+    return <EventsBlockPreview category={category} heading={block.text} tag={block.tag} areaSearchEnabled={block.eventsAreaSearchEnabled} showFilterTag={block.eventsShowFilterTagEnabled} />;
   }
   if (block.type === 'circles') {
     return <CirclesBlockPreview category={category} heading={block.text} />;
