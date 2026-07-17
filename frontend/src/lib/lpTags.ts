@@ -49,7 +49,7 @@ export const ALL_LOCATION_TAGS: readonly string[] = [
   ...Object.values(WARD_SUBAREAS).flat(),
 ];
 
-export const SEARCH_TAGS = ['初心者大歓迎', '経験者大歓迎', '20代歓迎', '30代歓迎', '1人参加歓迎'] as const;
+export const SEARCH_TAGS = ['初心者大歓迎', '経験者大歓迎', '20代歓迎', '30代歓迎', '1人参加歓迎', 'ラケット貸出有り'] as const;
 
 export const ARTICLE_THEME_TAGS = ['選び方', '初心者向け', '費用', '持ち物', '雰囲気'] as const;
 
