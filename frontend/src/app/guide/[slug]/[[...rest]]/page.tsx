@@ -425,10 +425,20 @@ function CardSliderBlock({ items }: { items: CardItem[] }) {
             {item.imageUrl && (
               // eslint-disable-next-line @next/next/no-img-element
               (() => {
-                const img = <img src={item.imageUrl} alt={item.name} className={`h-auto ${CARD_IMAGE_SIZE_CLASS[item.imageSize ?? 'medium']}`} />;
+                // The size class + mx-auto go on the wrapping element (not the <img>) so the
+                // <img>'s own width can just be 100% of that already-sized box - a percentage
+                // width directly on the <img> here would need to resolve against a flex item
+                // whose own size depends on the <img>, a circular case browsers resolve by
+                // just ignoring the intended centering.
+                const img = <img src={item.imageUrl} alt={item.name} className="block h-auto w-full" />;
+                const sizeClass = CARD_IMAGE_SIZE_CLASS[item.imageSize ?? 'medium'];
                 return (
-                  <div className="flex justify-center pt-4">
-                    {item.href ? <Link href={item.href}>{img}</Link> : img}
+                  <div className="pt-4">
+                    {item.href ? (
+                      <Link href={item.href} className={`mx-auto block ${sizeClass}`}>{img}</Link>
+                    ) : (
+                      <div className={`mx-auto ${sizeClass}`}>{img}</div>
+                    )}
                   </div>
                 );
               })()
