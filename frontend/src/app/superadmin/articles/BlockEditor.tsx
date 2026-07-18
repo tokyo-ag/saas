@@ -439,8 +439,8 @@ function TableFields({ block, updateBlock }: { block: Block; updateBlock: (id: s
                         />
                       </td>
                       {r === 0 && (
-                        <td rowSpan={rows.length * 2} className="p-0 align-middle">
-                          <div className="flex justify-center">
+                        <td rowSpan={rows.length * 2} className="p-0 align-top">
+                          <div className="flex justify-center pt-2">
                             <button
                               type="button"
                               onClick={() => insertColumnAt(c + 1)}
