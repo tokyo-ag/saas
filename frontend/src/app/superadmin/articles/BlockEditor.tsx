@@ -402,6 +402,16 @@ function TableFields({ block, updateBlock }: { block: Block; updateBlock: (id: s
     updateBlock(block.id, { tableRows: rows.map((row) => [...row, '']) });
   }
 
+  function insertColumnAt(index: number) {
+    updateBlock(block.id, {
+      tableRows: rows.map((row) => {
+        const next = [...row];
+        next.splice(index, 0, '');
+        return next;
+      }),
+    });
+  }
+
   function removeColumn(c: number) {
     if (colCount <= 1) return;
     if (!confirm('この列を削除しますか？')) return;
@@ -420,13 +430,29 @@ function TableFields({ block, updateBlock }: { block: Block; updateBlock: (id: s
               <Fragment key={r}>
                 <tr>
                   {row.map((cell, c) => (
-                    <td key={c} className="border border-gray-200 p-0.5">
-                      <input
-                        value={cell}
-                        onChange={(e) => setCell(r, c, e.target.value)}
-                        className={`w-28 border-0 px-1.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755] ${r === 0 ? 'bg-gray-50 font-bold' : ''}`}
-                      />
-                    </td>
+                    <Fragment key={c}>
+                      <td className="border border-gray-200 p-0.5">
+                        <input
+                          value={cell}
+                          onChange={(e) => setCell(r, c, e.target.value)}
+                          className={`w-28 border-0 px-1.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755] ${r === 0 ? 'bg-gray-50 font-bold' : ''}`}
+                        />
+                      </td>
+                      {r === 0 && (
+                        <td rowSpan={rows.length * 2} className="p-0 align-middle">
+                          <div className="flex justify-center">
+                            <button
+                              type="button"
+                              onClick={() => insertColumnAt(c + 1)}
+                              aria-label="この位置に列を挿入"
+                              className="flex h-3.5 w-3.5 items-center justify-center rounded-full border border-dashed border-gray-300 text-[9px] leading-none text-gray-400 hover:border-[#06C755] hover:text-[#06C755]"
+                            >
+                              ＋
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </Fragment>
                   ))}
                   <td className="p-0.5">
                     <button type="button" onClick={() => removeRow(r)} disabled={rows.length <= 1} className="text-xs text-red-400 hover:text-red-600 disabled:opacity-30">
@@ -435,7 +461,7 @@ function TableFields({ block, updateBlock }: { block: Block; updateBlock: (id: s
                   </td>
                 </tr>
                 <tr>
-                  <td colSpan={colCount + 1} className="p-0">
+                  <td colSpan={colCount * 2 + 1} className="p-0">
                     <div className="flex justify-center">
                       <button
                         type="button"
@@ -452,11 +478,14 @@ function TableFields({ block, updateBlock }: { block: Block; updateBlock: (id: s
             ))}
             <tr>
               {rows[0]?.map((_, c) => (
-                <td key={c} className="p-0.5 text-center">
-                  <button type="button" onClick={() => removeColumn(c)} disabled={colCount <= 1} className="text-[10px] text-red-400 hover:text-red-600 disabled:opacity-30">
-                    列削除
-                  </button>
-                </td>
+                <Fragment key={c}>
+                  <td className="p-0.5 text-center">
+                    <button type="button" onClick={() => removeColumn(c)} disabled={colCount <= 1} className="text-[10px] text-red-400 hover:text-red-600 disabled:opacity-30">
+                      列削除
+                    </button>
+                  </td>
+                  <td className="p-0" />
+                </Fragment>
               ))}
             </tr>
           </tbody>
