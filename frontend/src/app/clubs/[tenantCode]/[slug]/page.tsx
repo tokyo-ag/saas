@@ -12,6 +12,14 @@ import { SnsBlock } from '@/components/public/SnsBlock';
 
 export const revalidate = 60;
 
+// Pixel size for メディアテキスト blocks' thumbnail. Must stay in sync with the admin editor's
+// preview at frontend/src/app/admin/public-page/page.tsx.
+const MEDIA_TEXT_IMAGE_SIZE_PX: Record<'small' | 'medium' | 'large', number> = {
+  small: 56,
+  medium: 96,
+  large: 140,
+};
+
 type TenantPageList = {
   pages?: Array<{ slug: string; updatedAt?: string | null }>;
 };
@@ -739,15 +747,17 @@ export default async function ClubCmsPage({
             <div className="space-y-5">
               {(page.blocks as any[]).map((block: any, i: number) => {
                 const blockFontSize = resolvePxSize(block.fontSize, bodyFontSize, 10, 28, BODY_SIZE_LEGACY);
-                const blockBodyClass = bodyLeadingClass(blockFontSize);
-                const blockTextStyle = { fontSize: blockFontSize };
+                const blockLineHeight = typeof block.lineHeight === 'number' ? block.lineHeight : undefined;
+                const blockBodyClass = blockLineHeight == null ? bodyLeadingClass(blockFontSize) : '';
+                const blockTextStyle = { fontSize: blockFontSize, lineHeight: blockLineHeight };
                 if (block.type === 'media-text') {
                   const isLeft = block.imagePosition !== 'right';
+                  const mediaTextPx = MEDIA_TEXT_IMAGE_SIZE_PX[(block.imageSize as 'small' | 'medium' | 'large') ?? 'medium'];
                   return (
                     <div key={i} className={`flex items-start gap-3 ${!isLeft ? 'flex-row-reverse' : ''}`}>
                       {block.imageUrl && (
-                        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl">
-                          <Image src={block.imageUrl} alt="" fill className="object-cover" sizes="96px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
+                        <div className="relative shrink-0 overflow-hidden rounded-xl" style={{ height: mediaTextPx, width: mediaTextPx }}>
+                          <Image src={block.imageUrl} alt="" fill className="object-cover" sizes={`${mediaTextPx}px`} style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                         </div>
                       )}
                       <div className={`min-w-0 flex-1 space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>

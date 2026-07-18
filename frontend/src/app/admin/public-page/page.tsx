@@ -17,7 +17,9 @@ interface Block {
   imageUrl?: string;
   imagePosition?: 'left' | 'right';
   imageFocal?: string;
+  imageSize?: 'small' | 'medium' | 'large';
   fontSize?: string;
+  lineHeight?: number;
   // SNS block fields
   instagramUrl?: string;
   xUrl?: string;
@@ -211,6 +213,22 @@ function bodyLeadingClass(size: number) {
   if (size >= 17) return 'leading-9';
   return 'leading-8';
 }
+
+// Same px values as the leading-* classes above, expressed as a ratio of the given font size -
+// used as the 行間 slider's starting position so existing content doesn't visually jump before
+// the organizer has touched it.
+const LEADING_CLASS_PX: Record<string, number> = { 'leading-7': 28, 'leading-8': 32, 'leading-9': 36, 'leading-10': 40 };
+function defaultLineHeightFor(fontSizePx: number): number {
+  return Math.round((LEADING_CLASS_PX[bodyLeadingClass(fontSizePx)] / fontSizePx) * 10) / 10;
+}
+
+// Pixel size for メディアテキスト blocks' thumbnail. Both this admin preview and the real
+// public page (frontend/src/app/clubs/[tenantCode]/[slug]/page.tsx) must stay in sync.
+const MEDIA_TEXT_IMAGE_SIZE_PX: Record<'small' | 'medium' | 'large', number> = {
+  small: 56,
+  medium: 96,
+  large: 140,
+};
 
 const PASTEL_COLORS = [
   { label: 'ライト', value: '#F7F8FA' },
@@ -987,11 +1005,11 @@ export default function AdminPublicPage() {
     }
   }
 
-  function renderPreviewText(content: string, fontSize = bodyFontSize) {
+  function renderPreviewText(content: string, fontSize = bodyFontSize, lineHeight?: number) {
     return (
       <p
-        className={`${bodyLeadingClass(fontSize)} whitespace-pre-wrap break-words opacity-90`}
-        style={{ color: bodyTextColor, fontFamily, fontSize, overflowWrap: 'anywhere' }}>
+        className={`${lineHeight == null ? bodyLeadingClass(fontSize) : ''} whitespace-pre-wrap break-words opacity-90`}
+        style={{ color: bodyTextColor, fontFamily, fontSize, lineHeight: lineHeight ?? undefined, overflowWrap: 'anywhere' }}>
         {content || '団体説明'}
       </p>
     );
@@ -1008,14 +1026,15 @@ export default function AdminPublicPage() {
 
           if (block.type === 'media-text') {
             const imageRight = block.imagePosition === 'right';
+            const mediaTextPx = MEDIA_TEXT_IMAGE_SIZE_PX[block.imageSize ?? 'medium'];
             return (
               <div key={block.id} className={`flex items-start gap-3 ${imageRight ? 'flex-row-reverse' : ''}`}>
                 {block.imageUrl && (
-                  <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl">
+                  <div className="shrink-0 overflow-hidden rounded-xl" style={{ height: mediaTextPx, width: mediaTextPx }}>
                     <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                   </div>
                 )}
-                <div className="min-w-0 flex-1">{renderPreviewText(content, blockFontSize)}</div>
+                <div className="min-w-0 flex-1">{renderPreviewText(content, blockFontSize, block.lineHeight)}</div>
               </div>
             );
           }
@@ -1028,7 +1047,7 @@ export default function AdminPublicPage() {
                     <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                   </div>
                 )}
-                <div className="min-w-0 flex-1">{renderPreviewText(content, blockFontSize)}</div>
+                <div className="min-w-0 flex-1">{renderPreviewText(content, blockFontSize, block.lineHeight)}</div>
               </div>
             );
           }
@@ -1041,7 +1060,7 @@ export default function AdminPublicPage() {
                     <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                   </div>
                 )}
-                {renderPreviewText(content, blockFontSize)}
+                {renderPreviewText(content, blockFontSize, block.lineHeight)}
               </div>
             );
           }
@@ -1098,7 +1117,7 @@ export default function AdminPublicPage() {
             );
           }
 
-          return <div key={block.id}>{renderPreviewText(content, blockFontSize)}</div>;
+          return <div key={block.id}>{renderPreviewText(content, blockFontSize, block.lineHeight)}</div>;
         })}
       </div>
     );
@@ -2001,15 +2020,28 @@ export default function AdminPublicPage() {
                         </label>
                       )}
                       {block.type === 'media-text' && (
-                        <div className="flex gap-2">
-                          {(['left', 'right'] as const).map(pos => (
-                            <button key={pos} type="button"
-                              onClick={() => updateBlock(block.id, { imagePosition: pos })}
-                              className={`rounded-full border px-3 py-1 text-[11px] font-bold transition ${block.imagePosition === pos ? 'text-white' : 'border-gray-200 text-gray-500'}`}
-                              style={block.imagePosition === pos ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
-                              {pos === 'left' ? '画像を左' : '画像を右'}
-                            </button>
-                          ))}
+                        <div className="space-y-1.5">
+                          <div className="flex gap-2">
+                            {(['left', 'right'] as const).map(pos => (
+                              <button key={pos} type="button"
+                                onClick={() => updateBlock(block.id, { imagePosition: pos })}
+                                className={`rounded-full border px-3 py-1 text-[11px] font-bold transition ${block.imagePosition === pos ? 'text-white' : 'border-gray-200 text-gray-500'}`}
+                                style={block.imagePosition === pos ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                                {pos === 'left' ? '画像を左' : '画像を右'}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-bold text-gray-400">画像サイズ</span>
+                            {(['small', 'medium', 'large'] as const).map(size => (
+                              <button key={size} type="button"
+                                onClick={() => updateBlock(block.id, { imageSize: size })}
+                                className={`rounded-full border px-3 py-1 text-[11px] font-bold transition ${(block.imageSize ?? 'medium') === size ? 'text-white' : 'border-gray-200 text-gray-500'}`}
+                                style={(block.imageSize ?? 'medium') === size ? { backgroundColor: accentColor, borderColor: accentColor } : undefined}>
+                                {size === 'small' ? '小' : size === 'medium' ? '中' : '大'}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -2060,6 +2092,18 @@ export default function AdminPublicPage() {
                       </span>
                       <input type="range" min="10" max="28" step="1" value={blockFontSize}
                         onChange={(e) => updateBlock(block.id, { fontSize: e.target.value })}
+                        className="w-full accent-[#06C755]" />
+                    </label>
+                  )}
+
+                  {block.type !== 'sns' && block.type !== 'faq' && (
+                    <label className="block">
+                      <span className="mb-1 flex items-center justify-between text-xs text-gray-500">
+                        <span className="font-bold text-gray-400">行間</span>
+                        <span className="font-bold">{(block.lineHeight ?? defaultLineHeightFor(blockFontSize)).toFixed(1)}</span>
+                      </span>
+                      <input type="range" min="1.0" max="3.0" step="0.1" value={block.lineHeight ?? defaultLineHeightFor(blockFontSize)}
+                        onChange={(e) => updateBlock(block.id, { lineHeight: Number(e.target.value) })}
                         className="w-full accent-[#06C755]" />
                     </label>
                   )}
