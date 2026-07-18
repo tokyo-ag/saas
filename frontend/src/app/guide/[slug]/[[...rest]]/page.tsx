@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { API_URL, SITE_URL } from '@/lib/config';
-import { ACTIVITY_TAG_EVENT_CATEGORY, AREA_SLUG_TO_JAPANESE, CATEGORY_SLUG_TO_JAPANESE, WARD_SUBAREAS, buildCategoryAreaPath } from '@/lib/lpTags';
-import { HubPage, buildHubMetadata } from '../../_hub/hubPage';
+import { ACTIVITY_TAG_EVENT_CATEGORY, ALL_LOCATION_TAGS, AREA_SLUG_TO_JAPANESE, CATEGORY_SLUG_TO_JAPANESE, WARD_SUBAREAS, buildCategoryAreaPath } from '@/lib/lpTags';
+import { HubPage, buildHubMetadata, fetchArticlesByCategory, fetchBlogPostsByCategory, buildOfficialRelated, buildTeamRelated, RelatedArticleCard } from '../../_hub/hubPage';
 import EventsAreaFilter from '../EventsAreaFilter';
 import EventsTagFilter from '../EventsTagFilter';
 import PublicFooter from '@/components/public/PublicFooter';
@@ -123,6 +123,24 @@ async function fetchCategoryEvents(category?: string | null, tag?: string): Prom
   } catch {
     return [];
   }
+}
+
+// Ranks areas by how many upcoming events of this category they host, mirroring the "イベント"
+// column on the superadmin area-hubs summary table - used to link to the most active area hubs
+// from the bottom of an article, without needing a per-area fetch for each candidate.
+async function fetchAreaEventCounts(category?: string | null): Promise<{ area: string; count: number }[]> {
+  const events = await fetchCategoryEvents(category);
+  const locationSet = new Set<string>(ALL_LOCATION_TAGS);
+  const counts = new Map<string, number>();
+  for (const event of events) {
+    for (const tag of event.tags ?? []) {
+      if (!locationSet.has(tag)) continue;
+      counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    }
+  }
+  return Array.from(counts.entries())
+    .map(([area, count]) => ({ area, count }))
+    .sort((a, b) => b.count - a.count);
 }
 
 // Each {{events}} marker needs its own fetch keyed by tag - except blocks with the tag-tab
@@ -783,6 +801,20 @@ export default async function GuideArticlePage({
   const faqItems = extractFaqItems(article.body);
   const relatedArticles = pickRelatedArticles(articleSummaries, article);
   const articleDescription = article.excerpt;
+
+  const isHubCategory = !!(article.category && ACTIVITY_TAG_EVENT_CATEGORY[article.category]);
+  const [officialArticlesForCategory, blogPostsForCategory, areaEventCounts] = isHubCategory
+    ? await Promise.all([
+        fetchArticlesByCategory(article.category!),
+        fetchBlogPostsByCategory(article.category!, 10, 2),
+        fetchAreaEventCounts(article.category),
+      ])
+    : [[], [], []];
+  const officialRelatedByCategory = isHubCategory
+    ? buildOfficialRelated(officialArticlesForCategory.filter((a) => a.id !== article.id), article.category!, '', 10)
+    : [];
+  const teamRelatedByCategory = isHubCategory ? buildTeamRelated(blogPostsForCategory, 10) : [];
+  const topAreasForCategory = areaEventCounts.slice(0, 8);
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -885,6 +917,45 @@ export default async function GuideArticlePage({
                 {article.ctaLabel || 'COMIUを見る'}
               </Link>
             </div>
+          )}
+
+          {teamRelatedByCategory.length > 0 && (
+            <section className="mt-6 rounded-xl border border-gray-200 bg-white px-6 py-6 shadow-sm">
+              <h2 className="text-base font-bold text-gray-950">{`団体の${article.category}記事`}</h2>
+              <div className="mt-4 flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {teamRelatedByCategory.map((item) => <RelatedArticleCard key={item.id} item={item} />)}
+              </div>
+            </section>
+          )}
+
+          {officialRelatedByCategory.length > 0 && (
+            <section className="mt-6 rounded-xl border border-gray-200 bg-white px-6 py-6 shadow-sm">
+              <h2 className="text-base font-bold text-gray-950">{`COMIUの${article.category}記事`}</h2>
+              <div className="mt-4 flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {officialRelatedByCategory.map((item) => <RelatedArticleCard key={item.id} item={item} />)}
+              </div>
+            </section>
+          )}
+
+          {topAreasForCategory.length > 0 && (
+            <section className="mt-6 rounded-xl border border-gray-200 bg-white px-6 py-6 shadow-sm">
+              <h2 className="text-base font-bold text-gray-950">{`${article.category}の活動が多い地域`}</h2>
+              <div className="mt-4 flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {topAreasForCategory.map(({ area, count }) => (
+                  <Link
+                    key={area}
+                    href={buildCategoryAreaPath(article.category!, area)}
+                    className="flex w-56 shrink-0 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:w-64"
+                  >
+                    <div className="flex flex-1 flex-col p-4">
+                      <h3 className="line-clamp-2 text-sm font-bold leading-5">{`${area}の${article.category}`}</h3>
+                      <p className="mt-2 text-xs leading-5 text-gray-500">{`現在${count}件のイベントを開催中`}</p>
+                      <p className="mt-3 text-[11px] font-bold text-gray-400">エリアの情報を見る</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
           )}
 
           {relatedArticles.length > 0 && (
