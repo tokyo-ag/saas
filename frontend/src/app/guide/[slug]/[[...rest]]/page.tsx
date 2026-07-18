@@ -9,6 +9,7 @@ import { ACTIVITY_TAG_EVENT_CATEGORY, AREA_SLUG_TO_JAPANESE, CATEGORY_SLUG_TO_JA
 import { HubPage, buildHubMetadata } from '../../_hub/hubPage';
 import EventsAreaFilter from '../EventsAreaFilter';
 import EventsTagFilter from '../EventsTagFilter';
+import PublicFooter from '@/components/public/PublicFooter';
 
 export const revalidate = 60;
 
@@ -909,6 +910,7 @@ export default async function GuideArticlePage({
           )}
         </article>
       </main>
+      <PublicFooter />
     </>
   );
 }
