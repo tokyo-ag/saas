@@ -498,7 +498,7 @@ export default function AdminPublicPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    global: true, header: true, structure: true, reserve: false, blog: false, footer: false,
+    global: true, seo: false, header: true, structure: true, reserve: false, blog: false, footer: false,
     headerLogo: false, headerTitle: false, headerSubtitle: false, headerPhoto: false, headerLayout: false, headerButton: false, headerNavLabel: false,
   });
   const toggleSection = (key: string) => setOpenSections(p => ({ ...p, [key]: !p[key] }));
@@ -1209,8 +1209,11 @@ export default function AdminPublicPage() {
         displayFields: form.displayFields,
       }),
       status: 'published',
-      seoTitle: form.seoTitle?.trim() || siteTitle,
-      seoDescription: form.seoDescription?.trim() || blocks.map(b => b.content).join(' ').replace(/\s+/g, ' ').trim().slice(0, 150) || form.body.replace(/[#>*_-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 150),
+      // Leave blank as empty when the organizer hasn't typed one - the public page generates a
+      // richer fallback at render time from the tenant's name/area/category/audience instead of
+      // baking in just the display title here.
+      seoTitle: form.seoTitle?.trim() || '',
+      seoDescription: form.seoDescription?.trim() || '',
       orgNameDisplayType: form.orgNameDisplayType || 'text',
       orgLogoWordmarkUrl: form.orgLogoWordmarkUrl?.trim() || '',
       orgLogoWordmarkAlt: form.orgLogoWordmarkAlt?.trim() || siteTitle,
@@ -1356,6 +1359,41 @@ export default function AdminPublicPage() {
             </div>
             <span className="text-[11px] text-gray-400">個別にフォント指定していないタイトル・本文すべてに使われます</span>
           </div>
+          </div>}
+        </div>
+
+        {/* SEO設定 */}
+        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+          <button type="button" onClick={() => toggleSection('seo')}
+            className="flex w-full items-center justify-between px-4 py-3 hover:bg-gray-50 transition">
+            <p className="text-xs font-bold text-gray-700">SEO設定</p>
+            <svg className={`h-4 w-4 text-gray-400 transition-transform ${openSections.seo ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          </button>
+          {openSections.seo && <div className="space-y-4 border-t border-gray-100 p-4">
+            <p className="text-[11px] leading-relaxed text-gray-400">
+              Google検索結果に表示されるタイトル・説明文です。画面に表示される「{siteTitle}」とは別に設定できます。未入力の場合は、団体名・活動エリア・カテゴリ・対象者から自動生成されます。
+            </p>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-gray-500">Google検索に表示するタイトル</label>
+              <input
+                value={form.seoTitle ?? ''}
+                onChange={(e) => setForm((p) => ({ ...p, seoTitle: e.target.value }))}
+                placeholder={`例: 東京の社会人バドミントンサークル${siteTitle}｜初心者・1人参加歓迎`}
+                maxLength={160}
+                className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-gray-500">Google検索に表示する説明文</label>
+              <textarea
+                value={form.seoDescription ?? ''}
+                onChange={(e) => setForm((p) => ({ ...p, seoDescription: e.target.value }))}
+                placeholder={`例: ${siteTitle}は、東京都内で活動するバドミントンサークルです。初心者、経験者、1人参加歓迎。`}
+                maxLength={300}
+                rows={3}
+                className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+              />
+            </div>
           </div>}
         </div>
 
