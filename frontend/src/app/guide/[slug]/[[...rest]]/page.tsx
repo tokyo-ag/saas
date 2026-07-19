@@ -6,7 +6,7 @@ import { notFound } from 'next/navigation';
 
 import { API_URL, SITE_URL } from '@/lib/config';
 import { ACTIVITY_TAG_EVENT_CATEGORY, ALL_LOCATION_TAGS, AREA_SLUG_TO_JAPANESE, CATEGORY_SLUG_TO_JAPANESE, WARD_SUBAREAS, buildCategoryAreaPath } from '@/lib/lpTags';
-import { HubPage, buildHubMetadata, fetchArticlesByCategory, fetchBlogPostsByCategory, buildOfficialRelated, buildTeamRelated, RelatedArticleCard } from '../../_hub/hubPage';
+import { HubPage, buildHubMetadata, fetchBlogPostsByCategory, buildTeamRelated, RelatedArticleCard } from '../../_hub/hubPage';
 import EventsAreaFilter from '../EventsAreaFilter';
 import EventsTagFilter from '../EventsTagFilter';
 import PublicFooter from '@/components/public/PublicFooter';
@@ -69,8 +69,6 @@ type OfficialArticle = {
   updatedAt?: string | null;
 };
 
-type OfficialArticleSummary = Omit<OfficialArticle, 'body'>;
-
 type PublicArticleEvent = {
   id: string;
   tenantCode?: string | null;
@@ -98,16 +96,6 @@ async function fetchArticle(slug: string): Promise<OfficialArticle | null> {
     return res.json();
   } catch {
     return null;
-  }
-}
-
-async function fetchArticleSummaries(): Promise<OfficialArticleSummary[]> {
-  try {
-    const res = await fetch(`${API_URL}/api/public/official-articles?limit=120`, { next: { revalidate } });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
   }
 }
 
@@ -327,36 +315,6 @@ function extractFaqItems(body: string) {
 
   pushCurrent();
   return items.slice(0, 8);
-}
-
-function relatedScore(article: OfficialArticleSummary, current: OfficialArticle) {
-  if (article.slug === current.slug) return -1;
-  let score = 0;
-  const currentCluster = current.isPillar ? current.slug : current.pillarSlug;
-  const articleCluster = article.isPillar ? article.slug : article.pillarSlug;
-  if (currentCluster && articleCluster && currentCluster === articleCluster) score += 20;
-  if (article.category && article.category === current.category) score += 6;
-  const areaOverlap = (article.areaTags ?? []).some((tag) => (current.areaTags ?? []).includes(tag));
-  if (areaOverlap) score += 4;
-  const haystack = `${article.title} ${article.excerpt ?? ''} ${article.targetKeyword ?? ''}`.toLowerCase();
-  const terms = `${current.targetKeyword ?? ''} ${current.title}`
-    .toLowerCase()
-    .split(/[\s・、。/｜|]+/)
-    .map((term) => term.trim())
-    .filter((term) => term.length >= 2);
-  for (const term of new Set(terms)) {
-    if (haystack.includes(term)) score += 1;
-  }
-  return score;
-}
-
-function pickRelatedArticles(articles: OfficialArticleSummary[], current: OfficialArticle) {
-  return articles
-    .map((article, index) => ({ article, index, score: relatedScore(article, current) }))
-    .filter((item) => item.score >= 0)
-    .sort((a, b) => b.score - a.score || a.index - b.index)
-    .slice(0, 4)
-    .map((item) => item.article);
 }
 
 export async function generateMetadata({
@@ -782,10 +740,7 @@ export default async function GuideArticlePage({
   if (resolution.kind === 'invalid') notFound();
   if (resolution.kind === 'hub') return <HubPage category={resolution.category} area={resolution.area} />;
 
-  const [article, articleSummaries] = await Promise.all([
-    fetchArticle(slug),
-    fetchArticleSummaries(),
-  ]);
+  const article = await fetchArticle(slug);
   if (!article) notFound();
   const eventsFetchKeys = extractEventsFetchKeys(article.body);
   const hasCirclesBlock = /\{\{circles/.test(article.body);
@@ -799,20 +754,15 @@ export default async function GuideArticlePage({
   const articleUrl = `${SITE_URL}/guide/${slug}`;
   const articleImage = ogImageFor(article);
   const faqItems = extractFaqItems(article.body);
-  const relatedArticles = pickRelatedArticles(articleSummaries, article);
   const articleDescription = article.excerpt;
 
   const isHubCategory = !!(article.category && ACTIVITY_TAG_EVENT_CATEGORY[article.category]);
-  const [officialArticlesForCategory, blogPostsForCategory, areaEventCounts] = isHubCategory
+  const [blogPostsForCategory, areaEventCounts] = isHubCategory
     ? await Promise.all([
-        fetchArticlesByCategory(article.category!),
         fetchBlogPostsByCategory(article.category!, 10, 2),
         fetchAreaEventCounts(article.category),
       ])
-    : [[], [], []];
-  const officialRelatedByCategory = isHubCategory
-    ? buildOfficialRelated(officialArticlesForCategory.filter((a) => a.id !== article.id), article.category!, '', 10)
-    : [];
+    : [[], []];
   const teamRelatedByCategory = isHubCategory ? buildTeamRelated(blogPostsForCategory, 10) : [];
   const topAreasForCategory = areaEventCounts.slice(0, 8);
   const jsonLd = {
@@ -907,32 +857,11 @@ export default async function GuideArticlePage({
             <BodyRenderer body={article.body} eventsByTag={eventsByTag} circles={circles} category={article.category} />
           </div>
 
-          {!hasInlineCta && (
-            <div className="mt-6 rounded-xl border border-[#06C755]/20 bg-[#06C755]/5 px-6 py-6">
-              <p className="text-sm font-bold text-gray-950">{article.ctaTitle || 'COMIUで主催者向けWEBサイトと予約管理をまとめる'}</p>
-              <p className="mt-2 text-sm leading-7 text-gray-600">
-                {article.ctaDescription || '団体紹介、記事導線、予約画面、参加者管理をひとつにつなげられます。'}
-              </p>
-              <Link href={article.ctaHref || '/organizers'} className="mt-4 inline-flex rounded-lg bg-[#06C755] px-5 py-3 text-sm font-bold text-white hover:opacity-90">
-                {article.ctaLabel || 'COMIUを見る'}
-              </Link>
-            </div>
-          )}
-
           {teamRelatedByCategory.length > 0 && (
             <section className="mt-6 rounded-xl border border-gray-200 bg-white px-6 py-6 shadow-sm">
               <h2 className="text-base font-bold text-gray-950">{`団体の${article.category}記事`}</h2>
               <div className="mt-4 flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {teamRelatedByCategory.map((item) => <RelatedArticleCard key={item.id} item={item} />)}
-              </div>
-            </section>
-          )}
-
-          {officialRelatedByCategory.length > 0 && (
-            <section className="mt-6 rounded-xl border border-gray-200 bg-white px-6 py-6 shadow-sm">
-              <h2 className="text-base font-bold text-gray-950">{`COMIUの${article.category}記事`}</h2>
-              <div className="mt-4 flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {officialRelatedByCategory.map((item) => <RelatedArticleCard key={item.id} item={item} />)}
               </div>
             </section>
           )}
@@ -958,26 +887,16 @@ export default async function GuideArticlePage({
             </section>
           )}
 
-          {relatedArticles.length > 0 && (
-            <section className="mt-6 rounded-xl border border-gray-200 bg-white px-6 py-6 shadow-sm">
-              <h2 className="text-base font-bold text-gray-950">関連する記事</h2>
-              <div className="mt-4 grid gap-3">
-                {relatedArticles.map((related) => (
-                  <Link
-                    key={related.id}
-                    href={`/guide/${related.slug}`}
-                    className="rounded-lg border border-gray-100 p-4 transition hover:border-[#06C755]/40 hover:bg-[#06C755]/5"
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      {related.category && <span className="rounded-full bg-[#06C755]/10 px-2 py-0.5 text-[11px] font-bold text-[#06C755]">{related.category}</span>}
-                      {related.targetKeyword && <span className="text-[11px] text-gray-400">{related.targetKeyword}</span>}
-                    </div>
-                    <p className="mt-2 text-sm font-bold leading-6 text-gray-950">{related.title}</p>
-                    {related.excerpt && <p className="mt-1 line-clamp-2 text-xs leading-5 text-gray-500">{related.excerpt}</p>}
-                  </Link>
-                ))}
-              </div>
-            </section>
+          {!hasInlineCta && (
+            <div className="mt-6 rounded-xl border border-[#06C755]/20 bg-[#06C755]/5 px-6 py-6">
+              <p className="text-sm font-bold text-gray-950">{article.ctaTitle || 'COMIUで主催者向けWEBサイトと予約管理をまとめる'}</p>
+              <p className="mt-2 text-sm leading-7 text-gray-600">
+                {article.ctaDescription || '団体紹介、記事導線、予約画面、参加者管理をひとつにつなげられます。'}
+              </p>
+              <Link href={article.ctaHref || '/organizers'} className="mt-4 inline-flex rounded-lg bg-[#06C755] px-5 py-3 text-sm font-bold text-white hover:opacity-90">
+                {article.ctaLabel || 'COMIUを見る'}
+              </Link>
+            </div>
           )}
         </article>
       </main>
