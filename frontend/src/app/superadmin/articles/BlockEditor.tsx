@@ -38,7 +38,7 @@ export async function uploadFile(file: File): Promise<string> {
   return data.url as string;
 }
 
-export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'imageText' | 'textImage' | 'cta' | 'events' | 'circles' | 'table' | 'cardSlider';
+export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'imageText' | 'textImage' | 'cta' | 'events' | 'circles' | 'table' | 'cardSlider' | 'faq';
 
 export type ListStyle = 'check' | 'bullet' | 'number';
 export type ImageSize = 'small' | 'medium' | 'large';
@@ -60,6 +60,8 @@ export const CARD_IMAGE_SIZE_CLASS: Record<ImageSize, string> = {
   large: 'w-full',
 };
 
+export type FaqPair = { q: string; a: string };
+
 export type Block = {
   id: string;
   type: BlockType;
@@ -74,6 +76,7 @@ export type Block = {
   cardItems?: CardItem[];
   eventsAreaSearchEnabled?: boolean;
   eventsShowFilterTagEnabled?: boolean;
+  faqItems?: FaqPair[];
 };
 
 // UTF-8-safe base64 so embedded Japanese/symbol text survives being placed in a single-line marker.
@@ -109,6 +112,16 @@ export function decodeCardItems(encoded: string): CardItem[] {
   return [];
 }
 
+export function encodeFaq(items: FaqPair[]): string {
+  return encodeJsonB64(items);
+}
+
+export function decodeFaq(encoded: string): FaqPair[] {
+  const parsed = decodeJsonB64<FaqPair[]>(encoded, []);
+  if (Array.isArray(parsed)) return parsed;
+  return [];
+}
+
 export const IMAGE_SIZE_PX: Record<ImageSize, number> = { small: 80, medium: 128, large: 200 };
 // Smaller cap below sm: so image+text blocks stay side-by-side (not stacked) on narrow phones.
 export const IMAGE_SIZE_CLASS: Record<ImageSize, string> = {
@@ -135,6 +148,7 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   circles: '団体カード',
   table: '表（比較表）',
   cardSlider: 'カードスライド（横スクロール）',
+  faq: 'FAQ（よくある質問）',
 };
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
@@ -148,6 +162,7 @@ const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|([^|}]*)(?:\|(true|false)(?:\|(tr
 const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
 const TABLE_RE = /^\{\{table:(.+)\}\}$/;
 const CARD_SLIDER_RE = /^\{\{cardslider:(.+)\}\}$/;
+const FAQ_RE = /^\{\{faq:(.+)\}\}$/;
 
 function newId() {
   return Math.random().toString(36).slice(2, 10);
@@ -173,8 +188,11 @@ export function parseBodyToBlocks(body: string): Block[] {
     const circles = CIRCLES_RE.exec(line);
     const table = TABLE_RE.exec(line);
     const cardSlider = CARD_SLIDER_RE.exec(line);
+    const faq = FAQ_RE.exec(line);
     if (table) {
       blocks.push({ id: newId(), type: 'table', text: '', tableRows: decodeTable(table[1]) });
+    } else if (faq) {
+      blocks.push({ id: newId(), type: 'faq', text: '', faqItems: decodeFaq(faq[1]) });
     } else if (cardSlider) {
       blocks.push({ id: newId(), type: 'cardSlider', text: '', cardItems: decodeCardItems(cardSlider[1]) });
     } else if (events) {
@@ -274,6 +292,7 @@ export function blocksToBody(blocks: Block[]): string {
     else if (block.type === 'circles') line = block.text ? `{{circles:${block.text}}}` : '{{circles}}';
     else if (block.type === 'table') line = `{{table:${encodeTable(block.tableRows ?? [['', ''], ['', '']])}}}`;
     else if (block.type === 'cardSlider') line = `{{cardslider:${encodeCardItems(block.cardItems ?? [])}}}`;
+    else if (block.type === 'faq') line = `{{faq:${encodeFaq(block.faqItems ?? [])}}}`;
     else line = block.text;
     parts.push(line);
   });
@@ -503,6 +522,57 @@ function TableFields({ block, updateBlock }: { block: Block; updateBlock: (id: s
   );
 }
 
+function FaqFields({ block, updateBlock }: { block: Block; updateBlock: (id: string, patch: Partial<Block>) => void }) {
+  const items = block.faqItems ?? [];
+
+  function updateItem(index: number, patch: Partial<FaqPair>) {
+    const next = items.map((item, i) => (i === index ? { ...item, ...patch } : item));
+    updateBlock(block.id, { faqItems: next });
+  }
+
+  function removeItem(index: number) {
+    updateBlock(block.id, { faqItems: items.filter((_, i) => i !== index) });
+  }
+
+  function addItem() {
+    updateBlock(block.id, { faqItems: [...items, { q: '', a: '' }] });
+  }
+
+  return (
+    <div className="space-y-2">
+      {items.map((item, i) => (
+        <div key={i} className="space-y-1.5 rounded-lg border border-gray-100 bg-gray-50 p-2.5">
+          <div className="flex items-center gap-1.5">
+            <span className="shrink-0 text-xs font-bold text-[#06C755]">Q</span>
+            <input
+              value={item.q}
+              onChange={(e) => updateItem(i, { q: e.target.value })}
+              placeholder="質問を入力"
+              className="flex-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+            />
+            <button type="button" onClick={() => removeItem(i)} disabled={items.length <= 1} className="shrink-0 text-xs text-red-400 hover:text-red-600 disabled:opacity-30">
+              削除
+            </button>
+          </div>
+          <div className="flex items-start gap-1.5">
+            <span className="mt-1.5 shrink-0 text-xs font-bold text-gray-400">A</span>
+            <textarea
+              value={item.a}
+              onChange={(e) => updateItem(i, { a: e.target.value })}
+              rows={2}
+              placeholder="回答を入力"
+              className="flex-1 resize-y rounded-md border border-gray-200 bg-white px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+            />
+          </div>
+        </div>
+      ))}
+      <button type="button" onClick={addItem} className="w-full rounded-lg border border-dashed border-gray-300 py-1.5 text-xs text-gray-500 hover:border-[#06C755] hover:text-[#06C755]">
+        ＋ Q&A を追加
+      </button>
+    </div>
+  );
+}
+
 function CardSliderFields({
   block,
   updateBlock,
@@ -678,6 +748,7 @@ export default function BlockEditor({
       cardItems: type === 'cardSlider' ? [{ imageUrl: '', name: '', description: '', href: '' }] : undefined,
       eventsAreaSearchEnabled: type === 'events' ? false : undefined,
       eventsShowFilterTagEnabled: type === 'events' ? false : undefined,
+      faqItems: type === 'faq' ? [{ q: '', a: '' }] : undefined,
     };
     const next = [...blocks];
     next.splice(index, 0, block);
@@ -859,6 +930,8 @@ export default function BlockEditor({
               </div>
             ) : block.type === 'table' ? (
               <TableFields block={block} updateBlock={updateBlock} />
+            ) : block.type === 'faq' ? (
+              <FaqFields block={block} updateBlock={updateBlock} />
             ) : block.type === 'cardSlider' ? (
               <CardSliderFields
                 block={block}

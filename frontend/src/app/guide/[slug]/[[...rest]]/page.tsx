@@ -296,6 +296,15 @@ function extractFaqItems(body: string) {
 
   for (const raw of lines) {
     const line = raw.trim();
+    const faqBlock = FAQ_RE.exec(line);
+    if (faqBlock) {
+      for (const { q, a } of decodeFaq(faqBlock[1])) {
+        const question = plainMarkdown(q);
+        const answer = plainMarkdown(a);
+        if (question && answer) items.push({ question, answer });
+      }
+      continue;
+    }
     if (/^##\s+よくある質問/.test(line)) {
       inFaq = true;
       continue;
@@ -303,7 +312,8 @@ function extractFaqItems(body: string) {
     if (!inFaq) continue;
     if (line.startsWith('## ')) {
       pushCurrent();
-      break;
+      inFaq = false;
+      continue;
     }
     if (line.startsWith('### ')) {
       pushCurrent();
@@ -375,6 +385,7 @@ const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|([^|}]*)(?:\|(true|false)(?:\|(tr
 const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
 const TABLE_RE = /^\{\{table:(.+)\}\}$/;
 const CARD_SLIDER_RE = /^\{\{cardslider:(.+)\}\}$/;
+const FAQ_RE = /^\{\{faq:(.+)\}\}$/;
 
 function decodeTable(encoded: string): string[][] {
   try {
@@ -401,6 +412,33 @@ function decodeCardItems(encoded: string): CardItem[] {
     // fall through to default
   }
   return [];
+}
+
+type FaqPair = { q: string; a: string };
+
+function decodeFaq(encoded: string): FaqPair[] {
+  try {
+    const parsed = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    if (Array.isArray(parsed)) return parsed;
+  } catch {
+    // fall through to default
+  }
+  return [];
+}
+
+function FaqBlock({ items }: { items: FaqPair[] }) {
+  const valid = items.filter((item) => item.q && item.a);
+  if (valid.length === 0) return null;
+  return (
+    <div className="my-6 space-y-3">
+      {valid.map((item, i) => (
+        <div key={i} className="rounded-xl border border-gray-200 bg-white p-5">
+          <p className="font-bold text-gray-900">Q. {item.q}</p>
+          <p className="mt-2 text-sm leading-7 text-gray-600">A. {item.a}</p>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function CardSliderBlock({ items }: { items: CardItem[] }) {
@@ -639,6 +677,13 @@ function BodyRenderer({
     if (cardSlider) {
       flushParagraph();
       nodes.push(<CardSliderBlock key={i} items={decodeCardItems(cardSlider[1])} />);
+      i++;
+      continue;
+    }
+    const faq = FAQ_RE.exec(line);
+    if (faq) {
+      flushParagraph();
+      nodes.push(<FaqBlock key={i} items={decodeFaq(faq[1])} />);
       i++;
       continue;
     }

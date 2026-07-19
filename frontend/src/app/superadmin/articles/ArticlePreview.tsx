@@ -382,6 +382,20 @@ function BlockView({ block, category }: { block: Block; category: string }) {
   if (block.type === 'cardSlider') {
     return <CardSliderBlockView items={block.cardItems ?? []} />;
   }
+  if (block.type === 'faq') {
+    const items = (block.faqItems ?? []).filter((item) => item.q && item.a);
+    if (items.length === 0) return null;
+    return (
+      <div className="my-6 space-y-3">
+        {items.map((item, i) => (
+          <div key={i} className="rounded-xl border border-gray-200 bg-white p-5">
+            <p className="font-bold text-gray-900">Q. {item.q}</p>
+            <p className="mt-2 text-sm leading-7 text-gray-600">A. {item.a}</p>
+          </div>
+        ))}
+      </div>
+    );
+  }
   return <ParagraphText text={block.text} />;
 }
 
