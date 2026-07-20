@@ -459,7 +459,10 @@ async function fetchOwnCircle(code: string): Promise<OwnCircleTenant | null> {
     const tenant = await res.json();
     const slug = tenant.pages?.[0]?.slug;
     return {
-      name: tenant.lineDisplayName || tenant.name,
+      // Prefer the tenant's proper name over lineDisplayName - this block represents the team
+      // in official editorial copy, where the LINE OA's casually-cased chat display name (e.g.
+      // "gakuori") isn't the intended public brand casing.
+      name: tenant.name || tenant.lineDisplayName,
       description: tenant.description,
       imageUrl: tenant.linePictureUrl,
       href: slug ? `/clubs/${tenant.code}/${slug}` : `/clubs/${tenant.code}`,

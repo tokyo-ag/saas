@@ -248,7 +248,10 @@ function OwnCircleBlockPreview({ tenantCode }: { tenantCode?: string }) {
   if (!tenant) {
     return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">読み込み中...</p>;
   }
-  const displayName = tenant.lineDisplayName ?? tenant.name;
+  // Prefer the tenant's proper name over lineDisplayName here (unlike CirclesBlockPreview) -
+  // this block represents the team in official editorial copy, where the LINE OA's often
+  // casually-cased chat display name (e.g. "gakuori") isn't the intended public brand casing.
+  const displayName = tenant.name || tenant.lineDisplayName || '';
   return (
     <div className="my-6 flex gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
       {tenant.linePictureUrl ? (
