@@ -668,8 +668,22 @@ function CardSliderFields({
 
 
 function BlockTypePicker({ onPick, onClose }: { onPick: (type: BlockType) => void; onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleOutsideClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    }
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [onClose]);
+
   return (
-    <div className="absolute z-10 mt-1 w-48 rounded-lg border border-gray-200 bg-white shadow-lg">
+    <div ref={ref} className="absolute z-10 mt-1 w-48 rounded-lg border border-gray-200 bg-white shadow-lg">
+      <div className="flex items-center justify-between border-b border-gray-100 px-3 py-1.5">
+        <span className="text-[11px] font-bold text-gray-400">ブロックを選択</span>
+        <button type="button" onClick={onClose} aria-label="閉じる" className="text-gray-400 hover:text-gray-700">×</button>
+      </div>
       {(Object.keys(BLOCK_LABELS) as BlockType[]).map((type) => (
         <button
           key={type}
