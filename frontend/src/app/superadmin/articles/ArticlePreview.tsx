@@ -224,6 +224,50 @@ function CirclesBlockPreview({ category, heading }: { category: string; heading:
   );
 }
 
+function OwnCircleBlockPreview({ tenantCode }: { tenantCode?: string }) {
+  const [tenant, setTenant] = useState<PublicTenant | null>(null);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    setTenant(null);
+    setNotFound(false);
+    if (!tenantCode) return;
+    let active = true;
+    api.public.tenant(tenantCode)
+      .then((t) => { if (active) setTenant(t); })
+      .catch(() => { if (active) setNotFound(true); });
+    return () => { active = false; };
+  }, [tenantCode]);
+
+  if (!tenantCode) {
+    return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">埋め込む自社サークルを選択してください。</p>;
+  }
+  if (notFound) {
+    return <p className="my-6 rounded-lg bg-red-50 px-4 py-3 text-xs text-red-500">団体が見つかりませんでした（コード: {tenantCode}）。</p>;
+  }
+  if (!tenant) {
+    return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">読み込み中...</p>;
+  }
+  const displayName = tenant.lineDisplayName ?? tenant.name;
+  return (
+    <div className="my-6 flex gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      {tenant.linePictureUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={tenant.linePictureUrl} alt={displayName} className="h-20 w-20 shrink-0 rounded-lg object-cover" />
+      ) : (
+        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#06C755] to-[#047a35]">
+          <span className="text-xl font-bold text-white">{displayName.slice(0, 1)}</span>
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="font-bold text-gray-950">{displayName}</p>
+        {tenant.description && <p className="mt-1 line-clamp-2 text-sm leading-6 text-gray-500">{tenant.description}</p>}
+        <p className="mt-2 text-xs font-bold text-[#06C755]">団体ページを見る →</p>
+      </div>
+    </div>
+  );
+}
+
 function CheckBullet() {
   return (
     <svg width="24" height="24" viewBox="0 0 20 20" fill="none" className="mt-[1px] shrink-0">
@@ -381,6 +425,9 @@ function BlockView({ block, category }: { block: Block; category: string }) {
   }
   if (block.type === 'cardSlider') {
     return <CardSliderBlockView items={block.cardItems ?? []} />;
+  }
+  if (block.type === 'ownCircle') {
+    return <OwnCircleBlockPreview tenantCode={block.tenantCode} />;
   }
   if (block.type === 'faq') {
     const items = (block.faqItems ?? []).filter((item) => item.q && item.a);

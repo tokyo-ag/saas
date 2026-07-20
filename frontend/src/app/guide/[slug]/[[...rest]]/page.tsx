@@ -386,6 +386,7 @@ const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
 const TABLE_RE = /^\{\{table:(.+)\}\}$/;
 const CARD_SLIDER_RE = /^\{\{cardslider:(.+)\}\}$/;
 const FAQ_RE = /^\{\{faq:(.+)\}\}$/;
+const OWN_CIRCLE_RE = /^\{\{owncircle(?::([^}]*))?\}\}$/;
 
 function decodeTable(encoded: string): string[][] {
   try {
@@ -438,6 +439,62 @@ function FaqBlock({ items }: { items: FaqPair[] }) {
         </div>
       ))}
     </div>
+  );
+}
+
+type OwnCircleTenant = {
+  name: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  href: string;
+};
+
+// {{owncircle:code}} embeds a live-fetched COMIU-registered circle, unlike the manually-typed
+// cardSlider/imageText blocks used for external (non-COMIU) circles - so its name/image/link stay
+// accurate even after the organizer edits their own public page.
+async function fetchOwnCircle(code: string): Promise<OwnCircleTenant | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/tenants/${encodeURIComponent(code)}`, { next: { revalidate } });
+    if (!res.ok) return null;
+    const tenant = await res.json();
+    const slug = tenant.pages?.[0]?.slug;
+    return {
+      name: tenant.lineDisplayName || tenant.name,
+      description: tenant.description,
+      imageUrl: tenant.linePictureUrl,
+      href: slug ? `/clubs/${tenant.code}/${slug}` : `/clubs/${tenant.code}`,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function extractOwnCircleCodes(body: string): string[] {
+  const codes = new Set<string>();
+  for (const raw of body.split('\n')) {
+    const match = OWN_CIRCLE_RE.exec(raw.trim());
+    if (match?.[1]) codes.add(match[1]);
+  }
+  return Array.from(codes);
+}
+
+function OwnCircleBlock({ tenant }: { tenant: OwnCircleTenant | null | undefined }) {
+  if (!tenant) return null;
+  return (
+    <Link href={tenant.href} className="my-6 flex gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      {tenant.imageUrl ? (
+        <Image src={tenant.imageUrl} alt="" width={80} height={80} unoptimized className="h-20 w-20 shrink-0 rounded-lg object-cover" />
+      ) : (
+        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#06C755] to-[#047a35]">
+          <span className="text-xl font-bold text-white">{tenant.name.slice(0, 1)}</span>
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="font-bold text-gray-950">{tenant.name}</p>
+        {tenant.description && <p className="mt-1 line-clamp-2 text-sm leading-6 text-gray-500">{tenant.description}</p>}
+        <p className="mt-2 text-xs font-bold text-[#06C755]">団体ページを見る →</p>
+      </div>
+    </Link>
   );
 }
 
@@ -546,11 +603,13 @@ function BodyRenderer({
   eventsByTag,
   circles,
   category,
+  ownCirclesByCode,
 }: {
   body: string;
   eventsByTag: Map<string, PublicArticleEvent[]>;
   circles: PublicArticleTenant[];
   category?: string | null;
+  ownCirclesByCode: Map<string, OwnCircleTenant | null>;
 }) {
   const lines = body.split('\n');
   const nodes: ReactNode[] = [];
@@ -687,6 +746,14 @@ function BodyRenderer({
       i++;
       continue;
     }
+    const ownCircle = OWN_CIRCLE_RE.exec(line);
+    if (ownCircle) {
+      flushParagraph();
+      const code = ownCircle[1];
+      nodes.push(<OwnCircleBlock key={i} tenant={code ? ownCirclesByCode.get(code) : null} />);
+      i++;
+      continue;
+    }
     const imageTextV3 = IMAGE_TEXT_RE_V3.exec(line);
     const imageTextV2 = IMAGE_TEXT_RE_V2.exec(line);
     const imageTextV1 = IMAGE_TEXT_RE_V1.exec(line);
@@ -789,11 +856,14 @@ export default async function GuideArticlePage({
   if (!article) notFound();
   const eventsFetchKeys = extractEventsFetchKeys(article.body);
   const hasCirclesBlock = /\{\{circles/.test(article.body);
-  const [eventsByTagEntries, circles] = await Promise.all([
+  const ownCircleCodes = extractOwnCircleCodes(article.body);
+  const [eventsByTagEntries, circles, ownCircleEntries] = await Promise.all([
     Promise.all(eventsFetchKeys.map(async (tag) => [tag ?? '', await fetchCategoryEvents(article.category, tag)] as const)),
     hasCirclesBlock ? fetchCircles(article.category) : Promise.resolve([]),
+    Promise.all(ownCircleCodes.map(async (code) => [code, await fetchOwnCircle(code)] as const)),
   ]);
   const eventsByTag = new Map<string, PublicArticleEvent[]>(eventsByTagEntries);
+  const ownCirclesByCode = new Map<string, OwnCircleTenant | null>(ownCircleEntries);
   const hasInlineCta = /\{\{cta:/.test(article.body);
 
   const articleUrl = `${SITE_URL}/guide/${slug}`;
@@ -899,7 +969,7 @@ export default async function GuideArticlePage({
             </div>
             <h1 className="mt-4 text-2xl font-bold leading-tight text-gray-950 sm:text-3xl">{article.title}</h1>
             <div className="my-8 h-px bg-gray-100" />
-            <BodyRenderer body={article.body} eventsByTag={eventsByTag} circles={circles} category={article.category} />
+            <BodyRenderer body={article.body} eventsByTag={eventsByTag} circles={circles} category={article.category} ownCirclesByCode={ownCirclesByCode} />
           </div>
 
           {teamRelatedByCategory.length > 0 && (

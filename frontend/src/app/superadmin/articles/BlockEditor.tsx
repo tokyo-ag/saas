@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { SEARCH_TAGS } from '@/lib/lpTags';
 import { UploadButton } from '@/components/admin/EventFormPrimitives';
+import { api, TenantWithStats } from '@/lib/api';
 
 async function compressImage(file: File, maxBytes = 4 * 1024 * 1024): Promise<Blob> {
   if (file.size <= maxBytes) return file;
@@ -38,7 +39,7 @@ export async function uploadFile(file: File): Promise<string> {
   return data.url as string;
 }
 
-export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'imageText' | 'textImage' | 'cta' | 'events' | 'circles' | 'table' | 'cardSlider' | 'faq';
+export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'imageText' | 'textImage' | 'cta' | 'events' | 'circles' | 'table' | 'cardSlider' | 'faq' | 'ownCircle';
 
 export type ListStyle = 'check' | 'bullet' | 'number';
 export type ImageSize = 'small' | 'medium' | 'large';
@@ -77,6 +78,7 @@ export type Block = {
   eventsAreaSearchEnabled?: boolean;
   eventsShowFilterTagEnabled?: boolean;
   faqItems?: FaqPair[];
+  tenantCode?: string;
 };
 
 // UTF-8-safe base64 so embedded Japanese/symbol text survives being placed in a single-line marker.
@@ -149,6 +151,7 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   table: '表（比較表）',
   cardSlider: 'カードスライド（横スクロール）',
   faq: 'FAQ（よくある質問）',
+  ownCircle: '自社サークル埋め込み',
 };
 
 // Color-codes each block type by role so the block list stays visually scannable - a left
@@ -168,6 +171,7 @@ const BLOCK_COLOR: Record<BlockType, { border: string; pill: string }> = {
   table: { border: 'border-l-amber-400', pill: 'bg-amber-50 text-amber-700' },
   cardSlider: { border: 'border-l-amber-400', pill: 'bg-amber-50 text-amber-700' },
   faq: { border: 'border-l-amber-400', pill: 'bg-amber-50 text-amber-700' },
+  ownCircle: { border: 'border-l-indigo-400', pill: 'bg-indigo-50 text-indigo-600' },
 };
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
@@ -182,6 +186,7 @@ const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
 const TABLE_RE = /^\{\{table:(.+)\}\}$/;
 const CARD_SLIDER_RE = /^\{\{cardslider:(.+)\}\}$/;
 const FAQ_RE = /^\{\{faq:(.+)\}\}$/;
+const OWN_CIRCLE_RE = /^\{\{owncircle(?::([^}]*))?\}\}$/;
 
 function newId() {
   return Math.random().toString(36).slice(2, 10);
@@ -208,10 +213,13 @@ export function parseBodyToBlocks(body: string): Block[] {
     const table = TABLE_RE.exec(line);
     const cardSlider = CARD_SLIDER_RE.exec(line);
     const faq = FAQ_RE.exec(line);
+    const ownCircle = OWN_CIRCLE_RE.exec(line);
     if (table) {
       blocks.push({ id: newId(), type: 'table', text: '', tableRows: decodeTable(table[1]) });
     } else if (faq) {
       blocks.push({ id: newId(), type: 'faq', text: '', faqItems: decodeFaq(faq[1]) });
+    } else if (ownCircle) {
+      blocks.push({ id: newId(), type: 'ownCircle', text: '', tenantCode: ownCircle[1] || '' });
     } else if (cardSlider) {
       blocks.push({ id: newId(), type: 'cardSlider', text: '', cardItems: decodeCardItems(cardSlider[1]) });
     } else if (events) {
@@ -312,6 +320,7 @@ export function blocksToBody(blocks: Block[]): string {
     else if (block.type === 'table') line = `{{table:${encodeTable(block.tableRows ?? [['', ''], ['', '']])}}}`;
     else if (block.type === 'cardSlider') line = `{{cardslider:${encodeCardItems(block.cardItems ?? [])}}}`;
     else if (block.type === 'faq') line = `{{faq:${encodeFaq(block.faqItems ?? [])}}}`;
+    else if (block.type === 'ownCircle') line = block.tenantCode ? `{{owncircle:${block.tenantCode}}}` : '{{owncircle}}';
     else line = block.text;
     parts.push(line);
   });
@@ -592,6 +601,67 @@ function FaqFields({ block, updateBlock }: { block: Block; updateBlock: (id: str
   );
 }
 
+function OwnCircleFields({ block, updateBlock }: { block: Block; updateBlock: (id: string, patch: Partial<Block>) => void }) {
+  const [tenants, setTenants] = useState<TenantWithStats[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
+
+  useEffect(() => {
+    api.superadmin.list()
+      .then((list) => setTenants(list.filter((t) => t.code && !t.bannedAt && !t.deletedAt)))
+      .catch(() => setTenants([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const selected = tenants.find((t) => t.code === block.tenantCode);
+  const filtered = query.trim()
+    ? tenants.filter((t) => t.name.includes(query) || (t.code ?? '').includes(query))
+    : tenants;
+
+  if (selected) {
+    return (
+      <div className="flex items-center justify-between rounded-md border border-[#06C755] bg-[#06C755]/5 px-3 py-2">
+        <span className="text-sm">
+          <span className="font-bold text-gray-900">{selected.name}</span>
+          <span className="ml-1.5 text-xs text-gray-400">({selected.code})</span>
+        </span>
+        <button type="button" onClick={() => updateBlock(block.id, { tenantCode: '' })} className="shrink-0 text-xs text-gray-400 hover:text-red-500">
+          変更
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="団体名またはコードで検索"
+        className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+      />
+      <div className="max-h-48 overflow-y-auto rounded-md border border-gray-100">
+        {loading ? (
+          <p className="px-3 py-2 text-xs text-gray-400">読み込み中...</p>
+        ) : filtered.length === 0 ? (
+          <p className="px-3 py-2 text-xs text-gray-400">団体が見つかりません</p>
+        ) : (
+          filtered.slice(0, 30).map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => updateBlock(block.id, { tenantCode: t.code ?? '' })}
+              className="block w-full border-b border-gray-50 px-3 py-2 text-left text-sm last:border-0 hover:bg-gray-50"
+            >
+              {t.name} <span className="text-xs text-gray-400">({t.code})</span>
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 function CardSliderFields({
   block,
   updateBlock,
@@ -782,6 +852,7 @@ export default function BlockEditor({
       eventsAreaSearchEnabled: type === 'events' ? false : undefined,
       eventsShowFilterTagEnabled: type === 'events' ? false : undefined,
       faqItems: type === 'faq' ? [{ q: '', a: '' }] : undefined,
+      tenantCode: type === 'ownCircle' ? '' : undefined,
     };
     const next = [...blocks];
     next.splice(index, 0, block);
@@ -965,6 +1036,8 @@ export default function BlockEditor({
               <TableFields block={block} updateBlock={updateBlock} />
             ) : block.type === 'faq' ? (
               <FaqFields block={block} updateBlock={updateBlock} />
+            ) : block.type === 'ownCircle' ? (
+              <OwnCircleFields block={block} updateBlock={updateBlock} />
             ) : block.type === 'cardSlider' ? (
               <CardSliderFields
                 block={block}
