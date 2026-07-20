@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, API_URL, Event, Tenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
-import { getEventTagGroups, LOCATION_TAGS, TOKYO_WARDS, OTHER_PREFECTURE_TAGS, WARD_SUBAREAS, SEARCH_TAGS, MEETUP_SEARCH_TAGS } from '@/lib/lpTags';
+import { getEventTagGroups, LOCATION_TAGS, TOKYO_WARDS, TOKYO_CITIES, OTHER_PREFECTURE_TAGS, WARD_SUBAREAS, SEARCH_TAGS, MEETUP_SEARCH_TAGS } from '@/lib/lpTags';
 import { Section, Field, RadioGroup, Check, UploadButton } from './EventFormPrimitives';
 
 type EventFormData = {
@@ -142,6 +142,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
   const [isPro, setIsPro] = useState(false);
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [tokyoExpanded, setTokyoExpanded] = useState(false);
+  const [tamaExpanded, setTamaExpanded] = useState(false);
   const isLineConfigured = !!tenant?.lineConfigured;
   const initialHeldAt = toLocalDatetimeValue(initial?.heldAt);
   const initialEndAt = initial?.endAt
@@ -541,8 +542,11 @@ export default function EventForm({ initial }: { initial?: Event }) {
             {getEventTagGroups(form.category).map((group) => {
               if (group.label === '場所タグ') {
                 const selectedWard = TOKYO_WARDS.find((t) => form.tags.includes(t));
+                const selectedCity = TOKYO_CITIES.find((t) => form.tags.includes(t));
+                const selectedArea = selectedWard ?? selectedCity;
                 const showWards = tokyoExpanded || !!selectedWard;
-                const subareaOptions = selectedWard ? WARD_SUBAREAS[selectedWard] ?? [] : [];
+                const showCities = tamaExpanded || !!selectedCity;
+                const subareaOptions = selectedArea ? WARD_SUBAREAS[selectedArea] ?? [] : [];
                 return (
                   <div key={group.label}>
                     <p className="mb-1.5 text-xs font-bold text-gray-500">{group.label}</p>
@@ -557,6 +561,17 @@ export default function EventForm({ initial }: { initial?: Event }) {
                         }`}
                       >
                         東京23区
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTamaExpanded((v) => !v)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                          showCities
+                            ? 'bg-[#06C755] text-white border-[#06C755]'
+                            : 'bg-white text-gray-600 border-gray-300 hover:border-[#06C755]'
+                        }`}
+                      >
+                        東京都下
                       </button>
                       {OTHER_PREFECTURE_TAGS.map((tag) => (
                         <button
@@ -594,9 +609,30 @@ export default function EventForm({ initial }: { initial?: Event }) {
                         </div>
                       </div>
                     )}
+                    {showCities && (
+                      <div className="mt-2 pl-3 border-l-2 border-[#06C755]/30">
+                        <p className="mb-1.5 text-xs text-gray-400">東京都下（任意で1つ選択）</p>
+                        <div className="flex flex-wrap gap-2">
+                          {TOKYO_CITIES.map((city) => (
+                            <button
+                              key={city}
+                              type="button"
+                              onClick={() => selectWard(city)}
+                              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                                form.tags.includes(city)
+                                  ? 'bg-[#06C755] text-white border-[#06C755]'
+                                  : 'bg-white text-gray-600 border-gray-300 hover:border-[#06C755]'
+                              }`}
+                            >
+                              {city}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     {subareaOptions.length > 0 && (
                       <div className="mt-2 pl-6 border-l-2 border-[#06C755]/30">
-                        <p className="mb-1.5 text-xs text-gray-400">{selectedWard}の細かいエリア（任意）</p>
+                        <p className="mb-1.5 text-xs text-gray-400">{selectedArea}の細かいエリア（任意）</p>
                         <div className="flex flex-wrap gap-2">
                           {subareaOptions.map((subarea) => (
                             <button

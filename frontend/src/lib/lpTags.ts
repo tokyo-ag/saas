@@ -30,19 +30,24 @@ export const TOKYO_WARDS = [
   '江戸川区',
 ] as const;
 
+// 東京都下（多摩地域）の主要市 - 23区と同じ「東京都下」グルーピングの下にぶら下がる、有名・大きい
+// ターゲットが見込める市のみを厳選（全市町村は網羅しない）。
+export const TOKYO_CITIES = ['武蔵野市', '三鷹市', '立川市', '八王子市', '町田市', '調布市'] as const;
+
 // Other prefecture-level tags, selected directly (no ward breakdown for these yet).
 export const OTHER_PREFECTURE_TAGS = ['埼玉', '千葉', '神奈川'] as const;
 
-// Finer-grained areas within a ward. Selecting the ward reveals these as additional options;
-// picking one is saved alongside the ward tag (not instead of it). Only wards with a confirmed
-// list are populated here - unlisted wards simply have no sub-area options yet.
+// Finer-grained areas within a ward/city. Selecting the parent reveals these as additional
+// options; picking one is saved alongside the parent tag (not instead of it). Only areas with a
+// confirmed list are populated here - unlisted ones simply have no sub-area options yet.
 export const WARD_SUBAREAS: Record<string, readonly string[]> = {
   '豊島区': ['千川', '要町', '小竹向原'],
+  '武蔵野市': ['吉祥寺'],
 };
 
-// Every real, savable location value (wards + other prefectures) - excludes the "東京23区"
-// grouping label itself, which is a UI-only parent, never a tag value on its own.
-export const LOCATION_TAGS = [...TOKYO_WARDS, ...OTHER_PREFECTURE_TAGS] as const;
+// Every real, savable location value (wards + cities + other prefectures) - excludes the
+// "東京23区"/"東京都下" grouping labels themselves, which are UI-only parents, never tag values.
+export const LOCATION_TAGS = [...TOKYO_WARDS, ...TOKYO_CITIES, ...OTHER_PREFECTURE_TAGS] as const;
 
 export const ALL_LOCATION_TAGS: readonly string[] = [
   ...LOCATION_TAGS,
@@ -86,8 +91,11 @@ export const AREA_SLUGS: Record<string, string> = {
   '渋谷区': 'shibuya', '中野区': 'nakano', '杉並区': 'suginami', '豊島区': 'toshima',
   '北区': 'kita', '荒川区': 'arakawa', '板橋区': 'itabashi', '練馬区': 'nerima',
   '足立区': 'adachi', '葛飾区': 'katsushika', '江戸川区': 'edogawa',
+  '武蔵野市': 'musashino', '三鷹市': 'mitaka', '立川市': 'tachikawa',
+  '八王子市': 'hachioji', '町田市': 'machida', '調布市': 'chofu',
   '埼玉': 'saitama', '千葉': 'chiba', '神奈川': 'kanagawa',
   '千川': 'senkawa', '要町': 'kanamecho', '小竹向原': 'kotakemukaihara',
+  '吉祥寺': 'kichijoji',
 };
 export const AREA_SLUG_TO_JAPANESE: Record<string, string> = Object.fromEntries(
   Object.entries(AREA_SLUGS).map(([ja, slug]) => [slug, ja]),
