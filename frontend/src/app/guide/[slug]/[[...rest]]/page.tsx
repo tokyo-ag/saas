@@ -387,6 +387,7 @@ const TABLE_RE = /^\{\{table:(.+)\}\}$/;
 const CARD_SLIDER_RE = /^\{\{cardslider:(.+)\}\}$/;
 const FAQ_RE = /^\{\{faq:(.+)\}\}$/;
 const OWN_CIRCLE_RE = /^\{\{owncircle(?::([^}]*))?\}\}$/;
+const EXTERNAL_CIRCLE_RE = /^\{\{extcircle:([^|]*)\|([^|]*)\|([^|]*)\|(.*)\}\}$/;
 
 function decodeTable(encoded: string): string[][] {
   try {
@@ -499,6 +500,36 @@ function OwnCircleBlock({ tenant }: { tenant: OwnCircleTenant | null | undefined
       </div>
     </Link>
   );
+}
+
+// Introduces a circle not registered on COMIU (imageUrl/name/description/href are hand-entered
+// by the article author, unlike OwnCircleBlock's live-fetched data) - same card visual as
+// OwnCircleBlock for consistency when the two are mixed in the same numbered list.
+function ExternalCircleBlock({ imageUrl, name, description, href }: { imageUrl?: string; name?: string; description?: string; href?: string }) {
+  if (!name) return null;
+  const content = (
+    <>
+      {imageUrl ? (
+        <Image src={imageUrl} alt="" width={80} height={80} unoptimized className="h-20 w-20 shrink-0 rounded-lg object-cover" />
+      ) : (
+        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-gray-400 to-gray-600">
+          <span className="text-xl font-bold text-white">{name.slice(0, 1)}</span>
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="font-bold text-gray-950">{name}</p>
+        {description && <p className="mt-1 line-clamp-2 text-sm leading-6 text-gray-500">{description}</p>}
+      </div>
+    </>
+  );
+  if (href) {
+    return (
+      <Link href={href} target="_blank" rel="noopener noreferrer" className="my-6 flex gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+        {content}
+      </Link>
+    );
+  }
+  return <div className="my-6 flex gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">{content}</div>;
 }
 
 function CardSliderBlock({ items }: { items: CardItem[] }) {
@@ -754,6 +785,21 @@ function BodyRenderer({
       flushParagraph();
       const code = ownCircle[1];
       nodes.push(<OwnCircleBlock key={i} tenant={code ? ownCirclesByCode.get(code) : null} />);
+      i++;
+      continue;
+    }
+    const externalCircle = EXTERNAL_CIRCLE_RE.exec(line);
+    if (externalCircle) {
+      flushParagraph();
+      nodes.push(
+        <ExternalCircleBlock
+          key={i}
+          imageUrl={externalCircle[1] || undefined}
+          href={externalCircle[2] || undefined}
+          name={externalCircle[3] || undefined}
+          description={externalCircle[4].replace(/\\n/g, '\n') || undefined}
+        />,
+      );
       i++;
       continue;
     }

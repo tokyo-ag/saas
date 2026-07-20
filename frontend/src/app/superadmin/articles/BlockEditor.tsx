@@ -39,7 +39,7 @@ export async function uploadFile(file: File): Promise<string> {
   return data.url as string;
 }
 
-export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'imageText' | 'textImage' | 'cta' | 'events' | 'circles' | 'table' | 'cardSlider' | 'faq' | 'ownCircle';
+export type BlockType = 'paragraph' | 'h2' | 'h3' | 'list' | 'image' | 'imageText' | 'textImage' | 'cta' | 'events' | 'circles' | 'table' | 'cardSlider' | 'faq' | 'ownCircle' | 'externalCircle';
 
 export type ListStyle = 'check' | 'bullet' | 'number';
 export type ImageSize = 'small' | 'medium' | 'large';
@@ -79,6 +79,7 @@ export type Block = {
   eventsShowFilterTagEnabled?: boolean;
   faqItems?: FaqPair[];
   tenantCode?: string;
+  name?: string;
 };
 
 // UTF-8-safe base64 so embedded Japanese/symbol text survives being placed in a single-line marker.
@@ -152,6 +153,7 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   cardSlider: 'カードスライド（横スクロール）',
   faq: 'FAQ（よくある質問）',
   ownCircle: '自社サークル埋め込み',
+  externalCircle: '外部サークルカード',
 };
 
 // Color-codes each block type by role so the block list stays visually scannable - a left
@@ -172,6 +174,7 @@ const BLOCK_COLOR: Record<BlockType, { border: string; pill: string }> = {
   cardSlider: { border: 'border-l-amber-400', pill: 'bg-amber-50 text-amber-700' },
   faq: { border: 'border-l-amber-400', pill: 'bg-amber-50 text-amber-700' },
   ownCircle: { border: 'border-l-indigo-400', pill: 'bg-indigo-50 text-indigo-600' },
+  externalCircle: { border: 'border-l-teal-400', pill: 'bg-teal-50 text-teal-600' },
 };
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
@@ -187,6 +190,7 @@ const TABLE_RE = /^\{\{table:(.+)\}\}$/;
 const CARD_SLIDER_RE = /^\{\{cardslider:(.+)\}\}$/;
 const FAQ_RE = /^\{\{faq:(.+)\}\}$/;
 const OWN_CIRCLE_RE = /^\{\{owncircle(?::([^}]*))?\}\}$/;
+const EXTERNAL_CIRCLE_RE = /^\{\{extcircle:([^|]*)\|([^|]*)\|([^|]*)\|(.*)\}\}$/;
 
 function newId() {
   return Math.random().toString(36).slice(2, 10);
@@ -214,12 +218,22 @@ export function parseBodyToBlocks(body: string): Block[] {
     const cardSlider = CARD_SLIDER_RE.exec(line);
     const faq = FAQ_RE.exec(line);
     const ownCircle = OWN_CIRCLE_RE.exec(line);
+    const externalCircle = EXTERNAL_CIRCLE_RE.exec(line);
     if (table) {
       blocks.push({ id: newId(), type: 'table', text: '', tableRows: decodeTable(table[1]) });
     } else if (faq) {
       blocks.push({ id: newId(), type: 'faq', text: '', faqItems: decodeFaq(faq[1]) });
     } else if (ownCircle) {
       blocks.push({ id: newId(), type: 'ownCircle', text: '', tenantCode: ownCircle[1] || '' });
+    } else if (externalCircle) {
+      blocks.push({
+        id: newId(),
+        type: 'externalCircle',
+        text: externalCircle[4].replace(/\\n/g, '\n'),
+        imageUrl: externalCircle[1],
+        href: externalCircle[2] || undefined,
+        name: externalCircle[3],
+      });
     } else if (cardSlider) {
       blocks.push({ id: newId(), type: 'cardSlider', text: '', cardItems: decodeCardItems(cardSlider[1]) });
     } else if (events) {
@@ -321,6 +335,9 @@ export function blocksToBody(blocks: Block[]): string {
     else if (block.type === 'cardSlider') line = `{{cardslider:${encodeCardItems(block.cardItems ?? [])}}}`;
     else if (block.type === 'faq') line = `{{faq:${encodeFaq(block.faqItems ?? [])}}}`;
     else if (block.type === 'ownCircle') line = block.tenantCode ? `{{owncircle:${block.tenantCode}}}` : '{{owncircle}}';
+    else if (block.type === 'externalCircle') {
+      line = `{{extcircle:${block.imageUrl ?? ''}|${block.href ?? ''}|${block.name ?? ''}|${block.text.replace(/\n/g, '\\n')}}}`;
+    }
     else line = block.text;
     parts.push(line);
   });
@@ -662,6 +679,59 @@ function OwnCircleFields({ block, updateBlock }: { block: Block; updateBlock: (i
   );
 }
 
+function ExternalCircleFields({
+  block,
+  updateBlock,
+  uploadingId,
+  setUploadingId,
+  setUploadError,
+}: {
+  block: Block;
+  updateBlock: (id: string, patch: Partial<Block>) => void;
+  uploadingId: string | null;
+  setUploadingId: (id: string | null) => void;
+  setUploadError: (message: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      {block.imageUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={block.imageUrl} alt="" className="h-20 w-20 rounded-lg border border-gray-100 object-cover" />
+      )}
+      <UploadButton
+        uploading={uploadingId === block.id}
+        onUpload={async (file) => { const url = await uploadFile(file); updateBlock(block.id, { imageUrl: url }); }}
+        setUploading={(v) => setUploadingId(v ? block.id : null)}
+        setError={setUploadError}
+      />
+      {block.imageUrl && (
+        <button type="button" onClick={() => updateBlock(block.id, { imageUrl: '' })} className="text-xs text-red-500 hover:underline">
+          画像を削除
+        </button>
+      )}
+      <input
+        value={block.name ?? ''}
+        onChange={(e) => updateBlock(block.id, { name: e.target.value })}
+        placeholder="団体名 例: ○○テニス同好会"
+        className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+      />
+      <textarea
+        value={block.text}
+        onChange={(e) => updateBlock(block.id, { text: e.target.value })}
+        rows={3}
+        placeholder="概要（活動場所、雰囲気、新歓情報など）"
+        className="w-full resize-y rounded-md border border-gray-200 px-2.5 py-1.5 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+      />
+      <input
+        value={block.href ?? ''}
+        onChange={(e) => updateBlock(block.id, { href: e.target.value })}
+        placeholder="リンク先URL（任意）"
+        className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+      />
+    </div>
+  );
+}
+
 function CardSliderFields({
   block,
   updateBlock,
@@ -846,13 +916,14 @@ export default function BlockEditor({
       id: newId(),
       type,
       text: '',
-      imageUrl: (type === 'image' || type === 'imageText' || type === 'textImage') ? '' : undefined,
+      imageUrl: (type === 'image' || type === 'imageText' || type === 'textImage' || type === 'externalCircle') ? '' : undefined,
       tableRows: type === 'table' ? [['見出し1', '見出し2'], ['', '']] : undefined,
       cardItems: type === 'cardSlider' ? [{ imageUrl: '', name: '', description: '', href: '' }] : undefined,
       eventsAreaSearchEnabled: type === 'events' ? false : undefined,
       eventsShowFilterTagEnabled: type === 'events' ? false : undefined,
       faqItems: type === 'faq' ? [{ q: '', a: '' }] : undefined,
       tenantCode: type === 'ownCircle' ? '' : undefined,
+      name: type === 'externalCircle' ? '' : undefined,
     };
     const next = [...blocks];
     next.splice(index, 0, block);
@@ -1038,6 +1109,14 @@ export default function BlockEditor({
               <FaqFields block={block} updateBlock={updateBlock} />
             ) : block.type === 'ownCircle' ? (
               <OwnCircleFields block={block} updateBlock={updateBlock} />
+            ) : block.type === 'externalCircle' ? (
+              <ExternalCircleFields
+                block={block}
+                updateBlock={updateBlock}
+                uploadingId={uploadingId}
+                setUploadingId={setUploadingId}
+                setUploadError={setUploadError}
+              />
             ) : block.type === 'cardSlider' ? (
               <CardSliderFields
                 block={block}

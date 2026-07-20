@@ -271,6 +271,28 @@ function OwnCircleBlockPreview({ tenantCode }: { tenantCode?: string }) {
   );
 }
 
+function ExternalCircleBlockPreview({ name, description, imageUrl }: { name?: string; description?: string; imageUrl?: string }) {
+  if (!name) {
+    return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">外部サークルの団体名を入力してください。</p>;
+  }
+  return (
+    <div className="my-6 flex gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      {imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={imageUrl} alt={name} className="h-20 w-20 shrink-0 rounded-lg object-cover" />
+      ) : (
+        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-gray-400 to-gray-600">
+          <span className="text-xl font-bold text-white">{name.slice(0, 1)}</span>
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="font-bold text-gray-950">{name}</p>
+        {description && <p className="mt-1 line-clamp-2 text-sm leading-6 text-gray-500">{description}</p>}
+      </div>
+    </div>
+  );
+}
+
 function CheckBullet() {
   return (
     <svg width="24" height="24" viewBox="0 0 20 20" fill="none" className="mt-[1px] shrink-0">
@@ -431,6 +453,9 @@ function BlockView({ block, category }: { block: Block; category: string }) {
   }
   if (block.type === 'ownCircle') {
     return <OwnCircleBlockPreview tenantCode={block.tenantCode} />;
+  }
+  if (block.type === 'externalCircle') {
+    return <ExternalCircleBlockPreview name={block.name} description={block.text} imageUrl={block.imageUrl} />;
   }
   if (block.type === 'faq') {
     const items = (block.faqItems ?? []).filter((item) => item.q && item.a);
