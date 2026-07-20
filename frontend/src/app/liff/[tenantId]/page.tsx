@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { api, API_URL, formatDateShort, LiffEvent, LiffTenant, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
+import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
 import { initLiff, getLiffProfile } from '@/lib/liff';
 import { EventCardSkeleton } from '@/components/liff/EventCardSkeleton';
@@ -69,11 +70,7 @@ function EventCard({ event, tenantId, accentColor, cardBg, myStatus }: { event: 
       style={{ backgroundColor: cardBg, boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
     >
       <div className="relative aspect-[1/1]">
-        {img ? (
-          <Image src={img} alt={event.title} fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" unoptimized />
-        ) : (
-          <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${accentColor}, #111827)` }} />
-        )}
+        <Image src={img || DEFAULT_EVENT_IMAGE} alt={event.title} fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" unoptimized />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-2.5">
           <p className="text-white font-bold text-[13px] leading-snug" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
