@@ -151,6 +151,25 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   faq: 'FAQ（よくある質問）',
 };
 
+// Color-codes each block type by role so the block list stays visually scannable - a left
+// accent bar + tinted pill label, so the type is readable without stopping to read the text.
+// Structural (headings) / body text / data (image) / interactive (CTA/cards) / structured (table etc).
+const BLOCK_COLOR: Record<BlockType, { border: string; pill: string }> = {
+  h2: { border: 'border-l-blue-400', pill: 'bg-blue-50 text-blue-600' },
+  h3: { border: 'border-l-blue-300', pill: 'bg-blue-50 text-blue-500' },
+  paragraph: { border: 'border-l-gray-300', pill: 'bg-gray-100 text-gray-500' },
+  list: { border: 'border-l-violet-400', pill: 'bg-violet-50 text-violet-600' },
+  image: { border: 'border-l-pink-400', pill: 'bg-pink-50 text-pink-600' },
+  imageText: { border: 'border-l-pink-400', pill: 'bg-pink-50 text-pink-600' },
+  textImage: { border: 'border-l-pink-400', pill: 'bg-pink-50 text-pink-600' },
+  cta: { border: 'border-l-[#06C755]', pill: 'bg-[#06C755]/10 text-[#06C755]' },
+  events: { border: 'border-l-indigo-400', pill: 'bg-indigo-50 text-indigo-600' },
+  circles: { border: 'border-l-indigo-400', pill: 'bg-indigo-50 text-indigo-600' },
+  table: { border: 'border-l-amber-400', pill: 'bg-amber-50 text-amber-700' },
+  cardSlider: { border: 'border-l-amber-400', pill: 'bg-amber-50 text-amber-700' },
+  faq: { border: 'border-l-amber-400', pill: 'bg-amber-50 text-amber-700' },
+};
+
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 const LINKED_IMAGE_RE = /^\[!\[([^\]]*)\]\(([^)]+)\)\]\(([^)]+)\)$/;
 const IMAGE_TEXT_RE_V3 = /^\{\{imagetext:([^|]*)\|([^|]*)\|(small|medium|large)\|(small|medium|large)\|(.*)\}\}$/;
@@ -808,9 +827,9 @@ export default function BlockEditor({
       <AddBlockButton onAdd={(type) => insertAt(0, type)} />
       {blocks.map((block, index) => (
         <div key={block.id}>
-          <div className="group relative rounded-lg border border-gray-200 bg-white p-3">
+          <div className={`group relative rounded-lg border border-l-4 border-gray-200 bg-white p-3 ${BLOCK_COLOR[block.type].border}`}>
             <div className="mb-2 flex items-center justify-between">
-              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-bold text-gray-500">{BLOCK_LABELS[block.type]}</span>
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${BLOCK_COLOR[block.type].pill}`}>{BLOCK_LABELS[block.type]}</span>
               <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                 <button type="button" onClick={() => moveBlock(index, -1)} disabled={index === 0} className="rounded px-1.5 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30">↑</button>
                 <button type="button" onClick={() => moveBlock(index, 1)} disabled={index === blocks.length - 1} className="rounded px-1.5 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30">↓</button>
