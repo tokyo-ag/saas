@@ -700,7 +700,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
         />
         {form.capacityMode === 'total' && (
           <div className="flex max-w-44 items-center gap-2">
-            <input type="number" min={5} step={5} value={form.capacity} onChange={(e) => set('capacity', e.target.value)} placeholder="30" className={inputClass} />
+            <input type="number" min={5} max={300} step={5} value={form.capacity} onChange={(e) => set('capacity', e.target.value)} placeholder="30" className={inputClass} />
             <span className="text-sm text-gray-500">人</span>
           </div>
         )}
@@ -708,13 +708,13 @@ export default function EventForm({ initial }: { initial?: Event }) {
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="男性">
               <div className="flex items-center gap-2">
-                <input type="number" min={0} step={5} value={form.capacityMale} onChange={(e) => set('capacityMale', e.target.value)} className={inputClass} />
+                <input type="number" min={0} max={300} step={5} value={form.capacityMale} onChange={(e) => set('capacityMale', e.target.value)} className={inputClass} />
                 <span className="text-sm text-gray-500">人</span>
               </div>
             </Field>
             <Field label="女性">
               <div className="flex items-center gap-2">
-                <input type="number" min={0} step={5} value={form.capacityFemale} onChange={(e) => set('capacityFemale', e.target.value)} className={inputClass} />
+                <input type="number" min={0} max={300} step={5} value={form.capacityFemale} onChange={(e) => set('capacityFemale', e.target.value)} className={inputClass} />
                 <span className="text-sm text-gray-500">人</span>
               </div>
             </Field>
