@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, API_URL, Event, Tenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
-import { EVENT_TAG_GROUPS, LOCATION_TAGS, TOKYO_WARDS, OTHER_PREFECTURE_TAGS, WARD_SUBAREAS } from '@/lib/lpTags';
+import { getEventTagGroups, LOCATION_TAGS, TOKYO_WARDS, OTHER_PREFECTURE_TAGS, WARD_SUBAREAS, SEARCH_TAGS, MEETUP_SEARCH_TAGS } from '@/lib/lpTags';
 import { Section, Field, RadioGroup, Check, UploadButton } from './EventFormPrimitives';
 
 type EventFormData = {
@@ -43,7 +43,9 @@ type EventFormData = {
 const inputClass = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]';
 const ALL_SUBAREAS: readonly string[] = Object.values(WARD_SUBAREAS).flat();
 const EVENT_TAG_VALUES: readonly string[] = [
-  ...EVENT_TAG_GROUPS.flatMap((group) => [...group.tags]),
+  ...LOCATION_TAGS,
+  ...SEARCH_TAGS,
+  ...MEETUP_SEARCH_TAGS,
   ...ALL_SUBAREAS,
 ];
 export const PORTAL_CATEGORY_TAGS = ['交流会', 'バドミントン', 'バスケ', 'フットサル', 'バレー'];
@@ -314,6 +316,19 @@ export default function EventForm({ initial }: { initial?: Event }) {
     if (tmpl) set('description', tmpl);
   }
 
+  // The 検索タグ options shown depend on category (meetup vs. everything else) - drop any
+  // already-selected search tag that isn't valid for the newly picked category, so switching
+  // e.g. バドミントン -> 交流会 doesn't silently keep "ラケット貸出有り" selected.
+  function handleCategoryChange(category: string) {
+    const validSearchTags: readonly string[] = category === 'meetup' ? MEETUP_SEARCH_TAGS : SEARCH_TAGS;
+    const allSearchTags: readonly string[] = [...SEARCH_TAGS, ...MEETUP_SEARCH_TAGS];
+    setForm((prev) => ({
+      ...prev,
+      category,
+      tags: prev.tags.filter((tag) => !allSearchTags.includes(tag) || validSearchTags.includes(tag)),
+    }));
+  }
+
   function toggleTag(tag: string, groupTags: readonly string[], single: boolean) {
     setForm((prev) => {
       const active = prev.tags.includes(tag);
@@ -502,7 +517,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
 
       <Section title="基本情報">
         <Field label="カテゴリ">
-          <select value={form.category} onChange={(e) => set('category', e.target.value)} className={inputClass}>
+          <select value={form.category} onChange={(e) => handleCategoryChange(e.target.value)} className={inputClass}>
             <option value="">なし</option>
             <option value="meetup">交流会</option>
             <option value="badminton">バドミントン</option>
@@ -523,7 +538,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
         </Field>
         <Field label="LP用タグ">
           <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
-            {EVENT_TAG_GROUPS.map((group) => {
+            {getEventTagGroups(form.category).map((group) => {
               if (group.label === '場所タグ') {
                 const selectedWard = TOKYO_WARDS.find((t) => form.tags.includes(t));
                 const showWards = tokyoExpanded || !!selectedWard;

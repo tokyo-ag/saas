@@ -51,6 +51,10 @@ export const ALL_LOCATION_TAGS: readonly string[] = [
 
 export const SEARCH_TAGS = ['初心者大歓迎', '経験者大歓迎', '20代歓迎', '30代歓迎', '1人参加歓迎', 'ラケット貸出有り'] as const;
 
+// 交流会 events use their own event-type tags instead of the sport-oriented SEARCH_TAGS above
+// (e.g. "ラケット貸出有り" makes no sense for a 飲み会) - keyed by Event.category slug.
+export const MEETUP_SEARCH_TAGS = ['交流会', '新歓', '飲み会', 'パーティー', 'クラブイベント', 'ビジネス交流会', 'ワークショップ'] as const;
+
 export const ARTICLE_THEME_TAGS = ['選び方', '初心者向け', '費用', '持ち物', '雰囲気'] as const;
 
 export const PORTAL_CATEGORY_TAGS = [...ACTIVITY_TAGS];
@@ -109,10 +113,13 @@ export const BLOG_TAG_GROUPS = [
   { label: '記事テーマタグ', tags: ARTICLE_THEME_TAGS },
 ] as const;
 
-export const EVENT_TAG_GROUPS = [
-  { label: '場所タグ', tags: LOCATION_TAGS, single: true },
-  { label: '検索タグ', tags: SEARCH_TAGS, single: false },
-] as const;
+// category is Event.category's English slug ('meetup', 'badminton', ...) - see ACTIVITY_TAG_EVENT_CATEGORY.
+export function getEventTagGroups(category: string) {
+  return [
+    { label: '場所タグ', tags: LOCATION_TAGS, single: true },
+    { label: '検索タグ', tags: category === 'meetup' ? MEETUP_SEARCH_TAGS : SEARCH_TAGS, single: false },
+  ] as const;
+}
 
 export function normalizePortalCategoryTags(tags: string[]) {
   const firstCategory = tags.find((tag) => PORTAL_CATEGORY_TAGS.includes(tag as never));
