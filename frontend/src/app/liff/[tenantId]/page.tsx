@@ -633,10 +633,10 @@ export default function LiffTopPage() {
           ) : tenant?.liffEventView === 'calendar' ? (
             <LiffCalendarCard events={events} tenantId={tenantId} accentColor={theme.accentColor} myStatusByEvent={myStatusByEvent} />
           ) : tenant?.liffEventView === 'thread' ? (
-            <LiffThreadView events={events} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} myStatusByEvent={myStatusByEvent} />
+            <LiffThreadView events={events} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg || '#ffffff'} myStatusByEvent={myStatusByEvent} />
           ) : (
             <div className="grid grid-cols-2 gap-2">
-              {events.map((ev) => <EventCard key={ev.id} event={ev} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg} myStatus={myStatusByEvent[ev.id]} />)}
+              {events.map((ev) => <EventCard key={ev.id} event={ev} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg || '#ffffff'} myStatus={myStatusByEvent[ev.id]} />)}
             </div>
           )}
 

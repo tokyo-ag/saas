@@ -38,9 +38,9 @@ async function fetchTheme(tenantId: string): Promise<LiffTheme> {
     let borderColor = DEFAULT_LIFF_THEME.borderColor;
     try {
       const fd = JSON.parse(data.footerText ?? '{}');
-      eventCardBg = fd.reserveEventCardBg?.trim() || DEFAULT_LIFF_THEME.eventCardBg;
+      eventCardBg = fd.reserveEventCardBg?.trim() || DEFAULT_LIFF_THEME.eventCardBg || '#ffffff';
       reserveButtonColor = fd.reserveButtonBgColor?.trim() || null;
-      borderColor = fd.globalBorderColor?.trim() || DEFAULT_LIFF_THEME.borderColor;
+      borderColor = fd.globalBorderColor?.trim() || DEFAULT_LIFF_THEME.borderColor || '#E5E7EB';
     } catch { /* ignore */ }
 
     const accentColor = reserveButtonColor || data.accentColor?.trim() || DEFAULT_LIFF_THEME.accentColor;
