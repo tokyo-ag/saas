@@ -12,7 +12,7 @@ import EventsTagFilter from '../EventsTagFilter';
 import CircleCardReveal from '../CircleCardReveal';
 import PublicFooter from '@/components/public/PublicFooter';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
-import { buildAutoSeoDescription, buildSeoProfileFromTenant } from '../../../clubs/[tenantCode]/[slug]/page';
+import { buildAutoSeoDescription, buildSeoProfileFromTenant } from '@/lib/tenantSeo';
 
 export const revalidate = 60;
 

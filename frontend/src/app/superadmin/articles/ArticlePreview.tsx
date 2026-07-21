@@ -6,7 +6,7 @@ import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import { ACTIVITY_TAG_EVENT_CATEGORY, ALL_LOCATION_TAGS, SEARCH_TAGS } from '@/lib/lpTags';
 import { Block, CARD_IMAGE_SIZE_CLASS, IMAGE_SIZE_CLASS, TEXT_SIZE_CLASS } from './BlockEditor';
-import { buildAutoSeoDescription, buildSeoProfileFromTenant } from '../../clubs/[tenantCode]/[slug]/page';
+import { buildAutoSeoDescription, buildSeoProfileFromTenant } from '@/lib/tenantSeo';
 
 const CELL_LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]*)\)/g;
 
