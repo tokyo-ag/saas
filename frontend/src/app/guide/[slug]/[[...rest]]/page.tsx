@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import type { ReactNode } from 'react';
+import { isValidElement, type ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -532,6 +532,23 @@ function ExternalCircleBlock({ imageUrl, name, description, href }: { imageUrl?:
   return <div className="my-6 flex gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">{content}</div>;
 }
 
+// Circle-card entries beyond the visible limit are grouped here instead of being deleted, so
+// they stay in the server-rendered HTML for SEO crawling but are visually collapsed behind a
+// native <details> toggle - no JS required, and search engines index hidden-but-present content.
+function CollapsibleCircleCards({ children }: { children: ReactNode }) {
+  return (
+    <details className="group/more">
+      <summary className="my-4 flex cursor-pointer list-none items-center gap-1 text-sm font-bold text-[#06C755] hover:underline [&::-webkit-details-marker]:hidden [&::marker]:hidden">
+        つづきを見る
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="transition-transform group-open/more:rotate-180">
+          <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </summary>
+      {children}
+    </details>
+  );
+}
+
 function CardSliderBlock({ items }: { items: CardItem[] }) {
   if (items.length === 0) return null;
   return (
@@ -888,7 +905,44 @@ function BodyRenderer({
     i++;
   }
   flushParagraph();
-  return <div>{nodes}</div>;
+  return <div>{groupExtraCircleCards(nodes)}</div>;
+}
+
+// Keeps the first CIRCLE_CARD_VISIBLE_LIMIT own/external circle-card blocks visible as-is; any
+// beyond that are collected (in place) into a single collapsed <details> group per contiguous
+// run, so a long recommendation list doesn't overwhelm the page while still keeping every card
+// in the HTML for SEO.
+const CIRCLE_CARD_VISIBLE_LIMIT = 5;
+
+function isCircleCardNode(node: ReactNode): boolean {
+  return isValidElement(node) && (node.type === OwnCircleBlock || node.type === ExternalCircleBlock);
+}
+
+function groupExtraCircleCards(nodes: ReactNode[]): ReactNode[] {
+  const result: ReactNode[] = [];
+  let visibleCount = 0;
+  let collapsed: ReactNode[] = [];
+  const flushCollapsed = () => {
+    if (collapsed.length > 0) {
+      result.push(<CollapsibleCircleCards key={`more-${result.length}`}>{collapsed}</CollapsibleCircleCards>);
+      collapsed = [];
+    }
+  };
+  for (const node of nodes) {
+    if (isCircleCardNode(node)) {
+      visibleCount++;
+      if (visibleCount <= CIRCLE_CARD_VISIBLE_LIMIT) {
+        result.push(node);
+      } else {
+        collapsed.push(node);
+      }
+    } else {
+      flushCollapsed();
+      result.push(node);
+    }
+  }
+  flushCollapsed();
+  return result;
 }
 
 export default async function GuideArticlePage({

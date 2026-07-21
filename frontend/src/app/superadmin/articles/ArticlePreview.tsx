@@ -474,12 +474,39 @@ function BlockView({ block, category }: { block: Block; category: string }) {
   return <ParagraphText text={block.text} />;
 }
 
+const CIRCLE_CARD_VISIBLE_LIMIT = 5;
+
+// Mirrors the public page's collapsing of circle-card blocks beyond the visible limit, so the
+// editor preview shows the same "つづきを見る" grouping the reader will actually see.
+function CollapsibleCircleCardsPreview({ children }: { children: ReactNode }) {
+  return (
+    <details className="group/more">
+      <summary className="my-4 flex cursor-pointer list-none items-center gap-1 text-sm font-bold text-[#06C755] hover:underline [&::-webkit-details-marker]:hidden [&::marker]:hidden">
+        つづきを見る
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="transition-transform group-open/more:rotate-180">
+          <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </summary>
+      {children}
+    </details>
+  );
+}
+
 function renderBlocks(blocks: Block[], category: string) {
   const nodes: ReactNode[] = [];
+  let circleCardCount = 0;
+  let collapsed: ReactNode[] = [];
+  const flushCollapsed = () => {
+    if (collapsed.length > 0) {
+      nodes.push(<CollapsibleCircleCardsPreview key={`more-${nodes.length}`}>{collapsed}</CollapsibleCircleCardsPreview>);
+      collapsed = [];
+    }
+  };
   let i = 0;
   while (i < blocks.length) {
     const block = blocks[i];
     if (block.type === 'list') {
+      flushCollapsed();
       const group: Block[] = [];
       while (i < blocks.length && blocks[i].type === 'list') {
         group.push(blocks[i]);
@@ -495,11 +522,22 @@ function renderBlocks(blocks: Block[], category: string) {
           ))}
         </ul>,
       );
+    } else if (block.type === 'ownCircle' || block.type === 'externalCircle') {
+      circleCardCount++;
+      const node = <BlockView key={block.id} block={block} category={category} />;
+      if (circleCardCount <= CIRCLE_CARD_VISIBLE_LIMIT) {
+        nodes.push(node);
+      } else {
+        collapsed.push(node);
+      }
+      i++;
     } else {
+      flushCollapsed();
       nodes.push(<BlockView key={block.id} block={block} category={category} />);
       i++;
     }
   }
+  flushCollapsed();
   return nodes;
 }
 
