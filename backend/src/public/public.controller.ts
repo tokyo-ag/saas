@@ -207,13 +207,24 @@ export class PublicController {
   async getEvents(
     @Query('category') category?: string,
     @Query('tag') tag?: string,
+    @Query('typeTags') typeTagsParam?: string,
   ) {
+    // typeTags (団体種別) broadens the query to every activity category for tenants matching any
+    // of the given team-type tags, instead of being restricted to one category - so when present
+    // it takes over from `category` entirely rather than being combined with it.
+    const typeTags = typeTagsParam ? typeTagsParam.split(',').map((t) => t.trim()).filter(Boolean) : [];
+
     const events = await this.prisma.event.findMany({
       where: {
         status: 'open',
         heldAt: { gte: new Date() },
-        tenant: { deletedAt: null, bannedAt: null, code: { not: null } },
-        ...(category ? { category } : {}),
+        tenant: {
+          deletedAt: null,
+          bannedAt: null,
+          code: { not: null },
+          ...(typeTags.length > 0 ? { typeTags: { hasSome: typeTags } } : {}),
+        },
+        ...(typeTags.length === 0 && category ? { category } : {}),
         ...(tag ? { tags: { has: tag } } : {}),
       },
       orderBy: { heldAt: 'asc' },
@@ -564,19 +575,24 @@ export class PublicController {
   @Get('tenants')
   async getTenants(
     @Query('activityTag') activityTag?: string,
+    @Query('typeTags') typeTagsParam?: string,
     @Query('area') area?: string,
     @Query('limit') limitParam?: string,
   ) {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const requestedLimit = parseInt(limitParam ?? '10', 10);
     const limit = Math.min(Math.max(Number.isFinite(requestedLimit) ? requestedLimit : 10, 1), 50);
+    // typeTags (団体種別: インカレサークル/学生団体/...) is an alternate filter to activityTag -
+    // when given, it takes over entirely (OR-matched across every activity category) instead of
+    // being combined with activityTag, since callers use it specifically to broaden beyond one category.
+    const typeTags = typeTagsParam ? typeTagsParam.split(',').map((t) => t.trim()).filter(Boolean) : [];
 
     const tenants = await this.prisma.tenant.findMany({
       where: {
         deletedAt: null,
         bannedAt: null,
         code: { not: null },
-        ...(activityTag ? { activityTags: { has: activityTag } } : {}),
+        ...(typeTags.length > 0 ? { typeTags: { hasSome: typeTags } } : activityTag ? { activityTags: { has: activityTag } } : {}),
         ...(area ? { events: { some: { tags: { has: area }, status: { not: 'draft' } } } } : {}),
       },
       include: {

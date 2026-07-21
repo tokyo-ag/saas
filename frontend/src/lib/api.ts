@@ -252,15 +252,21 @@ export const api = {
     },
   },
   public: {
-    events: (category?: string, tag?: string) => {
+    events: (category?: string, tag?: string, typeTags?: string[]) => {
       const params = new URLSearchParams();
       if (category) params.set('category', category);
       if (tag) params.set('tag', tag);
+      if (typeTags && typeTags.length > 0) params.set('typeTags', typeTags.join(','));
       const qs = params.toString();
       return request<PublicEvent[]>(`/public/events${qs ? `?${qs}` : ''}`);
     },
-    tenants: (activityTag?: string) =>
-      request<PublicTenant[]>(`/public/tenants${activityTag ? `?activityTag=${encodeURIComponent(activityTag)}` : ''}`),
+    tenants: (activityTag?: string, typeTags?: string[]) => {
+      const params = new URLSearchParams();
+      if (activityTag) params.set('activityTag', activityTag);
+      if (typeTags && typeTags.length > 0) params.set('typeTags', typeTags.join(','));
+      const qs = params.toString();
+      return request<PublicTenant[]>(`/public/tenants${qs ? `?${qs}` : ''}`);
+    },
     tenant: (tenantCode: string) => request<PublicTenant>(`/public/tenants/${tenantCode}`),
     sitemapPages: () =>
       request<PublicSitemapPage[]>(`/public/sitemap-pages?t=${Date.now()}`, {

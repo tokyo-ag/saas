@@ -101,12 +101,17 @@ async function fetchArticle(slug: string): Promise<OfficialArticle | null> {
   }
 }
 
-async function fetchCategoryEvents(category?: string | null, tag?: string): Promise<PublicArticleEvent[]> {
+async function fetchCategoryEvents(category?: string | null, tag?: string, typeTags?: string[]): Promise<PublicArticleEvent[]> {
+  // typeTags (団体種別) broadens the fetch to every category for matching tenants, ignoring
+  // this article's own category entirely.
+  const hasTypeTags = (typeTags ?? []).length > 0;
   const eventCategory = category ? ACTIVITY_TAG_EVENT_CATEGORY[category] : undefined;
-  if (!eventCategory) return [];
+  if (!hasTypeTags && !eventCategory) return [];
   try {
-    const params = new URLSearchParams({ category: eventCategory });
+    const params = new URLSearchParams();
+    if (!hasTypeTags && eventCategory) params.set('category', eventCategory);
     if (tag) params.set('tag', tag);
+    if (hasTypeTags) params.set('typeTags', (typeTags ?? []).join(','));
     const res = await fetch(`${API_URL}/api/public/events?${params.toString()}`, { next: { revalidate } });
     if (!res.ok) return [];
     return res.json();
@@ -133,22 +138,48 @@ async function fetchAreaEventCounts(category?: string | null): Promise<{ area: s
     .sort((a, b) => b.count - a.count);
 }
 
-// Each {{events}} marker needs its own fetch keyed by tag - except blocks with the tag-tab
-// filter enabled, which always need the unfiltered category-wide list (tags[4]) so every tag
-// among that category's events can be offered as a tab, regardless of the block's own picker.
-function extractEventsFetchKeys(body: string): (string | undefined)[] {
-  const keys = new Set<string | undefined>();
-  for (const raw of body.split('\n')) {
-    const match = EVENTS_RE.exec(raw.trim());
-    if (match) keys.add(match[4] === 'true' ? undefined : (match[2] || undefined));
-  }
-  return Array.from(keys);
+type EventsFetchKey = { tag?: string; typeTags: string[] };
+
+function eventsFetchKeyString(key: EventsFetchKey): string {
+  return JSON.stringify([key.tag ?? '', key.typeTags]);
 }
 
-async function fetchCircles(category?: string | null): Promise<PublicArticleTenant[]> {
-  if (!category) return [];
+// Each {{events}} marker needs its own fetch keyed by tag+typeTags - except blocks with the
+// tag-tab filter enabled, which always need the unfiltered category-wide list (tags[4]) so every
+// tag among that category's events can be offered as a tab, regardless of the block's own picker.
+function extractEventsFetchKeys(body: string): EventsFetchKey[] {
+  const seen = new Map<string, EventsFetchKey>();
+  for (const raw of body.split('\n')) {
+    const match = EVENTS_RE.exec(raw.trim());
+    if (!match) continue;
+    const key: EventsFetchKey = {
+      tag: match[4] === 'true' ? undefined : (match[2] || undefined),
+      typeTags: match[5] ? match[5].split(',').filter(Boolean) : [],
+    };
+    seen.set(eventsFetchKeyString(key), key);
+  }
+  return Array.from(seen.values());
+}
+
+// The article's circles blocks all share one fetched list (matching how multiple {{circles}}
+// markers already reuse the same category-filtered array) - so typeTags is read from whichever
+// circles marker specifies it first.
+function extractCirclesTypeTags(body: string): string[] {
+  for (const raw of body.split('\n')) {
+    const match = CIRCLES_RE.exec(raw.trim());
+    if (match) return match[2] ? match[2].split(',').filter(Boolean) : [];
+  }
+  return [];
+}
+
+async function fetchCircles(category?: string | null, typeTags?: string[]): Promise<PublicArticleTenant[]> {
+  const hasTypeTags = (typeTags ?? []).length > 0;
+  if (!hasTypeTags && !category) return [];
   try {
-    const res = await fetch(`${API_URL}/api/public/tenants?activityTag=${encodeURIComponent(category)}`, { next: { revalidate } });
+    const params = new URLSearchParams();
+    if (!hasTypeTags && category) params.set('activityTag', category);
+    if (hasTypeTags) params.set('typeTags', (typeTags ?? []).join(','));
+    const res = await fetch(`${API_URL}/api/public/tenants?${params.toString()}`, { next: { revalidate } });
     if (!res.ok) return [];
     return res.json();
   } catch {
@@ -383,8 +414,8 @@ const TEXT_SIZE_CLASS: Record<string, string> = {
   large: 'text-lg sm:text-xl',
 };
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
-const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|([^|}]*)(?:\|(true|false)(?:\|(true|false))?)?)?)?\}\}$/;
-const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
+const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|([^|}]*)(?:\|(true|false)(?:\|(true|false)(?:\|([^}]*))?)?)?)?)?\}\}$/;
+const CIRCLES_RE = /^\{\{circles(?::([^|}]*)(?:\|([^}]*))?)?\}\}$/;
 const TABLE_RE = /^\{\{table:(.+)\}\}$/;
 const CARD_SLIDER_RE = /^\{\{cardslider:(.+)\}\}$/;
 const FAQ_RE = /^\{\{faq:(.+)\}\}$/;
@@ -695,10 +726,11 @@ function BodyRenderer({
       const eventsTag = events[2] || undefined;
       const showFilterTag = events[4] === 'true';
       const fetchKey = showFilterTag ? undefined : eventsTag;
+      const eventsTypeTags = events[5] ? events[5].split(',').filter(Boolean) : [];
       nodes.push(
         <EventsBlock
           key={i}
-          events={eventsByTag.get(fetchKey ?? '') ?? []}
+          events={eventsByTag.get(eventsFetchKeyString({ tag: fetchKey, typeTags: eventsTypeTags })) ?? []}
           heading={events[1] ?? ''}
           showFilterTag={showFilterTag}
           areaSearchEnabled={events[3] === 'true'}
@@ -938,10 +970,11 @@ export default async function GuideArticlePage({
   if (!article) notFound();
   const eventsFetchKeys = extractEventsFetchKeys(article.body);
   const hasCirclesBlock = /\{\{circles/.test(article.body);
+  const circlesTypeTags = hasCirclesBlock ? extractCirclesTypeTags(article.body) : [];
   const ownCircleCodes = extractOwnCircleCodes(article.body);
   const [eventsByTagEntries, circles, ownCircleEntries] = await Promise.all([
-    Promise.all(eventsFetchKeys.map(async (tag) => [tag ?? '', await fetchCategoryEvents(article.category, tag)] as const)),
-    hasCirclesBlock ? fetchCircles(article.category) : Promise.resolve([]),
+    Promise.all(eventsFetchKeys.map(async (key) => [eventsFetchKeyString(key), await fetchCategoryEvents(article.category, key.tag, key.typeTags)] as const)),
+    hasCirclesBlock ? fetchCircles(article.category, circlesTypeTags) : Promise.resolve([]),
     Promise.all(ownCircleCodes.map(async (code) => [code, await fetchOwnCircle(code)] as const)),
   ]);
   const eventsByTag = new Map<string, PublicArticleEvent[]>(eventsByTagEntries);

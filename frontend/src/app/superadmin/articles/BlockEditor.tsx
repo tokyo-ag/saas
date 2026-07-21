@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useRef, useState } from 'react';
-import { SEARCH_TAGS } from '@/lib/lpTags';
+import { SEARCH_TAGS, TENANT_TYPE_TAGS } from '@/lib/lpTags';
 import { UploadButton } from '@/components/admin/EventFormPrimitives';
 import { api, TenantWithStats } from '@/lib/api';
 
@@ -80,6 +80,10 @@ export type Block = {
   faqItems?: FaqPair[];
   tenantCode?: string;
   name?: string;
+  // 団体種別（TENANT_TYPE_TAGS）で絞り込む場合に使用 - 空配列/未設定ならカテゴリ基準の従来通りの
+  // 挙動、1件以上選択されるとカテゴリを無視して全カテゴリ横断でその種別タグに一致する団体/イベントを表示する。
+  circleTypeTags?: string[];
+  eventsTypeTags?: string[];
 };
 
 // UTF-8-safe base64 so embedded Japanese/symbol text survives being placed in a single-line marker.
@@ -184,8 +188,8 @@ const IMAGE_TEXT_RE_V2 = /^\{\{imagetext:([^|]*)\|([^|]*)\|(small|medium|large)\
 const IMAGE_TEXT_RE_V1 = /^\{\{imagetext:([^|]*)\|([^|]*)\|(.*)\}\}$/;
 const TEXT_IMAGE_RE = /^\{\{textimage:([^|]*)\|([^|]*)\|(small|medium|large)\|(small|medium|large)\|(.*)\}\}$/;
 const CTA_RE = /^\{\{cta:(.*)\|(.*)\}\}$/;
-const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|([^|}]*)(?:\|(true|false)(?:\|(true|false))?)?)?)?\}\}$/;
-const CIRCLES_RE = /^\{\{circles(?::(.*))?\}\}$/;
+const EVENTS_RE = /^\{\{events(?::([^|}]*)(?:\|([^|}]*)(?:\|(true|false)(?:\|(true|false)(?:\|([^}]*))?)?)?)?)?\}\}$/;
+const CIRCLES_RE = /^\{\{circles(?::([^|}]*)(?:\|([^}]*))?)?\}\}$/;
 const TABLE_RE = /^\{\{table:(.+)\}\}$/;
 const CARD_SLIDER_RE = /^\{\{cardslider:(.+)\}\}$/;
 const FAQ_RE = /^\{\{faq:(.+)\}\}$/;
@@ -237,9 +241,17 @@ export function parseBodyToBlocks(body: string): Block[] {
     } else if (cardSlider) {
       blocks.push({ id: newId(), type: 'cardSlider', text: '', cardItems: decodeCardItems(cardSlider[1]) });
     } else if (events) {
-      blocks.push({ id: newId(), type: 'events', text: events[1] ?? '', tag: events[2] || undefined, eventsAreaSearchEnabled: events[3] === 'true', eventsShowFilterTagEnabled: events[4] === 'true' });
+      blocks.push({
+        id: newId(),
+        type: 'events',
+        text: events[1] ?? '',
+        tag: events[2] || undefined,
+        eventsAreaSearchEnabled: events[3] === 'true',
+        eventsShowFilterTagEnabled: events[4] === 'true',
+        eventsTypeTags: events[5] ? events[5].split(',').filter(Boolean) : [],
+      });
     } else if (circles) {
-      blocks.push({ id: newId(), type: 'circles', text: circles[1] ?? '' });
+      blocks.push({ id: newId(), type: 'circles', text: circles[1] ?? '', circleTypeTags: circles[2] ? circles[2].split(',').filter(Boolean) : [] });
     } else if (textImage) {
       blocks.push({
         id: newId(),
@@ -325,12 +337,26 @@ export function blocksToBody(blocks: Block[]): string {
     else if (block.type === 'events') {
       const areaSearch = block.eventsAreaSearchEnabled ?? false;
       const showFilterTag = block.eventsShowFilterTagEnabled ?? false;
-      const extra = (areaSearch || showFilterTag) ? `|${areaSearch}${showFilterTag ? '|true' : ''}` : '';
-      line = (block.text || block.tag || areaSearch || showFilterTag)
-        ? `{{events:${block.text ?? ''}|${block.tag ?? ''}${extra}}}`
-        : '{{events}}';
+      const typeTags = block.eventsTypeTags ?? [];
+      const hasExtra = areaSearch || showFilterTag || typeTags.length > 0;
+      if (!(block.text || block.tag || hasExtra)) {
+        line = '{{events}}';
+      } else {
+        const parts = [block.text ?? '', block.tag ?? ''];
+        if (hasExtra) {
+          parts.push(String(areaSearch));
+          if (showFilterTag || typeTags.length > 0) parts.push(String(showFilterTag));
+          if (typeTags.length > 0) parts.push(typeTags.join(','));
+        }
+        line = `{{events:${parts.join('|')}}}`;
+      }
     }
-    else if (block.type === 'circles') line = block.text ? `{{circles:${block.text}}}` : '{{circles}}';
+    else if (block.type === 'circles') {
+      const typeTags = block.circleTypeTags ?? [];
+      line = (block.text || typeTags.length > 0)
+        ? `{{circles:${block.text ?? ''}${typeTags.length > 0 ? `|${typeTags.join(',')}` : ''}}}`
+        : '{{circles}}';
+    }
     else if (block.type === 'table') line = `{{table:${encodeTable(block.tableRows ?? [['', ''], ['', '']])}}}`;
     else if (block.type === 'cardSlider') line = `{{cardslider:${encodeCardItems(block.cardItems ?? [])}}}`;
     else if (block.type === 'faq') line = `{{faq:${encodeFaq(block.faqItems ?? [])}}}`;
@@ -921,9 +947,11 @@ export default function BlockEditor({
       cardItems: type === 'cardSlider' ? [{ imageUrl: '', name: '', description: '', href: '' }] : undefined,
       eventsAreaSearchEnabled: type === 'events' ? false : undefined,
       eventsShowFilterTagEnabled: type === 'events' ? false : undefined,
+      eventsTypeTags: type === 'events' ? [] : undefined,
       faqItems: type === 'faq' ? [{ q: '', a: '' }] : undefined,
       tenantCode: type === 'ownCircle' ? '' : undefined,
       name: type === 'externalCircle' ? '' : undefined,
+      circleTypeTags: type === 'circles' ? [] : undefined,
     };
     const next = [...blocks];
     next.splice(index, 0, block);
@@ -1102,6 +1130,34 @@ export default function BlockEditor({
                   />
                   絞り込みタグをタブで表示する（読者がタグを切り替えてカードを絞り込めるようにする）
                 </label>
+                <div>
+                  <p className="mb-1 text-xs font-medium text-gray-500">団体種別で絞り込む（任意・複数選択可）</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {TENANT_TYPE_TAGS.map((typeTag) => {
+                      const selected = (block.eventsTypeTags ?? []).includes(typeTag);
+                      return (
+                        <button
+                          key={typeTag}
+                          type="button"
+                          onClick={() => {
+                            const current = block.eventsTypeTags ?? [];
+                            updateBlock(block.id, {
+                              eventsTypeTags: selected ? current.filter((t) => t !== typeTag) : [...current, typeTag],
+                            });
+                          }}
+                          className={`rounded-full px-3 py-1 text-xs font-bold transition ${
+                            selected ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          {typeTag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-1 text-xs text-gray-400">
+                    1つ以上選ぶと、記事のカテゴリに関係なく、選んだ団体種別に一致するイベントを全カテゴリ横断で表示します。
+                  </p>
+                </div>
               </div>
             ) : block.type === 'table' ? (
               <TableFields block={block} updateBlock={updateBlock} />
@@ -1136,6 +1192,34 @@ export default function BlockEditor({
                 <p className="rounded-md bg-gray-50 px-2.5 py-2 text-xs text-gray-500">
                   記事のカテゴリに応じて、COMIUに登録されている団体をアクセス数順にここに自動で表示します。
                 </p>
+                <div>
+                  <p className="mb-1 text-xs font-medium text-gray-500">団体種別で絞り込む（任意・複数選択可）</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {TENANT_TYPE_TAGS.map((typeTag) => {
+                      const selected = (block.circleTypeTags ?? []).includes(typeTag);
+                      return (
+                        <button
+                          key={typeTag}
+                          type="button"
+                          onClick={() => {
+                            const current = block.circleTypeTags ?? [];
+                            updateBlock(block.id, {
+                              circleTypeTags: selected ? current.filter((t) => t !== typeTag) : [...current, typeTag],
+                            });
+                          }}
+                          className={`rounded-full px-3 py-1 text-xs font-bold transition ${
+                            selected ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          {typeTag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-1 text-xs text-gray-400">
+                    1つ以上選ぶと、記事のカテゴリに関係なく、選んだ団体種別に一致する団体を全カテゴリ横断で表示します。
+                  </p>
+                </div>
               </div>
             ) : block.type === 'paragraph' ? (
               <textarea
