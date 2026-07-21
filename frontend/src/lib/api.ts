@@ -877,6 +877,7 @@ export interface PublicTenant {
   eventCount: number;
   accessCount: number;
   pages?: PublicPageSummary[];
+  events?: { tags?: string[] }[];
 }
 
 export interface PublicPageSummary {

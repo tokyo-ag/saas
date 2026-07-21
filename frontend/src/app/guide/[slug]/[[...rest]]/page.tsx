@@ -12,6 +12,7 @@ import EventsTagFilter from '../EventsTagFilter';
 import CircleCardReveal from '../CircleCardReveal';
 import PublicFooter from '@/components/public/PublicFooter';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
+import { buildAutoSeoDescription, buildSeoProfileFromTenant } from '../../../clubs/[tenantCode]/[slug]/page';
 
 export const revalidate = 60;
 
@@ -492,12 +493,19 @@ async function fetchOwnCircle(code: string): Promise<OwnCircleTenant | null> {
     if (!res.ok) return null;
     const tenant = await res.json();
     const slug = tenant.pages?.[0]?.slug;
+    const name: string = tenant.name || tenant.lineDisplayName;
+    // Most tenants haven't filled in the plain "description" field, so fall back to whatever
+    // actually renders as this tenant's real SEO meta description (manual seoDescription, or
+    // the same auto-generated text clubs/[tenantCode]/[slug]/page.tsx uses) instead of showing
+    // nothing.
+    const description: string =
+      tenant.description || tenant.pages?.[0]?.seoDescription || buildAutoSeoDescription(name, buildSeoProfileFromTenant(tenant));
     return {
       // Prefer the tenant's proper name over lineDisplayName - this block represents the team
       // in official editorial copy, where the LINE OA's casually-cased chat display name (e.g.
       // "gakuori") isn't the intended public brand casing.
-      name: tenant.name || tenant.lineDisplayName,
-      description: tenant.description,
+      name,
+      description,
       imageUrl: tenant.linePictureUrl,
       href: slug ? `/clubs/${tenant.code}/${slug}` : `/clubs/${tenant.code}`,
     };

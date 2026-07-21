@@ -6,6 +6,7 @@ import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import { ACTIVITY_TAG_EVENT_CATEGORY, ALL_LOCATION_TAGS, SEARCH_TAGS } from '@/lib/lpTags';
 import { Block, CARD_IMAGE_SIZE_CLASS, IMAGE_SIZE_CLASS, TEXT_SIZE_CLASS } from './BlockEditor';
+import { buildAutoSeoDescription, buildSeoProfileFromTenant } from '../../clubs/[tenantCode]/[slug]/page';
 
 const CELL_LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]*)\)/g;
 
@@ -256,6 +257,10 @@ function OwnCircleBlockPreview({ tenantCode }: { tenantCode?: string }) {
   // this block represents the team in official editorial copy, where the LINE OA's often
   // casually-cased chat display name (e.g. "gakuori") isn't the intended public brand casing.
   const displayName = tenant.name || tenant.lineDisplayName || '';
+  // Most tenants haven't filled in the plain "description" field, so fall back to whatever
+  // actually renders as this tenant's real SEO meta description (manual seoDescription, or the
+  // same auto-generated text clubs/[tenantCode]/[slug]/page.tsx uses) instead of showing nothing.
+  const description = tenant.description || tenant.pages?.[0]?.seoDescription || buildAutoSeoDescription(displayName, buildSeoProfileFromTenant(tenant));
   return (
     <div className="my-6 flex gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
       {tenant.linePictureUrl ? (
@@ -268,7 +273,7 @@ function OwnCircleBlockPreview({ tenantCode }: { tenantCode?: string }) {
       )}
       <div className="min-w-0 flex-1">
         <p className="font-bold text-gray-950">{displayName}</p>
-        {tenant.description && <p className="mt-1 line-clamp-2 text-sm leading-6 text-gray-500">{tenant.description}</p>}
+        {description && <p className="mt-1 line-clamp-2 text-sm leading-6 text-gray-500">{description}</p>}
         <p className="mt-2 text-xs font-bold text-[#06C755]">団体ページを見る →</p>
       </div>
     </div>
