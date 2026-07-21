@@ -475,20 +475,45 @@ function BlockView({ block, category }: { block: Block; category: string }) {
 }
 
 const CIRCLE_CARD_VISIBLE_LIMIT = 5;
+const CIRCLE_CARD_BATCH_SIZE = 5;
 
-// Mirrors the public page's collapsing of circle-card blocks beyond the visible limit, so the
-// editor preview shows the same "つづきを見る" grouping the reader will actually see.
-function CollapsibleCircleCardsPreview({ children }: { children: ReactNode }) {
+// Mirrors the public page's CircleCardReveal: batches of 5 revealed at a time with a slide/fade
+// transition, so the editor preview shows the same "つづきを見る" behavior the reader will see.
+// Every item stays mounted (just visually collapsed) to match the SEO-safe approach used live.
+function CircleCardRevealPreview({ items }: { items: ReactNode[] }) {
+  const [revealedBatches, setRevealedBatches] = useState(0);
+  const batches: ReactNode[][] = [];
+  for (let i = 0; i < items.length; i += CIRCLE_CARD_BATCH_SIZE) batches.push(items.slice(i, i + CIRCLE_CARD_BATCH_SIZE));
+  const remaining = items.length - revealedBatches * CIRCLE_CARD_BATCH_SIZE;
+
   return (
-    <details className="group/more">
-      <summary className="my-4 flex cursor-pointer list-none items-center gap-1 text-sm font-bold text-[#06C755] hover:underline [&::-webkit-details-marker]:hidden [&::marker]:hidden">
-        つづきを見る
-        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="transition-transform group-open/more:rotate-180">
-          <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </summary>
-      {children}
-    </details>
+    <div>
+      {batches.map((batch, bi) => {
+        const isRevealed = bi < revealedBatches;
+        return (
+          <div
+            key={bi}
+            className={`grid overflow-hidden transition-all duration-500 ease-out ${
+              isRevealed ? 'mt-0 max-h-[4000px] opacity-100' : 'max-h-0 -translate-y-2 opacity-0'
+            }`}
+          >
+            {batch}
+          </div>
+        );
+      })}
+      {remaining > 0 && (
+        <button
+          type="button"
+          onClick={() => setRevealedBatches((v) => v + 1)}
+          className="mx-auto my-4 flex items-center gap-1 rounded-full border border-[#06C755]/30 bg-[#06C755]/5 px-5 py-2 text-sm font-bold text-[#06C755] transition hover:bg-[#06C755]/10"
+        >
+          つづきを見る（あと{remaining}件）
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+            <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -498,7 +523,7 @@ function renderBlocks(blocks: Block[], category: string) {
   let collapsed: ReactNode[] = [];
   const flushCollapsed = () => {
     if (collapsed.length > 0) {
-      nodes.push(<CollapsibleCircleCardsPreview key={`more-${nodes.length}`}>{collapsed}</CollapsibleCircleCardsPreview>);
+      nodes.push(<CircleCardRevealPreview key={`more-${nodes.length}`} items={collapsed} />);
       collapsed = [];
     }
   };
