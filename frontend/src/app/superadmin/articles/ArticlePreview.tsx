@@ -277,14 +277,8 @@ function ExternalCircleBlockPreview({ name, description, imageUrl }: { name?: st
   }
   return (
     <div className="my-6 flex gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-      {imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={imageUrl} alt={name} className="h-20 w-20 shrink-0 rounded-lg object-cover" />
-      ) : (
-        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-gray-400 to-gray-600">
-          <span className="text-xl font-bold text-white">{name.slice(0, 1)}</span>
-        </div>
-      )}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={imageUrl || DEFAULT_EVENT_IMAGE} alt={name} className="h-20 w-20 shrink-0 rounded-lg object-cover" />
       <div className="min-w-0 flex-1">
         <p className="font-bold text-gray-950">{name}</p>
         {description && <p className="mt-1 line-clamp-2 text-sm leading-6 text-gray-500">{description}</p>}

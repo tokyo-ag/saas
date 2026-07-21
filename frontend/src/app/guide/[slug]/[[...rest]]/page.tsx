@@ -11,6 +11,7 @@ import EventsAreaFilter from '../EventsAreaFilter';
 import EventsTagFilter from '../EventsTagFilter';
 import CircleCardReveal from '../CircleCardReveal';
 import PublicFooter from '@/components/public/PublicFooter';
+import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 
 export const revalidate = 60;
 
@@ -510,13 +511,7 @@ function ExternalCircleBlock({ imageUrl, name, description, href }: { imageUrl?:
   if (!name) return null;
   const content = (
     <>
-      {imageUrl ? (
-        <Image src={imageUrl} alt="" width={80} height={80} unoptimized className="h-20 w-20 shrink-0 rounded-lg object-cover" />
-      ) : (
-        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-gray-400 to-gray-600">
-          <span className="text-xl font-bold text-white">{name.slice(0, 1)}</span>
-        </div>
-      )}
+      <Image src={imageUrl || DEFAULT_EVENT_IMAGE} alt="" width={80} height={80} unoptimized className="h-20 w-20 shrink-0 rounded-lg object-cover" />
       <div className="min-w-0 flex-1">
         <p className="font-bold text-gray-950">{name}</p>
         {description && <p className="mt-1 line-clamp-2 text-sm leading-6 text-gray-500">{description}</p>}
