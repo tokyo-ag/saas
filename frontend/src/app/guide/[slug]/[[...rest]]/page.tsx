@@ -494,12 +494,11 @@ async function fetchOwnCircle(code: string): Promise<OwnCircleTenant | null> {
     const tenant = await res.json();
     const slug = tenant.pages?.[0]?.slug;
     const name: string = tenant.name || tenant.lineDisplayName;
-    // Most tenants haven't filled in the plain "description" field, so fall back to whatever
-    // actually renders as this tenant's real SEO meta description (manual seoDescription, or
-    // the same auto-generated text clubs/[tenantCode]/[slug]/page.tsx uses) instead of showing
-    // nothing.
-    const description: string =
-      tenant.description || tenant.pages?.[0]?.seoDescription || buildAutoSeoDescription(name, buildSeoProfileFromTenant(tenant));
+    // Always use the tenant's real SEO meta description here (manual seoDescription, or the same
+    // auto-generated text clubs/[tenantCode]/[slug]/page.tsx uses) rather than the plain
+    // "description" field, so every card in a list reads consistently instead of some showing a
+    // casually-written description and others an SEO-style one.
+    const description: string = tenant.pages?.[0]?.seoDescription || buildAutoSeoDescription(name, buildSeoProfileFromTenant(tenant));
     return {
       // Prefer the tenant's proper name over lineDisplayName - this block represents the team
       // in official editorial copy, where the LINE OA's casually-cased chat display name (e.g.

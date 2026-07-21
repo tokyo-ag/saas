@@ -257,10 +257,11 @@ function OwnCircleBlockPreview({ tenantCode }: { tenantCode?: string }) {
   // this block represents the team in official editorial copy, where the LINE OA's often
   // casually-cased chat display name (e.g. "gakuori") isn't the intended public brand casing.
   const displayName = tenant.name || tenant.lineDisplayName || '';
-  // Most tenants haven't filled in the plain "description" field, so fall back to whatever
-  // actually renders as this tenant's real SEO meta description (manual seoDescription, or the
-  // same auto-generated text clubs/[tenantCode]/[slug]/page.tsx uses) instead of showing nothing.
-  const description = tenant.description || tenant.pages?.[0]?.seoDescription || buildAutoSeoDescription(displayName, buildSeoProfileFromTenant(tenant));
+  // Always use the tenant's real SEO meta description here (manual seoDescription, or the same
+  // auto-generated text clubs/[tenantCode]/[slug]/page.tsx uses) rather than the plain
+  // "description" field, so every card in a list reads consistently instead of some showing a
+  // casually-written description and others an SEO-style one.
+  const description = tenant.pages?.[0]?.seoDescription || buildAutoSeoDescription(displayName, buildSeoProfileFromTenant(tenant));
   return (
     <div className="my-6 flex gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
       {tenant.linePictureUrl ? (
