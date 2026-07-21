@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { API_URL, formatDateShort } from '@/lib/api';
+import { API_URL } from '@/lib/api';
 import { isInLineInAppBrowser } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
@@ -121,8 +121,20 @@ function eventTime(event: ReservationShowcaseEvent) {
   });
 }
 
-function eventDate(event: ReservationShowcaseEvent) {
-  return formatDateShort(event.heldAt);
+// Full date + start-end time range for the schedule list (e.g. "2026年7月23日（木）19:00〜22:00") -
+// scoped to this component only, unlike the shared formatDateShort() used elsewhere (LIFF pages
+// etc.) which stays in its shorter "7/23(木) 19:00" form.
+function eventFullDateTime(event: ReservationShowcaseEvent) {
+  const start = new Date(event.heldAt);
+  const datePart = start
+    .toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short', timeZone: 'Asia/Tokyo' })
+    .replace('(', '（')
+    .replace(')', '）');
+  const startTime = start.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
+  const endTime = event.endAt
+    ? new Date(event.endAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })
+    : null;
+  return endTime ? `${datePart}${startTime}〜${endTime}` : `${datePart}${startTime}`;
 }
 
 function eventStatus(event: ReservationShowcaseEvent) {
@@ -135,10 +147,10 @@ function eventStatus(event: ReservationShowcaseEvent) {
 
 function eventPrice(event: ReservationShowcaseEvent) {
   if (event.priceMale != null && event.priceFemale != null) {
-    return `男性 ${event.priceMale.toLocaleString()}円 / 女性 ${event.priceFemale.toLocaleString()}円`;
+    return `参加費：男性${event.priceMale.toLocaleString()}円／女性${event.priceFemale.toLocaleString()}円`;
   }
   if (event.price == null) return '';
-  return event.price === 0 ? '無料' : `${event.price.toLocaleString()}円`;
+  return event.price === 0 ? '無料' : `参加費：${event.price.toLocaleString()}円`;
 }
 
 function eventDetailHref(tenantCode: string | undefined, eventId: string, fallbackHref?: string) {
@@ -328,7 +340,7 @@ function CardMini({
                 </div>
                 <div className="space-y-1 p-3">
                   <p className="line-clamp-2 text-sm font-bold leading-snug" style={{ color: eventTitleColor || cardText }}>{event.title}</p>
-                  <p className="text-xs font-medium" style={{ color: eventDateColor || cardText, opacity: eventDateColor ? 1 : 0.7 }}>{eventDate(event)} {eventTime(event)}</p>
+                  <p className="text-xs font-medium" style={{ color: eventDateColor || cardText, opacity: eventDateColor ? 1 : 0.7 }}>{eventFullDateTime(event)}</p>
                   {showLocation && event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{event.location}</p>}
                   {metaLine && <p className="text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{metaLine}</p>}
                 </div>
@@ -406,7 +418,7 @@ function ThreadMini({
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold" style={{ color: eventTitleColor || cardText }}>{event.title}</p>
-                        <p className="mt-1 text-xs" style={{ color: eventDateColor || cardText, opacity: eventDateColor ? 1 : 0.7 }}>{eventDate(event)}</p>
+                        <p className="mt-1 text-xs" style={{ color: eventDateColor || cardText, opacity: eventDateColor ? 1 : 0.7 }}>{eventFullDateTime(event)}</p>
                         {showLocation && event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{event.location}</p>}
                         {metaLine && <p className="text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{metaLine}</p>}
                         {showDescription && (event as any).description && (
