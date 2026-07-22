@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { api, BlogPost, BlogPostInput } from '@/lib/api';
-import { API_URL } from '@/lib/config';
+import { API_URL, SITE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { getToken } from '@/lib/auth';
 
@@ -242,6 +242,7 @@ export default function AdminBlogPage() {
   const [cropModal, setCropModal] = useState<{ blockIdx: number; url: string } | null>(null);
   const [tenantCode, setTenantCode] = useState('');
   const [tenantTags, setTenantTags] = useState<string[]>([]);
+  const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function load() {
@@ -385,6 +386,19 @@ export default function AdminBlogPage() {
             ← 一覧
           </button>
           <h1 className="text-xl font-bold text-gray-900">{editing ? '記事を編集' : '新しい記事'}</h1>
+          {editing && tenantCode && (
+            <button
+              type="button"
+              onClick={async () => {
+                await navigator.clipboard.writeText(`${SITE_URL}/clubs/${tenantCode}/blog/${editing.slug}`);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1600);
+              }}
+              className="ml-auto rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50"
+            >
+              {copied ? 'コピー済み' : 'URLコピー'}
+            </button>
+          )}
         </div>
 
         {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
