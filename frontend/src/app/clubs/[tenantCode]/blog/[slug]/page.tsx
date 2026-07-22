@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { API_URL, SITE_URL, IMAGE_BASE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
-import type { BlogPost } from '@/lib/api';
+import type { BlogPost, BlogPostSummary, PortalBlogPost } from '@/lib/api';
 
 export const revalidate = 60;
 
@@ -18,6 +18,36 @@ async function fetchPost(tenantCode: string, slug: string): Promise<BlogPost | n
     return res.json();
   } catch {
     return null;
+  }
+}
+
+const RELATED_LIMIT = 6;
+
+async function fetchSameTenantPosts(tenantCode: string, excludeId: string): Promise<BlogPostSummary[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/tenants/${tenantCode}/blog`, { next: { revalidate } });
+    if (!res.ok) return [];
+    const posts: BlogPostSummary[] = await res.json();
+    return posts.filter((p) => p.id !== excludeId).slice(0, RELATED_LIMIT);
+  } catch {
+    return [];
+  }
+}
+
+async function fetchRelatedByTags(tags: string[], excludeTenantCode: string, excludeId: string): Promise<PortalBlogPost[]> {
+  if (tags.length === 0) return [];
+  try {
+    const res = await fetch(
+      `${API_URL}/api/public/blog?tags=${encodeURIComponent(tags.join(','))}&limit=30`,
+      { next: { revalidate } },
+    );
+    if (!res.ok) return [];
+    const posts: PortalBlogPost[] = await res.json();
+    return posts
+      .filter((p) => p.id !== excludeId && p.tenant.code !== excludeTenantCode)
+      .slice(0, RELATED_LIMIT);
+  } catch {
+    return [];
   }
 }
 
@@ -130,6 +160,43 @@ function BodyRenderer({ body }: { body: string }) {
   );
 }
 
+type RelatedItem = {
+  key: string;
+  href: string;
+  title: string;
+  subtitle?: string | null;
+  image: string;
+};
+
+function RelatedPostSlider({ heading, items }: { heading: string; items: RelatedItem[] }) {
+  if (items.length === 0) return null;
+  return (
+    <section className="mt-8">
+      <h2 className="mb-3 text-base font-bold text-gray-900">{heading}</h2>
+      <div className="-mx-1 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex snap-x snap-mandatory gap-3">
+          {items.map((item) => (
+            <Link
+              key={item.key}
+              href={item.href}
+              className="block shrink-0 snap-start overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              style={{ width: '220px' }}
+            >
+              <div className="relative aspect-[16/9] w-full bg-gray-100">
+                <Image src={item.image} alt={item.title} fill className="object-cover" sizes="220px" />
+              </div>
+              <div className="space-y-1 p-3">
+                {item.subtitle && <p className="truncate text-[11px] text-gray-400">{item.subtitle}</p>}
+                <p className="line-clamp-2 text-sm font-bold leading-snug text-gray-800">{item.title}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default async function BlogPostPage({
   params,
 }: {
@@ -146,6 +213,24 @@ export default async function BlogPostPage({
     imgUrl(post.tenant?.linePictureUrl ?? post.tenant?.iconUrl, IMAGE_BASE_URL) ??
     DEFAULT_EVENT_IMAGE;
   const bodyWithoutEyecatch = stripFirstImageLine(post.body);
+
+  const [sameTenantPosts, comiuRelatedPosts] = await Promise.all([
+    fetchSameTenantPosts(tenantCode, post.id),
+    fetchRelatedByTags(post.tags ?? [], tenantCode, post.id),
+  ]);
+  const sameTenantItems: RelatedItem[] = sameTenantPosts.map((p) => ({
+    key: p.id,
+    href: `/clubs/${tenantCode}/blog/${p.slug}`,
+    title: p.title,
+    image: imgUrl(p.coverImageUrl, IMAGE_BASE_URL) ?? DEFAULT_EVENT_IMAGE,
+  }));
+  const comiuRelatedItems: RelatedItem[] = comiuRelatedPosts.map((p) => ({
+    key: p.id,
+    href: `/clubs/${p.tenant.code}/blog/${p.slug}`,
+    title: p.title,
+    subtitle: p.tenant.lineDisplayName ?? p.tenant.name,
+    image: imgUrl(p.coverImageUrl, IMAGE_BASE_URL) ?? DEFAULT_EVENT_IMAGE,
+  }));
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -172,18 +257,13 @@ export default async function BlogPostPage({
           <article className="rounded-xl border border-gray-200 bg-white px-6 py-8">
             <p className="mb-2 text-xs text-gray-400">{formatDate(post.publishedAt)}</p>
             <h1 className="mb-3 text-2xl font-bold leading-tight text-gray-900">{post.title}</h1>
-            {post.tags && post.tags.length > 0 && (
-              <div className="mb-6 flex flex-wrap gap-1.5">
-                {post.tags.map(tag => (
-                  <span key={tag} className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-500">{tag}</span>
-                ))}
-              </div>
-            )}
             <div className="relative mb-6 aspect-[16/9] w-full overflow-hidden rounded-lg bg-gray-100">
               <Image src={eyecatchImage} alt={post.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" />
             </div>
             <BodyRenderer body={bodyWithoutEyecatch} />
           </article>
+          <RelatedPostSlider heading={`${tenantName}の関連記事`} items={sameTenantItems} />
+          <RelatedPostSlider heading="COMIUの関連記事" items={comiuRelatedItems} />
           <div className="mt-8 text-center">
             <Link
               href={`/clubs/${tenantCode}/blog`}
