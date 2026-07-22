@@ -41,6 +41,11 @@ export class BlogController {
     return this.blogService.update(tenantId, id, dto);
   }
 
+  @Put(':id/regenerate-slug')
+  regenerateSlug(@TenantId() tenantId: string, @Param('id') id: string) {
+    return this.blogService.regenerateSlug(tenantId, id);
+  }
+
   @Delete(':id')
   remove(@TenantId() tenantId: string, @Param('id') id: string) {
     return this.blogService.remove(tenantId, id);

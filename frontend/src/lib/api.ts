@@ -293,6 +293,8 @@ export const api = {
       request<BlogPost>(`/admin/blog/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) =>
       request<void>(`/admin/blog/${id}`, { method: 'DELETE' }),
+    regenerateSlug: (id: string) =>
+      request<BlogPost>(`/admin/blog/${id}/regenerate-slug`, { method: 'PUT' }),
   },
   publicPages: {
     list: () => request<PublicPage[]>('/admin/public-pages'),

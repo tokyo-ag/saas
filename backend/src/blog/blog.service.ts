@@ -151,6 +151,19 @@ export class BlogService {
     });
   }
 
+  // Slugs are normally immutable after creation (to avoid breaking already-shared/indexed
+  // links), but old posts created before the slug length cap was tightened can end up with
+  // an unreasonably long URL. This lets an admin explicitly opt into a fresh, short slug.
+  async regenerateSlug(tenantId: string, id: string) {
+    const existing = await this.prisma.blogPost.findFirst({
+      where: { tenantId, id },
+    });
+    if (!existing) throw new NotFoundException('Post not found');
+    const baseSlug = await this.slugify(existing.title);
+    const slug = await this.uniqueSlug(tenantId, baseSlug, id);
+    return await this.prisma.blogPost.update({ where: { id }, data: { slug } });
+  }
+
   async remove(tenantId: string, id: string) {
     const existing = await this.prisma.blogPost.findFirst({
       where: { tenantId, id },

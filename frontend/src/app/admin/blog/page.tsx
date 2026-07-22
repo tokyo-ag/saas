@@ -243,6 +243,7 @@ export default function AdminBlogPage() {
   const [tenantCode, setTenantCode] = useState('');
   const [tenantTags, setTenantTags] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
+  const [regeneratingSlug, setRegeneratingSlug] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function load() {
@@ -315,6 +316,22 @@ export default function AdminBlogPage() {
       setError(err instanceof Error ? err.message : '保存に失敗しました');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleRegenerateSlug() {
+    if (!editing) return;
+    if (!confirm('現在のURLは使えなくなります。よろしいですか？')) return;
+    setRegeneratingSlug(true);
+    try {
+      const updated = await api.blog.regenerateSlug(editing.id);
+      setEditing(updated);
+      await revalidatePublishedBlog(updated);
+      load();
+    } catch {
+      alert('URLの短縮に失敗しました');
+    } finally {
+      setRegeneratingSlug(false);
     }
   }
 
@@ -397,6 +414,16 @@ export default function AdminBlogPage() {
               className="ml-auto rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50"
             >
               {copied ? 'コピー済み' : 'URLコピー'}
+            </button>
+          )}
+          {editing && editing.slug.length > 60 && (
+            <button
+              type="button"
+              disabled={regeneratingSlug}
+              onClick={handleRegenerateSlug}
+              className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+            >
+              {regeneratingSlug ? '短縮中...' : 'URLを短くする'}
             </button>
           )}
         </div>
