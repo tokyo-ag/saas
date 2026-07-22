@@ -60,8 +60,6 @@ export const SEARCH_TAGS = ['初心者大歓迎', '経験者大歓迎', '20代�
 // (e.g. "ラケット貸出有り" makes no sense for a 飲み会) - keyed by Event.category slug.
 export const MEETUP_SEARCH_TAGS = ['交流会', '新歓', '飲み会', 'パーティー', 'クラブイベント', 'ビジネス交流会', 'ワークショップ'] as const;
 
-export const ARTICLE_THEME_TAGS = ['選び方', '初心者向け', '費用', '持ち物', '雰囲気'] as const;
-
 export const PORTAL_CATEGORY_TAGS = [...ACTIVITY_TAGS];
 
 // Event.category is stored as an English slug (see EventForm's category <select>),
@@ -114,12 +112,6 @@ export function buildCategoryAreaPath(category: string, area?: string): string {
   const parts = wardOfSubarea ? [wardOfSubarea, area] : [area];
   return `/guide/${categorySlug}/${parts.map((p) => AREA_SLUGS[p] ?? p).join('/')}`;
 }
-
-export const BLOG_TAG_GROUPS = [
-  { label: '団体種別タグ', tags: TENANT_TYPE_TAGS },
-  { label: '活動タグ', tags: ACTIVITY_TAGS },
-  { label: '記事テーマタグ', tags: ARTICLE_THEME_TAGS },
-] as const;
 
 // category is Event.category's English slug ('meetup', 'badminton', ...) - see ACTIVITY_TAG_EVENT_CATEGORY.
 export function getEventTagGroups(category: string) {

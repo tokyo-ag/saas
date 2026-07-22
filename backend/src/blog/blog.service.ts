@@ -29,7 +29,7 @@ export class UpsertBlogPostDto {
 
   @IsArray()
   @ArrayMinSize(1)
-  @ArrayMaxSize(1)
+  @ArrayMaxSize(20)
   @IsString({ each: true })
   @MaxLength(30, { each: true })
   tags!: string[];
