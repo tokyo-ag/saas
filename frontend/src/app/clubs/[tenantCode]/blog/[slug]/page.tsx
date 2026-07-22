@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { API_URL, SITE_URL, IMAGE_BASE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
+import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import type { BlogPost } from '@/lib/api';
 
 export const revalidate = 60;
@@ -23,6 +24,15 @@ async function fetchPost(tenantCode: string, slug: string): Promise<BlogPost | n
 function firstImageFromBody(body: string): string | null {
   const match = body.match(/!\[[^\]]*\]\(([^)]+)\)/);
   return match?.[1] ?? null;
+}
+
+// The one image a post can have is promoted to the eyecatch slot at the top of the article,
+// so it's dropped from its original spot in the body to avoid showing it twice.
+function stripFirstImageLine(body: string): string {
+  return body
+    .split('\n')
+    .filter((line) => !IMAGE_RE.test(line.trim()))
+    .join('\n');
 }
 
 function cleanDescription(text: string): string {
@@ -131,6 +141,11 @@ export default async function BlogPostPage({
 
   const tenantName = post.tenant?.lineDisplayName ?? post.tenant?.name ?? tenantCode;
   const description = post.excerpt ?? cleanDescription(post.body);
+  const eyecatchImage =
+    firstImageFromBody(post.body) ??
+    imgUrl(post.tenant?.linePictureUrl ?? post.tenant?.iconUrl, IMAGE_BASE_URL) ??
+    DEFAULT_EVENT_IMAGE;
+  const bodyWithoutEyecatch = stripFirstImageLine(post.body);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -164,7 +179,10 @@ export default async function BlogPostPage({
                 ))}
               </div>
             )}
-            <BodyRenderer body={post.body} />
+            <div className="relative mb-6 aspect-[16/9] w-full overflow-hidden rounded-lg bg-gray-100">
+              <Image src={eyecatchImage} alt={post.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" />
+            </div>
+            <BodyRenderer body={bodyWithoutEyecatch} />
           </article>
           <div className="mt-8 text-center">
             <Link
