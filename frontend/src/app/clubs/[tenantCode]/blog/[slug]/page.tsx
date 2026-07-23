@@ -6,6 +6,7 @@ import { API_URL, SITE_URL, IMAGE_BASE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import type { BlogPost, BlogPostSummary, LiffEvent, PortalBlogPost } from '@/lib/api';
+import { EventCardMini, RelatedArticleCard, buildTeamRelated, type RelatedArticle } from '@/app/guide/_hub/hubPage';
 
 export const revalidate = 60;
 
@@ -141,17 +142,6 @@ function formatDate(iso: string | null | undefined) {
   return new Date(iso).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-function formatEventDate(iso: string) {
-  return new Date(iso).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', weekday: 'short', timeZone: 'Asia/Tokyo' });
-}
-
-function eventPriceLabel(event: LiffEvent) {
-  if (event.priceMale != null && event.priceFemale != null) {
-    return `男性${event.priceMale.toLocaleString()}円／女性${event.priceFemale.toLocaleString()}円`;
-  }
-  return event.price === 0 ? '無料' : `${event.price.toLocaleString()}円`;
-}
-
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 
 function linkifyText(text: string, keyPrefix: string) {
@@ -193,71 +183,27 @@ function BodyRenderer({ body }: { body: string }) {
   );
 }
 
-type RelatedItem = {
-  key: string;
-  href: string;
-  title: string;
-  subtitle?: string | null;
-  image: string;
-};
-
-function RelatedPostSlider({ heading, items }: { heading: string; items: RelatedItem[] }) {
+function RelatedArticleSection({ heading, items }: { heading: string; items: RelatedArticle[] }) {
   if (items.length === 0) return null;
   return (
     <section className="mt-8">
-      <h2 className="mb-3 text-base font-bold text-gray-900">{heading}</h2>
-      <div className="-mx-1 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex snap-x snap-mandatory gap-3">
-          {items.map((item) => (
-            <Link
-              key={item.key}
-              href={item.href}
-              className="block shrink-0 snap-start overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-              style={{ width: '220px' }}
-            >
-              <div className="relative aspect-[16/9] w-full bg-gray-100">
-                <Image src={item.image} alt={item.title} fill className="object-cover" sizes="220px" />
-              </div>
-              <div className="space-y-1 p-3">
-                {item.subtitle && <p className="truncate text-[11px] text-gray-400">{item.subtitle}</p>}
-                <p className="line-clamp-2 text-sm font-bold leading-snug text-gray-800">{item.title}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
+      <h2 className="text-lg font-bold text-gray-950">{heading}</h2>
+      <div className="mt-4 flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {items.map((item) => <RelatedArticleCard key={item.id} item={item} />)}
       </div>
     </section>
   );
 }
 
-function UpcomingEventsScroll({ tenantCode, events }: { tenantCode: string; events: LiffEvent[] }) {
+function UpcomingEventsSection({ tenantCode, tenantName, events }: { tenantCode: string; tenantName: string; events: LiffEvent[] }) {
   if (events.length === 0) return null;
   return (
     <section className="mt-8">
-      <h2 className="mb-3 text-base font-bold text-gray-900">すぐ参加できる活動</h2>
-      <div className="-mx-1 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex snap-x snap-mandatory gap-3">
-          {events.map((event) => {
-            const image = imgUrl(event.imageUrl, API_URL) ?? DEFAULT_EVENT_IMAGE;
-            return (
-              <Link
-                key={event.id}
-                href={`/e/${tenantCode}/${event.id}`}
-                className="block shrink-0 snap-start overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                style={{ width: '180px' }}
-              >
-                <div className="relative aspect-[4/5] w-full bg-gray-100">
-                  <Image src={image} alt={event.title} fill className="object-cover" sizes="180px" />
-                </div>
-                <div className="space-y-1 p-3">
-                  <p className="text-[11px] text-gray-400">{formatEventDate(event.heldAt)}</p>
-                  <p className="line-clamp-2 text-sm font-bold leading-snug text-gray-800">{event.title}</p>
-                  <p className="text-[11px] text-gray-500">{eventPriceLabel(event)}</p>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+      <h2 className="text-lg font-bold text-gray-950">{`すぐ参加できる${tenantName}の活動`}</h2>
+      <div className="mt-4 flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {events.map((event) => (
+          <EventCardMini key={event.id} event={{ ...event, tenantCode }} />
+        ))}
       </div>
     </section>
   );
@@ -286,19 +232,16 @@ export default async function BlogPostPage({
     fetchTenantHome(tenantCode),
     fetchUpcomingEvents(tenantCode),
   ]);
-  const sameTenantItems: RelatedItem[] = sameTenantPosts.map((p) => ({
-    key: p.id,
+  const sameTenantItems: RelatedArticle[] = sameTenantPosts.map((p) => ({
+    id: p.id,
+    title: p.title,
+    excerpt: p.excerpt,
+    imageUrl: p.coverImageUrl ?? null,
     href: `/clubs/${tenantCode}/blog/${p.slug}`,
-    title: p.title,
-    image: imgUrl(p.coverImageUrl, IMAGE_BASE_URL) ?? DEFAULT_EVENT_IMAGE,
+    matchesBoth: false,
+    publishedAt: p.publishedAt ?? null,
   }));
-  const comiuRelatedItems: RelatedItem[] = comiuRelatedPosts.map((p) => ({
-    key: p.id,
-    href: `/clubs/${p.tenant.code}/blog/${p.slug}`,
-    title: p.title,
-    subtitle: p.tenant.lineDisplayName ?? p.tenant.name,
-    image: imgUrl(p.coverImageUrl, IMAGE_BASE_URL) ?? DEFAULT_EVENT_IMAGE,
-  }));
+  const comiuRelatedItems: RelatedArticle[] = buildTeamRelated(comiuRelatedPosts, RELATED_LIMIT);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -334,14 +277,14 @@ export default async function BlogPostPage({
             <BodyRenderer body={bodyWithoutEyecatch} />
           </article>
 
-          {sameTenantItems.length > 0 && <hr className="my-8 border-gray-200" />}
-          <RelatedPostSlider heading={`${tenantName}の関連記事`} items={sameTenantItems} />
-
           {upcomingEvents.length > 0 && <hr className="my-8 border-gray-200" />}
-          <UpcomingEventsScroll tenantCode={tenantCode} events={upcomingEvents} />
+          <UpcomingEventsSection tenantCode={tenantCode} tenantName={tenantName} events={upcomingEvents} />
+
+          {sameTenantItems.length > 0 && <hr className="my-8 border-gray-200" />}
+          <RelatedArticleSection heading={`${tenantName}の関連記事`} items={sameTenantItems} />
 
           {comiuRelatedItems.length > 0 && <hr className="my-8 border-gray-200" />}
-          <RelatedPostSlider heading="COMIUおすすめ記事" items={comiuRelatedItems} />
+          <RelatedArticleSection heading="COMIUおすすめ記事" items={comiuRelatedItems} />
 
           <div className="mt-8 text-center">
             <Link

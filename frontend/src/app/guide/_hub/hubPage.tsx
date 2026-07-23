@@ -179,7 +179,7 @@ async function fetchUpcomingEvents(category: string, area: string, limit: number
   }
 }
 
-function eventHref(event: PublicEvent) {
+function eventHref(event: Pick<PublicEvent, 'id' | 'tenantCode'>) {
   return event.tenantCode ? `/e/${event.tenantCode}/${event.id}` : '/';
 }
 
@@ -194,7 +194,7 @@ function eventDateLabel(dateStr: string) {
   });
 }
 
-function eventPriceLabel(event: PublicEvent) {
+function eventPriceLabel(event: Pick<PublicEvent, 'price' | 'priceMale' | 'priceFemale'>) {
   if (event.priceMale != null && event.priceFemale != null) {
     return `¥${Math.min(event.priceMale, event.priceFemale).toLocaleString()}〜`;
   }
@@ -203,7 +203,7 @@ function eventPriceLabel(event: PublicEvent) {
 
 // Same 4:5 overlay-text mini card used for events on comiu.link's top page (HomeClient's
 // EventCard) - kept visually identical.
-function EventCardMini({ event }: { event: PublicEvent }) {
+export function EventCardMini({ event }: { event: Pick<PublicEvent, 'id' | 'title' | 'heldAt' | 'imageUrl' | 'capacity' | 'reservedCount' | 'price' | 'priceMale' | 'priceFemale' | 'tenantCode'> }) {
   const image = imgUrl(event.imageUrl, IMAGE_BASE_URL);
   const remaining = event.capacity != null ? event.capacity - event.reservedCount : null;
 
