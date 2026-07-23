@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { API_URL, SITE_URL, IMAGE_BASE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
-import type { BlogPost, BlogPostSummary, PortalBlogPost } from '@/lib/api';
+import type { BlogPost, BlogPostSummary, LiffEvent, PortalBlogPost } from '@/lib/api';
 
 export const revalidate = 60;
 
@@ -46,6 +46,28 @@ async function fetchRelatedByTags(tags: string[], excludeTenantCode: string, exc
     return posts
       .filter((p) => p.id !== excludeId && p.tenant.code !== excludeTenantCode)
       .slice(0, RELATED_LIMIT);
+  } catch {
+    return [];
+  }
+}
+
+async function fetchTenantHome(tenantCode: string): Promise<string> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/tenants/${tenantCode}`, { next: { revalidate } });
+    if (!res.ok) return `/clubs/${tenantCode}`;
+    const tenant: { pages?: Array<{ slug: string }> } = await res.json();
+    const primarySlug = tenant.pages?.[0]?.slug;
+    return primarySlug ? `/clubs/${tenantCode}/${primarySlug}` : `/clubs/${tenantCode}`;
+  } catch {
+    return `/clubs/${tenantCode}`;
+  }
+}
+
+async function fetchUpcomingEvents(tenantCode: string): Promise<LiffEvent[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/liff/${tenantCode}/events`, { next: { revalidate } });
+    if (!res.ok) return [];
+    return res.json();
   } catch {
     return [];
   }
@@ -117,6 +139,17 @@ export async function generateMetadata({
 function formatDate(iso: string | null | undefined) {
   if (!iso) return '';
   return new Date(iso).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function formatEventDate(iso: string) {
+  return new Date(iso).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', weekday: 'short', timeZone: 'Asia/Tokyo' });
+}
+
+function eventPriceLabel(event: LiffEvent) {
+  if (event.priceMale != null && event.priceFemale != null) {
+    return `男性${event.priceMale.toLocaleString()}円／女性${event.priceFemale.toLocaleString()}円`;
+  }
+  return event.price === 0 ? '無料' : `${event.price.toLocaleString()}円`;
 }
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
@@ -197,6 +230,39 @@ function RelatedPostSlider({ heading, items }: { heading: string; items: Related
   );
 }
 
+function UpcomingEventsScroll({ tenantCode, events }: { tenantCode: string; events: LiffEvent[] }) {
+  if (events.length === 0) return null;
+  return (
+    <section className="mt-8">
+      <h2 className="mb-3 text-base font-bold text-gray-900">今後のイベント</h2>
+      <div className="-mx-1 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex snap-x snap-mandatory gap-3">
+          {events.map((event) => {
+            const image = imgUrl(event.imageUrl, API_URL) ?? DEFAULT_EVENT_IMAGE;
+            return (
+              <Link
+                key={event.id}
+                href={`/e/${tenantCode}/${event.id}`}
+                className="block shrink-0 snap-start overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                style={{ width: '220px' }}
+              >
+                <div className="relative aspect-[16/9] w-full bg-gray-100">
+                  <Image src={image} alt={event.title} fill className="object-cover" sizes="220px" />
+                </div>
+                <div className="space-y-1 p-3">
+                  <p className="text-[11px] text-gray-400">{formatEventDate(event.heldAt)}</p>
+                  <p className="line-clamp-2 text-sm font-bold leading-snug text-gray-800">{event.title}</p>
+                  <p className="text-[11px] text-gray-500">{eventPriceLabel(event)}</p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default async function BlogPostPage({
   params,
 }: {
@@ -214,9 +280,11 @@ export default async function BlogPostPage({
     DEFAULT_EVENT_IMAGE;
   const bodyWithoutEyecatch = stripFirstImageLine(post.body);
 
-  const [sameTenantPosts, comiuRelatedPosts] = await Promise.all([
+  const [sameTenantPosts, comiuRelatedPosts, tenantHomeHref, upcomingEvents] = await Promise.all([
     fetchSameTenantPosts(tenantCode, post.id),
     fetchRelatedByTags(post.tags ?? [], tenantCode, post.id),
+    fetchTenantHome(tenantCode),
+    fetchUpcomingEvents(tenantCode),
   ]);
   const sameTenantItems: RelatedItem[] = sameTenantPosts.map((p) => ({
     key: p.id,
@@ -247,7 +315,7 @@ export default async function BlogPostPage({
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
-      <main className="min-h-screen bg-[#F7F8FA]">
+      <main className="min-h-screen bg-[#F7F8FA] pb-24">
         <div className="mx-auto max-w-2xl px-4 py-10">
           <div className="mb-6 flex items-center gap-3">
             <Link href={`/clubs/${tenantCode}/blog`} className="text-sm text-[#06C755] hover:underline">
@@ -255,6 +323,9 @@ export default async function BlogPostPage({
             </Link>
           </div>
           <article className="rounded-xl border border-gray-200 bg-white px-6 py-8">
+            <Link href={tenantHomeHref} className="mb-3 inline-block text-sm font-bold text-[#06C755] hover:underline">
+              {tenantName}
+            </Link>
             <p className="mb-2 text-xs text-gray-400">{formatDate(post.publishedAt)}</p>
             <h1 className="mb-3 text-2xl font-bold leading-tight text-gray-900">{post.title}</h1>
             <div className="relative mb-6 aspect-[16/9] w-full overflow-hidden rounded-lg bg-gray-100">
@@ -262,8 +333,16 @@ export default async function BlogPostPage({
             </div>
             <BodyRenderer body={bodyWithoutEyecatch} />
           </article>
+
+          {sameTenantItems.length > 0 && <hr className="my-8 border-gray-200" />}
           <RelatedPostSlider heading={`${tenantName}の関連記事`} items={sameTenantItems} />
-          <RelatedPostSlider heading="COMIUの関連記事" items={comiuRelatedItems} />
+
+          {upcomingEvents.length > 0 && <hr className="my-8 border-gray-200" />}
+          <UpcomingEventsScroll tenantCode={tenantCode} events={upcomingEvents} />
+
+          {comiuRelatedItems.length > 0 && <hr className="my-8 border-gray-200" />}
+          <RelatedPostSlider heading="COMIUおすすめ記事" items={comiuRelatedItems} />
+
           <div className="mt-8 text-center">
             <Link
               href={`/clubs/${tenantCode}/blog`}
@@ -274,6 +353,16 @@ export default async function BlogPostPage({
           </div>
         </div>
       </main>
+      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur">
+        <div className="mx-auto max-w-2xl">
+          <Link
+            href={tenantHomeHref}
+            className="block rounded-full bg-[#06C755] px-6 py-3 text-center text-sm font-bold text-white hover:bg-[#05a847]"
+          >
+            {tenantName}の団体ページを見る
+          </Link>
+        </div>
+      </div>
     </>
   );
 }
