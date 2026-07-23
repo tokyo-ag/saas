@@ -5,8 +5,8 @@ import Image from 'next/image';
 import { API_URL, SITE_URL, IMAGE_BASE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
-import type { BlogPost, BlogPostSummary, LiffEvent, PortalBlogPost } from '@/lib/api';
-import { EventCardMini, RelatedArticleCard, buildTeamRelated, type RelatedArticle } from '@/app/guide/_hub/hubPage';
+import type { BlogPost, BlogPostSummary, LiffEvent } from '@/lib/api';
+import { EventCardMini, RelatedArticleCard, buildOfficialRelated, type OfficialArticle, type RelatedArticle } from '@/app/guide/_hub/hubPage';
 
 export const revalidate = 60;
 
@@ -35,18 +35,11 @@ async function fetchSameTenantPosts(tenantCode: string, excludeId: string): Prom
   }
 }
 
-async function fetchRelatedByTags(tags: string[], excludeTenantCode: string, excludeId: string): Promise<PortalBlogPost[]> {
-  if (tags.length === 0) return [];
+async function fetchOfficialArticles(): Promise<OfficialArticle[]> {
   try {
-    const res = await fetch(
-      `${API_URL}/api/public/blog?tags=${encodeURIComponent(tags.join(','))}&limit=30`,
-      { next: { revalidate } },
-    );
+    const res = await fetch(`${API_URL}/api/public/official-articles?limit=${RELATED_LIMIT}`, { next: { revalidate } });
     if (!res.ok) return [];
-    const posts: PortalBlogPost[] = await res.json();
-    return posts
-      .filter((p) => p.id !== excludeId && p.tenant.code !== excludeTenantCode)
-      .slice(0, RELATED_LIMIT);
+    return res.json();
   } catch {
     return [];
   }
@@ -226,9 +219,9 @@ export default async function BlogPostPage({
     DEFAULT_EVENT_IMAGE;
   const bodyWithoutEyecatch = stripFirstImageLine(post.body);
 
-  const [sameTenantPosts, comiuRelatedPosts, tenantHomeHref, upcomingEvents] = await Promise.all([
+  const [sameTenantPosts, officialArticles, tenantHomeHref, upcomingEvents] = await Promise.all([
     fetchSameTenantPosts(tenantCode, post.id),
-    fetchRelatedByTags(post.tags ?? [], tenantCode, post.id),
+    fetchOfficialArticles(),
     fetchTenantHome(tenantCode),
     fetchUpcomingEvents(tenantCode),
   ]);
@@ -241,7 +234,7 @@ export default async function BlogPostPage({
     matchesBoth: false,
     publishedAt: p.publishedAt ?? null,
   }));
-  const comiuRelatedItems: RelatedArticle[] = buildTeamRelated(comiuRelatedPosts, RELATED_LIMIT);
+  const comiuRelatedItems: RelatedArticle[] = buildOfficialRelated(officialArticles, '', '', RELATED_LIMIT);
 
   const jsonLd = {
     '@context': 'https://schema.org',
