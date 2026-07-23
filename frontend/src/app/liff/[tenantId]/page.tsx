@@ -192,9 +192,6 @@ function LiffThreadView({ events, tenantId, accentColor, cardBg, myStatusByEvent
                           <span className="flex items-center gap-1.5">💴<span>{threadPriceLabel(event)}</span></span>
                         </p>
                       </div>
-                      {event.description && (
-                        <p className="mt-2 line-clamp-2 text-[12px] leading-5 text-gray-500">{event.description}</p>
-                      )}
                     </div>
                     <div className="shrink-0 flex flex-col items-end gap-1">
                       <span className={`rounded-md px-2.5 py-1 text-[11px] font-bold ${isFull ? 'bg-gray-100 text-gray-400' : ''}`}
