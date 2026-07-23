@@ -182,17 +182,18 @@ function LiffThreadView({ events, tenantId, accentColor, cardBg, myStatusByEvent
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="text-[15px] font-bold leading-snug text-gray-900">{event.title}</p>
-                      <div className="mt-2 space-y-1 text-[12px] leading-5 text-gray-600">
-                        <p>{formatThreadDate(event)}</p>
-                        <p className="truncate">{event.location}</p>
-                        <p>
-                          {event.capacity ? `${event.reservedCount}/${event.capacity}人` : null}
-                          {event.capacity && <span className="mx-1 text-gray-300">/</span>}
-                          {threadPriceLabel(event)}
+                      <div className="mt-2 space-y-1.5 text-[12px] font-medium leading-5 text-gray-700">
+                        <p className="flex items-center gap-1.5"><span>🕐</span><span>{formatThreadDate(event)}</span></p>
+                        <p className="flex items-center gap-1.5"><span>📍</span><span className="truncate">{event.location}</span></p>
+                        <p className="flex items-center gap-1.5 flex-wrap">
+                          {event.capacity != null && (
+                            <span className="flex items-center gap-1.5">👥<span>{event.reservedCount}/{event.capacity}人</span></span>
+                          )}
+                          <span className="flex items-center gap-1.5">💴<span>{threadPriceLabel(event)}</span></span>
                         </p>
                       </div>
                       {event.description && (
-                        <p className="mt-2 line-clamp-2 text-[12px] leading-5 text-gray-400">{event.description}</p>
+                        <p className="mt-2 line-clamp-2 text-[12px] leading-5 text-gray-500">{event.description}</p>
                       )}
                     </div>
                     <div className="shrink-0 flex flex-col items-end gap-1">
