@@ -234,7 +234,7 @@ function UpcomingEventsScroll({ tenantCode, events }: { tenantCode: string; even
   if (events.length === 0) return null;
   return (
     <section className="mt-8">
-      <h2 className="mb-3 text-base font-bold text-gray-900">今後のイベント</h2>
+      <h2 className="mb-3 text-base font-bold text-gray-900">すぐ参加できる活動</h2>
       <div className="-mx-1 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex snap-x snap-mandatory gap-3">
           {events.map((event) => {
@@ -244,10 +244,10 @@ function UpcomingEventsScroll({ tenantCode, events }: { tenantCode: string; even
                 key={event.id}
                 href={`/e/${tenantCode}/${event.id}`}
                 className="block shrink-0 snap-start overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                style={{ width: '220px' }}
+                style={{ width: '180px' }}
               >
-                <div className="relative aspect-[16/9] w-full bg-gray-100">
-                  <Image src={image} alt={event.title} fill className="object-cover" sizes="220px" />
+                <div className="relative aspect-[4/5] w-full bg-gray-100">
+                  <Image src={image} alt={event.title} fill className="object-cover" sizes="180px" />
                 </div>
                 <div className="space-y-1 p-3">
                   <p className="text-[11px] text-gray-400">{formatEventDate(event.heldAt)}</p>
@@ -315,7 +315,7 @@ export default async function BlogPostPage({
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
-      <main className="min-h-screen bg-[#F7F8FA] pb-24">
+      <main className="min-h-screen bg-[#F7F8FA] pb-32">
         <div className="mx-auto max-w-2xl px-4 py-10">
           <div className="mb-6 flex items-center gap-3">
             <Link href={`/clubs/${tenantCode}/blog`} className="text-sm text-[#06C755] hover:underline">
@@ -353,11 +353,11 @@ export default async function BlogPostPage({
           </div>
         </div>
       </main>
-      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-gray-200 bg-white/95 px-5 py-4 backdrop-blur">
         <div className="mx-auto max-w-2xl">
           <Link
             href={tenantHomeHref}
-            className="block rounded-full bg-[#06C755] px-6 py-3 text-center text-sm font-bold text-white hover:bg-[#05a847]"
+            className="block rounded-full bg-[#06C755] px-8 py-4 text-center text-base font-bold text-white hover:bg-[#05a847]"
           >
             {tenantName}の団体ページを見る
           </Link>
