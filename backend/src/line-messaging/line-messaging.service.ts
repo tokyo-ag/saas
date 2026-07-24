@@ -30,7 +30,11 @@ export class LineMessagingService {
       });
       this.logger.log(`LINE push sent → to: ${lineUserId}`);
     } catch (err) {
-      this.logger.error(`LINE push failed to ${lineUserId}: ${err}`);
+      const detail =
+        err && typeof err === 'object' && 'body' in err
+          ? JSON.stringify((err as { body: unknown }).body)
+          : String(err);
+      this.logger.error(`LINE push failed to ${lineUserId}: ${err} | body: ${detail}`);
     }
   }
 
