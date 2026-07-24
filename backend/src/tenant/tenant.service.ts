@@ -38,6 +38,8 @@ export class UpdateTenantDto {
   @IsOptional() @IsString() stripeSecretKey?: string;
   @IsOptional() @IsString() stripeWebhookSecret?: string;
   @IsOptional() @IsString() liffEventView?: string;
+  @IsOptional() @IsString() reservationMessageTemplate?: string;
+  @IsOptional() @IsString() reminderMessageTemplate?: string;
   @IsOptional() @IsBoolean() activityTickerEnabled?: boolean;
   @IsOptional() @IsString() themeColor?: string;
   @IsOptional() @IsString() iconUrl?: string;
@@ -235,6 +237,12 @@ export class TenantService {
         }),
         ...(dto.liffEventView !== undefined && {
           liffEventView: dto.liffEventView,
+        }),
+        ...(dto.reservationMessageTemplate !== undefined && {
+          reservationMessageTemplate: dto.reservationMessageTemplate || null,
+        }),
+        ...(dto.reminderMessageTemplate !== undefined && {
+          reminderMessageTemplate: dto.reminderMessageTemplate || null,
         }),
         ...(dto.activityTickerEnabled !== undefined && {
           activityTickerEnabled: dto.activityTickerEnabled,

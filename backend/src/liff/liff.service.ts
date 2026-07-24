@@ -581,6 +581,7 @@ export class LiffService {
           event.location,
           event.price,
           event.description,
+          tenant?.reservationMessageTemplate,
         );
       } else {
         await this.lineMessaging.sendWaitlistRegistered(

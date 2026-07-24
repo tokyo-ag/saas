@@ -42,6 +42,7 @@ export class LineMessagingService {
     location: string,
     price?: number,
     description?: string | null,
+    customTemplate?: string | null,
   ): Promise<void> {
     const dateStr = this.formatDate(heldAt);
     const priceStr =
@@ -50,6 +51,16 @@ export class LineMessagingService {
           ? '無料'
           : `¥${price.toLocaleString()}`
         : null;
+    if (customTemplate?.trim()) {
+      const text = this.applyTemplate(customTemplate, {
+        title: eventTitle,
+        date: dateStr,
+        location,
+        price: priceStr ?? '',
+      });
+      await this.sendPushMessage(accessToken, lineUserId, text);
+      return;
+    }
     const lines = [
       `【${eventTitle}】ご予約ありがとうございます！`,
       `日時：${dateStr}`,
@@ -126,13 +137,30 @@ export class LineMessagingService {
     eventTitle: string,
     heldAt: Date,
     location: string,
+    customTemplate?: string | null,
   ): Promise<void> {
     const dateStr = this.formatDate(heldAt);
+    if (customTemplate?.trim()) {
+      const text = this.applyTemplate(customTemplate, {
+        title: eventTitle,
+        date: dateStr,
+        location,
+      });
+      await this.sendPushMessage(accessToken, lineUserId, text);
+      return;
+    }
     await this.sendPushMessage(
       accessToken,
       lineUserId,
       `【${eventTitle}】まもなく開催です！\n日時：${dateStr}\n場所：${location}`,
     );
+  }
+
+  private applyTemplate(
+    template: string,
+    vars: Record<string, string>,
+  ): string {
+    return template.replace(/\{(\w+)\}/g, (match, key) => vars[key] ?? match);
   }
 
   async getLineProfile(

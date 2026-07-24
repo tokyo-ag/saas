@@ -733,6 +733,8 @@ export interface Tenant {
   plan: 'free' | 'standard' | 'pro';
   planStartedAt?: string | null;
   liffEventView?: string;
+  reservationMessageTemplate?: string | null;
+  reminderMessageTemplate?: string | null;
   activityTickerEnabled?: boolean;
   themeColor?: string;
   iconUrl?: string | null;
@@ -762,6 +764,8 @@ export interface TenantInput {
   stripeSecretKey?: string;
   stripeWebhookSecret?: string;
   liffEventView?: string;
+  reservationMessageTemplate?: string;
+  reminderMessageTemplate?: string;
   activityTickerEnabled?: boolean;
   themeColor?: string;
   iconUrl?: string;
