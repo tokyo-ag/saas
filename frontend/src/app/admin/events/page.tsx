@@ -94,10 +94,6 @@ export default function EventsPage() {
   const [reservationLineUrl, setReservationLineUrl] = useState('');
   const [displayFields, setDisplayFields] = useState<DisplayFields>(DEFAULT_DISPLAY_FIELDS);
   const [activityTickerEnabled, setActivityTickerEnabled] = useState(true);
-  const [reservationMessageTemplate, setReservationMessageTemplate] = useState('');
-  const [reminderMessageTemplate, setReminderMessageTemplate] = useState('');
-  const [savingMessages, setSavingMessages] = useState(false);
-  const [messagesSaved, setMessagesSaved] = useState(false);
   const [savingStyle, setSavingStyle] = useState(false);
   const [reflected, setReflected] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
@@ -112,8 +108,6 @@ export default function EventsPage() {
     api.tenant.get().then((t) => {
       setTenantId(t.code ?? t.id);
       setActivityTickerEnabled(t.activityTickerEnabled !== false);
-      setReservationMessageTemplate(t.reservationMessageTemplate ?? '');
-      setReminderMessageTemplate(t.reminderMessageTemplate ?? '');
     }).catch(() => {});
     api.publicPages.list().then((pages) => {
       const first = pages[0];
@@ -155,20 +149,6 @@ export default function EventsPage() {
     } catch { /* silent */ } finally {
       setSavingStyle(false);
       setIframeKey((k) => k + 1);
-    }
-  }
-
-  async function saveMessageTemplates() {
-    setSavingMessages(true);
-    try {
-      await api.tenant.update({
-        reservationMessageTemplate,
-        reminderMessageTemplate,
-      });
-      setMessagesSaved(true);
-      setTimeout(() => setMessagesSaved(false), 2500);
-    } catch { /* silent */ } finally {
-      setSavingMessages(false);
     }
   }
 
@@ -389,44 +369,6 @@ export default function EventsPage() {
                 }`}
               >
                 {activityTickerEnabled ? 'ON' : 'OFF'}
-              </button>
-            </div>
-          </div>
-
-          {/* メッセージ文面 */}
-          <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
-            <p className="text-xs font-bold text-gray-500">メッセージ文面のカスタマイズ</p>
-            <p className="mt-0.5 text-[11px] text-gray-400">
-              空欄の場合は標準の文面が使われます。使える変数：{'{title}'}（イベント名）・{'{date}'}（日時）・{'{location}'}（場所）・{'{price}'}（参加費、予約完了メッセージのみ）
-            </p>
-            <div className="mt-3 space-y-3">
-              <div>
-                <label className="mb-1 block text-xs font-bold text-gray-600">予約完了メッセージ</label>
-                <textarea
-                  value={reservationMessageTemplate}
-                  onChange={(e) => setReservationMessageTemplate(e.target.value)}
-                  placeholder={'【{title}】ご予約ありがとうございます！\n日時：{date}\n場所：{location}'}
-                  rows={4}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-bold text-gray-600">前日リマインドメッセージ</label>
-                <textarea
-                  value={reminderMessageTemplate}
-                  onChange={(e) => setReminderMessageTemplate(e.target.value)}
-                  placeholder={'【{title}】まもなく開催です！\n日時：{date}\n場所：{location}'}
-                  rows={4}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={saveMessageTemplates}
-                disabled={savingMessages}
-                className="rounded-lg bg-[#06C755] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#05a847] disabled:opacity-50"
-              >
-                {savingMessages ? '保存中...' : messagesSaved ? '保存しました ✓' : '保存する'}
               </button>
             </div>
           </div>
