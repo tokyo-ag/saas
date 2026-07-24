@@ -277,10 +277,12 @@ model Event {
   paymentTiming   String      @default("onsite") @map("payment_timing")
   notifyOnReserve    Boolean     @default(true) @map("notify_on_reserve")
   notifyOnReserveApp Boolean     @default(true) @map("notify_on_reserve_app")
+  reservationMessageTemplate String? @map("reservation_message_template") @db.Text
   remindEnabled      Boolean     @default(false) @map("remind_enabled")
   remindApp          Boolean     @default(false) @map("remind_app")
   remindAt        DateTime?   @map("remind_at")
   remindedAt      DateTime?   @map("reminded_at")
+  reminderMessageTemplate    String? @map("reminder_message_template") @db.Text
   levelEnabled    Boolean     @default(false) @map("level_enabled")
   rosterShareEnabled Boolean  @default(false) @map("roster_share_enabled")
   rosterShareToken String?    @unique @map("roster_share_token") @db.VarChar(64)

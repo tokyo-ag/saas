@@ -28,10 +28,12 @@ type EventFormData = {
   paymentTiming: 'onsite' | 'prepay' | 'both';
   notifyOnReserve: boolean;
   notifyOnReserveApp: boolean;
+  reservationMessageTemplate: string;
   remindEnabled: boolean;
   remindApp: boolean;
   remindPreset: 'prev18' | 'day9' | 'custom';
   remindAt: string;
+  reminderMessageTemplate: string;
   levelEnabled: boolean;
   rosterShareEnabled: boolean;
   imageUrl: string;
@@ -168,10 +170,12 @@ export default function EventForm({ initial }: { initial?: Event }) {
     paymentTiming: (initial?.paymentTiming ?? 'onsite') as 'onsite' | 'prepay' | 'both',
     notifyOnReserve: initial?.notifyOnReserve ?? true,
     notifyOnReserveApp: initial?.notifyOnReserveApp ?? true,
+    reservationMessageTemplate: initial?.reservationMessageTemplate ?? '',
     remindEnabled: initial?.remindEnabled ?? false,
     remindApp: initial?.remindApp ?? false,
     remindPreset: 'prev18',
     remindAt: toLocalDatetimeValue(initial?.remindAt),
+    reminderMessageTemplate: initial?.reminderMessageTemplate ?? '',
     levelEnabled: initial?.levelEnabled ?? false,
     rosterShareEnabled: initial?.rosterShareEnabled ?? false,
     imageUrl: initial?.imageUrl ?? '',
@@ -439,9 +443,11 @@ export default function EventForm({ initial }: { initial?: Event }) {
       paymentTiming: form.paymentTiming,
       notifyOnReserve: form.notifyOnReserve,
       notifyOnReserveApp: form.notifyOnReserveApp,
+      reservationMessageTemplate: form.reservationMessageTemplate || null,
       remindEnabled: form.remindEnabled,
       remindApp: form.remindApp,
       remindAt,
+      reminderMessageTemplate: form.reminderMessageTemplate || null,
       levelEnabled: form.levelEnabled,
       rosterShareEnabled: form.rosterShareEnabled,
       imageUrl: form.imageUrl || undefined,
@@ -856,6 +862,20 @@ export default function EventForm({ initial }: { initial?: Event }) {
               <Link href="/admin/settings/line" className="ml-1 underline">LINE設定へ</Link>
             </p>
           )}
+          {form.notifyOnReserve && (
+            <div className="pt-1">
+              <label className="mb-1 block text-xs font-medium text-gray-500">
+                このイベントだけのメッセージ文面（空欄なら団体の標準文面）
+              </label>
+              <textarea
+                value={form.reservationMessageTemplate}
+                onChange={(e) => set('reservationMessageTemplate', e.target.value)}
+                placeholder={'【{title}】ご予約ありがとうございます！\n日時：{date}\n場所：{location}'}
+                rows={3}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+              />
+            </div>
+          )}
         </div>
 
         {/* リマインド通知 */}
@@ -892,6 +912,18 @@ export default function EventForm({ initial }: { initial?: Event }) {
               {form.remindPreset === 'custom' && (
                 <input type="datetime-local" step={1800} value={form.remindAt} onChange={(e) => set('remindAt', e.target.value)} className={`${inputClass} max-w-xs`} />
               )}
+              <div className="pt-1">
+                <label className="mb-1 block text-xs font-medium text-gray-500">
+                  このイベントだけのメッセージ文面（空欄なら団体の標準文面）
+                </label>
+                <textarea
+                  value={form.reminderMessageTemplate}
+                  onChange={(e) => set('reminderMessageTemplate', e.target.value)}
+                  placeholder={'【{title}】まもなく開催です！\n日時：{date}\n場所：{location}'}
+                  rows={3}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                />
+              </div>
             </div>
           )}
         </div>

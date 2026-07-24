@@ -434,10 +434,12 @@ export interface Event {
   paymentTiming?: string;
   notifyOnReserve: boolean;
   notifyOnReserveApp?: boolean;
+  reservationMessageTemplate?: string | null;
   remindEnabled: boolean;
   remindApp?: boolean;
   remindAt?: string;
   remindedAt?: string;
+  reminderMessageTemplate?: string | null;
   createdAt: string;
   updatedAt: string;
   reservedCount?: number;
@@ -469,9 +471,11 @@ export interface EventInput {
   paymentTiming?: string;
   notifyOnReserve?: boolean;
   notifyOnReserveApp?: boolean;
+  reservationMessageTemplate?: string | null;
   remindEnabled?: boolean;
   remindApp?: boolean;
   remindAt?: string | null;
+  reminderMessageTemplate?: string | null;
   imageUrl?: string;
   iconUrl?: string;
   category?: string | null;

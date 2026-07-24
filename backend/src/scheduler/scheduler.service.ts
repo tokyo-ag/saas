@@ -60,7 +60,7 @@ export class SchedulerService {
             event.title,
             event.heldAt,
             event.location,
-            tenant.reminderMessageTemplate,
+            event.reminderMessageTemplate ?? tenant.reminderMessageTemplate,
           );
         }
         if (event.remindApp) {

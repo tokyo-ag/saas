@@ -174,9 +174,11 @@ export class EventsService {
         paymentTiming: dto.paymentTiming ?? 'onsite',
         notifyOnReserve: dto.notifyOnReserve,
         notifyOnReserveApp: dto.notifyOnReserveApp ?? false,
+        reservationMessageTemplate: dto.reservationMessageTemplate || null,
         remindEnabled: dto.remindEnabled,
         remindApp: dto.remindApp ?? false,
         remindAt,
+        reminderMessageTemplate: dto.reminderMessageTemplate || null,
         imageUrl: dto.imageUrl ?? null,
         iconUrl: dto.iconUrl ?? null,
         category: dto.category ?? null,
@@ -250,12 +252,18 @@ export class EventsService {
         ...(dto.notifyOnReserveApp !== undefined && {
           notifyOnReserveApp: dto.notifyOnReserveApp,
         }),
+        ...(dto.reservationMessageTemplate !== undefined && {
+          reservationMessageTemplate: dto.reservationMessageTemplate || null,
+        }),
         ...(dto.remindEnabled !== undefined && {
           remindEnabled: dto.remindEnabled,
         }),
         ...(dto.remindApp !== undefined && { remindApp: dto.remindApp }),
         ...(dto.remindAt !== undefined && {
           remindAt,
+        }),
+        ...(dto.reminderMessageTemplate !== undefined && {
+          reminderMessageTemplate: dto.reminderMessageTemplate || null,
         }),
         ...(dto.imageUrl !== undefined && { imageUrl: dto.imageUrl || null }),
         ...(dto.iconUrl !== undefined && { iconUrl: dto.iconUrl || null }),
