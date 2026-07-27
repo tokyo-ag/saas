@@ -167,6 +167,8 @@ const BULLET_LINE_RE = /^(?:[-*]\s+|・\s*)(.+)$/;
 const ORDERED_LINE_RE = /^\d+(?:[.)]\s+|．\s*)(.+)$/;
 const QUOTE_LINE_RE = /^>\s?(.+)$/;
 const DIVIDER_LINE_RE = /^(-{3,}|\*{3,}|_{3,})$/;
+const QUESTION_LINE_RE = /^Q[:.：。]\s*(.+)$/i;
+const ANSWER_LINE_RE = /^A[:.：。]\s*(.+)$/i;
 
 // マークダウン記号なしで「短い行＝見出し／箇条書き」として書かれた原稿
 // （句読点で終わらない短い行が、それだけで見出しや項目を意味しているケース）も
@@ -190,7 +192,8 @@ type BodyGroup =
   | { type: 'paragraph'; text: string }
   | { type: 'list'; ordered: boolean; items: string[] }
   | { type: 'quote'; text: string }
-  | { type: 'divider' };
+  | { type: 'divider' }
+  | { type: 'faq'; items: { q: string; a: string }[] };
 
 // 見出し・画像・リスト・引用・区切り線だけを区切りとして扱い、それ以外の
 // 連続する行は（空行を挟むまで）ひとつの段落としてまとめる。1文ごとに
@@ -201,6 +204,8 @@ function groupBody(body: string): BodyGroup[] {
   let listItems: string[] = [];
   let listOrdered = false;
   let quoteLines: string[] = [];
+  let faqItems: { q: string; a: string }[] = [];
+  let pendingQuestion: string | null = null;
 
   function flushParagraph() {
     if (paragraphLines.length === 0) return;
@@ -223,16 +228,36 @@ function groupBody(body: string): BodyGroup[] {
     groups.push({ type: 'quote', text: quoteLines.join(' ') });
     quoteLines = [];
   }
-  function flushAll() {
+  // 回答が来ないまま次の質問や別の内容に切り替わった場合、質問を消さず段落として残す
+  function flushPendingQuestion() {
+    if (pendingQuestion === null) return;
+    groups.push({ type: 'paragraph', text: `Q. ${pendingQuestion}` });
+    pendingQuestion = null;
+  }
+  function flushFaqItems() {
+    if (faqItems.length === 0) return;
+    groups.push({ type: 'faq', items: faqItems });
+    faqItems = [];
+  }
+  function flushFaq() {
+    flushPendingQuestion();
+    flushFaqItems();
+  }
+  // 空行はQ&Aの組同士の区切りとしてもよく使われるため、空行だけではFAQをまとめ終わらせない
+  function flushSoft() {
     flushParagraph();
     flushList();
     flushQuote();
+  }
+  function flushAll() {
+    flushSoft();
+    flushFaq();
   }
 
   for (const rawLine of body.split('\n')) {
     const trimmed = rawLine.trim();
     if (trimmed === '') {
-      flushAll();
+      flushSoft();
       continue;
     }
 
@@ -263,10 +288,31 @@ function groupBody(body: string): BodyGroup[] {
       continue;
     }
 
+    const question = QUESTION_LINE_RE.exec(trimmed);
+    if (question) {
+      flushParagraph();
+      flushList();
+      flushQuote();
+      flushPendingQuestion();
+      pendingQuestion = question[1];
+      continue;
+    }
+
+    const answer = ANSWER_LINE_RE.exec(trimmed);
+    if (answer && pendingQuestion !== null) {
+      flushParagraph();
+      flushList();
+      flushQuote();
+      faqItems.push({ q: pendingQuestion, a: answer[1] });
+      pendingQuestion = null;
+      continue;
+    }
+
     const bullet = BULLET_LINE_RE.exec(trimmed);
     if (bullet) {
       flushParagraph();
       flushQuote();
+      flushFaq();
       if (listItems.length > 0 && listOrdered) flushList();
       listOrdered = false;
       listItems.push(bullet[1]);
@@ -277,6 +323,7 @@ function groupBody(body: string): BodyGroup[] {
     if (ordered) {
       flushParagraph();
       flushQuote();
+      flushFaq();
       if (listItems.length > 0 && !listOrdered) flushList();
       listOrdered = true;
       listItems.push(ordered[1]);
@@ -287,12 +334,14 @@ function groupBody(body: string): BodyGroup[] {
     if (quote) {
       flushParagraph();
       flushList();
+      flushFaq();
       quoteLines.push(quote[1]);
       continue;
     }
 
     flushList();
     flushQuote();
+    flushFaq();
     paragraphLines.push(trimmed);
   }
   flushAll();
@@ -351,6 +400,25 @@ function BodyRenderer({ body }: { body: string }) {
                 </li>
               ))}
             </ul>
+          );
+        }
+
+        if (group.type === 'faq') {
+          return (
+            <div key={i} className="my-2 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white">
+              {group.items.map((item, j) => (
+                <div key={j} className="p-4">
+                  <div className="flex items-start gap-2 font-bold text-gray-900">
+                    <span className="mt-0.5 shrink-0 rounded-full bg-[#06C755] px-2 text-xs font-bold leading-6 text-white">Q</span>
+                    <span>{renderInline(item.q, `faq-q-${i}-${j}`)}</span>
+                  </div>
+                  <div className="mt-2 flex items-start gap-2 text-gray-600">
+                    <span className="mt-0.5 shrink-0 rounded-full border border-[#06C755] px-2 text-xs font-bold leading-6 text-[#06C755]">A</span>
+                    <span>{renderInline(item.a, `faq-a-${i}-${j}`)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           );
         }
 
