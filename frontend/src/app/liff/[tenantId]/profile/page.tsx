@@ -61,6 +61,11 @@ function priceLabel(r: LiffMyReservation) {
   return r.event.price === 0 ? '無料' : `¥${r.event.price.toLocaleString()}`;
 }
 
+function reservationLocation(r: LiffMyReservation) {
+  if (r.status === 'reserved' || r.status === 'attended') return r.event.location;
+  return r.event.locationHint || r.event.location;
+}
+
 export default function ProfilePage() {
   const { tenantId } = useParams<{ tenantId: string }>();
   const searchParams = useSearchParams();
@@ -420,7 +425,7 @@ export default function ProfilePage() {
                                 <p className="text-sm font-bold text-gray-900 truncate">{r.event.title}</p>
                                 <div className="mt-1 space-y-0.5 text-xs text-gray-500">
                                   <p>{threadDateLabel(r.event.heldAt)}</p>
-                                  <p className="truncate">{r.event.location}</p>
+                                  <p className="truncate">{reservationLocation(r)}</p>
                                   <p>{priceLabel(r)}</p>
                                 </div>
                               </div>
@@ -441,7 +446,7 @@ export default function ProfilePage() {
                                   <p><span className="text-gray-400">カテゴリ：</span>{categoryLabel}</p>
                                 )}
                                 <p><span className="text-gray-400">日時：</span>{threadDateLabel(r.event.heldAt)}</p>
-                                <p><span className="text-gray-400">場所：</span>{r.event.location}</p>
+                                <p><span className="text-gray-400">場所：</span>{reservationLocation(r)}</p>
                                 <p><span className="text-gray-400">参加費：</span>{priceLabel(r)}</p>
                                 {r.event.description && (
                                   <p className="whitespace-pre-wrap border-t border-gray-100 pt-2 text-xs leading-relaxed text-gray-500">{r.event.description}</p>

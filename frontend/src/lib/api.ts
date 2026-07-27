@@ -825,6 +825,7 @@ export interface LiffMyReservation {
     heldAt: string;
     endAt?: string | null;
     location: string;
+    locationHint?: string | null;
     price: number;
     priceMale?: number | null;
     priceFemale?: number | null;

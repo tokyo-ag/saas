@@ -645,6 +645,7 @@ export class LiffService {
         heldAt: r.event.heldAt,
         endAt: this.publicEndAt(r.event.heldAt, r.event.endAt),
         location: r.event.location,
+        locationHint: r.event.locationHint,
         price: r.event.price,
         priceMale: r.event.priceMale,
         priceFemale: r.event.priceFemale,
