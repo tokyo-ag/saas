@@ -135,10 +135,6 @@ function formatDate(iso: string | null | undefined) {
   return new Date(iso).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-function estimateReadingMinutes(body: string): number {
-  return Math.max(1, Math.ceil(body.length / 500));
-}
-
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 
 function linkifyText(text: string, keyPrefix: string) {
@@ -409,8 +405,7 @@ function groupBody(body: string): BodyGroup[] {
   return groups;
 }
 
-function BodyRenderer({ body }: { body: string }) {
-  const groups = groupBody(body);
+function BodyRenderer({ groups }: { groups: BodyGroup[] }) {
   return (
     <div className="space-y-4 text-sm leading-8 text-gray-700">
       {groups.map((group, i) => {
@@ -431,8 +426,8 @@ function BodyRenderer({ body }: { body: string }) {
         if (group.type === 'heading') {
           const content = renderInline(group.text, `h-${i}`);
           return group.level === 2
-            ? <h2 key={i} className="mt-8 border-l-4 border-[#06C755] pl-3 text-lg font-bold leading-snug text-gray-950">{content}</h2>
-            : <h3 key={i} className="mt-6 text-base font-bold text-gray-950">{content}</h3>;
+            ? <h2 key={i} id={`heading-${i}`} className="mt-8 scroll-mt-6 border-l-4 border-[#06C755] pl-3 text-lg font-bold leading-snug text-gray-950">{content}</h2>
+            : <h3 key={i} id={`heading-${i}`} className="mt-6 scroll-mt-6 text-base font-bold text-gray-950">{content}</h3>;
         }
 
         if (group.type === 'divider') {
@@ -524,6 +519,25 @@ function BodyRenderer({ body }: { body: string }) {
   );
 }
 
+function TableOfContents({ groups }: { groups: BodyGroup[] }) {
+  const items = groups
+    .map((g, i) => (g.type === 'heading' ? { id: `heading-${i}`, level: g.level, text: g.text } : null))
+    .filter((item): item is { id: string; level: 2 | 3; text: string } => item !== null);
+  if (items.length < 2) return null;
+  return (
+    <nav className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+      <p className="mb-2 text-xs font-bold text-gray-500">目次</p>
+      <ol className="space-y-1.5 text-sm">
+        {items.map((item) => (
+          <li key={item.id} className={item.level === 3 ? 'ml-4' : undefined}>
+            <a href={`#${item.id}`} className="text-[#06C755] hover:underline">{item.text}</a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+}
+
 function RelatedArticleSection({ heading, items }: { heading: string; items: RelatedArticle[] }) {
   if (items.length === 0) return null;
   return (
@@ -567,6 +581,7 @@ export default async function BlogPostPage({
     tenantIconUrl ??
     DEFAULT_EVENT_IMAGE;
   const bodyWithoutEyecatch = stripFirstImageLine(post.body);
+  const bodyGroups = groupBody(bodyWithoutEyecatch);
 
   const [sameTenantPosts, officialArticles, tenantHomeHref, upcomingEvents] = await Promise.all([
     fetchSameTenantPosts(tenantCode, post.id),
@@ -624,16 +639,13 @@ export default async function BlogPostPage({
                   {tenantName}
                 </Link>
               </div>
-              <p className="mb-2 flex items-center gap-2 text-xs text-gray-400">
-                <span>{formatDate(post.publishedAt)}</span>
-                <span className="text-gray-300">・</span>
-                <span>約{estimateReadingMinutes(post.body)}分で読めます</span>
-              </p>
+              <p className="mb-2 text-xs text-gray-400">{formatDate(post.publishedAt)}</p>
               <h1 className="mb-3 text-3xl font-bold leading-tight tracking-tight text-gray-900">{post.title}</h1>
               <div className="relative mb-6 aspect-[16/9] w-full overflow-hidden rounded-lg bg-gray-100">
                 <Image src={eyecatchImage} alt={post.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" />
               </div>
-              <BodyRenderer body={bodyWithoutEyecatch} />
+              <TableOfContents groups={bodyGroups} />
+              <BodyRenderer groups={bodyGroups} />
             </div>
           </article>
 
