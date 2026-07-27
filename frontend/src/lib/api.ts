@@ -149,7 +149,7 @@ export const api = {
     event: (tenantId: string, eventId: string) =>
       request<LiffEvent>(`/liff/${tenantId}/events/${eventId}`),
     activity: (tenantId: string) =>
-      request<{ id: string; type: 'login' | 'reservation'; at: string }[]>(`/liff/${tenantId}/activity`),
+      request<{ id: string; type: 'login' | 'reservation'; at: string; name: string; pictureUrl: string | null }[]>(`/liff/${tenantId}/activity`),
     myReservation: (
       tenantId: string,
       eventId: string,

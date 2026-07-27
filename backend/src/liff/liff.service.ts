@@ -216,13 +216,17 @@ export class LiffService {
         where: { tenantId, status: { in: ['reserved', 'attended'] } },
         orderBy: { reservedAt: 'desc' },
         take: 15,
-        select: { id: true, reservedAt: true },
+        select: {
+          id: true,
+          reservedAt: true,
+          member: { select: { name: true, lineDisplayName: true, linePictureUrl: true } },
+        },
       }),
       this.prisma.member.findMany({
         where: { tenantId },
         orderBy: { createdAt: 'desc' },
         take: 15,
-        select: { id: true, createdAt: true },
+        select: { id: true, createdAt: true, name: true, lineDisplayName: true, linePictureUrl: true },
       }),
     ]);
 
@@ -231,11 +235,15 @@ export class LiffService {
         id: `r-${r.id}`,
         type: 'reservation' as const,
         at: r.reservedAt,
+        name: r.member.lineDisplayName ?? r.member.name ?? '参加者',
+        pictureUrl: r.member.linePictureUrl,
       })),
       ...newMembers.map((m) => ({
         id: `l-${m.id}`,
         type: 'login' as const,
         at: m.createdAt,
+        name: m.lineDisplayName ?? m.name ?? '参加者',
+        pictureUrl: m.linePictureUrl,
       })),
     ];
 

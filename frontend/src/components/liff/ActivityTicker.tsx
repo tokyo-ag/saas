@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { api } from '@/lib/api';
 import { isLightHexColor } from '@/lib/color';
 
-type ActivityItem = { id: string; type: 'login' | 'reservation'; at: string };
+type ActivityItem = { id: string; type: 'login' | 'reservation'; at: string; name: string; pictureUrl: string | null };
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -32,8 +33,14 @@ export function ActivityTicker({ tenantId, accentColor }: { tenantId: string; ac
     <div className="overflow-hidden border-b border-gray-100 bg-white py-2">
       <div className="flex w-max animate-ticker gap-6 px-4">
         {loop.map((item, i) => (
-          <span key={`${item.id}-${i}`} className="shrink-0 text-xs font-medium whitespace-nowrap" style={{ color: textColor }}>
-            {formatActivity(item)}
+          <span key={`${item.id}-${i}`} className="flex shrink-0 items-center gap-1.5 text-xs font-medium whitespace-nowrap" style={{ color: textColor }}>
+            {item.pictureUrl ? (
+              <Image src={item.pictureUrl} width={16} height={16} className="w-4 h-4 rounded-full object-cover shrink-0" alt="" unoptimized />
+            ) : (
+              <span className="w-4 h-4 rounded-full bg-gray-200 shrink-0" />
+            )}
+            <span className="truncate max-w-[90px]">{item.name}</span>
+            <span>{formatActivity(item)}</span>
           </span>
         ))}
       </div>
