@@ -653,25 +653,30 @@ export default async function BlogPostPage({
               ← ブログ一覧
             </Link>
           </div>
-          <article className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+
+          <div className="mb-3 flex items-center gap-2">
+            {tenantIconUrl && (
+              <Image src={tenantIconUrl} alt="" width={28} height={28} className="h-7 w-7 rounded-full object-cover" unoptimized />
+            )}
+            <Link href={tenantHomeHref} className="text-sm font-bold text-[#06C755] hover:underline">
+              {tenantName}
+            </Link>
+            <span className="text-gray-300">・</span>
+            <span className="text-xs text-gray-400">{formatDate(post.publishedAt)}</span>
+          </div>
+          <h1 className="mb-6 text-[32px] font-extrabold leading-[1.3] tracking-tight text-gray-900 sm:text-4xl">{post.title}</h1>
+
+          <div className="-mx-4 mb-2 sm:mx-0">
+            <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100 shadow-md sm:aspect-[16/9] sm:rounded-2xl">
+              <Image src={eyecatchImage} alt={post.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" />
+            </div>
+          </div>
+          {eyecatchCaption && <p className="mb-8 text-center text-xs italic text-gray-400">{eyecatchCaption}</p>}
+          {!eyecatchCaption && <div className="mb-8" />}
+
+          <article className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
             <div className="h-1.5 w-full bg-gradient-to-r from-[#06C755] to-emerald-300" />
-            <div className="px-6 py-8">
-              <div className="mb-3 flex items-center gap-2">
-                {tenantIconUrl && (
-                  <Image src={tenantIconUrl} alt="" width={28} height={28} className="h-7 w-7 rounded-full object-cover" unoptimized />
-                )}
-                <Link href={tenantHomeHref} className="text-sm font-bold text-[#06C755] hover:underline">
-                  {tenantName}
-                </Link>
-              </div>
-              <p className="mb-2 text-xs text-gray-400">{formatDate(post.publishedAt)}</p>
-              <h1 className="mb-3 text-3xl font-bold leading-tight tracking-tight text-gray-900">{post.title}</h1>
-              <div className="mb-6">
-                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg bg-gray-100 shadow-sm">
-                  <Image src={eyecatchImage} alt={post.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" />
-                </div>
-                {eyecatchCaption && <p className="mt-1.5 text-center text-xs italic text-gray-400">{eyecatchCaption}</p>}
-              </div>
+            <div className="px-6 py-8 sm:px-8 sm:py-10">
               {post.excerpt && (
                 <div className="mb-6 flex gap-2 rounded-lg border border-[#06C755]/20 bg-[#06C755]/5 p-4">
                   <span className="shrink-0">📝</span>
