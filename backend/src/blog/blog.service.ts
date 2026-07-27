@@ -164,6 +164,24 @@ export class BlogService {
     return await this.prisma.blogPost.update({ where: { id }, data: { slug } });
   }
 
+  // 旧スラグ上限（60文字）より前に作られた記事を一括で短縮するための、
+  // 一度きりの移行用アクション。個別のregenerateSlugと同じロジックを使う。
+  async regenerateLongSlugs(tenantId: string) {
+    const posts = await this.prisma.blogPost.findMany({
+      where: { tenantId },
+      select: { id: true, slug: true },
+    });
+    const targets = posts.filter(
+      (p) => p.slug.length > BlogService.SLUG_MAX_LENGTH,
+    );
+    const updated: { id: string; slug: string }[] = [];
+    for (const post of targets) {
+      const result = await this.regenerateSlug(tenantId, post.id);
+      updated.push({ id: result.id, slug: result.slug });
+    }
+    return { updated };
+  }
+
   async remove(tenantId: string, id: string) {
     const existing = await this.prisma.blogPost.findFirst({
       where: { tenantId, id },

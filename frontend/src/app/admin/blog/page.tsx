@@ -268,7 +268,7 @@ export default function AdminBlogPage() {
   const [tenantCode, setTenantCode] = useState('');
   const [tenantTags, setTenantTags] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
-  const [regeneratingSlug, setRegeneratingSlug] = useState(false);
+  const [regeneratingSlugs, setRegeneratingSlugs] = useState(false);
   const [aiDraft, setAiDraft] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -356,19 +356,22 @@ export default function AdminBlogPage() {
     }
   }
 
-  async function handleRegenerateSlug() {
-    if (!editing) return;
-    if (!confirm('現在のURLは使えなくなります。よろしいですか？')) return;
-    setRegeneratingSlug(true);
+  async function handleRegenerateAllLongSlugs() {
+    if (!confirm('60文字を超えるURLをすべて短縮します。よろしいですか？')) return;
+    setRegeneratingSlugs(true);
     try {
-      const updated = await api.blog.regenerateSlug(editing.id);
-      setEditing(updated);
-      await revalidatePublishedBlog(updated);
+      const { updated } = await api.blog.regenerateLongSlugs();
+      for (const post of posts) {
+        if (updated.some((u) => u.id === post.id)) {
+          await revalidatePublishedBlog({ ...post, slug: updated.find((u) => u.id === post.id)!.slug });
+        }
+      }
       load();
+      alert(updated.length > 0 ? `${updated.length}件のURLを短縮しました` : '短縮が必要なURLはありませんでした');
     } catch {
-      alert('URLの短縮に失敗しました');
+      alert('URLの一括短縮に失敗しました');
     } finally {
-      setRegeneratingSlug(false);
+      setRegeneratingSlugs(false);
     }
   }
 
@@ -451,16 +454,6 @@ export default function AdminBlogPage() {
               className="ml-auto rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50"
             >
               {copied ? 'コピー済み' : 'URLコピー'}
-            </button>
-          )}
-          {editing && editing.slug.length > 60 && (
-            <button
-              type="button"
-              disabled={regeneratingSlug}
-              onClick={handleRegenerateSlug}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-            >
-              {regeneratingSlug ? '短縮中...' : 'URLを短くする'}
             </button>
           )}
         </div>
@@ -582,13 +575,25 @@ export default function AdminBlogPage() {
           <h1 className="text-2xl font-bold text-gray-900">ブログ</h1>
           <p className="mt-1 text-xs text-gray-500">公開した記事は公開サイトとSEOに反映されます</p>
         </div>
-        <button
-          type="button"
-          onClick={openNew}
-          className="rounded-lg bg-[#06C755] px-4 py-2 text-sm font-bold text-white hover:bg-[#05a847]"
-        >
-          新規作成
-        </button>
+        <div className="flex items-center gap-2">
+          {posts.some((p) => p.slug.length > 60) && (
+            <button
+              type="button"
+              disabled={regeneratingSlugs}
+              onClick={handleRegenerateAllLongSlugs}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+            >
+              {regeneratingSlugs ? '短縮中...' : '長いURLを一括で短縮する'}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={openNew}
+            className="rounded-lg bg-[#06C755] px-4 py-2 text-sm font-bold text-white hover:bg-[#05a847]"
+          >
+            新規作成
+          </button>
+        </div>
       </div>
 
       {loading ? (

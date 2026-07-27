@@ -32,6 +32,11 @@ export class BlogController {
     return this.blogService.get(tenantId, id);
   }
 
+  @Put('regenerate-long-slugs')
+  regenerateLongSlugs(@TenantId() tenantId: string) {
+    return this.blogService.regenerateLongSlugs(tenantId);
+  }
+
   @Put(':id')
   update(
     @TenantId() tenantId: string,

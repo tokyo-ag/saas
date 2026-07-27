@@ -295,6 +295,8 @@ export const api = {
       request<void>(`/admin/blog/${id}`, { method: 'DELETE' }),
     regenerateSlug: (id: string) =>
       request<BlogPost>(`/admin/blog/${id}/regenerate-slug`, { method: 'PUT' }),
+    regenerateLongSlugs: () =>
+      request<{ updated: { id: string; slug: string }[] }>('/admin/blog/regenerate-long-slugs', { method: 'PUT' }),
   },
   publicPages: {
     list: () => request<PublicPage[]>('/admin/public-pages'),
