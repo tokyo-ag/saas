@@ -151,18 +151,32 @@ function linkifyText(text: string, keyPrefix: string) {
   });
 }
 
+// AIが生成した原稿にありがちな「**太字**」を見出し/強調として解釈できるようにする
+function renderInline(text: string, keyPrefix: string) {
+  const segments = text.split(/(\*\*[^*]+\*\*)/g);
+  return segments.flatMap((seg, i) => {
+    const m = /^\*\*([^*]+)\*\*$/.exec(seg);
+    if (m) return <strong key={`${keyPrefix}-b-${i}`}>{linkifyText(m[1], `${keyPrefix}-b-${i}`)}</strong>;
+    return linkifyText(seg, `${keyPrefix}-${i}`);
+  });
+}
+
+const HEADING_LINE_RE = /^(#{1,6})\s+(.+)$/;
+const BOLD_ONLY_LINE_RE = /^\*\*([^*]+)\*\*$/;
+
 function BodyRenderer({ body }: { body: string }) {
   const parts = body.split('\n');
   return (
     <div className="space-y-2 text-sm leading-8 text-gray-700">
       {parts.map((line, i) => {
-        const m = IMAGE_RE.exec(line.trim());
-        if (m) {
+        const trimmed = line.trim();
+        const img = IMAGE_RE.exec(trimmed);
+        if (img) {
           return (
             <div key={i} className="relative my-2 w-full overflow-hidden rounded-lg" style={{ minHeight: 200 }}>
               <Image
-                src={m[2]}
-                alt={m[1]}
+                src={img[2]}
+                alt={img[1]}
                 fill
                 className="object-contain"
                 sizes="(max-width: 640px) 100vw, 640px"
@@ -170,7 +184,22 @@ function BodyRenderer({ body }: { body: string }) {
             </div>
           );
         }
-        return line ? <p key={i}>{linkifyText(line, `line-${i}`)}</p> : <br key={i} />;
+
+        const heading = HEADING_LINE_RE.exec(trimmed);
+        if (heading) {
+          const level = heading[1].length;
+          const content = renderInline(heading[2], `h-${i}`);
+          return level <= 2
+            ? <h2 key={i} className="mt-6 text-lg font-bold text-gray-950">{content}</h2>
+            : <h3 key={i} className="mt-4 text-base font-bold text-gray-950">{content}</h3>;
+        }
+
+        const boldOnly = BOLD_ONLY_LINE_RE.exec(trimmed);
+        if (boldOnly) {
+          return <h2 key={i} className="mt-6 text-lg font-bold text-gray-950">{linkifyText(boldOnly[1], `h-${i}`)}</h2>;
+        }
+
+        return line ? <p key={i}>{renderInline(line, `line-${i}`)}</p> : <br key={i} />;
       })}
     </div>
   );

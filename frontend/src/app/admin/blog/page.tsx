@@ -59,6 +59,31 @@ function blocksToBody(blocks: Block[]): string {
   return blocks.map((b) => (b.type === 'image' ? `![](${b.url})` : b.content)).join('\n');
 }
 
+// AIに書かせた原稿をそのまま貼り付けられるように、1行目=タイトル、
+// 続く段落=概要、それ以降=本文（見出しは #/##/### や **太字** のまま残す）として分割する
+function parseAiDraft(raw: string): { title: string; excerpt: string; body: string } {
+  const lines = raw.replace(/\r\n/g, '\n').split('\n');
+  let i = 0;
+  while (i < lines.length && lines[i].trim() === '') i++;
+  const titleLine = (lines[i] ?? '').trim().replace(/^#{1,6}\s+/, '').replace(/^\*\*([^*]+)\*\*$/, '$1');
+  i++;
+  while (i < lines.length && lines[i].trim() === '') i++;
+
+  const excerptLines: string[] = [];
+  while (i < lines.length && lines[i].trim() !== '') {
+    excerptLines.push(lines[i].trim());
+    i++;
+  }
+  while (i < lines.length && lines[i].trim() === '') i++;
+
+  const body = lines.slice(i).join('\n').trim();
+  return {
+    title: titleLine.slice(0, 160),
+    excerpt: excerptLines.join(' ').slice(0, 300),
+    body,
+  };
+}
+
 function CropModal({
   url,
   onConfirm,
@@ -244,6 +269,7 @@ export default function AdminBlogPage() {
   const [tenantTags, setTenantTags] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
   const [regeneratingSlug, setRegeneratingSlug] = useState(false);
+  const [aiDraft, setAiDraft] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function load() {
@@ -279,6 +305,7 @@ export default function AdminBlogPage() {
     setForm({ title: '', body: '', excerpt: '', tags: [], status: 'draft' });
     setBlocks([{ type: 'text', content: '' }]);
     setActiveBlockIdx(0);
+    setAiDraft('');
     setError('');
     setMode('edit');
   }
@@ -288,8 +315,18 @@ export default function AdminBlogPage() {
     setForm({ title: post.title, body: post.body, excerpt: post.excerpt ?? '', tags: post.tags ?? [], status: post.status });
     setBlocks(bodyToBlocks(post.body));
     setActiveBlockIdx(0);
+    setAiDraft('');
     setError('');
     setMode('edit');
+  }
+
+  function applyAiDraft() {
+    const { title, excerpt, body } = parseAiDraft(aiDraft);
+    if (!title && !body) return;
+    setForm((p) => ({ ...p, title: title || p.title, excerpt: excerpt || p.excerpt }));
+    setBlocks(bodyToBlocks(body));
+    setActiveBlockIdx(0);
+    setAiDraft('');
   }
 
   async function handleSave(publish: boolean) {
@@ -429,6 +466,28 @@ export default function AdminBlogPage() {
         </div>
 
         {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+
+        <div className="mb-4 space-y-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4">
+          <label className="block text-sm font-bold text-gray-700">AI原稿を貼り付けて自動入力（任意）</label>
+          <p className="text-xs leading-5 text-gray-500">
+            1行目がタイトル、2行目以降の段落が概要になります。空行を挟んだ続きが本文です。本文中の「# 見出し」「**太字**」はそのまま見出し・強調として表示されます。
+          </p>
+          <textarea
+            value={aiDraft}
+            onChange={(e) => setAiDraft(e.target.value)}
+            placeholder={'記事タイトル\n\n概要になる書き出しの段落をここに。\n\n本文がここから始まります。\n\n**見出し例**\n本文が続きます...'}
+            rows={4}
+            className="w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm leading-6 text-gray-700 outline-none focus:ring-2 focus:ring-[#06C755]"
+          />
+          <button
+            type="button"
+            onClick={applyAiDraft}
+            disabled={!aiDraft.trim()}
+            className="rounded-lg bg-gray-800 px-4 py-1.5 text-xs font-bold text-white hover:bg-gray-700 disabled:opacity-40"
+          >
+            自動入力する
+          </button>
+        </div>
 
         <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-5">
           <div>
