@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import { isLightHexColor } from '@/lib/color';
 
 type ActivityItem = { id: string; type: 'login' | 'reservation'; at: string };
 
@@ -23,12 +24,15 @@ export function ActivityTicker({ tenantId, accentColor }: { tenantId: string; ac
   if (!items || items.length === 0) return null;
 
   const loop = [...items, ...items];
+  // ticker背景が白固定のため、accentColorが白に近い（例:ボタン専用の白文字色）場合は
+  // 読めなくなってしまう。その場合だけ読みやすい濃い色にフォールバックする。
+  const textColor = isLightHexColor(accentColor) ? '#111827' : accentColor;
 
   return (
     <div className="overflow-hidden border-b border-gray-100 bg-white py-2">
       <div className="flex w-max animate-ticker gap-6 px-4">
         {loop.map((item, i) => (
-          <span key={`${item.id}-${i}`} className="shrink-0 text-xs font-medium whitespace-nowrap" style={{ color: accentColor }}>
+          <span key={`${item.id}-${i}`} className="shrink-0 text-xs font-medium whitespace-nowrap" style={{ color: textColor }}>
             {formatActivity(item)}
           </span>
         ))}
