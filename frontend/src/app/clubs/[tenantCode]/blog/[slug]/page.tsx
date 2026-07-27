@@ -163,56 +163,117 @@ function renderInline(text: string, keyPrefix: string) {
 
 const HEADING_LINE_RE = /^(#{1,6})\s+(.+)$/;
 const BOLD_ONLY_LINE_RE = /^\*\*([^*]+)\*\*$/;
+const BULLET_LINE_RE = /^(?:[-*]\s+|・\s*)(.+)$/;
+const ORDERED_LINE_RE = /^\d+[.)]\s+(.+)$/;
+const QUOTE_LINE_RE = /^>\s?(.+)$/;
+const DIVIDER_LINE_RE = /^(-{3,}|\*{3,}|_{3,})$/;
 
 type BodyGroup =
   | { type: 'image'; alt: string; url: string }
   | { type: 'heading'; level: 2 | 3; text: string }
-  | { type: 'paragraph'; text: string };
+  | { type: 'paragraph'; text: string }
+  | { type: 'list'; ordered: boolean; items: string[] }
+  | { type: 'quote'; text: string }
+  | { type: 'divider' };
 
-// 見出しや画像行だけを区切りとして扱い、それ以外の連続する行は
-// （空行を挟むまで）ひとつの段落としてまとめる。1文ごとに改行された
-// 原稿でも、見た目上バラバラの段落に分かれてしまわないようにするため。
+// 見出し・画像・リスト・引用・区切り線だけを区切りとして扱い、それ以外の
+// 連続する行は（空行を挟むまで）ひとつの段落としてまとめる。1文ごとに
+// 改行された原稿でも、見た目上バラバラの段落に分かれてしまわないようにするため。
 function groupBody(body: string): BodyGroup[] {
   const groups: BodyGroup[] = [];
   let paragraphLines: string[] = [];
+  let listItems: string[] = [];
+  let listOrdered = false;
+  let quoteLines: string[] = [];
 
   function flushParagraph() {
     if (paragraphLines.length === 0) return;
     groups.push({ type: 'paragraph', text: paragraphLines.join(' ') });
     paragraphLines = [];
   }
+  function flushList() {
+    if (listItems.length === 0) return;
+    groups.push({ type: 'list', ordered: listOrdered, items: listItems });
+    listItems = [];
+  }
+  function flushQuote() {
+    if (quoteLines.length === 0) return;
+    groups.push({ type: 'quote', text: quoteLines.join(' ') });
+    quoteLines = [];
+  }
+  function flushAll() {
+    flushParagraph();
+    flushList();
+    flushQuote();
+  }
 
   for (const rawLine of body.split('\n')) {
     const trimmed = rawLine.trim();
     if (trimmed === '') {
-      flushParagraph();
+      flushAll();
       continue;
     }
 
     const img = IMAGE_RE.exec(trimmed);
     if (img) {
-      flushParagraph();
+      flushAll();
       groups.push({ type: 'image', alt: img[1], url: img[2] });
+      continue;
+    }
+
+    if (DIVIDER_LINE_RE.test(trimmed)) {
+      flushAll();
+      groups.push({ type: 'divider' });
       continue;
     }
 
     const heading = HEADING_LINE_RE.exec(trimmed);
     if (heading) {
-      flushParagraph();
+      flushAll();
       groups.push({ type: 'heading', level: heading[1].length <= 2 ? 2 : 3, text: heading[2] });
       continue;
     }
 
     const boldOnly = BOLD_ONLY_LINE_RE.exec(trimmed);
     if (boldOnly) {
-      flushParagraph();
+      flushAll();
       groups.push({ type: 'heading', level: 2, text: boldOnly[1] });
       continue;
     }
 
+    const bullet = BULLET_LINE_RE.exec(trimmed);
+    if (bullet) {
+      flushParagraph();
+      flushQuote();
+      if (listItems.length > 0 && listOrdered) flushList();
+      listOrdered = false;
+      listItems.push(bullet[1]);
+      continue;
+    }
+
+    const ordered = ORDERED_LINE_RE.exec(trimmed);
+    if (ordered) {
+      flushParagraph();
+      flushQuote();
+      if (listItems.length > 0 && !listOrdered) flushList();
+      listOrdered = true;
+      listItems.push(ordered[1]);
+      continue;
+    }
+
+    const quote = QUOTE_LINE_RE.exec(trimmed);
+    if (quote) {
+      flushParagraph();
+      flushList();
+      quoteLines.push(quote[1]);
+      continue;
+    }
+
+    flushList();
+    flushQuote();
     paragraphLines.push(trimmed);
   }
-  flushParagraph();
+  flushAll();
   return groups;
 }
 
@@ -238,8 +299,37 @@ function BodyRenderer({ body }: { body: string }) {
         if (group.type === 'heading') {
           const content = renderInline(group.text, `h-${i}`);
           return group.level === 2
-            ? <h2 key={i} className="mt-6 text-lg font-bold text-gray-950">{content}</h2>
-            : <h3 key={i} className="mt-4 text-base font-bold text-gray-950">{content}</h3>;
+            ? <h2 key={i} className="mt-8 border-l-4 border-[#06C755] pl-3 text-lg font-bold leading-snug text-gray-950">{content}</h2>
+            : <h3 key={i} className="mt-6 text-base font-bold text-gray-950">{content}</h3>;
+        }
+
+        if (group.type === 'divider') {
+          return <hr key={i} className="my-6 border-gray-200" />;
+        }
+
+        if (group.type === 'quote') {
+          return (
+            <blockquote key={i} className="rounded-lg border-l-4 border-[#06C755] bg-[#06C755]/5 py-3 pl-4 pr-3 text-gray-700">
+              {renderInline(group.text, `q-${i}`)}
+            </blockquote>
+          );
+        }
+
+        if (group.type === 'list') {
+          return group.ordered ? (
+            <ol key={i} className="list-decimal space-y-1.5 pl-5 marker:font-bold marker:text-[#06C755]">
+              {group.items.map((item, j) => <li key={j}>{renderInline(item, `li-${i}-${j}`)}</li>)}
+            </ol>
+          ) : (
+            <ul key={i} className="space-y-1.5">
+              {group.items.map((item, j) => (
+                <li key={j} className="flex gap-2">
+                  <span className="mt-[3px] shrink-0 text-[#06C755]">●</span>
+                  <span>{renderInline(item, `li-${i}-${j}`)}</span>
+                </li>
+              ))}
+            </ul>
+          );
         }
 
         return <p key={i}>{renderInline(group.text, `line-${i}`)}</p>;
