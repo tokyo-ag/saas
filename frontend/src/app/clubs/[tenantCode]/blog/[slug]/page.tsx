@@ -135,6 +135,10 @@ function formatDate(iso: string | null | undefined) {
   return new Date(iso).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+function estimateReadingMinutes(body: string): number {
+  return Math.max(1, Math.ceil(body.length / 500));
+}
+
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 
 function linkifyText(text: string, keyPrefix: string) {
@@ -556,10 +560,11 @@ export default async function BlogPostPage({
   if (!post) notFound();
 
   const tenantName = post.tenant?.lineDisplayName ?? post.tenant?.name ?? tenantCode;
+  const tenantIconUrl = imgUrl(post.tenant?.linePictureUrl ?? post.tenant?.iconUrl, IMAGE_BASE_URL);
   const description = post.excerpt ?? cleanDescription(post.body);
   const eyecatchImage =
     firstImageFromBody(post.body) ??
-    imgUrl(post.tenant?.linePictureUrl ?? post.tenant?.iconUrl, IMAGE_BASE_URL) ??
+    tenantIconUrl ??
     DEFAULT_EVENT_IMAGE;
   const bodyWithoutEyecatch = stripFirstImageLine(post.body);
 
@@ -595,23 +600,41 @@ export default async function BlogPostPage({
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
-      <main className="min-h-screen bg-[#F7F8FA] pb-32">
+      <main
+        className="min-h-screen pb-32"
+        style={{
+          backgroundColor: '#F7F8FA',
+          backgroundImage: 'repeating-linear-gradient(135deg, rgba(6,199,85,0.05) 0px, rgba(6,199,85,0.05) 1px, transparent 1px, transparent 26px)',
+        }}
+      >
         <div className="mx-auto max-w-2xl px-4 py-10">
           <div className="mb-6 flex items-center gap-3">
             <Link href={`/clubs/${tenantCode}/blog`} className="text-sm text-[#06C755] hover:underline">
               ← ブログ一覧
             </Link>
           </div>
-          <article className="rounded-xl border border-gray-200 bg-white px-6 py-8">
-            <Link href={tenantHomeHref} className="mb-3 inline-block text-sm font-bold text-[#06C755] hover:underline">
-              {tenantName}
-            </Link>
-            <p className="mb-2 text-xs text-gray-400">{formatDate(post.publishedAt)}</p>
-            <h1 className="mb-3 text-2xl font-bold leading-tight text-gray-900">{post.title}</h1>
-            <div className="relative mb-6 aspect-[16/9] w-full overflow-hidden rounded-lg bg-gray-100">
-              <Image src={eyecatchImage} alt={post.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" />
+          <article className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="h-1.5 w-full bg-gradient-to-r from-[#06C755] to-emerald-300" />
+            <div className="px-6 py-8">
+              <div className="mb-3 flex items-center gap-2">
+                {tenantIconUrl && (
+                  <Image src={tenantIconUrl} alt="" width={28} height={28} className="h-7 w-7 rounded-full object-cover" unoptimized />
+                )}
+                <Link href={tenantHomeHref} className="text-sm font-bold text-[#06C755] hover:underline">
+                  {tenantName}
+                </Link>
+              </div>
+              <p className="mb-2 flex items-center gap-2 text-xs text-gray-400">
+                <span>{formatDate(post.publishedAt)}</span>
+                <span className="text-gray-300">・</span>
+                <span>約{estimateReadingMinutes(post.body)}分で読めます</span>
+              </p>
+              <h1 className="mb-3 text-3xl font-bold leading-tight tracking-tight text-gray-900">{post.title}</h1>
+              <div className="relative mb-6 aspect-[16/9] w-full overflow-hidden rounded-lg bg-gray-100">
+                <Image src={eyecatchImage} alt={post.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" />
+              </div>
+              <BodyRenderer body={bodyWithoutEyecatch} />
             </div>
-            <BodyRenderer body={bodyWithoutEyecatch} />
           </article>
 
           {upcomingEvents.length > 0 && <hr className="my-8 border-gray-200" />}
