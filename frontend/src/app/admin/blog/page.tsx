@@ -489,10 +489,10 @@ export default function AdminBlogPage() {
               </label>
             </div>
 
-            <div className="space-y-1 rounded-xl border border-[#06C755] p-1">
+            <div className="space-y-3">
               {blocks.map((block, i) =>
                 block.type === 'image' ? (
-                  <div key={i} className="group relative overflow-hidden rounded-lg">
+                  <div key={i} className="group relative overflow-hidden rounded-lg border border-gray-200">
                     <img src={block.url} alt="" className="w-full max-h-72 rounded-lg object-contain bg-gray-50" />
                     <div className="absolute right-2 top-2 hidden gap-1.5 group-hover:flex">
                       <button
@@ -515,16 +515,17 @@ export default function AdminBlogPage() {
                     </div>
                   </div>
                 ) : (
-                  <textarea
-                    key={i}
-                    value={block.content}
-                    onChange={(e) => setBlocks((prev) => prev.map((b, idx) => idx === i ? { ...b, content: e.target.value } : b))}
-                    onFocus={() => setActiveBlockIdx(i)}
-                    onPaste={handleBodyPaste}
-                    placeholder={blocks.filter(b => b.type === 'text').indexOf(block as TextBlock) === 0 ? '活動の様子やお知らせを書いてください（AI原稿をそのまま貼り付けてもOK）...' : '続きを入力...'}
-                    rows={Math.max(3, (block.content.split('\n').length || 1) + 1)}
-                    className="w-full resize-none rounded-lg bg-transparent px-3 py-2 text-sm leading-7 text-gray-800 outline-none placeholder:text-gray-300 focus:bg-gray-50/60"
-                  />
+                  <div key={i} className="rounded-xl border border-[#06C755] p-1">
+                    <textarea
+                      value={block.content}
+                      onChange={(e) => setBlocks((prev) => prev.map((b, idx) => idx === i ? { ...b, content: e.target.value } : b))}
+                      onFocus={() => setActiveBlockIdx(i)}
+                      onPaste={handleBodyPaste}
+                      placeholder={blocks.filter(b => b.type === 'text').indexOf(block as TextBlock) === 0 ? '活動の様子やお知らせを書いてください（AI原稿をそのまま貼り付けてもOK）...' : '続きを入力...'}
+                      rows={Math.max(3, (block.content.split('\n').length || 1) + 1)}
+                      className="w-full resize-none rounded-lg bg-transparent px-3 py-2 text-sm leading-7 text-gray-800 outline-none placeholder:text-gray-300 focus:bg-gray-50/60"
+                    />
+                  </div>
                 )
               )}
             </div>
