@@ -13,6 +13,7 @@ export type ReservationShowcaseEvent = {
   heldAt: string;
   endAt?: string | null;
   location?: string | null;
+  locationHint?: string | null;
   capacity?: number | null;
   reservedCount?: number | null;
   price?: number | null;
@@ -341,7 +342,7 @@ function CardMini({
                 <div className="space-y-1 p-3">
                   <p className="line-clamp-2 text-sm font-bold leading-snug" style={{ color: eventTitleColor || cardText }}>{event.title}</p>
                   <p className="text-xs font-medium" style={{ color: eventDateColor || cardText, opacity: eventDateColor ? 1 : 0.7 }}>{eventFullDateTime(event)}</p>
-                  {showLocation && event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{event.location}</p>}
+                  {showLocation && event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{event.locationHint || event.location}</p>}
                   {metaLine && <p className="text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{metaLine}</p>}
                 </div>
               </Link>
@@ -419,7 +420,7 @@ function ThreadMini({
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold" style={{ color: eventTitleColor || cardText }}>{event.title}</p>
                         <p className="mt-1 text-xs" style={{ color: eventDateColor || cardText, opacity: eventDateColor ? 1 : 0.7 }}>{eventFullDateTime(event)}</p>
-                        {showLocation && event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{event.location}</p>}
+                        {showLocation && event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{event.locationHint || event.location}</p>}
                         {metaLine && <p className="text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{metaLine}</p>}
                         {showDescription && (event as any).description && (
                           <p className="mt-1 line-clamp-2 text-xs leading-relaxed" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{(event as any).description}</p>

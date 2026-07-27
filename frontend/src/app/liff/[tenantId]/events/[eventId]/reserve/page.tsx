@@ -507,7 +507,11 @@ function ReservePageInner() {
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="mt-0.5 shrink-0 text-xs text-gray-400">場所</span>
-                  <p className="text-gray-800">{event.location}</p>
+                  <p className="text-gray-800">
+                    {myReservation && (myReservation.status === 'reserved' || myReservation.status === 'attended')
+                      ? event.location
+                      : event.locationHint || event.location}
+                  </p>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="mt-0.5 shrink-0 text-xs text-gray-400">参加費</span>

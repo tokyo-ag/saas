@@ -156,6 +156,7 @@ export class LiffService {
       heldAt: e.heldAt,
       endAt: this.publicEndAt(e.heldAt, e.endAt),
       location: e.location,
+      locationHint: e.locationHint,
       capacity: e.capacity,
       status: e.status,
       price: e.price,

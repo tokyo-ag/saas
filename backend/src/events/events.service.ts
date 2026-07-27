@@ -163,6 +163,7 @@ export class EventsService {
         endAt,
         location: dto.location,
         locationUrl: dto.locationUrl ?? null,
+        locationHint: dto.locationHint || null,
         capacity: dto.capacity ?? null,
         capacityMale: dto.capacityMale ?? null,
         capacityFemale: dto.capacityFemale ?? null,
@@ -229,6 +230,9 @@ export class EventsService {
         }),
         ...(dto.locationUrl !== undefined && {
           locationUrl: dto.locationUrl ?? null,
+        }),
+        ...(dto.locationHint !== undefined && {
+          locationHint: dto.locationHint || null,
         }),
         ...(dto.capacityMale !== undefined && {
           capacityMale: dto.capacityMale ?? null,

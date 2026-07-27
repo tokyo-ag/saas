@@ -423,6 +423,7 @@ export interface Event {
   endAt?: string | null;
   location: string;
   locationUrl?: string;
+  locationHint?: string | null;
   capacity?: number;
   capacityMale?: number;
   capacityFemale?: number;
@@ -460,6 +461,7 @@ export interface EventInput {
   endAt?: string | null;
   location: string;
   locationUrl?: string;
+  locationHint?: string | null;
   capacity?: number | null;
   capacityMale?: number | null;
   capacityFemale?: number | null;
@@ -666,6 +668,7 @@ export interface LiffEvent {
   endAt?: string | null;
   location: string;
   locationUrl?: string | null;
+  locationHint?: string | null;
   capacity?: number;
   status: EventStatus;
   price: number;
@@ -1215,6 +1218,7 @@ export interface PublicRoster {
     title: string;
     heldAt: string;
     location: string;
+    locationHint?: string | null;
     levelEnabled: boolean;
   };
   reservations: {
@@ -1236,6 +1240,7 @@ export interface PublicEvent {
   title: string;
   heldAt: string;
   location: string;
+  locationHint?: string | null;
   price: number;
   priceMale?: number | null;
   priceFemale?: number | null;

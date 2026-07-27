@@ -266,6 +266,7 @@ model Event {
   endAt           DateTime?   @map("end_at")
   location        String      @db.VarChar(200)
   locationUrl     String?     @map("location_url") @db.VarChar(500)
+  locationHint    String?     @map("location_hint") @db.VarChar(200)
   capacity        Int?
   capacityMale    Int?        @map("capacity_male")
   capacityFemale  Int?        @map("capacity_female")

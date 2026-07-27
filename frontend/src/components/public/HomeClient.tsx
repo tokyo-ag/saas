@@ -219,7 +219,7 @@ export default function HomeClient({
         : [];
       return [
         ev.title,
-        ev.location,
+        ev.locationHint || ev.location,
         ev.tenant.lineDisplayName ?? ev.tenant.name,
         ev.category ?? '',
         ...categoryTerms,

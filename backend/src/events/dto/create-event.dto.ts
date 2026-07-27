@@ -45,6 +45,11 @@ export class CreateEventDto {
   locationUrl?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  locationHint?: string | null;
+
+  @IsOptional()
   @IsInt()
   @Min(1)
   @Transform(({ value }) =>

@@ -312,7 +312,7 @@ export default async function EventTopicPage({
                       {ev.title}
                     </p>
                     <p className="text-[11px] text-gray-400 mt-1">{fmtDate(ev.heldAt)}</p>
-                    <p className="text-[11px] text-gray-400 truncate">{ev.location}</p>
+                    <p className="text-[11px] text-gray-400 truncate">{ev.locationHint || ev.location}</p>
                     <div className="flex items-center justify-between mt-1.5">
                       <div className="flex items-center gap-1 min-w-0">
                         <span className="text-[10px] text-gray-400 truncate max-w-[80px]">{org}</span>

@@ -19,6 +19,11 @@ function reserveHref(tenantId: string, eventId: string) {
   return `/liff/${tenantId}/events/${eventId}/reserve`;
 }
 
+function displayLocation(event: { location: string; locationHint?: string | null }, myStatus?: string) {
+  if (myStatus === 'reserved' || myStatus === 'attended') return event.location;
+  return event.locationHint || event.location;
+}
+
 function AvatarRow({ count, friends }: { count: number; friends?: { id: string; name: string | null }[] }) {
   const friendCount = friends?.length ?? 0;
   const total = count;
@@ -91,7 +96,7 @@ function EventCard({ event, tenantId, accentColor, cardBg, myStatus }: { event: 
         <p className="text-[10px] opacity-60">{formatDateShort(event.heldAt)}</p>
         <AvatarRow count={event.reservedCount} friends={event.friendAttendees} />
         <div className="flex items-center gap-1 flex-wrap">
-          <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">{event.location}</span>
+          <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">{displayLocation(event, myStatus)}</span>
           {event.priceMale != null && event.priceFemale != null ? (
             <>
               <span className="text-[9px] text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded-full">男¥{event.priceMale.toLocaleString()}</span>
@@ -184,7 +189,7 @@ function LiffThreadView({ events, tenantId, accentColor, cardBg, myStatusByEvent
                       <p className="text-[15px] font-bold leading-snug text-gray-900">{event.title}</p>
                       <div className="mt-2 space-y-1.5 text-[12px] font-medium leading-5 text-gray-700">
                         <p className="flex items-center gap-1.5"><span>🕐</span><span>{formatThreadDate(event)}</span></p>
-                        <p className="flex items-center gap-1.5"><span>📍</span><span className="truncate">{event.location}</span></p>
+                        <p className="flex items-center gap-1.5"><span>📍</span><span className="truncate">{displayLocation(event, myStatusByEvent?.[event.id])}</span></p>
                         <p className="flex items-center gap-1.5 flex-wrap">
                           {event.capacity != null && (
                             <span className="flex items-center gap-1.5">👥<span>{event.reservedCount}/{event.capacity}人</span></span>
@@ -450,7 +455,7 @@ function LiffCalendarCard({ events, tenantId, accentColor, myStatusByEvent }: { 
                     </span>
                     <div className="space-y-1">
                       {dayEvents.slice(0, 1).map((event) => {
-                        const locationPreview = event.location.trim().slice(0, 6);
+                        const locationPreview = displayLocation(event, myStatusByEvent?.[event.id]).trim().slice(0, 6);
                         return (
                           <Link
                             key={event.id}

@@ -16,6 +16,7 @@ type EventFormData = {
   endAt: string;
   location: string;
   locationUrl: string;
+  locationHint: string;
   capacityMode: 'none' | 'total' | 'gender';
   capacity: string;
   capacityMale: string;
@@ -158,6 +159,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
     endAt: initialEndAt,
     location: initial?.location ?? '',
     locationUrl: initial?.locationUrl ?? '',
+    locationHint: initial?.locationHint ?? '',
     capacityMode: initial?.capacityMale != null || initial?.capacityFemale != null ? 'gender' : initial?.capacity != null ? 'total' : 'none',
     capacity: initial?.capacity?.toString() ?? '',
     capacityMale: initial?.capacityMale?.toString() ?? '',
@@ -432,6 +434,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
       endAt: form.endAt ? new Date(form.endAt).toISOString() : null,
       location: form.location,
       locationUrl: form.locationUrl || undefined,
+      locationHint: form.locationHint || null,
       capacity,
       capacityMale,
       capacityFemale,
@@ -742,6 +745,12 @@ export default function EventForm({ initial }: { initial?: Event }) {
         </Field>
         <Field label="地図URL">
           <input type="url" value={form.locationUrl} onChange={(e) => set('locationUrl', e.target.value)} placeholder="https://maps.google.com/..." className={inputClass} />
+        </Field>
+        <Field label="場所の目安表示（駅からの距離など）">
+          <input maxLength={200} value={form.locationHint} onChange={(e) => set('locationHint', e.target.value)} placeholder="例: 渋谷駅から徒歩5分" className={inputClass} />
+          <p className="text-xs leading-5 text-gray-500">
+            予約前の方や検索エンジンには、場所名の代わりにこの目安が表示されます。未入力の場合は場所名がそのまま表示されます。予約済みの方には常に正式な場所名が表示されます。
+          </p>
         </Field>
       </Section>
 

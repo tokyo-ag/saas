@@ -24,6 +24,7 @@ type EventDetail = {
   endAt?: string | null;
   location: string;
   locationUrl?: string | null;
+  locationHint?: string | null;
   price: number;
   priceMale?: number | null;
   priceFemale?: number | null;
@@ -125,7 +126,7 @@ function buildDescription(event: EventDetail) {
   if (event.description && event.description.trim()) {
     return event.description.trim().slice(0, 150).replace(/\n/g, ' ');
   }
-  return `${event.location}で開催。参加費は${priceText(event)}。COMIUでイベント詳細を確認できます。`;
+  return `${event.locationHint || event.location}で開催。参加費は${priceText(event)}。COMIUでイベント詳細を確認できます。`;
 }
 
 function buildJsonLd(event: EventDetail) {
@@ -170,8 +171,8 @@ function buildJsonLd(event: EventDetail) {
         ...(image ? { image: [image] } : {}),
         location: {
           '@type': 'Place',
-          name: event.location,
-          ...(event.locationUrl ? { url: event.locationUrl } : {}),
+          name: event.locationHint || event.location,
+          ...(!event.locationHint && event.locationUrl ? { url: event.locationUrl } : {}),
         },
         organizer: {
           '@type': 'Organization',
@@ -446,7 +447,9 @@ export default async function PublicEventPage({
                 <div>
                   <p className="text-xs font-semibold text-gray-400">場所</p>
                   <div className="text-gray-800">
-                    {event.locationUrl ? (
+                    {event.locationHint ? (
+                      <span>{event.locationHint}</span>
+                    ) : event.locationUrl ? (
                       <a
                         href={event.locationUrl}
                         target="_blank"
