@@ -490,26 +490,6 @@ export default function AdminBlogPage() {
         </div>
 
         <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-5">
-          <div>
-            <label className="mb-1 block text-sm font-bold text-gray-700">タイトル</label>
-            <input
-              value={form.title}
-              onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-              placeholder="記事のタイトル"
-              maxLength={160}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-bold text-gray-700">概要（任意）</label>
-            <input
-              value={form.excerpt ?? ''}
-              onChange={(e) => setForm((p) => ({ ...p, excerpt: e.target.value }))}
-              placeholder="検索エンジン・一覧に表示される説明文"
-              maxLength={300}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-            />
-          </div>
 
           {/* Block editor */}
           <div>
