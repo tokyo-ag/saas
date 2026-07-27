@@ -269,7 +269,6 @@ export default function AdminBlogPage() {
   const [tenantTags, setTenantTags] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
   const [regeneratingSlugs, setRegeneratingSlugs] = useState(false);
-  const [aiDraft, setAiDraft] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function load() {
@@ -305,7 +304,6 @@ export default function AdminBlogPage() {
     setForm({ title: '', body: '', excerpt: '', tags: [], status: 'draft' });
     setBlocks([{ type: 'text', content: '' }]);
     setActiveBlockIdx(0);
-    setAiDraft('');
     setError('');
     setMode('edit');
   }
@@ -315,18 +313,23 @@ export default function AdminBlogPage() {
     setForm({ title: post.title, body: post.body, excerpt: post.excerpt ?? '', tags: post.tags ?? [], status: post.status });
     setBlocks(bodyToBlocks(post.body));
     setActiveBlockIdx(0);
-    setAiDraft('');
     setError('');
     setMode('edit');
   }
 
-  function applyAiDraft() {
-    const { title, excerpt, body } = parseAiDraft(aiDraft);
+  // 本文欄が空の状態でAI原稿をまるごと貼り付けたときだけ、
+  // 1行目=タイトル、続く段落=概要として自動で抜き出す
+  function handleBodyPaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const isFreshSingleBlock = blocks.length === 1 && blocks[0].type === 'text' && blocks[0].content.trim() === '';
+    if (!isFreshSingleBlock) return;
+    const pasted = e.clipboardData.getData('text');
+    if (!pasted.includes('\n')) return;
+    const { title, excerpt, body } = parseAiDraft(pasted);
     if (!title && !body) return;
+    e.preventDefault();
     setForm((p) => ({ ...p, title: title || p.title, excerpt: excerpt || p.excerpt }));
     setBlocks(bodyToBlocks(body));
     setActiveBlockIdx(0);
-    setAiDraft('');
   }
 
   async function handleSave(publish: boolean) {
@@ -460,34 +463,15 @@ export default function AdminBlogPage() {
 
         {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
-        <div className="mb-4 space-y-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4">
-          <label className="block text-sm font-bold text-gray-700">AI原稿を貼り付けて自動入力（任意）</label>
-          <p className="text-xs leading-5 text-gray-500">
-            1行目がタイトル、2行目以降の段落が概要になります。空行を挟んだ続きが本文です。本文中の「# 見出し」「**太字**」はそのまま見出し・強調として表示されます。
-          </p>
-          <textarea
-            value={aiDraft}
-            onChange={(e) => setAiDraft(e.target.value)}
-            placeholder={'記事タイトル\n\n概要になる書き出しの段落をここに。\n\n本文がここから始まります。\n\n**見出し例**\n本文が続きます...'}
-            rows={4}
-            className="w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm leading-6 text-gray-700 outline-none focus:ring-2 focus:ring-[#06C755]"
-          />
-          <button
-            type="button"
-            onClick={applyAiDraft}
-            disabled={!aiDraft.trim()}
-            className="rounded-lg bg-gray-800 px-4 py-1.5 text-xs font-bold text-white hover:bg-gray-700 disabled:opacity-40"
-          >
-            自動入力する
-          </button>
-        </div>
-
         <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-5">
 
           {/* Block editor */}
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <label className="text-sm font-bold text-gray-700">本文</label>
+              <div>
+                <label className="text-sm font-bold text-gray-700">本文</label>
+                <p className="text-xs text-gray-400">AIに書かせた原稿をそのまま貼り付けると、1行目→タイトル、2行目以降の段落→概要に自動で振り分けられます</p>
+              </div>
               <label className={`flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1 text-xs font-bold text-gray-600 hover:bg-gray-50 ${imageUploading ? 'pointer-events-none opacity-50' : ''}`}>
                 <input
                   ref={fileInputRef}
@@ -536,7 +520,8 @@ export default function AdminBlogPage() {
                     value={block.content}
                     onChange={(e) => setBlocks((prev) => prev.map((b, idx) => idx === i ? { ...b, content: e.target.value } : b))}
                     onFocus={() => setActiveBlockIdx(i)}
-                    placeholder={blocks.filter(b => b.type === 'text').indexOf(block as TextBlock) === 0 ? '活動の様子やお知らせを書いてください...' : '続きを入力...'}
+                    onPaste={handleBodyPaste}
+                    placeholder={blocks.filter(b => b.type === 'text').indexOf(block as TextBlock) === 0 ? '活動の様子やお知らせを書いてください（AI原稿をそのまま貼り付けてもOK）...' : '続きを入力...'}
                     rows={Math.max(3, (block.content.split('\n').length || 1) + 1)}
                     className="w-full resize-none rounded-lg bg-transparent px-3 py-2 text-sm leading-7 text-gray-800 outline-none placeholder:text-gray-300 focus:bg-gray-50/60"
                   />
