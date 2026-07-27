@@ -75,6 +75,8 @@ const AI_DRAFT_PROMPT = `ブログ記事の下書きを書いてもらいたい�
 ・1行目：記事のタイトルだけを書く（記号や「タイトル：」などの接頭辞は付けない）
 ・1行空けて、2〜3行程度で記事の概要（要約）を書く
 ・1行空けて、本文を書く
+・本文の最初は「## はじめに」で始め、読者の悩みや記事を読むメリットを書く
+・本文の最後は「## まとめ」で締めくくり、記事全体の要点を簡潔に振り返る
 ・本文中で見出しを付けたい場合は「## 見出し」「### 小見出し」のように#を使うか、見出しにしたい行だけを「**見出し**」のように太字にする
 ・強調したい語句は文中で「**このように**」太字にする
 ・箇条書きにしたい場合は各行を「- 項目」または「・項目」で始める
@@ -468,10 +470,10 @@ export default function AdminBlogPage() {
 
         {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
-        <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4">
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-violet-50 to-fuchsia-50 border border-violet-200 p-4">
           <div>
-            <p className="text-sm font-bold text-gray-700">AIに記事を書かせる時の指示文</p>
-            <p className="mt-0.5 text-xs text-gray-400">この指示文をコピーしてChatGPTなどに貼り付けてから、記事の内容を伝えてください</p>
+            <p className="text-sm font-bold text-violet-700">🤖 AIに記事を書かせる時の指示文</p>
+            <p className="mt-0.5 text-xs text-violet-400">この指示文をコピーしてChatGPTなどに貼り付けてから、記事の内容を伝えてください</p>
           </div>
           <button
             type="button"
@@ -480,9 +482,9 @@ export default function AdminBlogPage() {
               setPromptCopied(true);
               setTimeout(() => setPromptCopied(false), 1600);
             }}
-            className="shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50"
+            className="shrink-0 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-violet-700"
           >
-            {promptCopied ? 'コピー済み' : '指示文をコピー'}
+            {promptCopied ? 'コピー済み ✓' : '指示文をコピー'}
           </button>
         </div>
 
@@ -562,9 +564,9 @@ export default function AdminBlogPage() {
               type="button"
               onClick={() => handleSave(true)}
               disabled={saving}
-              className="rounded-lg bg-[#06C755] px-5 py-2 text-sm font-bold text-white hover:bg-[#05a847] disabled:opacity-50"
+              className="rounded-lg bg-gradient-to-r from-[#06C755] to-emerald-400 px-5 py-2 text-sm font-bold text-white shadow-sm hover:shadow-md disabled:opacity-50"
             >
-              {saving ? '保存中...' : '公開する'}
+              {saving ? '保存中...' : '🚀 公開する'}
             </button>
           </div>
         </div>
@@ -574,29 +576,31 @@ export default function AdminBlogPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 md:px-6">
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">ブログ</h1>
-          <p className="mt-1 text-xs text-gray-500">公開した記事は公開サイトとSEOに反映されます</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {posts.some((p) => p.slug.length > 60) && (
+      <div className="mb-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#06C755] to-emerald-400 p-5 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-white">✨ ブログ</h1>
+            <p className="mt-1 text-xs text-white/80">公開した記事は公開サイトとSEOに反映されます</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {posts.some((p) => p.slug.length > 60) && (
+              <button
+                type="button"
+                disabled={regeneratingSlugs}
+                onClick={handleRegenerateAllLongSlugs}
+                className="rounded-lg border border-white/40 bg-white/10 px-3 py-2 text-xs font-bold text-white hover:bg-white/20 disabled:opacity-50"
+              >
+                {regeneratingSlugs ? '短縮中...' : '長いURLを一括で短縮する'}
+              </button>
+            )}
             <button
               type="button"
-              disabled={regeneratingSlugs}
-              onClick={handleRegenerateAllLongSlugs}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              onClick={openNew}
+              className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-[#06C755] shadow-sm hover:bg-white/90"
             >
-              {regeneratingSlugs ? '短縮中...' : '長いURLを一括で短縮する'}
+              ＋ 新規作成
             </button>
-          )}
-          <button
-            type="button"
-            onClick={openNew}
-            className="rounded-lg bg-[#06C755] px-4 py-2 text-sm font-bold text-white hover:bg-[#05a847]"
-          >
-            新規作成
-          </button>
+          </div>
         </div>
       </div>
 
@@ -611,13 +615,18 @@ export default function AdminBlogPage() {
           </button>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {posts.map((post) => (
-            <div key={post.id} className="flex items-start gap-3 rounded-xl border border-gray-200 bg-white px-4 py-4">
+            <div
+              key={post.id}
+              className={`flex items-start gap-3 rounded-xl border-l-4 bg-white px-4 py-4 shadow-sm transition-shadow hover:shadow-md ${
+                post.status === 'published' ? 'border-l-[#06C755]' : 'border-l-gray-300'
+              } border-y border-r border-gray-200`}
+            >
               {(() => {
                 const image = imgUrl(post.coverImageUrl ?? firstBlogImage(post.body), API_URL);
                 return image ? (
-                  <img src={image} alt="" className="h-16 w-20 shrink-0 rounded-lg object-cover" />
+                  <img src={image} alt="" className="h-16 w-20 shrink-0 rounded-lg object-cover shadow-sm" />
                 ) : (
                   <div className="flex h-16 w-20 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-[10px] font-bold text-gray-300">
                     NO IMAGE
