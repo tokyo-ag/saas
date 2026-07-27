@@ -677,15 +677,6 @@ export default async function BlogPostPage({
           <article className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
             <div className="h-1.5 w-full bg-gradient-to-r from-[#06C755] to-emerald-300" />
             <div className="px-6 py-8 sm:px-8 sm:py-10">
-              {post.excerpt && (
-                <div className="mb-6 flex gap-2 rounded-lg border border-[#06C755]/20 bg-[#06C755]/5 p-4">
-                  <span className="shrink-0">📝</span>
-                  <div>
-                    <p className="mb-1 text-xs font-bold text-[#06C755]">この記事でわかること</p>
-                    <p className="text-sm leading-6 text-gray-700">{post.excerpt}</p>
-                  </div>
-                </div>
-              )}
               <TableOfContents groups={bodyGroups} />
               <BodyRenderer groups={bodyGroups} />
             </div>
