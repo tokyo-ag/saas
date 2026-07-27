@@ -225,11 +225,19 @@ function groupBody(body: string): BodyGroup[] {
   let pendingQuestion: string | null = null;
   let calloutLines: string[] = [];
   let tableRows: string[][] = [];
+  // SEO/アクセシビリティ的にH2を飛ばしてH3から始まるのは階層として不自然なため、
+  // 最初のH2が出てくるまではH3判定をH2に格上げする
+  let sawH2 = false;
+  function pushHeading(level: 2 | 3, text: string) {
+    const effectiveLevel = level === 3 && !sawH2 ? 2 : level;
+    if (effectiveLevel === 2) sawH2 = true;
+    groups.push({ type: 'heading', level: effectiveLevel, text });
+  }
 
   function flushParagraph() {
     if (paragraphLines.length === 0) return;
     if (paragraphLines.length === 1 && looksLikeNakedHeading(paragraphLines[0])) {
-      groups.push({ type: 'heading', level: 2, text: paragraphLines[0] });
+      pushHeading(2, paragraphLines[0]);
     } else if (paragraphLines.length >= 2 && paragraphLines.every(looksLikeNakedListItem)) {
       groups.push({ type: 'list', ordered: false, items: [...paragraphLines] });
     } else {
@@ -308,14 +316,14 @@ function groupBody(body: string): BodyGroup[] {
     const heading = HEADING_LINE_RE.exec(trimmed);
     if (heading) {
       flushAll();
-      groups.push({ type: 'heading', level: heading[1].length <= 2 ? 2 : 3, text: heading[2] });
+      pushHeading(heading[1].length <= 2 ? 2 : 3, heading[2]);
       continue;
     }
 
     const boldOnly = BOLD_ONLY_LINE_RE.exec(trimmed);
     if (boldOnly) {
       flushAll();
-      groups.push({ type: 'heading', level: 2, text: boldOnly[1] });
+      pushHeading(2, boldOnly[1]);
       continue;
     }
 
@@ -481,7 +489,9 @@ function BodyRenderer({ groups }: { groups: BodyGroup[] }) {
 
         if (group.type === 'faq') {
           return (
-            <div key={i} className="my-2 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div key={i} className="my-2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+              <div className="h-1 w-full bg-gradient-to-r from-[#06C755] to-emerald-300" />
+              <div className="divide-y divide-gray-100">
               {group.items.map((item, j) => (
                 <div key={j} className="p-4">
                   <div className="flex items-start gap-2 font-bold text-gray-900">
@@ -494,6 +504,7 @@ function BodyRenderer({ groups }: { groups: BodyGroup[] }) {
                   </div>
                 </div>
               ))}
+              </div>
             </div>
           );
         }
@@ -549,9 +560,9 @@ function TableOfContents({ groups }: { groups: BodyGroup[] }) {
     .filter((item): item is { id: string; level: 2 | 3; text: string } => item !== null);
   if (items.length < 2) return null;
   return (
-    <nav className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
-      <p className="mb-2 text-xs font-bold text-gray-500">目次</p>
-      <ol className="space-y-1.5 text-sm">
+    <nav className="mb-6 overflow-hidden rounded-lg border border-[#06C755]/20 bg-gradient-to-br from-[#06C755]/5 to-emerald-50">
+      <p className="border-b border-[#06C755]/10 px-4 py-2 text-xs font-bold text-[#06C755]">📖 目次</p>
+      <ol className="space-y-1.5 px-4 py-3 text-sm">
         {items.map((item) => (
           <li key={item.id} className={item.level === 3 ? 'ml-4' : undefined}>
             <a href={`#${item.id}`} className="text-[#06C755] hover:underline">{item.text}</a>
@@ -625,6 +636,10 @@ export default async function BlogPostPage({
   }));
   const comiuRelatedItems: RelatedArticle[] = buildOfficialRelated(officialArticles, '', '', RELATED_LIMIT);
 
+  const canonicalUrl = `${SITE_URL}/clubs/${tenantCode}/blog/${slug}`;
+  const blogListUrl = `${SITE_URL}/clubs/${tenantCode}/blog`;
+  const tenantAbsoluteHref = tenantHomeHref.startsWith('http') ? tenantHomeHref : `${SITE_URL}${tenantHomeHref}`;
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
@@ -634,12 +649,45 @@ export default async function BlogPostPage({
     dateModified: post.updatedAt,
     author: { '@type': 'Organization', name: tenantName },
     publisher: { '@type': 'Organization', name: tenantName },
-    url: `${SITE_URL}/clubs/${tenantCode}/blog/${slug}`,
+    url: canonicalUrl,
+    image: { '@type': 'ImageObject', url: eyecatchImage },
+    ...(post.tags && post.tags.length > 0 ? { keywords: post.tags.join(', ') } : {}),
+    wordCount: post.body.length,
   };
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'COMIU', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: tenantName, item: tenantAbsoluteHref },
+      { '@type': 'ListItem', position: 3, name: 'ブログ', item: blogListUrl },
+      { '@type': 'ListItem', position: 4, name: post.title, item: canonicalUrl },
+    ],
+  };
+
+  const faqItemsForSchema = bodyGroups
+    .filter((g): g is Extract<BodyGroup, { type: 'faq' }> => g.type === 'faq')
+    .flatMap((g) => g.items);
+  const faqJsonLd = faqItemsForSchema.length > 0
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: faqItemsForSchema.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
+      }
+    : null;
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, '\\u003c') }} />
+      {faqJsonLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd).replace(/</g, '\\u003c') }} />
+      )}
       <main
         className="min-h-screen pb-32"
         style={{
@@ -668,7 +716,7 @@ export default async function BlogPostPage({
 
           <div className="-mx-4 mb-2 sm:mx-0">
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100 shadow-md sm:aspect-[16/9] sm:rounded-2xl">
-              <Image src={eyecatchImage} alt={post.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" />
+              <Image src={eyecatchImage} alt={eyecatchCaption || post.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" />
             </div>
           </div>
           {eyecatchCaption && <p className="mb-8 text-center text-xs italic text-gray-400">{eyecatchCaption}</p>}
@@ -705,7 +753,7 @@ export default async function BlogPostPage({
         <div className="mx-auto max-w-2xl">
           <Link
             href={tenantHomeHref}
-            className="block rounded-full bg-[#06C755] px-8 py-4 text-center text-base font-bold text-white hover:bg-[#05a847]"
+            className="block rounded-full bg-gradient-to-r from-[#06C755] to-emerald-400 px-8 py-4 text-center text-base font-bold text-white shadow-md hover:shadow-lg"
           >
             {tenantName}の団体ページを見る
           </Link>
