@@ -493,6 +493,7 @@ export default function AdminBlogPage() {
               {blocks.map((block, i) =>
                 block.type === 'image' ? (
                   <div key={i} className="group relative overflow-hidden rounded-lg border border-gray-200">
+                    <span className="absolute left-2 top-2 z-10 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white">画像</span>
                     <img src={block.url} alt="" className="w-full max-h-72 rounded-lg object-contain bg-gray-50" />
                     <div className="absolute right-2 top-2 hidden gap-1.5 group-hover:flex">
                       <button
@@ -516,6 +517,7 @@ export default function AdminBlogPage() {
                   </div>
                 ) : (
                   <div key={i} className="rounded-xl border border-[#06C755] p-1">
+                    <span className="ml-2 mt-1 inline-block rounded-full bg-[#06C755]/10 px-2 py-0.5 text-[10px] font-bold text-[#06C755]">文章</span>
                     <textarea
                       value={block.content}
                       onChange={(e) => setBlocks((prev) => prev.map((b, idx) => idx === i ? { ...b, content: e.target.value } : b))}
