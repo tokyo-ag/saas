@@ -64,6 +64,17 @@ function buildBody(imageUrl: string | null, text: string, extraImages: string[] 
   return parts.join('\n');
 }
 
+// ChatGPT/Claude等に記事の下書きを書かせる際、最初に貼り付けてもらう指示文。
+// この形式で出力させると、貼り付けるだけでタイトル・概要・見出しが自動で振り分けられる
+const AI_DRAFT_PROMPT = `ブログ記事の下書きを、以下のルールを守って書いてください。
+
+・1行目：記事のタイトルだけを書く（記号や「タイトル：」などの接頭辞は付けない）
+・1行空けて、2〜3行程度で記事の概要（要約）を書く
+・1行空けて、本文を書く
+・本文中で見出しを付けたい場合は「## 見出し」「### 小見出し」のように#を使うか、見出しにしたい行だけを「**見出し**」のように太字にする
+・強調したい語句は文中で「**このように**」太字にする
+・絵文字や記号の羅列など、装飾的な表現は使わない`;
+
 // AIに書かせた原稿をそのまま貼り付けられるように、1行目=タイトル、
 // 続く段落=概要、それ以降=本文（見出しは #/##/### や **太字** のまま残す）として分割する
 function parseAiDraft(raw: string): { title: string; excerpt: string; body: string } {
@@ -274,6 +285,7 @@ export default function AdminBlogPage() {
   const [tenantCode, setTenantCode] = useState('');
   const [tenantTags, setTenantTags] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
+  const [promptCopied, setPromptCopied] = useState(false);
   const [regeneratingSlugs, setRegeneratingSlugs] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -443,6 +455,24 @@ export default function AdminBlogPage() {
         </div>
 
         {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4">
+          <div>
+            <p className="text-sm font-bold text-gray-700">AIに記事を書かせる時の指示文</p>
+            <p className="mt-0.5 text-xs text-gray-400">この指示文をコピーしてChatGPTなどに貼り付けてから、記事の内容を伝えてください</p>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              await navigator.clipboard.writeText(AI_DRAFT_PROMPT);
+              setPromptCopied(true);
+              setTimeout(() => setPromptCopied(false), 1600);
+            }}
+            className="shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50"
+          >
+            {promptCopied ? 'コピー済み' : '指示文をコピー'}
+          </button>
+        </div>
 
         <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-5">
 
