@@ -494,7 +494,7 @@ export default function AdminBlogPage() {
           {/* 文章 */}
           <div>
             <span className="mb-1 inline-block rounded-full bg-[#06C755]/10 px-2 py-0.5 text-[10px] font-bold text-[#06C755]">文章</span>
-            <p className="mb-1 text-xs text-gray-400">AIに書かせた原稿をそのまま貼り付けると、1行目→タイトル、2行目以降の段落→概要に自動で振り分けられます</p>
+            <p className="mb-1 text-xs text-gray-400">AIに書かせた原稿をそのまま貼り付けると、1行目→タイトル、2行目以降の段落→概要に自動で振り分けられます。本文中の「# 見出し」「**太字**」はそのまま見出し・強調として表示されます</p>
             <div className="rounded-xl border border-[#06C755] p-1">
               <textarea
                 value={bodyText}
