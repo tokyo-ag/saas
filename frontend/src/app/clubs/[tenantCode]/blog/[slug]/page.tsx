@@ -164,19 +164,69 @@ function renderInline(text: string, keyPrefix: string) {
 const HEADING_LINE_RE = /^(#{1,6})\s+(.+)$/;
 const BOLD_ONLY_LINE_RE = /^\*\*([^*]+)\*\*$/;
 
+type BodyGroup =
+  | { type: 'image'; alt: string; url: string }
+  | { type: 'heading'; level: 2 | 3; text: string }
+  | { type: 'paragraph'; text: string };
+
+// 見出しや画像行だけを区切りとして扱い、それ以外の連続する行は
+// （空行を挟むまで）ひとつの段落としてまとめる。1文ごとに改行された
+// 原稿でも、見た目上バラバラの段落に分かれてしまわないようにするため。
+function groupBody(body: string): BodyGroup[] {
+  const groups: BodyGroup[] = [];
+  let paragraphLines: string[] = [];
+
+  function flushParagraph() {
+    if (paragraphLines.length === 0) return;
+    groups.push({ type: 'paragraph', text: paragraphLines.join(' ') });
+    paragraphLines = [];
+  }
+
+  for (const rawLine of body.split('\n')) {
+    const trimmed = rawLine.trim();
+    if (trimmed === '') {
+      flushParagraph();
+      continue;
+    }
+
+    const img = IMAGE_RE.exec(trimmed);
+    if (img) {
+      flushParagraph();
+      groups.push({ type: 'image', alt: img[1], url: img[2] });
+      continue;
+    }
+
+    const heading = HEADING_LINE_RE.exec(trimmed);
+    if (heading) {
+      flushParagraph();
+      groups.push({ type: 'heading', level: heading[1].length <= 2 ? 2 : 3, text: heading[2] });
+      continue;
+    }
+
+    const boldOnly = BOLD_ONLY_LINE_RE.exec(trimmed);
+    if (boldOnly) {
+      flushParagraph();
+      groups.push({ type: 'heading', level: 2, text: boldOnly[1] });
+      continue;
+    }
+
+    paragraphLines.push(trimmed);
+  }
+  flushParagraph();
+  return groups;
+}
+
 function BodyRenderer({ body }: { body: string }) {
-  const parts = body.split('\n');
+  const groups = groupBody(body);
   return (
-    <div className="space-y-2 text-sm leading-8 text-gray-700">
-      {parts.map((line, i) => {
-        const trimmed = line.trim();
-        const img = IMAGE_RE.exec(trimmed);
-        if (img) {
+    <div className="space-y-4 text-sm leading-8 text-gray-700">
+      {groups.map((group, i) => {
+        if (group.type === 'image') {
           return (
             <div key={i} className="relative my-2 w-full overflow-hidden rounded-lg" style={{ minHeight: 200 }}>
               <Image
-                src={img[2]}
-                alt={img[1]}
+                src={group.url}
+                alt={group.alt}
                 fill
                 className="object-contain"
                 sizes="(max-width: 640px) 100vw, 640px"
@@ -185,21 +235,14 @@ function BodyRenderer({ body }: { body: string }) {
           );
         }
 
-        const heading = HEADING_LINE_RE.exec(trimmed);
-        if (heading) {
-          const level = heading[1].length;
-          const content = renderInline(heading[2], `h-${i}`);
-          return level <= 2
+        if (group.type === 'heading') {
+          const content = renderInline(group.text, `h-${i}`);
+          return group.level === 2
             ? <h2 key={i} className="mt-6 text-lg font-bold text-gray-950">{content}</h2>
             : <h3 key={i} className="mt-4 text-base font-bold text-gray-950">{content}</h3>;
         }
 
-        const boldOnly = BOLD_ONLY_LINE_RE.exec(trimmed);
-        if (boldOnly) {
-          return <h2 key={i} className="mt-6 text-lg font-bold text-gray-950">{linkifyText(boldOnly[1], `h-${i}`)}</h2>;
-        }
-
-        return line ? <p key={i}>{renderInline(line, `line-${i}`)}</p> : <br key={i} />;
+        return <p key={i}>{renderInline(group.text, `line-${i}`)}</p>;
       })}
     </div>
   );
