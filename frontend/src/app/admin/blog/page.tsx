@@ -6,9 +6,6 @@ import { API_URL, SITE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { getToken } from '@/lib/auth';
 
-type TextBlock = { type: 'text'; content: string };
-type ImageBlock = { type: 'image'; url: string };
-type Block = TextBlock | ImageBlock;
 type Mode = 'list' | 'edit';
 
 type CropSel = { x1: number; y1: number; x2: number; y2: number };
@@ -37,26 +34,29 @@ function firstBlogImage(body: string | null | undefined) {
   return body?.match(ANY_IMAGE_RE)?.[1] ?? null;
 }
 
-function bodyToBlocks(body: string): Block[] {
-  const result: Block[] = [];
-  let textLines: string[] = [];
-  for (const line of body.split('\n')) {
-    const m = IMAGE_RE.exec(line.trim());
-    if (m) {
-      result.push({ type: 'text', content: textLines.join('\n') });
-      textLines = [];
-      result.push({ type: 'image', url: m[2] });
-    } else {
-      textLines.push(line);
+// 記事は「画像1枚（任意）＋文章1本」だけの構成なので、保存済みのbody文字列から
+// 最初に見つかった画像行だけを取り出し、残りをすべて文章として扱う
+function parseBody(body: string): { imageUrl: string | null; text: string } {
+  const lines = body.split('\n');
+  let imageUrl: string | null = null;
+  const textLines: string[] = [];
+  for (const line of lines) {
+    if (imageUrl === null) {
+      const m = IMAGE_RE.exec(line.trim());
+      if (m) {
+        imageUrl = m[2];
+        continue;
+      }
     }
+    textLines.push(line);
   }
-  result.push({ type: 'text', content: textLines.join('\n') });
-  const filtered = result.filter((b, i) => b.type === 'image' || b.content !== '' || i === 0);
-  return filtered.length > 0 ? filtered : [{ type: 'text', content: '' }];
+  let text = textLines.join('\n');
+  if (imageUrl !== null) text = text.replace(/^\n+/, '');
+  return { imageUrl, text };
 }
 
-function blocksToBody(blocks: Block[]): string {
-  return blocks.map((b) => (b.type === 'image' ? `![](${b.url})` : b.content)).join('\n');
+function buildBody(imageUrl: string | null, text: string): string {
+  return imageUrl ? `![](${imageUrl})\n\n${text}` : text;
 }
 
 // AIに書かせた原稿をそのまま貼り付けられるように、1行目=タイトル、
@@ -259,12 +259,12 @@ export default function AdminBlogPage() {
   const [mode, setMode] = useState<Mode>('list');
   const [editing, setEditing] = useState<BlogPost | null>(null);
   const [form, setForm] = useState<BlogPostInput>({ title: '', body: '', excerpt: '', tags: [], status: 'draft' });
-  const [blocks, setBlocks] = useState<Block[]>([{ type: 'text', content: '' }]);
-  const [activeBlockIdx, setActiveBlockIdx] = useState(0);
+  const [bodyText, setBodyText] = useState('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
   const [error, setError] = useState('');
-  const [cropModal, setCropModal] = useState<{ blockIdx: number; url: string } | null>(null);
+  const [cropModal, setCropModal] = useState<string | null>(null);
   const [tenantCode, setTenantCode] = useState('');
   const [tenantTags, setTenantTags] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
@@ -302,8 +302,8 @@ export default function AdminBlogPage() {
   function openNew() {
     setEditing(null);
     setForm({ title: '', body: '', excerpt: '', tags: [], status: 'draft' });
-    setBlocks([{ type: 'text', content: '' }]);
-    setActiveBlockIdx(0);
+    setBodyText('');
+    setImageUrl(null);
     setError('');
     setMode('edit');
   }
@@ -311,30 +311,31 @@ export default function AdminBlogPage() {
   function openEdit(post: BlogPost) {
     setEditing(post);
     setForm({ title: post.title, body: post.body, excerpt: post.excerpt ?? '', tags: post.tags ?? [], status: post.status });
-    setBlocks(bodyToBlocks(post.body));
-    setActiveBlockIdx(0);
+    const parsed = parseBody(post.body);
+    setBodyText(parsed.text);
+    setImageUrl(parsed.imageUrl);
     setError('');
     setMode('edit');
   }
 
-  // 本文欄が空の状態でAI原稿をまるごと貼り付けたときだけ、
+  // 文章欄が空の状態でAI原稿をまるごと貼り付けたときだけ、
   // 1行目=タイトル、続く段落=概要として自動で抜き出す
   function handleBodyPaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
-    const isFreshSingleBlock = blocks.length === 1 && blocks[0].type === 'text' && blocks[0].content.trim() === '';
-    if (!isFreshSingleBlock) return;
+    if (bodyText.trim() !== '') return;
     const pasted = e.clipboardData.getData('text');
     if (!pasted.includes('\n')) return;
     const { title, excerpt, body } = parseAiDraft(pasted);
     if (!title && !body) return;
     e.preventDefault();
     setForm((p) => ({ ...p, title: title || p.title, excerpt: excerpt || p.excerpt }));
-    setBlocks(bodyToBlocks(body));
-    setActiveBlockIdx(0);
+    const parsed = parseBody(body);
+    setBodyText(parsed.text);
+    if (parsed.imageUrl && !imageUrl) setImageUrl(parsed.imageUrl);
   }
 
   async function handleSave(publish: boolean) {
-    const body = blocksToBody(blocks);
-    if (!form.title.trim() || !body.replace(/\n/g, '').trim()) {
+    const body = buildBody(imageUrl, bodyText);
+    if (!form.title.trim() || !bodyText.trim()) {
       setError('タイトルと本文は必須です'); return;
     }
     if (tenantTags.length === 0) {
@@ -390,16 +391,7 @@ export default function AdminBlogPage() {
     setImageUploading(true);
     try {
       const url = await uploadImage(file);
-      setBlocks((prev) => {
-        const insertAt = activeBlockIdx + 1;
-        const next = [...prev];
-        next.splice(insertAt, 0, { type: 'image', url });
-        if (insertAt + 1 >= next.length || next[insertAt + 1].type === 'image') {
-          next.splice(insertAt + 1, 0, { type: 'text', content: '' });
-        }
-        return next;
-      });
-      setActiveBlockIdx((i) => i + 2);
+      setImageUrl(url);
     } catch {
       alert('画像のアップロードに失敗しました');
     } finally {
@@ -407,34 +399,14 @@ export default function AdminBlogPage() {
     }
   }
 
-  function removeImage(idx: number) {
-    setBlocks((prev) => {
-      const next = [...prev];
-      const before = prev[idx - 1] as TextBlock | undefined;
-      const after = prev[idx + 1] as TextBlock | undefined;
-      if (before?.type === 'text' && after?.type === 'text') {
-        const merged: TextBlock = {
-          type: 'text',
-          content: [before.content, after.content].filter(Boolean).join('\n'),
-        };
-        next.splice(idx - 1, 3, merged);
-      } else {
-        next.splice(idx, 1);
-      }
-      return next.length > 0 ? next : [{ type: 'text', content: '' }];
-    });
-  }
-
   if (mode === 'edit') {
     return (
       <div className="mx-auto max-w-3xl px-4 py-6 md:px-6">
         {cropModal && (
           <CropModal
-            url={cropModal.url}
+            url={cropModal}
             onConfirm={(newUrl) => {
-              setBlocks((prev) =>
-                prev.map((b, i) => i === cropModal.blockIdx ? { type: 'image', url: newUrl } : b)
-              );
+              setImageUrl(newUrl);
               setCropModal(null);
             }}
             onClose={() => setCropModal(null)}
@@ -465,14 +437,34 @@ export default function AdminBlogPage() {
 
         <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-5">
 
-          {/* Block editor */}
+          {/* 画像（任意・1枚まで） */}
           <div>
-            <div className="mb-2 flex items-center justify-between">
-              <div>
-                <label className="text-sm font-bold text-gray-700">本文</label>
-                <p className="text-xs text-gray-400">AIに書かせた原稿をそのまま貼り付けると、1行目→タイトル、2行目以降の段落→概要に自動で振り分けられます</p>
+            <span className="mb-1 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-500">画像</span>
+            {imageUrl ? (
+              <div className="group relative overflow-hidden rounded-lg border border-gray-200">
+                <img src={imageUrl} alt="" className="w-full max-h-72 rounded-lg object-contain bg-gray-50" />
+                <div className="absolute right-2 top-2 hidden gap-1.5 group-hover:flex">
+                  <button
+                    type="button"
+                    onClick={() => setCropModal(imageUrl)}
+                    className="flex h-7 items-center gap-1 rounded-full bg-black/60 px-2.5 text-xs font-bold text-white hover:bg-black/80"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M5 3a2 2 0 00-2 2v2h2V5h2V3H5zM3 13v2a2 2 0 002 2h2v-2H5v-2H3zM17 5V3h-2v2h-2v2h2a2 2 0 012-2V5h-2V3h2a2 2 0 012 2zm-2 10h-2v2h2a2 2 0 002-2v-2h-2v2z"/>
+                    </svg>
+                    切り取り
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageUrl(null)}
+                    className="flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-xs font-bold text-white hover:bg-black/80"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
-              <label className={`flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1 text-xs font-bold text-gray-600 hover:bg-gray-50 ${imageUploading ? 'pointer-events-none opacity-50' : ''}`}>
+            ) : (
+              <label className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-gray-300 py-8 text-sm font-bold text-gray-400 hover:bg-gray-50 ${imageUploading ? 'pointer-events-none opacity-50' : ''}`}>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -482,54 +474,27 @@ export default function AdminBlogPage() {
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImageFile(f); e.currentTarget.value = ''; }}
                 />
                 {imageUploading ? (
-                  <><span className="h-3 w-3 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />アップロード中</>
+                  <><span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />アップロード中</>
                 ) : (
                   <><svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 5.5 2-3.5 3 6z" clipRule="evenodd" /></svg>画像を追加</>
                 )}
               </label>
-            </div>
+            )}
+          </div>
 
-            <div className="space-y-3">
-              {blocks.map((block, i) =>
-                block.type === 'image' ? (
-                  <div key={i} className="group relative overflow-hidden rounded-lg border border-gray-200">
-                    <span className="absolute left-2 top-2 z-10 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white">画像</span>
-                    <img src={block.url} alt="" className="w-full max-h-72 rounded-lg object-contain bg-gray-50" />
-                    <div className="absolute right-2 top-2 hidden gap-1.5 group-hover:flex">
-                      <button
-                        type="button"
-                        onClick={() => setCropModal({ blockIdx: i, url: block.url })}
-                        className="flex h-7 items-center gap-1 rounded-full bg-black/60 px-2.5 text-xs font-bold text-white hover:bg-black/80"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M5 3a2 2 0 00-2 2v2h2V5h2V3H5zM3 13v2a2 2 0 002 2h2v-2H5v-2H3zM17 5V3h-2v2h-2v2h2a2 2 0 012-2V5h-2V3h2a2 2 0 012 2zm-2 10h-2v2h2a2 2 0 002-2v-2h-2v2z"/>
-                        </svg>
-                        切り取り
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeImage(i)}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-xs font-bold text-white hover:bg-black/80"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div key={i} className="rounded-xl border border-[#06C755] p-1">
-                    <span className="ml-2 mt-1 inline-block rounded-full bg-[#06C755]/10 px-2 py-0.5 text-[10px] font-bold text-[#06C755]">文章</span>
-                    <textarea
-                      value={block.content}
-                      onChange={(e) => setBlocks((prev) => prev.map((b, idx) => idx === i ? { ...b, content: e.target.value } : b))}
-                      onFocus={() => setActiveBlockIdx(i)}
-                      onPaste={handleBodyPaste}
-                      placeholder={blocks.filter(b => b.type === 'text').indexOf(block as TextBlock) === 0 ? '活動の様子やお知らせを書いてください（AI原稿をそのまま貼り付けてもOK）...' : '続きを入力...'}
-                      rows={Math.max(3, (block.content.split('\n').length || 1) + 1)}
-                      className="w-full resize-none rounded-lg bg-transparent px-3 py-2 text-sm leading-7 text-gray-800 outline-none placeholder:text-gray-300 focus:bg-gray-50/60"
-                    />
-                  </div>
-                )
-              )}
+          {/* 文章 */}
+          <div>
+            <span className="mb-1 inline-block rounded-full bg-[#06C755]/10 px-2 py-0.5 text-[10px] font-bold text-[#06C755]">文章</span>
+            <p className="mb-1 text-xs text-gray-400">AIに書かせた原稿をそのまま貼り付けると、1行目→タイトル、2行目以降の段落→概要に自動で振り分けられます</p>
+            <div className="rounded-xl border border-[#06C755] p-1">
+              <textarea
+                value={bodyText}
+                onChange={(e) => setBodyText(e.target.value)}
+                onPaste={handleBodyPaste}
+                placeholder="活動の様子やお知らせを書いてください（AI原稿をそのまま貼り付けてもOK）..."
+                rows={Math.max(8, (bodyText.split('\n').length || 1) + 1)}
+                className="w-full resize-none rounded-lg bg-transparent px-3 py-2 text-sm leading-7 text-gray-800 outline-none placeholder:text-gray-300 focus:bg-gray-50/60"
+              />
             </div>
           </div>
 
