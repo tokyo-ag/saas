@@ -164,9 +164,25 @@ function renderInline(text: string, keyPrefix: string) {
 const HEADING_LINE_RE = /^(#{1,6})\s+(.+)$/;
 const BOLD_ONLY_LINE_RE = /^\*\*([^*]+)\*\*$/;
 const BULLET_LINE_RE = /^(?:[-*]\s+|・\s*)(.+)$/;
-const ORDERED_LINE_RE = /^\d+[.)]\s+(.+)$/;
+const ORDERED_LINE_RE = /^\d+(?:[.)]\s+|．\s*)(.+)$/;
 const QUOTE_LINE_RE = /^>\s?(.+)$/;
 const DIVIDER_LINE_RE = /^(-{3,}|\*{3,}|_{3,})$/;
+
+// マークダウン記号なしで「短い行＝見出し／箇条書き」として書かれた原稿
+// （句読点で終わらない短い行が、それだけで見出しや項目を意味しているケース）も
+// 装飾できるようにするための簡易判定。通常の文は句点などで終わることがほとんどなので、
+// 「句読点で終わらない」「短い」の2条件で見出し・箇条書きらしさを推定する。
+const TERMINAL_PUNCTUATION_RE = /[。！？!?…]$/;
+const NAKED_HEADING_MAX_LENGTH = 30;
+const NAKED_LIST_ITEM_MAX_LENGTH = 40;
+
+function looksLikeNakedHeading(line: string): boolean {
+  return line.length > 0 && line.length <= NAKED_HEADING_MAX_LENGTH && !TERMINAL_PUNCTUATION_RE.test(line);
+}
+
+function looksLikeNakedListItem(line: string): boolean {
+  return line.length > 0 && line.length <= NAKED_LIST_ITEM_MAX_LENGTH && !TERMINAL_PUNCTUATION_RE.test(line);
+}
 
 type BodyGroup =
   | { type: 'image'; alt: string; url: string }
@@ -188,7 +204,13 @@ function groupBody(body: string): BodyGroup[] {
 
   function flushParagraph() {
     if (paragraphLines.length === 0) return;
-    groups.push({ type: 'paragraph', text: paragraphLines.join(' ') });
+    if (paragraphLines.length === 1 && looksLikeNakedHeading(paragraphLines[0])) {
+      groups.push({ type: 'heading', level: 2, text: paragraphLines[0] });
+    } else if (paragraphLines.length >= 2 && paragraphLines.every(looksLikeNakedListItem)) {
+      groups.push({ type: 'list', ordered: false, items: [...paragraphLines] });
+    } else {
+      groups.push({ type: 'paragraph', text: paragraphLines.join(' ') });
+    }
     paragraphLines = [];
   }
   function flushList() {
