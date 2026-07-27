@@ -72,6 +72,11 @@ function firstImageFromBody(body: string): string | null {
   return match?.[1] ?? null;
 }
 
+function firstImageAltFromBody(body: string): string {
+  const match = body.match(/!\[([^\]]*)\]\([^)]+\)/);
+  return match?.[1]?.trim() ?? '';
+}
+
 // The one image a post can have is promoted to the eyecatch slot at the top of the article,
 // so it's dropped from its original spot in the body to avoid showing it twice.
 function stripFirstImageLine(body: string): string {
@@ -151,12 +156,15 @@ function linkifyText(text: string, keyPrefix: string) {
   });
 }
 
-// AIが生成した原稿にありがちな「**太字**」を見出し/強調として解釈できるようにする
+// AIが生成した原稿にありがちな「**太字**」を見出し/強調として、「==マーカー==」を
+// 蛍光ペン風のハイライトとして解釈できるようにする
 function renderInline(text: string, keyPrefix: string) {
-  const segments = text.split(/(\*\*[^*]+\*\*)/g);
+  const segments = text.split(/(\*\*[^*]+\*\*|==[^=]+==)/g);
   return segments.flatMap((seg, i) => {
-    const m = /^\*\*([^*]+)\*\*$/.exec(seg);
-    if (m) return <strong key={`${keyPrefix}-b-${i}`}>{linkifyText(m[1], `${keyPrefix}-b-${i}`)}</strong>;
+    const bold = /^\*\*([^*]+)\*\*$/.exec(seg);
+    if (bold) return <strong key={`${keyPrefix}-b-${i}`}>{linkifyText(bold[1], `${keyPrefix}-b-${i}`)}</strong>;
+    const marker = /^==([^=]+)==$/.exec(seg);
+    if (marker) return <mark key={`${keyPrefix}-m-${i}`} className="rounded bg-yellow-200 px-1">{linkifyText(marker[1], `${keyPrefix}-m-${i}`)}</mark>;
     return linkifyText(seg, `${keyPrefix}-${i}`);
   });
 }
@@ -406,28 +414,40 @@ function groupBody(body: string): BodyGroup[] {
 }
 
 function BodyRenderer({ groups }: { groups: BodyGroup[] }) {
+  let h2Count = 0;
+  const h2Numbers = groups.map((g) => (g.type === 'heading' && g.level === 2 ? ++h2Count : null));
+  const leadParagraphIndex = groups.findIndex((g) => g.type === 'paragraph');
   return (
-    <div className="space-y-4 text-sm leading-8 text-gray-700">
+    <div className="space-y-4 text-[15px] leading-9 text-gray-800">
       {groups.map((group, i) => {
         if (group.type === 'image') {
           return (
-            <div key={i} className="relative my-2 w-full overflow-hidden rounded-lg" style={{ minHeight: 200 }}>
-              <Image
-                src={group.url}
-                alt={group.alt}
-                fill
-                className="object-contain"
-                sizes="(max-width: 640px) 100vw, 640px"
-              />
+            <div key={i} className="my-2">
+              <div className="relative w-full overflow-hidden rounded-lg shadow-sm" style={{ minHeight: 200 }}>
+                <Image
+                  src={group.url}
+                  alt={group.alt}
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 640px) 100vw, 640px"
+                />
+              </div>
+              {group.alt && <p className="mt-1.5 text-center text-xs italic text-gray-400">{group.alt}</p>}
             </div>
           );
         }
 
         if (group.type === 'heading') {
           const content = renderInline(group.text, `h-${i}`);
-          return group.level === 2
-            ? <h2 key={i} id={`heading-${i}`} className="mt-8 scroll-mt-6 border-l-4 border-[#06C755] pl-3 text-lg font-bold leading-snug text-gray-950">{content}</h2>
-            : <h3 key={i} id={`heading-${i}`} className="mt-6 scroll-mt-6 text-base font-bold text-gray-950">{content}</h3>;
+          if (group.level === 2) {
+            return (
+              <h2 key={i} id={`heading-${i}`} className="mt-8 flex scroll-mt-6 items-start gap-2 text-lg font-bold leading-snug text-gray-950">
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#06C755] text-xs font-bold text-white">{h2Numbers[i]}</span>
+                <span>{content}</span>
+              </h2>
+            );
+          }
+          return <h3 key={i} id={`heading-${i}`} className="mt-6 scroll-mt-6 text-base font-bold text-gray-950">{content}</h3>;
         }
 
         if (group.type === 'divider') {
@@ -513,7 +533,11 @@ function BodyRenderer({ groups }: { groups: BodyGroup[] }) {
           );
         }
 
-        return <p key={i}>{renderInline(group.text, `line-${i}`)}</p>;
+        return (
+          <p key={i} className={i === leadParagraphIndex ? 'text-base font-medium text-gray-900' : undefined}>
+            {renderInline(group.text, `line-${i}`)}
+          </p>
+        );
       })}
     </div>
   );
@@ -580,6 +604,7 @@ export default async function BlogPostPage({
     firstImageFromBody(post.body) ??
     tenantIconUrl ??
     DEFAULT_EVENT_IMAGE;
+  const eyecatchCaption = firstImageAltFromBody(post.body);
   const bodyWithoutEyecatch = stripFirstImageLine(post.body);
   const bodyGroups = groupBody(bodyWithoutEyecatch);
 
@@ -641,9 +666,21 @@ export default async function BlogPostPage({
               </div>
               <p className="mb-2 text-xs text-gray-400">{formatDate(post.publishedAt)}</p>
               <h1 className="mb-3 text-3xl font-bold leading-tight tracking-tight text-gray-900">{post.title}</h1>
-              <div className="relative mb-6 aspect-[16/9] w-full overflow-hidden rounded-lg bg-gray-100">
-                <Image src={eyecatchImage} alt={post.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" />
+              <div className="mb-6">
+                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg bg-gray-100 shadow-sm">
+                  <Image src={eyecatchImage} alt={post.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" />
+                </div>
+                {eyecatchCaption && <p className="mt-1.5 text-center text-xs italic text-gray-400">{eyecatchCaption}</p>}
               </div>
+              {post.excerpt && (
+                <div className="mb-6 flex gap-2 rounded-lg border border-[#06C755]/20 bg-[#06C755]/5 p-4">
+                  <span className="shrink-0">📝</span>
+                  <div>
+                    <p className="mb-1 text-xs font-bold text-[#06C755]">この記事でわかること</p>
+                    <p className="text-sm leading-6 text-gray-700">{post.excerpt}</p>
+                  </div>
+                </div>
+              )}
               <TableOfContents groups={bodyGroups} />
               <BodyRenderer groups={bodyGroups} />
             </div>
