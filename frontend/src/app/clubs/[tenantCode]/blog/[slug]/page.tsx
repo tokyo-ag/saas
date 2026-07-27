@@ -169,6 +169,13 @@ const QUOTE_LINE_RE = /^>\s?(.+)$/;
 const DIVIDER_LINE_RE = /^(-{3,}|\*{3,}|_{3,})$/;
 const QUESTION_LINE_RE = /^Q[:.：。]\s*(.+)$/i;
 const ANSWER_LINE_RE = /^A[:.：。]\s*(.+)$/i;
+const CALLOUT_LINE_RE = /^!\s?(.+)$/;
+const TABLE_ROW_RE = /^\|(.+)\|$/;
+const TABLE_SEPARATOR_ROW_RE = /^\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)+\|?$/;
+
+function parseTableRow(line: string): string[] {
+  return line.replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim());
+}
 
 // マークダウン記号なしで「短い行＝見出し／箇条書き」として書かれた原稿
 // （句読点で終わらない短い行が、それだけで見出しや項目を意味しているケース）も
@@ -193,7 +200,9 @@ type BodyGroup =
   | { type: 'list'; ordered: boolean; items: string[] }
   | { type: 'quote'; text: string }
   | { type: 'divider' }
-  | { type: 'faq'; items: { q: string; a: string }[] };
+  | { type: 'faq'; items: { q: string; a: string }[] }
+  | { type: 'callout'; text: string }
+  | { type: 'table'; rows: string[][] };
 
 // 見出し・画像・リスト・引用・区切り線だけを区切りとして扱い、それ以外の
 // 連続する行は（空行を挟むまで）ひとつの段落としてまとめる。1文ごとに
@@ -206,6 +215,8 @@ function groupBody(body: string): BodyGroup[] {
   let quoteLines: string[] = [];
   let faqItems: { q: string; a: string }[] = [];
   let pendingQuestion: string | null = null;
+  let calloutLines: string[] = [];
+  let tableRows: string[][] = [];
 
   function flushParagraph() {
     if (paragraphLines.length === 0) return;
@@ -243,11 +254,23 @@ function groupBody(body: string): BodyGroup[] {
     flushPendingQuestion();
     flushFaqItems();
   }
+  function flushCallout() {
+    if (calloutLines.length === 0) return;
+    groups.push({ type: 'callout', text: calloutLines.join(' ') });
+    calloutLines = [];
+  }
+  function flushTable() {
+    if (tableRows.length === 0) return;
+    groups.push({ type: 'table', rows: tableRows });
+    tableRows = [];
+  }
   // 空行はQ&Aの組同士の区切りとしてもよく使われるため、空行だけではFAQをまとめ終わらせない
   function flushSoft() {
     flushParagraph();
     flushList();
     flushQuote();
+    flushCallout();
+    flushTable();
   }
   function flushAll() {
     flushSoft();
@@ -288,11 +311,35 @@ function groupBody(body: string): BodyGroup[] {
       continue;
     }
 
+    const tableRow = TABLE_ROW_RE.exec(trimmed);
+    if (tableRow) {
+      flushParagraph();
+      flushList();
+      flushQuote();
+      flushFaq();
+      flushCallout();
+      if (!TABLE_SEPARATOR_ROW_RE.test(trimmed)) tableRows.push(parseTableRow(tableRow[1]));
+      continue;
+    }
+
+    const callout = CALLOUT_LINE_RE.exec(trimmed);
+    if (callout) {
+      flushParagraph();
+      flushList();
+      flushQuote();
+      flushFaq();
+      flushTable();
+      calloutLines.push(callout[1]);
+      continue;
+    }
+
     const question = QUESTION_LINE_RE.exec(trimmed);
     if (question) {
       flushParagraph();
       flushList();
       flushQuote();
+      flushCallout();
+      flushTable();
       flushPendingQuestion();
       pendingQuestion = question[1];
       continue;
@@ -303,6 +350,8 @@ function groupBody(body: string): BodyGroup[] {
       flushParagraph();
       flushList();
       flushQuote();
+      flushCallout();
+      flushTable();
       faqItems.push({ q: pendingQuestion, a: answer[1] });
       pendingQuestion = null;
       continue;
@@ -313,6 +362,8 @@ function groupBody(body: string): BodyGroup[] {
       flushParagraph();
       flushQuote();
       flushFaq();
+      flushCallout();
+      flushTable();
       if (listItems.length > 0 && listOrdered) flushList();
       listOrdered = false;
       listItems.push(bullet[1]);
@@ -324,6 +375,8 @@ function groupBody(body: string): BodyGroup[] {
       flushParagraph();
       flushQuote();
       flushFaq();
+      flushCallout();
+      flushTable();
       if (listItems.length > 0 && !listOrdered) flushList();
       listOrdered = true;
       listItems.push(ordered[1]);
@@ -335,6 +388,8 @@ function groupBody(body: string): BodyGroup[] {
       flushParagraph();
       flushList();
       flushFaq();
+      flushCallout();
+      flushTable();
       quoteLines.push(quote[1]);
       continue;
     }
@@ -342,6 +397,8 @@ function groupBody(body: string): BodyGroup[] {
     flushList();
     flushQuote();
     flushFaq();
+    flushCallout();
+    flushTable();
     paragraphLines.push(trimmed);
   }
   flushAll();
@@ -418,6 +475,41 @@ function BodyRenderer({ body }: { body: string }) {
                   </div>
                 </div>
               ))}
+            </div>
+          );
+        }
+
+        if (group.type === 'callout') {
+          return (
+            <div key={i} className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 py-3 pl-3 pr-3 text-amber-900">
+              <span className="shrink-0">💡</span>
+              <span>{renderInline(group.text, `callout-${i}`)}</span>
+            </div>
+          );
+        }
+
+        if (group.type === 'table') {
+          const [header, ...rows] = group.rows;
+          return (
+            <div key={i} className="overflow-x-auto rounded-lg border border-gray-200">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    {header.map((cell, ci) => (
+                      <th key={ci} className="border-b border-gray-200 px-3 py-2 font-bold text-gray-900">{renderInline(cell, `th-${i}-${ci}`)}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row, ri) => (
+                    <tr key={ri} className={ri % 2 === 1 ? 'bg-gray-50/50' : undefined}>
+                      {row.map((cell, ci) => (
+                        <td key={ci} className="border-b border-gray-100 px-3 py-2 text-gray-700">{renderInline(cell, `td-${i}-${ri}-${ci}`)}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           );
         }
