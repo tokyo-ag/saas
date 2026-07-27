@@ -443,7 +443,7 @@ function BodyRenderer({ groups }: { groups: BodyGroup[] }) {
             return (
               <h2 key={i} id={`heading-${i}`} className="mt-8 flex scroll-mt-6 items-start gap-2 text-lg font-bold leading-snug text-gray-950">
                 <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#06C755] text-xs font-bold text-white">{h2Numbers[i]}</span>
-                <span>{content}</span>
+                <span className="rounded bg-[#06C755]/10 px-1.5 py-0.5">{content}</span>
               </h2>
             );
           }
