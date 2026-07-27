@@ -34,29 +34,34 @@ function firstBlogImage(body: string | null | undefined) {
   return body?.match(ANY_IMAGE_RE)?.[1] ?? null;
 }
 
-// 記事は「画像1枚（任意）＋文章1本」だけの構成なので、保存済みのbody文字列から
-// 最初に見つかった画像行だけを取り出し、残りをすべて文章として扱う
-function parseBody(body: string): { imageUrl: string | null; text: string } {
+// 記事は「画像1枚（任意）＋文章1本」だけの構成。旧仕様で複数画像が入っていた記事を開いた場合、
+// 1枚目だけを画像欄に出し、2枚目以降は文章欄を汚さないようextraImagesとして裏で保持する
+// （保存時にそのまま末尾へ書き戻すので、編集し直しても画像が消えることはない）
+function parseBody(body: string): { imageUrl: string | null; extraImages: string[]; text: string } {
   const lines = body.split('\n');
-  let imageUrl: string | null = null;
+  const images: string[] = [];
   const textLines: string[] = [];
   for (const line of lines) {
-    if (imageUrl === null) {
-      const m = IMAGE_RE.exec(line.trim());
-      if (m) {
-        imageUrl = m[2];
-        continue;
-      }
+    const m = IMAGE_RE.exec(line.trim());
+    if (m) {
+      images.push(m[2]);
+    } else {
+      textLines.push(line);
     }
-    textLines.push(line);
   }
-  let text = textLines.join('\n');
-  if (imageUrl !== null) text = text.replace(/^\n+/, '');
-  return { imageUrl, text };
+  const text = textLines
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/^\n+|\n+$/g, '');
+  return { imageUrl: images[0] ?? null, extraImages: images.slice(1), text };
 }
 
-function buildBody(imageUrl: string | null, text: string): string {
-  return imageUrl ? `![](${imageUrl})\n\n${text}` : text;
+function buildBody(imageUrl: string | null, text: string, extraImages: string[] = []): string {
+  const parts: string[] = [];
+  if (imageUrl) parts.push(`![](${imageUrl})`, '');
+  parts.push(text);
+  for (const url of extraImages) parts.push('', `![](${url})`);
+  return parts.join('\n');
 }
 
 // AIに書かせた原稿をそのまま貼り付けられるように、1行目=タイトル、
@@ -261,6 +266,7 @@ export default function AdminBlogPage() {
   const [form, setForm] = useState<BlogPostInput>({ title: '', body: '', excerpt: '', tags: [], status: 'draft' });
   const [bodyText, setBodyText] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [extraImages, setExtraImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
   const [error, setError] = useState('');
@@ -304,6 +310,7 @@ export default function AdminBlogPage() {
     setForm({ title: '', body: '', excerpt: '', tags: [], status: 'draft' });
     setBodyText('');
     setImageUrl(null);
+    setExtraImages([]);
     setError('');
     setMode('edit');
   }
@@ -314,6 +321,7 @@ export default function AdminBlogPage() {
     const parsed = parseBody(post.body);
     setBodyText(parsed.text);
     setImageUrl(parsed.imageUrl);
+    setExtraImages(parsed.extraImages);
     setError('');
     setMode('edit');
   }
@@ -331,10 +339,11 @@ export default function AdminBlogPage() {
     const parsed = parseBody(body);
     setBodyText(parsed.text);
     if (parsed.imageUrl && !imageUrl) setImageUrl(parsed.imageUrl);
+    if (parsed.extraImages.length > 0) setExtraImages((prev) => [...prev, ...parsed.extraImages]);
   }
 
   async function handleSave(publish: boolean) {
-    const body = buildBody(imageUrl, bodyText);
+    const body = buildBody(imageUrl, bodyText, extraImages);
     if (!form.title.trim() || !bodyText.trim()) {
       setError('タイトルと本文は必須です'); return;
     }
