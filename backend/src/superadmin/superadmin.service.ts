@@ -861,6 +861,7 @@ export class SuperadminService implements OnApplicationBootstrap {
         navColor: true,
         buttonBgColor: true,
         buttonBgOpacity: true,
+        accentColor: true,
       },
     });
     let updated = 0;
@@ -906,6 +907,19 @@ export class SuperadminService implements OnApplicationBootstrap {
       // 団体は不透明度の現在値に関わらず0に上書きして「塗りつぶしなし」を維持する。
       const buttonBgOpacityFreeze = !page.buttonBgColor || !page.buttonBgColor.trim() ? 0 : null;
       if (buttonBgOpacityFreeze !== null && page.buttonBgOpacity !== buttonBgOpacityFreeze) changed = true;
+
+      // お問い合わせボタンの色: 未設定の場合、これまでは常にテーマカラー(accentColor)で
+      // 表示されていた。「中の色」(buttonBgColor)をcontactColorより優先度の高いフォール
+      // バックとして挟み込むと、buttonBgColorだけ設定済みの団体は見た目が変わってしまうため、
+      // 未設定の団体はその時点のaccentColor値をcontactColorへ明示的に書き込んで固定する。
+      const contactColorFreeze =
+        !footer.contactColor || typeof footer.contactColor !== 'string' || !footer.contactColor.trim()
+          ? page.accentColor?.trim() || '#06C755'
+          : null;
+      if (contactColorFreeze) {
+        footer.contactColor = contactColorFreeze;
+        changed = true;
+      }
 
       if (!changed) continue;
       await this.prisma.publicPage.update({

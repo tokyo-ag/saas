@@ -388,7 +388,7 @@ export default async function ClubCmsPage({
   const backgroundColor = page.backgroundColor || '#F7F8FA';
   const backgroundOpacity = clampPercent(page.backgroundOpacity ?? 100);
   const bgColor = hexToRgba(backgroundColor, backgroundOpacity);
-  const navColor = page.navColor || accentColor;
+  const navColor = page.navColor || page.buttonBgColor?.trim() || accentColor;
   const navOpacity = clampPercent(page.navOpacity ?? 100);
   const navBg = hexToRgba(navColor, navOpacity);
   const fontFamily = fontFamilyMap[page.fontFamily || 'mincho'] ?? fontFamilyMap.mincho;
@@ -528,7 +528,7 @@ export default async function ClubCmsPage({
   const reserveEventTitleColor = sectionCopy.reserveEventTitleColor?.trim() || '#111827';
   const reserveEventDateColor = sectionCopy.reserveEventDateColor?.trim() || '#4B5563';
   const reserveEventMetaColor = sectionCopy.reserveEventMetaColor?.trim() || '#6B7280';
-  const reserveEventCardBg = sectionCopy.reserveEventCardBg?.trim() || '#ffffff';
+  const reserveEventCardBg = sectionCopy.reserveEventCardBg?.trim() || navBg;
   const reserveButtonBgColor = sectionCopy.reserveButtonBgColor?.trim() || '#06C755';
   const reserveButtonTextColor = sectionCopy.reserveButtonTextColor?.trim() || '#111827';
   const globalBorderColor = sectionCopy.globalBorderColor?.trim() || '#E5E7EB';
@@ -536,7 +536,7 @@ export default async function ClubCmsPage({
   const globalRadius = Number.isFinite(sectionCopy.globalRadius) ? Number(sectionCopy.globalRadius) : 12;
   const globalBorderWidth = Number.isFinite(sectionCopy.globalBorderWidth) ? Number(sectionCopy.globalBorderWidth) : 1;
   const cardBorderStyle: CSSProperties = { borderRadius: globalRadius, borderWidth: globalBorderWidth, borderColor: globalBorderColor, borderStyle: 'solid' };
-  const blogPostCardBg = sectionCopy.blogPostCardBg?.trim() || '#ffffff';
+  const blogPostCardBg = sectionCopy.blogPostCardBg?.trim() || navBg;
   const blogPostTitleColor = sectionCopy.blogPostTitleColor?.trim() || textColor;
   const reserveActionStyle = sectionCopy.reserveActionStyle === 'line' ? 'line' : 'comiu';
   const df = sectionCopy.displayFields ?? {};
@@ -790,7 +790,7 @@ export default async function ClubCmsPage({
                   return (
                     <div key={i} className="space-y-1.5">
                       {items.map((item: {q:string;a:string}, j: number) => (
-                        <details key={j} className="group overflow-hidden" style={{ backgroundColor: block.faqCardBg?.trim() || '#F9FAFB', ...cardBorderStyle }}>
+                        <details key={j} className="group overflow-hidden" style={{ backgroundColor: block.faqCardBg?.trim() || navBg, ...cardBorderStyle }}>
                           <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 select-none" style={{ color: bodyTextColor }}>
                             <span className="flex-1 font-bold" style={blockTextStyle}>{item.q}</span>
                             <span className="ml-2 shrink-0 text-xs text-gray-400 transition-transform duration-200 group-open:rotate-180">▼</span>
@@ -944,7 +944,7 @@ export default async function ClubCmsPage({
                     ? `tel:${sectionCopy.contact.replace(/[^\d+]/g, '')}`
                     : '#contact'
               : (configuredLineUrl || '#contact');
-            const btnColor = sectionCopy.contactColor?.trim() || accentColor;
+            const btnColor = sectionCopy.contactColor?.trim() || page.buttonBgColor?.trim() || accentColor;
             const subtitle = sectionCopy.contactMessage?.trim();
             return (
               <>
