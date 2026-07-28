@@ -1371,10 +1371,10 @@ export default function AdminPublicPage() {
               className="flex-1 accent-[#06C755]" />
             <span className="w-8 text-right text-xs text-gray-400">{backgroundOpacity}%</span>
           </div>
-          {/* テーマカラー（ナビ背景・ナビボタン・お問い合わせボタンを一括変更） */}
+          {/* テーマ色（ナビボタン・構成/予約/ブログの各セクション背景・お問い合わせボタンを一括変更） */}
           <div className="space-y-2 rounded-lg border border-[#06C755]/30 bg-[#06C755]/5 p-3">
             <div className="flex items-center gap-3">
-              <span className="w-16 shrink-0 text-xs font-bold text-gray-700">テーマ色</span>
+              <span className="w-20 shrink-0 text-xs font-bold text-gray-700">テーマ色</span>
               <input type="color" value={navColor}
                 onChange={(e) => setForm((p) => ({
                   ...p,
@@ -1384,22 +1384,26 @@ export default function AdminPublicPage() {
                   footerContactColor: e.target.value,
                 }))}
                 className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-              <span className="text-[11px] text-gray-500">ナビ背景・ナビボタン・お問い合わせボタンの色を一括で変更します</span>
-            </div>
-          </div>
-          {/* ナビ背景 */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <span className="w-16 shrink-0 text-xs font-bold text-gray-500">ナビ背景</span>
-              <input type="color" value={navColor}
-                onChange={(e) => setForm((p) => ({ ...p, navColor: e.target.value }))}
-                className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
               <input type="range" min="20" max="100" step="5" value={navOpacity}
                 onChange={(e) => setForm((p) => ({ ...p, navOpacity: Number(e.target.value) }))}
                 className="flex-1 accent-[#06C755]" />
               <span className="w-8 text-right text-xs text-gray-400">{navOpacity}%</span>
             </div>
-            <span className="text-[11px] text-gray-400">ナビ背景だけ個別に変えたい場合はこちら</span>
+            <span className="text-[11px] text-gray-500">ナビボタン・構成/予約ページ/活動ブログの背景・お問い合わせボタンの色を一括で変更します</span>
+          </div>
+          {/* サブテーマ色（予約イベントカード・記事カードの中の色） */}
+          <div className="space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
+            <div className="flex items-center gap-3">
+              <span className="w-20 shrink-0 text-xs font-bold text-gray-700">サブテーマ色</span>
+              <input type="color" value={reserveEventCardBg.startsWith('rgba') ? '#ffffff' : reserveEventCardBg}
+                onChange={(e) => setForm((p) => ({
+                  ...p,
+                  reserveEventCardBg: e.target.value,
+                  blogPostCardBg: e.target.value,
+                }))}
+                className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+              <span className="text-[11px] text-gray-500">予約ページのイベントカード・活動ブログの記事カードの中の色を一括で変更します</span>
+            </div>
           </div>
           {/* 全体の外枠色 */}
           <div className="space-y-2">
