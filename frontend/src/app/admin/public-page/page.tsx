@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { api, BlogPost, LiffEvent, PublicPageInput, Tenant } from '@/lib/api';
 import { API_URL, SITE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
@@ -59,6 +59,15 @@ function normalizeNavOrder(order: string[]): string[] {
   return [
     ...order.filter((key) => (DEFAULT_NAV_ORDER as readonly string[]).includes(key)),
     ...DEFAULT_NAV_ORDER.filter((key) => !order.includes(key)),
+  ];
+}
+
+const DEFAULT_CONTENT_ORDER = ['about', 'reserve', 'blog'] as const;
+const CONTENT_SECTION_LABELS: Record<string, string> = { about: '構成', reserve: '予約ページ', blog: '活動ブログ' };
+function normalizeContentOrder(order: string[]): string[] {
+  return [
+    ...order.filter((key) => (DEFAULT_CONTENT_ORDER as readonly string[]).includes(key)),
+    ...DEFAULT_CONTENT_ORDER.filter((key) => !order.includes(key)),
   ];
 }
 
@@ -183,6 +192,7 @@ const emptyForm: PublicPageInput = {
   subtitleHeroY: null as unknown as number,
   sectionOrder: [...DEFAULT_SECTION_ORDER] as string[],
   navOrder: [...DEFAULT_NAV_ORDER] as string[],
+  contentOrder: [...DEFAULT_CONTENT_ORDER] as string[],
   displayFields: { location: true, price: true, capacity: false, description: true } as { location: boolean; price: boolean; capacity: boolean; description: boolean },
   status: 'published',
 };
@@ -686,6 +696,8 @@ export default function AdminPublicPage() {
   const visibleNavItems = normalizeNavOrder(form.navOrder ?? [...DEFAULT_NAV_ORDER])
     .map((key) => navItemsByKey[key])
     .filter((item): item is { key: string; label: string } => item !== undefined);
+  const contentOrder = normalizeContentOrder(form.contentOrder ?? [...DEFAULT_CONTENT_ORDER])
+    .filter((key) => key === 'about' || (key === 'reserve' && hasReserveSection) || (key === 'blog' && hasBlogSection));
   const reserveSectionTitle = form.reserveTitle?.trim() || '';
   const reserveSectionLead = form.reserveLead?.trim() || '';
   const reserveTitleColor = form.reserveTitleColor?.trim() || textColor;
@@ -880,6 +892,7 @@ export default function AdminPublicPage() {
                   subtitleHeroY: fd.subtitleHeroY ?? null,
                   sectionOrder: Array.isArray(fd.sectionOrder) ? normalizeSectionOrder(fd.sectionOrder) : [...DEFAULT_SECTION_ORDER],
                   navOrder: Array.isArray(fd.navOrder) ? normalizeNavOrder(fd.navOrder) : [...DEFAULT_NAV_ORDER],
+                  contentOrder: Array.isArray(fd.contentOrder) ? normalizeContentOrder(fd.contentOrder) : [...DEFAULT_CONTENT_ORDER],
                   heroOutsideKeys: Array.isArray(fd.heroOutsideKeys) ? fd.heroOutsideKeys : (first.heroNavPosition === 'inside' ? [] : ['nav']),
                   titleLogoLayout: fd.titleLogoLayout === 'inline' ? 'inline' : 'stacked',
                   displayFields: (fd.displayFields && typeof fd.displayFields === 'object') ? {
@@ -1238,6 +1251,7 @@ export default function AdminPublicPage() {
         subtitleHeroY: form.subtitleHeroY ?? null,
         sectionOrder: form.sectionOrder ?? [...DEFAULT_SECTION_ORDER],
         navOrder: form.navOrder ?? [...DEFAULT_NAV_ORDER],
+        contentOrder: form.contentOrder ?? [...DEFAULT_CONTENT_ORDER],
         heroOutsideKeys: form.heroOutsideKeys ?? ['nav'],
         titleLogoLayout,
         displayFields: form.displayFields,
@@ -1958,6 +1972,31 @@ export default function AdminPublicPage() {
             <svg className={`h-4 w-4 text-gray-400 transition-transform ${openSections.structure ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
           </button>
           {openSections.structure && <div className="space-y-3 border-t border-gray-100 p-4">
+          <div>
+            <p className="mb-2 text-[11px] font-bold text-gray-400">ページの並び順（構成／予約ページ／活動ブログ）</p>
+            <div className="space-y-1.5">
+              {normalizeContentOrder(form.contentOrder ?? [...DEFAULT_CONTENT_ORDER]).map((key, i, arr) => (
+                <div key={key} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
+                  <span className="flex-1 text-xs font-bold text-gray-700">{CONTENT_SECTION_LABELS[key] ?? key}</span>
+                  <button type="button" disabled={i === 0}
+                    onClick={() => setForm((p) => {
+                      const a = normalizeContentOrder(p.contentOrder ?? [...DEFAULT_CONTENT_ORDER]);
+                      [a[i - 1], a[i]] = [a[i], a[i - 1]];
+                      return { ...p, contentOrder: a };
+                    })}
+                    className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs text-gray-400 disabled:opacity-30 hover:enabled:bg-gray-100">↑</button>
+                  <button type="button" disabled={i === arr.length - 1}
+                    onClick={() => setForm((p) => {
+                      const a = normalizeContentOrder(p.contentOrder ?? [...DEFAULT_CONTENT_ORDER]);
+                      [a[i + 1], a[i]] = [a[i], a[i + 1]];
+                      return { ...p, contentOrder: a };
+                    })}
+                    className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs text-gray-400 disabled:opacity-30 hover:enabled:bg-gray-100">↓</button>
+                </div>
+              ))}
+            </div>
+            <p className="mt-1 text-[10px] text-gray-400">「予約ページ」「活動ブログ」は記事・予約設定が無い団体では表示されません</p>
+          </div>
           {/* 予約表示スタイルは予約ページで設定 */}
           <div>
             <label className="block">
@@ -2669,78 +2708,84 @@ export default function AdminPublicPage() {
                 </div>
               )}
               <div className="space-y-4 p-5">
-                <div className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
-                  {renderPreviewBlocks()}
-                </div>
-                {hasReserveSection && (
-                  <>
-                  <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
-                    {reserveSectionTitle && (
-                      <p className="text-sm font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
-                    )}
-                    {reserveSectionLead && (
-                      <p className="mt-1 text-xs leading-5" style={{ color: reserveLeadColor }}>{reserveSectionLead}</p>
-                    )}
-                    {reserveActionStyle === 'line' && reserveEvents.length === 0 ? null : (
-                      <ReservationViewShowcase
-                        accentColor={accentColor}
-                        buttonLabel={reserveActionStyle === 'line' ? 'LINEで友達追加して予約する' : navLabels.reserve}
-                        viewStyle={form.reserveViewStyle}
-                        events={reserveEvents}
-                        href={reserveActionStyle === 'line' ? (form.reserveLineUrl?.trim() || form.navContactUrl?.trim() || '#') : undefined}
-                        lineMode={reserveActionStyle === 'line'}
-                        eventTitleColor={reserveEventTitleColor}
-                        eventDateColor={reserveEventDateColor}
-                        eventMetaColor={reserveEventMetaColor}
-                        eventCardBg={reserveEventCardBg}
-                        className="mt-3"
-                        showButton={false}
-                      />
-                    )}
-                  </section>
-                  {reserveActionStyle === 'line' && reserveEvents.length === 0 ? (
-                    <ReservationButton
-                      buttonLabel="LINEで予約する"
-                      href={form.reserveLineUrl?.trim() || form.navContactUrl?.trim() || '#'}
-                      buttonBgColor={reserveButtonBgColor}
-                      buttonTextColor={reserveButtonTextColor}
-                      buttonBorderColor={reserveButtonBorderColor}
-                    />
-                  ) : form.reserveViewStyle !== 'card' ? (
-                    <ReservationButton
-                      buttonLabel={reserveActionStyle === 'line' ? 'LINEで友達追加して予約する' : navLabels.reserve}
-                      href={reserveActionStyle === 'line' ? (form.reserveLineUrl?.trim() || form.navContactUrl?.trim() || '#') : undefined}
-                      buttonBgColor={reserveButtonBgColor}
-                      buttonTextColor={reserveButtonTextColor}
-                      buttonBorderColor={reserveButtonBorderColor}
-                    />
-                  ) : null}
-                  </>
-                )}
-                {hasBlogSection && (
-                  <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
-                    {blogSectionTitle && (
-                      <p className="text-sm font-bold" style={{ color: blogTitleColor }}>{blogSectionTitle}</p>
-                    )}
-                    {blogSectionLead && (
-                      <p className="mt-1 text-xs leading-5" style={{ color: blogLeadColor }}>{blogSectionLead}</p>
-                    )}
-                    <div className="mt-3 max-h-[380px] space-y-2 overflow-y-auto pr-1">
-                      {blogPosts.map((post) => {
-                        const image = imgUrl(post.coverImageUrl ?? firstBlogImage(post.body), API_URL);
-                        return (
-                          <div key={post.id} className="flex gap-2 rounded-lg p-2 ring-1 ring-black/5" style={{ backgroundColor: blogPostCardBg }}>
-                            {image && <img src={image} alt="" className="h-12 w-16 shrink-0 rounded-md object-cover" />}
-                            <div className="min-w-0">
-                              <p className="truncate text-xs font-bold" style={{ color: blogPostTitleColor }}>{post.title}</p>
-                              {post.excerpt && <p className="mt-0.5 line-clamp-2 text-[10px] leading-4" style={{ color: blogLeadColor }}>{post.excerpt}</p>}
-                            </div>
-                          </div>
-                        );
-                      })}
+                {(() => {
+                  const aboutSection = (
+                    <div key="about" className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
+                      {renderPreviewBlocks()}
                     </div>
-                  </section>
-                )}
+                  );
+                  const reserveSection = hasReserveSection ? (
+                    <Fragment key="reserve">
+                    <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
+                      {reserveSectionTitle && (
+                        <p className="text-sm font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
+                      )}
+                      {reserveSectionLead && (
+                        <p className="mt-1 text-xs leading-5" style={{ color: reserveLeadColor }}>{reserveSectionLead}</p>
+                      )}
+                      {reserveActionStyle === 'line' && reserveEvents.length === 0 ? null : (
+                        <ReservationViewShowcase
+                          accentColor={accentColor}
+                          buttonLabel={reserveActionStyle === 'line' ? 'LINEで友達追加して予約する' : navLabels.reserve}
+                          viewStyle={form.reserveViewStyle}
+                          events={reserveEvents}
+                          href={reserveActionStyle === 'line' ? (form.reserveLineUrl?.trim() || form.navContactUrl?.trim() || '#') : undefined}
+                          lineMode={reserveActionStyle === 'line'}
+                          eventTitleColor={reserveEventTitleColor}
+                          eventDateColor={reserveEventDateColor}
+                          eventMetaColor={reserveEventMetaColor}
+                          eventCardBg={reserveEventCardBg}
+                          className="mt-3"
+                          showButton={false}
+                        />
+                      )}
+                    </section>
+                    {reserveActionStyle === 'line' && reserveEvents.length === 0 ? (
+                      <ReservationButton
+                        buttonLabel="LINEで予約する"
+                        href={form.reserveLineUrl?.trim() || form.navContactUrl?.trim() || '#'}
+                        buttonBgColor={reserveButtonBgColor}
+                        buttonTextColor={reserveButtonTextColor}
+                        buttonBorderColor={reserveButtonBorderColor}
+                      />
+                    ) : form.reserveViewStyle !== 'card' ? (
+                      <ReservationButton
+                        buttonLabel={reserveActionStyle === 'line' ? 'LINEで友達追加して予約する' : navLabels.reserve}
+                        href={reserveActionStyle === 'line' ? (form.reserveLineUrl?.trim() || form.navContactUrl?.trim() || '#') : undefined}
+                        buttonBgColor={reserveButtonBgColor}
+                        buttonTextColor={reserveButtonTextColor}
+                        buttonBorderColor={reserveButtonBorderColor}
+                      />
+                    ) : null}
+                    </Fragment>
+                  ) : null;
+                  const blogSection = hasBlogSection ? (
+                    <section key="blog" className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
+                      {blogSectionTitle && (
+                        <p className="text-sm font-bold" style={{ color: blogTitleColor }}>{blogSectionTitle}</p>
+                      )}
+                      {blogSectionLead && (
+                        <p className="mt-1 text-xs leading-5" style={{ color: blogLeadColor }}>{blogSectionLead}</p>
+                      )}
+                      <div className="mt-3 max-h-[380px] space-y-2 overflow-y-auto pr-1">
+                        {blogPosts.map((post) => {
+                          const image = imgUrl(post.coverImageUrl ?? firstBlogImage(post.body), API_URL);
+                          return (
+                            <div key={post.id} className="flex gap-2 rounded-lg p-2 ring-1 ring-black/5" style={{ backgroundColor: blogPostCardBg }}>
+                              {image && <img src={image} alt="" className="h-12 w-16 shrink-0 rounded-md object-cover" />}
+                              <div className="min-w-0">
+                                <p className="truncate text-xs font-bold" style={{ color: blogPostTitleColor }}>{post.title}</p>
+                                {post.excerpt && <p className="mt-0.5 line-clamp-2 text-[10px] leading-4" style={{ color: blogLeadColor }}>{post.excerpt}</p>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  ) : null;
+                  const contentSectionsByKey: Record<string, ReactNode> = { about: aboutSection, reserve: reserveSection, blog: blogSection };
+                  return contentOrder.map((key) => contentSectionsByKey[key] ?? null);
+                })()}
                 <div>
                   <div className="flex w-full items-center justify-center rounded-xl border py-4 text-base font-bold shadow-sm"
                     style={{ backgroundColor: form.footerContactColor?.trim() || accentColor, color: form.footerContactTextColor?.trim() || '#111827', borderColor: globalBorderColor }}>

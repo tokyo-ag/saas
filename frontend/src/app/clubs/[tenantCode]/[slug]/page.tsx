@@ -2,7 +2,8 @@ import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import type { CSSProperties } from 'react';
+import { Fragment } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import type { BlogPostSummary, LiffEvent, PublicCmsPage } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
@@ -512,6 +513,7 @@ export default async function ClubCmsPage({
         blogUrl?: string;
         contactUrl?: string;
         navOrder?: string[];
+        contentOrder?: string[];
       };
     } catch {
       return {};
@@ -563,6 +565,14 @@ export default async function ClubCmsPage({
   const visibleNavItems = navOrder
     .map((key) => navItemsByKey[key])
     .filter((item): item is { key: string; label: string; href: string } => item !== undefined);
+  // 構成（団体詳細）/予約ページ/活動ブログの表示順も団体側で自由に入れ替えられる。
+  // 未設定（既存の団体）の場合はこれまでと全く同じ「構成→予約ページ→活動ブログ」の順になる。
+  const DEFAULT_CONTENT_ORDER = ['about', 'reserve', 'blog'];
+  const configuredContentOrder = Array.isArray(sectionCopy.contentOrder) ? sectionCopy.contentOrder : [];
+  const contentOrder = [
+    ...configuredContentOrder.filter((key) => DEFAULT_CONTENT_ORDER.includes(key)),
+    ...DEFAULT_CONTENT_ORDER.filter((key) => !configuredContentOrder.includes(key)),
+  ];
   const buttonGridStyle: CSSProperties = {
     gridTemplateColumns: `repeat(${buttonLayout === 'row1x4' ? visibleNavItems.length : Math.min(2, visibleNavItems.length)}, minmax(0, 1fr))`,
   };
@@ -711,9 +721,14 @@ export default async function ClubCmsPage({
         </div>
       )}
 
-      <article id="about" className={`px-4 ${heroImageMode === 'background' ? 'pt-4 pb-8' : 'pt-4 pb-8'}`}>
+      <article className={`px-4 ${heroImageMode === 'background' ? 'pt-4 pb-8' : 'pt-4 pb-8'}`}>
 
-        <div className={`rounded-xl px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8 ${heroImageMode === 'background' ? '' : 'mt-0'}`} style={{ backgroundColor: navBg }}>
+      {(() => {
+        const renderedContentKeys = contentOrder.filter((key) => key === 'about' || (key === 'reserve' && hasReserveSection) || (key === 'blog' && hasBlogSection));
+        const isFirstContentSection = (key: string) => renderedContentKeys[0] === key;
+
+        const aboutSection = (
+        <div key="about" id="about" className={`rounded-xl px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8 ${isFirstContentSection('about') ? (heroImageMode === 'background' ? '' : 'mt-0') : 'mt-8 scroll-mt-6'}`} style={{ backgroundColor: navBg }}>
           {page.blocks?.length ? (
             <div className="space-y-5">
               {(page.blocks as any[]).map((block: any, i: number) => {
@@ -813,10 +828,11 @@ export default async function ClubCmsPage({
             </div>
           )}
         </div>
+        );
 
-        {hasReserveSection && (
-        <>
-        <div id="reserve" className="relative mt-8 scroll-mt-6 rounded-xl px-5 py-6 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
+        const reserveSection = hasReserveSection ? (
+        <Fragment key="reserve">
+        <div id="reserve" className={`relative ${isFirstContentSection('reserve') ? '' : 'mt-8'} scroll-mt-6 rounded-xl px-5 py-6 shadow-sm ring-1 ring-black/5`} style={{ backgroundColor: navBg }}>
           <div className="relative">
             {reserveSectionTitle && (
               <p className="text-lg font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
@@ -866,11 +882,11 @@ export default async function ClubCmsPage({
             className="mt-4"
           />
         ) : null}
-        </>
-        )}
+        </Fragment>
+        ) : null;
 
-        {hasBlogSection && (
-        <section id="blog" className="relative mt-8 scroll-mt-6 rounded-xl px-5 py-6 shadow-sm ring-1 ring-black/5" style={{ backgroundColor: navBg }}>
+        const blogSection = hasBlogSection ? (
+        <section key="blog" id="blog" className={`relative ${isFirstContentSection('blog') ? '' : 'mt-8'} scroll-mt-6 rounded-xl px-5 py-6 shadow-sm ring-1 ring-black/5`} style={{ backgroundColor: navBg }}>
           <Link href={navBlogUrl} className="absolute inset-0 rounded-xl" aria-label={navLabels.blog} />
           <div className="relative">
             {blogSectionTitle && (
@@ -906,7 +922,11 @@ export default async function ClubCmsPage({
             )}
           </div>
         </section>
-        )}
+        ) : null;
+
+        const contentSectionsByKey: Record<string, ReactNode> = { about: aboutSection, reserve: reserveSection, blog: blogSection };
+        return contentOrder.map((key) => contentSectionsByKey[key] ?? null);
+      })()}
 
         <div id="contact" className="mt-6 scroll-mt-6">
           {(() => {

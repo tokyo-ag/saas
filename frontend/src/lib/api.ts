@@ -1094,6 +1094,7 @@ export interface PublicPageInput {
   subtitleHeroY?: number | null;
   sectionOrder?: string[];
   navOrder?: string[];
+  contentOrder?: string[];
   displayFields?: { location?: boolean; price?: boolean; capacity?: boolean; description?: boolean };
   status?: 'draft' | 'published';
 }
