@@ -557,7 +557,7 @@ export default function AdminPublicPage() {
   const backgroundColor = form.backgroundColor?.trim() || '#F7F8FA';
   const backgroundOpacity = clampPercent(form.backgroundOpacity ?? 100);
   const bgColor = hexToRgba(backgroundColor, backgroundOpacity);
-  const navColor = form.navColor?.trim() || '#F3F4F6';
+  const navColor = form.navColor?.trim() || accentColor;
   const navOpacity = clampPercent(form.navOpacity ?? 100);
   const navBg = hexToRgba(navColor, navOpacity);
   const fontFamily = fontOptions.find((o) => o.value === form.fontFamily)?.family ?? fontOptions[0].family;
@@ -729,9 +729,9 @@ export default function AdminPublicPage() {
   const buttonTextOpacity = clampPercent(form.buttonTextOpacity ?? 100);
   const buttonBgColor = form.buttonBgColor?.trim() || undefined;
   const btnBorderColor = hexToRgba(accentColor, buttonOpacity);
-  const btnFillColor = buttonBgColor ? hexToRgba(buttonBgColor, buttonBgOpacity) : undefined;
+  const btnFillColor = hexToRgba(buttonBgColor || accentColor, buttonBgOpacity);
   const btnTextColor = hexToRgba(navButtonTextColor, buttonTextOpacity);
-  const buttonBgStyle = btnFillColor ? { backgroundColor: btnFillColor } : {};
+  const buttonBgStyle = { backgroundColor: btnFillColor };
   const btnBoxShadow = getBtnBoxShadow(buttonStyle, btnBorderColor);
   const previewButtonLayoutClass = buttonLayout === 'row1x4' ? 'grid gap-2' : 'grid gap-2';
   const previewButtonGridStyle = {

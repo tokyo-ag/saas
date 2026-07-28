@@ -165,6 +165,7 @@ export class SuperadminService implements OnApplicationBootstrap {
         });
       }
     }
+    await this.backfillPublicPageCardColors();
   }
 
   async listTenants() {
@@ -841,12 +842,26 @@ export class SuperadminService implements OnApplicationBootstrap {
     return { ok: true };
   }
 
-  // 公開サイトのカード背景色（記事カード・予約イベントカード・Q&Aカード）のデフォルトを
-  // navBg連動に変更するにあたり、既存団体の見た目を変えないよう、未設定のものへ
-  // 旧デフォルト値を明示的に書き込む一回限りの移行処理。
+  // 公開サイトの各種色をテーマカラー(accentColor)連動のデフォルトへ切り替えるにあたり、
+  // 既存団体の見た目を変えないよう、未設定の項目へ旧デフォルト値を明示的に書き込む
+  // 移行処理。onApplicationBootstrapから毎回自動実行されるため、デフォルト値を
+  // 切り替えるコードより必ず先に反映される（手動ボタン操作の完了に依存しない）。
+  //
+  // 注意: この処理はテーマ連動の切り替え(2026-07-29)より前から存在する団体だけを対象にする。
+  // 起動のたびに毎回実行されるため、対象を絞らないと新規団体まで「未設定=旧デフォルト」に
+  // 固定されてしまい、新規団体がテーマ連動の恩恵を永久に受けられなくなってしまう。
   async backfillPublicPageCardColors() {
+    const THEME_SYNC_CUTOFF = new Date('2026-07-29T00:00:00.000Z');
     const pages = await this.prisma.publicPage.findMany({
-      select: { id: true, footerText: true, blocks: true },
+      where: { tenant: { createdAt: { lt: THEME_SYNC_CUTOFF } } },
+      select: {
+        id: true,
+        footerText: true,
+        blocks: true,
+        navColor: true,
+        buttonBgColor: true,
+        buttonBgOpacity: true,
+      },
     });
     let updated = 0;
     for (const page of pages) {
@@ -879,12 +894,27 @@ export class SuperadminService implements OnApplicationBootstrap {
         if (blocksChanged) changed = true; else blocks = null;
       }
 
+      // ナビ背景色: 未設定のものは旧デフォルト値(#F3F4F6)を明示化し、
+      // 将来navColorのデフォルトをaccentColor連動に変えても見た目が変わらないようにする。
+      const navColorFreeze = !page.navColor || !page.navColor.trim() ? '#F3F4F6' : null;
+      if (navColorFreeze) changed = true;
+
+      // ナビボタンの背景(塗りつぶし)は現状「塗りつぶし色が未設定＝塗りつぶしなし」という扱いで、
+      // 不透明度の値(多くは管理画面で一度保存した際に既定値100が入っている)自体には意味がない。
+      // buttonBgColorのデフォルトをaccentColorへ変えると、この既存の100という値がそのまま
+      // 「不透明度100%で塗りつぶす」という新しい意味を持ってしまうため、塗りつぶし色が未設定の
+      // 団体は不透明度の現在値に関わらず0に上書きして「塗りつぶしなし」を維持する。
+      const buttonBgOpacityFreeze = !page.buttonBgColor || !page.buttonBgColor.trim() ? 0 : null;
+      if (buttonBgOpacityFreeze !== null && page.buttonBgOpacity !== buttonBgOpacityFreeze) changed = true;
+
       if (!changed) continue;
       await this.prisma.publicPage.update({
         where: { id: page.id },
         data: {
           footerText: JSON.stringify(footer),
           ...(blocks ? { blocks } : {}),
+          ...(navColorFreeze ? { navColor: navColorFreeze } : {}),
+          ...(buttonBgOpacityFreeze !== null ? { buttonBgOpacity: buttonBgOpacityFreeze } : {}),
         },
       });
       updated++;

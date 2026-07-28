@@ -388,7 +388,7 @@ export default async function ClubCmsPage({
   const backgroundColor = page.backgroundColor || '#F7F8FA';
   const backgroundOpacity = clampPercent(page.backgroundOpacity ?? 100);
   const bgColor = hexToRgba(backgroundColor, backgroundOpacity);
-  const navColor = page.navColor || '#F3F4F6';
+  const navColor = page.navColor || accentColor;
   const navOpacity = clampPercent(page.navOpacity ?? 100);
   const navBg = hexToRgba(navColor, navOpacity);
   const fontFamily = fontFamilyMap[page.fontFamily || 'mincho'] ?? fontFamilyMap.mincho;
@@ -432,7 +432,7 @@ export default async function ClubCmsPage({
   const btnTextOpacity = clampPercent(page.buttonTextOpacity ?? 100);
   const btnBorderColor = hexToRgba(btnBorderHex, buttonOpacity);
   const btnTextColor = hexToRgba(navButtonTextColor, btnTextOpacity);
-  const btnBgStyle = page.buttonBgColor ? { backgroundColor: hexToRgba(page.buttonBgColor, btnBgOpacity) } : {};
+  const btnBgStyle = { backgroundColor: hexToRgba(page.buttonBgColor?.trim() || accentColor, btnBgOpacity) };
   const btnRadiusStyle = Number.isInteger(page.buttonRadius) ? { borderRadius: `${page.buttonRadius}px` } : {};
   const btnSize = Number.isInteger(page.buttonSize) ? page.buttonSize! : 40;
   const btnSizeStyle = { minHeight: btnSize, ...(buttonStyle === 'pill' ? { height: btnSize } : {}) };
