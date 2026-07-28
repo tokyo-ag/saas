@@ -528,7 +528,7 @@ export default async function ClubCmsPage({
   const reserveEventTitleColor = sectionCopy.reserveEventTitleColor?.trim() || '#111827';
   const reserveEventDateColor = sectionCopy.reserveEventDateColor?.trim() || '#4B5563';
   const reserveEventMetaColor = sectionCopy.reserveEventMetaColor?.trim() || '#6B7280';
-  const reserveEventCardBg = sectionCopy.reserveEventCardBg?.trim() || navBg;
+  const reserveEventCardBg = sectionCopy.reserveEventCardBg?.trim() || '#ffffff';
   const reserveButtonBgColor = sectionCopy.reserveButtonBgColor?.trim() || '#06C755';
   const reserveButtonTextColor = sectionCopy.reserveButtonTextColor?.trim() || '#111827';
   const globalBorderColor = sectionCopy.globalBorderColor?.trim() || '#E5E7EB';
@@ -536,7 +536,7 @@ export default async function ClubCmsPage({
   const globalRadius = Number.isFinite(sectionCopy.globalRadius) ? Number(sectionCopy.globalRadius) : 12;
   const globalBorderWidth = Number.isFinite(sectionCopy.globalBorderWidth) ? Number(sectionCopy.globalBorderWidth) : 1;
   const cardBorderStyle: CSSProperties = { borderRadius: globalRadius, borderWidth: globalBorderWidth, borderColor: globalBorderColor, borderStyle: 'solid' };
-  const blogPostCardBg = sectionCopy.blogPostCardBg?.trim() || navBg;
+  const blogPostCardBg = sectionCopy.blogPostCardBg?.trim() || '#ffffff';
   const blogPostTitleColor = sectionCopy.blogPostTitleColor?.trim() || textColor;
   const reserveActionStyle = sectionCopy.reserveActionStyle === 'line' ? 'line' : 'comiu';
   const df = sectionCopy.displayFields ?? {};
@@ -790,7 +790,7 @@ export default async function ClubCmsPage({
                   return (
                     <div key={i} className="space-y-1.5">
                       {items.map((item: {q:string;a:string}, j: number) => (
-                        <details key={j} className="group overflow-hidden" style={{ backgroundColor: block.faqCardBg?.trim() || navBg, ...cardBorderStyle }}>
+                        <details key={j} className="group overflow-hidden" style={{ backgroundColor: block.faqCardBg?.trim() || '#F9FAFB', ...cardBorderStyle }}>
                           <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 select-none" style={{ color: bodyTextColor }}>
                             <span className="flex-1 font-bold" style={blockTextStyle}>{item.q}</span>
                             <span className="ml-2 shrink-0 text-xs text-gray-400 transition-transform duration-200 group-open:rotate-180">▼</span>

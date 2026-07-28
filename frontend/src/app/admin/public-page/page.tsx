@@ -708,7 +708,7 @@ export default function AdminPublicPage() {
   const reserveEventTitleColor = form.reserveEventTitleColor?.trim() || '#111827';
   const reserveEventDateColor = form.reserveEventDateColor?.trim() || '#4B5563';
   const reserveEventMetaColor = form.reserveEventMetaColor?.trim() || '#6B7280';
-  const reserveEventCardBg = form.reserveEventCardBg?.trim() || navBg;
+  const reserveEventCardBg = form.reserveEventCardBg?.trim() || '#ffffff';
   const reserveButtonBgColor = form.reserveButtonBgColor?.trim() || '#06C755';
   const reserveButtonTextColor = form.reserveButtonTextColor?.trim() || '#111827';
   const globalBorderColor = form.globalBorderColor?.trim() || '#E5E7EB';
@@ -716,7 +716,7 @@ export default function AdminPublicPage() {
   const globalRadius = Number.isFinite(form.globalRadius) ? Number(form.globalRadius) : 12;
   const globalBorderWidth = Number.isFinite(form.globalBorderWidth) ? Number(form.globalBorderWidth) : 1;
   const cardBorderStyle: CSSProperties = { borderRadius: globalRadius, borderWidth: globalBorderWidth, borderColor: globalBorderColor, borderStyle: 'solid' };
-  const blogPostCardBg = form.blogPostCardBg?.trim() || navBg;
+  const blogPostCardBg = form.blogPostCardBg?.trim() || '#ffffff';
   const blogPostTitleColor = form.blogPostTitleColor?.trim() || textColor;
   const blogSectionTitle = form.blogTitle?.trim() || '';
   const blogSectionLead = form.blogLead?.trim() || '';
@@ -1109,7 +1109,7 @@ export default function AdminPublicPage() {
               <div key={block.id} className="space-y-1.5">
                 {items.length === 0 && <p className="text-xs text-gray-400">Q&Aを追加してください</p>}
                 {items.map((item, j) => (
-                  <div key={j} className="px-3 py-2" style={{ backgroundColor: block.faqCardBg?.trim() || navBg, ...cardBorderStyle }}>
+                  <div key={j} className="px-3 py-2" style={{ backgroundColor: block.faqCardBg?.trim() || '#F9FAFB', ...cardBorderStyle }}>
                     <p className="font-bold" style={faqTextStyle}>Q. {item.q || '（質問）'}</p>
                     {item.a && <p className="mt-0.5 opacity-60" style={faqTextStyle}>A. {item.a}</p>}
                   </div>
