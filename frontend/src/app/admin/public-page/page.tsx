@@ -50,6 +50,16 @@ function firstBlogImage(body: string | null | undefined) {
   return body?.match(BLOG_IMAGE_RE)?.[1] ?? null;
 }
 
+// 公開サイト側のrenderLine（見出し・箇条書きの検知）とプレビューの見た目を揃えるための簡易版。
+function renderPreviewLine(line: string, index: number, textColor: string, bodyClassName: string, textStyle: CSSProperties = {}) {
+  const style: CSSProperties = { color: textColor, overflowWrap: 'anywhere', ...textStyle };
+  if (line.startsWith('### ')) return <h3 key={index} className="mt-7 text-xl font-bold" style={{ color: textColor }}>{line.slice(4)}</h3>;
+  if (line.startsWith('## ') || line.startsWith('# ')) return <h2 key={index} className="mt-9 text-2xl font-bold" style={{ color: textColor }}>{line.replace(/^#{1,3}\s/, '')}</h2>;
+  if (line.startsWith('- ')) return <li key={index} className="ml-5 list-disc break-words" style={style}>{line.slice(2)}</li>;
+  if (!line.trim()) return <div key={index} className="h-3" />;
+  return <p key={index} className={`${bodyClassName} break-words`} style={style}>{line}</p>;
+}
+
 const DEFAULT_SECTION_ORDER = ['name', 'logo', 'subtitle', 'nav', 'image'] as const;
 type TitleLogoLayout = 'stacked' | 'inline';
 const SECTION_LABELS: Record<string, string> = { name: '名前', logo: 'ロゴ', subtitle: 'サブタイトル', nav: 'ナビボタン', image: '写真' };
@@ -1043,12 +1053,15 @@ export default function AdminPublicPage() {
   }
 
   function renderPreviewText(content: string, fontSize = bodyFontSize, lineHeight?: number) {
+    const bodyClassName = lineHeight == null ? bodyLeadingClass(fontSize) : '';
+    const textStyle: CSSProperties = { fontFamily, fontSize, lineHeight: lineHeight ?? undefined };
+    if (!content) {
+      return <p className={`${bodyClassName} opacity-90`} style={{ color: bodyTextColor, ...textStyle }}>団体説明</p>;
+    }
     return (
-      <p
-        className={`${lineHeight == null ? bodyLeadingClass(fontSize) : ''} whitespace-pre-wrap break-words opacity-90`}
-        style={{ color: bodyTextColor, fontFamily, fontSize, lineHeight: lineHeight ?? undefined, overflowWrap: 'anywhere' }}>
-        {content || '団体説明'}
-      </p>
+      <div className="space-y-1" style={{ fontFamily }}>
+        {content.split('\n').map((line, i) => renderPreviewLine(line, i, bodyTextColor, bodyClassName, textStyle))}
+      </div>
     );
   }
 
@@ -1371,38 +1384,39 @@ export default function AdminPublicPage() {
               className="flex-1 accent-[#06C755]" />
             <span className="w-8 text-right text-xs text-gray-400">{backgroundOpacity}%</span>
           </div>
-          {/* テーマ色（ナビボタン・構成/予約/ブログの各セクション背景・お問い合わせボタンを一括変更） */}
+          {/* テーマ色（構成/予約/ブログの各セクション背景） */}
           <div className="space-y-2 rounded-lg border border-[#06C755]/30 bg-[#06C755]/5 p-3">
             <div className="flex items-center gap-3">
               <span className="w-20 shrink-0 text-xs font-bold text-gray-700">テーマ色</span>
               <input type="color" value={navColor}
-                onChange={(e) => setForm((p) => ({
-                  ...p,
-                  navColor: e.target.value,
-                  buttonBgColor: e.target.value,
-                  buttonBgOpacity: 100,
-                  footerContactColor: e.target.value,
-                }))}
+                onChange={(e) => setForm((p) => ({ ...p, navColor: e.target.value }))}
                 className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
               <input type="range" min="20" max="100" step="5" value={navOpacity}
                 onChange={(e) => setForm((p) => ({ ...p, navOpacity: Number(e.target.value) }))}
                 className="flex-1 accent-[#06C755]" />
               <span className="w-8 text-right text-xs text-gray-400">{navOpacity}%</span>
             </div>
-            <span className="text-[11px] text-gray-500">ナビボタン・構成/予約ページ/活動ブログの背景・お問い合わせボタンの色を一括で変更します</span>
+            <span className="text-[11px] text-gray-500">構成/予約ページ/活動ブログの背景の色を一括で変更します</span>
           </div>
-          {/* サブテーマ色（予約イベントカード・記事カードの中の色） */}
+          {/* サブテーマ色（ナビボタン・お問い合わせボタン・予約イベントカード・記事カード・Q&Aカードの中の色） */}
           <div className="space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
             <div className="flex items-center gap-3">
               <span className="w-20 shrink-0 text-xs font-bold text-gray-700">サブテーマ色</span>
               <input type="color" value={reserveEventCardBg.startsWith('rgba') ? '#ffffff' : reserveEventCardBg}
-                onChange={(e) => setForm((p) => ({
-                  ...p,
-                  reserveEventCardBg: e.target.value,
-                  blogPostCardBg: e.target.value,
-                }))}
+                onChange={(e) => {
+                  const color = e.target.value;
+                  setForm((p) => ({
+                    ...p,
+                    reserveEventCardBg: color,
+                    blogPostCardBg: color,
+                    buttonBgColor: color,
+                    buttonBgOpacity: 100,
+                    footerContactColor: color,
+                  }));
+                  setBlocks((prev) => prev.map((b) => (b.type === 'faq' ? { ...b, faqCardBg: color } : b)));
+                }}
                 className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-              <span className="text-[11px] text-gray-500">予約ページのイベントカード・活動ブログの記事カードの中の色を一括で変更します</span>
+              <span className="text-[11px] text-gray-500">ナビボタン・お問い合わせボタン・予約イベントカード・記事カード・Q&amp;Aカードの色を一括で変更します</span>
             </div>
           </div>
           {/* 全体の外枠色 */}
