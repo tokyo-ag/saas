@@ -331,17 +331,28 @@ export default function AdminBlogPage() {
       .catch(() => setTenantCode(''));
   }, []);
 
+  // 公開ページのキャッシュ再検証。失敗すると古い内容が表示され続けてしまうため、
+  // 1回失敗しても静かに諦めず、もう一度だけ試みる
   async function revalidatePublishedBlog(post: BlogPost) {
     if (!tenantCode || post.status !== 'published') return;
     const token = getToken();
-    await fetch('/api/revalidate-public-page', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({ tenantCode, blogSlug: post.slug }),
-    }).catch(() => null);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await fetch('/api/revalidate-public-page', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ tenantCode, blogSlug: post.slug }),
+        });
+        if (res.ok) return;
+        console.error(`公開ページの再検証に失敗しました（試行${attempt + 1}回目、status: ${res.status}）`);
+      } catch (err) {
+        console.error(`公開ページの再検証に失敗しました（試行${attempt + 1}回目）`, err);
+      }
+    }
+    alert('記事は保存されましたが、公開ページへの反映確認が取れませんでした。少し時間を置いてから公開ページをご確認ください。');
   }
 
   function openNew() {
