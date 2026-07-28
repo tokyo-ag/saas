@@ -142,9 +142,16 @@ function formatDate(iso: string | null | undefined) {
 
 const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
 
+// 「[表示文](URL)」というMarkdownリンク記法にも対応する（未対応だと、AIが
+// このように書いた際に記号ごとそのまま文字として表示されてしまうため）
 function linkifyText(text: string, keyPrefix: string) {
-  const parts = text.split(/(https?:\/\/[^\s\])}"'」』]+)/g);
+  const parts = text.split(/(\[[^\]]*\]\(https?:\/\/[^\s)]+\)|https?:\/\/[^\s\])}"'」』]+)/g);
   return parts.flatMap((part, i) => {
+    const mdLink = /^\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)$/.exec(part);
+    if (mdLink) {
+      const label = mdLink[1] || mdLink[2];
+      return [<a key={`${keyPrefix}-${i}`} href={mdLink[2]} target="_blank" rel="noopener noreferrer" className="underline">{label}</a>];
+    }
     if (!/^https?:\/\//.test(part)) return [part];
     const m = part.match(/^(.*?)([.,!?！?。、]*)$/);
     const url = m ? m[1] : part;
@@ -210,7 +217,17 @@ type BodyGroup =
   | { type: 'divider' }
   | { type: 'faq'; items: { q: string; a: string }[] }
   | { type: 'callout'; text: string }
-  | { type: 'table'; rows: string[][] };
+  | { type: 'table'; rows: string[][] }
+  | { type: 'lineCta'; url: string };
+
+// LINE公式アカウントの友だ追加URL（lin.ee / line.me）だけの行を検出し、
+// 「[URL](URL)」のようなMarkdownリンク表記でもプレーンなURLでも拾えるようにする
+const LINE_URL_HOST_RE = /^https?:\/\/(?:[^/]*\.)?(?:lin\.ee|line\.me)\//i;
+function extractLineCtaUrl(trimmed: string): string | null {
+  const mdLink = /^\[[^\]]*\]\((https?:\/\/\S+)\)$/.exec(trimmed);
+  const candidate = mdLink ? mdLink[1] : trimmed;
+  return LINE_URL_HOST_RE.test(candidate) ? candidate : null;
+}
 
 // 見出し・画像・リスト・引用・区切り線だけを区切りとして扱い、それ以外の
 // 連続する行は（空行を挟むまで）ひとつの段落としてまとめる。1文ごとに
@@ -304,6 +321,13 @@ function groupBody(body: string): BodyGroup[] {
     if (img) {
       flushAll();
       groups.push({ type: 'image', alt: img[1], url: img[2] });
+      continue;
+    }
+
+    const lineCtaUrl = extractLineCtaUrl(trimmed);
+    if (lineCtaUrl) {
+      flushAll();
+      groups.push({ type: 'lineCta', url: lineCtaUrl });
       continue;
     }
 
@@ -496,6 +520,20 @@ function BodyRenderer({ groups }: { groups: BodyGroup[] }) {
 
         if (group.type === 'divider') {
           return <hr key={i} className="my-6 border-gray-200" />;
+        }
+
+        if (group.type === 'lineCta') {
+          return (
+            <a
+              key={i}
+              href={group.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 rounded-full bg-[#06C755] px-6 py-3.5 text-center text-base font-bold text-white shadow-md hover:shadow-lg"
+            >
+              💬 公式LINEを追加する
+            </a>
+          );
         }
 
         if (group.type === 'quote') {
