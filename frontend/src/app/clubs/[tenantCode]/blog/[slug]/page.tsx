@@ -421,13 +421,43 @@ function groupBody(body: string): BodyGroup[] {
   return groups;
 }
 
+// H2セクションごとに色を変えて視覚的なメリハリを出す（Tailwindのビルド時パージを
+// 避けるため、動的な色はクラス名ではなくインラインstyleで指定する）
+const SECTION_COLORS = ['#06C755', '#3B82F6', '#F59E0B', '#EC4899', '#8B5CF6'];
+function sectionColor(sectionNumber: number): string {
+  return SECTION_COLORS[(sectionNumber - 1) % SECTION_COLORS.length];
+}
+
 function BodyRenderer({ groups }: { groups: BodyGroup[] }) {
   let h2Count = 0;
   const h2Numbers = groups.map((g) => (g.type === 'heading' && g.level === 2 ? ++h2Count : null));
+  // 直近のH2の色をH3にも引き継ぎ、同じセクション内で色が揃うようにする
+  let currentSectionColor: string | null = null;
+  const sectionColors = groups.map((g, idx) => {
+    if (g.type === 'heading' && g.level === 2 && h2Numbers[idx] != null) {
+      currentSectionColor = sectionColor(h2Numbers[idx]!);
+    }
+    return currentSectionColor;
+  });
   const leadParagraphIndex = groups.findIndex((g) => g.type === 'paragraph');
-  return (
-    <div className="space-y-4 text-[15px] leading-9 text-gray-800">
-      {groups.map((group, i) => {
+
+  // 文章だけが延々と続くと単調に見えるため、H2ごとにその区間をうっすら色付きの
+  // ゾーンで囲み、セクションの切れ目を視覚的にも分かりやすくする
+  type Section = { color: string | null; indices: number[] };
+  const sections: Section[] = [];
+  let current: Section = { color: null, indices: [] };
+  groups.forEach((g, idx) => {
+    if (g.type === 'heading' && g.level === 2) {
+      if (current.indices.length > 0) sections.push(current);
+      current = { color: sectionColors[idx], indices: [idx] };
+    } else {
+      current.indices.push(idx);
+    }
+  });
+  if (current.indices.length > 0) sections.push(current);
+
+  function renderItem(i: number) {
+        const group = groups[i];
         if (group.type === 'image') {
           return (
             <div key={i} className="my-2">
@@ -448,14 +478,20 @@ function BodyRenderer({ groups }: { groups: BodyGroup[] }) {
         if (group.type === 'heading') {
           const content = renderInline(group.text, `h-${i}`);
           if (group.level === 2) {
+            const color = sectionColor(h2Numbers[i]!);
             return (
               <h2 key={i} id={`heading-${i}`} className="mt-8 flex scroll-mt-6 items-start gap-2 text-lg font-bold leading-snug text-gray-950">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#06C755] text-xs font-bold text-white">{h2Numbers[i]}</span>
-                <span className="rounded bg-[#06C755]/10 px-1.5 py-0.5">{content}</span>
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style={{ backgroundColor: color }}>{h2Numbers[i]}</span>
+                <span className="rounded px-1.5 py-0.5" style={{ backgroundColor: `${color}1a` }}>{content}</span>
               </h2>
             );
           }
-          return <h3 key={i} id={`heading-${i}`} className="mt-6 scroll-mt-6 text-base font-bold text-gray-950">{content}</h3>;
+          return (
+            <h3 key={i} id={`heading-${i}`} className="mt-6 flex scroll-mt-6 items-center gap-2 text-base font-bold text-gray-950">
+              <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: sectionColors[i] ?? SECTION_COLORS[0] }} />
+              {content}
+            </h3>
+          );
         }
 
         if (group.type === 'divider') {
@@ -549,7 +585,29 @@ function BodyRenderer({ groups }: { groups: BodyGroup[] }) {
             {renderInline(group.text, `line-${i}`)}
           </p>
         );
-      })}
+  }
+
+  return (
+    <div className="space-y-6 text-[15px] leading-9 text-gray-800">
+      {sections.map((section, si) =>
+        section.color ? (
+          <div
+            key={si}
+            className="-mx-4 space-y-4 rounded-xl px-4 py-5 sm:mx-0 sm:px-5"
+            style={{ backgroundColor: `${section.color}0d` }}
+          >
+            {section.indices.map((i) => (
+              <div key={i}>{renderItem(i)}</div>
+            ))}
+          </div>
+        ) : (
+          <div key={si} className="space-y-4">
+            {section.indices.map((i) => (
+              <div key={i}>{renderItem(i)}</div>
+            ))}
+          </div>
+        )
+      )}
     </div>
   );
 }
