@@ -37,6 +37,11 @@ export class BlogController {
     return this.blogService.regenerateLongSlugs(tenantId);
   }
 
+  @Put('regenerate-keyword-excerpts')
+  regenerateKeywordExcerpts(@TenantId() tenantId: string) {
+    return this.blogService.regenerateKeywordExcerpts(tenantId);
+  }
+
   @Put(':id')
   update(
     @TenantId() tenantId: string,

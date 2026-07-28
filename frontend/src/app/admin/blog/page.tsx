@@ -15,6 +15,15 @@ function formatDate(iso: string | null | undefined) {
   return new Date(iso).toLocaleDateString('ja-JP', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+// 句読点が一切なく空白区切りの単語が並んでいるだけの、旧来のキーワード羅列型の
+// 概要文を検出する（バックエンド側のlooksLikeKeywordExcerptと同じ判定基準）
+function looksLikeKeywordExcerpt(excerpt: string | null | undefined): boolean {
+  if (!excerpt) return false;
+  if (/[。！？!?]/.test(excerpt)) return false;
+  const segments = excerpt.split(/[\s　、,]+/).filter(Boolean);
+  return segments.length >= 2;
+}
+
 async function uploadImage(file: File): Promise<string> {
   const ext = file.name.split('.').pop() ?? 'jpg';
   const res = await fetch(`/api/upload?filename=blog-${Date.now()}.${ext}`, {
@@ -87,8 +96,10 @@ const AI_DRAFT_PROMPT = `ブログ記事の下書きを書いてもらいたい�
 ・料金プランや比較表を書きたい場合はMarkdown表記法（「| 項目 | 内容 |」の見出し行、次に「|---|---|」、続けてデータ行）を使う（表として表示されます）
 ・大きく話題を切り替える箇所には「---」だけの行を入れて区切り線にする
 ・公式LINEの追加を促したい場合は、そのURLだけを1行にして書く（自動でボタンとして表示されます）
+・当日のタイムスケジュールを書く場合は、各行を「内容の説明19:00」のように末尾に時刻（H:MM形式）を付けて書く（タイムライン形式で表示されます）
 ・絵文字や記号の羅列など、装飾的な表現は使わない
-・1つの段落は2〜4文でまとめる。1文ごとに改行するのではなく、同じ話題の文はまとめて1つの段落にし、話題が変わるところだけ空行で段落を分ける`;
+・1つの段落は2〜4文でまとめる。1文ごとに改行するのではなく、同じ話題の文はまとめて1つの段落にし、話題が変わるところだけ空行で段落を分ける
+・他の団体の記事と内容が似通わないよう、この団体・イベントならではの固有名詞、実際のエピソード、具体的な数字を必ず盛り込み、どこにでも当てはまるような一般論だけの文章にしない`;
 
 // AIに書かせた原稿をそのまま貼り付けられるように、1行目=タイトル、
 // 続く段落=概要、それ以降=本文（見出しは #/##/### や **太字** のまま残す）として分割する
@@ -302,6 +313,7 @@ export default function AdminBlogPage() {
   const [copied, setCopied] = useState(false);
   const [promptCopied, setPromptCopied] = useState(false);
   const [regeneratingSlugs, setRegeneratingSlugs] = useState(false);
+  const [regeneratingExcerpts, setRegeneratingExcerpts] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function load() {
@@ -412,6 +424,26 @@ export default function AdminBlogPage() {
       alert('URLの一括短縮に失敗しました');
     } finally {
       setRegeneratingSlugs(false);
+    }
+  }
+
+  async function handleRegenerateAllKeywordExcerpts() {
+    if (!confirm('キーワード羅列になっている概要文を、本文から作った説明文に置き換えます。よろしいですか？')) return;
+    setRegeneratingExcerpts(true);
+    try {
+      const { updated } = await api.blog.regenerateKeywordExcerpts();
+      for (const post of posts) {
+        const match = updated.find((u) => u.id === post.id);
+        if (match) {
+          await revalidatePublishedBlog({ ...post, excerpt: match.excerpt });
+        }
+      }
+      load();
+      alert(updated.length > 0 ? `${updated.length}件の概要文を更新しました` : '更新が必要な概要文はありませんでした');
+    } catch {
+      alert('概要文の一括更新に失敗しました');
+    } finally {
+      setRegeneratingExcerpts(false);
     }
   }
 
@@ -539,7 +571,7 @@ export default function AdminBlogPage() {
           {/* 文章 */}
           <div>
             <span className="mb-1 inline-block rounded-full bg-[#06C755]/10 px-2 py-0.5 text-[10px] font-bold text-[#06C755]">文章</span>
-            <p className="mb-1 text-xs text-gray-400">AIに書かせた原稿をそのまま貼り付けると、1行目→タイトル、2行目以降の段落→概要に自動で振り分けられます。本文中の「# 見出し」「**太字**」「- 箇条書き」「1. 番号リスト」「&gt; 引用」「Q: 質問 / A: 回答」「!ヒント」「表（Markdown表記法）」「---区切り線」「公式LINEのURL（1行単独）」はそのまま装飾・ボタンとして表示されます</p>
+            <p className="mb-1 text-xs text-gray-400">AIに書かせた原稿をそのまま貼り付けると、1行目→タイトル、2行目以降の段落→概要に自動で振り分けられます。本文中の「# 見出し」「**太字**」「- 箇条書き」「1. 番号リスト」「&gt; 引用」「Q: 質問 / A: 回答」「!ヒント」「表（Markdown表記法）」「---区切り線」「公式LINEのURL（1行単独）」「内容19:00のような時刻付きの行（タイムスケジュール）」はそのまま装飾・ボタンとして表示されます</p>
             <div className="rounded-xl border border-[#06C755] p-1">
               <textarea
                 value={bodyText}
@@ -592,6 +624,16 @@ export default function AdminBlogPage() {
                 className="rounded-lg border border-white/40 bg-white/10 px-3 py-2 text-xs font-bold text-white hover:bg-white/20 disabled:opacity-50"
               >
                 {regeneratingSlugs ? '短縮中...' : '長いURLを一括で短縮する'}
+              </button>
+            )}
+            {posts.some((p) => looksLikeKeywordExcerpt(p.excerpt)) && (
+              <button
+                type="button"
+                disabled={regeneratingExcerpts}
+                onClick={handleRegenerateAllKeywordExcerpts}
+                className="rounded-lg border border-white/40 bg-white/10 px-3 py-2 text-xs font-bold text-white hover:bg-white/20 disabled:opacity-50"
+              >
+                {regeneratingExcerpts ? '更新中...' : '概要文を本文から一括再生成'}
               </button>
             )}
             <button

@@ -297,6 +297,8 @@ export const api = {
       request<BlogPost>(`/admin/blog/${id}/regenerate-slug`, { method: 'PUT' }),
     regenerateLongSlugs: () =>
       request<{ updated: { id: string; slug: string }[] }>('/admin/blog/regenerate-long-slugs', { method: 'PUT' }),
+    regenerateKeywordExcerpts: () =>
+      request<{ updated: { id: string; excerpt: string }[] }>('/admin/blog/regenerate-keyword-excerpts', { method: 'PUT' }),
   },
   publicPages: {
     list: () => request<PublicPage[]>('/admin/public-pages'),

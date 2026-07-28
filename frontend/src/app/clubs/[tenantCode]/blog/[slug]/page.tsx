@@ -218,7 +218,8 @@ type BodyGroup =
   | { type: 'faq'; items: { q: string; a: string }[] }
   | { type: 'callout'; text: string }
   | { type: 'table'; rows: string[][] }
-  | { type: 'lineCta'; url: string };
+  | { type: 'lineCta'; url: string }
+  | { type: 'timeline'; items: { time: string; text: string }[] };
 
 // LINE公式アカウントの友だ追加URL（lin.ee / line.me）だけの行を検出し、
 // 「[URL](URL)」のようなMarkdownリンク表記でもプレーンなURLでも拾えるようにする
@@ -228,6 +229,10 @@ function extractLineCtaUrl(trimmed: string): string | null {
   const candidate = mdLink ? mdLink[1] : trimmed;
   return LINE_URL_HOST_RE.test(candidate) ? candidate : null;
 }
+
+// 「説明文19:00」のように、末尾が時刻でそれ以外が内容という行を
+// 当日のタイムスケジュールとして検出する
+const TIME_ITEM_RE = /^(.+?)\s*(\d{1,2}:\d{2})$/;
 
 // 見出し・画像・リスト・引用・区切り線だけを区切りとして扱い、それ以外の
 // 連続する行は（空行を挟むまで）ひとつの段落としてまとめる。1文ごとに
@@ -242,6 +247,7 @@ function groupBody(body: string): BodyGroup[] {
   let pendingQuestion: string | null = null;
   let calloutLines: string[] = [];
   let tableRows: string[][] = [];
+  let timelineItems: { time: string; text: string }[] = [];
   // SEO/アクセシビリティ的にH2を飛ばしてH3から始まるのは階層として不自然なため、
   // 最初のH2が出てくるまではH3判定をH2に格上げする
   let sawH2 = false;
@@ -297,7 +303,13 @@ function groupBody(body: string): BodyGroup[] {
     groups.push({ type: 'table', rows: tableRows });
     tableRows = [];
   }
-  // 空行はQ&Aの組同士の区切りとしてもよく使われるため、空行だけではFAQをまとめ終わらせない
+  // 空行はQ&A・タイムスケジュールの項目同士の区切りとしてもよく使われるため、
+  // 空行だけではFAQ/タイムラインをまとめ終わらせない
+  function flushTimeline() {
+    if (timelineItems.length === 0) return;
+    groups.push({ type: 'timeline', items: timelineItems });
+    timelineItems = [];
+  }
   function flushSoft() {
     flushParagraph();
     flushList();
@@ -308,6 +320,7 @@ function groupBody(body: string): BodyGroup[] {
   function flushAll() {
     flushSoft();
     flushFaq();
+    flushTimeline();
   }
 
   for (const rawLine of body.split('\n')) {
@@ -351,6 +364,18 @@ function groupBody(body: string): BodyGroup[] {
       continue;
     }
 
+    const timeItem = TIME_ITEM_RE.exec(trimmed);
+    if (timeItem) {
+      flushParagraph();
+      flushList();
+      flushQuote();
+      flushCallout();
+      flushTable();
+      flushFaq();
+      timelineItems.push({ text: timeItem[1].trim(), time: timeItem[2] });
+      continue;
+    }
+
     const tableRow = TABLE_ROW_RE.exec(trimmed);
     if (tableRow) {
       flushParagraph();
@@ -358,6 +383,7 @@ function groupBody(body: string): BodyGroup[] {
       flushQuote();
       flushFaq();
       flushCallout();
+      flushTimeline();
       if (!TABLE_SEPARATOR_ROW_RE.test(trimmed)) tableRows.push(parseTableRow(tableRow[1]));
       continue;
     }
@@ -369,6 +395,7 @@ function groupBody(body: string): BodyGroup[] {
       flushQuote();
       flushFaq();
       flushTable();
+      flushTimeline();
       calloutLines.push(callout[1]);
       continue;
     }
@@ -380,6 +407,7 @@ function groupBody(body: string): BodyGroup[] {
       flushQuote();
       flushCallout();
       flushTable();
+      flushTimeline();
       flushPendingQuestion();
       pendingQuestion = question[1];
       continue;
@@ -392,6 +420,7 @@ function groupBody(body: string): BodyGroup[] {
       flushQuote();
       flushCallout();
       flushTable();
+      flushTimeline();
       faqItems.push({ q: pendingQuestion, a: answer[1] });
       pendingQuestion = null;
       continue;
@@ -404,6 +433,7 @@ function groupBody(body: string): BodyGroup[] {
       flushFaq();
       flushCallout();
       flushTable();
+      flushTimeline();
       if (listItems.length > 0 && listOrdered) flushList();
       listOrdered = false;
       listItems.push(bullet[1]);
@@ -417,6 +447,7 @@ function groupBody(body: string): BodyGroup[] {
       flushFaq();
       flushCallout();
       flushTable();
+      flushTimeline();
       if (listItems.length > 0 && !listOrdered) flushList();
       listOrdered = true;
       listItems.push(ordered[1]);
@@ -430,6 +461,7 @@ function groupBody(body: string): BodyGroup[] {
       flushFaq();
       flushCallout();
       flushTable();
+      flushTimeline();
       quoteLines.push(quote[1]);
       continue;
     }
@@ -439,6 +471,7 @@ function groupBody(body: string): BodyGroup[] {
     flushFaq();
     flushCallout();
     flushTable();
+    flushTimeline();
     paragraphLines.push(trimmed);
   }
   flushAll();
@@ -533,6 +566,22 @@ function BodyRenderer({ groups }: { groups: BodyGroup[] }) {
             >
               💬 公式LINEを追加する
             </a>
+          );
+        }
+
+        if (group.type === 'timeline') {
+          return (
+            <div key={i} className="my-2 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <ol className="relative ml-1 border-l-2 border-[#06C755]/30">
+                {group.items.map((item, j) => (
+                  <li key={j} className="relative pb-5 pl-5 last:pb-0">
+                    <span className="absolute -left-[7px] top-1 h-3 w-3 rounded-full border-2 border-white bg-[#06C755]" />
+                    <span className="inline-block rounded-full bg-[#06C755] px-2.5 py-0.5 text-xs font-bold text-white">{item.time}</span>
+                    <p className="mt-1 text-gray-800">{renderInline(item.text, `tl-${i}-${j}`)}</p>
+                  </li>
+                ))}
+              </ol>
+            </div>
           );
         }
 

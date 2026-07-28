@@ -182,6 +182,52 @@ export class BlogService {
     return { updated };
   }
 
+  // 昔ながらのSEO手法（キーワードを空白区切りで並べただけの説明文）は、今のGoogleでは
+  // 逆にスパム的と評価されやすいため検出対象にする。文の終わりを示す句読点が一切なく、
+  // かつ空白区切りの単語が複数ある場合をキーワード羅列とみなす。
+  private looksLikeKeywordExcerpt(excerpt: string | null): boolean {
+    if (!excerpt) return false;
+    if (/[。！？!?]/.test(excerpt)) return false;
+    const segments = excerpt.split(/[\s　、,]+/).filter(Boolean);
+    return segments.length >= 2;
+  }
+
+  private buildExcerptFromBody(body: string): string {
+    const cleaned = body
+      .replace(/!\[.*?\]\(.*?\)/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/^#{1,6}\s*/gm, '')
+      .replace(/[*_~`>|]/g, '')
+      .replace(/^[-*+・]\s*/gm, '')
+      .replace(/^\d+[.)．]\s*/gm, '')
+      .replace(/^Q[:.：。]\s*/gim, '')
+      .replace(/^A[:.：。]\s*/gim, '')
+      .replace(/^!\s?/gm, '')
+      .replace(/^-{3,}$/gm, '')
+      .replace(/\n+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return cleaned.slice(0, 120);
+  }
+
+  // 空白区切りのキーワード羅列になっている旧来の概要を、本文から作った
+  // 自然な説明文に一括で置き換える一度きりの移行用アクション
+  async regenerateKeywordExcerpts(tenantId: string) {
+    const posts = await this.prisma.blogPost.findMany({
+      where: { tenantId },
+      select: { id: true, excerpt: true, body: true },
+    });
+    const targets = posts.filter((p) => this.looksLikeKeywordExcerpt(p.excerpt));
+    const updated: { id: string; excerpt: string }[] = [];
+    for (const post of targets) {
+      const excerpt = this.buildExcerptFromBody(post.body);
+      if (!excerpt) continue;
+      await this.prisma.blogPost.update({ where: { id: post.id }, data: { excerpt } });
+      updated.push({ id: post.id, excerpt });
+    }
+    return { updated };
+  }
+
   async remove(tenantId: string, id: string) {
     const existing = await this.prisma.blogPost.findFirst({
       where: { tenantId, id },
