@@ -163,4 +163,9 @@ export class SuperadminController {
   deleteOfficialArticle(@Param('id') id: string) {
     return this.service.deleteOfficialArticle(id);
   }
+
+  @Put('public-pages/backfill-card-colors')
+  backfillPublicPageCardColors() {
+    return this.service.backfillPublicPageCardColors();
+  }
 }

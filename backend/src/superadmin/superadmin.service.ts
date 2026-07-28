@@ -840,4 +840,55 @@ export class SuperadminService implements OnApplicationBootstrap {
     `);
     return { ok: true };
   }
+
+  // 公開サイトのカード背景色（記事カード・予約イベントカード・Q&Aカード）のデフォルトを
+  // navBg連動に変更するにあたり、既存団体の見た目を変えないよう、未設定のものへ
+  // 旧デフォルト値を明示的に書き込む一回限りの移行処理。
+  async backfillPublicPageCardColors() {
+    const pages = await this.prisma.publicPage.findMany({
+      select: { id: true, footerText: true, blocks: true },
+    });
+    let updated = 0;
+    for (const page of pages) {
+      let footer: Record<string, unknown> = {};
+      try {
+        footer = page.footerText ? JSON.parse(page.footerText) : {};
+      } catch {
+        footer = {};
+      }
+      let changed = false;
+      if (!footer.blogPostCardBg || typeof footer.blogPostCardBg !== 'string' || !footer.blogPostCardBg.trim()) {
+        footer.blogPostCardBg = '#ffffff';
+        changed = true;
+      }
+      if (!footer.reserveEventCardBg || typeof footer.reserveEventCardBg !== 'string' || !footer.reserveEventCardBg.trim()) {
+        footer.reserveEventCardBg = '#ffffff';
+        changed = true;
+      }
+
+      let blocks: any[] | null = null;
+      if (Array.isArray(page.blocks)) {
+        let blocksChanged = false;
+        blocks = (page.blocks as any[]).map((block) => {
+          if (block?.type === 'faq' && (!block.faqCardBg || typeof block.faqCardBg !== 'string' || !block.faqCardBg.trim())) {
+            blocksChanged = true;
+            return { ...block, faqCardBg: '#F9FAFB' };
+          }
+          return block;
+        });
+        if (blocksChanged) changed = true; else blocks = null;
+      }
+
+      if (!changed) continue;
+      await this.prisma.publicPage.update({
+        where: { id: page.id },
+        data: {
+          footerText: JSON.stringify(footer),
+          ...(blocks ? { blocks } : {}),
+        },
+      });
+      updated++;
+    }
+    return { total: pages.length, updated };
+  }
 }

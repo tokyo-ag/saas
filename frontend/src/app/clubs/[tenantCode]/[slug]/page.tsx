@@ -495,6 +495,8 @@ export default async function ClubCmsPage({
         reserveButtonTextColor?: string;
         reserveButtonBorderColor?: string;
         globalBorderColor?: string;
+        globalRadius?: number;
+        globalBorderWidth?: number;
         reserveActionStyle?: string;
         displayFields?: { location?: boolean; price?: boolean; capacity?: boolean; description?: boolean };
         blogPostCardBg?: string;
@@ -526,12 +528,15 @@ export default async function ClubCmsPage({
   const reserveEventTitleColor = sectionCopy.reserveEventTitleColor?.trim() || '#111827';
   const reserveEventDateColor = sectionCopy.reserveEventDateColor?.trim() || '#4B5563';
   const reserveEventMetaColor = sectionCopy.reserveEventMetaColor?.trim() || '#6B7280';
-  const reserveEventCardBg = sectionCopy.reserveEventCardBg?.trim() || '#ffffff';
+  const reserveEventCardBg = sectionCopy.reserveEventCardBg?.trim() || navBg;
   const reserveButtonBgColor = sectionCopy.reserveButtonBgColor?.trim() || '#06C755';
   const reserveButtonTextColor = sectionCopy.reserveButtonTextColor?.trim() || '#111827';
   const globalBorderColor = sectionCopy.globalBorderColor?.trim() || '#E5E7EB';
   const reserveButtonBorderColor = globalBorderColor;
-  const blogPostCardBg = sectionCopy.blogPostCardBg?.trim() || '#ffffff';
+  const globalRadius = Number.isFinite(sectionCopy.globalRadius) ? Number(sectionCopy.globalRadius) : 12;
+  const globalBorderWidth = Number.isFinite(sectionCopy.globalBorderWidth) ? Number(sectionCopy.globalBorderWidth) : 1;
+  const cardBorderStyle: CSSProperties = { borderRadius: globalRadius, borderWidth: globalBorderWidth, borderColor: globalBorderColor, borderStyle: 'solid' };
+  const blogPostCardBg = sectionCopy.blogPostCardBg?.trim() || navBg;
   const blogPostTitleColor = sectionCopy.blogPostTitleColor?.trim() || textColor;
   const reserveActionStyle = sectionCopy.reserveActionStyle === 'line' ? 'line' : 'comiu';
   const df = sectionCopy.displayFields ?? {};
@@ -728,7 +733,7 @@ export default async function ClubCmsPage({
         const isFirstContentSection = (key: string) => renderedContentKeys[0] === key;
 
         const aboutSection = (
-        <div key="about" id="about" className={`rounded-xl px-5 py-6 shadow-sm ring-1 ring-gray-100 md:px-8 md:py-8 ${isFirstContentSection('about') ? (heroImageMode === 'background' ? '' : 'mt-0') : 'mt-8 scroll-mt-6'}`} style={{ backgroundColor: navBg }}>
+        <div key="about" id="about" className={`px-5 py-6 shadow-sm md:px-8 md:py-8 ${isFirstContentSection('about') ? (heroImageMode === 'background' ? '' : 'mt-0') : 'mt-8 scroll-mt-6'}`} style={{ backgroundColor: navBg, ...cardBorderStyle }}>
           {page.blocks?.length ? (
             <div className="space-y-5">
               {(page.blocks as any[]).map((block: any, i: number) => {
@@ -785,7 +790,7 @@ export default async function ClubCmsPage({
                   return (
                     <div key={i} className="space-y-1.5">
                       {items.map((item: {q:string;a:string}, j: number) => (
-                        <details key={j} className="group overflow-hidden rounded-xl border border-gray-100" style={{ backgroundColor: block.faqCardBg || '#F9FAFB' }}>
+                        <details key={j} className="group overflow-hidden" style={{ backgroundColor: block.faqCardBg?.trim() || navBg, ...cardBorderStyle }}>
                           <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 select-none" style={{ color: bodyTextColor }}>
                             <span className="flex-1 font-bold" style={blockTextStyle}>{item.q}</span>
                             <span className="ml-2 shrink-0 text-xs text-gray-400 transition-transform duration-200 group-open:rotate-180">▼</span>
@@ -832,7 +837,7 @@ export default async function ClubCmsPage({
 
         const reserveSection = hasReserveSection ? (
         <Fragment key="reserve">
-        <div id="reserve" className={`relative ${isFirstContentSection('reserve') ? '' : 'mt-8'} scroll-mt-6 rounded-xl px-5 py-6 shadow-sm ring-1 ring-black/5`} style={{ backgroundColor: navBg }}>
+        <div id="reserve" className={`relative ${isFirstContentSection('reserve') ? '' : 'mt-8'} scroll-mt-6 px-5 py-6 shadow-sm`} style={{ backgroundColor: navBg, ...cardBorderStyle }}>
           <div className="relative">
             {reserveSectionTitle && (
               <p className="text-lg font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
@@ -886,7 +891,7 @@ export default async function ClubCmsPage({
         ) : null;
 
         const blogSection = hasBlogSection ? (
-        <section key="blog" id="blog" className={`relative ${isFirstContentSection('blog') ? '' : 'mt-8'} scroll-mt-6 rounded-xl px-5 py-6 shadow-sm ring-1 ring-black/5`} style={{ backgroundColor: navBg }}>
+        <section key="blog" id="blog" className={`relative ${isFirstContentSection('blog') ? '' : 'mt-8'} scroll-mt-6 px-5 py-6 shadow-sm`} style={{ backgroundColor: navBg, ...cardBorderStyle }}>
           <Link href={navBlogUrl} className="absolute inset-0 rounded-xl" aria-label={navLabels.blog} />
           <div className="relative">
             {blogSectionTitle && (
@@ -902,8 +907,8 @@ export default async function ClubCmsPage({
                   const postImage = imgUrl(post.coverImageUrl, IMAGE_BASE_URL);
                   return (
                     <Link key={post.id} href={`/clubs/${page.tenant.code ?? tenantCode}/blog/${post.slug}`}
-                      className="flex gap-3 rounded-xl border border-gray-100 p-3 transition hover:opacity-90"
-                      style={{ backgroundColor: blogPostCardBg }}>
+                      className="flex gap-3 p-3 transition hover:opacity-90"
+                      style={{ backgroundColor: blogPostCardBg, ...cardBorderStyle }}>
                       {postImage && <Image src={postImage} alt="" width={80} height={64} className="h-16 w-20 shrink-0 rounded-lg object-cover" />}
                       <div className="min-w-0">
                         <p className="line-clamp-2 text-sm font-bold leading-5" style={{ color: blogPostTitleColor }}>{post.title}</p>

@@ -384,6 +384,8 @@ export const api = {
       }),
     errorLogs: () => request<ErrorLog[]>('/superadmin/errors'),
     clearErrorLogs: () => request<void>('/superadmin/errors', { method: 'DELETE' }),
+    backfillPublicPageCardColors: () =>
+      request<{ total: number; updated: number }>('/superadmin/public-pages/backfill-card-colors', { method: 'PUT' }),
     officialSite: () => request<OfficialSiteSettings>('/superadmin/official-site'),
     updateOfficialSite: (data: OfficialSiteInput) =>
       request<OfficialSiteSettings>('/superadmin/official-site', {
@@ -952,6 +954,8 @@ export interface PublicPage {
   reserveButtonTextColor?: string | null;
   reserveButtonBorderColor?: string | null;
   globalBorderColor?: string | null;
+  globalRadius?: number | null;
+  globalBorderWidth?: number | null;
   fontFamily?: string | null;
   titleFont?: string | null;
   titleColor?: string | null;
@@ -1064,6 +1068,8 @@ export interface PublicPageInput {
   reserveButtonTextColor?: string;
   reserveButtonBorderColor?: string;
   globalBorderColor?: string;
+  globalRadius?: number;
+  globalBorderWidth?: number;
   reserveActionStyle?: 'comiu' | 'line';
   reserveLineUrl?: string;
   blogPostCardBg?: string;

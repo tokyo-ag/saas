@@ -61,6 +61,16 @@ export default function SuperadminPage() {
     load();
   }
 
+  async function handleBackfillCardColors() {
+    if (!confirm('公開サイトのカード背景色（記事カード・予約イベントカード・Q&Aカード）が未設定の団体に、旧デフォルト値を書き込みます。\n一回限りの移行処理です。実行しますか？')) return;
+    try {
+      const { total, updated } = await api.superadmin.backfillPublicPageCardColors();
+      alert(`完了しました。対象 ${total} 件中 ${updated} 件を更新しました。`);
+    } catch (e: any) {
+      alert(e.message);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
       {/* ヘッダー */}
@@ -123,6 +133,14 @@ export default function SuperadminPage() {
           <ErrorLogTab errors={errors} onClear={async () => { await api.superadmin.clearErrorLogs(); load(); }} />
         ) : tab === 'tenants' ? (
           <div className="space-y-3">
+            <div className="flex justify-end">
+              <button
+                onClick={handleBackfillCardColors}
+                className="text-xs text-gray-400 hover:text-gray-600 underline underline-offset-2"
+              >
+                【一時】公開サイトのカード背景色を移行
+              </button>
+            </div>
             {tenants.map((t) => {
               const isBanned = !!t.bannedAt;
               const isDeactivated = !!t.deletedAt && !isBanned;

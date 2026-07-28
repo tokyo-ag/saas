@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { api, BlogPost, LiffEvent, PublicPageInput, Tenant } from '@/lib/api';
 import { API_URL, SITE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
@@ -162,6 +163,8 @@ const emptyForm: PublicPageInput = {
   reserveButtonTextColor: '',
   reserveButtonBorderColor: '',
   globalBorderColor: '',
+  globalRadius: 12,
+  globalBorderWidth: 1,
   reserveActionStyle: 'comiu',
   reserveLineUrl: '',
   blogPostCardBg: '',
@@ -705,12 +708,15 @@ export default function AdminPublicPage() {
   const reserveEventTitleColor = form.reserveEventTitleColor?.trim() || '#111827';
   const reserveEventDateColor = form.reserveEventDateColor?.trim() || '#4B5563';
   const reserveEventMetaColor = form.reserveEventMetaColor?.trim() || '#6B7280';
-  const reserveEventCardBg = form.reserveEventCardBg?.trim() || '#ffffff';
+  const reserveEventCardBg = form.reserveEventCardBg?.trim() || navBg;
   const reserveButtonBgColor = form.reserveButtonBgColor?.trim() || '#06C755';
   const reserveButtonTextColor = form.reserveButtonTextColor?.trim() || '#111827';
   const globalBorderColor = form.globalBorderColor?.trim() || '#E5E7EB';
   const reserveButtonBorderColor = globalBorderColor;
-  const blogPostCardBg = form.blogPostCardBg?.trim() || '#ffffff';
+  const globalRadius = Number.isFinite(form.globalRadius) ? Number(form.globalRadius) : 12;
+  const globalBorderWidth = Number.isFinite(form.globalBorderWidth) ? Number(form.globalBorderWidth) : 1;
+  const cardBorderStyle: CSSProperties = { borderRadius: globalRadius, borderWidth: globalBorderWidth, borderColor: globalBorderColor, borderStyle: 'solid' };
+  const blogPostCardBg = form.blogPostCardBg?.trim() || navBg;
   const blogPostTitleColor = form.blogPostTitleColor?.trim() || textColor;
   const blogSectionTitle = form.blogTitle?.trim() || '';
   const blogSectionLead = form.blogLead?.trim() || '';
@@ -873,6 +879,8 @@ export default function AdminPublicPage() {
                   reserveButtonTextColor: fd.reserveButtonTextColor ?? '',
                   reserveButtonBorderColor: fd.reserveButtonBorderColor ?? '',
                   globalBorderColor: fd.globalBorderColor ?? '',
+                  globalRadius: Number.isFinite(fd.globalRadius) ? fd.globalRadius : 12,
+                  globalBorderWidth: Number.isFinite(fd.globalBorderWidth) ? fd.globalBorderWidth : 1,
                   reserveActionStyle: fd.reserveActionStyle === 'line' ? 'line' : 'comiu',
                   reserveLineUrl: fd.reserveLineUrl ?? fd.line ?? '',
                   blogPostCardBg: fd.blogPostCardBg ?? '',
@@ -928,6 +936,8 @@ export default function AdminPublicPage() {
                   reserveButtonTextColor: '',
                   reserveButtonBorderColor: '',
                   globalBorderColor: '',
+                  globalRadius: 12,
+                  globalBorderWidth: 1,
                   reserveActionStyle: 'comiu',
                   reserveLineUrl: '',
                   blogPostCardBg: '',
@@ -1099,7 +1109,7 @@ export default function AdminPublicPage() {
               <div key={block.id} className="space-y-1.5">
                 {items.length === 0 && <p className="text-xs text-gray-400">Q&Aを追加してください</p>}
                 {items.map((item, j) => (
-                  <div key={j} className="rounded-lg border border-gray-100 px-3 py-2" style={{ backgroundColor: block.faqCardBg || '#F9FAFB' }}>
+                  <div key={j} className="px-3 py-2" style={{ backgroundColor: block.faqCardBg?.trim() || navBg, ...cardBorderStyle }}>
                     <p className="font-bold" style={faqTextStyle}>Q. {item.q || '（質問）'}</p>
                     {item.a && <p className="mt-0.5 opacity-60" style={faqTextStyle}>A. {item.a}</p>}
                   </div>
@@ -1232,6 +1242,8 @@ export default function AdminPublicPage() {
         reserveButtonTextColor: form.reserveButtonTextColor?.trim() || '',
         reserveButtonBorderColor: form.reserveButtonBorderColor?.trim() || '',
         globalBorderColor: form.globalBorderColor?.trim() || '',
+        globalRadius: Number.isFinite(form.globalRadius) ? form.globalRadius : 12,
+        globalBorderWidth: Number.isFinite(form.globalBorderWidth) ? form.globalBorderWidth : 1,
         reserveActionStyle,
         reserveLineUrl: form.reserveLineUrl?.trim() || '',
         blogPostCardBg: form.blogPostCardBg?.trim() || '',
@@ -1381,6 +1393,24 @@ export default function AdminPublicPage() {
                 className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
               <span className="text-[11px] text-gray-400">予約ボタン・お問い合わせボタンなど、サイト全体のボタンの外枠に使われます</span>
             </div>
+          </div>
+          {/* カードの角の丸み・枠線の太さ */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <span className="w-16 shrink-0 text-xs font-bold text-gray-500">角の丸み</span>
+              <input type="range" min="0" max="24" step="1" value={globalRadius}
+                onChange={(e) => setForm((p) => ({ ...p, globalRadius: Number(e.target.value) }))}
+                className="flex-1 accent-[#06C755]" />
+              <span className="w-10 text-right text-xs text-gray-400">{globalRadius}px</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="w-16 shrink-0 text-xs font-bold text-gray-500">枠線の太さ</span>
+              <input type="range" min="0" max="4" step="1" value={globalBorderWidth}
+                onChange={(e) => setForm((p) => ({ ...p, globalBorderWidth: Number(e.target.value) }))}
+                className="flex-1 accent-[#06C755]" />
+              <span className="w-10 text-right text-xs text-gray-400">{globalBorderWidth}px</span>
+            </div>
+            <span className="text-[11px] text-gray-400">構成・予約ページ・活動ブログのカードや記事カードの角丸・枠線に一括で使われます</span>
           </div>
           {/* 全体の文字色 */}
           <div className="space-y-2">
@@ -2710,13 +2740,13 @@ export default function AdminPublicPage() {
               <div className="space-y-4 p-5">
                 {(() => {
                   const aboutSection = (
-                    <div key="about" className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
+                    <div key="about" className="p-4" style={{ backgroundColor: navBg, ...cardBorderStyle }}>
                       {renderPreviewBlocks()}
                     </div>
                   );
                   const reserveSection = hasReserveSection ? (
                     <Fragment key="reserve">
-                    <section className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
+                    <section className="p-4" style={{ backgroundColor: navBg, ...cardBorderStyle }}>
                       {reserveSectionTitle && (
                         <p className="text-sm font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
                       )}
@@ -2760,7 +2790,7 @@ export default function AdminPublicPage() {
                     </Fragment>
                   ) : null;
                   const blogSection = hasBlogSection ? (
-                    <section key="blog" className="rounded-lg p-4" style={{ backgroundColor: navBg }}>
+                    <section key="blog" className="p-4" style={{ backgroundColor: navBg, ...cardBorderStyle }}>
                       {blogSectionTitle && (
                         <p className="text-sm font-bold" style={{ color: blogTitleColor }}>{blogSectionTitle}</p>
                       )}
@@ -2771,7 +2801,7 @@ export default function AdminPublicPage() {
                         {blogPosts.map((post) => {
                           const image = imgUrl(post.coverImageUrl ?? firstBlogImage(post.body), API_URL);
                           return (
-                            <div key={post.id} className="flex gap-2 rounded-lg p-2 ring-1 ring-black/5" style={{ backgroundColor: blogPostCardBg }}>
+                            <div key={post.id} className="flex gap-2 p-2" style={{ backgroundColor: blogPostCardBg, ...cardBorderStyle }}>
                               {image && <img src={image} alt="" className="h-12 w-16 shrink-0 rounded-md object-cover" />}
                               <div className="min-w-0">
                                 <p className="truncate text-xs font-bold" style={{ color: blogPostTitleColor }}>{post.title}</p>
