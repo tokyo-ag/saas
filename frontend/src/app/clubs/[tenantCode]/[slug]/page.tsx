@@ -511,6 +511,7 @@ export default async function ClubCmsPage({
         reserveUrl?: string;
         blogUrl?: string;
         contactUrl?: string;
+        navOrder?: string[];
       };
     } catch {
       return {};
@@ -545,12 +546,23 @@ export default async function ClubCmsPage({
   const navContactUrl = sectionCopy.contactUrl?.trim() || '#contact';
   const hasReserveSection = reserveActionStyle === 'line' || reserveEvents.length > 0;
   const hasBlogSection = blogPosts.length > 0;
-  const visibleNavItems = [
-    { key: 'about', label: navLabels.about, href: navAboutUrl },
-    ...(hasBlogSection ? [{ key: 'blog', label: navLabels.blog, href: navBlogUrl }] : []),
-    ...(hasReserveSection ? [{ key: 'reserve', label: navLabels.reserve, href: navReserveUrl }] : []),
-    { key: 'contact', label: navLabels.contact, href: navContactUrl },
+  // ナビボタンの並び順は団体側で自由に入れ替えられる。未設定（既存の団体）の場合は
+  // これまでと全く同じ「団体詳細→活動ブログ→予約する→お問い合わせ」の順になる。
+  const DEFAULT_NAV_ORDER = ['about', 'blog', 'reserve', 'contact'];
+  const configuredNavOrder = Array.isArray(sectionCopy.navOrder) ? sectionCopy.navOrder : [];
+  const navOrder = [
+    ...configuredNavOrder.filter((key) => DEFAULT_NAV_ORDER.includes(key)),
+    ...DEFAULT_NAV_ORDER.filter((key) => !configuredNavOrder.includes(key)),
   ];
+  const navItemsByKey: Record<string, { key: string; label: string; href: string } | undefined> = {
+    about: { key: 'about', label: navLabels.about, href: navAboutUrl },
+    blog: hasBlogSection ? { key: 'blog', label: navLabels.blog, href: navBlogUrl } : undefined,
+    reserve: hasReserveSection ? { key: 'reserve', label: navLabels.reserve, href: navReserveUrl } : undefined,
+    contact: { key: 'contact', label: navLabels.contact, href: navContactUrl },
+  };
+  const visibleNavItems = navOrder
+    .map((key) => navItemsByKey[key])
+    .filter((item): item is { key: string; label: string; href: string } => item !== undefined);
   const buttonGridStyle: CSSProperties = {
     gridTemplateColumns: `repeat(${buttonLayout === 'row1x4' ? visibleNavItems.length : Math.min(2, visibleNavItems.length)}, minmax(0, 1fr))`,
   };

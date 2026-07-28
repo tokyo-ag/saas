@@ -53,6 +53,15 @@ const DEFAULT_SECTION_ORDER = ['name', 'logo', 'subtitle', 'nav', 'image'] as co
 type TitleLogoLayout = 'stacked' | 'inline';
 const SECTION_LABELS: Record<string, string> = { name: '名前', logo: 'ロゴ', subtitle: 'サブタイトル', nav: 'ナビボタン', image: '写真' };
 
+const DEFAULT_NAV_ORDER = ['about', 'blog', 'reserve', 'contact'] as const;
+const NAV_ITEM_LABELS: Record<string, string> = { about: '団体詳細', blog: '活動ブログ', reserve: '予約する', contact: 'お問い合わせ' };
+function normalizeNavOrder(order: string[]): string[] {
+  return [
+    ...order.filter((key) => (DEFAULT_NAV_ORDER as readonly string[]).includes(key)),
+    ...DEFAULT_NAV_ORDER.filter((key) => !order.includes(key)),
+  ];
+}
+
 function normalizeSectionOrder(order: string[]): string[] {
   return order.flatMap((key) => (key === 'title' ? ['name', 'logo'] : [key]));
 }
@@ -173,6 +182,7 @@ const emptyForm: PublicPageInput = {
   subtitleHeroX: 5,
   subtitleHeroY: null as unknown as number,
   sectionOrder: [...DEFAULT_SECTION_ORDER] as string[],
+  navOrder: [...DEFAULT_NAV_ORDER] as string[],
   displayFields: { location: true, price: true, capacity: false, description: true } as { location: boolean; price: boolean; capacity: boolean; description: boolean },
   status: 'published',
 };
@@ -667,12 +677,15 @@ export default function AdminPublicPage() {
   const reserveActionStyle = form.reserveActionStyle === 'line' ? 'line' : 'comiu';
   const hasReserveSection = reserveActionStyle === 'line' || reserveEvents.length > 0;
   const hasBlogSection = blogPosts.length > 0;
-  const visibleNavItems = [
-    { key: 'about', label: navLabels.about },
-    ...(hasBlogSection ? [{ key: 'blog', label: navLabels.blog }] : []),
-    ...(hasReserveSection ? [{ key: 'reserve', label: navLabels.reserve }] : []),
-    { key: 'contact', label: navLabels.contact },
-  ];
+  const navItemsByKey: Record<string, { key: string; label: string } | undefined> = {
+    about: { key: 'about', label: navLabels.about },
+    blog: hasBlogSection ? { key: 'blog', label: navLabels.blog } : undefined,
+    reserve: hasReserveSection ? { key: 'reserve', label: navLabels.reserve } : undefined,
+    contact: { key: 'contact', label: navLabels.contact },
+  };
+  const visibleNavItems = normalizeNavOrder(form.navOrder ?? [...DEFAULT_NAV_ORDER])
+    .map((key) => navItemsByKey[key])
+    .filter((item): item is { key: string; label: string } => item !== undefined);
   const reserveSectionTitle = form.reserveTitle?.trim() || '';
   const reserveSectionLead = form.reserveLead?.trim() || '';
   const reserveTitleColor = form.reserveTitleColor?.trim() || textColor;
@@ -866,6 +879,7 @@ export default function AdminPublicPage() {
                   subtitleHeroX: fd.subtitleHeroX ?? 5,
                   subtitleHeroY: fd.subtitleHeroY ?? null,
                   sectionOrder: Array.isArray(fd.sectionOrder) ? normalizeSectionOrder(fd.sectionOrder) : [...DEFAULT_SECTION_ORDER],
+                  navOrder: Array.isArray(fd.navOrder) ? normalizeNavOrder(fd.navOrder) : [...DEFAULT_NAV_ORDER],
                   heroOutsideKeys: Array.isArray(fd.heroOutsideKeys) ? fd.heroOutsideKeys : (first.heroNavPosition === 'inside' ? [] : ['nav']),
                   titleLogoLayout: fd.titleLogoLayout === 'inline' ? 'inline' : 'stacked',
                   displayFields: (fd.displayFields && typeof fd.displayFields === 'object') ? {
@@ -1223,6 +1237,7 @@ export default function AdminPublicPage() {
         subtitleHeroX: form.subtitleHeroX ?? 5,
         subtitleHeroY: form.subtitleHeroY ?? null,
         sectionOrder: form.sectionOrder ?? [...DEFAULT_SECTION_ORDER],
+        navOrder: form.navOrder ?? [...DEFAULT_NAV_ORDER],
         heroOutsideKeys: form.heroOutsideKeys ?? ['nav'],
         titleLogoLayout,
         displayFields: form.displayFields,
@@ -1888,6 +1903,31 @@ export default function AdminPublicPage() {
 
           <SubSection label="ナビラベル・リンク先" open={openSections.headerNavLabel} onToggle={() => toggleSection('headerNavLabel')}>
             <div className="space-y-2">
+              <div>
+                <p className="mb-2 text-[11px] font-bold text-gray-400">ボタンの並び順</p>
+                <div className="space-y-1.5">
+                  {normalizeNavOrder(form.navOrder ?? [...DEFAULT_NAV_ORDER]).map((key, i, arr) => (
+                    <div key={key} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
+                      <span className="flex-1 text-xs font-bold text-gray-700">{NAV_ITEM_LABELS[key] ?? key}</span>
+                      <button type="button" disabled={i === 0}
+                        onClick={() => setForm((p) => {
+                          const a = normalizeNavOrder(p.navOrder ?? [...DEFAULT_NAV_ORDER]);
+                          [a[i - 1], a[i]] = [a[i], a[i - 1]];
+                          return { ...p, navOrder: a };
+                        })}
+                        className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs text-gray-400 disabled:opacity-30 hover:enabled:bg-gray-100">↑</button>
+                      <button type="button" disabled={i === arr.length - 1}
+                        onClick={() => setForm((p) => {
+                          const a = normalizeNavOrder(p.navOrder ?? [...DEFAULT_NAV_ORDER]);
+                          [a[i + 1], a[i]] = [a[i], a[i + 1]];
+                          return { ...p, navOrder: a };
+                        })}
+                        className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs text-gray-400 disabled:opacity-30 hover:enabled:bg-gray-100">↓</button>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-1 text-[10px] text-gray-400">「活動ブログ」「予約する」は記事・予約設定が無い団体では表示されません</p>
+              </div>
               {[
                 { labelField: 'aboutLabel' as const, urlField: 'navAboutUrl' as const, placeholder: '団体詳細', defaultUrl: '#about' },
                 { labelField: 'reserveLabel' as const, urlField: 'navReserveUrl' as const, placeholder: '予約する', defaultUrl: '#reserve' },
