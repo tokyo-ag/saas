@@ -1371,6 +1371,22 @@ export default function AdminPublicPage() {
               className="flex-1 accent-[#06C755]" />
             <span className="w-8 text-right text-xs text-gray-400">{backgroundOpacity}%</span>
           </div>
+          {/* テーマカラー（ナビ背景・ナビボタン・お問い合わせボタンを一括変更） */}
+          <div className="space-y-2 rounded-lg border border-[#06C755]/30 bg-[#06C755]/5 p-3">
+            <div className="flex items-center gap-3">
+              <span className="w-16 shrink-0 text-xs font-bold text-gray-700">テーマ色</span>
+              <input type="color" value={navColor}
+                onChange={(e) => setForm((p) => ({
+                  ...p,
+                  navColor: e.target.value,
+                  buttonBgColor: e.target.value,
+                  buttonBgOpacity: 100,
+                  footerContactColor: e.target.value,
+                }))}
+                className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+              <span className="text-[11px] text-gray-500">ナビ背景・ナビボタン・お問い合わせボタンの色を一括で変更します</span>
+            </div>
+          </div>
           {/* ナビ背景 */}
           <div className="space-y-2">
             <div className="flex items-center gap-3">
@@ -1383,6 +1399,7 @@ export default function AdminPublicPage() {
                 className="flex-1 accent-[#06C755]" />
               <span className="w-8 text-right text-xs text-gray-400">{navOpacity}%</span>
             </div>
+            <span className="text-[11px] text-gray-400">ナビ背景だけ個別に変えたい場合はこちら</span>
           </div>
           {/* 全体の外枠色 */}
           <div className="space-y-2">
