@@ -176,7 +176,7 @@ function renderInline(text: string, keyPrefix: string) {
   });
 }
 
-const HEADING_LINE_RE = /^(#{1,6})\s+(.+)$/;
+const HEADING_LINE_RE = /^(#{1,6})\s*(.+)$/;
 const BOLD_ONLY_LINE_RE = /^\*\*([^*]+)\*\*$/;
 const BULLET_LINE_RE = /^(?:[-*]\s+|・\s*)(.+)$/;
 const ORDERED_LINE_RE = /^\d+(?:[.)]\s+|．\s*)(.+)$/;

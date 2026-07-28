@@ -53,8 +53,10 @@ function firstBlogImage(body: string | null | undefined) {
 // 公開サイト側のrenderLine（見出し・箇条書きの検知）とプレビューの見た目を揃えるための簡易版。
 function renderPreviewLine(line: string, index: number, textColor: string, bodyClassName: string, textStyle: CSSProperties = {}) {
   const style: CSSProperties = { color: textColor, overflowWrap: 'anywhere', ...textStyle };
-  if (line.startsWith('### ')) return <h3 key={index} className="mt-7 text-xl font-bold" style={{ color: textColor }}>{line.slice(4)}</h3>;
-  if (line.startsWith('## ') || line.startsWith('# ')) return <h2 key={index} className="mt-9 text-2xl font-bold" style={{ color: textColor }}>{line.replace(/^#{1,3}\s/, '')}</h2>;
+  const h3Match = line.match(/^###\s*(.*)$/);
+  if (h3Match) return <h3 key={index} className="mt-7 text-xl font-bold" style={{ color: textColor }}>{h3Match[1]}</h3>;
+  const h2Match = line.match(/^#{1,2}\s*(.*)$/);
+  if (h2Match) return <h2 key={index} className="mt-9 text-2xl font-bold" style={{ color: textColor }}>{h2Match[1]}</h2>;
   if (line.startsWith('- ')) return <li key={index} className="ml-5 list-disc break-words" style={style}>{line.slice(2)}</li>;
   if (!line.trim()) return <div key={index} className="h-3" />;
   return <p key={index} className={`${bodyClassName} break-words`} style={style}>{line}</p>;
