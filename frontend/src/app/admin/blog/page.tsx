@@ -582,7 +582,7 @@ export default function AdminBlogPage() {
           {/* 文章 */}
           <div>
             <span className="mb-1 inline-block rounded-full bg-[#06C755]/10 px-2 py-0.5 text-[10px] font-bold text-[#06C755]">文章</span>
-            <p className="mb-1 text-xs text-gray-400">AIに書かせた原稿をそのまま貼り付けると、1行目→タイトル、2行目以降の段落→概要に自動で振り分けられます。本文中の「# 見出し」「**太字**」「- 箇条書き」「1. 番号リスト」「&gt; 引用」「Q: 質問 / A: 回答」「!ヒント」「表（Markdown表記法）」「---区切り線」「公式LINEのURL（1行単独）」「内容19:00のような時刻付きの行（タイムスケジュール）」はそのまま装飾・ボタンとして表示されます</p>
+            <p className="mb-1 text-xs text-gray-400">AIに書かせた原稿をそのまま貼り付けると、1行目→タイトル、2行目以降の段落→概要に自動で振り分けられます。本文中の「# 見出し」「**太字**」「- 箇条書き」「1. 番号リスト」「&gt; 引用」「Q: 質問 / A: 回答」「!ヒント」「表（Markdown表記法）」「---区切り線」「公式LINEのURL（1行単独）」「内容19:00のような時刻付きの行（タイムスケジュール）」「InstagramやThreadsの「埋め込みコードをコピー」で取得できるコード（そのまま貼り付けでOK）」はそのまま装飾・ボタン・埋め込みとして表示されます</p>
             <div className="rounded-xl border border-[#06C755] p-1">
               <textarea
                 value={bodyText}

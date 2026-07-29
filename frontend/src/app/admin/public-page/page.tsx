@@ -47,6 +47,18 @@ const BLOCK_LABELS: Record<BlockType, string> = {
 const BLOG_IMAGE_RE = /!\[[^\]]*]\(([^)]+)\)/;
 function genId() { return Math.random().toString(36).slice(2); }
 
+// InstagramやThreadsの「埋め込みコードをコピー」で取得できる<blockquote>一式を
+// そのまま貼り付けても、埋め込み用のURLだけを自動で抜き出して使えるようにする。
+// 通常のURLがそのまま貼られた場合はそのまま返す。
+function extractEmbedUrl(pasted: string): string {
+  const trimmed = pasted.trim();
+  const permalinkMatch = trimmed.match(/data-instgrm-permalink="([^"]+)"/) ?? trimmed.match(/data-url="([^"]+)"/);
+  if (permalinkMatch) return permalinkMatch[1];
+  const hrefMatch = trimmed.match(/href="(https?:\/\/[^"]+)"/);
+  if (trimmed.includes('<') && hrefMatch) return hrefMatch[1];
+  return trimmed;
+}
+
 function firstBlogImage(body: string | null | undefined) {
   return body?.match(BLOG_IMAGE_RE)?.[1] ?? null;
 }
@@ -2325,14 +2337,26 @@ export default function AdminPublicPage() {
                         <span className="mb-1 block text-[11px] text-gray-500">Instagram 投稿 URL（投稿を埋め込み）</span>
                         <input type="url" value={block.instagramEmbedUrl ?? ''}
                           onChange={(e) => updateBlock(block.id, { instagramEmbedUrl: e.target.value })}
-                          placeholder="https://www.instagram.com/p/..."
+                          onPaste={(e) => {
+                            const pasted = e.clipboardData.getData('text');
+                            if (!pasted.includes('<')) return;
+                            e.preventDefault();
+                            updateBlock(block.id, { instagramEmbedUrl: extractEmbedUrl(pasted) });
+                          }}
+                          placeholder="https://www.instagram.com/p/...（埋め込みコードの貼り付けもOK）"
                           className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
                       </label>
                       <label className="block">
                         <span className="mb-1 block text-[11px] text-gray-500">Threads 投稿 URL（投稿を埋め込み）</span>
                         <input type="url" value={block.threadsEmbedUrl ?? ''}
                           onChange={(e) => updateBlock(block.id, { threadsEmbedUrl: e.target.value })}
-                          placeholder="https://www.threads.net/@yourname/post/..."
+                          onPaste={(e) => {
+                            const pasted = e.clipboardData.getData('text');
+                            if (!pasted.includes('<')) return;
+                            e.preventDefault();
+                            updateBlock(block.id, { threadsEmbedUrl: extractEmbedUrl(pasted) });
+                          }}
+                          placeholder="https://www.threads.net/@yourname/post/...（埋め込みコードの貼り付けもOK）"
                           className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
                       </label>
                     </div>

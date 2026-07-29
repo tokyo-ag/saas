@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
+import Script from 'next/script';
 import { API_URL, SITE_URL, IMAGE_BASE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
@@ -219,7 +220,9 @@ type BodyGroup =
   | { type: 'callout'; text: string }
   | { type: 'table'; rows: string[][] }
   | { type: 'lineCta'; url: string }
-  | { type: 'timeline'; items: { time: string; text: string }[] };
+  | { type: 'timeline'; items: { time: string; text: string }[] }
+  | { type: 'instagramEmbed'; url: string }
+  | { type: 'threadsEmbed'; url: string };
 
 // LINE公式アカウントの友だ追加URL（lin.ee / line.me）だけの行を検出し、
 // 「[URL](URL)」のようなMarkdownリンク表記でもプレーンなURLでも拾えるようにする
@@ -233,6 +236,19 @@ function extractLineCtaUrl(trimmed: string): string | null {
 // 「説明文19:00」のように、末尾が時刻でそれ以外が内容という行を
 // 当日のタイムスケジュールとして検出する
 const TIME_ITEM_RE = /^(.+?)\s*(\d{1,2}:\d{2})$/;
+
+// InstagramやThreadsの「埋め込みコードをコピー」で取得できる<blockquote>〜<script>一式が
+// そのまま本文に貼り付けられていても、投稿URLだけを抜き出して単一行の目印に置き換え、
+// 通常の行単位の解析（groupBody）に渡せるようにする。
+const INSTAGRAM_EMBED_BLOCK_RE = /<blockquote[^>]*class="instagram-media"[^>]*data-instgrm-permalink="([^"]+)"[\s\S]*?<\/blockquote>\s*(?:<script[^>]*instagram[^>]*>\s*<\/script>)?/gi;
+const THREADS_EMBED_BLOCK_RE = /<blockquote[^>]*class="text-post-media"[^>]*data-url="([^"]+)"[\s\S]*?<\/blockquote>\s*(?:<script[^>]*threads[^>]*>\s*<\/script>)?/gi;
+function extractSocialEmbeds(body: string): string {
+  return body
+    .replace(INSTAGRAM_EMBED_BLOCK_RE, (_match, url) => `\n[[INSTAGRAM_EMBED:${url}]]\n`)
+    .replace(THREADS_EMBED_BLOCK_RE, (_match, url) => `\n[[THREADS_EMBED:${url}]]\n`);
+}
+const INSTAGRAM_EMBED_LINE_RE = /^\[\[INSTAGRAM_EMBED:(.+)\]\]$/;
+const THREADS_EMBED_LINE_RE = /^\[\[THREADS_EMBED:(.+)\]\]$/;
 
 // 見出し・画像・リスト・引用・区切り線だけを区切りとして扱い、それ以外の
 // 連続する行は（空行を挟むまで）ひとつの段落としてまとめる。1文ごとに
@@ -323,10 +339,24 @@ function groupBody(body: string): BodyGroup[] {
     flushTimeline();
   }
 
-  for (const rawLine of body.split('\n')) {
+  for (const rawLine of extractSocialEmbeds(body).split('\n')) {
     const trimmed = rawLine.trim();
     if (trimmed === '') {
       flushSoft();
+      continue;
+    }
+
+    const instagramEmbed = INSTAGRAM_EMBED_LINE_RE.exec(trimmed);
+    if (instagramEmbed) {
+      flushAll();
+      groups.push({ type: 'instagramEmbed', url: instagramEmbed[1] });
+      continue;
+    }
+
+    const threadsEmbed = THREADS_EMBED_LINE_RE.exec(trimmed);
+    if (threadsEmbed) {
+      flushAll();
+      groups.push({ type: 'threadsEmbed', url: threadsEmbed[1] });
       continue;
     }
 
@@ -566,6 +596,35 @@ function BodyRenderer({ groups }: { groups: BodyGroup[] }) {
             >
               💬 公式LINEを追加する
             </a>
+          );
+        }
+
+        if (group.type === 'instagramEmbed') {
+          return (
+            <div key={i} className="my-2 overflow-hidden rounded-xl">
+              <blockquote
+                className="instagram-media"
+                data-instgrm-permalink={group.url}
+                data-instgrm-version="14"
+                style={{ background: '#FFF', border: 0, margin: 0, padding: 0, width: '100%' }}
+              />
+              <Script src="//www.instagram.com/embed.js" strategy="lazyOnload" />
+            </div>
+          );
+        }
+
+        if (group.type === 'threadsEmbed') {
+          return (
+            <div key={i} className="my-2 overflow-hidden rounded-xl">
+              <blockquote
+                className="text-post-media"
+                data-url={group.url}
+                style={{ background: '#FFF', border: 0, margin: 0, padding: 0, width: '100%' }}
+              >
+                <a href={group.url} target="_blank" rel="noopener noreferrer">Threads 投稿</a>
+              </blockquote>
+              <Script src="https://www.threads.net/embed/iframe.js" strategy="lazyOnload" />
+            </div>
           );
         }
 
