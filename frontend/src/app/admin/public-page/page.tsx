@@ -21,6 +21,7 @@ interface Block {
   imageSize?: 'small' | 'medium' | 'large';
   fontSize?: string;
   lineHeight?: number;
+  letterSpacing?: number;
   // SNS block fields
   instagramUrl?: string;
   xUrl?: string;
@@ -53,10 +54,11 @@ function firstBlogImage(body: string | null | undefined) {
 // 公開サイト側のrenderLine（見出し・箇条書きの検知）とプレビューの見た目を揃えるための簡易版。
 function renderPreviewLine(line: string, index: number, textColor: string, bodyClassName: string, textStyle: CSSProperties = {}) {
   const style: CSSProperties = { color: textColor, overflowWrap: 'anywhere', ...textStyle };
+  const baseFontSize = typeof textStyle.fontSize === 'number' ? textStyle.fontSize : 16;
   const h3Match = line.match(/^###\s*(.*)$/);
-  if (h3Match) return <h3 key={index} className="mt-7 text-xl font-bold" style={{ color: textColor }}>{h3Match[1]}</h3>;
+  if (h3Match) return <h3 key={index} className={`font-bold ${index === 0 ? '' : 'mt-7'}`} style={{ color: textColor, fontSize: Math.round(baseFontSize * 1.25), letterSpacing: textStyle.letterSpacing }}>{h3Match[1]}</h3>;
   const h2Match = line.match(/^#{1,2}\s*(.*)$/);
-  if (h2Match) return <h2 key={index} className="mt-9 text-2xl font-bold" style={{ color: textColor }}>{h2Match[1]}</h2>;
+  if (h2Match) return <h2 key={index} className={`font-bold ${index === 0 ? '' : 'mt-9'}`} style={{ color: textColor, fontSize: Math.round(baseFontSize * 1.5), letterSpacing: textStyle.letterSpacing }}>{h2Match[1]}</h2>;
   if (line.startsWith('- ')) return <li key={index} className="ml-5 list-disc break-words" style={style}>{line.slice(2)}</li>;
   if (!line.trim()) return <div key={index} className="h-3" />;
   return <p key={index} className={`${bodyClassName} break-words`} style={style}>{line}</p>;
@@ -1054,9 +1056,9 @@ export default function AdminPublicPage() {
     }
   }
 
-  function renderPreviewText(content: string, fontSize = bodyFontSize, lineHeight?: number) {
+  function renderPreviewText(content: string, fontSize = bodyFontSize, lineHeight?: number, letterSpacing?: number) {
     const bodyClassName = lineHeight == null ? bodyLeadingClass(fontSize) : '';
-    const textStyle: CSSProperties = { fontFamily, fontSize, lineHeight: lineHeight ?? undefined };
+    const textStyle: CSSProperties = { fontFamily, fontSize, lineHeight: lineHeight ?? undefined, letterSpacing: typeof letterSpacing === 'number' ? `${letterSpacing}em` : undefined };
     if (!content) {
       return <p className={`${bodyClassName} opacity-90`} style={{ color: bodyTextColor, ...textStyle }}>団体説明</p>;
     }
@@ -1092,7 +1094,7 @@ export default function AdminPublicPage() {
                     <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                   </div>
                 )}
-                <div className="min-w-0 flex-1">{renderPreviewText(content, blockFontSize, block.lineHeight)}</div>
+                <div className="min-w-0 flex-1">{renderPreviewText(content, blockFontSize, block.lineHeight, block.letterSpacing)}</div>
               </div>
             );
           }
@@ -1105,7 +1107,7 @@ export default function AdminPublicPage() {
                     <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                   </div>
                 )}
-                <div className="min-w-0 flex-1">{renderPreviewText(content, blockFontSize, block.lineHeight)}</div>
+                <div className="min-w-0 flex-1">{renderPreviewText(content, blockFontSize, block.lineHeight, block.letterSpacing)}</div>
               </div>
             );
           }
@@ -1118,7 +1120,7 @@ export default function AdminPublicPage() {
                     <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
                   </div>
                 )}
-                {renderPreviewText(content, blockFontSize, block.lineHeight)}
+                {renderPreviewText(content, blockFontSize, block.lineHeight, block.letterSpacing)}
               </div>
             );
           }
@@ -1175,7 +1177,7 @@ export default function AdminPublicPage() {
             );
           }
 
-          return wrapBlock(block.id, <div>{renderPreviewText(content, blockFontSize, block.lineHeight)}</div>);
+          return wrapBlock(block.id, <div>{renderPreviewText(content, blockFontSize, block.lineHeight, block.letterSpacing)}</div>);
         })}
       </div>
     );
@@ -2256,6 +2258,18 @@ export default function AdminPublicPage() {
                       </span>
                       <input type="range" min="1.0" max="3.0" step="0.1" value={block.lineHeight ?? defaultLineHeightFor(blockFontSize)}
                         onChange={(e) => updateBlock(block.id, { lineHeight: Number(e.target.value) })}
+                        className="w-full accent-[#06C755]" />
+                    </label>
+                  )}
+
+                  {block.type !== 'sns' && block.type !== 'faq' && (
+                    <label className="block">
+                      <span className="mb-1 flex items-center justify-between text-xs text-gray-500">
+                        <span className="font-bold text-gray-400">文字の間隔</span>
+                        <span className="font-bold">{(block.letterSpacing ?? 0).toFixed(2)}em</span>
+                      </span>
+                      <input type="range" min="-0.05" max="0.3" step="0.01" value={block.letterSpacing ?? 0}
+                        onChange={(e) => updateBlock(block.id, { letterSpacing: Number(e.target.value) })}
                         className="w-full accent-[#06C755]" />
                     </label>
                   )}
