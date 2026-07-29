@@ -106,7 +106,7 @@ export async function generateMetadata({
   const { tenantCode, slug } = await params;
   const post = await fetchPost(tenantCode, slug);
   if (!post) return {};
-  const tenantName = post.tenant?.lineDisplayName ?? post.tenant?.name ?? tenantCode;
+  const tenantName = post.tenant?.name ?? post.tenant?.lineDisplayName ?? tenantCode;
   const description = post.excerpt ?? cleanDescription(post.body);
   const image =
     firstImageFromBody(post.body) ??
@@ -753,7 +753,7 @@ export default async function BlogPostPage({
   const post = await fetchPost(tenantCode, slug);
   if (!post) notFound();
 
-  const tenantName = post.tenant?.lineDisplayName ?? post.tenant?.name ?? tenantCode;
+  const tenantName = post.tenant?.name ?? post.tenant?.lineDisplayName ?? tenantCode;
   const tenantIconUrl = imgUrl(post.tenant?.linePictureUrl ?? post.tenant?.iconUrl, IMAGE_BASE_URL);
   const description = post.excerpt ?? cleanDescription(post.body);
   const eyecatchImage =
