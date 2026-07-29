@@ -2064,32 +2064,7 @@ export default function AdminPublicPage() {
           </button>
           {openSections.structure && <div className="space-y-3 border-t border-gray-100 p-4">
           <div>
-            <p className="mb-2 text-[11px] font-bold text-gray-400">ページの並び順（構成／予約ページ／活動ブログ）</p>
-            <div className="space-y-1.5">
-              {normalizeContentOrder(form.contentOrder ?? [...DEFAULT_CONTENT_ORDER]).map((key, i, arr) => (
-                <div key={key} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
-                  <span className="flex-1 text-xs font-bold text-gray-700">{CONTENT_SECTION_LABELS[key] ?? key}</span>
-                  <button type="button" disabled={i === 0}
-                    onClick={() => setForm((p) => {
-                      const a = normalizeContentOrder(p.contentOrder ?? [...DEFAULT_CONTENT_ORDER]);
-                      [a[i - 1], a[i]] = [a[i], a[i - 1]];
-                      return { ...p, contentOrder: a };
-                    })}
-                    className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs text-gray-400 disabled:opacity-30 hover:enabled:bg-gray-100">↑</button>
-                  <button type="button" disabled={i === arr.length - 1}
-                    onClick={() => setForm((p) => {
-                      const a = normalizeContentOrder(p.contentOrder ?? [...DEFAULT_CONTENT_ORDER]);
-                      [a[i + 1], a[i]] = [a[i], a[i + 1]];
-                      return { ...p, contentOrder: a };
-                    })}
-                    className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs text-gray-400 disabled:opacity-30 hover:enabled:bg-gray-100">↓</button>
-                </div>
-              ))}
-            </div>
-            <p className="mt-1 text-[10px] text-gray-400">「予約ページ」「活動ブログ」は記事・予約設定が無い団体では表示されません</p>
-          </div>
-          <div>
-            <p className="mb-2 text-[11px] font-bold text-gray-400">構成内のブロック単位で並び替える（応用）</p>
+            <p className="mb-2 text-[11px] font-bold text-gray-400">ページの並び順（構成のブロック／予約ページ／活動ブログ）</p>
             <div className="space-y-1.5">
               {(form.blockOrder && form.blockOrder.length > 0 ? form.blockOrder : DEFAULT_BLOCK_ORDER).map((key, i, arr) => (
                 <div key={key} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
@@ -2113,7 +2088,7 @@ export default function AdminPublicPage() {
                 </div>
               ))}
             </div>
-            <p className="mt-1 text-[10px] text-gray-400">これを使うと「ページの並び順」より優先され、構成のブロックを予約ページ・活動ブログと自由に入れ替えられます。並び替えたブロックは予約ページ・活動ブログと同じカードデザインになります</p>
+            <p className="mt-1 text-[10px] text-gray-400">構成のブロックを予約ページ・活動ブログと自由に入れ替えられます（「予約ページ」「活動ブログ」は記事・予約設定が無い団体では表示されません）。単独で配置したブロックは予約ページ・活動ブログと同じカードデザインになります</p>
           </div>
           {/* 予約表示スタイルは予約ページで設定 */}
           <div>
