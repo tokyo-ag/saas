@@ -210,6 +210,7 @@ const emptyForm: PublicPageInput = {
   sectionOrder: [...DEFAULT_SECTION_ORDER] as string[],
   navOrder: [...DEFAULT_NAV_ORDER] as string[],
   contentOrder: [...DEFAULT_CONTENT_ORDER] as string[],
+  blockOrder: [] as string[],
   displayFields: { location: true, price: true, capacity: false, description: true } as { location: boolean; price: boolean; capacity: boolean; description: boolean },
   status: 'published',
 };
@@ -731,6 +732,14 @@ export default function AdminPublicPage() {
   const globalBorderWidth = Number.isFinite(form.globalBorderWidth) ? Number(form.globalBorderWidth) : 1;
   const cardBorderStyle: CSSProperties = { borderRadius: globalRadius, borderWidth: globalBorderWidth, borderColor: globalBorderColor, borderStyle: 'solid' };
   const blogPostCardBg = form.blogPostCardBg?.trim() || navBg;
+  const DEFAULT_BLOCK_ORDER = [...blocks.map((_, i) => `block-${i}`), 'reserve', 'blog'];
+  const configuredBlockOrder = Array.isArray(form.blockOrder) ? form.blockOrder : [];
+  const hasCustomBlockOrder = configuredBlockOrder.length > 0 &&
+    JSON.stringify(configuredBlockOrder) !== JSON.stringify(DEFAULT_BLOCK_ORDER);
+  const blockOrder = [
+    ...configuredBlockOrder.filter((key) => DEFAULT_BLOCK_ORDER.includes(key)),
+    ...DEFAULT_BLOCK_ORDER.filter((key) => !configuredBlockOrder.includes(key)),
+  ];
   const blogPostTitleColor = form.blogPostTitleColor?.trim() || textColor;
   const blogSectionTitle = form.blogTitle?.trim() || '';
   const blogSectionLead = form.blogLead?.trim() || '';
@@ -915,6 +924,7 @@ export default function AdminPublicPage() {
                   sectionOrder: Array.isArray(fd.sectionOrder) ? normalizeSectionOrder(fd.sectionOrder) : [...DEFAULT_SECTION_ORDER],
                   navOrder: Array.isArray(fd.navOrder) ? normalizeNavOrder(fd.navOrder) : [...DEFAULT_NAV_ORDER],
                   contentOrder: Array.isArray(fd.contentOrder) ? normalizeContentOrder(fd.contentOrder) : [...DEFAULT_CONTENT_ORDER],
+                  blockOrder: Array.isArray(fd.blockOrder) ? fd.blockOrder : [],
                   heroOutsideKeys: Array.isArray(fd.heroOutsideKeys) ? fd.heroOutsideKeys : (first.heroNavPosition === 'inside' ? [] : ['nav']),
                   titleLogoLayout: fd.titleLogoLayout === 'inline' ? 'inline' : 'stacked',
                   displayFields: (fd.displayFields && typeof fd.displayFields === 'object') ? {
@@ -1069,115 +1079,120 @@ export default function AdminPublicPage() {
     );
   }
 
+  function renderPreviewBlockInner(block: Block) {
+    const content = block.content?.trim() || '';
+    const blockFontSize = resolvePxSize(block.fontSize, bodyFontSize, 10, 28, BODY_SIZE_LEGACY);
+
+    if (block.type === 'media-text') {
+      const imageRight = block.imagePosition === 'right';
+      const mediaTextPx = MEDIA_TEXT_IMAGE_SIZE_PX[block.imageSize ?? 'medium'];
+      return (
+        <div className={`flex items-start gap-3 ${imageRight ? 'flex-row-reverse' : ''}`}>
+          {block.imageUrl && (
+            <div className="shrink-0 overflow-hidden rounded-xl" style={{ height: mediaTextPx, width: mediaTextPx }}>
+              <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">{renderPreviewText(content, blockFontSize, block.lineHeight, block.letterSpacing)}</div>
+        </div>
+      );
+    }
+
+    if (block.type === 'profile') {
+      return (
+        <div className="flex items-start gap-3">
+          {block.imageUrl && (
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full">
+              <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">{renderPreviewText(content, blockFontSize, block.lineHeight, block.letterSpacing)}</div>
+        </div>
+      );
+    }
+
+    if (block.type === 'feature') {
+      return (
+        <div className="space-y-3">
+          {block.imageUrl && (
+            <div className="h-48 w-full overflow-hidden rounded-xl">
+              <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
+            </div>
+          )}
+          {renderPreviewText(content, blockFontSize, block.lineHeight, block.letterSpacing)}
+        </div>
+      );
+    }
+
+    if (block.type === 'faq') {
+      const items = block.faqItems ?? [];
+      const faqTextStyle = { fontSize: blockFontSize, color: bodyTextColor };
+      return (
+        <div className="space-y-1.5">
+          {items.length === 0 && <p className="text-xs text-gray-400">Q&Aを追加してください</p>}
+          {items.map((item, j) => (
+            <div key={j} className="px-3 py-2" style={{ backgroundColor: block.faqCardBg?.trim() || navBg, ...cardBorderStyle }}>
+              <p className="font-bold" style={faqTextStyle}>Q. {item.q || '（質問）'}</p>
+              {item.a && <p className="mt-0.5 opacity-60" style={faqTextStyle}>A. {item.a}</p>}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (block.type === 'sns') {
+      const snsItems = [
+        { url: block.instagramUrl, label: block.instagramLabel || 'Instagramでフォロー', color: '#E1306C' },
+        { url: block.xUrl, label: block.xLabel || 'Xでフォロー', color: '#000000' },
+        { url: block.threadsUrl, label: block.threadsLabel || 'Threadsでフォロー', color: '#000000' },
+      ].filter(s => s.url);
+      return (
+        <div className="space-y-3">
+          {snsItems.length > 0 && (
+            <div className="flex flex-col gap-2">
+              {snsItems.map(({ label, color }) => (
+                <span key={label} className="flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 text-sm font-bold" style={{ borderColor: color, color }}>
+                  {label}
+                </span>
+              ))}
+            </div>
+          )}
+          {block.xUsername && (
+            <div className="rounded-xl border border-gray-200 p-3 text-center text-xs text-gray-400">
+              X タイムライン @{block.xUsername}
+            </div>
+          )}
+          {block.instagramEmbedUrl && (
+            <div className="rounded-xl border border-gray-200 p-3 text-center text-xs text-gray-400">
+              Instagram 投稿 埋め込み
+            </div>
+          )}
+          {block.threadsEmbedUrl && (
+            <div className="rounded-xl border border-gray-200 p-3 text-center text-xs text-gray-400">
+              Threads 投稿 埋め込み
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return <div>{renderPreviewText(content, blockFontSize, block.lineHeight, block.letterSpacing)}</div>;
+  }
+
   function renderPreviewBlocks() {
     if (!blocks.length) return renderPreviewText(previewBody);
 
     const hasMultipleBlocks = blocks.length > 1;
-    const wrapBlock = (key: string, inner: ReactNode) => hasMultipleBlocks ? (
-      <div key={key} className="p-4" style={{ backgroundColor: reserveEventCardBg, ...cardBorderStyle }}>{inner}</div>
-    ) : (
-      <Fragment key={key}>{inner}</Fragment>
-    );
     return (
       <div className="space-y-5">
         {blocks.map((block) => {
-          const content = block.content?.trim() || '';
-          const blockFontSize = resolvePxSize(block.fontSize, bodyFontSize, 10, 28, BODY_SIZE_LEGACY);
-
-          if (block.type === 'media-text') {
-            const imageRight = block.imagePosition === 'right';
-            const mediaTextPx = MEDIA_TEXT_IMAGE_SIZE_PX[block.imageSize ?? 'medium'];
-            return wrapBlock(block.id,
-              <div className={`flex items-start gap-3 ${imageRight ? 'flex-row-reverse' : ''}`}>
-                {block.imageUrl && (
-                  <div className="shrink-0 overflow-hidden rounded-xl" style={{ height: mediaTextPx, width: mediaTextPx }}>
-                    <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">{renderPreviewText(content, blockFontSize, block.lineHeight, block.letterSpacing)}</div>
-              </div>
-            );
-          }
-
-          if (block.type === 'profile') {
-            return wrapBlock(block.id,
-              <div className="flex items-start gap-3">
-                {block.imageUrl && (
-                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full">
-                    <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">{renderPreviewText(content, blockFontSize, block.lineHeight, block.letterSpacing)}</div>
-              </div>
-            );
-          }
-
-          if (block.type === 'feature') {
-            return wrapBlock(block.id,
-              <div className="space-y-3">
-                {block.imageUrl && (
-                  <div className="h-48 w-full overflow-hidden rounded-xl">
-                    <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
-                  </div>
-                )}
-                {renderPreviewText(content, blockFontSize, block.lineHeight, block.letterSpacing)}
-              </div>
-            );
-          }
-
-          if (block.type === 'faq') {
-            const items = block.faqItems ?? [];
-            const faqTextStyle = { fontSize: blockFontSize, color: bodyTextColor };
-            return (
-              <div key={block.id} className="space-y-1.5">
-                {items.length === 0 && <p className="text-xs text-gray-400">Q&Aを追加してください</p>}
-                {items.map((item, j) => (
-                  <div key={j} className="px-3 py-2" style={{ backgroundColor: block.faqCardBg?.trim() || navBg, ...cardBorderStyle }}>
-                    <p className="font-bold" style={faqTextStyle}>Q. {item.q || '（質問）'}</p>
-                    {item.a && <p className="mt-0.5 opacity-60" style={faqTextStyle}>A. {item.a}</p>}
-                  </div>
-                ))}
-              </div>
-            );
-          }
-
-          if (block.type === 'sns') {
-            const snsItems = [
-              { url: block.instagramUrl, label: block.instagramLabel || 'Instagramでフォロー', color: '#E1306C' },
-              { url: block.xUrl, label: block.xLabel || 'Xでフォロー', color: '#000000' },
-              { url: block.threadsUrl, label: block.threadsLabel || 'Threadsでフォロー', color: '#000000' },
-            ].filter(s => s.url);
-            return (
-              <div key={block.id} className="space-y-3">
-                {snsItems.length > 0 && (
-                  <div className="flex flex-col gap-2">
-                    {snsItems.map(({ label, color }) => (
-                      <span key={label} className="flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 text-sm font-bold" style={{ borderColor: color, color }}>
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {block.xUsername && (
-                  <div className="rounded-xl border border-gray-200 p-3 text-center text-xs text-gray-400">
-                    X タイムライン @{block.xUsername}
-                  </div>
-                )}
-                {block.instagramEmbedUrl && (
-                  <div className="rounded-xl border border-gray-200 p-3 text-center text-xs text-gray-400">
-                    Instagram 投稿 埋め込み
-                  </div>
-                )}
-                {block.threadsEmbedUrl && (
-                  <div className="rounded-xl border border-gray-200 p-3 text-center text-xs text-gray-400">
-                    Threads 投稿 埋め込み
-                  </div>
-                )}
-              </div>
-            );
-          }
-
-          return wrapBlock(block.id, <div>{renderPreviewText(content, blockFontSize, block.lineHeight, block.letterSpacing)}</div>);
+          const inner = renderPreviewBlockInner(block);
+          if (block.type === 'faq' || block.type === 'sns') return <Fragment key={block.id}>{inner}</Fragment>;
+          return hasMultipleBlocks ? (
+            <div key={block.id} className="p-4" style={{ backgroundColor: reserveEventCardBg, ...cardBorderStyle }}>{inner}</div>
+          ) : (
+            <Fragment key={block.id}>{inner}</Fragment>
+          );
         })}
       </div>
     );
@@ -1287,6 +1302,7 @@ export default function AdminPublicPage() {
         sectionOrder: form.sectionOrder ?? [...DEFAULT_SECTION_ORDER],
         navOrder: form.navOrder ?? [...DEFAULT_NAV_ORDER],
         contentOrder: form.contentOrder ?? [...DEFAULT_CONTENT_ORDER],
+        blockOrder: form.blockOrder ?? [],
         heroOutsideKeys: form.heroOutsideKeys ?? ['nav'],
         titleLogoLayout,
         displayFields: form.displayFields,
@@ -2071,6 +2087,33 @@ export default function AdminPublicPage() {
               ))}
             </div>
             <p className="mt-1 text-[10px] text-gray-400">「予約ページ」「活動ブログ」は記事・予約設定が無い団体では表示されません</p>
+          </div>
+          <div>
+            <p className="mb-2 text-[11px] font-bold text-gray-400">構成内のブロック単位で並び替える（応用）</p>
+            <div className="space-y-1.5">
+              {(form.blockOrder && form.blockOrder.length > 0 ? form.blockOrder : DEFAULT_BLOCK_ORDER).map((key, i, arr) => (
+                <div key={key} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
+                  <span className="flex-1 text-xs font-bold text-gray-700">
+                    {key === 'reserve' ? '予約ページ' : key === 'blog' ? '活動ブログ' : `構成: ${BLOCK_LABELS[blocks[Number(key.replace('block-', ''))]?.type] ?? key}`}
+                  </span>
+                  <button type="button" disabled={i === 0}
+                    onClick={() => setForm((p) => {
+                      const a = [...(p.blockOrder && p.blockOrder.length > 0 ? p.blockOrder : DEFAULT_BLOCK_ORDER)];
+                      [a[i - 1], a[i]] = [a[i], a[i - 1]];
+                      return { ...p, blockOrder: a };
+                    })}
+                    className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs text-gray-400 disabled:opacity-30 hover:enabled:bg-gray-100">↑</button>
+                  <button type="button" disabled={i === arr.length - 1}
+                    onClick={() => setForm((p) => {
+                      const a = [...(p.blockOrder && p.blockOrder.length > 0 ? p.blockOrder : DEFAULT_BLOCK_ORDER)];
+                      [a[i + 1], a[i]] = [a[i], a[i + 1]];
+                      return { ...p, blockOrder: a };
+                    })}
+                    className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs text-gray-400 disabled:opacity-30 hover:enabled:bg-gray-100">↓</button>
+                </div>
+              ))}
+            </div>
+            <p className="mt-1 text-[10px] text-gray-400">これを使うと「ページの並び順」より優先され、構成のブロックを予約ページ・活動ブログと自由に入れ替えられます。並び替えたブロックは予約ページ・活動ブログと同じカードデザインになります</p>
           </div>
           {/* 予約表示スタイルは予約ページで設定 */}
           <div>
@@ -2870,6 +2913,20 @@ export default function AdminPublicPage() {
                       </div>
                     </section>
                   ) : null;
+                  if (hasCustomBlockOrder) {
+                    return blockOrder.map((key) => {
+                      if (key === 'reserve') return reserveSection;
+                      if (key === 'blog') return blogSection;
+                      const idx = Number(key.replace('block-', ''));
+                      const block = blocks[idx];
+                      if (!block) return null;
+                      return (
+                        <div key={key} className="p-4" style={{ backgroundColor: reserveEventCardBg, ...cardBorderStyle }}>
+                          {renderPreviewBlockInner(block)}
+                        </div>
+                      );
+                    });
+                  }
                   const contentSectionsByKey: Record<string, ReactNode> = { about: aboutSection, reserve: reserveSection, blog: blogSection };
                   return contentOrder.map((key) => contentSectionsByKey[key] ?? null);
                 })()}

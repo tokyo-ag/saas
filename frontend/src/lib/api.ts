@@ -1101,6 +1101,7 @@ export interface PublicPageInput {
   sectionOrder?: string[];
   navOrder?: string[];
   contentOrder?: string[];
+  blockOrder?: string[];
   displayFields?: { location?: boolean; price?: boolean; capacity?: boolean; description?: boolean };
   status?: 'draft' | 'published';
 }

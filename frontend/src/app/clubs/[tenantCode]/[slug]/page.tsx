@@ -519,6 +519,7 @@ export default async function ClubCmsPage({
         contactUrl?: string;
         navOrder?: string[];
         contentOrder?: string[];
+        blockOrder?: string[];
       };
     } catch {
       return {};
@@ -603,6 +604,112 @@ export default async function ClubCmsPage({
     !footerTextColorRaw || ['#6B7280', '#9CA3AF'].includes(footerTextColorRaw.toUpperCase())
       ? '#111827'
       : footerTextColorRaw;
+
+  // 構成内の各ブロックを予約ページ・活動ブログと自由に入れ替えられるようにする設定。
+  // 未設定（既存の団体）の場合はこれまでと全く同じ「構成（ブロックまとめて）→予約ページ→活動ブログ」
+  // の順のまま、見た目も一切変わらない。設定されている場合のみ、ブロック単位で並び替えた
+  // レイアウトに切り替わる。
+  const pageBlocks = (page.blocks as any[]) ?? [];
+  const DEFAULT_BLOCK_ORDER = [...pageBlocks.map((_, i) => `block-${i}`), 'reserve', 'blog'];
+  const configuredBlockOrder = Array.isArray(sectionCopy.blockOrder) ? sectionCopy.blockOrder : [];
+  const hasCustomBlockOrder = configuredBlockOrder.length > 0 &&
+    JSON.stringify(configuredBlockOrder) !== JSON.stringify(DEFAULT_BLOCK_ORDER);
+  const blockOrder = [
+    ...configuredBlockOrder.filter((key) => DEFAULT_BLOCK_ORDER.includes(key)),
+    ...DEFAULT_BLOCK_ORDER.filter((key) => !configuredBlockOrder.includes(key)),
+  ];
+
+  function renderBlockInner(block: any, i: number) {
+    const blockFontSize = resolvePxSize(block.fontSize, bodyFontSize, 10, 28, BODY_SIZE_LEGACY);
+    const blockLineHeight = typeof block.lineHeight === 'number' ? block.lineHeight : undefined;
+    const blockBodyClass = blockLineHeight == null ? bodyLeadingClass(blockFontSize) : '';
+    const blockLetterSpacing = typeof block.letterSpacing === 'number' ? `${block.letterSpacing}em` : undefined;
+    const blockTextStyle = { fontSize: blockFontSize, lineHeight: blockLineHeight, letterSpacing: blockLetterSpacing };
+    if (block.type === 'media-text') {
+      const isLeft = block.imagePosition !== 'right';
+      const mediaTextPx = MEDIA_TEXT_IMAGE_SIZE_PX[(block.imageSize as 'small' | 'medium' | 'large') ?? 'medium'];
+      return (
+        <div className={`flex items-start gap-3 ${!isLeft ? 'flex-row-reverse' : ''}`}>
+          {block.imageUrl && (
+            <div className="relative shrink-0 overflow-hidden rounded-xl" style={{ height: mediaTextPx, width: mediaTextPx }}>
+              <Image src={block.imageUrl} alt="" fill className="object-cover" sizes={`${mediaTextPx}px`} style={{ objectPosition: block.imageFocal ?? 'center center' }} />
+            </div>
+          )}
+          <div className={`min-w-0 flex-1 space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>
+            {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, bodyTextColor, blockBodyClass, blockTextStyle))}
+          </div>
+        </div>
+      );
+    }
+    if (block.type === 'profile') {
+      return (
+        <div className="flex gap-4">
+          {block.imageUrl && (
+            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full">
+              <Image src={block.imageUrl} alt="" fill className="object-cover" sizes="80px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
+            </div>
+          )}
+          <div className={`min-w-0 space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>
+            {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, bodyTextColor, blockBodyClass, blockTextStyle))}
+          </div>
+        </div>
+      );
+    }
+    if (block.type === 'feature') {
+      return (
+        <div className="space-y-3">
+          {block.imageUrl && (
+            <div className="relative h-56 w-full overflow-hidden rounded-xl">
+              <Image src={block.imageUrl} alt="" fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
+            </div>
+          )}
+          <div className={`space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>
+            {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, bodyTextColor, blockBodyClass, blockTextStyle))}
+          </div>
+        </div>
+      );
+    }
+    if (block.type === 'faq') {
+      const items = (block.faqItems ?? []).filter((item: {q:string;a:string}) => item.q);
+      return (
+        <div className="space-y-1.5">
+          {items.map((item: {q:string;a:string}, j: number) => (
+            <details key={j} className="group overflow-hidden" style={{ backgroundColor: block.faqCardBg?.trim() || navBg, ...cardBorderStyle }}>
+              <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 select-none" style={{ color: bodyTextColor }}>
+                <span className="flex-1 font-bold" style={blockTextStyle}>{item.q}</span>
+                <span className="ml-2 shrink-0 text-xs text-gray-400 transition-transform duration-200 group-open:rotate-180">▼</span>
+              </summary>
+              <div className={`border-t border-gray-100 px-4 py-3 leading-relaxed whitespace-pre-wrap ${blockBodyClass}`} style={{ color: bodyTextColor, opacity: 0.8, ...blockTextStyle }}>
+                {linkifyText(item.a, `faq-${i}-${j}`)}
+              </div>
+            </details>
+          ))}
+        </div>
+      );
+    }
+    if (block.type === 'sns') {
+      return (
+        <SnsBlock
+          instagramUrl={block.instagramUrl}
+          xUrl={block.xUrl}
+          threadsUrl={block.threadsUrl}
+          instagramLabel={block.instagramLabel}
+          xLabel={block.xLabel}
+          threadsLabel={block.threadsLabel}
+          xUsername={block.xUsername}
+          instagramEmbedUrl={block.instagramEmbedUrl}
+          threadsEmbedUrl={block.threadsEmbedUrl}
+          accentColor={accentColor}
+        />
+      );
+    }
+    // text
+    return (
+      <div className={`space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>
+        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, bodyTextColor, blockBodyClass, blockTextStyle))}
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen sm:bg-gray-200" style={{ fontFamily, backgroundColor: bgColor }}>
@@ -734,108 +841,25 @@ export default async function ClubCmsPage({
       {(() => {
         const renderedContentKeys = contentOrder.filter((key) => key === 'about' || (key === 'reserve' && hasReserveSection) || (key === 'blog' && hasBlogSection));
         const isFirstContentSection = (key: string) => renderedContentKeys[0] === key;
+        const flatRenderedKeys = hasCustomBlockOrder
+          ? blockOrder.filter((key) => key.startsWith('block-') || (key === 'reserve' && hasReserveSection) || (key === 'blog' && hasBlogSection))
+          : [];
+        const isFirstItem = (key: string) => hasCustomBlockOrder ? flatRenderedKeys[0] === key : isFirstContentSection(key);
 
         const aboutSection = (
         <div key="about" id="about" className={`px-5 py-6 shadow-sm md:px-8 md:py-8 ${isFirstContentSection('about') ? (heroImageMode === 'background' ? '' : 'mt-0') : 'mt-8 scroll-mt-6'}`} style={{ backgroundColor: navBg, ...cardBorderStyle }}>
-          {page.blocks?.length ? (
+          {pageBlocks.length ? (
             <div className="space-y-5">
               {(() => {
-                const hasMultipleBlocks = (page.blocks as any[]).length > 1;
-                const wrapBlock = (key: number, inner: ReactNode) => hasMultipleBlocks ? (
-                  <div key={key} className="p-4" style={{ backgroundColor: reserveEventCardBg, ...cardBorderStyle }}>{inner}</div>
-                ) : (
-                  <Fragment key={key}>{inner}</Fragment>
-                );
-                return (page.blocks as any[]).map((block: any, i: number) => {
-                const blockFontSize = resolvePxSize(block.fontSize, bodyFontSize, 10, 28, BODY_SIZE_LEGACY);
-                const blockLineHeight = typeof block.lineHeight === 'number' ? block.lineHeight : undefined;
-                const blockBodyClass = blockLineHeight == null ? bodyLeadingClass(blockFontSize) : '';
-                const blockLetterSpacing = typeof block.letterSpacing === 'number' ? `${block.letterSpacing}em` : undefined;
-                const blockTextStyle = { fontSize: blockFontSize, lineHeight: blockLineHeight, letterSpacing: blockLetterSpacing };
-                if (block.type === 'media-text') {
-                  const isLeft = block.imagePosition !== 'right';
-                  const mediaTextPx = MEDIA_TEXT_IMAGE_SIZE_PX[(block.imageSize as 'small' | 'medium' | 'large') ?? 'medium'];
-                  return wrapBlock(i,
-                    <div className={`flex items-start gap-3 ${!isLeft ? 'flex-row-reverse' : ''}`}>
-                      {block.imageUrl && (
-                        <div className="relative shrink-0 overflow-hidden rounded-xl" style={{ height: mediaTextPx, width: mediaTextPx }}>
-                          <Image src={block.imageUrl} alt="" fill className="object-cover" sizes={`${mediaTextPx}px`} style={{ objectPosition: block.imageFocal ?? 'center center' }} />
-                        </div>
-                      )}
-                      <div className={`min-w-0 flex-1 space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>
-                        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, bodyTextColor, blockBodyClass, blockTextStyle))}
-                      </div>
-                    </div>
+                const hasMultipleBlocks = pageBlocks.length > 1;
+                return pageBlocks.map((block: any, i: number) => {
+                  const inner = renderBlockInner(block, i);
+                  if (block.type === 'faq' || block.type === 'sns') return <Fragment key={i}>{inner}</Fragment>;
+                  return hasMultipleBlocks ? (
+                    <div key={i} className="p-4" style={{ backgroundColor: reserveEventCardBg, ...cardBorderStyle }}>{inner}</div>
+                  ) : (
+                    <Fragment key={i}>{inner}</Fragment>
                   );
-                }
-                if (block.type === 'profile') {
-                  return wrapBlock(i,
-                    <div className="flex gap-4">
-                      {block.imageUrl && (
-                        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full">
-                          <Image src={block.imageUrl} alt="" fill className="object-cover" sizes="80px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
-                        </div>
-                      )}
-                      <div className={`min-w-0 space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>
-                        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, bodyTextColor, blockBodyClass, blockTextStyle))}
-                      </div>
-                    </div>
-                  );
-                }
-                if (block.type === 'feature') {
-                  return wrapBlock(i,
-                    <div className="space-y-3">
-                      {block.imageUrl && (
-                        <div className="relative h-56 w-full overflow-hidden rounded-xl">
-                          <Image src={block.imageUrl} alt="" fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
-                        </div>
-                      )}
-                      <div className={`space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>
-                        {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, bodyTextColor, blockBodyClass, blockTextStyle))}
-                      </div>
-                    </div>
-                  );
-                }
-                if (block.type === 'faq') {
-                  const items = (block.faqItems ?? []).filter((item: {q:string;a:string}) => item.q);
-                  return (
-                    <div key={i} className="space-y-1.5">
-                      {items.map((item: {q:string;a:string}, j: number) => (
-                        <details key={j} className="group overflow-hidden" style={{ backgroundColor: block.faqCardBg?.trim() || navBg, ...cardBorderStyle }}>
-                          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 select-none" style={{ color: bodyTextColor }}>
-                            <span className="flex-1 font-bold" style={blockTextStyle}>{item.q}</span>
-                            <span className="ml-2 shrink-0 text-xs text-gray-400 transition-transform duration-200 group-open:rotate-180">▼</span>
-                          </summary>
-                          <div className={`border-t border-gray-100 px-4 py-3 leading-relaxed whitespace-pre-wrap ${blockBodyClass}`} style={{ color: bodyTextColor, opacity: 0.8, ...blockTextStyle }}>
-                            {linkifyText(item.a, `faq-${i}-${j}`)}
-                          </div>
-                        </details>
-                      ))}
-                    </div>
-                  );
-                }
-                if (block.type === 'sns') {
-                  return (
-                    <SnsBlock key={i}
-                      instagramUrl={block.instagramUrl}
-                      xUrl={block.xUrl}
-                      threadsUrl={block.threadsUrl}
-                      instagramLabel={block.instagramLabel}
-                      xLabel={block.xLabel}
-                      threadsLabel={block.threadsLabel}
-                      xUsername={block.xUsername}
-                      instagramEmbedUrl={block.instagramEmbedUrl}
-                      threadsEmbedUrl={block.threadsEmbedUrl}
-                      accentColor={accentColor}
-                    />
-                  );
-                }
-                // text
-                return wrapBlock(i,
-                  <div className={`space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>
-                    {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, bodyTextColor, blockBodyClass, blockTextStyle))}
-                  </div>
-                );
                 });
               })()}
             </div>
@@ -849,7 +873,7 @@ export default async function ClubCmsPage({
 
         const reserveSection = hasReserveSection ? (
         <Fragment key="reserve">
-        <div id="reserve" className={`relative ${isFirstContentSection('reserve') ? '' : 'mt-8'} scroll-mt-6 px-5 py-6 shadow-sm`} style={{ backgroundColor: navBg, ...cardBorderStyle }}>
+        <div id="reserve" className={`relative ${isFirstItem('reserve') ? '' : 'mt-8'} scroll-mt-6 px-5 py-6 shadow-sm`} style={{ backgroundColor: navBg, ...cardBorderStyle }}>
           <div className="relative">
             {reserveSectionTitle && (
               <p className="text-lg font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
@@ -903,7 +927,7 @@ export default async function ClubCmsPage({
         ) : null;
 
         const blogSection = hasBlogSection ? (
-        <section key="blog" id="blog" className={`relative ${isFirstContentSection('blog') ? '' : 'mt-8'} scroll-mt-6 px-5 py-6 shadow-sm`} style={{ backgroundColor: navBg, ...cardBorderStyle }}>
+        <section key="blog" id="blog" className={`relative ${isFirstItem('blog') ? '' : 'mt-8'} scroll-mt-6 px-5 py-6 shadow-sm`} style={{ backgroundColor: navBg, ...cardBorderStyle }}>
           <Link href={navBlogUrl} className="absolute inset-0 rounded-xl" aria-label={navLabels.blog} />
           <div className="relative">
             {blogSectionTitle && (
@@ -941,6 +965,20 @@ export default async function ClubCmsPage({
         </section>
         ) : null;
 
+        if (hasCustomBlockOrder) {
+          return blockOrder.map((key) => {
+            if (key === 'reserve') return reserveSection;
+            if (key === 'blog') return blogSection;
+            const idx = Number(key.replace('block-', ''));
+            const block = pageBlocks[idx];
+            if (!block) return null;
+            return (
+              <div key={key} className={`px-5 py-6 shadow-sm ${isFirstItem(key) ? '' : 'mt-8 scroll-mt-6'}`} style={{ backgroundColor: reserveEventCardBg, ...cardBorderStyle }}>
+                {renderBlockInner(block, idx)}
+              </div>
+            );
+          });
+        }
         const contentSectionsByKey: Record<string, ReactNode> = { about: aboutSection, reserve: reserveSection, blog: blogSection };
         return contentOrder.map((key) => contentSectionsByKey[key] ?? null);
       })()}
