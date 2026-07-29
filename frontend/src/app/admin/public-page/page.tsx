@@ -1070,6 +1070,12 @@ export default function AdminPublicPage() {
   function renderPreviewBlocks() {
     if (!blocks.length) return renderPreviewText(previewBody);
 
+    const hasMultipleBlocks = blocks.length > 1;
+    const wrapBlock = (key: string, inner: ReactNode) => hasMultipleBlocks ? (
+      <div key={key} className="p-4" style={{ backgroundColor: reserveEventCardBg, ...cardBorderStyle }}>{inner}</div>
+    ) : (
+      <Fragment key={key}>{inner}</Fragment>
+    );
     return (
       <div className="space-y-5">
         {blocks.map((block) => {
@@ -1079,8 +1085,8 @@ export default function AdminPublicPage() {
           if (block.type === 'media-text') {
             const imageRight = block.imagePosition === 'right';
             const mediaTextPx = MEDIA_TEXT_IMAGE_SIZE_PX[block.imageSize ?? 'medium'];
-            return (
-              <div key={block.id} className={`flex items-start gap-3 ${imageRight ? 'flex-row-reverse' : ''}`}>
+            return wrapBlock(block.id,
+              <div className={`flex items-start gap-3 ${imageRight ? 'flex-row-reverse' : ''}`}>
                 {block.imageUrl && (
                   <div className="shrink-0 overflow-hidden rounded-xl" style={{ height: mediaTextPx, width: mediaTextPx }}>
                     <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
@@ -1092,8 +1098,8 @@ export default function AdminPublicPage() {
           }
 
           if (block.type === 'profile') {
-            return (
-              <div key={block.id} className="flex items-start gap-3">
+            return wrapBlock(block.id,
+              <div className="flex items-start gap-3">
                 {block.imageUrl && (
                   <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full">
                     <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
@@ -1105,8 +1111,8 @@ export default function AdminPublicPage() {
           }
 
           if (block.type === 'feature') {
-            return (
-              <div key={block.id} className="space-y-3">
+            return wrapBlock(block.id,
+              <div className="space-y-3">
                 {block.imageUrl && (
                   <div className="h-48 w-full overflow-hidden rounded-xl">
                     <img src={block.imageUrl} alt="" className="h-full w-full object-cover" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
@@ -1169,7 +1175,7 @@ export default function AdminPublicPage() {
             );
           }
 
-          return <div key={block.id}>{renderPreviewText(content, blockFontSize, block.lineHeight)}</div>;
+          return wrapBlock(block.id, <div>{renderPreviewText(content, blockFontSize, block.lineHeight)}</div>);
         })}
       </div>
     );

@@ -738,7 +738,14 @@ export default async function ClubCmsPage({
         <div key="about" id="about" className={`px-5 py-6 shadow-sm md:px-8 md:py-8 ${isFirstContentSection('about') ? (heroImageMode === 'background' ? '' : 'mt-0') : 'mt-8 scroll-mt-6'}`} style={{ backgroundColor: navBg, ...cardBorderStyle }}>
           {page.blocks?.length ? (
             <div className="space-y-5">
-              {(page.blocks as any[]).map((block: any, i: number) => {
+              {(() => {
+                const hasMultipleBlocks = (page.blocks as any[]).length > 1;
+                const wrapBlock = (key: number, inner: ReactNode) => hasMultipleBlocks ? (
+                  <div key={key} className="p-4" style={{ backgroundColor: reserveEventCardBg, ...cardBorderStyle }}>{inner}</div>
+                ) : (
+                  <Fragment key={key}>{inner}</Fragment>
+                );
+                return (page.blocks as any[]).map((block: any, i: number) => {
                 const blockFontSize = resolvePxSize(block.fontSize, bodyFontSize, 10, 28, BODY_SIZE_LEGACY);
                 const blockLineHeight = typeof block.lineHeight === 'number' ? block.lineHeight : undefined;
                 const blockBodyClass = blockLineHeight == null ? bodyLeadingClass(blockFontSize) : '';
@@ -746,8 +753,8 @@ export default async function ClubCmsPage({
                 if (block.type === 'media-text') {
                   const isLeft = block.imagePosition !== 'right';
                   const mediaTextPx = MEDIA_TEXT_IMAGE_SIZE_PX[(block.imageSize as 'small' | 'medium' | 'large') ?? 'medium'];
-                  return (
-                    <div key={i} className={`flex items-start gap-3 ${!isLeft ? 'flex-row-reverse' : ''}`}>
+                  return wrapBlock(i,
+                    <div className={`flex items-start gap-3 ${!isLeft ? 'flex-row-reverse' : ''}`}>
                       {block.imageUrl && (
                         <div className="relative shrink-0 overflow-hidden rounded-xl" style={{ height: mediaTextPx, width: mediaTextPx }}>
                           <Image src={block.imageUrl} alt="" fill className="object-cover" sizes={`${mediaTextPx}px`} style={{ objectPosition: block.imageFocal ?? 'center center' }} />
@@ -760,8 +767,8 @@ export default async function ClubCmsPage({
                   );
                 }
                 if (block.type === 'profile') {
-                  return (
-                    <div key={i} className="flex gap-4">
+                  return wrapBlock(i,
+                    <div className="flex gap-4">
                       {block.imageUrl && (
                         <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full">
                           <Image src={block.imageUrl} alt="" fill className="object-cover" sizes="80px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
@@ -774,8 +781,8 @@ export default async function ClubCmsPage({
                   );
                 }
                 if (block.type === 'feature') {
-                  return (
-                    <div key={i} className="space-y-3">
+                  return wrapBlock(i,
+                    <div className="space-y-3">
                       {block.imageUrl && (
                         <div className="relative h-56 w-full overflow-hidden rounded-xl">
                           <Image src={block.imageUrl} alt="" fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
@@ -822,12 +829,13 @@ export default async function ClubCmsPage({
                   );
                 }
                 // text
-                return (
-                  <div key={i} className={`space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>
+                return wrapBlock(i,
+                  <div className={`space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>
                     {block.content.split('\n').map((line: string, j: number) => renderLine(line, j, bodyTextColor, blockBodyClass, blockTextStyle))}
                   </div>
                 );
-              })}
+                });
+              })()}
             </div>
           ) : (
             <div className={`space-y-2 ${bodySizeClass}`} style={bodyTextStyle}>
