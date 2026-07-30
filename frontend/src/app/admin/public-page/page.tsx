@@ -841,7 +841,7 @@ export default function AdminPublicPage() {
           setSavedSlug(first.slug || null);
           const variant = first.layoutVariant;
           setForm({
-            title: first.title?.trim() || tenantName, slug: tenantSlug,
+            title: first.title?.trim() || tenantName, slug: first.slug || tenantSlug,
             subtitle: first.subtitle ?? '',
             body: first.body,
             coverImageUrl: first.coverImageUrl ?? '',
@@ -1231,7 +1231,7 @@ export default function AdminPublicPage() {
     setSaving(true); setError(''); setSaved(false);
     const payload: PublicPageInput = {
       ...form,
-      title: siteTitle, slug: generatedSlug,
+      title: siteTitle, slug: slugify(form.slug ?? '') || generatedSlug,
       subtitle: (form.subtitle ?? '').trim().slice(0, 1000),
       coverImageUrl: imageUrls[0]?.trim(),
       imageUrls,
@@ -1363,21 +1363,33 @@ export default function AdminPublicPage() {
       <SaveToast show={saved} />
 
       {/* Top bar */}
-      <div className="sticky top-0 z-20 flex items-center gap-2 border-b border-gray-200 bg-white px-4 py-3">
-        <h1 className="text-base font-bold text-gray-900">公開サイト</h1>
-        <div className="ml-auto flex items-center gap-2">
-          {previewUrl && (
-            <button type="button"
-              onClick={async () => { await navigator.clipboard.writeText(previewUrl); setCopied(true); setTimeout(() => setCopied(false), 1600); }}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50">
-              {copied ? 'コピー済み' : 'URLコピー'}
+      <div className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-3">
+        <div className="flex items-center gap-2">
+          <h1 className="text-base font-bold text-gray-900">公開サイト</h1>
+          <div className="ml-auto flex items-center gap-2">
+            {previewUrl && (
+              <button type="button"
+                onClick={async () => { await navigator.clipboard.writeText(previewUrl); setCopied(true); setTimeout(() => setCopied(false), 1600); }}
+                className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50">
+                {copied ? 'コピー済み' : 'URLコピー'}
+              </button>
+            )}
+            <button type="submit" disabled={saving}
+              className="rounded-lg bg-[#06C755] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#05a847] disabled:opacity-50">
+              {saving ? '保存中...' : '保存する'}
             </button>
-          )}
-          <button type="submit" disabled={saving}
-            className="rounded-lg bg-[#06C755] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#05a847] disabled:opacity-50">
-            {saving ? '保存中...' : '保存する'}
-          </button>
+          </div>
         </div>
+        {tenantCode && (
+          <div className="mt-2 flex items-center gap-1 text-xs text-gray-500">
+            <span className="shrink-0">URL：{SITE_URL}/clubs/{tenantCode}/</span>
+            <input type="text" value={form.slug ?? ''}
+              onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))}
+              onBlur={(e) => setForm((p) => ({ ...p, slug: slugify(e.target.value) }))}
+              placeholder={generatedSlug}
+              className="min-w-0 flex-1 rounded border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+          </div>
+        )}
       </div>
 
       {error && <div className="px-4 pt-2"><div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div></div>}
