@@ -1012,14 +1012,26 @@ export default function BlockEditor({
     onChange(next);
   }
 
+  function isListRunHead(index: number) {
+    return blocks[index].type === 'list' && (index === 0 || blocks[index - 1].type !== 'list');
+  }
+
+  function updateListRunStyle(index: number, style: ListStyle) {
+    let end = index;
+    while (end < blocks.length && blocks[end].type === 'list') end++;
+    onChange(blocks.map((b, i) => (i >= index && i < end ? { ...b, listStyle: style } : b)));
+  }
+
   return (
     <div className="space-y-2">
       {uploadError && <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-600">{uploadError}</p>}
       <AddBlockButton onAdd={(type) => insertAt(0, type)} />
-      {blocks.map((block, index) => (
+      {blocks.map((block, index) => {
+        const compact = block.type === 'list' || block.type === 'h2' || block.type === 'h3';
+        return (
         <div key={block.id}>
-          <div className={`group relative rounded-lg border border-l-4 border-gray-200 bg-white p-3 ${BLOCK_COLOR[block.type].border}`}>
-            <div className="mb-2 flex items-center justify-between">
+          <div className={`group relative rounded-lg border border-l-4 border-gray-200 bg-white ${compact ? 'p-2' : 'p-3'} ${BLOCK_COLOR[block.type].border}`}>
+            <div className={`${compact ? 'mb-1' : 'mb-2'} flex items-center justify-between`}>
               <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${BLOCK_COLOR[block.type].pill}`}>{BLOCK_LABELS[block.type]}</span>
               <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                 {block.type === 'paragraph' && index > 0 && blocks[index - 1].type === 'paragraph' && (
@@ -1261,7 +1273,7 @@ export default function BlockEditor({
                 className="w-full resize-y rounded-md border border-gray-200 px-2.5 py-1.5 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
               />
             ) : block.type === 'list' ? (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <input
                   ref={(el) => { inputRefs.current[block.id] = el; }}
                   value={block.text}
@@ -1270,24 +1282,26 @@ export default function BlockEditor({
                   placeholder="リスト項目のテキスト（Enterで次の項目を追加）"
                   className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
                 />
-                <div className="flex gap-1.5">
-                  {([
-                    { style: 'check' as const, label: '✓ チェック' },
-                    { style: 'bullet' as const, label: '・ 中黒' },
-                    { style: 'number' as const, label: '1,2,3 番号' },
-                  ]).map(({ style, label }) => (
-                    <button
-                      key={style}
-                      type="button"
-                      onClick={() => updateBlock(block.id, { listStyle: style })}
-                      className={`rounded-full px-2.5 py-1 text-xs font-bold transition ${
-                        (block.listStyle ?? 'check') === style ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
+                {isListRunHead(index) && (
+                  <div className="flex gap-1.5">
+                    {([
+                      { style: 'check' as const, label: '✓ チェック' },
+                      { style: 'bullet' as const, label: '・ 中黒' },
+                      { style: 'number' as const, label: '1,2,3 番号' },
+                    ]).map(({ style, label }) => (
+                      <button
+                        key={style}
+                        type="button"
+                        onClick={() => updateListRunStyle(index, style)}
+                        className={`rounded-full px-2.5 py-1 text-xs font-bold transition ${
+                          (block.listStyle ?? 'check') === style ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
               <input
@@ -1304,7 +1318,8 @@ export default function BlockEditor({
           </div>
           <AddBlockButton onAdd={(type) => insertAt(index + 1, type)} />
         </div>
-      ))}
+        );
+      })}
       {blocks.length === 0 && (
         <p className="py-6 text-center text-sm text-gray-400">「＋」からブロックを追加してください</p>
       )}
