@@ -1103,6 +1103,7 @@ export interface PublicPageInput {
   contentOrder?: string[];
   blockOrder?: string[];
   displayFields?: { location?: boolean; price?: boolean; capacity?: boolean; description?: boolean };
+  slugLocked?: boolean;
   status?: 'draft' | 'published';
 }
 

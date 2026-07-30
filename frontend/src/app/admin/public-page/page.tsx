@@ -224,6 +224,7 @@ const emptyForm: PublicPageInput = {
   contentOrder: [...DEFAULT_CONTENT_ORDER] as string[],
   blockOrder: [] as string[],
   displayFields: { location: true, price: true, capacity: false, description: true } as { location: boolean; price: boolean; capacity: boolean; description: boolean },
+  slugLocked: false,
   status: 'published',
 };
 
@@ -945,6 +946,7 @@ export default function AdminPublicPage() {
                     capacity: fd.displayFields.capacity === true,
                     description: fd.displayFields.description !== false,
                   } : { location: true, price: true, capacity: false, description: true },
+                  slugLocked: fd.slugLocked === true,
                 };
               } catch {
                 return {
@@ -986,6 +988,7 @@ export default function AdminPublicPage() {
                   footerInstagram: '',
                   footerX: '',
                   titleLogoLayout: 'stacked',
+                  slugLocked: false,
                 };
               }
             })(),
@@ -1229,9 +1232,12 @@ export default function AdminPublicPage() {
   async function handleSubmit(e: { preventDefault(): void }) {
     e.preventDefault();
     setSaving(true); setError(''); setSaved(false);
+    const nextSlug = slugify(form.slug ?? '') || generatedSlug;
+    const slugChanged = savedSlug !== null && nextSlug !== savedSlug;
+    const nextSlugLocked = form.slugLocked === true || slugChanged;
     const payload: PublicPageInput = {
       ...form,
-      title: siteTitle, slug: slugify(form.slug ?? '') || generatedSlug,
+      title: siteTitle, slug: nextSlug,
       subtitle: (form.subtitle ?? '').trim().slice(0, 1000),
       coverImageUrl: imageUrls[0]?.trim(),
       imageUrls,
@@ -1318,6 +1324,7 @@ export default function AdminPublicPage() {
         heroOutsideKeys: form.heroOutsideKeys ?? ['nav'],
         titleLogoLayout,
         displayFields: form.displayFields,
+        slugLocked: nextSlugLocked,
       }),
       status: 'published',
       // Leave blank as empty when the organizer hasn't typed one - the public page generates a
@@ -1336,6 +1343,7 @@ export default function AdminPublicPage() {
         : await api.publicPages.create(payload);
       setSelectedId(page.id);
       setSavedSlug(page.slug || null);
+      setForm((p) => ({ ...p, slug: page.slug || p.slug, slugLocked: nextSlugLocked }));
       if (tenantCode) {
         const token = getToken();
         await fetch('/api/revalidate-public-page', {
@@ -1383,11 +1391,20 @@ export default function AdminPublicPage() {
         {tenantCode && (
           <div className="mt-2 flex items-center gap-1 text-xs text-gray-500">
             <span className="shrink-0">URL：{SITE_URL}/clubs/{tenantCode}/</span>
-            <input type="text" value={form.slug ?? ''}
-              onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))}
-              onBlur={(e) => setForm((p) => ({ ...p, slug: slugify(e.target.value) }))}
-              placeholder={generatedSlug}
-              className="min-w-0 flex-1 rounded border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+            {form.slugLocked ? (
+              <span className="min-w-0 flex-1 truncate rounded border border-gray-100 bg-gray-50 px-2 py-1 text-xs text-gray-700">
+                {form.slug}
+              </span>
+            ) : (
+              <input type="text" value={form.slug ?? ''}
+                onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))}
+                onBlur={(e) => setForm((p) => ({ ...p, slug: slugify(e.target.value) }))}
+                placeholder={generatedSlug}
+                className="min-w-0 flex-1 rounded border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+            )}
+            {form.slugLocked && (
+              <span className="shrink-0 text-[10px] text-gray-400">変更済み（編集不可）</span>
+            )}
           </div>
         )}
       </div>
