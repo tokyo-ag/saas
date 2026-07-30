@@ -1022,17 +1022,46 @@ export default function BlockEditor({
     onChange(blocks.map((b, i) => (i >= index && i < end ? { ...b, listStyle: style } : b)));
   }
 
+  function moveListGroup(start: number, end: number, dir: -1 | 1) {
+    const group = blocks.slice(start, end);
+    if (dir === -1) {
+      if (start === 0) return;
+      const prevBlock = blocks[start - 1];
+      onChange([...blocks.slice(0, start - 1), ...group, prevBlock, ...blocks.slice(end)]);
+    } else {
+      if (end >= blocks.length) return;
+      const nextBlock = blocks[end];
+      onChange([...blocks.slice(0, start), nextBlock, ...group, ...blocks.slice(end + 1)]);
+    }
+  }
+
+  function addListItemAt(position: number, style: ListStyle) {
+    const newBlock: Block = { id: newId(), type: 'list', text: '', listStyle: style };
+    const next = [...blocks];
+    next.splice(position, 0, newBlock);
+    onChange(next);
+    setFocusId(newBlock.id);
+  }
+
   return (
     <div className="space-y-2">
       {uploadError && <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-600">{uploadError}</p>}
       <AddBlockButton onAdd={(type) => insertAt(0, type)} />
       {blocks.map((block, index) => {
         const compact = block.type === 'list' || block.type === 'h2' || block.type === 'h3';
+        if (block.type === 'list' && !isListRunHead(index)) return null;
+        let listRunEnd = index + 1;
+        if (block.type === 'list') {
+          listRunEnd = index;
+          while (listRunEnd < blocks.length && blocks[listRunEnd].type === 'list') listRunEnd++;
+        }
         return (
         <div key={block.id}>
           <div className={`group relative rounded-lg border border-l-4 border-gray-200 bg-white ${compact ? 'p-2' : 'p-3'} ${BLOCK_COLOR[block.type].border}`}>
             <div className={`${compact ? 'mb-1' : 'mb-2'} flex items-center justify-between`}>
-              <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${BLOCK_COLOR[block.type].pill}`}>{BLOCK_LABELS[block.type]}</span>
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${BLOCK_COLOR[block.type].pill}`}>
+                {BLOCK_LABELS[block.type]}{block.type === 'list' && listRunEnd - index > 1 ? `（${listRunEnd - index}件）` : ''}
+              </span>
               <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                 {block.type === 'paragraph' && index > 0 && blocks[index - 1].type === 'paragraph' && (
                   <button type="button" onClick={() => mergeWithPrevious(index)} className="rounded px-1.5 text-xs text-gray-400 hover:text-gray-700" title="上の段落と結合します">
@@ -1044,9 +1073,27 @@ export default function BlockEditor({
                     分割
                   </button>
                 )}
-                <button type="button" onClick={() => moveBlock(index, -1)} disabled={index === 0} className="rounded px-1.5 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30">↑</button>
-                <button type="button" onClick={() => moveBlock(index, 1)} disabled={index === blocks.length - 1} className="rounded px-1.5 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30">↓</button>
-                <button type="button" onClick={() => removeBlock(block.id)} className="rounded px-1.5 text-xs text-red-400 hover:text-red-600">削除</button>
+                <button
+                  type="button"
+                  onClick={() => (block.type === 'list' ? moveListGroup(index, listRunEnd, -1) : moveBlock(index, -1))}
+                  disabled={index === 0}
+                  className="rounded px-1.5 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30"
+                >↑</button>
+                <button
+                  type="button"
+                  onClick={() => (block.type === 'list' ? moveListGroup(index, listRunEnd, 1) : moveBlock(index, 1))}
+                  disabled={block.type === 'list' ? listRunEnd >= blocks.length : index === blocks.length - 1}
+                  className="rounded px-1.5 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30"
+                >↓</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (block.type !== 'list') { removeBlock(block.id); return; }
+                    if (listRunEnd - index > 1 && !confirm(`このリスト（${listRunEnd - index}件）をまとめて削除しますか？`)) return;
+                    onChange([...blocks.slice(0, index), ...blocks.slice(listRunEnd)]);
+                  }}
+                  className="rounded px-1.5 text-xs text-red-400 hover:text-red-600"
+                >削除</button>
               </div>
             </div>
 
@@ -1274,15 +1321,27 @@ export default function BlockEditor({
               />
             ) : block.type === 'list' ? (
               <div className="space-y-1.5">
-                <input
-                  ref={(el) => { inputRefs.current[block.id] = el; }}
-                  value={block.text}
-                  onChange={(e) => updateBlock(block.id, { text: e.target.value })}
-                  onKeyDown={(e) => insertAfterOnEnter(e, block)}
-                  placeholder="リスト項目のテキスト（Enterで次の項目を追加）"
-                  className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-                />
-                {isListRunHead(index) && (
+                <div className="space-y-1">
+                  {blocks.slice(index, listRunEnd).map((item, i) => {
+                    const itemIndex = index + i;
+                    return (
+                      <div key={item.id} className="flex items-center gap-1">
+                        <input
+                          ref={(el) => { inputRefs.current[item.id] = el; }}
+                          value={item.text}
+                          onChange={(e) => updateBlock(item.id, { text: e.target.value })}
+                          onKeyDown={(e) => insertAfterOnEnter(e, item)}
+                          placeholder="リスト項目のテキスト（Enterで次の項目を追加）"
+                          className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                        />
+                        <button type="button" onClick={() => moveBlock(itemIndex, -1)} disabled={i === 0} className="shrink-0 px-1 text-xs text-gray-300 hover:text-gray-600 disabled:opacity-20">↑</button>
+                        <button type="button" onClick={() => moveBlock(itemIndex, 1)} disabled={i === listRunEnd - index - 1} className="shrink-0 px-1 text-xs text-gray-300 hover:text-gray-600 disabled:opacity-20">↓</button>
+                        <button type="button" onClick={() => onChange(blocks.filter((b) => b.id !== item.id))} className="shrink-0 px-1 text-xs text-red-300 hover:text-red-600">×</button>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center justify-between">
                   <div className="flex gap-1.5">
                     {([
                       { style: 'check' as const, label: '✓ チェック' },
@@ -1301,7 +1360,14 @@ export default function BlockEditor({
                       </button>
                     ))}
                   </div>
-                )}
+                  <button
+                    type="button"
+                    onClick={() => addListItemAt(listRunEnd, block.listStyle ?? 'check')}
+                    className="shrink-0 rounded-lg border border-dashed border-gray-300 px-2.5 py-1 text-xs text-gray-500 hover:border-[#06C755] hover:text-[#06C755]"
+                  >
+                    ＋項目を追加
+                  </button>
+                </div>
               </div>
             ) : (
               <input
@@ -1316,7 +1382,7 @@ export default function BlockEditor({
               />
             )}
           </div>
-          <AddBlockButton onAdd={(type) => insertAt(index + 1, type)} />
+          <AddBlockButton onAdd={(type) => insertAt(listRunEnd, type)} />
         </div>
         );
       })}
