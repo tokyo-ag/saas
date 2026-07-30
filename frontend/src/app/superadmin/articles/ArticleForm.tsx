@@ -3,15 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { OfficialArticle, OfficialArticleInput } from '@/lib/api';
 import { SITE_URL } from '@/lib/config';
-import { LOCATION_TAGS } from '@/lib/lpTags';
 import { UploadButton } from '@/components/admin/EventFormPrimitives';
 import BlockEditor, { Block, parseBodyToBlocks, blocksToBody, uploadFile } from './BlockEditor';
 import ArticlePreview from './ArticlePreview';
 
 const inputClass = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]';
-
-const ACTIVITY_CATEGORIES = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー'];
-const TYPE_CATEGORIES = ['インカレサークル', '学生団体', 'イベント団体', '社会人サークル'];
 
 export default function ArticleForm({
   initial,
@@ -30,8 +26,8 @@ export default function ArticleForm({
   const [slug, setSlug] = useState(initial?.slug ?? '');
   const excerpt = initial?.excerpt ?? '';
   const [blocks, setBlocks] = useState<Block[]>(() => parseBodyToBlocks(initial?.body ?? ''));
-  const [category, setCategory] = useState(initial?.category ?? '');
-  const [areaTags, setAreaTags] = useState<string[]>(initial?.areaTags ?? []);
+  const category = initial?.category ?? '';
+  const areaTags = initial?.areaTags ?? [];
   const isPillar = initial?.isPillar ?? false;
   const pillarSlug = initial?.pillarSlug ?? '';
   const targetKeyword = initial?.targetKeyword ?? '';
@@ -55,10 +51,6 @@ export default function ArticleForm({
     await navigator.clipboard.writeText(publicUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }
-
-  function toggleAreaTag(tag: string) {
-    setAreaTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
   }
 
   function buildPayload(): OfficialArticleInput {
@@ -149,41 +141,6 @@ export default function ArticleForm({
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">スラッグ（URL）</label>
         <input maxLength={120} value={slug} onChange={(e) => setSlug(e.target.value)} className={`${inputClass} font-mono`} placeholder="空欄でタイトルから自動生成" />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">カテゴリ</label>
-        <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputClass}>
-          <option value="">未選択</option>
-          <optgroup label="活動種目">
-            {ACTIVITY_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </optgroup>
-          <optgroup label="団体タイプ">
-            {TYPE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </optgroup>
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">エリアタグ</label>
-        <p className="text-xs text-gray-400 mb-1.5">/guide/area/〇〇 のハブページ生成に使われます。イベント作成時の場所タグと同じ一覧から選択します。</p>
-        <div className="flex flex-wrap gap-1.5">
-          {LOCATION_TAGS.map((tag) => {
-            const selected = areaTags.includes(tag);
-            return (
-              <button
-                key={tag}
-                type="button"
-                onClick={() => toggleAreaTag(tag)}
-                className={`rounded-full px-3 py-1 text-xs font-bold transition ${
-                  selected ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {tag}
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       <div>
