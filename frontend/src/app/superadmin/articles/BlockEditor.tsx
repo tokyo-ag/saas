@@ -991,6 +991,16 @@ export default function BlockEditor({
     onChange(next);
   }
 
+  function mergeWithPrevious(index: number) {
+    const prev = blocks[index - 1];
+    const curr = blocks[index];
+    if (!prev || prev.type !== 'paragraph' || curr.type !== 'paragraph') return;
+    const merged: Block = { ...prev, text: `${prev.text}\n${curr.text}` };
+    const next = [...blocks];
+    next.splice(index - 1, 2, merged);
+    onChange(next);
+  }
+
   return (
     <div className="space-y-2">
       {uploadError && <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-600">{uploadError}</p>}
@@ -1001,6 +1011,11 @@ export default function BlockEditor({
             <div className="mb-2 flex items-center justify-between">
               <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${BLOCK_COLOR[block.type].pill}`}>{BLOCK_LABELS[block.type]}</span>
               <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                {block.type === 'paragraph' && index > 0 && blocks[index - 1].type === 'paragraph' && (
+                  <button type="button" onClick={() => mergeWithPrevious(index)} className="rounded px-1.5 text-xs text-gray-400 hover:text-gray-700" title="上の段落と結合します">
+                    ↑と結合
+                  </button>
+                )}
                 <button type="button" onClick={() => moveBlock(index, -1)} disabled={index === 0} className="rounded px-1.5 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30">↑</button>
                 <button type="button" onClick={() => moveBlock(index, 1)} disabled={index === blocks.length - 1} className="rounded px-1.5 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30">↓</button>
                 <button type="button" onClick={() => removeBlock(block.id)} className="rounded px-1.5 text-xs text-red-400 hover:text-red-600">削除</button>
