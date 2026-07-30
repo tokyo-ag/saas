@@ -301,8 +301,8 @@ export function parseBodyToBlocks(body: string): Block[] {
       blocks.push({ id: newId(), type: 'list', text: line.replace(/^-\s+/, ''), listStyle: 'check' });
     } else {
       const prevBlock = blocks[blocks.length - 1];
-      if (!blankBefore && prevBlock?.type === 'paragraph') {
-        prevBlock.text += `\n${line}`;
+      if (prevBlock?.type === 'paragraph') {
+        prevBlock.text += blankBefore ? `\n\n${line}` : `\n${line}`;
       } else {
         blocks.push({ id: newId(), type: 'paragraph', text: line });
       }
@@ -1001,6 +1001,17 @@ export default function BlockEditor({
     onChange(next);
   }
 
+  function splitIntoParagraphs(index: number) {
+    const block = blocks[index];
+    if (block.type !== 'paragraph') return;
+    const parts = block.text.split(/\n\s*\n/).map((t) => t.trim()).filter(Boolean);
+    if (parts.length <= 1) return;
+    const newBlocks: Block[] = parts.map((text) => ({ id: newId(), type: 'paragraph', text }));
+    const next = [...blocks];
+    next.splice(index, 1, ...newBlocks);
+    onChange(next);
+  }
+
   return (
     <div className="space-y-2">
       {uploadError && <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-600">{uploadError}</p>}
@@ -1014,6 +1025,11 @@ export default function BlockEditor({
                 {block.type === 'paragraph' && index > 0 && blocks[index - 1].type === 'paragraph' && (
                   <button type="button" onClick={() => mergeWithPrevious(index)} className="rounded px-1.5 text-xs text-gray-400 hover:text-gray-700" title="上の段落と結合します">
                     ↑と結合
+                  </button>
+                )}
+                {block.type === 'paragraph' && /\n\s*\n/.test(block.text) && (
+                  <button type="button" onClick={() => splitIntoParagraphs(index)} className="rounded px-1.5 text-xs text-gray-400 hover:text-gray-700" title="空行の位置で複数の段落ブロックに分割します">
+                    分割
                   </button>
                 )}
                 <button type="button" onClick={() => moveBlock(index, -1)} disabled={index === 0} className="rounded px-1.5 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30">↑</button>
@@ -1240,7 +1256,7 @@ export default function BlockEditor({
               <textarea
                 value={block.text}
                 onChange={(e) => updateBlock(block.id, { text: e.target.value })}
-                rows={3}
+                rows={6}
                 placeholder="本文テキスト"
                 className="w-full resize-y rounded-md border border-gray-200 px-2.5 py-1.5 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
               />
