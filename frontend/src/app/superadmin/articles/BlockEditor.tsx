@@ -1012,17 +1012,28 @@ export default function BlockEditor({
     onChange(next);
   }
 
-  function isListRunHead(index: number) {
-    return blocks[index].type === 'list' && (index === 0 || blocks[index - 1].type !== 'list');
+  const GROUPABLE_TYPES: BlockType[] = ['list', 'h2', 'h3', 'ownCircle', 'externalCircle'];
+
+  function isRunHead(index: number) {
+    const type = blocks[index].type;
+    if (!GROUPABLE_TYPES.includes(type)) return true;
+    return index === 0 || blocks[index - 1].type !== type;
+  }
+
+  function computeRunEnd(index: number) {
+    const type = blocks[index].type;
+    if (!GROUPABLE_TYPES.includes(type)) return index + 1;
+    let end = index;
+    while (end < blocks.length && blocks[end].type === type) end++;
+    return end;
   }
 
   function updateListRunStyle(index: number, style: ListStyle) {
-    let end = index;
-    while (end < blocks.length && blocks[end].type === 'list') end++;
+    const end = computeRunEnd(index);
     onChange(blocks.map((b, i) => (i >= index && i < end ? { ...b, listStyle: style } : b)));
   }
 
-  function moveListGroup(start: number, end: number, dir: -1 | 1) {
+  function moveGroup(start: number, end: number, dir: -1 | 1) {
     const group = blocks.slice(start, end);
     if (dir === -1) {
       if (start === 0) return;
@@ -1049,18 +1060,16 @@ export default function BlockEditor({
       <AddBlockButton onAdd={(type) => insertAt(0, type)} />
       {blocks.map((block, index) => {
         const compact = block.type === 'list' || block.type === 'h2' || block.type === 'h3';
-        if (block.type === 'list' && !isListRunHead(index)) return null;
-        let listRunEnd = index + 1;
-        if (block.type === 'list') {
-          listRunEnd = index;
-          while (listRunEnd < blocks.length && blocks[listRunEnd].type === 'list') listRunEnd++;
-        }
+        const grouped = GROUPABLE_TYPES.includes(block.type);
+        if (grouped && !isRunHead(index)) return null;
+        const listRunEnd = computeRunEnd(index);
+        const groupSize = listRunEnd - index;
         return (
         <div key={block.id}>
           <div className={`group relative rounded-lg border border-l-4 border-gray-200 bg-white ${compact ? 'p-2' : 'p-3'} ${BLOCK_COLOR[block.type].border}`}>
             <div className={`${compact ? 'mb-1' : 'mb-2'} flex items-center justify-between`}>
               <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${BLOCK_COLOR[block.type].pill}`}>
-                {BLOCK_LABELS[block.type]}{block.type === 'list' && listRunEnd - index > 1 ? `（${listRunEnd - index}件）` : ''}
+                {BLOCK_LABELS[block.type]}{grouped && groupSize > 1 ? `（${groupSize}件）` : ''}
               </span>
               <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                 {block.type === 'paragraph' && index > 0 && blocks[index - 1].type === 'paragraph' && (
@@ -1075,21 +1084,21 @@ export default function BlockEditor({
                 )}
                 <button
                   type="button"
-                  onClick={() => (block.type === 'list' ? moveListGroup(index, listRunEnd, -1) : moveBlock(index, -1))}
+                  onClick={() => (grouped ? moveGroup(index, listRunEnd, -1) : moveBlock(index, -1))}
                   disabled={index === 0}
                   className="rounded px-1.5 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30"
                 >↑</button>
                 <button
                   type="button"
-                  onClick={() => (block.type === 'list' ? moveListGroup(index, listRunEnd, 1) : moveBlock(index, 1))}
-                  disabled={block.type === 'list' ? listRunEnd >= blocks.length : index === blocks.length - 1}
+                  onClick={() => (grouped ? moveGroup(index, listRunEnd, 1) : moveBlock(index, 1))}
+                  disabled={grouped ? listRunEnd >= blocks.length : index === blocks.length - 1}
                   className="rounded px-1.5 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30"
                 >↓</button>
                 <button
                   type="button"
                   onClick={() => {
-                    if (block.type !== 'list') { removeBlock(block.id); return; }
-                    if (listRunEnd - index > 1 && !confirm(`このリスト（${listRunEnd - index}件）をまとめて削除しますか？`)) return;
+                    if (!grouped) { removeBlock(block.id); return; }
+                    if (groupSize > 1 && !confirm(`この${BLOCK_LABELS[block.type]}（${groupSize}件）をまとめて削除しますか？`)) return;
                     onChange([...blocks.slice(0, index), ...blocks.slice(listRunEnd)]);
                   }}
                   className="rounded px-1.5 text-xs text-red-400 hover:text-red-600"
@@ -1254,15 +1263,46 @@ export default function BlockEditor({
             ) : block.type === 'faq' ? (
               <FaqFields block={block} updateBlock={updateBlock} />
             ) : block.type === 'ownCircle' ? (
-              <OwnCircleFields block={block} updateBlock={updateBlock} />
+              <div className="space-y-2">
+                {blocks.slice(index, listRunEnd).map((item) => (
+                  <div key={item.id} className="flex items-start gap-1.5">
+                    <div className="flex-1"><OwnCircleFields block={item} updateBlock={updateBlock} /></div>
+                    <button type="button" onClick={() => onChange(blocks.filter((b) => b.id !== item.id))} className="shrink-0 px-1 text-xs text-red-300 hover:text-red-600">×</button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => insertAt(listRunEnd, 'ownCircle')}
+                  className="w-full rounded-lg border border-dashed border-gray-300 py-1.5 text-xs text-gray-500 hover:border-[#06C755] hover:text-[#06C755]"
+                >
+                  ＋団体を追加
+                </button>
+              </div>
             ) : block.type === 'externalCircle' ? (
-              <ExternalCircleFields
-                block={block}
-                updateBlock={updateBlock}
-                uploadingId={uploadingId}
-                setUploadingId={setUploadingId}
-                setUploadError={setUploadError}
-              />
+              <div className="space-y-3">
+                {blocks.slice(index, listRunEnd).map((item, i) => (
+                  <div key={item.id} className={i > 0 ? 'space-y-2 border-t border-gray-100 pt-3' : 'space-y-2'}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-gray-400">団体{i + 1}</span>
+                      <button type="button" onClick={() => onChange(blocks.filter((b) => b.id !== item.id))} className="text-xs text-red-300 hover:text-red-600">×</button>
+                    </div>
+                    <ExternalCircleFields
+                      block={item}
+                      updateBlock={updateBlock}
+                      uploadingId={uploadingId}
+                      setUploadingId={setUploadingId}
+                      setUploadError={setUploadError}
+                    />
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => insertAt(listRunEnd, 'externalCircle')}
+                  className="w-full rounded-lg border border-dashed border-gray-300 py-1.5 text-xs text-gray-500 hover:border-[#06C755] hover:text-[#06C755]"
+                >
+                  ＋団体を追加
+                </button>
+              </div>
             ) : block.type === 'cardSlider' ? (
               <CardSliderFields
                 block={block}
@@ -1370,16 +1410,28 @@ export default function BlockEditor({
                 </div>
               </div>
             ) : (
-              <input
-                ref={(el) => { inputRefs.current[block.id] = el; }}
-                value={block.text}
-                onChange={(e) => updateBlock(block.id, { text: e.target.value })}
-                onKeyDown={(e) => insertAfterOnEnter(e, block)}
-                placeholder={block.type === 'h2' ? '見出しテキスト（Enterで次の見出しを追加）' : '小見出しテキスト（Enterで次の小見出しを追加）'}
-                className={`w-full rounded-md border border-gray-200 px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#06C755] ${
-                  block.type === 'h2' ? 'text-lg font-bold' : 'text-base font-bold'
-                }`}
-              />
+              <div className="space-y-1">
+                {blocks.slice(index, listRunEnd).map((item, i) => {
+                  const itemIndex = index + i;
+                  return (
+                    <div key={item.id} className="flex items-center gap-1">
+                      <input
+                        ref={(el) => { inputRefs.current[item.id] = el; }}
+                        value={item.text}
+                        onChange={(e) => updateBlock(item.id, { text: e.target.value })}
+                        onKeyDown={(e) => insertAfterOnEnter(e, item)}
+                        placeholder={block.type === 'h2' ? '見出しテキスト（Enterで次の見出しを追加）' : '小見出しテキスト（Enterで次の小見出しを追加）'}
+                        className={`w-full rounded-md border border-gray-200 px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#06C755] ${
+                          block.type === 'h2' ? 'text-lg font-bold' : 'text-base font-bold'
+                        }`}
+                      />
+                      <button type="button" onClick={() => moveBlock(itemIndex, -1)} disabled={i === 0} className="shrink-0 px-1 text-xs text-gray-300 hover:text-gray-600 disabled:opacity-20">↑</button>
+                      <button type="button" onClick={() => moveBlock(itemIndex, 1)} disabled={i === listRunEnd - index - 1} className="shrink-0 px-1 text-xs text-gray-300 hover:text-gray-600 disabled:opacity-20">↓</button>
+                      <button type="button" onClick={() => onChange(blocks.filter((b) => b.id !== item.id))} className="shrink-0 px-1 text-xs text-red-300 hover:text-red-600">×</button>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
           <AddBlockButton onAdd={(type) => insertAt(listRunEnd, type)} />
