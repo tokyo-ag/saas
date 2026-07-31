@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation';
+import { permanentRedirect } from 'next/navigation';
 
 export default async function LegacyPublicEventPage({
   params,
@@ -6,5 +6,5 @@ export default async function LegacyPublicEventPage({
   params: Promise<{ tenantCode: string; eventId: string }>;
 }) {
   const { tenantCode, eventId } = await params;
-  redirect(`/e/${tenantCode}/${eventId}`);
+  permanentRedirect(`/e/${tenantCode}/${eventId}`);
 }

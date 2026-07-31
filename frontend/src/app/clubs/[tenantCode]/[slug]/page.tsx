@@ -1,4 +1,4 @@
-import { notFound, redirect } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -323,7 +323,7 @@ export default async function ClubCmsPage({
   ]);
   if (!page) {
     const primarySlug = await fetchPrimaryPageSlug(tenantCode);
-    if (primarySlug && primarySlug !== slug) redirect(`/clubs/${tenantCode}/${primarySlug}`);
+    if (primarySlug && primarySlug !== slug) permanentRedirect(`/clubs/${tenantCode}/${primarySlug}`);
     notFound();
   }
 

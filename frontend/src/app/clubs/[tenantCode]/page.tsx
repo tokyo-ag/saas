@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation';
+import { permanentRedirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { API_URL } from '@/lib/config';
 
@@ -33,5 +33,5 @@ export default async function ClubRedirectPage({
 }) {
   const { tenantCode } = await params;
   const slug = await fetchPrimaryPage(tenantCode);
-  redirect(slug ? `/clubs/${tenantCode}/${slug}` : '/');
+  permanentRedirect(slug ? `/clubs/${tenantCode}/${slug}` : '/');
 }
