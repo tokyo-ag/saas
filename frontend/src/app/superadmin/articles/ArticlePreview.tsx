@@ -208,7 +208,7 @@ function CirclesBlockPreview({ category, heading, typeTags }: { category: string
       {heading && <p className="mb-2 text-base font-bold text-gray-950">{heading}</p>}
       <div className="flex gap-2 overflow-x-auto pb-1">
         {tenants.map((tenant, index) => {
-          const displayName = tenant.lineDisplayName ?? tenant.name;
+          const displayName = tenant.name ?? tenant.lineDisplayName;
           return (
             <div key={tenant.id} className="relative flex w-36 shrink-0 flex-col items-center gap-2 rounded-xl bg-white p-3" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
               <span className="absolute left-3 top-2 text-xs font-bold text-[#06C755]">No.{index + 1}</span>

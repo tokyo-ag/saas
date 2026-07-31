@@ -834,7 +834,7 @@ export default function AdminPublicPage() {
           .then(setReserveEvents)
           .catch(() => setReserveEvents([]));
         loadPublishedBlogPosts();
-        const tenantName = tenantData.lineDisplayName ?? tenantData.name;
+        const tenantName = tenantData.name ?? tenantData.lineDisplayName;
         const tenantSlug = slugify(tenantName) || slugify(tenantData.code ?? tenantData.id) || 'home';
         const first = pageData[0];
         if (first) {

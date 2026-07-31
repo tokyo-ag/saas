@@ -217,7 +217,7 @@ function LiffThreadView({ events, tenantId, accentColor, cardBg, myStatusByEvent
 }
 
 function TenantCard({ tenant }: { tenant: PublicTenant }) {
-  const name = tenant.lineDisplayName ?? tenant.name;
+  const name = tenant.name ?? tenant.lineDisplayName;
   return (
     <Link
       href={`/liff/${tenant.id}`}

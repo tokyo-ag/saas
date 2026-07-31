@@ -260,7 +260,7 @@ function EventsBlock({
 }
 
 function CircleCardMini({ tenant, index }: { tenant: PublicArticleTenant; index: number }) {
-  const displayName = tenant.lineDisplayName ?? tenant.name;
+  const displayName = tenant.name ?? tenant.lineDisplayName;
   const href = tenant.code ? `/clubs/${tenant.code}` : `/liff/${tenant.id}`;
   return (
     <Link href={href} className="relative flex w-36 shrink-0 flex-col items-center gap-2 rounded-xl bg-white p-3" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>

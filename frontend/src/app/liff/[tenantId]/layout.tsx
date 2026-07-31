@@ -58,7 +58,7 @@ export async function generateMetadata({ params }: { params: Promise<{ tenantId:
       .then(r => r.ok ? r.json() : null);
     if (!tenant) return NO_INDEX;
 
-    const name = tenant.lineDisplayName ?? tenant.name;
+    const name = tenant.name ?? tenant.lineDisplayName;
     const description = tenant.description ?? `${name}のイベント・交流会情報`;
 
     return {

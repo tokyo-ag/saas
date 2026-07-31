@@ -53,7 +53,7 @@ function tenantHref(tenant: PublicTenant) {
 }
 
 function tenantName(tenant: PublicTenant) {
-  return tenant.lineDisplayName ?? tenant.name;
+  return tenant.name ?? tenant.lineDisplayName;
 }
 
 function LockedDiscoveryHome({ tenants }: { tenants: PublicTenant[] }) {

@@ -386,7 +386,7 @@ function truncateDescription(text: string, maxLength = 100): string {
 }
 
 export function CircleCard({ circle, area }: { circle: PublicCircle; area: string }) {
-  const displayName = circle.lineDisplayName ?? circle.name;
+  const displayName = circle.name ?? circle.lineDisplayName;
   const href = circle.code ? `/clubs/${circle.code}` : `/liff/${circle.id}`;
   const audience = (circle.typeTags ?? []).join('・');
   return (

@@ -133,7 +133,7 @@ function EventCard({
 }
 
 function RankingCard({ tenant, rank }: { tenant: PublicTenant; rank: number }) {
-  const displayName = tenant.lineDisplayName ?? tenant.name;
+  const displayName = tenant.name ?? tenant.lineDisplayName;
   const href = tenant.code ? `/clubs/${tenant.code}` : `/liff/${tenant.id}`;
 
   return (
