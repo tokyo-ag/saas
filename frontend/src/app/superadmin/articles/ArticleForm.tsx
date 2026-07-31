@@ -9,6 +9,9 @@ import ArticlePreview from './ArticlePreview';
 
 const inputClass = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]';
 
+const ACTIVITY_CATEGORIES = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー'];
+const TYPE_CATEGORIES = ['インカレサークル', '学生団体', 'イベント団体', '社会人サークル'];
+
 export default function ArticleForm({
   initial,
   onSubmit,
@@ -26,7 +29,7 @@ export default function ArticleForm({
   const [slug, setSlug] = useState(initial?.slug ?? '');
   const excerpt = initial?.excerpt ?? '';
   const [blocks, setBlocks] = useState<Block[]>(() => parseBodyToBlocks(initial?.body ?? ''));
-  const category = initial?.category ?? '';
+  const [category, setCategory] = useState(initial?.category ?? '');
   const areaTags = initial?.areaTags ?? [];
   const isPillar = initial?.isPillar ?? false;
   const pillarSlug = initial?.pillarSlug ?? '';
@@ -141,6 +144,20 @@ export default function ArticleForm({
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">スラッグ（URL）</label>
         <input maxLength={120} value={slug} onChange={(e) => setSlug(e.target.value)} className={`${inputClass} font-mono`} placeholder="空欄でタイトルから自動生成" />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">カテゴリ</label>
+        <p className="text-xs text-gray-400 mb-1.5">/guideの一覧・カテゴリ別ハブページでの表示・関連記事の紐付けに使われます。</p>
+        <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputClass}>
+          <option value="">未選択</option>
+          <optgroup label="活動種目">
+            {ACTIVITY_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </optgroup>
+          <optgroup label="団体タイプ">
+            {TYPE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </optgroup>
+        </select>
       </div>
 
       <div>
