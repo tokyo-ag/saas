@@ -13,12 +13,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { AdminGuard } from '../auth/admin.guard';
+import { AdminOrMobileManageGuard } from '../auth/admin-or-mobile-manage.guard';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { TenantId } from '../auth/tenant-id.decorator';
 
-@UseGuards(AdminGuard)
+@UseGuards(AdminOrMobileManageGuard)
 @Controller('admin/events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}

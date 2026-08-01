@@ -135,7 +135,21 @@ function timeOptionsWith(value: string): string[] {
   return [...TIME_OPTIONS_15MIN, value].sort();
 }
 
-export default function EventForm({ initial }: { initial?: Event }) {
+export default function EventForm({
+  initial,
+  simplified,
+  hideLevel,
+  hideLineNotify,
+  onSaved,
+  onDeleted,
+}: {
+  initial?: Event;
+  simplified?: boolean;
+  hideLevel?: boolean;
+  hideLineNotify?: boolean;
+  onSaved?: () => void;
+  onDeleted?: () => void;
+}) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -466,7 +480,8 @@ export default function EventForm({ initial }: { initial?: Event }) {
         await api.events.create(body);
       }
       router.refresh();
-      router.push('/admin/events');
+      if (onSaved) onSaved();
+      else router.push('/admin/events');
     } catch (err: any) {
       if (err.message?.includes('スタンダード') || err.message?.includes('プラン')) setUpgradeRequired(true);
       else setError(err.message);
@@ -481,7 +496,8 @@ export default function EventForm({ initial }: { initial?: Event }) {
     setSubmitting(true);
     try {
       await api.events.delete(initial.id);
-      router.push('/admin/events');
+      if (onDeleted) onDeleted();
+      else router.push('/admin/events');
     } catch (err: any) {
       setError(err.message);
       setSubmitting(false);
@@ -687,6 +703,9 @@ export default function EventForm({ initial }: { initial?: Event }) {
             })}
           </div>
           <p className="mt-2 text-xs text-gray-500">場所タグは1つだけ選択できます。「東京23区」を選ぶと区の一覧が、区によっては更に細かいエリアが選べます。検索タグは地域LPや検索ページ整理に使います。</p>
+          {simplified && (
+            <p className="mt-1 text-xs text-gray-400">※タグを使って頂ければ団体をより多くの人にCOMIU側でPRの協力ができます（○○地域で活動中のサークル一覧、初心者大歓迎のサークル一覧など）。</p>
+          )}
         </Field>
         <Field label="説明">
           {DESCRIPTION_TEMPLATES[form.category] && (
@@ -818,34 +837,38 @@ export default function EventForm({ initial }: { initial?: Event }) {
             </Field>
           </div>
         )}
-        <div>
-          <p className="mb-2 text-xs text-gray-500">支払いタイミング</p>
-          <div className="flex flex-wrap gap-3">
-            {([['onsite', '当日払い'], ['prepay', '事前決済'], ['both', 'どちらでも可']] as const).map(([val, label]) => (
-              <label key={val} className="flex items-center gap-1.5 text-sm cursor-pointer text-gray-700">
-                <input type="radio" checked={form.paymentTiming === val} onChange={() => set('paymentTiming', val)} className="accent-[#06C755]" />
-                {label}
-              </label>
-            ))}
+        {!simplified && (
+          <div>
+            <p className="mb-2 text-xs text-gray-500">支払いタイミング</p>
+            <div className="flex flex-wrap gap-3">
+              {([['onsite', '当日払い'], ['prepay', '事前決済'], ['both', 'どちらでも可']] as const).map(([val, label]) => (
+                <label key={val} className="flex items-center gap-1.5 text-sm cursor-pointer text-gray-700">
+                  <input type="radio" checked={form.paymentTiming === val} onChange={() => set('paymentTiming', val)} className="accent-[#06C755]" />
+                  {label}
+                </label>
+              ))}
+            </div>
+            {(form.paymentTiming === 'prepay' || form.paymentTiming === 'both') && !showStripe && (
+              <p className="mt-2 text-xs text-gray-400">事前決済を使用するにはStripe連携が必要です。参加者がオンラインで事前支払いを行います。</p>
+            )}
+            {showStripe && (
+              <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                事前決済にはStripe設定が必要です。
+                <Link href="/admin/settings/stripe" className="ml-1 underline">Stripe設定へ</Link>
+              </p>
+            )}
           </div>
-          {(form.paymentTiming === 'prepay' || form.paymentTiming === 'both') && !showStripe && (
-            <p className="mt-2 text-xs text-gray-400">事前決済を使用するにはStripe連携が必要です。参加者がオンラインで事前支払いを行います。</p>
-          )}
-          {showStripe && (
-            <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
-              事前決済にはStripe設定が必要です。
-              <Link href="/admin/settings/stripe" className="ml-1 underline">Stripe設定へ</Link>
-            </p>
-          )}
-        </div>
+        )}
       </Section>
 
       <Section title="参加者情報">
-        <Check
-          label="予約時にレベル（初心者・中級・上級）を確認する"
-          checked={form.levelEnabled}
-          onChange={(checked) => set('levelEnabled', checked)}
-        />
+        {!hideLevel && (
+          <Check
+            label="予約時にレベル（初心者・中級・上級）を確認する"
+            checked={form.levelEnabled}
+            onChange={(checked) => set('levelEnabled', checked)}
+          />
+        )}
         <Check
           label="参加者名簿を公開する（ログイン不要の共有リンクを発行）"
           checked={form.rosterShareEnabled}
@@ -853,6 +876,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
         />
       </Section>
 
+      {!hideLineNotify && (
       <Section title="通知">
         {/* 予約完了時の通知 */}
         <div className="space-y-2">
@@ -937,6 +961,7 @@ export default function EventForm({ initial }: { initial?: Event }) {
           )}
         </div>
       </Section>
+      )}
 
       <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center">
         <button type="submit" disabled={submitting} className="rounded-lg bg-[#06C755] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#05a847] disabled:opacity-50">

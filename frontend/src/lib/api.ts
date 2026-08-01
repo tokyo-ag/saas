@@ -9,9 +9,18 @@ export function setLiffToken(token: string | null) {
   _liffToken = token;
 }
 
+// 超簡単モバイル管理（マジックリンク経由の制限付きセッション）専用トークン。
+// セットされている間は /admin/* へのリクエストが通常のadmin_tokenの代わりに
+// これを使う - 制限付きページはフル管理者ログインを一切経由しないため。
+let _mobileManageToken: string | null = null;
+export function setMobileManageToken(token: string | null) {
+  _mobileManageToken = token;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const isSuperadmin = path.startsWith('/superadmin');
   const isAdmin = path.startsWith('/admin');
+  const isMobileManageSession = path.startsWith('/mobile-manage/') && path !== '/mobile-manage/verify';
   const isLiff = path.startsWith('/liff/') || path.startsWith('/public/roster/');
   const method = (options?.method ?? 'GET').toString().toUpperCase();
   const isLiffPublicEndpoint =
@@ -19,8 +28,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     ((method === 'GET' &&
       /^\/liff\/[^/]+(\/(events(|\/[^/]+(|\/reviews))|members\/[^/]+)?)?$/.test(path)) ||
       (method === 'POST' && /^\/liff\/[^/]+\/access$/.test(path)));
-  const needsAuth = isSuperadmin || isAdmin || path === '/auth/reconfirm' || path === '/auth/me' || path === '/auth/set-email-password' || path === '/auth/resend-verification';
-  const token = needsAuth ? getToken() : null;
+  const needsAuth = isSuperadmin || isAdmin || isMobileManageSession || path === '/auth/reconfirm' || path === '/auth/me' || path === '/auth/set-email-password' || path === '/auth/resend-verification';
+  const token = (isAdmin || isMobileManageSession) && _mobileManageToken ? _mobileManageToken : needsAuth ? getToken() : null;
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
   if (isLiff) {
@@ -63,7 +72,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export async function downloadWithAuth(url: string, filename: string): Promise<void> {
-  const token = getToken();
+  const token = _mobileManageToken ?? getToken();
   const requestUrl =
     typeof window === 'undefined'
       ? url
@@ -309,6 +318,36 @@ export const api = {
       request<PublicPage>(`/admin/public-pages/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) =>
       request<{ ok: boolean }>(`/admin/public-pages/${id}`, { method: 'DELETE' }),
+  },
+  mobileManage: {
+    getSettings: () =>
+      request<MobileManageSettings>('/admin/mobile-manage/settings'),
+    issueLink: () =>
+      request<{ linkUrl: string }>('/admin/mobile-manage/link', { method: 'POST' }),
+    revokeLink: () =>
+      request<{ linkUrl: null }>('/admin/mobile-manage/link', { method: 'DELETE' }),
+    updateSettings: (data: Partial<Omit<MobileManageSettings, 'linkUrl'>>) =>
+      request<MobileManageSettings>('/admin/mobile-manage/settings', {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    verify: (token: string) =>
+      request<{
+        accessToken: string;
+        tenantCode: string;
+        tenantName: string;
+        tenantIcon: string | null;
+        liffEventView: string;
+        hideLevel: boolean;
+        hideLineNotify: boolean;
+      }>('/mobile-manage/verify', { method: 'POST', body: JSON.stringify({ token }) }),
+    getDisplayFields: () =>
+      request<MobileManageDisplayFields>('/mobile-manage/display-fields'),
+    updateDisplayFields: (data: Partial<MobileManageDisplayFields>) =>
+      request<MobileManageDisplayFields>('/mobile-manage/display-fields', {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
   },
   tenant: {
     get: () => request<Tenant>('/admin/tenant'),
@@ -719,6 +758,20 @@ export interface ReserveInput {
   gender: string;
   level?: string;
   comment?: string;
+}
+
+export interface MobileManageDisplayFields {
+  location: boolean;
+  price: boolean;
+  capacity: boolean;
+  description: boolean;
+}
+
+export interface MobileManageSettings {
+  linkUrl: string | null;
+  hideLevel: boolean;
+  hideLineNotify: boolean;
+  reserveActionStyle: 'comiu' | 'line';
 }
 
 export interface Tenant {

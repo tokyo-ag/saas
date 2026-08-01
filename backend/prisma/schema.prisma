@@ -47,6 +47,9 @@ model Tenant {
   stripeCustomerId       String?   @map("stripe_customer_id") @db.VarChar(100)
   stripeSubscriptionId   String?   @map("stripe_subscription_id") @db.VarChar(100)
   liffEventView          String    @default("card") @map("liff_event_view") @db.VarChar(20)
+  mobileManageToken      String?   @unique @map("mobile_manage_token") @db.VarChar(64)
+  mobileManageHideLevel  Boolean   @default(true) @map("mobile_manage_hide_level")
+  mobileManageHideLineNotify Boolean @default(true) @map("mobile_manage_hide_line_notify")
   reservationMessageTemplate String? @map("reservation_message_template") @db.Text
   reminderMessageTemplate    String? @map("reminder_message_template") @db.Text
   activityTickerEnabled  Boolean   @default(true) @map("activity_ticker_enabled")

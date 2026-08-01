@@ -18,7 +18,10 @@ export class AdminGuard implements CanActivate {
     if (!auth?.startsWith('Bearer '))
       throw new UnauthorizedException('認証が必要です');
     try {
-      req.user = this.jwtService.verify(auth.slice(7));
+      const payload = this.jwtService.verify(auth.slice(7));
+      if (payload?.scope === 'mobile-manage')
+        throw new UnauthorizedException('トークンが無効です');
+      req.user = payload;
       return true;
     } catch {
       throw new UnauthorizedException('トークンが無効です');

@@ -19,6 +19,7 @@ import { AuthModule } from './auth/auth.module';
 import { PublicModule } from './public/public.module';
 import { PublicPagesModule } from './public-pages/public-pages.module';
 import { BlogModule } from './blog/blog.module';
+import { MobileManageModule } from './mobile-manage/mobile-manage.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -40,6 +41,7 @@ import { BlogModule } from './blog/blog.module';
     PublicModule,
     PublicPagesModule,
     BlogModule,
+    MobileManageModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

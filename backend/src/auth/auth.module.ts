@@ -7,6 +7,8 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { AdminGuard } from './admin.guard';
 import { SuperadminGuard } from './superadmin.guard';
+import { MobileManageGuard } from './mobile-manage.guard';
+import { AdminOrMobileManageGuard } from './admin-or-mobile-manage.guard';
 
 @Global()
 @Module({
@@ -29,7 +31,7 @@ import { SuperadminGuard } from './superadmin.guard';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, AdminGuard, SuperadminGuard],
-  exports: [AdminGuard, SuperadminGuard, JwtModule],
+  providers: [AuthService, AdminGuard, SuperadminGuard, MobileManageGuard, AdminOrMobileManageGuard],
+  exports: [AdminGuard, SuperadminGuard, MobileManageGuard, AdminOrMobileManageGuard, JwtModule],
 })
 export class AuthModule {}
