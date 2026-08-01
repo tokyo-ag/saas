@@ -425,18 +425,13 @@ function ReservePageInner() {
       <div className="mx-auto w-full max-w-[480px] sm:my-8 sm:overflow-hidden sm:rounded-3xl sm:shadow-2xl" style={{ backgroundColor: theme.backgroundColor, minHeight: '100dvh' }}>
       <div className="sticky top-0 z-10 border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
         <div className="flex items-center justify-between gap-2 px-4 py-3">
-          <Link href={`/liff/${tenantId}`} className="flex min-w-0 items-center gap-2.5 -m-2 p-2 rounded-xl active:bg-black/5">
-            {(tenant?.linePictureUrl ?? tenant?.iconUrl) ? (
-              <Image src={(tenant?.linePictureUrl ?? tenant?.iconUrl)!} width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0" alt="" unoptimized />
-            ) : (
-              <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base" style={{ backgroundColor: `${accentColor}30` }}>🎉</div>
-            )}
-            <div className="min-w-0">
-              <p className="text-[15px] font-bold text-gray-900 tracking-tight truncate leading-tight">
-                {tenant?.name ?? tenant?.lineDisplayName ?? 'Home'}
-              </p>
-              <p className="text-[10px] text-gray-800 leading-tight">団体説明</p>
-            </div>
+          <Link
+            href={`/liff/${tenantId}`}
+            className="flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-sm font-bold active:opacity-80"
+            style={{ borderColor: hexToRgba(accentColor, 30), backgroundColor: hexToRgba(accentColor, 8), color: solidAccentColor }}
+          >
+            <span>📅</span>
+            <span>日程表一覧</span>
           </Link>
           <Link
             href={`/liff/${tenantId}/profile`}
