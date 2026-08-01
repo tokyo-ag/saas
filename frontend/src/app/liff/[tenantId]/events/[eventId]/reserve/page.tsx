@@ -579,41 +579,8 @@ function ReservePageInner() {
           </div>
         )}
 
-        {profile && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
-            <p className="text-xs font-medium text-gray-500 mb-1">この情報で予約します</p>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">お名前</span>
-              <span className="font-medium text-gray-900">{profile.name}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">年齢</span>
-              <span className="font-medium text-gray-900">{profile.grade}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">性別</span>
-              <span className="font-medium text-gray-900">{profile.gender}</span>
-            </div>
-            {requiresLevel && profile.level && (
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">レベル</span>
-                <span className="font-medium text-gray-900">{profile.level}</span>
-              </div>
-            )}
-            {profile.comment && (
-              <div className="flex justify-between text-sm gap-3">
-                <span className="text-gray-500 shrink-0">一言</span>
-                <span className="font-medium text-gray-900 text-right">{profile.comment}</span>
-              </div>
-            )}
-            <Link
-              href={`/liff/${tenantId}/profile?returnTo=${encodeURIComponent(`/liff/${tenantId}/events/${eventId}/reserve`)}`}
-              className="block text-xs hover:underline pt-1"
-              style={{ color: accentColor }}
-            >
-              情報を変更する →
-            </Link>
-          </div>
+        {!myReservation && (
+          <p className="text-center text-xs text-gray-400">予約・キャンセルはマイページから確認・変更できます</p>
         )}
 
         {myReservation ? (
@@ -646,7 +613,7 @@ function ReservePageInner() {
             className="w-full py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:opacity-90 transition-colors shadow-sm"
             style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
           >
-            {submitting ? '送信中...' : isWaitlist ? 'キャンセル待ちに登録する' : 'この情報で予約を確定する'}
+            {submitting ? '送信中...' : isWaitlist ? 'キャンセル待ちに登録する' : '予約する'}
           </button>
         )}
       </div>
