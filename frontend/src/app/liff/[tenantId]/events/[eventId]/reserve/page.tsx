@@ -19,7 +19,6 @@ import {
   isLiffLoggedIn,
 } from '@/lib/liff';
 import { useLiffTheme, hexToRgba, readableTextColor, isLightHexColor } from '@/components/liff/LiffThemeProvider';
-import { ConfirmDialog } from '@/components/liff/ConfirmDialog';
 import { LiffToast } from '@/components/liff/LiffToast';
 
 const STATUS_LABEL: Record<string, string> = {
@@ -77,8 +76,6 @@ function ReservePageInner() {
   const [rosterOpen, setRosterOpen] = useState(false);
   const [expandedComment, setExpandedComment] = useState<number | null>(null);
   const [myReservation, setMyReservation] = useState<LiffReservation | null>(null);
-  const [cancelling, setCancelling] = useState(false);
-  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
 
   const requiresLevel = event?.levelEnabled;
   const hasProfile = !!(profile && profile.name && profile.grade && profile.gender && (!requiresLevel || profile.level));
@@ -310,21 +307,6 @@ function ReservePageInner() {
       alert(`予約エラー: ${msg}`);
     } finally {
       setSubmitting(false);
-    }
-  }
-
-  async function handleCancel() {
-    if (!myReservation) return;
-    setCancelling(true);
-    try {
-      setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
-      await api.liff.cancel(tenantId, myReservation.id);
-      setMyReservation(null);
-      refetchRoster();
-    } catch {
-      alert('キャンセルに失敗しました');
-    } finally {
-      setCancelling(false);
     }
   }
 
@@ -579,25 +561,14 @@ function ReservePageInner() {
           </div>
         )}
 
-        {!myReservation && (
-          <p className="text-center text-xs text-gray-400">予約・キャンセルはマイページから確認・変更できます</p>
-        )}
-
         {myReservation ? (
-          <button
-            onClick={() => setConfirmCancelOpen(true)}
-            disabled={cancelling}
-            className="w-full py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:opacity-90 transition-colors shadow-sm"
-            style={{ backgroundColor: cancelling ? '#ef4444' : '#10b981', color: '#ffffff' }}
-          >
-            {cancelling ? 'キャンセル中...' : (
-              <>
-                {STATUS_LABEL[myReservation.status] ?? myReservation.status}
-                {myReservation.status === 'waitlisted' && myReservation.waitlistOrder ? `（${myReservation.waitlistOrder}番目）` : ''}
-                {' / キャンセルする'}
-              </>
-            )}
-          </button>
+          <div className="w-full rounded-2xl py-4 text-center shadow-sm" style={{ backgroundColor: '#10b981' }}>
+            <p className="font-bold text-base text-white">
+              {myReservation.status === 'reserved' ? '予約完了！' : STATUS_LABEL[myReservation.status] ?? myReservation.status}
+              {myReservation.status === 'waitlisted' && myReservation.waitlistOrder ? `（${myReservation.waitlistOrder}番目）` : ''}
+            </p>
+            <p className="mt-1 text-xs text-white/80">キャンセルはマイページから</p>
+          </div>
         ) : tenant?.reserveActionStyle === 'line' && tenant.reserveLineUrl ? (
           <a
             href={tenant.reserveLineUrl}
@@ -617,17 +588,6 @@ function ReservePageInner() {
           </button>
         )}
       </div>
-
-      <ConfirmDialog
-        open={confirmCancelOpen}
-        message="予約をキャンセルしますか？"
-        confirmLabel="キャンセルする"
-        cancelLabel="戻る"
-        accentColor={accentColor}
-        danger
-        onCancel={() => setConfirmCancelOpen(false)}
-        onConfirm={() => { setConfirmCancelOpen(false); handleCancel(); }}
-      />
       </div>
     </div>
   );
