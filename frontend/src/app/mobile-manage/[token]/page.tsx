@@ -35,6 +35,21 @@ const displayFieldOptions: { key: keyof MobileManageDisplayFields; label: string
   { key: 'description', label: '説明文', icon: '📄' },
 ];
 
+const FAQ_ITEMS: { q: string; a: string }[] = [
+  {
+    q: '人数管理ってLINEじゃだめですか？',
+    a: '結論から言うとLINEでも大丈夫です。ただLINEだけで管理してしまうと、引き抜きや紹介制でのワンマンパワーでしか新規の参加者を獲得できず、質の高いサークルでもいつか、人数が枯渇し衰退してしまいます。COMIUでは、WEB集客で団体の新規参加者を増やすために作りました。',
+  },
+  {
+    q: '参加者名簿って使わなくてもいいですか？',
+    a: '使わなくても大丈夫です。ただSEO（WEBサイトの知ってもらう）為にはGoogleから評価を頂くことが大事です。ユーザーがWEBサイトを行き来しするリピーターがいることは評価の対象になるので、参加者名簿をうまく使うことを推奨しています。',
+  },
+  {
+    q: '公式LINEを使った方がいいですか？',
+    a: '無理して使わなくても大丈夫です。使わないメリットとしては、実際に直接紹介制にしたほうが参加率が高いというところにあります。ただ開催する度に、個人LINEやグループLINEでの参加の有無を確認する場合、関係性がない限りストレスになり離脱に繋がります。また参加者が月に50人以上いる場合、団体が大きくなるに連れ主催者側の負担が大きくなります。COMIUでは参加者名簿以外に、自動リマインド機能や参加者一斉送信ができるので、仕組み化するで使わない手はありません。',
+  },
+];
+
 type Session = {
   tenantCode: string;
   tenantName: string;
@@ -328,6 +343,21 @@ function EventListScreen({
             </button>
           </div>
           <p className="text-xs leading-relaxed text-gray-500">このURLリンクを共有または公式LINEのチャットに貼ると、団体の活動スケジュールを直接共有できます！</p>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <p className="mb-2 text-xs font-bold text-gray-500">よくある質問</p>
+          <div className="space-y-1.5">
+            {FAQ_ITEMS.map((item, i) => (
+              <details key={i} className="group rounded-lg border border-gray-100 px-3 py-2 open:bg-gray-50">
+                <summary className="cursor-pointer list-none text-sm font-bold text-gray-800 marker:content-none">
+                  <span className="mr-1.5 inline-block text-gray-400 transition-transform group-open:rotate-90">▶</span>
+                  {item.q}
+                </summary>
+                <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-gray-500">{item.a}</p>
+              </details>
+            ))}
+          </div>
         </div>
       </div>
     </div>
