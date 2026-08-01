@@ -93,7 +93,12 @@ export default function MobileManagePage() {
 
       <main className="mx-auto max-w-xl px-4 py-4">
         {screen.name === 'list' && (
-          <EventListScreen session={session} onCreate={() => setScreen({ name: 'create' })} onOpen={(id) => setScreen({ name: 'detail', id })} />
+          <EventListScreen
+            session={session}
+            onCreate={() => setScreen({ name: 'create' })}
+            onOpen={(id) => setScreen({ name: 'detail', id })}
+            onEdit={(id) => setScreen({ name: 'edit', id })}
+          />
         )}
         {screen.name === 'create' && (
           <div>
@@ -136,7 +141,17 @@ function EditScreen({ eventId, session, onDone }: { eventId: string; session: Se
   );
 }
 
-function EventListScreen({ session, onCreate, onOpen }: { session: Session; onCreate: () => void; onOpen: (id: string) => void }) {
+function EventListScreen({
+  session,
+  onCreate,
+  onOpen,
+  onEdit,
+}: {
+  session: Session;
+  onCreate: () => void;
+  onOpen: (id: string) => void;
+  onEdit: (id: string) => void;
+}) {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('upcoming');
@@ -161,6 +176,51 @@ function EventListScreen({ session, onCreate, onOpen }: { session: Session; onCr
       const updated = await api.mobileManage.updateDisplayFields({ [key]: next[key] });
       setDisplayFields(updated);
     } catch { /* silent */ }
+  }
+
+  async function handleDuplicate(id: string) {
+    try {
+      const ev = await api.events.get(id);
+      const created = await api.events.create({
+        title: ev.title,
+        description: ev.description,
+        heldAt: ev.heldAt,
+        endAt: ev.endAt ?? null,
+        location: ev.location,
+        locationUrl: ev.locationUrl,
+        capacity: ev.capacity ?? null,
+        capacityMale: ev.capacityMale ?? null,
+        capacityFemale: ev.capacityFemale ?? null,
+        status: 'open',
+        price: ev.price,
+        priceMale: ev.priceMale ?? null,
+        priceFemale: ev.priceFemale ?? null,
+        paymentRequired: ev.paymentRequired,
+        paymentTiming: ev.paymentTiming,
+        notifyOnReserve: ev.notifyOnReserve,
+        notifyOnReserveApp: true,
+        remindEnabled: ev.remindEnabled,
+        remindApp: ev.remindApp,
+        remindAt: ev.remindAt ?? null,
+        imageUrl: ev.imageUrl,
+        iconUrl: ev.iconUrl,
+        category: ev.category ?? null,
+        tags: ev.tags ?? [],
+      });
+      onEdit(created.id);
+    } catch (err: any) {
+      alert(err.message ?? '複製に失敗しました');
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('このイベントを削除しますか？')) return;
+    try {
+      await api.events.delete(id);
+      load();
+    } catch {
+      alert('削除に失敗しました');
+    }
   }
 
   const scheduleUrl = buildLiffUrl(`/liff/${session.tenantCode}`) ?? `${SITE_URL}/liff/${session.tenantCode}`;
@@ -214,11 +274,9 @@ function EventListScreen({ session, onCreate, onOpen }: { session: Session; onCr
       ) : (
         <div className="space-y-2">
           {filtered.map((event) => (
-            <button
+            <div
               key={event.id}
-              type="button"
-              onClick={() => onOpen(event.id)}
-              className="flex w-full items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 text-left shadow-sm"
+              className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -227,7 +285,12 @@ function EventListScreen({ session, onCreate, onOpen }: { session: Session; onCr
                 </div>
                 <p className="mt-0.5 text-xs text-gray-400">{formatDate(event.heldAt)}</p>
               </div>
-            </button>
+              <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+                <button type="button" onClick={() => onOpen(event.id)} className="rounded-lg bg-[#06C755]/10 px-2.5 py-1.5 text-xs font-bold text-[#06C755]">詳細</button>
+                <button type="button" onClick={() => handleDuplicate(event.id)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">複製</button>
+                <button type="button" onClick={() => handleDelete(event.id)} className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-bold text-red-500">削除</button>
+              </div>
+            </div>
           ))}
         </div>
       )}

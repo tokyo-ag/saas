@@ -57,7 +57,9 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   });
 
   if (!res.ok) {
-    if (res.status === 401 && needsAuth && path !== '/auth/reconfirm' && typeof window !== 'undefined') {
+    // 超簡単モバイル管理セッション中は、通常ログインへの強制遷移を行わない
+    // - このセッションはそもそもパスワードログインを経由していないため。
+    if (res.status === 401 && needsAuth && !_mobileManageToken && path !== '/auth/reconfirm' && typeof window !== 'undefined') {
       clearToken();
       window.location.href = isSuperadmin ? '/superadmin/login' : '/login';
       return Promise.reject(new Error('Unauthorized'));

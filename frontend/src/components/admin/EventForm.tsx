@@ -201,12 +201,15 @@ export default function EventForm({
   });
 
   useEffect(() => {
+    // 超簡単モバイル管理のセッションには/admin/tenantへのアクセス権がなく、
+    // simplifiedモードではLINE通知・Stripe関連UIも表示しないため、そもそも不要。
+    if (simplified) return;
     api.tenant.get().then((tenantData) => {
       setTenant(tenantData);
       setIsFreePlan(tenantData.plan === 'free');
       setIsPro(tenantData.plan === 'pro');
     }).catch(() => {});
-  }, []);
+  }, [simplified]);
 
   useEffect(() => {
     if (!initial && tenant?.linePictureUrl) {
