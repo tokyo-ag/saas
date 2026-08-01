@@ -573,7 +573,7 @@ export default function AdminPublicPage() {
   const toggleSection = (key: string) => setOpenSections(p => ({ ...p, [key]: !p[key] }));
 
   const tenantCode = tenant?.code ?? tenant?.id ?? '';
-  const displayName = tenant?.lineDisplayName ?? tenant?.name ?? '公開サイト';
+  const displayName = tenant?.name ?? tenant?.lineDisplayName ?? '公開サイト';
   const siteTitle = form.title?.trim() || displayName;
   const tenantIcon = tenant?.iconUrl ?? tenant?.linePictureUrl ?? null;
   const generatedSlug = slugify(displayName) || slugify(tenantCode) || 'home';

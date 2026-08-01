@@ -49,7 +49,7 @@ export default function TalksPage() {
     init();
   }, [tenantId]);
 
-  const organizerName = tenant?.lineDisplayName ?? tenant?.name ?? '主催者';
+  const organizerName = tenant?.name ?? tenant?.lineDisplayName ?? '主催者';
   const organizerPicture = tenant?.linePictureUrl ?? tenant?.iconUrl;
   const officialLineChatUrl = tenant?.contactUrl?.trim() || null;
 

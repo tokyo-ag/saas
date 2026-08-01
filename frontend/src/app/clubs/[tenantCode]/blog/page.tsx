@@ -11,10 +11,12 @@ export const revalidate = 60;
 type BlogTenantInfo = {
   name?: string | null;
   lineDisplayName?: string | null;
+  linePictureUrl?: string | null;
+  iconUrl?: string | null;
   pages?: Array<{ slug: string }>;
 };
 
-async function fetchPosts(tenantCode: string): Promise<{ posts: BlogPostSummary[]; tenantName: string; homeHref: string } | null> {
+async function fetchPosts(tenantCode: string): Promise<{ posts: BlogPostSummary[]; tenantName: string; homeHref: string; tenantIcon: string | null } | null> {
   try {
     const [postsRes, tenantRes] = await Promise.all([
       fetch(`${API_URL}/api/public/tenants/${tenantCode}/blog`, { next: { revalidate } }),
@@ -23,10 +25,11 @@ async function fetchPosts(tenantCode: string): Promise<{ posts: BlogPostSummary[
     if (!postsRes.ok) return null;
     const posts = await postsRes.json();
     const tenant = tenantRes.ok ? ((await tenantRes.json()) as BlogTenantInfo) : null;
-    const tenantName = tenant?.lineDisplayName ?? tenant?.name ?? tenantCode;
+    const tenantName = tenant?.name ?? tenant?.lineDisplayName ?? tenantCode;
     const primarySlug = tenant?.pages?.[0]?.slug;
     const homeHref = primarySlug ? `/clubs/${tenantCode}/${primarySlug}` : `/clubs/${tenantCode}`;
-    return { posts, tenantName, homeHref };
+    const tenantIcon = imgUrl(tenant?.linePictureUrl ?? tenant?.iconUrl, IMAGE_BASE_URL);
+    return { posts, tenantName, homeHref, tenantIcon };
   } catch {
     return null;
   }
@@ -75,7 +78,7 @@ export default async function BlogListPage({
   const { tenantCode } = await params;
   const data = await fetchPosts(tenantCode);
   if (!data) notFound();
-  const { posts, tenantName, homeHref } = data;
+  const { posts, tenantName, homeHref, tenantIcon } = data;
 
   return (
     <main className="min-h-screen bg-[#F7F8FA]">
@@ -91,7 +94,7 @@ export default async function BlogListPage({
         ) : (
           <div className="space-y-4">
             {posts.map((post) => {
-              const cover = imgUrl(post.coverImageUrl, IMAGE_BASE_URL);
+              const cover = imgUrl(post.coverImageUrl, IMAGE_BASE_URL) ?? tenantIcon;
               return (
                 <Link
                   key={post.id}

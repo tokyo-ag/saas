@@ -534,6 +534,17 @@ export default function AdminBlogPage() {
 
         <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-5">
 
+          {/* タイトル */}
+          <div>
+            <span className="mb-1 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-500">タイトル</span>
+            <input
+              value={form.title}
+              onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
+              placeholder="記事のタイトル（AI原稿を貼り付けると1行目が自動で入ります）"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+            />
+          </div>
+
           {/* 画像（任意・1枚まで） */}
           <div>
             <span className="mb-1 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-500">画像</span>
@@ -588,7 +599,7 @@ export default function AdminBlogPage() {
                 value={bodyText}
                 onChange={(e) => setBodyText(e.target.value)}
                 onPaste={handleBodyPaste}
-                placeholder="活動の様子やお知らせを書いてください（AI原稿をそのまま貼り付けてもOK）..."
+                placeholder={'活動の様子やお知らせを書いてください（AI原稿をそのまま貼り付けてもOK）\n\n入力例:\n# 見出しにしたい文\n本文はこのように普通に書きます。\n\n- 箇条書きにしたい項目\n- もうひとつの項目\n\n1. 番号リストの項目\n2. 次の項目'}
                 rows={Math.max(8, (bodyText.split('\n').length || 1) + 1)}
                 className="w-full resize-none rounded-lg bg-transparent px-3 py-2 text-sm leading-7 text-gray-800 outline-none placeholder:text-gray-300 focus:bg-gray-50/60"
               />
