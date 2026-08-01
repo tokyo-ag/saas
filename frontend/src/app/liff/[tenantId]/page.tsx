@@ -573,7 +573,7 @@ export default function LiffTopPage() {
         {/* header */}
         <div className="sticky top-0 z-10 border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
           <div className="flex items-center justify-between gap-2 px-4 pt-12 pb-3 sm:pt-4">
-            <Link href={`/clubs/${tenantId}`} className="flex min-w-0 items-center gap-2.5 rounded-full border border-gray-200 bg-white/80 px-2.5 py-1.5 shadow-sm active:bg-black/5">
+            <Link href={`/clubs/${tenantId}`} className="flex min-w-0 items-center gap-2.5 -m-2 p-2 rounded-xl active:bg-black/5">
               {(tenant?.linePictureUrl ?? tenant?.iconUrl) ? (
                 <Image src={(tenant?.linePictureUrl ?? tenant?.iconUrl)!} width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0" alt="" unoptimized />
               ) : (
