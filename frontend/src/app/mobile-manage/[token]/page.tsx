@@ -302,6 +302,7 @@ function EventListScreen({
               </div>
               <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
                 <button type="button" onClick={() => onOpen(event.id)} className="rounded-lg bg-[#06C755]/10 px-2.5 py-1.5 text-xs font-bold text-[#06C755]">詳細</button>
+                <button type="button" onClick={() => onEdit(event.id)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">編集</button>
                 <button type="button" onClick={() => handleDuplicate(event.id)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">複製</button>
                 <button type="button" onClick={() => handleDelete(event.id)} className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-bold text-red-500">削除</button>
               </div>
