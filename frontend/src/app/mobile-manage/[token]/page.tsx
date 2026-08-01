@@ -28,12 +28,6 @@ const tabs: { key: Tab; label: string }[] = [
   { key: 'draft', label: '下書き' },
 ];
 
-const calendarStyleLabel: Record<string, string> = {
-  calendar: 'カレンダー',
-  card: 'カード',
-  thread: 'スレッド',
-};
-
 const displayFieldOptions: { key: keyof MobileManageDisplayFields; label: string; icon: string }[] = [
   { key: 'location', label: '場所', icon: '📍' },
   { key: 'price', label: '参加費', icon: '💴' },
@@ -45,7 +39,6 @@ type Session = {
   tenantCode: string;
   tenantName: string;
   tenantIcon: string | null;
-  liffEventView: string;
   hideLevel: boolean;
   hideLineNotify: boolean;
 };
@@ -67,7 +60,6 @@ export default function MobileManagePage() {
           tenantCode: res.tenantCode,
           tenantName: res.tenantName,
           tenantIcon: res.tenantIcon,
-          liffEventView: res.liffEventView,
           hideLevel: res.hideLevel,
           hideLineNotify: res.hideLineNotify,
         });
@@ -261,12 +253,6 @@ function EventListScreen({ session, onCreate, onOpen }: { session: Session; onCr
               );
             })}
           </div>
-        </div>
-
-        <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs font-bold text-gray-500">公開サイトの表示スタイル</p>
-          <p className="mt-1 text-sm text-gray-700">{calendarStyleLabel[session.liffEventView] ?? session.liffEventView}</p>
-          <p className="mt-1 text-[11px] text-gray-400">変更は設定画面（フル管理者）から行えます。</p>
         </div>
 
         <div className="rounded-xl border border-[#06C755]/30 bg-[#06C755]/5 p-4">
