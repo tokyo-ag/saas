@@ -744,7 +744,7 @@ export default function EventForm({
             </div>
           </Field>
           <Field label="終了日時">
-            <div className="grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center">
+            <div className={simplified ? '' : 'grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center'}>
               <select
                 disabled={!form.heldAt}
                 value={timeFromLocalDatetime(form.endAt)}
@@ -756,9 +756,11 @@ export default function EventForm({
                   .filter((t) => !timeFromLocalDatetime(form.heldAt) || t > timeFromLocalDatetime(form.heldAt))
                   .map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
-              <p className="text-xs leading-5 text-gray-500">
-                {form.heldAt ? `${form.heldAt.slice(0, 10)} と同じ日で保存されます。` : '開始日時を選ぶと入力できます。'}
-              </p>
+              {!simplified && (
+                <p className="text-xs leading-5 text-gray-500">
+                  {form.heldAt ? `${form.heldAt.slice(0, 10)} と同じ日で保存されます。` : '開始日時を選ぶと入力できます。'}
+                </p>
+              )}
             </div>
           </Field>
         </div>
