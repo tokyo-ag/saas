@@ -177,6 +177,13 @@ function LiffThreadView({ events, tenantId, accentColor, cardBg, myStatusByEvent
             {monthEvents.map((event) => {
               const status = threadStatusLabel(event);
               const isFull = status === '満席';
+              const myStatus = myStatusByEvent?.[event.id];
+              const badgeLabel = myStatus === 'reserved' ? '予約済み'
+                : myStatus === 'waitlisted' ? 'キャンセル待ち'
+                : status;
+              const badgeColorClass = myStatus === 'waitlisted' ? 'bg-yellow-100 text-yellow-700'
+                : isFull && !myStatus ? 'bg-gray-100 text-gray-400'
+                : 'bg-[#06C755]/10 text-[#06C755]';
               return (
                 <Link
                   key={event.id}
@@ -199,11 +206,9 @@ function LiffThreadView({ events, tenantId, accentColor, cardBg, myStatusByEvent
                       </div>
                     </div>
                     <div className="shrink-0 flex flex-col items-end gap-1">
-                      <span className={`rounded-md px-2.5 py-1 text-[11px] font-bold ${isFull ? 'bg-gray-100 text-gray-400' : ''}`}
-                        style={isFull ? undefined : { backgroundColor: accentColor, color: readableTextColor(accentColor) }}>
-                        {status}
+                      <span className={`rounded-full px-3 py-1.5 text-[13px] font-bold ${badgeColorClass}`}>
+                        {badgeLabel}
                       </span>
-                      <ReservedBadge status={myStatusByEvent?.[event.id]} accentColor={accentColor} />
                     </div>
                   </div>
                 </Link>
