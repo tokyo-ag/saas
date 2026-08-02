@@ -427,8 +427,8 @@ function ReservePageInner() {
         <div className="flex items-center justify-between gap-2 px-4 py-3">
           <Link
             href={`/liff/${tenantId}`}
-            className="flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-sm font-bold active:opacity-80"
-            style={{ borderColor: hexToRgba(accentColor, 30), backgroundColor: hexToRgba(accentColor, 8), color: solidAccentColor }}
+            className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-sm font-bold shadow-sm active:opacity-90"
+            style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
           >
             <span>📅</span>
             <span>日程表一覧</span>
