@@ -506,6 +506,7 @@ export default function LiffTopPage() {
   const [loading, setLoading] = useState(true);
   const [otherTenants, setOtherTenants] = useState<PublicTenant[]>([]);
   const [isOffline, setIsOffline] = useState(false);
+  const [tenantNotFound, setTenantNotFound] = useState(false);
   const [myStatusByEvent, setMyStatusByEvent] = useState<Record<string, string>>({});
   const [myPictureUrl, setMyPictureUrl] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -516,10 +517,22 @@ export default function LiffTopPage() {
       const eventsCacheKey = `liff_events_${tenantId}`;
 
       api.liff.recordAccess(tenantId).catch(() => {});
-      const t = await api.liff.tenant(tenantId).catch(() => null);
+      let notFound = false;
+      const t = await api.liff.tenant(tenantId).catch((err: any) => {
+        if (err?.status === 404) notFound = true;
+        return null;
+      });
       if (t) {
         setTenant(t);
         localStorage.setItem(tenantCacheKey, JSON.stringify(t));
+      } else if (notFound) {
+        // 団体が削除済みなど恒久的に存在しない場合は、古いキャッシュを
+        // 表示し続けず、はっきりと「見つかりません」を出す。
+        localStorage.removeItem(tenantCacheKey);
+        localStorage.removeItem(eventsCacheKey);
+        setTenantNotFound(true);
+        setLoading(false);
+        return;
       } else {
         const cached = localStorage.getItem(tenantCacheKey);
         if (cached) setTenant(JSON.parse(cached) as LiffTenant);
@@ -570,6 +583,16 @@ export default function LiffTopPage() {
     init();
 
   }, [tenantId]);
+
+  if (tenantNotFound) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center gap-3 bg-gray-50">
+        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-3xl">🔍</div>
+        <p className="text-lg font-bold text-gray-900">団体のページが見つかりません</p>
+        <p className="text-sm text-gray-500">この団体は削除されたか、URLが変更された可能性があります。</p>
+      </div>
+    );
+  }
 
   return (
     <>

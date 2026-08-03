@@ -65,7 +65,9 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
       return Promise.reject(new Error('Unauthorized'));
     }
     const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.message ?? 'Request failed');
+    const error = new Error(err.message ?? 'Request failed') as Error & { status?: number };
+    error.status = res.status;
+    throw error;
   }
   if (res.status === 204 || res.headers.get('content-length') === '0') {
     return undefined as T;
