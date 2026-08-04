@@ -916,7 +916,7 @@ export default async function BlogPostPage({
             <span className="text-gray-300">・</span>
             <span className="text-xs text-gray-400">{formatDate(post.publishedAt)}</span>
           </div>
-          <h1 className="mb-6 text-[32px] font-extrabold leading-[1.3] tracking-tight text-gray-900 sm:text-4xl">{post.title}</h1>
+          <h1 className="mb-6 text-[24px] font-extrabold leading-[1.3] tracking-tight text-gray-900 sm:text-4xl">{post.title}</h1>
 
           <div className="-mx-4 mb-2 sm:mx-0">
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100 shadow-md sm:aspect-[16/9] sm:rounded-2xl">
