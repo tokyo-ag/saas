@@ -37,6 +37,7 @@ type EventFormData = {
   reminderMessageTemplate: string;
   levelEnabled: boolean;
   rosterShareEnabled: boolean;
+  reserveActionStyle: '' | 'comiu' | 'line';
   imageUrl: string;
   iconUrl: string;
   category: string;
@@ -158,6 +159,7 @@ export default function EventForm({
   const [isFreePlan, setIsFreePlan] = useState(false);
   const [isPro, setIsPro] = useState(false);
   const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [tenantReserveActionStyle, setTenantReserveActionStyle] = useState<'comiu' | 'line'>('comiu');
   const [tokyoExpanded, setTokyoExpanded] = useState(false);
   const [tamaExpanded, setTamaExpanded] = useState(false);
   const isLineConfigured = !!tenant?.lineConfigured;
@@ -194,6 +196,7 @@ export default function EventForm({
     reminderMessageTemplate: initial?.reminderMessageTemplate ?? '',
     levelEnabled: initial?.levelEnabled ?? false,
     rosterShareEnabled: initial?.rosterShareEnabled ?? false,
+    reserveActionStyle: (initial?.reserveActionStyle === 'line' ? 'line' : initial?.reserveActionStyle === 'comiu' ? 'comiu' : '') as '' | 'comiu' | 'line',
     imageUrl: initial?.imageUrl ?? '',
     iconUrl: initial?.iconUrl ?? '',
     category: initial?.category ?? '',
@@ -208,6 +211,14 @@ export default function EventForm({
       setTenant(tenantData);
       setIsFreePlan(tenantData.plan === 'free');
       setIsPro(tenantData.plan === 'pro');
+    }).catch(() => {});
+    api.publicPages.list().then((pages) => {
+      const first = pages[0];
+      if (!first) return;
+      try {
+        const footer = first.footerText ? JSON.parse(first.footerText) : {};
+        setTenantReserveActionStyle(footer.reserveActionStyle === 'line' ? 'line' : 'comiu');
+      } catch { /* ignore */ }
     }).catch(() => {});
   }, [simplified]);
 
@@ -470,6 +481,7 @@ export default function EventForm({
       reminderMessageTemplate: form.reminderMessageTemplate || null,
       levelEnabled: form.levelEnabled,
       rosterShareEnabled: form.rosterShareEnabled,
+      reserveActionStyle: form.reserveActionStyle || null,
       imageUrl: form.imageUrl || undefined,
       iconUrl: form.iconUrl || undefined,
       category: form.category || null,
@@ -867,6 +879,18 @@ export default function EventForm({
       </Section>
 
       <Section title="参加者情報">
+        <div className="mb-3">
+          <p className="mb-2 text-xs text-gray-500">予約スタイル</p>
+          <RadioGroup
+            value={form.reserveActionStyle}
+            onChange={(value) => set('reserveActionStyle', value)}
+            options={[
+              ['', `団体の設定に従う（現在：${tenantReserveActionStyle === 'line' ? 'LINEで予約する' : 'COMIUで予約する'}）`],
+              ['comiu', 'COMIUで予約する'],
+              ['line', 'LINEで予約する'],
+            ]}
+          />
+        </div>
         {!hideLevel && (
           <Check
             label="予約時にレベル（初心者・中級・上級）を確認する"

@@ -288,6 +288,7 @@ model Event {
   remindedAt      DateTime?   @map("reminded_at")
   reminderMessageTemplate    String? @map("reminder_message_template") @db.Text
   levelEnabled    Boolean     @default(false) @map("level_enabled")
+  reserveActionStyle String? @map("reserve_action_style") @db.VarChar(20)
   rosterShareEnabled Boolean  @default(false) @map("roster_share_enabled")
   rosterShareToken String?    @unique @map("roster_share_token") @db.VarChar(64)
   category        String?     @db.VarChar(50)

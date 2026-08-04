@@ -501,6 +501,7 @@ export interface Event {
   levelEnabled?: boolean;
   rosterShareEnabled?: boolean;
   rosterShareToken?: string | null;
+  reserveActionStyle?: string | null;
 }
 
 export interface EventInput {
@@ -533,6 +534,7 @@ export interface EventInput {
   tags?: string[];
   levelEnabled?: boolean;
   rosterShareEnabled?: boolean;
+  reserveActionStyle?: string | null;
 }
 
 export interface Member {
@@ -730,6 +732,7 @@ export interface LiffEvent {
   levelEnabled?: boolean;
   rosterShareEnabled?: boolean;
   rosterShareToken?: string | null;
+  reserveActionStyle?: string | null;
   category?: string | null;
   friendAttendees?: { id: string; name: string | null }[];
   reviews?: EventReview[];

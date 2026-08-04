@@ -40,6 +40,7 @@ type EventDetail = {
   isEnded?: boolean;
   reviews?: Review[];
   footerText?: string | null;
+  reserveActionStyle?: string | null;
 };
 
 async function fetchEvent(eventId: string): Promise<EventDetail | null> {
@@ -324,7 +325,8 @@ export default async function PublicEventPage({
   })();
   const configuredLineUrl = footerSettings.reserveLineUrl?.trim() || footerSettings.line?.trim();
   const reservePath = `/liff/${event.tenantCode}/events/${event.id}/reserve`;
-  const isExternalLineUrl = footerSettings.reserveActionStyle === 'line' && !!configuredLineUrl;
+  const effectiveActionStyle = event.reserveActionStyle || footerSettings.reserveActionStyle;
+  const isExternalLineUrl = effectiveActionStyle === 'line' && !!configuredLineUrl;
   const reserveUrl = isExternalLineUrl
     ? configuredLineUrl!
     : buildLiffUrl(reservePath) ?? reservePath;

@@ -564,6 +564,7 @@ export class PublicController {
       tenantName: event.tenant.lineDisplayName ?? event.tenant.name,
       tenantIconUrl: event.tenant.linePictureUrl ?? event.tenant.iconUrl,
       footerText: event.tenant.publicPages[0]?.footerText ?? null,
+      reserveActionStyle: event.reserveActionStyle,
       isEnded,
       reviews: event.reviews.map((r) => ({
         id: r.id,

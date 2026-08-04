@@ -79,7 +79,8 @@ function ReservePageInner() {
 
   const requiresLevel = event?.levelEnabled;
   const hasProfile = !!(profile && profile.name && profile.grade && profile.gender && (!requiresLevel || profile.level));
-  const isLineMode = tenant?.reserveActionStyle === 'line' && !!tenant.reserveLineUrl;
+  const effectiveActionStyle = event?.reserveActionStyle || tenant?.reserveActionStyle;
+  const isLineMode = effectiveActionStyle === 'line' && !!tenant?.reserveLineUrl;
 
   function restartLineAuth() {
     setError('LINE認証を更新しています。画面が切り替わらない場合は、LINEからもう一度開き直してください。');
@@ -114,11 +115,12 @@ function ReservePageInner() {
     async function init() {
       const tenantInfo = await api.liff.tenant(tenantId).catch(() => null);
       if (tenantInfo) setTenant(tenantInfo);
+      const ev = await api.liff.event(tenantId, eventId).catch(() => null);
+      const effectiveActionStyle = ev?.reserveActionStyle || tenantInfo?.reserveActionStyle;
 
-      // LINE直通テナントはLIFFログイン自体が不要。認証なしで詳細だけ見せて、
+      // LINE直通イベント/テナントはLIFFログイン自体が不要。認証なしで詳細だけ見せて、
       // 最後のボタンでLINEに送る。
-      if (tenantInfo?.reserveActionStyle === 'line' && tenantInfo.reserveLineUrl) {
-        const ev = await api.liff.event(tenantId, eventId).catch(() => null);
+      if (effectiveActionStyle === 'line' && tenantInfo?.reserveLineUrl) {
         if (ev) setEvent(ev);
         setIsFriend(true);
         setAuthStatus('ok');
@@ -564,9 +566,9 @@ function ReservePageInner() {
             </p>
             <p className="mt-1 text-xs text-white/80">キャンセルはマイページから</p>
           </div>
-        ) : tenant?.reserveActionStyle === 'line' && tenant.reserveLineUrl ? (
+        ) : isLineMode ? (
           <a
-            href={tenant.reserveLineUrl}
+            href={tenant?.reserveLineUrl ?? ''}
             className="block w-full py-4 rounded-2xl font-bold text-base text-center active:opacity-90 transition-colors shadow-sm"
             style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
           >

@@ -146,6 +146,11 @@ export class CreateEventDto {
   rosterShareEnabled?: boolean;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  reserveActionStyle?: string | null;
+
+  @IsOptional()
   @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
   @MaxLength(500)
   imageUrl?: string;

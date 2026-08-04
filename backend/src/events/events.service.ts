@@ -189,6 +189,7 @@ export class EventsService {
         rosterShareToken: rosterShareEnabled
           ? this.generateRosterShareToken()
           : null,
+        reserveActionStyle: dto.reserveActionStyle || null,
       },
     });
   }
@@ -281,6 +282,9 @@ export class EventsService {
         ...(dto.rosterShareEnabled !== undefined && {
           rosterShareEnabled: dto.rosterShareEnabled,
           ...(rosterShareToken && { rosterShareToken }),
+        }),
+        ...(dto.reserveActionStyle !== undefined && {
+          reserveActionStyle: dto.reserveActionStyle || null,
         }),
       },
     });
