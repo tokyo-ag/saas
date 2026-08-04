@@ -1233,8 +1233,9 @@ export default function AdminPublicPage() {
     e.preventDefault();
     setSaving(true); setError(''); setSaved(false);
     const nextSlug = slugify(form.slug ?? '') || generatedSlug;
-    const slugChanged = savedSlug !== null && nextSlug !== savedSlug;
-    const nextSlugLocked = form.slugLocked === true || slugChanged;
+    // 初回作成時（savedSlugがまだ無い）だけは自由に編集できるようにし、
+    // 既存ページの保存（値を変えていない場合も含む）からは常にロックする。
+    const nextSlugLocked = form.slugLocked === true || savedSlug !== null;
     const payload: PublicPageInput = {
       ...form,
       title: siteTitle, slug: nextSlug,
@@ -1403,7 +1404,7 @@ export default function AdminPublicPage() {
                 className="min-w-0 flex-1 rounded border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
             )}
             {form.slugLocked && (
-              <span className="shrink-0 text-[10px] text-gray-400">変更済み（編集不可）</span>
+              <span className="shrink-0 text-[10px] text-gray-400">設定済み（編集不可）</span>
             )}
           </div>
         )}
