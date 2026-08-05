@@ -316,7 +316,12 @@ export default function LineSettingsPage() {
             <button
               disabled={saving || lineCredentialsLocked}
               onClick={async () => {
-                const ok = await save({ organizerLineUserId: organizerLineUserId || undefined });
+                const trimmed = organizerLineUserId.trim();
+                if (trimmed && !/^U[0-9a-f]{32}$/i.test(trimmed)) {
+                  setError('LINEユーザーIDの形式が正しくありません。U から始まる33文字のIDを入力するか、空欄にしてください。');
+                  return;
+                }
+                const ok = await save({ organizerLineUserId: trimmed });
                 if (ok) {
                   setEditUnlocked(false);
                   setReauthToken('');
