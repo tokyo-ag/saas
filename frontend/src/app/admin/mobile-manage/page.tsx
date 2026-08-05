@@ -170,6 +170,19 @@ export default function AdminMobileManagePage() {
           </span>
         </label>
 
+        <label className="flex items-start gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            checked={!settings?.hideLineNotify}
+            disabled={busy}
+            onChange={(e) => updateSetting({ hideLineNotify: !e.target.checked })}
+            className="mt-0.5 accent-[#06C755]"
+          />
+          <span>
+            イベント作成時に「LINE通知」項目を表示する
+            <span className="block text-xs text-gray-400">超簡単モバイル管理経由でのイベント作成のみに適用されます。</span>
+          </span>
+        </label>
       </section>
     </div>
   );

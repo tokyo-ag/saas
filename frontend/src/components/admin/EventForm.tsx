@@ -27,6 +27,14 @@ type EventFormData = {
   priceMale: string;
   priceFemale: string;
   paymentTiming: 'onsite' | 'prepay' | 'both';
+  notifyOnReserve: boolean;
+  notifyOnReserveApp: boolean;
+  reservationMessageTemplate: string;
+  remindEnabled: boolean;
+  remindApp: boolean;
+  remindPreset: 'prev18' | 'day9' | 'custom';
+  remindAt: string;
+  reminderMessageTemplate: string;
   levelEnabled: boolean;
   rosterShareEnabled: boolean;
   reserveActionStyle: '' | 'comiu' | 'line';
@@ -132,12 +140,14 @@ export default function EventForm({
   initial,
   simplified,
   hideLevel,
+  hideLineNotify,
   onSaved,
   onDeleted,
 }: {
   initial?: Event;
   simplified?: boolean;
   hideLevel?: boolean;
+  hideLineNotify?: boolean;
   onSaved?: () => void;
   onDeleted?: () => void;
 }) {
@@ -146,10 +156,13 @@ export default function EventForm({
   const [error, setError] = useState('');
   const [upgradeRequired, setUpgradeRequired] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isFreePlan, setIsFreePlan] = useState(false);
+  const [isPro, setIsPro] = useState(false);
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [tenantReserveActionStyle, setTenantReserveActionStyle] = useState<'comiu' | 'line'>('comiu');
   const [tokyoExpanded, setTokyoExpanded] = useState(false);
   const [tamaExpanded, setTamaExpanded] = useState(false);
+  const isLineConfigured = !!tenant?.lineConfigured;
   const initialHeldAt = toLocalDatetimeValue(initial?.heldAt);
   const initialEndAt = initial?.endAt
     ? sameDayDatetime(initialHeldAt, timeFromLocalDatetime(toLocalDatetimeValue(initial.endAt)))
@@ -173,6 +186,14 @@ export default function EventForm({
     priceMale: initial?.priceMale?.toString() ?? '0',
     priceFemale: initial?.priceFemale?.toString() ?? '0',
     paymentTiming: (initial?.paymentTiming ?? 'onsite') as 'onsite' | 'prepay' | 'both',
+    notifyOnReserve: initial?.notifyOnReserve ?? true,
+    notifyOnReserveApp: initial?.notifyOnReserveApp ?? true,
+    reservationMessageTemplate: initial?.reservationMessageTemplate ?? '',
+    remindEnabled: initial?.remindEnabled ?? false,
+    remindApp: initial?.remindApp ?? false,
+    remindPreset: 'prev18',
+    remindAt: toLocalDatetimeValue(initial?.remindAt),
+    reminderMessageTemplate: initial?.reminderMessageTemplate ?? '',
     levelEnabled: initial?.levelEnabled ?? false,
     rosterShareEnabled: initial?.rosterShareEnabled ?? false,
     reserveActionStyle: (initial?.reserveActionStyle === 'line' ? 'line' : initial?.reserveActionStyle === 'comiu' ? 'comiu' : '') as '' | 'comiu' | 'line',
@@ -188,6 +209,8 @@ export default function EventForm({
     if (simplified) return;
     api.tenant.get().then((tenantData) => {
       setTenant(tenantData);
+      setIsFreePlan(tenantData.plan === 'free');
+      setIsPro(tenantData.plan === 'pro');
     }).catch(() => {});
     api.publicPages.list().then((pages) => {
       const first = pages[0];
@@ -377,6 +400,20 @@ export default function EventForm({
     });
   }
 
+  function calcRemindAt(preset: string, heldAt: string): string {
+    if (!heldAt) return '';
+    const d = new Date(heldAt);
+    if (preset === 'prev18') {
+      d.setDate(d.getDate() - 1);
+      d.setHours(18, 0, 0, 0);
+    } else if (preset === 'day9') {
+      d.setHours(9, 0, 0, 0);
+    } else {
+      return form.remindAt;
+    }
+    return toLocalDatetimeValue(d.toISOString());
+  }
+
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     setError('');
@@ -394,6 +431,17 @@ export default function EventForm({
       setError('終了日時は開始日時より後にしてください。');
       setSubmitting(false);
       return;
+    }
+
+    let remindAt: string | null = null;
+    if (form.remindEnabled || form.remindApp) {
+      const value = form.remindPreset !== 'custom' ? calcRemindAt(form.remindPreset, form.heldAt) : form.remindAt;
+      if (value && new Date(value).getTime() >= heldAtMs) {
+        setError('リマインド日時は開始日時より前にしてください。');
+        setSubmitting(false);
+        return;
+      }
+      remindAt = value ? new Date(value).toISOString() : null;
     }
 
     let capacity: number | null = null;
@@ -424,6 +472,13 @@ export default function EventForm({
       priceFemale: form.priceMode === 'gender' ? numOrNull(form.priceFemale) : null,
       paymentRequired: form.paymentTiming === 'prepay',
       paymentTiming: form.paymentTiming,
+      notifyOnReserve: form.notifyOnReserve,
+      notifyOnReserveApp: form.notifyOnReserveApp,
+      reservationMessageTemplate: form.reservationMessageTemplate || null,
+      remindEnabled: form.remindEnabled,
+      remindApp: form.remindApp,
+      remindAt,
+      reminderMessageTemplate: form.reminderMessageTemplate || null,
       levelEnabled: form.levelEnabled,
       rosterShareEnabled: form.rosterShareEnabled,
       reserveActionStyle: form.reserveActionStyle || null,
@@ -849,6 +904,93 @@ export default function EventForm({
           onChange={(checked) => set('rosterShareEnabled', checked)}
         />
       </Section>
+
+      {!hideLineNotify && (
+      <Section title="通知">
+        {/* 予約完了時の通知 */}
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-gray-700">予約完了時</p>
+          <div className={`flex flex-wrap gap-3 ${!isLineConfigured ? 'pointer-events-none opacity-35' : ''}`}>
+            <Check
+              label="LINE"
+              checked={form.notifyOnReserve}
+              disabled={!isLineConfigured || !isPro}
+              onChange={(checked) => set('notifyOnReserve', checked)}
+            />
+          </div>
+          {!isLineConfigured && (
+            <p className="mt-1 rounded-lg bg-gray-100 px-3 py-2 text-xs text-gray-400">
+              LINE通知を使うにはLINE API設定が必要です。
+              <Link href="/admin/settings/line" className="ml-1 underline">LINE設定へ</Link>
+            </p>
+          )}
+          {form.notifyOnReserve && (
+            <div className="pt-1">
+              <label className="mb-1 block text-xs font-medium text-gray-500">
+                このイベントだけのメッセージ文面（空欄なら団体の標準文面）
+              </label>
+              <textarea
+                value={form.reservationMessageTemplate}
+                onChange={(e) => set('reservationMessageTemplate', e.target.value)}
+                placeholder={'【{title}】ご予約ありがとうございます！\n日時：{date}\n場所：{location}'}
+                rows={3}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* リマインド通知 */}
+        <div className="space-y-2 pt-3">
+          <p className={`text-sm font-medium ${isFreePlan ? 'text-gray-400' : 'text-gray-700'}`}>
+            事前リマインド
+            {isFreePlan && <span className="ml-2 text-xs text-[#06C755]">スタンダード以上</span>}
+          </p>
+          <div className={`flex flex-wrap gap-3 ${!isLineConfigured || isFreePlan ? 'pointer-events-none opacity-35' : ''}`}>
+            <Check
+              label="LINE"
+              checked={form.remindEnabled}
+              disabled={isFreePlan || !isLineConfigured}
+              onChange={(checked) => set('remindEnabled', checked)}
+            />
+          </div>
+          {!isLineConfigured && !isFreePlan && (
+            <p className="rounded-lg bg-gray-100 px-3 py-2 text-xs text-gray-400">
+              LINE通知を使うにはLINE API設定が必要です。
+              <Link href="/admin/settings/line" className="ml-1 underline">LINE設定へ</Link>
+            </p>
+          )}
+          {(form.remindEnabled || form.remindApp) && (
+            <div className="space-y-2 border-l-2 border-[#06C755]/30 pl-4 pt-1">
+              <RadioGroup
+                value={form.remindPreset}
+                onChange={(value) => set('remindPreset', value)}
+                options={[
+                  ['prev18', '前日 18:00'],
+                  ['day9', '当日 09:00'],
+                  ['custom', 'カスタム日時'],
+                ]}
+              />
+              {form.remindPreset === 'custom' && (
+                <input type="datetime-local" step={1800} value={form.remindAt} onChange={(e) => set('remindAt', e.target.value)} className={`${inputClass} max-w-xs`} />
+              )}
+              <div className="pt-1">
+                <label className="mb-1 block text-xs font-medium text-gray-500">
+                  このイベントだけのメッセージ文面（空欄なら団体の標準文面）
+                </label>
+                <textarea
+                  value={form.reminderMessageTemplate}
+                  onChange={(e) => set('reminderMessageTemplate', e.target.value)}
+                  placeholder={'【{title}】まもなく開催です！\n日時：{date}\n場所：{location}'}
+                  rows={3}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </Section>
+      )}
 
       <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center">
         <button type="submit" disabled={submitting} className="rounded-lg bg-[#06C755] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#05a847] disabled:opacity-50">

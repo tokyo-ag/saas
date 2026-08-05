@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { LineMessagingService } from '../line-messaging/line-messaging.service';
 
 @Injectable()
 export class ReservationsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private lineMessaging: LineMessagingService,
+  ) {}
 
   async updateStatus(tenantId: string, id: string, status: ReservationStatus) {
     const reservation = await this.prisma.reservation.findFirst({
@@ -20,13 +24,25 @@ export class ReservationsService {
     });
 
     if (status === ReservationStatus.cancelled) {
-      await this.promoteWaitlist(reservation.eventId);
+      await this.promoteWaitlist(tenantId, reservation.eventId);
+
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+      });
+      if (tenant?.lineChannelAccessToken) {
+        await this.lineMessaging.sendCancelNotifyToOrganizer(
+          tenant.lineChannelAccessToken,
+          tenant.organizerLineUserId ?? '',
+          reservation.member.name ?? '参加者',
+          reservation.event.title,
+        );
+      }
     }
 
     return updated;
   }
 
-  async promoteWaitlist(eventId: string) {
+  async promoteWaitlist(tenantId: string, eventId: string) {
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
     });
@@ -55,5 +71,18 @@ export class ReservationsService {
       where: { id: nextWaitlisted.id },
       data: { status: ReservationStatus.reserved, waitlistOrder: null },
     });
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
+    if (tenant?.lineChannelAccessToken && nextWaitlisted.member.lineUserId) {
+      await this.lineMessaging.sendWaitlistPromoted(
+        tenant.lineChannelAccessToken,
+        nextWaitlisted.member.lineUserId,
+        event.title,
+        event.heldAt,
+        event.location,
+      );
+    }
   }
 }

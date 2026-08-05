@@ -77,6 +77,8 @@ async function main() {
         price: ev.price,
         status: 'open',
         capacity: 20,
+        notifyOnReserve: true,
+        remindEnabled: false,
         paymentRequired: false,
         paymentTiming: 'onsite',
       },

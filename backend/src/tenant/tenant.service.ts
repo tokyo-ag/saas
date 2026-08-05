@@ -3,9 +3,11 @@ import {
   NotFoundException,
   BadRequestException,
   InternalServerErrorException,
+  UnauthorizedException,
   ForbiddenException,
   ConflictException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import Stripe from 'stripe';
 import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
@@ -28,10 +30,16 @@ export class UpdateTenantDto {
   @IsOptional() @IsArray() @IsString({ each: true }) tags?: string[];
   @IsOptional() @IsArray() @IsString({ each: true }) typeTags?: string[];
   @IsOptional() @IsArray() @IsString({ each: true }) activityTags?: string[];
+  @IsOptional() @IsString() lineChannelId?: string;
+  @IsOptional() @IsString() lineChannelSecret?: string;
+  @IsOptional() @IsString() lineChannelAccessToken?: string;
+  @IsOptional() @IsString() organizerLineUserId?: string;
   @IsOptional() @IsString() stripePublishableKey?: string;
   @IsOptional() @IsString() stripeSecretKey?: string;
   @IsOptional() @IsString() stripeWebhookSecret?: string;
   @IsOptional() @IsString() liffEventView?: string;
+  @IsOptional() @IsString() reservationMessageTemplate?: string;
+  @IsOptional() @IsString() reminderMessageTemplate?: string;
   @IsOptional() @IsBoolean() activityTickerEnabled?: boolean;
   @IsOptional() @IsString() themeColor?: string;
   @IsOptional() @IsString() iconUrl?: string;
@@ -40,10 +48,17 @@ export class UpdateTenantDto {
 
 @Injectable()
 export class TenantService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
 
   private toSafeTenant<
     T extends {
+      lineChannelId?: unknown;
+      lineChannelSecret: unknown;
+      lineChannelAccessToken: unknown;
+      liffId?: unknown;
       stripeSecretKey: unknown;
       stripeWebhookSecret: unknown;
     },
@@ -51,11 +66,20 @@ export class TenantService {
     // Keep secret values server-side while still letting the UI know whether setup is complete.
 
     const {
+      lineChannelSecret: _lineChannelSecret,
+      lineChannelAccessToken: _lineChannelAccessToken,
+      liffId: _liffId,
       stripeSecretKey: _stripeSecretKey,
       stripeWebhookSecret: _stripeWebhookSecret,
       ...safe
     } = tenant;
-    return safe;
+    return {
+      ...safe,
+      lineBasicConfigured: Boolean(safe.lineChannelId && _lineChannelSecret),
+      lineChannelSecretConfigured: Boolean(_lineChannelSecret),
+      lineChannelAccessTokenConfigured: Boolean(_lineChannelAccessToken),
+      lineConfigured: Boolean(_lineChannelAccessToken),
+    };
   }
 
   private async findRaw(tenantId: string) {
@@ -71,7 +95,50 @@ export class TenantService {
     return this.toSafeTenant(tenant);
   }
 
-  async update(tenantId: string, dto: UpdateTenantDto) {
+  private assertSensitiveSettingsReconfirmed(
+    tenantId: string,
+    accountId: string,
+    dto: UpdateTenantDto,
+    reauthRequired: boolean,
+    reauthToken?: string,
+  ) {
+    const changesSensitiveLineSettings = [
+      dto.lineChannelId,
+      dto.lineChannelSecret,
+      dto.lineChannelAccessToken,
+      dto.organizerLineUserId,
+    ].some((value) => value !== undefined);
+
+    if (!changesSensitiveLineSettings || !reauthRequired) return;
+    if (!reauthToken)
+      throw new UnauthorizedException('LINE設定を編集するには再認証が必要です');
+
+    try {
+      const payload = this.jwtService.verify<{
+        tenantId: string;
+        accountId: string;
+        purpose?: string;
+      }>(reauthToken);
+      if (
+        payload.tenantId !== tenantId ||
+        payload.accountId !== accountId ||
+        payload.purpose !== 'sensitive-settings'
+      ) {
+        throw new Error('invalid reauth token');
+      }
+    } catch {
+      throw new UnauthorizedException(
+        '再認証の有効期限が切れました。もう一度確認してください',
+      );
+    }
+  }
+
+  async update(
+    tenantId: string,
+    dto: UpdateTenantDto,
+    accountId: string,
+    reauthToken?: string,
+  ) {
     const tenant = await this.findRaw(tenantId);
 
     if (dto.code !== undefined) {
@@ -95,16 +162,35 @@ export class TenantService {
       dto = { ...dto, code: slug || undefined };
     }
 
+    const changesLineSettings = [
+      dto.lineChannelId,
+      dto.lineChannelSecret,
+      dto.lineChannelAccessToken,
+      dto.organizerLineUserId,
+    ].some((v) => v !== undefined);
     const changesStripeSettings = [
       dto.stripePublishableKey,
       dto.stripeSecretKey,
       dto.stripeWebhookSecret,
     ].some((v) => v !== undefined);
+    if (changesLineSettings && tenant.plan !== 'pro') {
+      throw new ForbiddenException(
+        'LINE API設定はPROプランでご利用いただけます。',
+      );
+    }
     if (changesStripeSettings && tenant.plan !== 'pro') {
       throw new ForbiddenException(
         'Stripe決済設定はPROプランでご利用いただけます。',
       );
     }
+
+    this.assertSensitiveSettingsReconfirmed(
+      tenantId,
+      accountId,
+      dto,
+      Boolean(tenant.lineChannelAccessToken),
+      reauthToken,
+    );
 
     const typeTags =
       dto.typeTags !== undefined
@@ -128,6 +214,18 @@ export class TenantService {
         ...(legacyTags !== undefined && { tags: legacyTags }),
         ...(typeTags !== undefined && { typeTags }),
         ...(activityTags !== undefined && { activityTags, tags: activityTags }),
+        ...(dto.lineChannelId !== undefined && {
+          lineChannelId: dto.lineChannelId.trim() || null,
+        }),
+        ...(dto.lineChannelSecret !== undefined && {
+          lineChannelSecret: dto.lineChannelSecret.trim() || null,
+        }),
+        ...(dto.lineChannelAccessToken !== undefined && {
+          lineChannelAccessToken: dto.lineChannelAccessToken.trim() || null,
+        }),
+        ...(dto.organizerLineUserId !== undefined && {
+          organizerLineUserId: dto.organizerLineUserId || null,
+        }),
         ...(dto.stripePublishableKey !== undefined && {
           stripePublishableKey: dto.stripePublishableKey || null,
         }),
@@ -139,6 +237,12 @@ export class TenantService {
         }),
         ...(dto.liffEventView !== undefined && {
           liffEventView: dto.liffEventView,
+        }),
+        ...(dto.reservationMessageTemplate !== undefined && {
+          reservationMessageTemplate: dto.reservationMessageTemplate || null,
+        }),
+        ...(dto.reminderMessageTemplate !== undefined && {
+          reminderMessageTemplate: dto.reminderMessageTemplate || null,
         }),
         ...(dto.activityTickerEnabled !== undefined && {
           activityTickerEnabled: dto.activityTickerEnabled,
@@ -294,6 +398,35 @@ export class TenantService {
       thisMonthReservationCount,
       totalRevenue,
     };
+  }
+
+  async syncLineProfile(tenantId: string) {
+    const tenant = await this.findRaw(tenantId);
+    if (!tenant.lineChannelAccessToken) {
+      throw new BadRequestException(
+        'LINE Channel Access Tokenが設定されていません',
+      );
+    }
+
+    const res = await fetch('https://api.line.me/v2/bot/info', {
+      headers: { Authorization: `Bearer ${tenant.lineChannelAccessToken}` },
+    });
+    if (!res.ok) {
+      throw new BadRequestException('LINEアカウント情報の取得に失敗しました');
+    }
+    const data = (await res.json()) as {
+      displayName: string;
+      pictureUrl?: string;
+    };
+
+    const updated = await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        lineDisplayName: data.displayName,
+        linePictureUrl: data.pictureUrl ?? null,
+      },
+    });
+    return this.toSafeTenant(updated);
   }
 
   private supportThreadId(tenantId: string) {

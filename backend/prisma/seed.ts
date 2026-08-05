@@ -85,6 +85,10 @@ async function main() {
         status: 'open',
         price: 1000,
         paymentRequired: false,
+        notifyOnReserve: true,
+        notifyOnReserveApp: true,
+        remindEnabled: true,
+        remindAt: daysFromNow(9, 18),
       },
     }),
     prisma.event.create({
@@ -100,6 +104,9 @@ async function main() {
         status: 'open',
         price: 1500,
         paymentRequired: false,
+        notifyOnReserve: true,
+        notifyOnReserveApp: true,
+        remindEnabled: false,
       },
     }),
     prisma.event.create({
@@ -115,6 +122,9 @@ async function main() {
         status: 'open',
         price: 1200,
         paymentRequired: false,
+        notifyOnReserve: true,
+        notifyOnReserveApp: false,
+        remindEnabled: false,
       },
     }),
     prisma.event.create({
@@ -130,6 +140,9 @@ async function main() {
         status: 'closed',
         price: 1000,
         paymentRequired: false,
+        notifyOnReserve: true,
+        notifyOnReserveApp: true,
+        remindEnabled: false,
       },
     }),
     prisma.event.create({
@@ -144,6 +157,9 @@ async function main() {
         status: 'draft',
         price: 0,
         paymentRequired: false,
+        notifyOnReserve: true,
+        notifyOnReserveApp: false,
+        remindEnabled: false,
       },
     }),
   ]);

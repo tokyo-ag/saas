@@ -31,6 +31,11 @@ model Tenant {
   id                     String    @id @default(uuid())
   name                   String    @db.VarChar(100)
   description            String?   @db.Text
+  lineChannelId          String?   @map("line_channel_id") @db.VarChar(100)
+  lineChannelSecret      String?   @map("line_channel_secret") @db.VarChar(100)
+  lineChannelAccessToken String?   @map("line_channel_access_token") @db.Text
+  liffId                 String?   @map("liff_id") @db.VarChar(100)
+  organizerLineUserId    String?   @map("organizer_line_user_id") @db.VarChar(100)
   lineDisplayName        String?   @map("line_display_name") @db.VarChar(100)
   linePictureUrl         String?   @map("line_picture_url") @db.Text
   stripeAccountId        String?   @map("stripe_account_id") @db.VarChar(100)
@@ -44,6 +49,9 @@ model Tenant {
   liffEventView          String    @default("card") @map("liff_event_view") @db.VarChar(20)
   mobileManageToken      String?   @unique @map("mobile_manage_token") @db.VarChar(64)
   mobileManageHideLevel  Boolean   @default(true) @map("mobile_manage_hide_level")
+  mobileManageHideLineNotify Boolean @default(true) @map("mobile_manage_hide_line_notify")
+  reservationMessageTemplate String? @map("reservation_message_template") @db.Text
+  reminderMessageTemplate    String? @map("reminder_message_template") @db.Text
   activityTickerEnabled  Boolean   @default(true) @map("activity_ticker_enabled")
   themeColor             String    @default("green") @map("theme_color") @db.VarChar(20)
   iconUrl                String?   @map("icon_url") @db.Text
@@ -271,6 +279,14 @@ model Event {
   priceFemale     Int?        @map("price_female")
   paymentRequired Boolean     @default(false) @map("payment_required")
   paymentTiming   String      @default("onsite") @map("payment_timing")
+  notifyOnReserve    Boolean     @default(true) @map("notify_on_reserve")
+  notifyOnReserveApp Boolean     @default(true) @map("notify_on_reserve_app")
+  reservationMessageTemplate String? @map("reservation_message_template") @db.Text
+  remindEnabled      Boolean     @default(false) @map("remind_enabled")
+  remindApp          Boolean     @default(false) @map("remind_app")
+  remindAt        DateTime?   @map("remind_at")
+  remindedAt      DateTime?   @map("reminded_at")
+  reminderMessageTemplate    String? @map("reminder_message_template") @db.Text
   levelEnabled    Boolean     @default(false) @map("level_enabled")
   reserveActionStyle String? @map("reserve_action_style") @db.VarChar(20)
   rosterShareEnabled Boolean  @default(false) @map("roster_share_enabled")

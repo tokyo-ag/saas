@@ -27,6 +27,11 @@ class LoginDto {
   @IsString() @IsNotEmpty() password: string;
 }
 
+class ReconfirmDto {
+  @IsEmail() email: string;
+  @IsString() @IsNotEmpty() password: string;
+}
+
 class LineCompleteDto {
   @IsString() lineToken: string;
   @IsNotEmpty() @IsString() orgName: string;
@@ -68,6 +73,21 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto.email, dto.password);
+  }
+
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @Post('reconfirm')
+  @UseGuards(AdminGuard)
+  reconfirm(
+    @Req() req: Request & { user: { tenantId: string; accountId: string } },
+    @Body() dto: ReconfirmDto,
+  ) {
+    return this.authService.reconfirmPassword(
+      req.user.tenantId,
+      req.user.accountId,
+      dto.email,
+      dto.password,
+    );
   }
 
   @Get('verify-email')

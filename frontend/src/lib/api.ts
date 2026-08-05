@@ -28,7 +28,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     ((method === 'GET' &&
       /^\/liff\/[^/]+(\/(events(|\/[^/]+(|\/reviews))|members\/[^/]+)?)?$/.test(path)) ||
       (method === 'POST' && /^\/liff\/[^/]+\/access$/.test(path)));
-  const needsAuth = isSuperadmin || isAdmin || isMobileManageSession || path === '/auth/me' || path === '/auth/set-email-password' || path === '/auth/resend-verification';
+  const needsAuth = isSuperadmin || isAdmin || isMobileManageSession || path === '/auth/reconfirm' || path === '/auth/me' || path === '/auth/set-email-password' || path === '/auth/resend-verification';
   const token = (isAdmin || isMobileManageSession) && _mobileManageToken ? _mobileManageToken : needsAuth ? getToken() : null;
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -59,7 +59,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   if (!res.ok) {
     // 超簡単モバイル管理セッション中は、通常ログインへの強制遷移を行わない
     // - このセッションはそもそもパスワードログインを経由していないため。
-    if (res.status === 401 && needsAuth && !_mobileManageToken && typeof window !== 'undefined') {
+    if (res.status === 401 && needsAuth && !_mobileManageToken && path !== '/auth/reconfirm' && typeof window !== 'undefined') {
       clearToken();
       window.location.href = isSuperadmin ? '/superadmin/login' : '/login';
       return Promise.reject(new Error('Unauthorized'));
@@ -114,10 +114,17 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify({ isPublished }),
       }),
+    remind: (id: string) =>
+      request<{ sentCount: number }>(`/admin/events/${id}/remind`, { method: 'POST' }),
     checkin: (id: string, memberId: string) =>
       request<{ memberName: string; alreadyCheckedIn: boolean }>(
         `/admin/events/${id}/checkin`,
         { method: 'POST', body: JSON.stringify({ memberId }) },
+      ),
+    sendMessage: (id: string, data: { content: string; sendLine: boolean; sendApp: boolean }) =>
+      request<{ lineSentCount: number; appSentCount: number; total: number }>(
+        `/admin/events/${id}/message`,
+        { method: 'POST', body: JSON.stringify(data) },
       ),
     exportUrl: (id: string) => `${BASE}/admin/events/${id}/export`,
     toggleRosterShare: (id: string, enabled: boolean) =>
@@ -133,6 +140,7 @@ export const api = {
       return request<Member[]>(`/admin/members${q ? `?${q}` : ''}`);
     },
     get: (id: string) => request<MemberDetail>(`/admin/members/${id}`),
+    syncLineProfiles: () => request<{ updated: number }>('/admin/members/sync-line-profiles', { method: 'POST' }),
     block: (id: string) => request<Member>(`/admin/members/${id}/block`, { method: 'PATCH' }),
     unblock: (id: string) => request<Member>(`/admin/members/${id}/unblock`, { method: 'PATCH' }),
     remove: (id: string) => request<{ success: boolean }>(`/admin/members/${id}`, { method: 'DELETE' }),
@@ -335,6 +343,7 @@ export const api = {
         tenantIcon: string | null;
         liffEventView: string;
         hideLevel: boolean;
+        hideLineNotify: boolean;
       }>('/mobile-manage/verify', { method: 'POST', body: JSON.stringify({ token }) }),
     getDisplayFields: () =>
       request<MobileManageDisplayFields>('/mobile-manage/display-fields'),
@@ -346,9 +355,10 @@ export const api = {
   },
   tenant: {
     get: () => request<Tenant>('/admin/tenant'),
-    update: (data: Partial<TenantInput>) =>
+    update: (data: Partial<TenantInput>, reauthToken?: string) =>
       request<Tenant>('/admin/tenant', {
         method: 'PUT',
+        headers: reauthToken ? { 'X-Reauth-Token': reauthToken } : undefined,
         body: JSON.stringify(data),
       }),
     stats: () => request<{
@@ -358,6 +368,7 @@ export const api = {
       thisMonthReservationCount: number;
       totalRevenue: number;
     }>('/admin/tenant/stats'),
+    syncLineProfile: () => request<Tenant>('/admin/tenant/sync-line-profile', { method: 'POST' }),
     billingCheckout: (plan: 'standard' | 'pro') =>
       request<{ url: string }>('/admin/tenant/billing/checkout', {
         method: 'POST',
@@ -373,6 +384,11 @@ export const api = {
       }),
   },
   auth: {
+    reconfirm: (email: string, password: string) =>
+      request<{ reauthToken: string }>('/auth/reconfirm', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      }),
     getMe: () =>
       request<{ tenantId: string; accountId: string; email: string | null; emailVerified: boolean; hasPassword: boolean; lineUserId: string | null }>('/auth/me'),
     setEmailPassword: (email: string, password: string) =>
@@ -466,6 +482,14 @@ export interface Event {
   priceFemale?: number;
   paymentRequired: boolean;
   paymentTiming?: string;
+  notifyOnReserve: boolean;
+  notifyOnReserveApp?: boolean;
+  reservationMessageTemplate?: string | null;
+  remindEnabled: boolean;
+  remindApp?: boolean;
+  remindAt?: string;
+  remindedAt?: string;
+  reminderMessageTemplate?: string | null;
   createdAt: string;
   updatedAt: string;
   reservedCount?: number;
@@ -497,6 +521,13 @@ export interface EventInput {
   priceFemale?: number | null;
   paymentRequired?: boolean;
   paymentTiming?: string;
+  notifyOnReserve?: boolean;
+  notifyOnReserveApp?: boolean;
+  reservationMessageTemplate?: string | null;
+  remindEnabled?: boolean;
+  remindApp?: boolean;
+  remindAt?: string | null;
+  reminderMessageTemplate?: string | null;
   imageUrl?: string;
   iconUrl?: string;
   category?: string | null;
@@ -746,6 +777,7 @@ export interface MobileManageDisplayFields {
 export interface MobileManageSettings {
   linkUrl: string | null;
   hideLevel: boolean;
+  hideLineNotify: boolean;
   reserveActionStyle: 'comiu' | 'line';
 }
 
@@ -758,6 +790,14 @@ export interface Tenant {
   tags?: string[];
   typeTags?: string[];
   activityTags?: string[];
+  lineChannelId?: string;
+  lineChannelSecret?: string;
+  lineChannelAccessToken?: string;
+  lineBasicConfigured?: boolean;
+  lineChannelSecretConfigured?: boolean;
+  lineChannelAccessTokenConfigured?: boolean;
+  lineConfigured?: boolean;
+  organizerLineUserId?: string;
   lineDisplayName?: string;
   linePictureUrl?: string;
   stripePublishableKey?: string | null;
@@ -766,6 +806,8 @@ export interface Tenant {
   plan: 'free' | 'standard' | 'pro';
   planStartedAt?: string | null;
   liffEventView?: string;
+  reservationMessageTemplate?: string | null;
+  reminderMessageTemplate?: string | null;
   activityTickerEnabled?: boolean;
   themeColor?: string;
   iconUrl?: string | null;
@@ -787,10 +829,16 @@ export interface TenantInput {
   tags?: string[];
   typeTags?: string[];
   activityTags?: string[];
+  lineChannelId?: string;
+  lineChannelSecret?: string;
+  lineChannelAccessToken?: string;
+  organizerLineUserId?: string;
   stripePublishableKey?: string;
   stripeSecretKey?: string;
   stripeWebhookSecret?: string;
   liffEventView?: string;
+  reservationMessageTemplate?: string;
+  reminderMessageTemplate?: string;
   activityTickerEnabled?: boolean;
   themeColor?: string;
   iconUrl?: string;
@@ -807,6 +855,7 @@ export interface LiffTenant {
   lineDisplayName?: string;
   linePictureUrl?: string;
   iconUrl?: string;
+  lineChannelId?: string;
   liffEventView?: string;
   activityTickerEnabled?: boolean;
   themeColor?: string;

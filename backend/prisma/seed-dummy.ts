@@ -33,6 +33,9 @@ async function seedTenant001() {
         capacity: 20,
         status: 'open',
         price: 0,
+        notifyOnReserve: true,
+        remindEnabled: true,
+        remindAt: new Date('2026-06-14T18:00:00+09:00'),
       },
     }),
     prisma.event.create({
@@ -47,6 +50,8 @@ async function seedTenant001() {
         capacity: 15,
         status: 'open',
         price: 1500,
+        notifyOnReserve: true,
+        remindEnabled: false,
       },
     }),
     prisma.event.create({
@@ -61,6 +66,8 @@ async function seedTenant001() {
         capacity: 25,
         status: 'closed',
         price: 0,
+        notifyOnReserve: true,
+        remindEnabled: false,
       },
     }),
     prisma.event.create({
@@ -74,6 +81,8 @@ async function seedTenant001() {
         location: '未定',
         status: 'draft',
         price: 0,
+        notifyOnReserve: true,
+        remindEnabled: false,
       },
     }),
   ]);
@@ -151,6 +160,9 @@ async function seedTenant002() {
         capacity: 30,
         status: 'open',
         price: 2000,
+        notifyOnReserve: true,
+        remindEnabled: true,
+        remindAt: new Date('2026-06-19T18:00:00+09:00'),
       },
     }),
     prisma.event.create({
@@ -165,6 +177,8 @@ async function seedTenant002() {
         capacity: 20,
         status: 'open',
         price: 1000,
+        notifyOnReserve: true,
+        remindEnabled: false,
       },
     }),
     prisma.event.create({
@@ -179,6 +193,8 @@ async function seedTenant002() {
         capacity: 30,
         status: 'closed',
         price: 2000,
+        notifyOnReserve: true,
+        remindEnabled: false,
       },
     }),
   ]);
@@ -230,6 +246,9 @@ async function seedTenant003() {
         capacity: 12,
         status: 'open',
         price: 500,
+        notifyOnReserve: true,
+        remindEnabled: true,
+        remindAt: new Date('2026-06-21T20:00:00+09:00'),
       },
     }),
     prisma.event.create({
@@ -244,6 +263,8 @@ async function seedTenant003() {
         capacity: 8,
         status: 'open',
         price: 3000,
+        notifyOnReserve: true,
+        remindEnabled: false,
       },
     }),
   ]);

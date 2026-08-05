@@ -7,6 +7,7 @@ import {
 import { randomBytes } from 'crypto';
 import { ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { LineMessagingService } from '../line-messaging/line-messaging.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { PLAN_LIMITS } from '../config/plan-limits';
 
@@ -28,7 +29,10 @@ function normalizePortalCategoryTags(tags?: string[] | null) {
 
 @Injectable()
 export class EventsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private lineMessaging: LineMessagingService,
+  ) {}
 
   async findAll(tenantId: string) {
     const events = await this.prisma.event.findMany({
@@ -90,6 +94,10 @@ export class EventsService {
         status: e.status,
         price: e.price,
         paymentRequired: e.paymentRequired,
+        notifyOnReserve: e.notifyOnReserve,
+        remindEnabled: e.remindEnabled,
+        remindAt: e.remindAt,
+        remindedAt: e.remindedAt,
         imageUrl: e.imageUrl,
         iconUrl: e.iconUrl,
         category: e.category,
@@ -124,7 +132,7 @@ export class EventsService {
   }
 
   async create(tenantId: string, dto: CreateEventDto) {
-    const { heldAt, endAt } = this.validateEventDates(dto);
+    const { heldAt, endAt, remindAt } = this.validateEventDates(dto);
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
     });
@@ -137,6 +145,11 @@ export class EventsService {
       if (count >= PLAN_LIMITS.free.eventsPerMonth) {
         throw new ForbiddenException(
           `今月のイベント作成上限（${PLAN_LIMITS.free.eventsPerMonth}件）に達しました。スタンダードプランにアップグレードしてください。`,
+        );
+      }
+      if (dto.remindEnabled) {
+        throw new ForbiddenException(
+          'リマインド機能はスタンダードプランでご利用いただけます。',
         );
       }
     }
@@ -160,6 +173,13 @@ export class EventsService {
         priceFemale: dto.priceFemale ?? null,
         paymentRequired: dto.paymentTiming === 'prepay',
         paymentTiming: dto.paymentTiming ?? 'onsite',
+        notifyOnReserve: dto.notifyOnReserve,
+        notifyOnReserveApp: dto.notifyOnReserveApp ?? false,
+        reservationMessageTemplate: dto.reservationMessageTemplate || null,
+        remindEnabled: dto.remindEnabled,
+        remindApp: dto.remindApp ?? false,
+        remindAt,
+        reminderMessageTemplate: dto.reminderMessageTemplate || null,
         imageUrl: dto.imageUrl ?? null,
         iconUrl: dto.iconUrl ?? null,
         category: dto.category ?? null,
@@ -176,14 +196,33 @@ export class EventsService {
 
   async update(tenantId: string, id: string, dto: Partial<CreateEventDto>) {
     const current = await this.findOne(tenantId, id);
-    const { heldAt, endAt } = this.validateEventDates(dto, {
+    const { heldAt, endAt, remindAt } = this.validateEventDates(dto, {
       heldAt: current.heldAt,
       endAt: current.endAt,
+      remindAt: current.remindAt,
     });
+    if (dto.remindEnabled) {
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+      });
+      if (tenant?.plan === 'free') {
+        throw new ForbiddenException(
+          'リマインド機能はスタンダードプランでご利用いただけます。',
+        );
+      }
+    }
     const rosterShareToken =
       dto.rosterShareEnabled && !current.rosterShareToken
         ? this.generateRosterShareToken()
         : undefined;
+    const wasReminderActive = current.remindEnabled || current.remindApp;
+    const willReminderBeActive =
+      (dto.remindEnabled ?? current.remindEnabled) ||
+      (dto.remindApp ?? current.remindApp);
+    const remindAtChanged =
+      (remindAt?.getTime() ?? null) !== (current.remindAt?.getTime() ?? null);
+    const shouldResetReminder =
+      willReminderBeActive && (remindAtChanged || !wasReminderActive);
     return this.prisma.event.update({
       where: { id },
       data: {
@@ -219,6 +258,26 @@ export class EventsService {
         ...(dto.paymentTiming !== undefined && {
           paymentTiming: dto.paymentTiming,
           paymentRequired: dto.paymentTiming === 'prepay',
+        }),
+        ...(dto.notifyOnReserve !== undefined && {
+          notifyOnReserve: dto.notifyOnReserve,
+        }),
+        ...(dto.notifyOnReserveApp !== undefined && {
+          notifyOnReserveApp: dto.notifyOnReserveApp,
+        }),
+        ...(dto.reservationMessageTemplate !== undefined && {
+          reservationMessageTemplate: dto.reservationMessageTemplate || null,
+        }),
+        ...(dto.remindEnabled !== undefined && {
+          remindEnabled: dto.remindEnabled,
+        }),
+        ...(dto.remindApp !== undefined && { remindApp: dto.remindApp }),
+        ...(dto.remindAt !== undefined && {
+          remindAt,
+        }),
+        ...(shouldResetReminder && { remindedAt: null }),
+        ...(dto.reminderMessageTemplate !== undefined && {
+          reminderMessageTemplate: dto.reminderMessageTemplate || null,
         }),
         ...(dto.imageUrl !== undefined && { imageUrl: dto.imageUrl || null }),
         ...(dto.iconUrl !== undefined && { iconUrl: dto.iconUrl || null }),
@@ -339,6 +398,85 @@ export class EventsService {
     };
   }
 
+  async sendMessage(
+    tenantId: string,
+    eventId: string,
+    content: string,
+    sendLine: boolean,
+    sendApp: boolean,
+  ) {
+    const event = await this.findOne(tenantId, eventId);
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
+
+    const reservations = await this.prisma.reservation.findMany({
+      where: {
+        eventId,
+        tenantId,
+        status: { in: ['reserved', 'attended', 'waiting_payment'] },
+      },
+      include: { member: true },
+    });
+
+    let lineSentCount = 0;
+    let appSentCount = 0;
+
+    for (const r of reservations) {
+      if (sendLine && tenant?.lineChannelAccessToken) {
+        await this.lineMessaging.sendPushMessage(
+          tenant.lineChannelAccessToken,
+          r.member.lineUserId,
+          `【${event.title}】\n${content}`,
+        );
+        lineSentCount++;
+      }
+      if (sendApp) {
+        await this.prisma.notification.create({
+          data: {
+            tenantId,
+            memberId: r.memberId,
+            title: event.title,
+            body: content,
+          },
+        });
+        appSentCount++;
+      }
+    }
+
+    return { lineSentCount, appSentCount, total: reservations.length };
+  }
+
+  async sendRemind(tenantId: string, eventId: string) {
+    const event = await this.findOne(tenantId, eventId);
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
+    if (!tenant?.lineChannelAccessToken) return { sentCount: 0 };
+
+    const reservations = await this.prisma.reservation.findMany({
+      where: { eventId, tenantId, status: { in: ['reserved', 'attended'] } },
+      include: { member: true },
+    });
+
+    for (const r of reservations) {
+      await this.lineMessaging.sendRemind(
+        tenant.lineChannelAccessToken,
+        r.member.lineUserId,
+        event.title,
+        event.heldAt,
+        event.location,
+      );
+    }
+
+    await this.prisma.event.update({
+      where: { id: eventId },
+      data: { remindedAt: new Date() },
+    });
+
+    return { sentCount: reservations.length };
+  }
+
   async exportCsv(tenantId: string, eventId: string): Promise<string> {
     const event = await this.findOne(tenantId, eventId);
     const reservations = await this.prisma.reservation.findMany({
@@ -395,6 +533,7 @@ export class EventsService {
     current?: {
       heldAt: Date;
       endAt: Date | null;
+      remindAt: Date | null;
     },
   ) {
     const heldAt =
@@ -405,6 +544,12 @@ export class EventsService {
           ? new Date(dto.endAt)
           : null
         : (current?.endAt ?? null);
+    const remindAt =
+      dto.remindAt !== undefined
+        ? dto.remindAt
+          ? new Date(dto.remindAt)
+          : null
+        : (current?.remindAt ?? null);
 
     if (!heldAt || Number.isNaN(heldAt.getTime())) {
       throw new BadRequestException('開始日時を正しく入力してください。');
@@ -412,10 +557,18 @@ export class EventsService {
     if (endAt && Number.isNaN(endAt.getTime())) {
       throw new BadRequestException('終了日時を正しく入力してください。');
     }
+    if (remindAt && Number.isNaN(remindAt.getTime())) {
+      throw new BadRequestException('リマインド日時を正しく入力してください。');
+    }
     if (endAt && endAt <= heldAt) {
       throw new BadRequestException('終了日時は開始日時より後にしてください。');
     }
+    if (remindAt && remindAt >= heldAt) {
+      throw new BadRequestException(
+        'リマインド日時は開始日時より前にしてください。',
+      );
+    }
 
-    return { heldAt, endAt };
+    return { heldAt, endAt, remindAt };
   }
 }

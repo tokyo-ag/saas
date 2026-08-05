@@ -55,6 +55,7 @@ type Session = {
   tenantName: string;
   tenantIcon: string | null;
   hideLevel: boolean;
+  hideLineNotify: boolean;
 };
 
 type Screen = { name: 'list' } | { name: 'create' } | { name: 'edit'; id: string } | { name: 'detail'; id: string };
@@ -75,6 +76,7 @@ export default function MobileManagePage() {
           tenantName: res.tenantName,
           tenantIcon: res.tenantIcon,
           hideLevel: res.hideLevel,
+          hideLineNotify: res.hideLineNotify,
         });
       })
       .catch(() => setVerifyError('リンクが無効です。主催者に再発行を依頼してください。'));
@@ -116,7 +118,7 @@ export default function MobileManagePage() {
         {screen.name === 'create' && (
           <div>
             <ScreenHeader title="新規作成" onBack={() => setScreen({ name: 'list' })} />
-            <EventForm simplified hideLevel={session.hideLevel} onSaved={() => setScreen({ name: 'list' })} />
+            <EventForm simplified hideLevel={session.hideLevel} hideLineNotify={session.hideLineNotify} onSaved={() => setScreen({ name: 'list' })} />
           </div>
         )}
         {screen.name === 'edit' && (
@@ -146,7 +148,7 @@ function EditScreen({ eventId, session, onDone }: { eventId: string; session: Se
     <div>
       <ScreenHeader title="編集" onBack={onDone} />
       {event ? (
-        <EventForm initial={event} simplified hideLevel={session.hideLevel} onSaved={onDone} onDeleted={onDone} />
+        <EventForm initial={event} simplified hideLevel={session.hideLevel} hideLineNotify={session.hideLineNotify} onSaved={onDone} onDeleted={onDone} />
       ) : (
         <p className="text-sm text-gray-400">読み込み中...</p>
       )}
@@ -210,6 +212,11 @@ function EventListScreen({
         priceFemale: ev.priceFemale ?? null,
         paymentRequired: ev.paymentRequired,
         paymentTiming: ev.paymentTiming,
+        notifyOnReserve: ev.notifyOnReserve,
+        notifyOnReserveApp: true,
+        remindEnabled: ev.remindEnabled,
+        remindApp: ev.remindApp,
+        remindAt: ev.remindAt ?? null,
         imageUrl: ev.imageUrl,
         iconUrl: ev.iconUrl,
         category: ev.category ?? null,

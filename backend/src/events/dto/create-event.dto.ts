@@ -105,6 +105,36 @@ export class CreateEventDto {
   @IsString()
   paymentTiming?: string;
 
+  @IsBoolean()
+  @Transform(({ value }) => Boolean(value))
+  notifyOnReserve: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => Boolean(value))
+  notifyOnReserveApp?: boolean;
+
+  @IsOptional()
+  @IsString()
+  reservationMessageTemplate?: string | null;
+
+  @IsBoolean()
+  @Transform(({ value }) => Boolean(value))
+  remindEnabled: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => Boolean(value))
+  remindApp?: boolean;
+
+  @IsOptional()
+  @IsDateString()
+  remindAt?: string | null;
+
+  @IsOptional()
+  @IsString()
+  reminderMessageTemplate?: string | null;
+
   @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => Boolean(value))

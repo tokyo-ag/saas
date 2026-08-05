@@ -7,6 +7,7 @@ import { SaveToast } from '@/components/ui/SaveToast';
 
 const tabs = [
   { label: '団体情報', href: '/admin/settings' },
+  { label: 'LINE連携', href: '/admin/settings/line' },
   { label: 'Stripe決済', href: '/admin/settings/stripe' },
   { label: 'プラン', href: '/admin/settings/plan' },
   { label: 'アカウント', href: '/admin/settings/account', active: true },

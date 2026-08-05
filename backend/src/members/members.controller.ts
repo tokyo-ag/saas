@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Patch,
   Delete,
   Param,
@@ -25,6 +26,11 @@ export class MembersController {
     @Query('level') level?: string,
   ) {
     return this.membersService.findAll(tenantId, { name, grade, gender, level });
+  }
+
+  @Post('sync-line-profiles')
+  syncLineProfiles(@TenantId() tenantId: string) {
+    return this.membersService.syncLineProfiles(tenantId);
   }
 
   @Get(':memberId')
