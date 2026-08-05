@@ -950,7 +950,7 @@ export default function EventForm({
             <Check
               label="LINE"
               checked={form.remindEnabled}
-              disabled={isFreePlan || !isLineConfigured || !isPro}
+              disabled={isFreePlan || !isLineConfigured}
               onChange={(checked) => set('remindEnabled', checked)}
             />
           </div>

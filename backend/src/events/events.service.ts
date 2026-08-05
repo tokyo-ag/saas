@@ -215,6 +215,14 @@ export class EventsService {
       dto.rosterShareEnabled && !current.rosterShareToken
         ? this.generateRosterShareToken()
         : undefined;
+    const wasReminderActive = current.remindEnabled || current.remindApp;
+    const willReminderBeActive =
+      (dto.remindEnabled ?? current.remindEnabled) ||
+      (dto.remindApp ?? current.remindApp);
+    const remindAtChanged =
+      (remindAt?.getTime() ?? null) !== (current.remindAt?.getTime() ?? null);
+    const shouldResetReminder =
+      willReminderBeActive && (remindAtChanged || !wasReminderActive);
     return this.prisma.event.update({
       where: { id },
       data: {
@@ -267,6 +275,7 @@ export class EventsService {
         ...(dto.remindAt !== undefined && {
           remindAt,
         }),
+        ...(shouldResetReminder && { remindedAt: null }),
         ...(dto.reminderMessageTemplate !== undefined && {
           reminderMessageTemplate: dto.reminderMessageTemplate || null,
         }),
