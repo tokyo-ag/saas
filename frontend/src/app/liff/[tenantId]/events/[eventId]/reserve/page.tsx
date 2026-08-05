@@ -115,13 +115,13 @@ function ReservePageInner() {
     async function init() {
       const tenantInfo = await api.liff.tenant(tenantId).catch(() => null);
       if (tenantInfo) setTenant(tenantInfo);
-      const ev = await api.liff.event(tenantId, eventId).catch(() => null);
-      const effectiveActionStyle = ev?.reserveActionStyle || tenantInfo?.reserveActionStyle;
+      const preloadedEvent = await api.liff.event(tenantId, eventId).catch(() => null);
+      const effectiveActionStyle = preloadedEvent?.reserveActionStyle || tenantInfo?.reserveActionStyle;
 
       // LINE直通イベント/テナントはLIFFログイン自体が不要。認証なしで詳細だけ見せて、
       // 最後のボタンでLINEに送る。
       if (effectiveActionStyle === 'line' && tenantInfo?.reserveLineUrl) {
-        if (ev) setEvent(ev);
+        if (preloadedEvent) setEvent(preloadedEvent);
         setIsFriend(true);
         setAuthStatus('ok');
         return;
