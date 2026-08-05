@@ -182,19 +182,15 @@ export class SuperadminService implements OnApplicationBootstrap {
         updatedAt: true,
         stripeCustomerId: true,
         stripeSubscriptionId: true,
-        lineChannelAccessToken: true,
         _count: { select: { members: true } },
         organizerAccounts: { select: { email: true }, take: 1 },
       },
     });
-    return tenants.map(
-      ({ _count, organizerAccounts, lineChannelAccessToken, ...t }) => ({
-        ...t,
-        lineConfigured: Boolean(lineChannelAccessToken),
-        memberCount: _count.members,
-        organizerEmail: organizerAccounts[0]?.email ?? null,
-      }),
-    );
+    return tenants.map(({ _count, organizerAccounts, ...t }) => ({
+      ...t,
+      memberCount: _count.members,
+      organizerEmail: organizerAccounts[0]?.email ?? null,
+    }));
   }
 
   async deactivateTenant(id: string) {

@@ -15,7 +15,6 @@ const PLAN_INFO: Record<Plan, { name: string; price: string; color: string; badg
 
 const tabs = [
   { label: '団体情報', href: '/admin/settings' },
-  { label: 'LINE連携', href: '/admin/settings/line' },
   { label: 'Stripe決済', href: '/admin/settings/stripe' },
   { label: 'プラン', href: '/admin/settings/plan', active: true },
 ];
@@ -23,10 +22,8 @@ const tabs = [
 const FEATURES: { label: string; free: string; standard: string; pro: string }[] = [
   { label: 'イベント作成', free: '月2件', standard: '無制限', pro: '無制限' },
   { label: '参加者・予約上限', free: '50人', standard: '無制限', pro: '無制限' },
-  { label: 'リマインド通知', free: '-', standard: '利用可', pro: '利用可' },
   { label: 'CSVエクスポート', free: '-', standard: '利用可', pro: '利用可' },
   { label: '複数管理者', free: '-', standard: '2名まで', pro: '3名まで' },
-  { label: '公式LINE API設定', free: '-', standard: '-', pro: '利用可' },
   { label: 'Stripe事前決済', free: '-', standard: '-', pro: '利用可' },
   { label: '優先サポート', free: '-', standard: '-', pro: '利用可' },
 ];

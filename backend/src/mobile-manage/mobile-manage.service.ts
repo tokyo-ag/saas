@@ -93,7 +93,6 @@ export class MobileManageService {
       select: {
         mobileManageToken: true,
         mobileManageHideLevel: true,
-        mobileManageHideLineNotify: true,
       },
     });
     if (!tenant) throw new NotFoundException('団体が見つかりません');
@@ -102,7 +101,6 @@ export class MobileManageService {
         ? this.buildLinkUrl(tenant.mobileManageToken)
         : null,
       hideLevel: tenant.mobileManageHideLevel,
-      hideLineNotify: tenant.mobileManageHideLineNotify,
       reserveActionStyle: await this.getReserveActionStyle(tenantId),
     };
   }
@@ -126,15 +124,12 @@ export class MobileManageService {
 
   async updateSettings(
     tenantId: string,
-    dto: { hideLevel?: boolean; hideLineNotify?: boolean; reserveActionStyle?: 'comiu' | 'line' },
+    dto: { hideLevel?: boolean; reserveActionStyle?: 'comiu' | 'line' },
   ) {
     await this.prisma.tenant.update({
       where: { id: tenantId },
       data: {
         ...(dto.hideLevel !== undefined && { mobileManageHideLevel: dto.hideLevel }),
-        ...(dto.hideLineNotify !== undefined && {
-          mobileManageHideLineNotify: dto.hideLineNotify,
-        }),
       },
     });
     if (dto.reserveActionStyle) {
@@ -155,7 +150,6 @@ export class MobileManageService {
         iconUrl: true,
         liffEventView: true,
         mobileManageHideLevel: true,
-        mobileManageHideLineNotify: true,
         deletedAt: true,
         bannedAt: true,
       },
@@ -174,7 +168,6 @@ export class MobileManageService {
       tenantIcon: tenant.linePictureUrl ?? tenant.iconUrl ?? null,
       liffEventView: tenant.liffEventView,
       hideLevel: tenant.mobileManageHideLevel,
-      hideLineNotify: tenant.mobileManageHideLineNotify,
     };
   }
 }

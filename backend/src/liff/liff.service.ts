@@ -9,7 +9,6 @@ import {
 import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { LineMessagingService } from '../line-messaging/line-messaging.service';
 import { StripeService } from '../stripe/stripe.service';
 import { PLAN_LIMITS } from '../config/plan-limits';
 export class CreateReservationDto {
@@ -37,7 +36,6 @@ export class SendMessageDto {
 export class LiffService {
   constructor(
     private prisma: PrismaService,
-    private lineMessaging: LineMessagingService,
     private stripeService: StripeService,
   ) {}
 
@@ -86,7 +84,6 @@ export class LiffService {
       lineDisplayName: tenant.lineDisplayName,
       linePictureUrl: tenant.linePictureUrl,
       iconUrl: tenant.iconUrl,
-      lineChannelId: tenant.lineChannelId,
       liffEventView: tenant.liffEventView,
       themeColor: tenant.themeColor,
       activityTickerEnabled: tenant.activityTickerEnabled,
@@ -392,16 +389,8 @@ export class LiffService {
     // 参加者を登録 or 情報更新（LINEユーザーIDで一意に管理）
     let member = await this.findMember(tenantId, dto.lineUserId);
 
-    const lineProfile = await this.lineMessaging.getLineProfile(
-      tenant?.lineChannelAccessToken ?? '',
-      dto.lineUserId,
-    );
-
-    // DTO values (from LIFF SDK) take priority over Messaging API profile
-    const resolvedDisplayName =
-      dto.lineDisplayName ?? lineProfile?.displayName ?? null;
-    const resolvedPictureUrl =
-      dto.linePictureUrl ?? lineProfile?.pictureUrl ?? null;
+    const resolvedDisplayName = dto.lineDisplayName ?? null;
+    const resolvedPictureUrl = dto.linePictureUrl ?? null;
 
     if (!member) {
       const requiresLevel = event.levelEnabled;
@@ -575,30 +564,6 @@ export class LiffService {
           });
           throw err;
         }
-      }
-    }
-
-    // LINE通知
-    if (event.notifyOnReserve && status !== 'waiting_payment') {
-      const token = tenant?.lineChannelAccessToken ?? '';
-      if (status === 'reserved') {
-        await this.lineMessaging.sendReservationConfirm(
-          token,
-          dto.lineUserId,
-          event.title,
-          event.heldAt,
-          event.location,
-          event.price,
-          event.description,
-          event.reservationMessageTemplate ?? tenant?.reservationMessageTemplate,
-        );
-      } else {
-        await this.lineMessaging.sendWaitlistRegistered(
-          token,
-          dto.lineUserId,
-          event.title,
-          waitlistOrder!,
-        );
       }
     }
 
@@ -945,20 +910,6 @@ export class LiffService {
       data: { connectionId, senderId: me.id, content },
     });
 
-    // 相手にLINEプッシュ通知
-    const partner = conn.member1Id === me.id ? conn.member2 : conn.member1;
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-    });
-    if (partner.lineUserId) {
-      await this.lineMessaging.sendTalkNotification(
-        tenant?.lineChannelAccessToken ?? '',
-        partner.lineUserId,
-        me.name ?? 'メンバー',
-        content,
-      );
-    }
-
     return message;
   }
 
@@ -1014,34 +965,8 @@ export class LiffService {
             where: { id: next.id },
             data: { status: ReservationStatus.reserved, waitlistOrder: null },
           });
-
-          const tenant = await this.prisma.tenant.findUnique({
-            where: { id: tenantId },
-          });
-          if (tenant?.lineChannelAccessToken) {
-            await this.lineMessaging.sendWaitlistPromoted(
-              tenant.lineChannelAccessToken,
-              next.member.lineUserId,
-              reservation.event.title,
-              reservation.event.heldAt,
-              reservation.event.location,
-            );
-          }
         }
       }
-    }
-
-    // 主催者へのキャンセル通知
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-    });
-    if (tenant?.lineChannelAccessToken && tenant.organizerLineUserId) {
-      await this.lineMessaging.sendCancelNotifyToOrganizer(
-        tenant.lineChannelAccessToken,
-        tenant.organizerLineUserId,
-        reservation.member.name ?? '（名前未登録）',
-        reservation.event.title,
-      );
     }
 
     return { message: 'キャンセルしました' };

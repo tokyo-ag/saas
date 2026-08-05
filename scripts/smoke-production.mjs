@@ -61,14 +61,11 @@ const suites = {
       },
     },
     {
-      name: 'backend LIFF tenant exposes tenant messaging settings',
+      name: 'backend LIFF tenant responds with basic tenant info',
       run: async () => {
         const tenant = await fetchJson(`${apiUrl}/api/liff/${tenantCode}`);
         if (!tenant?.id || !tenant?.name) {
           throw new Error('LIFF tenant response is missing id/name');
-        }
-        if (!tenant?.lineChannelId) {
-          throw new Error('LIFF tenant response is missing lineChannelId');
         }
         if ('liffId' in tenant) {
           throw new Error('LIFF tenant response must not expose tenant liffId');

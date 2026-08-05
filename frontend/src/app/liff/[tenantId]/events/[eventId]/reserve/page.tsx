@@ -10,7 +10,6 @@ import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
 import {
   initLiff,
   getLiffProfile,
-  checkFriendship,
   liff,
   getInitError,
   loginIfNeeded,
@@ -64,7 +63,6 @@ function ReservePageInner() {
   const [lineUserId, setLineUserId] = useState('');
   const [liffProfile, setLiffProfile] = useState<{ displayName: string; pictureUrl?: string } | null>(null);
   const [profile, setProfile] = useState<LiffProfile | null>(null);
-  const [isFriend, setIsFriend] = useState<boolean | null>(null);
   const [loginRequired, setLoginRequired] = useState(false);
   const [showLoginToast, setShowLoginToast] = useState(false);
   const isPastEvent = event ? new Date(event.heldAt).getTime() < Date.now() : false;
@@ -122,7 +120,6 @@ function ReservePageInner() {
       // 最後のボタンでLINEに送る。
       if (effectiveActionStyle === 'line' && tenantInfo?.reserveLineUrl) {
         if (preloadedEvent) setEvent(preloadedEvent);
-        setIsFriend(true);
         setAuthStatus('ok');
         return;
       }
@@ -221,15 +218,6 @@ function ReservePageInner() {
       }
       if (myRes.status === 'fulfilled') setMyReservation(myRes.value);
 
-      const profileComplete = prof.status === 'fulfilled' && prof.value?.name && prof.value?.grade && prof.value?.gender;
-      const tenantLineId = tenantInfo?.lineChannelId ?? null;
-      if (!profileComplete && tenantLineId) {
-        const friend = await checkFriendship();
-        setIsFriend(friend);
-      } else {
-        setIsFriend(true);
-      }
-
       setAuthStatus('ok');
     }
     init();
@@ -250,12 +238,12 @@ function ReservePageInner() {
 
   // プロフィール未入力ならマイページへ誘導し、入力後にこのページへ戻ってきてもらう
   useEffect(() => {
-    if (authStatus !== 'ok' || isFriend !== true || !lineUserId) return;
+    if (authStatus !== 'ok' || !lineUserId) return;
     if (!hasProfile) {
       const returnTo = `/liff/${tenantId}/events/${eventId}/reserve`;
       router.replace(`/liff/${tenantId}/profile?returnTo=${encodeURIComponent(returnTo)}`);
     }
-  }, [authStatus, isFriend, lineUserId, hasProfile, tenantId, eventId, router]);
+  }, [authStatus, lineUserId, hasProfile, tenantId, eventId, router]);
 
   async function submit() {
     if (!lineUserId || !profile) return;
@@ -336,7 +324,7 @@ function ReservePageInner() {
   }
 
   // ── ローディング / プロフィール未入力でのマイページ誘導中 ──
-  if (authStatus === 'loading' || (authStatus === 'ok' && isFriend === true && !hasProfile && !isLineMode)) {
+  if (authStatus === 'loading' || (authStatus === 'ok' && !hasProfile && !isLineMode)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-sm" style={{ color: accentColor }}>読み込み中...</div>
@@ -383,40 +371,6 @@ function ReservePageInner() {
             再試行する
           </button>
         )}
-      </div>
-    );
-  }
-
-  // ── 友だち追加が必要 ──
-  if (!isFriend) {
-    const addFriendUrl = tenant?.contactUrl?.trim() || null;
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center gap-6" style={{ backgroundColor: theme.backgroundColor }}>
-        <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ backgroundColor: hexToRgba(accentColor, 10), color: accentColor }}>
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2C6.48 2 2 6.03 2 11c0 3.13 1.68 5.9 4.28 7.54L5.5 22l3.78-1.97C10.16 20.65 11.07 21 12 21c5.52 0 10-4.03 10-9S17.52 2 12 2z" fill="currentColor"/>
-          </svg>
-        </div>
-        <div>
-          <p className="text-lg font-bold text-gray-900">公式LINEの友だち追加が必要です</p>
-          <p className="text-sm text-gray-500 mt-2 leading-relaxed">
-            予約にはLINE公式アカウントの友だち追加が必要です。追加後にもう一度お試しください。
-          </p>
-        </div>
-        {addFriendUrl && (
-          <a
-            href={addFriendUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
-            style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
-          >
-            友だち追加する
-          </a>
-        )}
-        <button onClick={() => router.back()} className="text-sm text-gray-400">
-          戻る
-        </button>
       </div>
     );
   }

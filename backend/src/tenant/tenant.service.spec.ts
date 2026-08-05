@@ -18,8 +18,6 @@ describe('TenantService billing checkout', () => {
     code: '12345678',
     plan: 'pro',
     stripeCustomerId: 'cus_test_123',
-    lineChannelSecret: null,
-    lineChannelAccessToken: null,
     stripeSecretKey: null,
     stripeWebhookSecret: null,
   };
@@ -48,7 +46,7 @@ describe('TenantService billing checkout', () => {
         findUnique: jest.fn().mockResolvedValue(tenant),
       },
     };
-    const service = new TenantService(prisma as never, {} as never);
+    const service = new TenantService(prisma as never);
 
     const result = await service.createBillingCheckout('tenant-1', 'pro');
 
@@ -75,34 +73,28 @@ describe('TenantService billing checkout', () => {
 });
 
 describe('TenantService tenant settings', () => {
-  it('returns LINE setup status flags without secret values', async () => {
+  it('returns tenant settings without secret values', async () => {
     const prisma = {
       tenant: {
         findUnique: jest.fn().mockResolvedValue({
           id: 'tenant-1',
           name: 'COMIU Club',
           code: 'comiu',
-          lineChannelId: '2010599444',
-          lineChannelSecret: 'secret',
-          lineChannelAccessToken: 'token',
-          liffId: null,
-          stripeSecretKey: null,
-          stripeWebhookSecret: null,
+          stripeSecretKey: 'secret',
+          stripeWebhookSecret: 'secret',
         }),
       },
     };
-    const service = new TenantService(prisma as never, {} as never);
+    const service = new TenantService(prisma as never);
 
     const result = await service.findOne('tenant-1');
 
     expect(result).toMatchObject({
-      lineChannelId: '2010599444',
-      lineBasicConfigured: true,
-      lineChannelSecretConfigured: true,
-      lineChannelAccessTokenConfigured: true,
-      lineConfigured: true,
+      id: 'tenant-1',
+      name: 'COMIU Club',
+      code: 'comiu',
     });
-    expect(result).not.toHaveProperty('lineChannelSecret');
-    expect(result).not.toHaveProperty('lineChannelAccessToken');
+    expect(result).not.toHaveProperty('stripeSecretKey');
+    expect(result).not.toHaveProperty('stripeWebhookSecret');
   });
 });

@@ -10,7 +10,6 @@ import { SaveToast } from '@/components/ui/SaveToast';
 
 const tabs = [
   { label: '団体情報', href: '/admin/settings', active: true },
-  { label: 'LINE連携', href: '/admin/settings/line' },
   { label: 'Stripe決済', href: '/admin/settings/stripe' },
   { label: 'プラン', href: '/admin/settings/plan' },
 ];
@@ -85,7 +84,6 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [syncing, setSyncing] = useState(false);
 
   // crop modal state
   const [cropSrc, setCropSrc] = useState<string | null>(null);
@@ -199,8 +197,8 @@ export default function SettingsPage() {
                 disabled={uploading}
                 className="relative flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-gray-300 bg-gray-50 transition-colors hover:border-[#06C755] hover:bg-green-50 disabled:opacity-60"
               >
-                {(form.iconUrl || tenant.linePictureUrl) ? (
-                  <NextImage src={form.iconUrl || tenant.linePictureUrl!} alt="アイコン" fill sizes="80px" className="object-cover" unoptimized />
+                {form.iconUrl ? (
+                  <NextImage src={form.iconUrl} alt="アイコン" fill sizes="80px" className="object-cover" unoptimized />
                 ) : (
                   <span className="text-3xl font-bold text-gray-300">{form.name?.[0] ?? '?'}</span>
                 )}
@@ -224,53 +222,6 @@ export default function SettingsPage() {
                 )}
               </div>
             </div>
-            {tenant.lineConfigured && (
-              <button
-                type="button"
-                disabled={syncing}
-                onClick={async () => {
-                  setSyncing(true);
-                  setError('');
-                  try {
-                    const updated = await api.tenant.syncLineProfile();
-                    setTenant(updated);
-                    setForm((prev) => ({
-                      ...prev,
-                      iconUrl: updated.linePictureUrl ?? updated.iconUrl ?? prev.iconUrl,
-                      name: updated.lineDisplayName ?? prev.name,
-                    }));
-                  } catch {
-                    setError('LINEアイコンの取得に失敗しました');
-                  } finally {
-                    setSyncing(false);
-                  }
-                }}
-                className="mt-3 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-              >
-                {syncing ? '取得中...' : 'LINEアイコン・名前を同期'}
-              </button>
-            )}
-            {tenant.lineConfigured && (
-              <button
-                type="button"
-                disabled={syncing}
-                onClick={async () => {
-                  setSyncing(true);
-                  setError('');
-                  try {
-                    const result = await api.members.syncLineProfiles();
-                    alert(`${result.updated}人の参加者プロフィールを更新しました`);
-                  } catch {
-                    setError('参加者プロフィールの同期に失敗しました');
-                  } finally {
-                    setSyncing(false);
-                  }
-                }}
-                className="mt-2 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-              >
-                {syncing ? '同期中...' : '参加者のLINEプロフィールを一括更新'}
-              </button>
-            )}
           </div>
 
           <div>

@@ -19,11 +19,6 @@ function eventDto(overrides: Partial<CreateEventDto> = {}): CreateEventDto {
     priceFemale: null,
     paymentRequired: false,
     paymentTiming: 'onsite',
-    notifyOnReserve: true,
-    notifyOnReserveApp: true,
-    remindEnabled: false,
-    remindApp: false,
-    remindAt: null,
     imageUrl: undefined,
     iconUrl: undefined,
     category: 'meetup',
@@ -48,7 +43,7 @@ describe('EventsService date validation', () => {
     },
   };
 
-  const service = new EventsService(prisma as never, {} as never);
+  const service = new EventsService(prisma as never);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -60,7 +55,6 @@ describe('EventsService date validation', () => {
       title: '20代交流会',
       heldAt: new Date('2026-06-12T11:00:00.000Z'),
       endAt: new Date('2026-06-12T13:00:00.000Z'),
-      remindAt: null,
     });
     prisma.reservation.count.mockResolvedValue(0);
   });
@@ -70,19 +64,6 @@ describe('EventsService date validation', () => {
       service.create(
         'tenant-1',
         eventDto({ endAt: '2026-06-12T10:59:00.000Z' }),
-      ),
-    ).rejects.toThrow(BadRequestException);
-    expect(prisma.event.create).not.toHaveBeenCalled();
-  });
-
-  it('rejects a reminder time that is not before the event start time', async () => {
-    await expect(
-      service.create(
-        'tenant-1',
-        eventDto({
-          remindEnabled: true,
-          remindAt: '2026-06-12T11:00:00.000Z',
-        }),
       ),
     ).rejects.toThrow(BadRequestException);
     expect(prisma.event.create).not.toHaveBeenCalled();

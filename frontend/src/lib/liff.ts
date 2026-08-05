@@ -179,13 +179,4 @@ export async function getLiffProfile(): Promise<{ userId: string; displayName: s
   }
 }
 
-export async function checkFriendship(): Promise<boolean> {
-  try {
-    const result = await liff.getFriendship();
-    return result.friendFlag;
-  } catch {
-    return true;
-  }
-}
-
 export { liff };

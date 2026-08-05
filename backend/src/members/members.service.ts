@@ -1,13 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { LineMessagingService } from '../line-messaging/line-messaging.service';
 
 @Injectable()
 export class MembersService {
-  constructor(
-    private prisma: PrismaService,
-    private lineMessaging: LineMessagingService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async findAll(
     tenantId: string,
@@ -96,32 +92,5 @@ export class MembersService {
       this.prisma.member.delete({ where: { id } }),
     ]);
     return { success: true };
-  }
-
-  async syncLineProfiles(tenantId: string): Promise<{ updated: number }> {
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { lineChannelAccessToken: true },
-    });
-    if (!tenant?.lineChannelAccessToken) return { updated: 0 };
-
-    const members = await this.prisma.member.findMany({ where: { tenantId } });
-    let updated = 0;
-    for (const member of members) {
-      const profile = await this.lineMessaging.getLineProfile(
-        tenant.lineChannelAccessToken,
-        member.lineUserId,
-      );
-      if (!profile) continue;
-      await this.prisma.member.update({
-        where: { id: member.id },
-        data: {
-          lineDisplayName: profile.displayName,
-          linePictureUrl: profile.pictureUrl ?? null,
-        },
-      });
-      updated++;
-    }
-    return { updated };
   }
 }

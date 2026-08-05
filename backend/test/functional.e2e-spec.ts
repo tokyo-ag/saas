@@ -4,11 +4,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import request from 'supertest';
 import * as bcrypt from 'bcryptjs';
-import * as crypto from 'crypto';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { EmailService } from '../src/email/email.service';
-import { LineMessagingService } from '../src/line-messaging/line-messaging.service';
 import { StripeService } from '../src/stripe/stripe.service';
 
 type MockPrisma = ReturnType<typeof createPrismaMock>;
@@ -29,19 +27,14 @@ function createPrismaMock() {
       code: '12345678',
       name: 'COMIU Club',
       description: 'Public tenant description',
-      liffId: '2000000000-testliff',
       lineDisplayName: 'COMIU LINE',
       linePictureUrl: 'https://example.com/tenant-line.png',
       iconUrl: 'https://example.com/tenant-icon.png',
-      lineChannelId: 'line-channel',
-      lineChannelSecret: 'line-webhook-secret',
-      lineChannelAccessToken: '',
       liffEventView: 'list',
       themeColor: 'green',
       plan: 'standard',
       stripeSecretKey: null,
       stripeWebhookSecret: 'whsec_tenant_test',
-      organizerLineUserId: 'organizer-line',
       updatedAt: now,
       deletedAt: null,
       bannedAt: null,
@@ -168,8 +161,6 @@ function createPrismaMock() {
           tags: ['初参加歓迎'],
           viewCount: 9,
           updatedAt: now,
-          notifyOnReserve: false,
-          notifyOnReserveApp: false,
           tenant: {
             id: state.tenant.id,
             code: state.tenant.code,
@@ -202,8 +193,6 @@ function createPrismaMock() {
         category: '交流会',
         tags: ['初参加歓迎'],
         viewCount: 9,
-        notifyOnReserve: false,
-        notifyOnReserveApp: false,
         tenant: {
           code: state.tenant.code,
           name: state.tenant.name,
@@ -336,16 +325,6 @@ describe('Core feature flows (e2e)', () => {
       .useValue({
         sendVerificationEmail: jest.fn(),
         sendPasswordResetEmail: jest.fn(),
-      })
-      .overrideProvider(LineMessagingService)
-      .useValue({
-        getLineProfile: jest.fn(async () => null),
-        sendReservationConfirm: jest.fn(),
-        sendWaitlistRegistered: jest.fn(),
-        sendWaitlistPromoted: jest.fn(),
-        sendCancelNotifyToOrganizer: jest.fn(),
-        sendRemind: jest.fn(),
-        sendTalkNotification: jest.fn(),
       })
       .overrideProvider(StripeService)
       .useValue(stripeServiceMock)
@@ -499,7 +478,6 @@ describe('Core feature flows (e2e)', () => {
         }),
       }),
     ]);
-    expect(response.body[0]).not.toHaveProperty('lineChannelAccessToken');
   });
 
   it('keeps LIFF protected routes requiring a verified LINE id token', async () => {
@@ -574,47 +552,6 @@ describe('Core feature flows (e2e)', () => {
         data: expect.objectContaining({ lineUserId: 'line-from-token' }),
       }),
     );
-  });
-
-  it('keeps LINE Official Account webhooks behind signature verification', async () => {
-    const rawBody = JSON.stringify({
-      events: [
-        {
-          type: 'follow',
-          source: { type: 'user', userId: 'line-webhook-user' },
-        },
-      ],
-    });
-    const signature = crypto
-      .createHmac('sha256', 'line-webhook-secret')
-      .update(rawBody)
-      .digest('base64');
-
-    await request(app.getHttpServer())
-      .post('/api/webhook/tenant-1')
-      .set('Content-Type', 'application/json')
-      .set('x-line-signature', signature)
-      .send(rawBody)
-      .expect(200);
-
-    expect(prisma.member.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          tenantId_lineUserId: {
-            tenantId: 'tenant-1',
-            lineUserId: 'line-webhook-user',
-          },
-        },
-        create: { tenantId: 'tenant-1', lineUserId: 'line-webhook-user' },
-      }),
-    );
-
-    await request(app.getHttpServer())
-      .post('/api/webhook/tenant-1')
-      .set('Content-Type', 'application/json')
-      .set('x-line-signature', 'invalid-signature')
-      .send(rawBody)
-      .expect(401);
   });
 
   it('keeps Stripe reservation webhooks behind signature verification', async () => {

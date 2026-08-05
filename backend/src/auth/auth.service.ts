@@ -260,41 +260,6 @@ export class AuthService {
     };
   }
 
-  async reconfirmPassword(
-    tenantId: string,
-    accountId: string,
-    email: string,
-    password: string,
-  ): Promise<{ reauthToken: string }> {
-    const trimmedEmail = email.trim().toLowerCase();
-    const account = await this.prisma.organizerAccount.findUnique({
-      where: { id: accountId },
-    });
-    if (
-      !account ||
-      account.tenantId !== tenantId ||
-      !account.email ||
-      account.email.toLowerCase() !== trimmedEmail ||
-      !account.passwordHash
-    ) {
-      throw new UnauthorizedException(
-        'メールアドレスまたはパスワードが正しくありません',
-      );
-    }
-
-    const valid = await bcrypt.compare(password, account.passwordHash);
-    if (!valid)
-      throw new UnauthorizedException(
-        'メールアドレスまたはパスワードが正しくありません',
-      );
-    return {
-      reauthToken: this.jwtService.sign(
-        { tenantId, accountId, purpose: 'sensitive-settings' },
-        { expiresIn: '10m' },
-      ),
-    };
-  }
-
   async verifyEmail(token: string): Promise<{ message: string }> {
     // 仮登録からの確認（新規登録フロー）
     const pending = await this.prisma.pendingRegistration.findUnique({

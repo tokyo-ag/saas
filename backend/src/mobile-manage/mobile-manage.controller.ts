@@ -36,7 +36,7 @@ export class MobileManageController {
   updateSettings(
     @TenantId() tenantId: string,
     @Body()
-    dto: { hideLevel?: boolean; hideLineNotify?: boolean; reserveActionStyle?: 'comiu' | 'line' },
+    dto: { hideLevel?: boolean; reserveActionStyle?: 'comiu' | 'line' },
   ) {
     return this.service.updateSettings(tenantId, dto);
   }

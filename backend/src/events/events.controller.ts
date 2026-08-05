@@ -81,11 +81,6 @@ export class EventsController {
     );
   }
 
-  @Post(':eventId/remind')
-  sendRemind(@TenantId() tenantId: string, @Param('eventId') eventId: string) {
-    return this.eventsService.sendRemind(tenantId, eventId);
-  }
-
   @Post(':eventId/checkin')
   checkin(
     @TenantId() tenantId: string,
@@ -93,21 +88,6 @@ export class EventsController {
     @Body() body: { memberId: string },
   ) {
     return this.eventsService.checkin(tenantId, eventId, body.memberId);
-  }
-
-  @Post(':eventId/message')
-  sendMessage(
-    @TenantId() tenantId: string,
-    @Param('eventId') eventId: string,
-    @Body() body: { content: string; sendLine: boolean; sendApp: boolean },
-  ) {
-    return this.eventsService.sendMessage(
-      tenantId,
-      eventId,
-      body.content,
-      body.sendLine,
-      body.sendApp,
-    );
   }
 
   @Patch(':eventId/roster-share')
