@@ -53,10 +53,10 @@ export class SchedulerService {
         timeZone: 'Asia/Tokyo',
       });
       for (const r of reservations) {
-        if (r.member.messagingLineUserId && tenant?.lineChannelAccessToken) {
+        if (r.member.lineUserId && tenant?.lineChannelAccessToken) {
           await this.lineMessaging.sendRemind(
             tenant.lineChannelAccessToken,
-            r.member.messagingLineUserId,
+            r.member.lineUserId,
             event.title,
             event.heldAt,
             event.location,

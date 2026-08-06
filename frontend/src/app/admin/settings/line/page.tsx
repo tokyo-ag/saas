@@ -41,10 +41,11 @@ export default function LineSettingsPage() {
   const [hasPassword, setHasPassword] = useState<boolean | null>(null);
   const [accountEmail, setAccountEmail] = useState('');
   const [step, setStep] = useState<Step>(1);
-  const [form, setForm] = useState<Pick<TenantInput, 'lineChannelId' | 'lineChannelSecret' | 'lineChannelAccessToken'>>({
+  const [form, setForm] = useState<Pick<TenantInput, 'lineChannelId' | 'lineChannelSecret' | 'lineChannelAccessToken' | 'liffId'>>({
     lineChannelId: '',
     lineChannelSecret: '',
     lineChannelAccessToken: '',
+    liffId: '',
   });
   const [organizerLineUserId, setOrganizerLineUserId] = useState('');
   const [saving, setSaving] = useState(false);
@@ -66,6 +67,7 @@ export default function LineSettingsPage() {
         lineChannelId: tenantData.lineChannelId ?? '',
         lineChannelSecret: tenantData.lineChannelSecret ?? '',
         lineChannelAccessToken: '',
+        liffId: tenantData.liffId ?? '',
       });
       setOrganizerLineUserId(tenantData.organizerLineUserId ?? '');
       if (tenantData.lineConfigured) {
@@ -96,7 +98,7 @@ export default function LineSettingsPage() {
   }
 
   const webhookUrl = `${BASE}/webhook/${tenant?.id ?? ''}`;
-  const liffEndpointUrl = SITE_URL;
+  const liffEndpointUrl = `${SITE_URL}/liff/${tenant?.code ?? tenant?.id ?? ''}`;
   const lineBasicConfigured = !!(tenant?.lineBasicConfigured || (tenant?.lineChannelId && tenant?.lineChannelSecretConfigured));
   const lineCredentialsLocked = !!tenant?.lineConfigured && !editUnlocked;
   const requiresChannelSecret = !lineBasicConfigured || editUnlocked;
@@ -242,13 +244,30 @@ export default function LineSettingsPage() {
               >
                 <CopyBox value={liffEndpointUrl} />
               </SetupGuide>
+              <Field
+                label="LIFF ID"
+                value={form.liffId ?? ''}
+                onChange={(value) => set('liffId', value)}
+                placeholder="1234567890-xxxxxxxx"
+                disabled={lineCredentialsLocked}
+              />
+              <p className="text-xs leading-relaxed text-gray-600">
+                LINE Loginチャネルは公式LINEのMessaging APIチャネルと同じProvider内に作成し、「リンクされたLINE公式アカウント」にこの団体の公式LINEを設定してください。
+              </p>
             </div>
             <div className="mt-4 flex flex-col gap-2 sm:flex-row">
               <button type="button" onClick={() => setStep(2)} className="w-full rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 sm:w-auto">
                 戻る
               </button>
-              <button onClick={() => setStep(4)} className="w-full rounded-lg bg-[#06C755] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] sm:w-auto">
-                設定できたので次へ
+              <button
+                disabled={saving || lineCredentialsLocked || !form.liffId}
+                onClick={async () => {
+                  const ok = await save({ liffId: form.liffId });
+                  if (ok) setStep(4);
+                }}
+                className="w-full rounded-lg bg-[#06C755] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#05a847] disabled:opacity-50 sm:w-auto"
+              >
+                {saving ? '保存中...' : 'LIFF IDを保存して次へ'}
               </button>
             </div>
           </StepCard>

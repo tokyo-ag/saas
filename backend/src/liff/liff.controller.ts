@@ -170,24 +170,6 @@ export class LiffController {
   }
 
   @UseGuards(LiffGuard)
-  @Get('line-notification-link')
-  getLineNotificationLink(
-    @Param('tenantId') tenantId: string,
-    @LiffUser() lineUserId: string,
-  ) {
-    return this.liffService.getLineNotificationLink(tenantId, lineUserId);
-  }
-
-  @UseGuards(LiffGuard)
-  @Post('line-notification-link/code')
-  createLineNotificationLinkCode(
-    @Param('tenantId') tenantId: string,
-    @LiffUser() lineUserId: string,
-  ) {
-    return this.liffService.createLineNotificationLinkCode(tenantId, lineUserId);
-  }
-
-  @UseGuards(LiffGuard)
   @Patch('profile')
   updateProfile(
     @Param('tenantId') tenantId: string,

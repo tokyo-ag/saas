@@ -1,6 +1,7 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { LiffGuard } from './liff.guard';
+import { PrismaService } from '../prisma/prisma.service';
 
 function createContext(auth?: string): ExecutionContext {
   return {
@@ -27,9 +28,13 @@ describe('LiffGuard', () => {
     jest.restoreAllMocks();
   });
 
+  const prisma = {
+    tenant: { findFirst: jest.fn().mockResolvedValue(null) },
+  } as unknown as PrismaService;
+
   it('requires a configured shared LIFF channel instead of trusting token aud', async () => {
     const config = { get: jest.fn(() => '') } as unknown as ConfigService;
-    const guard = new LiffGuard(config);
+    const guard = new LiffGuard(config, prisma);
     const fetchMock = jest.fn();
     global.fetch = fetchMock;
 
@@ -45,7 +50,7 @@ describe('LiffGuard', () => {
         key === 'LIFF_CHANNEL_ID' ? '2010103126' : '',
       ),
     } as unknown as ConfigService;
-    const guard = new LiffGuard(config);
+    const guard = new LiffGuard(config, prisma);
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ sub: 'line-user', exp: 9999999999 }),
@@ -58,6 +63,29 @@ describe('LiffGuard', () => {
 
     expect(String(fetchMock.mock.calls[0][1].body)).toContain(
       'client_id=2010103126',
+    );
+  });
+
+  it('verifies against the tenant LIFF channel when configured', async () => {
+    const config = { get: jest.fn(() => 'shared-channel') } as unknown as ConfigService;
+    const tenantPrisma = {
+      tenant: {
+        findFirst: jest.fn().mockResolvedValue({ liffId: '2012345678-liffapp' }),
+      },
+    } as unknown as PrismaService;
+    const guard = new LiffGuard(config, tenantPrisma);
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ sub: 'tenant-line-user', exp: 9999999999 }),
+    });
+    global.fetch = fetchMock;
+
+    await expect(
+      guard.canActivate(createContext(`Bearer ${createIdToken('2012345678')}`)),
+    ).resolves.toBe(true);
+
+    expect(String(fetchMock.mock.calls[0][1].body)).toContain(
+      'client_id=2012345678',
     );
   });
 });

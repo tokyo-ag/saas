@@ -25,11 +25,30 @@ export const LIFF_ID = envOr('NEXT_PUBLIC_LIFF_ID', '');
 
 export function buildLiffUrl(
   path: string,
-  _options?: { directInLineBrowser?: boolean },
+  options?: {
+    directInLineBrowser?: boolean;
+    liffId?: string | null;
+    endpointPath?: string;
+  },
 ): string | null {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  if (!LIFF_ID) return null;
-  const url = new URL(`https://liff.line.me/${LIFF_ID}`);
+  const liffId = options?.liffId?.trim() || LIFF_ID;
+  if (!liffId) return null;
+  const endpointPath = options?.endpointPath?.replace(/\/$/, '');
+  if (options?.liffId && endpointPath) {
+    const target = new URL(normalizedPath, SITE_URL);
+    if (
+      target.pathname === endpointPath ||
+      target.pathname.startsWith(`${endpointPath}/`)
+    ) {
+      const suffix = target.pathname.slice(endpointPath.length);
+      const url = new URL(`https://liff.line.me/${liffId}${suffix}`);
+      url.search = target.search;
+      url.hash = target.hash;
+      return url.toString();
+    }
+  }
+  const url = new URL(`https://liff.line.me/${liffId}`);
   url.searchParams.set('liff.state', normalizedPath);
   return url.toString();
 }

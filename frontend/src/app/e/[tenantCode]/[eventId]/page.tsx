@@ -35,6 +35,7 @@ type EventDetail = {
   category?: string | null;
   tags?: string[];
   tenantCode?: string | null;
+  liffId?: string | null;
   tenantName: string;
   tenantIconUrl?: string | null;
   isEnded?: boolean;
@@ -329,7 +330,10 @@ export default async function PublicEventPage({
   const isExternalLineUrl = effectiveActionStyle === 'line' && !!configuredLineUrl;
   const reserveUrl = isExternalLineUrl
     ? configuredLineUrl!
-    : buildLiffUrl(reservePath) ?? reservePath;
+    : buildLiffUrl(reservePath, {
+        liffId: event.liffId,
+        endpointPath: `/liff/${event.tenantCode}`,
+      }) ?? reservePath;
   const isFull =
     event.capacity != null && event.reservedCount >= event.capacity;
   const spotsLeft =

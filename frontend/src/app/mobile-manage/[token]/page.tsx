@@ -56,6 +56,7 @@ type Session = {
   tenantIcon: string | null;
   hideLevel: boolean;
   hideLineNotify: boolean;
+  liffId: string | null;
 };
 
 type Screen = { name: 'list' } | { name: 'create' } | { name: 'edit'; id: string } | { name: 'detail'; id: string };
@@ -77,6 +78,7 @@ export default function MobileManagePage() {
           tenantIcon: res.tenantIcon,
           hideLevel: res.hideLevel,
           hideLineNotify: res.hideLineNotify,
+          liffId: res.liffId,
         });
       })
       .catch(() => setVerifyError('リンクが無効です。主催者に再発行を依頼してください。'));
@@ -238,7 +240,11 @@ function EventListScreen({
     }
   }
 
-  const scheduleUrl = buildLiffUrl(`/liff/${session.tenantCode}`) ?? `${SITE_URL}/liff/${session.tenantCode}`;
+  const schedulePath = `/liff/${session.tenantCode}`;
+  const scheduleUrl = buildLiffUrl(schedulePath, {
+    liffId: session.liffId,
+    endpointPath: schedulePath,
+  }) ?? `${SITE_URL}${schedulePath}`;
 
   function copyScheduleUrl() {
     navigator.clipboard.writeText(scheduleUrl).then(() => {

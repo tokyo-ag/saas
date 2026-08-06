@@ -3,6 +3,7 @@
 import { Suspense, useEffect } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { buildLiffUrl } from '@/lib/config';
+import { api } from '@/lib/api';
 
 function PublicReserveRedirectInner() {
   const { tenantCode, eventId } = useParams<{ tenantCode: string; eventId: string }>();
@@ -11,10 +12,17 @@ function PublicReserveRedirectInner() {
   const liffReservePath = `/liff/${tenantCode}/events/${eventId}/reserve${isWaitlist ? '?waitlist=1' : ''}`;
 
   useEffect(() => {
-    window.location.replace(
-      buildLiffUrl(liffReservePath) ?? liffReservePath,
-    );
-  }, [liffReservePath]);
+    api.public.tenant(tenantCode)
+      .then((tenant) => {
+        window.location.replace(
+          buildLiffUrl(liffReservePath, {
+            liffId: tenant.liffId,
+            endpointPath: `/liff/${tenantCode}`,
+          }) ?? liffReservePath,
+        );
+      })
+      .catch(() => window.location.replace(liffReservePath));
+  }, [liffReservePath, tenantCode]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

@@ -5,14 +5,37 @@ import { setLiffToken } from './api';
 
 let initialized = false;
 let initializedLiffId: string | null = null;
+let resolvedLiffId: string | null = null;
+let usingTenantLiff = false;
 let lastError: string | null = null;
 let initInfo: { ok: boolean; hasId: boolean; loggedIn: boolean } | null = null;
 
 const LIFF_LOGIN_TRY_KEY = 'liff-login-tried';
 const LIFF_LOGIN_RETRY_INTERVAL_MS = 5 * 60 * 1000;
 
-function getLiffId(): string {
-  return process.env.NEXT_PUBLIC_LIFF_ID ?? '';
+async function getLiffId(): Promise<string> {
+  if (resolvedLiffId) return resolvedLiffId;
+  if (typeof window !== 'undefined') {
+    const match = window.location.pathname.match(/^\/liff\/([^/]+)/);
+    if (match) {
+      try {
+        const tenantId = decodeURIComponent(match[1]);
+        const res = await fetch(`/api/backend/liff/${encodeURIComponent(tenantId)}`);
+        if (res.ok) {
+          const tenant = (await res.json()) as { liffId?: string | null };
+          if (tenant.liffId?.trim()) {
+            resolvedLiffId = tenant.liffId.trim();
+            usingTenantLiff = true;
+            return resolvedLiffId;
+          }
+        }
+      } catch (err) {
+        console.error('[LIFF] tenant LIFF ID lookup failed:', err);
+      }
+    }
+  }
+  resolvedLiffId = process.env.NEXT_PUBLIC_LIFF_ID ?? '';
+  return resolvedLiffId;
 }
 
 export function getInitError(): string | null {
@@ -34,7 +57,7 @@ export function isLiffLoggedIn(): boolean {
 }
 
 export async function initLiff(): Promise<boolean> {
-  const id = getLiffId();
+  const id = await getLiffId();
   if (initialized && initializedLiffId === id) {
     // 既に初期化済みでも、ページ遷移や時間経過でトークンが古くなっている可能性があるため
     // liff.init()はスキップしつつ、トークンだけは毎回取り直す。
@@ -76,7 +99,7 @@ export async function initLiff(): Promise<boolean> {
 
 export function buildCurrentLiffUrl(): string | null {
   if (typeof window === 'undefined') return null;
-  const id = getLiffId();
+  const id = initializedLiffId ?? resolvedLiffId;
   if (!id) return null;
 
   const current = new URL(window.location.href);
@@ -85,9 +108,18 @@ export function buildCurrentLiffUrl(): string | null {
   params.delete('state');
   params.delete('liff.state');
 
-  const pathWithQuery = `${current.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
-  const liffUrl = new URL(`https://liff.line.me/${id}`);
-  liffUrl.searchParams.set('liff.state', pathWithQuery);
+  const tenantMatch = current.pathname.match(/^(\/liff\/[^/]+)(.*)$/);
+  if (!usingTenantLiff) {
+    const pathWithQuery = `${current.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+    const fallbackUrl = new URL(`https://liff.line.me/${id}`);
+    fallbackUrl.searchParams.set('liff.state', pathWithQuery);
+    return fallbackUrl.toString();
+  }
+  const suffix = tenantMatch?.[2] ?? '';
+  const liffUrl = new URL(`https://liff.line.me/${id}${suffix}`);
+  for (const [key, value] of params.entries()) {
+    liffUrl.searchParams.append(key, value);
+  }
   return liffUrl.toString();
 }
 

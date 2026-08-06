@@ -201,13 +201,6 @@ export const api = {
       void lineUserId;
       return request<LiffProfile>(`/liff/${tenantId}/profile`);
     },
-    lineNotificationLink: (tenantId: string) =>
-      request<{ available: boolean; linked: boolean }>(`/liff/${tenantId}/line-notification-link`),
-    createLineNotificationLinkCode: (tenantId: string) =>
-      request<{ linked: boolean; code: string | null; expiresAt: string | null }>(
-        `/liff/${tenantId}/line-notification-link/code`,
-        { method: 'POST' },
-      ),
     memberProfile: (tenantId: string, memberId: string) =>
       request<LiffProfile>(`/liff/${tenantId}/members/${memberId}`),
     createConnection: (tenantId: string, _myLineUserId: string, targetMemberId: string) =>
@@ -349,6 +342,7 @@ export const api = {
         tenantName: string;
         tenantIcon: string | null;
         liffEventView: string;
+        liffId: string | null;
         hideLevel: boolean;
         hideLineNotify: boolean;
       }>('/mobile-manage/verify', { method: 'POST', body: JSON.stringify({ token }) }),
@@ -800,6 +794,7 @@ export interface Tenant {
   lineChannelId?: string;
   lineChannelSecret?: string;
   lineChannelAccessToken?: string;
+  liffId?: string;
   lineBasicConfigured?: boolean;
   lineChannelSecretConfigured?: boolean;
   lineChannelAccessTokenConfigured?: boolean;
@@ -839,6 +834,7 @@ export interface TenantInput {
   lineChannelId?: string;
   lineChannelSecret?: string;
   lineChannelAccessToken?: string;
+  liffId?: string;
   organizerLineUserId?: string;
   stripePublishableKey?: string;
   stripeSecretKey?: string;
@@ -863,6 +859,7 @@ export interface LiffTenant {
   linePictureUrl?: string;
   iconUrl?: string;
   lineChannelId?: string;
+  liffId?: string;
   liffEventView?: string;
   activityTickerEnabled?: boolean;
   themeColor?: string;
@@ -959,6 +956,7 @@ export interface PublicTenant {
   activityTags?: string[];
   lineDisplayName?: string;
   linePictureUrl?: string;
+  liffId?: string | null;
   publicBlogUrl?: string;
   memberCount: number;
   eventCount: number;
@@ -1319,6 +1317,7 @@ export interface PublicEvent {
   id: string;
   tenantId: string;
   tenantCode?: string | null;
+  liffId?: string | null;
   title: string;
   heldAt: string;
   location: string;

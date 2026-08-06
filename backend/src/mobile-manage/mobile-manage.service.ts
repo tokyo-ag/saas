@@ -154,6 +154,7 @@ export class MobileManageService {
         linePictureUrl: true,
         iconUrl: true,
         liffEventView: true,
+        liffId: true,
         mobileManageHideLevel: true,
         mobileManageHideLineNotify: true,
         deletedAt: true,
@@ -173,6 +174,7 @@ export class MobileManageService {
       tenantName: tenant.name ?? tenant.lineDisplayName ?? '団体',
       tenantIcon: tenant.linePictureUrl ?? tenant.iconUrl ?? null,
       liffEventView: tenant.liffEventView,
+      liffId: tenant.liffId,
       hideLevel: tenant.mobileManageHideLevel,
       hideLineNotify: tenant.mobileManageHideLineNotify,
     };

@@ -86,6 +86,7 @@ export default function EventsPage() {
   const [tab, setTab] = useState<Tab>('upcoming');
 
   const [tenantId, setTenantId] = useState<string>('');
+  const [tenantLiffId, setTenantLiffId] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [publicPageId, setPublicPageId] = useState<string | null>(null);
   const [publicPageData, setPublicPageData] = useState<import('@/lib/api').PublicPage | null>(null);
@@ -107,6 +108,7 @@ export default function EventsPage() {
     load();
     api.tenant.get().then((t) => {
       setTenantId(t.code ?? t.id);
+      setTenantLiffId(t.liffId ?? '');
       setActivityTickerEnabled(t.activityTickerEnabled !== false);
     }).catch(() => {});
     api.publicPages.list().then((pages) => {
@@ -199,7 +201,12 @@ export default function EventsPage() {
   }
 
   const schedulePath = tenantId ? `/liff/${tenantId}` : '';
-  const scheduleUrl = schedulePath ? buildLiffUrl(schedulePath) ?? `${SITE_URL}${schedulePath}` : '';
+  const scheduleUrl = schedulePath
+    ? buildLiffUrl(schedulePath, {
+        liffId: tenantLiffId,
+        endpointPath: schedulePath,
+      }) ?? `${SITE_URL}${schedulePath}`
+    : '';
 
   function copyScheduleUrl() {
     if (!scheduleUrl) return;

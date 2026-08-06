@@ -238,6 +238,7 @@ export class PublicController {
             lineDisplayName: true,
             linePictureUrl: true,
             iconUrl: true,
+            liffId: true,
             _count: {
               select: {
                 liffAccesses: {
@@ -512,6 +513,7 @@ export class PublicController {
             lineDisplayName: true,
             linePictureUrl: true,
             iconUrl: true,
+            liffId: true,
             publicPages: {
               take: 1,
               select: { footerText: true },
@@ -561,6 +563,7 @@ export class PublicController {
       category: event.category,
       tags: event.tags,
       tenantCode: event.tenant.code,
+      liffId: event.tenant.liffId,
       tenantName: event.tenant.lineDisplayName ?? event.tenant.name,
       tenantIconUrl: event.tenant.linePictureUrl ?? event.tenant.iconUrl,
       footerText: event.tenant.publicPages[0]?.footerText ?? null,
@@ -746,6 +749,7 @@ export class PublicController {
       memberCount: tenant._count.members,
       eventCount: tenant._count.events,
       accessCount: tenant._count.liffAccesses,
+      liffId: tenant.liffId,
       pages: tenant.publicPages,
     };
 

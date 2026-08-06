@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
+import { PrismaService } from '../prisma/prisma.service';
 
 interface LiffIdTokenPayload {
   sub: string;
@@ -21,9 +22,20 @@ export class LiffGuard implements CanActivate {
   >();
   private readonly logger = new Logger(LiffGuard.name);
 
-  constructor(private config: ConfigService) {}
+  constructor(
+    private config: ConfigService,
+    private prisma: PrismaService,
+  ) {}
 
-  private getExpectedChannelId(): string | null {
+  private async getExpectedChannelId(tenantId?: string): Promise<string | null> {
+    if (tenantId) {
+      const tenant = await this.prisma.tenant.findFirst({
+        where: { OR: [{ id: tenantId }, { code: tenantId }] },
+        select: { liffId: true },
+      });
+      const tenantChannelId = tenant?.liffId?.split('-')[0]?.trim();
+      if (tenantChannelId) return tenantChannelId;
+    }
     return (
       this.config.get<string>('LIFF_CHANNEL_ID')?.trim() ||
       this.config.get<string>('LINE_LOGIN_CHANNEL_ID')?.trim() ||
@@ -45,12 +57,15 @@ export class LiffGuard implements CanActivate {
     }
 
     const idToken = auth.slice(7);
-    const channelId = this.getExpectedChannelId();
+    const tenantParam = req.params?.tenantId;
+    const tenantId = Array.isArray(tenantParam) ? tenantParam[0] : tenantParam;
+    const channelId = await this.getExpectedChannelId(tenantId);
     if (!channelId) {
       throw new UnauthorizedException('LIFF Channel IDが未設定です');
     }
 
-    const cached = this.cache.get(idToken);
+    const cacheKey = `${tenantId ?? 'shared'}:${idToken}`;
+    const cached = this.cache.get(cacheKey);
     if (cached && cached.exp > Date.now()) {
       req.lineUserId = cached.lineUserId;
       this.logger.debug(`LIFF token cache hit for user=${cached.lineUserId}`);
@@ -76,7 +91,7 @@ export class LiffGuard implements CanActivate {
     this.logger.debug(`LIFF token verified for user=${payload.sub}`);
 
     // Cache for 5 minutes (tokens expire at 10 min; 5 min gives safety margin)
-    this.cache.set(idToken, {
+    this.cache.set(cacheKey, {
       lineUserId: payload.sub,
       exp: Date.now() + 5 * 60 * 1000,
     });
