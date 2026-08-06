@@ -45,10 +45,14 @@ describe('EventsService date validation', () => {
     },
     reservation: {
       count: jest.fn().mockResolvedValue(0),
+      findMany: jest.fn().mockResolvedValue([]),
     },
   };
+  const lineMessaging = {
+    sendRemind: jest.fn().mockResolvedValue(undefined),
+  };
 
-  const service = new EventsService(prisma as never, {} as never);
+  const service = new EventsService(prisma as never, lineMessaging as never);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -98,6 +102,40 @@ describe('EventsService date validation', () => {
           endAt: new Date('2026-06-12T13:00:00.000Z'),
         }),
       }),
+    );
+  });
+
+  it('uses the event reminder template when sending a reminder manually', async () => {
+    const eventTemplate = '【{title}】イベント固有のリマインドです';
+    prisma.event.findFirst.mockResolvedValue({
+      id: 'event-1',
+      tenantId: 'tenant-1',
+      title: '20代交流会',
+      heldAt: new Date('2026-06-12T11:00:00.000Z'),
+      endAt: new Date('2026-06-12T13:00:00.000Z'),
+      remindAt: new Date('2026-06-11T09:00:00.000Z'),
+      reminderMessageTemplate: eventTemplate,
+      location: '池袋',
+    });
+    prisma.tenant.findUnique.mockResolvedValue({
+      id: 'tenant-1',
+      plan: 'pro',
+      lineChannelAccessToken: 'token',
+      reminderMessageTemplate: '団体の標準文面',
+    });
+    prisma.reservation.findMany.mockResolvedValue([
+      { member: { lineUserId: 'U123' } },
+    ]);
+
+    await service.sendRemind('tenant-1', 'event-1');
+
+    expect(lineMessaging.sendRemind).toHaveBeenCalledWith(
+      'token',
+      'U123',
+      '20代交流会',
+      new Date('2026-06-12T11:00:00.000Z'),
+      '池袋',
+      eventTemplate,
     );
   });
 });

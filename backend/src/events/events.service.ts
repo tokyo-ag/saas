@@ -466,6 +466,7 @@ export class EventsService {
         event.title,
         event.heldAt,
         event.location,
+        event.reminderMessageTemplate ?? tenant.reminderMessageTemplate,
       );
     }
 
