@@ -238,6 +238,7 @@ export default function EventsPage() {
         endAt: ev.endAt ?? null,
         location: ev.location,
         locationUrl: ev.locationUrl,
+        locationHint: ev.locationHint ?? null,
         capacity: ev.capacity ?? null,
         capacityMale: ev.capacityMale ?? null,
         capacityFemale: ev.capacityFemale ?? null,
@@ -248,14 +249,19 @@ export default function EventsPage() {
         paymentRequired: ev.paymentRequired,
         paymentTiming: ev.paymentTiming,
         notifyOnReserve: ev.notifyOnReserve,
-        notifyOnReserveApp: true,
+        notifyOnReserveApp: ev.notifyOnReserveApp,
+        reservationMessageTemplate: ev.reservationMessageTemplate ?? null,
         remindEnabled: ev.remindEnabled,
         remindApp: ev.remindApp,
         remindAt: ev.remindAt ?? null,
+        reminderMessageTemplate: ev.reminderMessageTemplate ?? null,
         imageUrl: ev.imageUrl,
         iconUrl: ev.iconUrl,
         category: ev.category ?? null,
         tags: ev.tags ?? [],
+        levelEnabled: ev.levelEnabled,
+        rosterShareEnabled: ev.rosterShareEnabled,
+        reserveActionStyle: ev.reserveActionStyle ?? null,
       });
       router.push(`/admin/events/${created.id}/edit`);
     } catch (err: any) {

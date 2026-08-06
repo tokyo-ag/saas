@@ -45,6 +45,8 @@ type EventFormData = {
 };
 
 const inputClass = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]';
+const DEFAULT_RESERVATION_MESSAGE = '【{title}】ご予約ありがとうございます！\n日時：{date}\n場所：{location}';
+const DEFAULT_REMINDER_MESSAGE = '【{title}】まもなく開催です！\n日時：{date}\n場所：{location}';
 const ALL_SUBAREAS: readonly string[] = Object.values(WARD_SUBAREAS).flat();
 const EVENT_TAG_VALUES: readonly string[] = [
   ...LOCATION_TAGS,
@@ -121,6 +123,100 @@ function timeFromLocalDatetime(value: string) {
 function sameDayDatetime(dateTime: string, time: string) {
   if (!dateTime || !time) return '';
   return `${dateTime.slice(0, 10)}T${time}`;
+}
+
+function formatLineDate(value: string) {
+  if (!value) return '（日時未設定）';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '（日時未設定）';
+  return date.toLocaleString('ja-JP', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Tokyo',
+  });
+}
+
+function renderLineMessage(template: string, form: Pick<EventFormData, 'title' | 'heldAt' | 'location'>) {
+  const values: Record<string, string> = {
+    title: form.title || '（イベント名未設定）',
+    date: formatLineDate(form.heldAt),
+    location: form.location || '（場所未設定）',
+  };
+  return template.replace(/\{(\w+)\}/g, (match, key) => values[key] ?? match);
+}
+
+function LineMessageEditor({
+  title,
+  timing,
+  enabled,
+  value,
+  effectiveTemplate,
+  preview,
+  onChange,
+}: {
+  title: string;
+  timing: string;
+  enabled: boolean;
+  value: string;
+  effectiveTemplate: string;
+  preview: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="flex items-start justify-between gap-3 border-b border-gray-100 px-4 py-3">
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+          <p className="mt-0.5 text-xs text-gray-400">{timing}</p>
+        </div>
+        <span className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${enabled ? 'bg-[#06C755]/10 text-[#05a847]' : 'bg-gray-100 text-gray-400'}`}>
+          {enabled ? '送信ON' : '送信OFF'}
+        </span>
+      </div>
+      <div className="space-y-3 p-4">
+        <div>
+          <div className="mb-1.5 flex items-center justify-between gap-3">
+            <label className="text-xs font-medium text-gray-600">送信文面を編集</label>
+            {!value.trim() && (
+              <button
+                type="button"
+                onClick={() => onChange(effectiveTemplate)}
+                className="text-[11px] font-medium text-[#05a847] hover:underline"
+              >
+                現在の文面を編集する
+              </button>
+            )}
+          </div>
+          <textarea
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder={effectiveTemplate}
+            rows={9}
+            maxLength={5000}
+            className="w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-xs leading-5 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+          />
+          <div className="mt-1 flex items-center justify-between gap-3 text-[11px] text-gray-400">
+            <span>{value.trim() ? 'このイベント専用の文面' : '団体の標準文面を使用中'}</span>
+            <span>{value.length}/5000</span>
+          </div>
+        </div>
+        <div>
+          <p className="mb-1.5 text-xs font-medium text-gray-600">実際に送られる文章</p>
+          <div className="rounded-xl bg-[#e8f7e8] p-3">
+            <div className="ml-auto max-w-[94%] rounded-2xl rounded-tr-sm bg-white px-3 py-2 shadow-sm">
+              <p className="whitespace-pre-wrap break-words text-xs leading-5 text-gray-800">{preview}</p>
+            </div>
+          </div>
+          <p className="mt-1.5 text-[11px] text-gray-400">
+            {'{title}・{date}・{location}'} は上のイベント情報で置き換えています。
+          </p>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 // ネイティブのtime入力はブラウザによって15分刻みの候補リストが効かないことがあるため、
@@ -522,9 +618,18 @@ export default function EventForm({
   const showStripe = form.paymentTiming !== 'onsite' && (
     form.priceMode === 'same' ? Number(form.price) > 0 : Number(form.priceMale) > 0 || Number(form.priceFemale) > 0
   );
+  const reservationTemplate = form.reservationMessageTemplate.trim()
+    ? form.reservationMessageTemplate
+    : tenant?.reservationMessageTemplate?.trim() || DEFAULT_RESERVATION_MESSAGE;
+  const reminderTemplate = form.reminderMessageTemplate.trim()
+    ? form.reminderMessageTemplate
+    : tenant?.reminderMessageTemplate?.trim() || DEFAULT_REMINDER_MESSAGE;
+  const reservationPreview = renderLineMessage(reservationTemplate, form);
+  const reminderPreview = renderLineMessage(reminderTemplate, form);
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl space-y-7 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-6">
+    <form onSubmit={handleSubmit} className="grid max-w-6xl items-start gap-6 xl:grid-cols-[minmax(0,672px)_minmax(360px,1fr)]">
+      <div className="space-y-7 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-6">
       {upgradeRequired && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           フリープランの上限に達しました。
@@ -925,18 +1030,7 @@ export default function EventForm({
             </p>
           )}
           {form.notifyOnReserve && (
-            <div className="pt-1">
-              <label className="mb-1 block text-xs font-medium text-gray-500">
-                このイベントだけのメッセージ文面（空欄なら団体の標準文面）
-              </label>
-              <textarea
-                value={form.reservationMessageTemplate}
-                onChange={(e) => set('reservationMessageTemplate', e.target.value)}
-                placeholder={'【{title}】ご予約ありがとうございます！\n日時：{date}\n場所：{location}'}
-                rows={3}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              />
-            </div>
+            <p className="text-xs text-gray-400">送信文面は右側の「事前リマインド」で編集・確認できます。</p>
           )}
         </div>
 
@@ -974,18 +1068,7 @@ export default function EventForm({
               {form.remindPreset === 'custom' && (
                 <input type="datetime-local" step={1800} value={form.remindAt} onChange={(e) => set('remindAt', e.target.value)} className={`${inputClass} max-w-xs`} />
               )}
-              <div className="pt-1">
-                <label className="mb-1 block text-xs font-medium text-gray-500">
-                  このイベントだけのメッセージ文面（空欄なら団体の標準文面）
-                </label>
-                <textarea
-                  value={form.reminderMessageTemplate}
-                  onChange={(e) => set('reminderMessageTemplate', e.target.value)}
-                  placeholder={'【{title}】まもなく開催です！\n日時：{date}\n場所：{location}'}
-                  rows={3}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-                />
-              </div>
+              <p className="text-xs text-gray-400">送信文面は右側の「前日リマインド」で編集・確認できます。</p>
             </div>
           )}
         </div>
@@ -1005,6 +1088,30 @@ export default function EventForm({
           </button>
         )}
       </div>
+      </div>
+
+      {!hideLineNotify && form.remindEnabled && (
+        <aside className="space-y-5 xl:sticky xl:top-6">
+          <LineMessageEditor
+            title="事前リマインド"
+            timing="予約完了時に送信"
+            enabled={form.notifyOnReserve}
+            value={form.reservationMessageTemplate}
+            effectiveTemplate={reservationTemplate}
+            preview={reservationPreview}
+            onChange={(value) => set('reservationMessageTemplate', value)}
+          />
+          <LineMessageEditor
+            title="前日リマインド"
+            timing={form.remindPreset === 'prev18' ? '前日 18:00に送信' : form.remindPreset === 'day9' ? '当日 09:00に送信' : `${form.remindAt || 'カスタム日時未設定'}に送信`}
+            enabled={form.remindEnabled}
+            value={form.reminderMessageTemplate}
+            effectiveTemplate={reminderTemplate}
+            preview={reminderPreview}
+            onChange={(value) => set('reminderMessageTemplate', value)}
+          />
+        </aside>
+      )}
     </form>
   );
 }
