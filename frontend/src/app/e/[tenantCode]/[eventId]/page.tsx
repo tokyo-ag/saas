@@ -332,7 +332,7 @@ export default async function PublicEventPage({
     ? configuredLineUrl!
     : buildLiffUrl(reservePath, {
         liffId: event.liffId,
-        endpointPath: `/liff/${event.tenantCode}`,
+        endpointPath: '/',
       }) ?? reservePath;
   const isFull =
     event.capacity != null && event.reservedCount >= event.capacity;

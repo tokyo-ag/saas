@@ -204,7 +204,7 @@ export default function EventsPage() {
   const scheduleUrl = schedulePath
     ? buildLiffUrl(schedulePath, {
         liffId: tenantLiffId,
-        endpointPath: schedulePath,
+        endpointPath: '/',
       }) ?? `${SITE_URL}${schedulePath}`
     : '';
 

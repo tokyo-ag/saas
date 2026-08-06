@@ -108,14 +108,13 @@ export function buildCurrentLiffUrl(): string | null {
   params.delete('state');
   params.delete('liff.state');
 
-  const tenantMatch = current.pathname.match(/^(\/liff\/[^/]+)(.*)$/);
   if (!usingTenantLiff) {
     const pathWithQuery = `${current.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
     const fallbackUrl = new URL(`https://liff.line.me/${id}`);
     fallbackUrl.searchParams.set('liff.state', pathWithQuery);
     return fallbackUrl.toString();
   }
-  const suffix = tenantMatch?.[2] ?? '';
+  const suffix = current.pathname;
   const liffUrl = new URL(`https://liff.line.me/${id}${suffix}`);
   for (const [key, value] of params.entries()) {
     liffUrl.searchParams.append(key, value);

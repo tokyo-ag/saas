@@ -34,10 +34,14 @@ export function buildLiffUrl(
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   const liffId = options?.liffId?.trim() || LIFF_ID;
   if (!liffId) return null;
-  const endpointPath = options?.endpointPath?.replace(/\/$/, '');
-  if (options?.liffId && endpointPath) {
+  const hasEndpointPath = options?.endpointPath !== undefined;
+  const endpointPath = options?.endpointPath === '/'
+    ? ''
+    : (options?.endpointPath?.replace(/\/$/, '') ?? '');
+  if (options?.liffId && hasEndpointPath) {
     const target = new URL(normalizedPath, SITE_URL);
     if (
+      endpointPath === '' ||
       target.pathname === endpointPath ||
       target.pathname.startsWith(`${endpointPath}/`)
     ) {

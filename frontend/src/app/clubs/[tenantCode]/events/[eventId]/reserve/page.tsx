@@ -17,7 +17,7 @@ function PublicReserveRedirectInner() {
         window.location.replace(
           buildLiffUrl(liffReservePath, {
             liffId: tenant.liffId,
-            endpointPath: `/liff/${tenantCode}`,
+            endpointPath: '/',
           }) ?? liffReservePath,
         );
       })

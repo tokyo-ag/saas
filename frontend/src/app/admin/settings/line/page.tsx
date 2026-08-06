@@ -98,7 +98,7 @@ export default function LineSettingsPage() {
   }
 
   const webhookUrl = `${BASE}/webhook/${tenant?.id ?? ''}`;
-  const liffEndpointUrl = `${SITE_URL}/liff/${tenant?.code ?? tenant?.id ?? ''}`;
+  const liffEndpointUrl = SITE_URL;
   const lineBasicConfigured = !!(tenant?.lineBasicConfigured || (tenant?.lineChannelId && tenant?.lineChannelSecretConfigured));
   const lineCredentialsLocked = !!tenant?.lineConfigured && !editUnlocked;
   const requiresChannelSecret = !lineBasicConfigured || editUnlocked;

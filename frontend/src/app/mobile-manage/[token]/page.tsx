@@ -243,7 +243,7 @@ function EventListScreen({
   const schedulePath = `/liff/${session.tenantCode}`;
   const scheduleUrl = buildLiffUrl(schedulePath, {
     liffId: session.liffId,
-    endpointPath: schedulePath,
+    endpointPath: '/',
   }) ?? `${SITE_URL}${schedulePath}`;
 
   function copyScheduleUrl() {
