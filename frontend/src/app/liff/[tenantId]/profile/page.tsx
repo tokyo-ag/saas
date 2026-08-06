@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { api, LiffMyReservation, LiffProfile, setLiffToken } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded, liff, redirectToLiffApp, isLiffLoggedIn } from '@/lib/liff';
@@ -390,6 +391,17 @@ export default function ProfilePage() {
           </button>
           )}
         </form>
+
+        <Link
+          href={`/liff/${tenantId}/line-notifications`}
+          className="flex items-center justify-between rounded-2xl border border-green-100 bg-green-50 p-4 shadow-sm active:opacity-80"
+        >
+          <div>
+            <p className="text-sm font-bold text-gray-900">LINE通知の連携</p>
+            <p className="mt-1 text-xs text-gray-600">予約完了・リマインドを団体公式LINEで受け取る</p>
+          </div>
+          <span className="text-lg text-green-600">›</span>
+        </Link>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
           <button

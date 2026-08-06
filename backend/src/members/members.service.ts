@@ -108,9 +108,10 @@ export class MembersService {
     const members = await this.prisma.member.findMany({ where: { tenantId } });
     let updated = 0;
     for (const member of members) {
+      if (!member.messagingLineUserId) continue;
       const profile = await this.lineMessaging.getLineProfile(
         tenant.lineChannelAccessToken,
-        member.lineUserId,
+        member.messagingLineUserId,
       );
       if (!profile) continue;
       await this.prisma.member.update({

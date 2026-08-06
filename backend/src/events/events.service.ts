@@ -423,10 +423,10 @@ export class EventsService {
     let appSentCount = 0;
 
     for (const r of reservations) {
-      if (sendLine && tenant?.lineChannelAccessToken) {
+      if (sendLine && tenant?.lineChannelAccessToken && r.member.messagingLineUserId) {
         await this.lineMessaging.sendPushMessage(
           tenant.lineChannelAccessToken,
-          r.member.lineUserId,
+          r.member.messagingLineUserId,
           `【${event.title}】\n${content}`,
         );
         lineSentCount++;
@@ -459,14 +459,17 @@ export class EventsService {
       include: { member: true },
     });
 
+    let sentCount = 0;
     for (const r of reservations) {
+      if (!r.member.messagingLineUserId) continue;
       await this.lineMessaging.sendRemind(
         tenant.lineChannelAccessToken,
-        r.member.lineUserId,
+        r.member.messagingLineUserId,
         event.title,
         event.heldAt,
         event.location,
       );
+      sentCount++;
     }
 
     await this.prisma.event.update({
@@ -474,7 +477,7 @@ export class EventsService {
       data: { remindedAt: new Date() },
     });
 
-    return { sentCount: reservations.length };
+    return { sentCount };
   }
 
   async exportCsv(tenantId: string, eventId: string): Promise<string> {

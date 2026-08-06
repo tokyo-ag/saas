@@ -12,6 +12,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LineMessagingService } from '../line-messaging/line-messaging.service';
 import { StripeService } from '../stripe/stripe.service';
 import { PLAN_LIMITS } from '../config/plan-limits';
+import { randomBytes } from 'crypto';
 export class CreateReservationDto {
   @IsString() eventId!: string;
   @IsOptional() @IsString() lineUserId?: string;
@@ -58,6 +59,55 @@ export class LiffService {
     tenantId = await this.resolveTenantId(tenantId);
     await this.prisma.tenantLiffAccess.create({ data: { tenantId } });
     return { ok: true };
+  }
+
+  async getLineNotificationLink(tenantId: string, lineUserId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
+    const [tenant, member] = await Promise.all([
+      this.prisma.tenant.findUnique({ where: { id: tenantId }, select: { lineChannelAccessToken: true } }),
+      this.prisma.member.findUnique({
+        where: { tenantId_lineUserId: { tenantId, lineUserId } },
+        select: { messagingLineUserId: true },
+      }),
+    ]);
+    return {
+      available: Boolean(tenant?.lineChannelAccessToken),
+      linked: Boolean(member?.messagingLineUserId),
+    };
+  }
+
+  async createLineNotificationLinkCode(tenantId: string, lineUserId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
+    const [tenant, member] = await Promise.all([
+      this.prisma.tenant.findUnique({ where: { id: tenantId }, select: { lineChannelAccessToken: true } }),
+      this.prisma.member.findUnique({ where: { tenantId_lineUserId: { tenantId, lineUserId } } }),
+    ]);
+    if (!tenant?.lineChannelAccessToken) {
+      throw new BadRequestException('この団体ではLINE通知を利用できません');
+    }
+    if (!member) {
+      throw new BadRequestException('先にプロフィール登録または予約をしてください');
+    }
+    if (member.messagingLineUserId) {
+      return { linked: true, code: null, expiresAt: null };
+    }
+
+    await this.prisma.lineNotificationLinkCode.deleteMany({
+      where: { tenantId, memberId: member.id, usedAt: null },
+    });
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const code = randomBytes(6).toString('base64url').toUpperCase();
+      try {
+        await this.prisma.lineNotificationLinkCode.create({
+          data: { tenantId, memberId: member.id, code, expiresAt },
+        });
+        return { linked: false, code, expiresAt };
+      } catch (error) {
+        if (attempt === 2) throw error;
+      }
+    }
+    throw new BadRequestException('連携コードを発行できませんでした');
   }
 
   // テナント公開情報（認証不要）
@@ -584,7 +634,7 @@ export class LiffService {
       if (status === 'reserved') {
         await this.lineMessaging.sendReservationConfirm(
           token,
-          dto.lineUserId,
+          member.messagingLineUserId ?? '',
           event.title,
           event.heldAt,
           event.location,
@@ -595,7 +645,7 @@ export class LiffService {
       } else {
         await this.lineMessaging.sendWaitlistRegistered(
           token,
-          dto.lineUserId,
+          member.messagingLineUserId ?? '',
           event.title,
           waitlistOrder!,
         );
@@ -935,8 +985,8 @@ export class LiffService {
         OR: [{ member1Id: me.id }, { member2Id: me.id }],
       },
       include: {
-        member1: { select: { id: true, lineUserId: true } },
-        member2: { select: { id: true, lineUserId: true } },
+        member1: { select: { id: true, messagingLineUserId: true } },
+        member2: { select: { id: true, messagingLineUserId: true } },
       },
     });
     if (!conn) throw new NotFoundException('会話が見つかりません');
@@ -950,10 +1000,10 @@ export class LiffService {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
     });
-    if (partner.lineUserId) {
+    if (partner.messagingLineUserId) {
       await this.lineMessaging.sendTalkNotification(
         tenant?.lineChannelAccessToken ?? '',
-        partner.lineUserId,
+        partner.messagingLineUserId,
         me.name ?? 'メンバー',
         content,
       );
@@ -1021,7 +1071,7 @@ export class LiffService {
           if (tenant?.lineChannelAccessToken) {
             await this.lineMessaging.sendWaitlistPromoted(
               tenant.lineChannelAccessToken,
-              next.member.lineUserId,
+              next.member.messagingLineUserId ?? '',
               reservation.event.title,
               reservation.event.heldAt,
               reservation.event.location,

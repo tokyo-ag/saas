@@ -75,10 +75,10 @@ export class ReservationsService {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
     });
-    if (tenant?.lineChannelAccessToken && nextWaitlisted.member.lineUserId) {
+    if (tenant?.lineChannelAccessToken && nextWaitlisted.member.messagingLineUserId) {
       await this.lineMessaging.sendWaitlistPromoted(
         tenant.lineChannelAccessToken,
-        nextWaitlisted.member.lineUserId,
+        nextWaitlisted.member.messagingLineUserId,
         event.title,
         event.heldAt,
         event.location,

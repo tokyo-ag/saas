@@ -201,6 +201,13 @@ export const api = {
       void lineUserId;
       return request<LiffProfile>(`/liff/${tenantId}/profile`);
     },
+    lineNotificationLink: (tenantId: string) =>
+      request<{ available: boolean; linked: boolean }>(`/liff/${tenantId}/line-notification-link`),
+    createLineNotificationLinkCode: (tenantId: string) =>
+      request<{ linked: boolean; code: string | null; expiresAt: string | null }>(
+        `/liff/${tenantId}/line-notification-link/code`,
+        { method: 'POST' },
+      ),
     memberProfile: (tenantId: string, memberId: string) =>
       request<LiffProfile>(`/liff/${tenantId}/members/${memberId}`),
     createConnection: (tenantId: string, _myLineUserId: string, targetMemberId: string) =>

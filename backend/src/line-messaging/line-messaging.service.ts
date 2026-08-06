@@ -38,6 +38,19 @@ export class LineMessagingService {
     }
   }
 
+  async replyText(accessToken: string, replyToken: string, text: string): Promise<void> {
+    if (!accessToken || !replyToken) return;
+    try {
+      const client = this.getClient(accessToken);
+      await client.replyMessage({
+        replyToken,
+        messages: [{ type: 'text', text }],
+      });
+    } catch (err) {
+      this.logger.error(`LINE reply failed: ${String(err)}`);
+    }
+  }
+
   async sendReservationConfirm(
     accessToken: string,
     lineUserId: string,

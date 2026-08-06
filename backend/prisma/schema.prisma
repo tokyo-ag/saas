@@ -69,6 +69,7 @@ model Tenant {
   members            Member[]
   organizerAccounts  OrganizerAccount[]
   liffAccesses       TenantLiffAccess[]
+  lineLinkCodes      LineNotificationLinkCode[]
   publicPages        PublicPage[]
   blogPosts          BlogPost[]
 
@@ -326,6 +327,7 @@ model Member {
   id         String   @id @default(uuid())
   tenantId   String   @map("tenant_id")
   lineUserId          String    @map("line_user_id") @db.VarChar(100)
+  messagingLineUserId String?   @map("messaging_line_user_id") @db.VarChar(100)
   lineDisplayName     String?   @map("line_display_name") @db.VarChar(200)
   linePictureUrl      String?   @map("line_picture_url") @db.VarChar(500)
   name                String?   @db.VarChar(100)
@@ -344,9 +346,27 @@ model Member {
   sentMessages    Message[]
   notifications   Notification[]
   eventReviews     EventReview[]
+  lineLinkCodes    LineNotificationLinkCode[]
 
   @@unique([tenantId, lineUserId])
+  @@unique([tenantId, messagingLineUserId])
   @@map("members")
+}
+
+model LineNotificationLinkCode {
+  id        String    @id @default(uuid())
+  tenantId  String    @map("tenant_id")
+  memberId  String    @map("member_id")
+  code      String    @unique @db.VarChar(12)
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, memberId])
+  @@map("line_notification_link_codes")
 }
 
 model Connection {
