@@ -196,7 +196,8 @@ export async function getLiffUserId(): Promise<string | null> {
     return profile.userId;
   } catch (err) {
     console.error('[LIFF] getProfile failed:', err);
-    return null;
+    const decoded = liff.getDecodedIDToken();
+    return typeof decoded?.sub === 'string' ? decoded.sub : null;
   }
 }
 
@@ -207,7 +208,13 @@ export async function getLiffProfile(): Promise<{ userId: string; displayName: s
     return { userId: profile.userId, displayName: profile.displayName, pictureUrl: profile.pictureUrl };
   } catch (err) {
     console.error('[LIFF] getProfile failed:', err);
-    return null;
+    const decoded = liff.getDecodedIDToken();
+    if (typeof decoded?.sub !== 'string') return null;
+    return {
+      userId: decoded.sub,
+      displayName: typeof decoded.name === 'string' ? decoded.name : '',
+      pictureUrl: typeof decoded.picture === 'string' ? decoded.picture : undefined,
+    };
   }
 }
 
