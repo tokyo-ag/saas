@@ -45,8 +45,8 @@ type EventFormData = {
 };
 
 const inputClass = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]';
-const DEFAULT_RESERVATION_MESSAGE = '【{title}】ご予約ありがとうございます！\n日時：{date}\n場所：{location}';
-const DEFAULT_REMINDER_MESSAGE = '【{title}】まもなく開催です！\n日時：{date}\n場所：{location}';
+const DEFAULT_RESERVATION_MESSAGE = '【{title}】ご予約ありがとうございます！\n日時：{date}\n参加費：{price}\n場所：{location}';
+const DEFAULT_REMINDER_MESSAGE = '【{title}】まもなく開催です！\n日時：{date}\n参加費：{price}\n場所：{location}';
 const ALL_SUBAREAS: readonly string[] = Object.values(WARD_SUBAREAS).flat();
 const EVENT_TAG_VALUES: readonly string[] = [
   ...LOCATION_TAGS,
@@ -125,25 +125,57 @@ function sameDayDatetime(dateTime: string, time: string) {
   return `${dateTime.slice(0, 10)}T${time}`;
 }
 
-function formatLineDate(value: string) {
+function formatLineDate(value: string, endValue: string) {
   if (!value) return '（日時未設定）';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '（日時未設定）';
-  return date.toLocaleString('ja-JP', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
+  const day = date.toLocaleDateString('ja-JP', {
+    month: 'numeric',
+    day: 'numeric',
+    weekday: 'short',
     timeZone: 'Asia/Tokyo',
   });
+  const startTime = date.toLocaleTimeString('ja-JP', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Tokyo',
+  });
+  const endDate = endValue ? new Date(endValue) : null;
+  const endTime = endDate && !Number.isNaN(endDate.getTime())
+    ? endDate.toLocaleTimeString('ja-JP', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Asia/Tokyo',
+      })
+    : null;
+  return `${day}${startTime}${endTime ? `~${endTime}` : ''}`;
 }
 
-function renderLineMessage(template: string, form: Pick<EventFormData, 'title' | 'heldAt' | 'location'>) {
+function formatLinePrice(form: Pick<EventFormData, 'priceMode' | 'price' | 'priceMale' | 'priceFemale'>) {
+  if (form.priceMode === 'gender') {
+    const male = Number(form.priceMale || 0).toLocaleString('ja-JP');
+    const female = Number(form.priceFemale || 0).toLocaleString('ja-JP');
+    return `男性🚹${male}円、女性🚺${female}円`;
+  }
+  const price = Number(form.price || 0);
+  return price === 0 ? '無料' : `${price.toLocaleString('ja-JP')}円`;
+}
+
+function renderLineMessage(
+  template: string,
+  form: Pick<EventFormData, 'title' | 'description' | 'heldAt' | 'endAt' | 'location' | 'locationUrl' | 'priceMode' | 'price' | 'priceMale' | 'priceFemale'>,
+) {
+  const location = form.location || '（場所未設定）';
   const values: Record<string, string> = {
     title: form.title || '（イベント名未設定）',
-    date: formatLineDate(form.heldAt),
-    location: form.location || '（場所未設定）',
+    date: formatLineDate(form.heldAt, form.endAt),
+    price: formatLinePrice(form),
+    location: form.locationUrl.trim() ? `${location}\n${form.locationUrl.trim()}` : location,
+    description: form.description
+      ? `${form.description.slice(0, 300)}${form.description.length > 300 ? '…' : ''}`
+      : '',
   };
   return template.replace(/\{(\w+)\}/g, (match, key) => values[key] ?? match);
 }
@@ -211,7 +243,7 @@ function LineMessageEditor({
             </div>
           </div>
           <p className="mt-1.5 text-[11px] text-gray-400">
-            {'{title}・{date}・{location}'} は上のイベント情報で置き換えています。
+            {'{title}・{date}・{price}・{location}・{description}'} は上のイベント情報で置き換えています。
           </p>
         </div>
       </div>
@@ -618,9 +650,10 @@ export default function EventForm({
   const showStripe = form.paymentTiming !== 'onsite' && (
     form.priceMode === 'same' ? Number(form.price) > 0 : Number(form.priceMale) > 0 || Number(form.priceFemale) > 0
   );
+  const defaultReservationTemplate = `${DEFAULT_RESERVATION_MESSAGE}${form.description ? '\n\n{description}' : ''}`;
   const reservationTemplate = form.reservationMessageTemplate.trim()
     ? form.reservationMessageTemplate
-    : tenant?.reservationMessageTemplate?.trim() || DEFAULT_RESERVATION_MESSAGE;
+    : tenant?.reservationMessageTemplate?.trim() || defaultReservationTemplate;
   const reminderTemplate = form.reminderMessageTemplate.trim()
     ? form.reminderMessageTemplate
     : tenant?.reminderMessageTemplate?.trim() || DEFAULT_REMINDER_MESSAGE;

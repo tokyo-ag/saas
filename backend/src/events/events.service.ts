@@ -467,6 +467,13 @@ export class EventsService {
         event.heldAt,
         event.location,
         event.reminderMessageTemplate ?? tenant.reminderMessageTemplate,
+        {
+          endAt: event.endAt,
+          locationUrl: event.locationUrl,
+          price: event.price,
+          priceMale: event.priceMale,
+          priceFemale: event.priceFemale,
+        },
       );
     }
 

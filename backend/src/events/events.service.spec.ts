@@ -116,6 +116,10 @@ describe('EventsService date validation', () => {
       remindAt: new Date('2026-06-11T09:00:00.000Z'),
       reminderMessageTemplate: eventTemplate,
       location: '池袋',
+      locationUrl: 'https://maps.example.com/ikebukuro',
+      price: 0,
+      priceMale: 3000,
+      priceFemale: 1000,
     });
     prisma.tenant.findUnique.mockResolvedValue({
       id: 'tenant-1',
@@ -136,6 +140,13 @@ describe('EventsService date validation', () => {
       new Date('2026-06-12T11:00:00.000Z'),
       '池袋',
       eventTemplate,
+      {
+        endAt: new Date('2026-06-12T13:00:00.000Z'),
+        locationUrl: 'https://maps.example.com/ikebukuro',
+        price: 0,
+        priceMale: 3000,
+        priceFemale: 1000,
+      },
     );
   });
 });

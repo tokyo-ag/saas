@@ -1,6 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as line from '@line/bot-sdk';
 
+type EventMessageDetails = {
+  endAt?: Date | null;
+  locationUrl?: string | null;
+  priceMale?: number | null;
+  priceFemale?: number | null;
+};
+
 @Injectable()
 export class LineMessagingService {
   private readonly logger = new Logger(LineMessagingService.name);
@@ -47,20 +54,22 @@ export class LineMessagingService {
     price?: number,
     description?: string | null,
     customTemplate?: string | null,
+    details: EventMessageDetails = {},
   ): Promise<void> {
-    const dateStr = this.formatDate(heldAt);
-    const priceStr =
-      price != null
-        ? price === 0
-          ? '無料'
-          : `¥${price.toLocaleString()}`
-        : null;
+    const dateStr = this.formatDate(heldAt, details.endAt);
+    const locationStr = this.formatLocation(location, details.locationUrl);
+    const priceStr = this.formatPrice(
+      price,
+      details.priceMale,
+      details.priceFemale,
+    );
     if (customTemplate?.trim()) {
       const text = this.applyTemplate(customTemplate, {
         title: eventTitle,
         date: dateStr,
-        location,
+        location: locationStr,
         price: priceStr ?? '',
+        description: description ?? '',
       });
       await this.sendPushMessage(accessToken, lineUserId, text);
       return;
@@ -68,8 +77,8 @@ export class LineMessagingService {
     const lines = [
       `【${eventTitle}】ご予約ありがとうございます！`,
       `日時：${dateStr}`,
-      `場所：${location}`,
-      ...(priceStr ? [`料金：${priceStr}`] : []),
+      ...(priceStr ? [`参加費：${priceStr}`] : []),
+      `場所：${locationStr}`,
       ...(description
         ? [
             `\n${description.slice(0, 300)}${description.length > 300 ? '…' : ''}`,
@@ -142,22 +151,32 @@ export class LineMessagingService {
     heldAt: Date,
     location: string,
     customTemplate?: string | null,
+    details: EventMessageDetails & { price?: number | null } = {},
   ): Promise<void> {
-    const dateStr = this.formatDate(heldAt);
+    const dateStr = this.formatDate(heldAt, details.endAt);
+    const locationStr = this.formatLocation(location, details.locationUrl);
+    const priceStr = this.formatPrice(
+      details.price,
+      details.priceMale,
+      details.priceFemale,
+    );
     if (customTemplate?.trim()) {
       const text = this.applyTemplate(customTemplate, {
         title: eventTitle,
         date: dateStr,
-        location,
+        location: locationStr,
+        price: priceStr ?? '',
       });
       await this.sendPushMessage(accessToken, lineUserId, text);
       return;
     }
-    await this.sendPushMessage(
-      accessToken,
-      lineUserId,
-      `【${eventTitle}】まもなく開催です！\n日時：${dateStr}\n場所：${location}`,
-    );
+    const lines = [
+      `【${eventTitle}】まもなく開催です！`,
+      `日時：${dateStr}`,
+      ...(priceStr ? [`参加費：${priceStr}`] : []),
+      `場所：${locationStr}`,
+    ];
+    await this.sendPushMessage(accessToken, lineUserId, lines.join('\n'));
   }
 
   private applyTemplate(
@@ -184,14 +203,44 @@ export class LineMessagingService {
     }
   }
 
-  private formatDate(date: Date): string {
-    return new Date(date).toLocaleString('ja-JP', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
+  private formatDate(date: Date, endAt?: Date | null): string {
+    const heldAt = new Date(date);
+    const day = heldAt.toLocaleDateString('ja-JP', {
+      month: 'numeric',
+      day: 'numeric',
+      weekday: 'short',
       timeZone: 'Asia/Tokyo',
     });
+    const startTime = heldAt.toLocaleTimeString('ja-JP', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Asia/Tokyo',
+    });
+    const endTime = endAt
+      ? new Date(endAt).toLocaleTimeString('ja-JP', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+          timeZone: 'Asia/Tokyo',
+        })
+      : null;
+    return `${day}${startTime}${endTime ? `~${endTime}` : ''}`;
+  }
+
+  private formatPrice(
+    price?: number | null,
+    priceMale?: number | null,
+    priceFemale?: number | null,
+  ): string | null {
+    if (priceMale != null && priceFemale != null) {
+      return `男性🚹${priceMale.toLocaleString('ja-JP')}円、女性🚺${priceFemale.toLocaleString('ja-JP')}円`;
+    }
+    if (price == null) return null;
+    return price === 0 ? '無料' : `${price.toLocaleString('ja-JP')}円`;
+  }
+
+  private formatLocation(location: string, locationUrl?: string | null): string {
+    return locationUrl?.trim() ? `${location}\n${locationUrl.trim()}` : location;
   }
 }

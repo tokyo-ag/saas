@@ -592,6 +592,12 @@ export class LiffService {
           event.price,
           event.description,
           event.reservationMessageTemplate ?? tenant?.reservationMessageTemplate,
+          {
+            endAt: event.endAt,
+            locationUrl: event.locationUrl,
+            priceMale: event.priceMale,
+            priceFemale: event.priceFemale,
+          },
         );
       } else {
         await this.lineMessaging.sendWaitlistRegistered(
