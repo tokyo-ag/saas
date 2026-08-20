@@ -207,6 +207,9 @@ export default function EventsPage() {
         endpointPath: '/',
       }) ?? `${SITE_URL}${schedulePath}`
     : '';
+  // liff.line.me は X-Frame-Options: DENY のため管理画面へ埋め込めない。
+  // コピー用URLは正式なLIFF URLのままにし、スマホプレビューだけ同一originの画面を使う。
+  const previewUrl = schedulePath ? `${schedulePath}?preview=1` : '';
 
   function copyScheduleUrl() {
     if (!scheduleUrl) return;
@@ -445,7 +448,7 @@ export default function EventsPage() {
         </div>
 
         {/* 右：モバイルプレビュー */}
-        {scheduleUrl && (
+        {previewUrl && (
           <div className="shrink-0 hidden lg:block">
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="text-[11px] font-bold text-gray-400">👤 ユーザーにはこう見えます</p>
@@ -463,7 +466,7 @@ export default function EventsPage() {
               </div>
               <iframe
                 key={iframeKey}
-                src={scheduleUrl}
+                src={previewUrl}
                 width="375"
                 height="667"
                 style={{ zoom: 0.587, border: 'none', display: 'block' }}

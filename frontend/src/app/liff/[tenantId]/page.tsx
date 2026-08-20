@@ -513,10 +513,11 @@ export default function LiffTopPage() {
 
   useEffect(() => {
     async function init() {
+      const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
       const tenantCacheKey = `liff_tenant_${tenantId}`;
       const eventsCacheKey = `liff_events_${tenantId}`;
 
-      api.liff.recordAccess(tenantId).catch(() => {});
+      if (!isPreview) api.liff.recordAccess(tenantId).catch(() => {});
       let notFound = false;
       const t = await api.liff.tenant(tenantId).catch((err: any) => {
         if (err?.status === 404) notFound = true;
@@ -556,6 +557,9 @@ export default function LiffTopPage() {
         const allTenants = await api.public.tenants().catch(() => []);
         setOtherTenants(allTenants.filter((t) => t.id !== tenantId));
       }
+
+      // 管理画面内のプレビューではLINE SDKを初期化せず、公開データだけで描画する。
+      if (isPreview) return;
 
       const ok = await initLiff();
       const lineProfile = ok ? await getLiffProfile().catch(() => null) : null;
