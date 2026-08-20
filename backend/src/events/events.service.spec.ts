@@ -105,6 +105,23 @@ describe('EventsService date validation', () => {
     );
   });
 
+  it('clears existing event images when null is sent', async () => {
+    await service.update('tenant-1', 'event-1', {
+      imageUrl: null,
+      iconUrl: null,
+    });
+
+    expect(prisma.event.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'event-1' },
+        data: expect.objectContaining({
+          imageUrl: null,
+          iconUrl: null,
+        }),
+      }),
+    );
+  });
+
   it('uses the event reminder template when sending a reminder manually', async () => {
     const eventTemplate = '【{title}】イベント固有のリマインドです';
     prisma.event.findFirst.mockResolvedValue({

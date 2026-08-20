@@ -495,8 +495,8 @@ export interface Event {
   updatedAt: string;
   reservedCount?: number;
   waitlistedCount?: number;
-  imageUrl?: string;
-  iconUrl?: string;
+  imageUrl?: string | null;
+  iconUrl?: string | null;
   category?: string | null;
   tags?: string[];
   levelEnabled?: boolean;
@@ -529,8 +529,8 @@ export interface EventInput {
   remindApp?: boolean;
   remindAt?: string | null;
   reminderMessageTemplate?: string | null;
-  imageUrl?: string;
-  iconUrl?: string;
+  imageUrl?: string | null;
+  iconUrl?: string | null;
   category?: string | null;
   tags?: string[];
   levelEnabled?: boolean;

@@ -610,8 +610,9 @@ export default function EventForm({
       levelEnabled: form.levelEnabled,
       rosterShareEnabled: form.rosterShareEnabled,
       reserveActionStyle: form.reserveActionStyle || null,
-      imageUrl: form.imageUrl || undefined,
-      iconUrl: form.iconUrl || undefined,
+      // 編集時に画像を削除した場合も、nullを明示して既存URLをDBから消す。
+      imageUrl: form.imageUrl || null,
+      iconUrl: form.iconUrl || null,
       category: form.category || null,
       tags: normalizeEventTags(form.tags),
     };

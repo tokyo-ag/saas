@@ -153,12 +153,12 @@ export class CreateEventDto {
   @IsOptional()
   @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
   @MaxLength(500)
-  imageUrl?: string;
+  imageUrl?: string | null;
 
   @IsOptional()
   @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
   @MaxLength(500)
-  iconUrl?: string;
+  iconUrl?: string | null;
 
   @IsOptional()
   @IsString()
