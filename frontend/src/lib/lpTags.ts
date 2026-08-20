@@ -41,7 +41,8 @@ export const OTHER_PREFECTURE_TAGS = ['埼玉', '千葉', '神奈川'] as const;
 // options; picking one is saved alongside the parent tag (not instead of it). Only areas with a
 // confirmed list are populated here - unlisted ones simply have no sub-area options yet.
 export const WARD_SUBAREAS: Record<string, readonly string[]> = {
-  '豊島区': ['千川', '要町', '小竹向原'],
+  '豊島区': ['池袋', '巣鴨', '千川', '要町', '小竹向原'],
+  '新宿区': ['西新宿', '新大久保', '歌舞伎町'],
   '武蔵野市': ['吉祥寺'],
 };
 
@@ -92,7 +93,9 @@ export const AREA_SLUGS: Record<string, string> = {
   '武蔵野市': 'musashino', '三鷹市': 'mitaka', '立川市': 'tachikawa',
   '八王子市': 'hachioji', '町田市': 'machida', '調布市': 'chofu',
   '埼玉': 'saitama', '千葉': 'chiba', '神奈川': 'kanagawa',
-  '千川': 'senkawa', '要町': 'kanamecho', '小竹向原': 'kotakemukaihara',
+  '池袋': 'ikebukuro', '巣鴨': 'sugamo', '千川': 'senkawa', '要町': 'kanamecho',
+  '小竹向原': 'kotakemukaihara', '西新宿': 'nishi-shinjuku',
+  '新大久保': 'shin-okubo', '歌舞伎町': 'kabukicho',
   '吉祥寺': 'kichijoji',
 };
 export const AREA_SLUG_TO_JAPANESE: Record<string, string> = Object.fromEntries(
