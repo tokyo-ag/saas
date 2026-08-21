@@ -64,7 +64,12 @@ export class LineMessagingService {
       details.priceFemale,
     );
     if (customTemplate?.trim()) {
-      const text = this.applyTemplate(customTemplate, {
+      const effectiveTemplate = this.omitRedundantTitle(
+        customTemplate,
+        eventTitle,
+        description,
+      );
+      const text = this.applyTemplate(effectiveTemplate, {
         title: eventTitle,
         date: dateStr,
         location: locationStr,
@@ -74,8 +79,13 @@ export class LineMessagingService {
       await this.sendPushMessage(accessToken, lineUserId, text);
       return;
     }
+    const descriptionStartsWithTitle = Boolean(
+      eventTitle.trim() && description?.trimStart().startsWith(eventTitle.trim()),
+    );
     const lines = [
-      `【${eventTitle}】ご予約ありがとうございます！`,
+      descriptionStartsWithTitle
+        ? 'ご予約ありがとうございます！'
+        : `【${eventTitle}】ご予約ありがとうございます！`,
       `日時：${dateStr}`,
       ...(priceStr ? [`参加費：${priceStr}`] : []),
       `場所：${locationStr}`,
@@ -186,6 +196,21 @@ export class LineMessagingService {
     return template.replace(/\{(\w+)\}/g, (match, key) => vars[key] ?? match);
   }
 
+  private omitRedundantTitle(
+    template: string,
+    eventTitle: string,
+    description?: string | null,
+  ): string {
+    const normalizedTitle = eventTitle.trim();
+    const descriptionStartsWithTitle = Boolean(
+      normalizedTitle && description?.trimStart().startsWith(normalizedTitle),
+    );
+    if (!descriptionStartsWithTitle || !template.includes('{description}')) {
+      return template;
+    }
+    return template.replace(/【\s*\{title\}\s*】/g, '').replace(/\{title\}/g, '');
+  }
+
   async getLineProfile(
     accessToken: string,
     lineUserId: string,
@@ -234,7 +259,7 @@ export class LineMessagingService {
     priceFemale?: number | null,
   ): string | null {
     if (priceMale != null && priceFemale != null) {
-      return `男性🚹${priceMale.toLocaleString('ja-JP')}円、女性🚺${priceFemale.toLocaleString('ja-JP')}円`;
+      return `男性🚹${priceMale.toLocaleString('ja-JP')}円\n女性🚺${priceFemale.toLocaleString('ja-JP')}円`;
     }
     if (price == null) return null;
     return price === 0 ? '無料' : `${price.toLocaleString('ja-JP')}円`;

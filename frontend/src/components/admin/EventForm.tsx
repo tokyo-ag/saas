@@ -157,10 +157,18 @@ function formatLinePrice(form: Pick<EventFormData, 'priceMode' | 'price' | 'pric
   if (form.priceMode === 'gender') {
     const male = Number(form.priceMale || 0).toLocaleString('ja-JP');
     const female = Number(form.priceFemale || 0).toLocaleString('ja-JP');
-    return `男性🚹${male}円、女性🚺${female}円`;
+    return `男性🚹${male}円\n女性🚺${female}円`;
   }
   const price = Number(form.price || 0);
   return price === 0 ? '無料' : `${price.toLocaleString('ja-JP')}円`;
+}
+
+function omitRedundantTitle(template: string, title: string, description: string) {
+  const normalizedTitle = title.trim();
+  const descriptionStartsWithTitle = normalizedTitle
+    && description.trimStart().startsWith(normalizedTitle);
+  if (!descriptionStartsWithTitle || !template.includes('{description}')) return template;
+  return template.replace(/【\s*\{title\}\s*】/g, '').replace(/\{title\}/g, '');
 }
 
 function renderLineMessage(
@@ -177,7 +185,8 @@ function renderLineMessage(
       ? `${form.description.slice(0, 300)}${form.description.length > 300 ? '…' : ''}`
       : '',
   };
-  return template.replace(/\{(\w+)\}/g, (match, key) => values[key] ?? match);
+  const effectiveTemplate = omitRedundantTitle(template, form.title, form.description);
+  return effectiveTemplate.replace(/\{(\w+)\}/g, (match, key) => values[key] ?? match);
 }
 
 function LineMessageEditor({
