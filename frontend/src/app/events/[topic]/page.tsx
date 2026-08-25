@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { PublicEvent, PortalBlogPost } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
-import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
+import { getDefaultEventImage } from '@/lib/defaultImages';
 import PublicFooter from '@/components/public/PublicFooter';
 import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
 
@@ -60,6 +60,7 @@ const RELATED_LINKS = [
   { href: '/sports/basketball', label: 'バスケ' },
   { href: '/sports/futsal', label: 'フットサル' },
   { href: '/sports/volleyball', label: 'バレー' },
+  { href: '/sports/tabletennis', label: '卓球' },
 ];
 
 export function generateStaticParams() {
@@ -299,7 +300,7 @@ export default async function EventTopicPage({
                     {image ? (
                       <Image src={image} alt={ev.title} fill sizes="80px" className="object-cover" />
                     ) : (
-                      <Image src={DEFAULT_EVENT_IMAGE} alt={ev.title} fill sizes="80px" className="object-cover" />
+                      <Image src={getDefaultEventImage(ev.category)} alt={ev.title} fill sizes="80px" className="object-cover" />
                     )}
                     {remaining !== null && remaining <= 0 && (
                       <div className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full">

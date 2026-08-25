@@ -99,6 +99,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/sports/basketball`, changeFrequency: 'daily', priority: 0.85, lastModified: STATIC_LAST_MODIFIED },
     { url: `${SITE_URL}/sports/futsal`, changeFrequency: 'daily', priority: 0.85, lastModified: STATIC_LAST_MODIFIED },
     { url: `${SITE_URL}/sports/volleyball`, changeFrequency: 'daily', priority: 0.85, lastModified: STATIC_LAST_MODIFIED },
+    { url: `${SITE_URL}/sports/tabletennis`, changeFrequency: 'daily', priority: 0.85, lastModified: STATIC_LAST_MODIFIED },
     { url: `${SITE_URL}/use-cases`, changeFrequency: 'monthly', priority: 0.7, lastModified: STATIC_LAST_MODIFIED },
     { url: `${SITE_URL}/use-cases/badminton-tokyo`, changeFrequency: 'weekly', priority: 0.9, lastModified: STATIC_LAST_MODIFIED },
     { url: `${SITE_URL}/use-cases/basketball-tokyo`, changeFrequency: 'weekly', priority: 0.9, lastModified: STATIC_LAST_MODIFIED },

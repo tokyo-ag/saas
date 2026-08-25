@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
-import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
+import { getDefaultEventImage } from '@/lib/defaultImages';
 import PublicFooter from '@/components/public/PublicFooter';
 
 type HomeClientProps = {
@@ -21,6 +21,7 @@ const DISCOVERY_LINKS = [
   { href: '/sports/futsal', label: 'フットサル' },
   { href: '/sports/basketball', label: 'バスケ' },
   { href: '/sports/volleyball', label: 'バレー' },
+  { href: '/sports/tabletennis', label: '卓球' },
 ];
 
 const CATEGORY_SEARCH_TERMS: Record<string, string[]> = {
@@ -29,6 +30,7 @@ const CATEGORY_SEARCH_TERMS: Record<string, string[]> = {
   futsal: ['フットサル', 'サッカー'],
   basketball: ['バスケ', 'バスケットボール', 'basketball'],
   volleyball: ['バレー', 'バレーボール', 'volleyball'],
+  tabletennis: ['卓球', 'テーブルテニス', 'ピンポン'],
 };
 
 function SectionHeader({ title }: { title: string }) {
@@ -93,7 +95,7 @@ function EventCard({
           />
         ) : (
           <Image
-            src={DEFAULT_EVENT_IMAGE}
+            src={getDefaultEventImage(event.category)}
             alt={event.title}
             fill
             sizes={compact ? '128px' : '176px'}

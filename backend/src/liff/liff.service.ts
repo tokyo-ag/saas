@@ -167,6 +167,7 @@ export class LiffService {
       reservedCount: e.reservations.length,
       imageUrl: e.imageUrl,
       iconUrl: e.iconUrl,
+      category: e.category,
       levelEnabled: e.levelEnabled,
       friendAttendees: [] as { id: string; name: string | null }[],
     }));

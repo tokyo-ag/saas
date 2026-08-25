@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api, OfficialArticle } from '@/lib/api';
 
-const ACTIVITY_CATEGORIES = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー'];
+const ACTIVITY_CATEGORIES = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー', '卓球'];
 const TYPE_CATEGORIES = ['インカレサークル', '学生団体', 'イベント団体', '社会人サークル'];
 const KNOWN_CATEGORIES = [...ACTIVITY_CATEGORIES, ...TYPE_CATEGORIES];
 const DELETE_PASSPHRASE = 'comiu.link';

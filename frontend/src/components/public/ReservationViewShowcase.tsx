@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { API_URL } from '@/lib/api';
 import { isInLineInAppBrowser } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
-import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
+import { getDefaultEventImage } from '@/lib/defaultImages';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
 
 export type ReservationShowcaseEvent = {
@@ -20,6 +20,7 @@ export type ReservationShowcaseEvent = {
   priceMale?: number | null;
   priceFemale?: number | null;
   imageUrl?: string | null;
+  category?: string | null;
 };
 
 type ReservationViewShowcaseProps = {
@@ -330,7 +331,7 @@ function CardMini({
                   {image ? (
                     <img src={image} alt={event.title} className="h-full w-full object-cover" />
                   ) : (
-                    <img src={DEFAULT_EVENT_IMAGE} alt={event.title} className="h-full w-full object-cover" />
+                    <img src={getDefaultEventImage(event.category)} alt={event.title} className="h-full w-full object-cover" />
                   )}
                   <span
                     className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-bold shadow-sm ${full ? 'bg-white/90 text-gray-400' : ''}`}

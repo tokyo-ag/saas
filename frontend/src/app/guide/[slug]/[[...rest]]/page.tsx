@@ -11,7 +11,7 @@ import EventsAreaFilter from '../EventsAreaFilter';
 import EventsTagFilter from '../EventsTagFilter';
 import CircleCardReveal from '../CircleCardReveal';
 import PublicFooter from '@/components/public/PublicFooter';
-import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
+import { DEFAULT_EVENT_IMAGE, getDefaultEventImage } from '@/lib/defaultImages';
 import { buildAutoSeoDescription, buildSeoProfileFromTenant } from '@/lib/tenantSeo';
 
 export const revalidate = 60;
@@ -81,6 +81,7 @@ type PublicArticleEvent = {
   priceMale?: number | null;
   priceFemale?: number | null;
   imageUrl?: string | null;
+  category?: string | null;
   tags?: string[];
 };
 
@@ -188,8 +189,8 @@ async function fetchCircles(category?: string | null, typeTags?: string[]): Prom
   }
 }
 
-function imgSrc(url: string | null | undefined) {
-  if (!url) return '/defaults/events/default.webp';
+function imgSrc(url: string | null | undefined, category?: string | null) {
+  if (!url) return getDefaultEventImage(category);
   return url.startsWith('http') ? url : `${API_URL}${url}`;
 }
 
@@ -217,7 +218,7 @@ function EventCardMini({ event }: { event: PublicArticleEvent }) {
     <Link href={href} className="relative w-28 shrink-0 overflow-hidden rounded-xl bg-white" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
       <div className="relative" style={{ aspectRatio: '4/5' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={imgSrc(event.imageUrl)} alt={event.title} className="h-full w-full object-cover" />
+        <img src={imgSrc(event.imageUrl, event.category)} alt={event.title} className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 px-2 pb-2">
           <p className="mb-1 line-clamp-2 text-[11px] font-bold leading-snug text-white" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>{event.title}</p>

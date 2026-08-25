@@ -11,6 +11,7 @@ const groups = [
       { label: 'フットサル', href: '/sports/futsal' },
       { label: 'バスケ', href: '/sports/basketball' },
       { label: 'バレー', href: '/sports/volleyball' },
+      { label: '卓球', href: '/sports/tabletennis' },
     ],
   },
   {

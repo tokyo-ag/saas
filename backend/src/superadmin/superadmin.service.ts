@@ -23,13 +23,14 @@ import * as bcrypt from 'bcryptjs';
 
 // Mirrors frontend/src/lib/lpTags.ts ACTIVITY_TAGS/ACTIVITY_TAG_EVENT_CATEGORY/LOCATION_TAGS -
 // kept in sync manually since the backend has no access to frontend constants.
-const ACTIVITY_TAGS = new Set(['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー']);
+const ACTIVITY_TAGS = new Set(['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー', '卓球']);
 const ACTIVITY_TAG_EVENT_CATEGORY: Record<string, string> = {
   '交流会': 'meetup',
   'バドミントン': 'badminton',
   'フットサル': 'futsal',
   'バスケ': 'basketball',
   'バレー': 'volleyball',
+  '卓球': 'tabletennis',
 };
 const EVENT_CATEGORY_TO_ACTIVITY_TAG: Record<string, string> = Object.fromEntries(
   Object.entries(ACTIVITY_TAG_EVENT_CATEGORY).map(([tag, eventCategory]) => [eventCategory, tag]),

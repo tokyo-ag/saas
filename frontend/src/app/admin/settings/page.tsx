@@ -16,7 +16,7 @@ const tabs = [
 ];
 
 const TENANT_TYPE_TAGS = ['インカレサークル', '学生団体', 'イベント団体', '社会人サークル'] as const;
-const TENANT_ACTIVITY_TAGS = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー'] as const;
+const TENANT_ACTIVITY_TAGS = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー', '卓球'] as const;
 
 function filterKnownTags(tags: string[] | undefined, allowedTags: readonly string[]) {
   return (tags ?? []).filter((tag) => allowedTags.includes(tag));

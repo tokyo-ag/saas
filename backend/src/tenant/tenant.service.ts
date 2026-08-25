@@ -13,7 +13,7 @@ import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 
 const TENANT_TYPE_TAGS = ['インカレサークル', '学生団体', 'イベント団体', '社会人サークル'];
-const TENANT_ACTIVITY_TAGS = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー'];
+const TENANT_ACTIVITY_TAGS = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー', '卓球'];
 
 function normalizeAllowedTags(tags: string[] | undefined, allowedTags: string[], limit: number) {
   if (!tags) return [];

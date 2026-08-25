@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import type { AreaHubSetting, PublicEvent } from '@/lib/api';
 import PublicFooter from '@/components/public/PublicFooter';
 import { imgUrl } from '@/lib/imgUrl';
-import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
+import { getDefaultEventImage } from '@/lib/defaultImages';
 
 import { API_URL, SITE_URL, IMAGE_BASE_URL } from '@/lib/config';
 import { WARD_SUBAREAS, buildCategoryAreaPath, ACTIVITY_TAG_EVENT_CATEGORY } from '@/lib/lpTags';
@@ -203,7 +203,7 @@ function eventPriceLabel(event: Pick<PublicEvent, 'price' | 'priceMale' | 'price
 
 // Same 4:5 overlay-text mini card used for events on comiu.link's top page (HomeClient's
 // EventCard) - kept visually identical.
-export function EventCardMini({ event }: { event: Pick<PublicEvent, 'id' | 'title' | 'heldAt' | 'imageUrl' | 'capacity' | 'reservedCount' | 'price' | 'priceMale' | 'priceFemale' | 'tenantCode'> }) {
+export function EventCardMini({ event }: { event: Pick<PublicEvent, 'id' | 'title' | 'heldAt' | 'imageUrl' | 'capacity' | 'reservedCount' | 'price' | 'priceMale' | 'priceFemale' | 'tenantCode' | 'category'> }) {
   const image = imgUrl(event.imageUrl, IMAGE_BASE_URL);
   const remaining = event.capacity != null ? event.capacity - event.reservedCount : null;
 
@@ -213,7 +213,7 @@ export function EventCardMini({ event }: { event: Pick<PublicEvent, 'id' | 'titl
         {image ? (
           <Image src={image} alt={event.title} fill sizes="176px" className="object-cover" />
         ) : (
-          <Image src={DEFAULT_EVENT_IMAGE} alt={event.title} fill sizes="176px" className="object-cover" />
+          <Image src={getDefaultEventImage(event.category)} alt={event.title} fill sizes="176px" className="object-cover" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
         {remaining !== null && remaining <= 0 && (

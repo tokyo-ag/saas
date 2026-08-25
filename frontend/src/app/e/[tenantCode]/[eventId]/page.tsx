@@ -120,6 +120,7 @@ function tagHref(tag: string) {
     バスケ: '/sports/basketball',
     フットサル: '/sports/futsal',
     バレー: '/sports/volleyball',
+    卓球: '/sports/tabletennis',
   };
   return links[tag] ?? null;
 }

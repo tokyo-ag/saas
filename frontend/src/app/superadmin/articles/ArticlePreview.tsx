@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { api, API_URL, PublicEvent, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
-import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
+import { DEFAULT_EVENT_IMAGE, getDefaultEventImage } from '@/lib/defaultImages';
 import { ACTIVITY_TAG_EVENT_CATEGORY, ALL_LOCATION_TAGS, SEARCH_TAGS } from '@/lib/lpTags';
 import { Block, CARD_IMAGE_SIZE_CLASS, IMAGE_SIZE_CLASS, TEXT_SIZE_CLASS } from './BlockEditor';
 import { buildAutoSeoDescription, buildSeoProfileFromTenant } from '@/lib/tenantSeo';
@@ -76,7 +76,7 @@ function computeEventTags(events: PublicEvent[]): string[] {
 }
 
 function EventCardMini({ event }: { event: PublicEvent }) {
-  const img = imgUrl(event.imageUrl, API_URL) ?? DEFAULT_EVENT_IMAGE;
+  const img = imgUrl(event.imageUrl, API_URL) ?? getDefaultEventImage(event.category);
   return (
     <div className="w-28 shrink-0 overflow-hidden rounded-xl relative bg-white">
       <div className="relative" style={{ aspectRatio: '4/5' }}>

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { api, API_URL, LiffEvent, LiffProfile, LiffReservation, LiffTenant, PublicRoster, setLiffToken, formatDate } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
-import { DEFAULT_EVENT_IMAGE } from '@/lib/defaultImages';
+import { getDefaultEventImage } from '@/lib/defaultImages';
 import {
   initLiff,
   getLiffProfile,
@@ -469,7 +469,7 @@ function ReservePageInner() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             {event.imageUrl && (
               <div className="relative aspect-[4/5] w-full bg-gray-100">
-                <Image src={imgUrl(event.imageUrl, API_URL) ?? DEFAULT_EVENT_IMAGE} alt={event.title} fill className="object-cover" unoptimized />
+                <Image src={imgUrl(event.imageUrl, API_URL) ?? getDefaultEventImage(event.category)} alt={event.title} fill className="object-cover" unoptimized />
               </div>
             )}
             <div className="p-4 space-y-3">

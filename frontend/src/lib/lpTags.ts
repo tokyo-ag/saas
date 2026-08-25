@@ -1,6 +1,6 @@
 export const TENANT_TYPE_TAGS = ['インカレサークル', '学生団体', 'イベント団体', '社会人サークル'] as const;
 
-export const ACTIVITY_TAGS = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー'] as const;
+export const ACTIVITY_TAGS = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー', '卓球'] as const;
 
 // The 23 wards, shown as a group of children once "東京23区" (a pure UI grouping, not itself
 // a savable tag) is picked - mirrors how a ward's own sub-areas appear once the ward is picked.
@@ -72,6 +72,7 @@ export const ACTIVITY_TAG_EVENT_CATEGORY: Record<string, string> = {
   'フットサル': 'futsal',
   'バスケ': 'basketball',
   'バレー': 'volleyball',
+  '卓球': 'tabletennis',
 };
 
 // Reverse of ACTIVITY_TAG_EVENT_CATEGORY: English category slug -> Japanese label.

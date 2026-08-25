@@ -38,6 +38,12 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
     intro:
       '東京で20代向けのバレーサークル・交流イベントを探せます。初心者歓迎、経験者向け、社会人向けの練習会を掲載しています。',
   },
+  tabletennis: {
+    slug: 'tabletennis',
+    label: '卓球',
+    intro:
+      '東京で20代向けの卓球サークル・交流イベントを探せます。初心者歓迎、経験者向け、社会人向けの練習会を掲載しています。',
+  },
 };
 
 export function generateStaticParams() {

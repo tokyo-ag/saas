@@ -54,7 +54,7 @@ const EVENT_TAG_VALUES: readonly string[] = [
   ...MEETUP_SEARCH_TAGS,
   ...ALL_SUBAREAS,
 ];
-export const PORTAL_CATEGORY_TAGS = ['交流会', 'バドミントン', 'バスケ', 'フットサル', 'バレー'];
+export const PORTAL_CATEGORY_TAGS = ['交流会', 'バドミントン', 'バスケ', 'フットサル', 'バレー', '卓球'];
 
 function normalizePortalCategoryTags(tags: string[]) {
   const firstCategory = tags.find((tag) => PORTAL_CATEGORY_TAGS.includes(tag));
@@ -407,6 +407,7 @@ export default function EventForm({
     futsal: '例：フットサル交流会 社会人歓迎 新宿開催',
     basketball: '例：バスケットボール3on3 20代男女 渋谷開催',
     volleyball: '例：バレー交流会 初心者歓迎 新宿開催',
+    tabletennis: '例：卓球交流会 初心者歓迎 池袋開催',
     '': '例：テニス交流会 20代限定 渋谷開催',
   };
 
@@ -416,6 +417,7 @@ export default function EventForm({
     'バスケ',
     'フットサル',
     'バレー',
+    '卓球',
     '初参加歓迎',
     'ひとり参加歓迎',
     '友達作り',
@@ -481,6 +483,15 @@ export default function EventForm({
 ・新しい仲間と交流したい方
 
 動きやすい服装と室内シューズをご持参ください。`,
+    tabletennis: `東京で卓球交流会を開催します。
+初心者・経験者どちらも歓迎です。20代を中心に、楽しくラリーしましょう。
+
+【こんな方におすすめ】
+・卓球を久しぶりにやりたい方
+・同年代と気軽にスポーツを楽しみたい方
+・新しい仲間と交流したい方
+
+ラケットの貸し出しあり。動きやすい服装でお越しください。`,
   };
 
   function insertTemplate() {
@@ -713,6 +724,7 @@ export default function EventForm({
             <option value="futsal">フットサル</option>
             <option value="basketball">バスケットボール</option>
             <option value="volleyball">バレー</option>
+            <option value="tabletennis">卓球</option>
           </select>
         </Field>
         <Field label="タイトル" required>

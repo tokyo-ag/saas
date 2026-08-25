@@ -24,6 +24,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   futsal: 'フットサル',
   basketball: 'バスケットボール',
   volleyball: 'バレー',
+  tabletennis: '卓球',
 };
 
 function isLineAuthErrorMessage(message: string): boolean {
