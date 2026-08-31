@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import { api, setLiffToken } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded, liff, redirectToLiffApp, isLiffLoggedIn } from '@/lib/liff';
 import { useLiffTheme, readableTextColor, isLightHexColor } from '@/components/liff/LiffThemeProvider';
-import { LiffToast } from '@/components/liff/LiffToast';
 
 function isLineAuthErrorMessage(message: string): boolean {
   return (
@@ -13,6 +12,22 @@ function isLineAuthErrorMessage(message: string): boolean {
     message.includes('LIFF認証') ||
     message.includes('Unauthorized')
   );
+}
+
+function backToSite() {
+  try {
+    if (liff.isInClient() || liff.isLoggedIn()) {
+      liff.closeWindow();
+      return;
+    }
+  } catch {
+    // ignore, fall through to history fallback
+  }
+  if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    window.close();
+  }
 }
 
 export default function TenantReviewPage() {
@@ -24,10 +39,10 @@ export default function TenantReviewPage() {
   const [lineUserId, setLineUserId] = useState('');
   const [loading, setLoading] = useState(true);
   const [loginRequired, setLoginRequired] = useState(false);
+  const [mode, setMode] = useState<'view' | 'edit'>('edit');
+  const [myReview, setMyReview] = useState<{ content: string; isPublished: boolean } | null>(null);
   const [content, setContent] = useState('');
-  const [alreadyPublished, setAlreadyPublished] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -62,8 +77,9 @@ export default function TenantReviewPage() {
       try {
         const existing = await api.liff.myTenantReview(tenantId, uid);
         if (existing) {
+          setMyReview({ content: existing.content, isPublished: !!existing.isPublished });
           setContent(existing.content);
-          setAlreadyPublished(!!existing.isPublished);
+          setMode('view');
         }
       } catch {
         // 初回投稿（まだ口コミが無い）は404相当なので、空フォームのまま進める。
@@ -102,9 +118,8 @@ export default function TenantReviewPage() {
     try {
       setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
       await api.liff.submitTenantReview(tenantId, lineUserId, trimmed);
-      setAlreadyPublished(false);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      setMyReview({ content: trimmed, isPublished: false });
+      setMode('view');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '送信に失敗しました';
       if (isLineAuthErrorMessage(msg)) {
@@ -156,40 +171,80 @@ export default function TenantReviewPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.backgroundColor }}>
       <div className="px-4 py-5" style={{ paddingTop: 'calc(env(safe-area-inset-top, 16px) + 20px)' }}>
-        <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
-          <div>
-            <p className="text-sm font-bold text-gray-800">感想を書く</p>
-            <p className="mt-1 text-xs leading-relaxed text-gray-400">
-              団体についての感想を投稿できます。送信した感想は、運営が確認のうえ公開されます。
-            </p>
+        {mode === 'view' && myReview ? (
+          <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-bold text-gray-800">あなたの投稿</p>
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                myReview.isPublished ? 'bg-green-50 text-[#06C755]' : 'bg-gray-100 text-gray-500'
+              }`}>
+                {myReview.isPublished ? '公開中' : '審査中（非公開）'}
+              </span>
+            </div>
+            <p className="whitespace-pre-wrap rounded-xl bg-gray-50 p-3 text-sm leading-relaxed text-gray-700">{myReview.content}</p>
+            {!myReview.isPublished && (
+              <p className="text-[11px] leading-relaxed text-gray-400">運営が内容を確認したのち、公開サイトに表示されます。内容はあなただけが確認できます。</p>
+            )}
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setMode('edit')}
+                className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-600"
+              >
+                編集する
+              </button>
+              <button
+                type="button"
+                onClick={backToSite}
+                className="flex-1 rounded-xl px-4 py-2.5 text-sm font-bold"
+                style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
+              >
+                サイトに戻る
+              </button>
+            </div>
           </div>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={5}
-            maxLength={300}
-            placeholder="参加した感想や団体の雰囲気を書いてみましょう（5〜300文字）"
-            className="w-full resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--liff-accent)]"
-          />
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] text-gray-400">{content.length}/300</span>
-            <button
-              type="submit"
-              disabled={saving}
-              className="shrink-0 rounded-xl px-5 py-2.5 text-sm font-bold disabled:opacity-50"
-              style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
-            >
-              {saving ? '送信中...' : alreadyPublished ? '更新する' : '感想を送信'}
-            </button>
-          </div>
-          {error && <p className="text-xs text-red-500">{error}</p>}
-          {alreadyPublished && (
-            <p className="text-[11px] text-gray-400">すでに公開中の口コミがあります。送信すると内容が更新され、非公開に戻ります（運営が再確認のうえ公開されます）。</p>
-          )}
-        </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+            <div>
+              <p className="text-sm font-bold text-gray-800">感想を書く</p>
+              <p className="mt-1 text-xs leading-relaxed text-gray-400">
+                団体についての感想を投稿できます。送信した感想は、運営が確認のうえ公開されます。内容は投稿したあなただけが確認できます。
+              </p>
+            </div>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={5}
+              maxLength={300}
+              placeholder="参加した感想や団体の雰囲気を書いてみましょう（5〜300文字）"
+              className="w-full resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--liff-accent)]"
+            />
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] text-gray-400">{content.length}/300</span>
+              <div className="flex shrink-0 gap-2">
+                {myReview && (
+                  <button
+                    type="button"
+                    onClick={() => { setContent(myReview.content); setMode('view'); setError(''); }}
+                    className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-600"
+                  >
+                    キャンセル
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="rounded-xl px-5 py-2.5 text-sm font-bold disabled:opacity-50"
+                  style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
+                >
+                  {saving ? '送信中...' : '感想を送信'}
+                </button>
+              </div>
+            </div>
+            {error && <p className="text-xs text-red-500">{error}</p>}
+          </form>
+        )}
       </div>
-
-      <LiffToast show={saved} message="口コミを送信しました" />
     </div>
   );
 }
