@@ -325,18 +325,24 @@ export class LiffService {
     const member = await this.findMember(tenantId, dto.lineUserId);
     if (!member) throw new NotFoundException('メンバーが見つかりません');
 
-    const reservation = await this.prisma.reservation.findFirst({
-      where: {
-        tenantId,
-        eventId,
-        memberId: member.id,
-        status: { in: ['reserved', 'attended'] },
-      },
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { reviewsRequireReservation: true },
     });
-    if (!reservation) {
-      throw new ForbiddenException(
-        '予約済みまたは参加済みのイベントにのみ感想を投稿できます',
-      );
+    if (tenant?.reviewsRequireReservation !== false) {
+      const reservation = await this.prisma.reservation.findFirst({
+        where: {
+          tenantId,
+          eventId,
+          memberId: member.id,
+          status: { in: ['reserved', 'attended'] },
+        },
+      });
+      if (!reservation) {
+        throw new ForbiddenException(
+          '予約済みまたは参加済みのイベントにのみ感想を投稿できます',
+        );
+      }
     }
 
     return this.prisma.eventReview.upsert({

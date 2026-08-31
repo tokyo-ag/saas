@@ -2,7 +2,7 @@
 
 import { Fragment, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { api, BlogPost, LiffEvent, PublicPageInput, Tenant } from '@/lib/api';
+import { api, BlogPost, LiffEvent, PublicPageInput, Tenant, TenantReview } from '@/lib/api';
 import { API_URL, SITE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { getToken } from '@/lib/auth';
@@ -80,8 +80,8 @@ const DEFAULT_SECTION_ORDER = ['name', 'logo', 'subtitle', 'nav', 'image'] as co
 type TitleLogoLayout = 'stacked' | 'inline';
 const SECTION_LABELS: Record<string, string> = { name: '名前', logo: 'ロゴ', subtitle: 'サブタイトル', nav: 'ナビボタン', image: '写真' };
 
-const DEFAULT_NAV_ORDER = ['about', 'blog', 'reserve', 'contact'] as const;
-const NAV_ITEM_LABELS: Record<string, string> = { about: '団体詳細', blog: '活動ブログ', reserve: '予約する', contact: 'お問い合わせ' };
+const DEFAULT_NAV_ORDER = ['about', 'blog', 'reserve', 'reviews', 'contact'] as const;
+const NAV_ITEM_LABELS: Record<string, string> = { about: '団体詳細', blog: '活動ブログ', reserve: '予約する', reviews: '口コミ', contact: 'お問い合わせ' };
 function normalizeNavOrder(order: string[]): string[] {
   return [
     ...order.filter((key) => (DEFAULT_NAV_ORDER as readonly string[]).includes(key)),
@@ -89,8 +89,8 @@ function normalizeNavOrder(order: string[]): string[] {
   ];
 }
 
-const DEFAULT_CONTENT_ORDER = ['about', 'reserve', 'blog'] as const;
-const CONTENT_SECTION_LABELS: Record<string, string> = { about: '構成', reserve: '予約ページ', blog: '活動ブログ' };
+const DEFAULT_CONTENT_ORDER = ['about', 'reserve', 'blog', 'reviews'] as const;
+const CONTENT_SECTION_LABELS: Record<string, string> = { about: '構成', reserve: '予約ページ', blog: '活動ブログ', reviews: '口コミ' };
 function normalizeContentOrder(order: string[]): string[] {
   return [
     ...order.filter((key) => (DEFAULT_CONTENT_ORDER as readonly string[]).includes(key)),
@@ -199,6 +199,12 @@ const emptyForm: PublicPageInput = {
   blogLead: '',
   blogTitleColor: '',
   blogLeadColor: '',
+  reviewsEnabled: true,
+  reviewsLabel: '',
+  reviewsTitle: '',
+  reviewsLead: '',
+  reviewsTitleColor: '',
+  reviewsLeadColor: '',
   footerLine: '',
   footerInstagram: '',
   footerX: '',
@@ -557,6 +563,7 @@ export default function AdminPublicPage() {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [reserveEvents, setReserveEvents] = useState<LiffEvent[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [reviews, setReviews] = useState<TenantReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -567,7 +574,7 @@ export default function AdminPublicPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    global: true, seo: false, header: true, structure: true, reserve: false, blog: false, footer: false,
+    global: true, seo: false, header: true, structure: true, reserve: false, blog: false, reviews: false, footer: false,
     headerLogo: false, headerTitle: false, headerSubtitle: false, headerPhoto: false, headerLayout: false, headerButton: false, headerNavLabel: false,
   });
   const toggleSection = (key: string) => setOpenSections(p => ({ ...p, [key]: !p[key] }));
@@ -713,22 +720,26 @@ export default function AdminPublicPage() {
     about: form.aboutLabel?.trim() || '団体詳細',
     reserve: form.reserveLabel?.trim() || '予約する',
     blog: form.blogLabel?.trim() || '活動ブログ',
+    reviews: form.reviewsLabel?.trim() || '口コミ',
     contact: form.contactLabel?.trim() || 'お問い合わせ',
   };
   const reserveActionStyle = form.reserveActionStyle === 'line' ? 'line' : 'comiu';
   const hasReserveSection = reserveActionStyle === 'line' || reserveEvents.length > 0;
   const hasBlogSection = blogPosts.length > 0;
+  const reviewsEnabled = form.reviewsEnabled !== false;
+  const hasReviewsSection = reviewsEnabled && reviews.length > 0;
   const navItemsByKey: Record<string, { key: string; label: string } | undefined> = {
     about: { key: 'about', label: navLabels.about },
     blog: hasBlogSection ? { key: 'blog', label: navLabels.blog } : undefined,
     reserve: hasReserveSection ? { key: 'reserve', label: navLabels.reserve } : undefined,
+    reviews: hasReviewsSection ? { key: 'reviews', label: navLabels.reviews } : undefined,
     contact: { key: 'contact', label: navLabels.contact },
   };
   const visibleNavItems = normalizeNavOrder(form.navOrder ?? [...DEFAULT_NAV_ORDER])
     .map((key) => navItemsByKey[key])
     .filter((item): item is { key: string; label: string } => item !== undefined);
   const contentOrder = normalizeContentOrder(form.contentOrder ?? [...DEFAULT_CONTENT_ORDER])
-    .filter((key) => key === 'about' || (key === 'reserve' && hasReserveSection) || (key === 'blog' && hasBlogSection));
+    .filter((key) => key === 'about' || (key === 'reserve' && hasReserveSection) || (key === 'blog' && hasBlogSection) || (key === 'reviews' && hasReviewsSection));
   const reserveSectionTitle = form.reserveTitle?.trim() || '';
   const reserveSectionLead = form.reserveLead?.trim() || '';
   const reserveTitleColor = form.reserveTitleColor?.trim() || textColor;
@@ -745,7 +756,7 @@ export default function AdminPublicPage() {
   const globalBorderWidth = Number.isFinite(form.globalBorderWidth) ? Number(form.globalBorderWidth) : 1;
   const cardBorderStyle: CSSProperties = { borderRadius: globalRadius, borderWidth: globalBorderWidth, borderColor: globalBorderColor, borderStyle: 'solid' };
   const blogPostCardBg = form.blogPostCardBg?.trim() || navBg;
-  const DEFAULT_BLOCK_ORDER = [...blocks.map((_, i) => `block-${i}`), 'reserve', 'blog'];
+  const DEFAULT_BLOCK_ORDER = [...blocks.map((_, i) => `block-${i}`), 'reserve', 'blog', 'reviews'];
   const configuredBlockOrder = Array.isArray(form.blockOrder) ? form.blockOrder : [];
   const hasCustomBlockOrder = configuredBlockOrder.length > 0 &&
     JSON.stringify(configuredBlockOrder) !== JSON.stringify(DEFAULT_BLOCK_ORDER);
@@ -758,6 +769,10 @@ export default function AdminPublicPage() {
   const blogSectionLead = form.blogLead?.trim() || '';
   const blogTitleColor = form.blogTitleColor?.trim() || textColor;
   const blogLeadColor = form.blogLeadColor?.trim() || bodyTextColor;
+  const reviewsSectionTitle = form.reviewsTitle?.trim() || '';
+  const reviewsSectionLead = form.reviewsLead?.trim() || '';
+  const reviewsTitleColor = form.reviewsTitleColor?.trim() || textColor;
+  const reviewsLeadColor = form.reviewsLeadColor?.trim() || bodyTextColor;
   const buttonStyle = form.buttonStyle ?? 'rounded';
   const buttonLayout = form.buttonLayout === 'row1x4' ? 'row1x4' : 'grid2x2';
   const buttonOpacity = clampPercent(form.buttonOpacity ?? 100);
@@ -834,6 +849,9 @@ export default function AdminPublicPage() {
           .then(setReserveEvents)
           .catch(() => setReserveEvents([]));
         loadPublishedBlogPosts();
+        void api.public.reviews(tenantData.code ?? tenantData.id)
+          .then(setReviews)
+          .catch(() => setReviews([]));
         const tenantName = tenantData.name ?? tenantData.lineDisplayName;
         const tenantSlug = slugify(tenantName) || slugify(tenantData.code ?? tenantData.id) || 'home';
         const first = pageData[0];
@@ -925,6 +943,12 @@ export default function AdminPublicPage() {
                   blogLead: fd.blogLead ?? '',
                   blogTitleColor: fd.blogTitleColor ?? '',
                   blogLeadColor: fd.blogLeadColor ?? '',
+                  reviewsEnabled: fd.reviewsEnabled !== false,
+                  reviewsLabel: fd.reviewsLabel ?? '',
+                  reviewsTitle: fd.reviewsTitle ?? '',
+                  reviewsLead: fd.reviewsLead ?? '',
+                  reviewsTitleColor: fd.reviewsTitleColor ?? '',
+                  reviewsLeadColor: fd.reviewsLeadColor ?? '',
                   footerLine: fd.footerLine ?? '',
                   footerInstagram: fd.instagram ?? '',
                   footerX: fd.x ?? '',
@@ -984,6 +1008,12 @@ export default function AdminPublicPage() {
                   blogLead: '',
                   blogTitleColor: '',
                   blogLeadColor: '',
+                  reviewsEnabled: true,
+                  reviewsLabel: '',
+                  reviewsTitle: '',
+                  reviewsLead: '',
+                  reviewsTitleColor: '',
+                  reviewsLeadColor: '',
                   footerLine: '',
                   footerInstagram: '',
                   footerX: '',
@@ -1309,6 +1339,12 @@ export default function AdminPublicPage() {
         blogLead: form.blogLead?.trim() || '',
         blogTitleColor: form.blogTitleColor?.trim() || '',
         blogLeadColor: form.blogLeadColor?.trim() || '',
+        reviewsEnabled: form.reviewsEnabled !== false,
+        reviewsLabel: form.reviewsLabel?.trim() || '',
+        reviewsTitle: form.reviewsTitle?.trim() || '',
+        reviewsLead: form.reviewsLead?.trim() || '',
+        reviewsTitleColor: form.reviewsTitleColor?.trim() || '',
+        reviewsLeadColor: form.reviewsLeadColor?.trim() || '',
         footerLine: form.footerLine?.trim() || '',
         instagram: form.footerInstagram?.trim() || '',
         x: form.footerX?.trim() || '',
@@ -2106,12 +2142,12 @@ export default function AdminPublicPage() {
           </button>
           {openSections.structure && <div className="space-y-3 border-t border-gray-100 p-4">
           <div>
-            <p className="mb-2 text-[11px] font-bold text-gray-400">ページの並び順（構成のブロック／予約ページ／活動ブログ）</p>
+            <p className="mb-2 text-[11px] font-bold text-gray-400">ページの並び順（構成のブロック／予約ページ／活動ブログ／口コミ）</p>
             <div className="space-y-1.5">
               {(form.blockOrder && form.blockOrder.length > 0 ? form.blockOrder : DEFAULT_BLOCK_ORDER).map((key, i, arr) => (
                 <div key={key} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
                   <span className="flex-1 text-xs font-bold text-gray-700">
-                    {key === 'reserve' ? '予約ページ' : key === 'blog' ? '活動ブログ' : `構成: ${BLOCK_LABELS[blocks[Number(key.replace('block-', ''))]?.type] ?? key}`}
+                    {key === 'reserve' ? '予約ページ' : key === 'blog' ? '活動ブログ' : key === 'reviews' ? '口コミ' : `構成: ${BLOCK_LABELS[blocks[Number(key.replace('block-', ''))]?.type] ?? key}`}
                   </span>
                   <button type="button" disabled={i === 0}
                     onClick={() => setForm((p) => {
@@ -2130,7 +2166,7 @@ export default function AdminPublicPage() {
                 </div>
               ))}
             </div>
-            <p className="mt-1 text-[10px] text-gray-400">構成のブロックを予約ページ・活動ブログと自由に入れ替えられます（「予約ページ」「活動ブログ」は記事・予約設定が無い団体では表示されません）。単独で配置したブロックは予約ページ・活動ブログと同じカードデザインになります</p>
+            <p className="mt-1 text-[10px] text-gray-400">構成のブロックを予約ページ・活動ブログ・口コミと自由に入れ替えられます（「予約ページ」「活動ブログ」「口コミ」は記事・予約設定・公開口コミが無い団体では表示されません）。単独で配置したブロックは予約ページ・活動ブログ・口コミと同じカードデザインになります</p>
           </div>
           {/* 予約表示スタイルは予約ページで設定 */}
           <div>
@@ -2600,6 +2636,64 @@ export default function AdminPublicPage() {
           )}
         </div>
 
+        {/* 口コミ */}
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <button type="button" onClick={() => toggleSection('reviews')}
+            className="flex w-full items-center justify-between px-4 py-3 transition hover:bg-gray-50">
+            <p className="text-xs font-bold text-gray-700">口コミ</p>
+            <svg className={`h-4 w-4 text-gray-400 transition-transform ${openSections.reviews ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          </button>
+          {openSections.reviews && (
+            <div className="space-y-4 border-t border-gray-100 p-4">
+              <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                <span className="text-xs font-bold text-gray-600">公開サイトに表示する</span>
+                <button
+                  type="button"
+                  onClick={() => setForm((p) => ({ ...p, reviewsEnabled: !reviewsEnabled }))}
+                  className={`relative h-6 w-11 shrink-0 rounded-full transition ${reviewsEnabled ? 'bg-[#06C755]' : 'bg-gray-300'}`}
+                >
+                  <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${reviewsEnabled ? 'left-5' : 'left-0.5'}`} />
+                </button>
+              </label>
+              <div className={`rounded-lg px-3 py-2 text-xs font-bold ${hasReviewsSection ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
+                {!reviewsEnabled
+                  ? 'このセクションは非表示に設定されています'
+                  : hasReviewsSection
+                    ? `公開口コミ ${reviews.length}件：公開サイトに表示されます`
+                    : '公開口コミ 0件：公開サイトでは非表示になります'}
+              </div>
+              <p className="text-[11px] leading-relaxed text-gray-400">
+                口コミの承認・編集は管理画面の「口コミ」ページで行います。ここでは公開サイト側の見た目のみ設定できます。
+              </p>
+              <label className="block space-y-1">
+                <span className="text-[11px] text-gray-500">ナビボタンのラベル</span>
+                <input value={form.reviewsLabel ?? ''}
+                  onChange={(e) => setForm((p) => ({ ...p, reviewsLabel: e.target.value }))}
+                  placeholder="口コミ"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+              </label>
+              <div className="space-y-3 rounded-lg bg-gray-50 p-3">
+                <p className="text-[11px] font-bold text-gray-400">セクションのタイトル・説明文</p>
+                <label className="block space-y-1">
+                  <span className="text-[11px] text-gray-500">タイトル(空欄: 非表示)</span>
+                  <input value={form.reviewsTitle ?? ''}
+                    onChange={(e) => setForm((p) => ({ ...p, reviewsTitle: e.target.value }))}
+                    placeholder="例：参加者の声"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                </label>
+                <label className="block space-y-1">
+                  <span className="text-[11px] text-gray-500">説明文</span>
+                  <textarea value={form.reviewsLead ?? ''}
+                    onChange={(e) => setForm((p) => ({ ...p, reviewsLead: e.target.value }))}
+                    rows={2}
+                    placeholder="参加したメンバーからの感想を紹介しています。"
+                    className="w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                </label>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* フッター */}
         <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
           <button type="button" onClick={() => toggleSection('footer')}
@@ -2942,10 +3036,41 @@ export default function AdminPublicPage() {
                       </div>
                     </section>
                   ) : null;
+                  const reviewsSection = hasReviewsSection ? (
+                    <section key="reviews" className="p-4" style={{ backgroundColor: navBg, ...cardBorderStyle }}>
+                      {reviewsSectionTitle && (
+                        <p className="text-sm font-bold" style={{ color: reviewsTitleColor }}>{reviewsSectionTitle}</p>
+                      )}
+                      {reviewsSectionLead && (
+                        <p className="mt-1 text-xs leading-5" style={{ color: reviewsLeadColor }}>{reviewsSectionLead}</p>
+                      )}
+                      <div className="mt-3 max-h-[380px] space-y-3 overflow-y-auto pr-1">
+                        {reviews.map((review) => (
+                          <div key={review.id} className="flex gap-2">
+                            {review.authorIconUrl ? (
+                              <img src={review.authorIconUrl} alt="" className="mt-0.5 h-7 w-7 shrink-0 rounded-full object-cover" />
+                            ) : (
+                              <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[10px] text-gray-400">
+                                {review.authorName.slice(0, 1)}
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-[11px] font-medium text-gray-700">
+                                {review.authorName}
+                                {review.authorGrade && <span className="ml-1 text-gray-400">{review.authorGrade}</span>}
+                              </p>
+                              <p className="whitespace-pre-wrap text-xs leading-relaxed text-gray-600">{review.content}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  ) : null;
                   if (hasCustomBlockOrder) {
                     return blockOrder.map((key) => {
                       if (key === 'reserve') return reserveSection;
                       if (key === 'blog') return blogSection;
+                      if (key === 'reviews') return reviewsSection;
                       const idx = Number(key.replace('block-', ''));
                       const block = blocks[idx];
                       if (!block) return null;
@@ -2956,7 +3081,7 @@ export default function AdminPublicPage() {
                       );
                     });
                   }
-                  const contentSectionsByKey: Record<string, ReactNode> = { about: aboutSection, reserve: reserveSection, blog: blogSection };
+                  const contentSectionsByKey: Record<string, ReactNode> = { about: aboutSection, reserve: reserveSection, blog: blogSection, reviews: reviewsSection };
                   return contentOrder.map((key) => contentSectionsByKey[key] ?? null);
                 })()}
                 <div>

@@ -886,6 +886,28 @@ export class PublicController {
     };
   }
 
+  @Get('tenants/:tenantCode/reviews')
+  async listTenantReviews(@Param('tenantCode') tenantCode: string) {
+    const reviews = await this.prisma.eventReview.findMany({
+      where: {
+        isPublished: true,
+        event: { tenant: { code: tenantCode, deletedAt: null, bannedAt: null } },
+      },
+      include: { member: { select: { name: true, grade: true, linePictureUrl: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 30,
+    });
+
+    return reviews.map((review) => ({
+      id: review.id,
+      content: review.content,
+      createdAt: review.createdAt,
+      authorName: review.member.name ?? '参加者',
+      authorGrade: review.member.grade,
+      authorIconUrl: review.member.linePictureUrl,
+    }));
+  }
+
   @Get('tenants/:tenantCode/blog')
   async listBlogPosts(@Param('tenantCode') tenantCode: string) {
     const posts = await this.prisma.blogPost.findMany({

@@ -71,14 +71,9 @@ export class EventsController {
     @TenantId() tenantId: string,
     @Param('eventId') eventId: string,
     @Param('reviewId') reviewId: string,
-    @Body() body: { isPublished: boolean },
+    @Body() body: { isPublished?: boolean; content?: string },
   ) {
-    return this.eventsService.updateReview(
-      tenantId,
-      eventId,
-      reviewId,
-      body.isPublished,
-    );
+    return this.eventsService.updateReview(tenantId, eventId, reviewId, body);
   }
 
   @Post(':eventId/remind')

@@ -56,7 +56,7 @@ export default function EventDetailPage() {
 
   async function toggleReview(reviewId: string, isPublished: boolean) {
     try {
-      await api.events.updateReview(eventId, reviewId, isPublished);
+      await api.events.updateReview(eventId, reviewId, { isPublished });
       setReviews((prev) => prev.map((review) => (review.id === reviewId ? { ...review, isPublished } : review)));
     } catch {
       alert('感想の更新に失敗しました');

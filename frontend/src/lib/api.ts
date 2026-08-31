@@ -109,10 +109,10 @@ export const api = {
       request<Reservation[]>(`/admin/events/${id}/reservations`),
     reviews: (id: string) =>
       request<AdminEventReview[]>(`/admin/events/${id}/reviews`),
-    updateReview: (eventId: string, reviewId: string, isPublished: boolean) =>
+    updateReview: (eventId: string, reviewId: string, data: { isPublished?: boolean; content?: string }) =>
       request<EventReview>(`/admin/events/${eventId}/reviews/${reviewId}`, {
         method: 'PATCH',
-        body: JSON.stringify({ isPublished }),
+        body: JSON.stringify(data),
       }),
     remind: (id: string) =>
       request<{ sentCount: number }>(`/admin/events/${id}/remind`, { method: 'POST' }),
@@ -295,6 +295,8 @@ export const api = {
       request<BlogPost>(`/public/tenants/${tenantCode}/blog/${slug}`),
     blogByTags: (tags: string[], limit = 10) =>
       request<PortalBlogPost[]>(`/public/blog?tags=${encodeURIComponent(tags.join(','))}&limit=${limit}`),
+    reviews: (tenantCode: string) =>
+      request<TenantReview[]>(`/public/tenants/${tenantCode}/reviews`),
     roster: (token: string) => request<PublicRoster>(`/public/roster/${token}`),
   },
   blog: {
@@ -811,6 +813,7 @@ export interface Tenant {
   reservationMessageTemplate?: string | null;
   reminderMessageTemplate?: string | null;
   activityTickerEnabled?: boolean;
+  reviewsRequireReservation?: boolean;
   themeColor?: string;
   iconUrl?: string | null;
   createdAt: string;
@@ -843,6 +846,7 @@ export interface TenantInput {
   reservationMessageTemplate?: string;
   reminderMessageTemplate?: string;
   activityTickerEnabled?: boolean;
+  reviewsRequireReservation?: boolean;
   themeColor?: string;
   iconUrl?: string;
   code?: string;
@@ -1143,6 +1147,12 @@ export interface PublicPageInput {
   blogLead?: string;
   blogTitleColor?: string;
   blogLeadColor?: string;
+  reviewsEnabled?: boolean;
+  reviewsLabel?: string;
+  reviewsTitle?: string;
+  reviewsLead?: string;
+  reviewsTitleColor?: string;
+  reviewsLeadColor?: string;
   footerLine?: string;
   footerInstagram?: string;
   footerX?: string;
@@ -1170,6 +1180,15 @@ export interface PublicPageInput {
   displayFields?: { location?: boolean; price?: boolean; capacity?: boolean; description?: boolean };
   slugLocked?: boolean;
   status?: 'draft' | 'published';
+}
+
+export interface TenantReview {
+  id: string;
+  content: string;
+  createdAt: string;
+  authorName: string;
+  authorGrade?: string | null;
+  authorIconUrl?: string | null;
 }
 
 export interface BlogPostSummary {

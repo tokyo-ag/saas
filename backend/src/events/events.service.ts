@@ -357,16 +357,26 @@ export class EventsService {
     tenantId: string,
     eventId: string,
     reviewId: string,
-    isPublished: boolean,
+    data: { isPublished?: boolean; content?: string },
   ) {
     const review = await this.prisma.eventReview.findFirst({
       where: { id: reviewId, tenantId, eventId },
     });
     if (!review) throw new NotFoundException('Review not found');
 
+    const content = data.content?.trim();
+    if (content !== undefined && (content.length < 5 || content.length > 300)) {
+      throw new BadRequestException(
+        '感想は5文字以上300文字以内で入力してください',
+      );
+    }
+
     return this.prisma.eventReview.update({
       where: { id: reviewId },
-      data: { isPublished },
+      data: {
+        ...(data.isPublished !== undefined && { isPublished: data.isPublished }),
+        ...(content !== undefined && { content }),
+      },
     });
   }
 

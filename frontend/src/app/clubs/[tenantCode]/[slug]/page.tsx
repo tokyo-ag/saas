@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Fragment } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import type { BlogPostSummary, LiffEvent, PublicCmsPage } from '@/lib/api';
+import type { BlogPostSummary, LiffEvent, PublicCmsPage, TenantReview } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
 import { ReservationViewShowcase, ReservationButton } from '@/components/public/ReservationViewShowcase';
@@ -65,6 +65,18 @@ async function fetchReserveEvents(tenantCode: string): Promise<LiffEvent[]> {
 async function fetchBlogPosts(tenantCode: string): Promise<BlogPostSummary[]> {
   try {
     const res = await fetch(`${API_URL}/api/public/tenants/${tenantCode}/blog`, {
+      next: { revalidate },
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+async function fetchReviews(tenantCode: string): Promise<TenantReview[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/tenants/${tenantCode}/reviews`, {
       next: { revalidate },
     });
     if (!res.ok) return [];
@@ -316,10 +328,11 @@ export default async function ClubCmsPage({
   params: Promise<{ tenantCode: string; slug: string }>;
 }) {
   const { tenantCode, slug } = await params;
-  const [page, reserveEvents, blogPosts] = await Promise.all([
+  const [page, reserveEvents, blogPosts, reviews] = await Promise.all([
     fetchPage(tenantCode, slug),
     fetchReserveEvents(tenantCode),
     fetchBlogPosts(tenantCode),
+    fetchReviews(tenantCode),
   ]);
   if (!page) {
     const primarySlug = await fetchPrimaryPageSlug(tenantCode);
@@ -409,10 +422,69 @@ export default async function ClubCmsPage({
   const bodyFontSize = resolvePxSize(page.bodySize, 16, 12, 24, BODY_SIZE_LEGACY);
   const bodySizeClass = bodyLeadingClass(bodyFontSize);
   const bodyTextStyle = { fontSize: bodyFontSize };
+  const sectionCopy = (() => {
+    try {
+      return JSON.parse(page.footerText ?? '{}') as {
+        contact?: string;
+        footerTextColor?: string;
+        contactColor?: string;
+        contactTextColor?: string;
+        contactTitle?: string;
+        contactLead?: string;
+        contactMessage?: string;
+        contactTitleColor?: string;
+        contactLeadColor?: string;
+        contactMessageColor?: string;
+        reserveTitle?: string;
+        reserveLead?: string;
+        reserveTitleColor?: string;
+        reserveLeadColor?: string;
+        reserveEventTitleColor?: string;
+        reserveEventDateColor?: string;
+        reserveEventMetaColor?: string;
+        reserveEventCardBg?: string;
+        reserveButtonBgColor?: string;
+        reserveButtonTextColor?: string;
+        reserveButtonBorderColor?: string;
+        globalBorderColor?: string;
+        globalRadius?: number;
+        globalBorderWidth?: number;
+        reserveActionStyle?: string;
+        displayFields?: { location?: boolean; price?: boolean; capacity?: boolean; description?: boolean };
+        blogPostCardBg?: string;
+        blogPostTitleColor?: string;
+        blogTitle?: string;
+        blogLead?: string;
+        blogTitleColor?: string;
+        blogLeadColor?: string;
+        reviewsEnabled?: boolean;
+        reviewsLabel?: string;
+        reviewsTitle?: string;
+        reviewsLead?: string;
+        reviewsTitleColor?: string;
+        reviewsLeadColor?: string;
+        reserveLineUrl?: string;
+        line?: string;
+        footerLine?: string;
+        instagram?: string;
+        x?: string;
+        aboutUrl?: string;
+        reserveUrl?: string;
+        blogUrl?: string;
+        contactUrl?: string;
+        navOrder?: string[];
+        contentOrder?: string[];
+        blockOrder?: string[];
+      };
+    } catch {
+      return {};
+    }
+  })();
   const navLabels = {
     about: page.aboutLabel || '団体詳細',
     reserve: page.reserveLabel || '予約する',
     blog: page.blogLabel || '活動ブログ',
+    reviews: sectionCopy.reviewsLabel?.trim() || '口コミ',
     contact: page.contactLabel || 'お問い合わせ',
   };
   const buttonStyle = page.buttonStyle ?? 'rounded';
@@ -473,58 +545,6 @@ export default async function ClubCmsPage({
     })),
   } : null;
 
-  const sectionCopy = (() => {
-    try {
-      return JSON.parse(page.footerText ?? '{}') as {
-        contact?: string;
-        footerTextColor?: string;
-        contactColor?: string;
-        contactTextColor?: string;
-        contactTitle?: string;
-        contactLead?: string;
-        contactMessage?: string;
-        contactTitleColor?: string;
-        contactLeadColor?: string;
-        contactMessageColor?: string;
-        reserveTitle?: string;
-        reserveLead?: string;
-        reserveTitleColor?: string;
-        reserveLeadColor?: string;
-        reserveEventTitleColor?: string;
-        reserveEventDateColor?: string;
-        reserveEventMetaColor?: string;
-        reserveEventCardBg?: string;
-        reserveButtonBgColor?: string;
-        reserveButtonTextColor?: string;
-        reserveButtonBorderColor?: string;
-        globalBorderColor?: string;
-        globalRadius?: number;
-        globalBorderWidth?: number;
-        reserveActionStyle?: string;
-        displayFields?: { location?: boolean; price?: boolean; capacity?: boolean; description?: boolean };
-        blogPostCardBg?: string;
-        blogPostTitleColor?: string;
-        blogTitle?: string;
-        blogLead?: string;
-        blogTitleColor?: string;
-        blogLeadColor?: string;
-        reserveLineUrl?: string;
-        line?: string;
-        footerLine?: string;
-        instagram?: string;
-        x?: string;
-        aboutUrl?: string;
-        reserveUrl?: string;
-        blogUrl?: string;
-        contactUrl?: string;
-        navOrder?: string[];
-        contentOrder?: string[];
-        blockOrder?: string[];
-      };
-    } catch {
-      return {};
-    }
-  })();
   const reserveSectionTitle = sectionCopy.reserveTitle?.trim() || '';
   const reserveSectionLead = sectionCopy.reserveLead?.trim() || '';
   const reserveTitleColor = sectionCopy.reserveTitleColor?.trim() || textColor;
@@ -554,12 +574,17 @@ export default async function ClubCmsPage({
   const lineReserveUrl = configuredLineUrl || configuredReserveUrl || '#contact';
   const navReserveUrl = reserveActionStyle === 'line' ? lineReserveUrl : (configuredReserveUrl || reserveHref);
   const navBlogUrl = sectionCopy.blogUrl?.trim() || '#blog';
+  const navReviewsUrl = '#reviews';
   const navContactUrl = sectionCopy.contactUrl?.trim() || '#contact';
   const hasReserveSection = reserveActionStyle === 'line' || reserveEvents.length > 0;
   const hasBlogSection = blogPosts.length > 0;
+  const reviewsEnabled = sectionCopy.reviewsEnabled !== false;
+  const hasReviewsSection = reviewsEnabled && reviews.length > 0;
   // ナビボタンの並び順は団体側で自由に入れ替えられる。未設定（既存の団体）の場合は
   // これまでと全く同じ「団体詳細→活動ブログ→予約する→お問い合わせ」の順になる。
-  const DEFAULT_NAV_ORDER = ['about', 'blog', 'reserve', 'contact'];
+  // 「口コミ」は後から追加した項目なので、既存の並び順設定を壊さないようお問い合わせの
+  // 直前に追加する。
+  const DEFAULT_NAV_ORDER = ['about', 'blog', 'reserve', 'reviews', 'contact'];
   const configuredNavOrder = Array.isArray(sectionCopy.navOrder) ? sectionCopy.navOrder : [];
   const navOrder = [
     ...configuredNavOrder.filter((key) => DEFAULT_NAV_ORDER.includes(key)),
@@ -569,14 +594,16 @@ export default async function ClubCmsPage({
     about: { key: 'about', label: navLabels.about, href: navAboutUrl },
     blog: hasBlogSection ? { key: 'blog', label: navLabels.blog, href: navBlogUrl } : undefined,
     reserve: hasReserveSection ? { key: 'reserve', label: navLabels.reserve, href: navReserveUrl } : undefined,
+    reviews: hasReviewsSection ? { key: 'reviews', label: navLabels.reviews, href: navReviewsUrl } : undefined,
     contact: { key: 'contact', label: navLabels.contact, href: navContactUrl },
   };
   const visibleNavItems = navOrder
     .map((key) => navItemsByKey[key])
     .filter((item): item is { key: string; label: string; href: string } => item !== undefined);
-  // 構成（団体詳細）/予約ページ/活動ブログの表示順も団体側で自由に入れ替えられる。
-  // 未設定（既存の団体）の場合はこれまでと全く同じ「構成→予約ページ→活動ブログ」の順になる。
-  const DEFAULT_CONTENT_ORDER = ['about', 'reserve', 'blog'];
+  // 構成（団体詳細）/予約ページ/活動ブログ/口コミの表示順も団体側で自由に入れ替えられる。
+  // 未設定（既存の団体）の場合はこれまでと全く同じ「構成→予約ページ→活動ブログ」の順のまま、
+  // 口コミは末尾に追加される。
+  const DEFAULT_CONTENT_ORDER = ['about', 'reserve', 'blog', 'reviews'];
   const configuredContentOrder = Array.isArray(sectionCopy.contentOrder) ? sectionCopy.contentOrder : [];
   const contentOrder = [
     ...configuredContentOrder.filter((key) => DEFAULT_CONTENT_ORDER.includes(key)),
@@ -589,6 +616,10 @@ export default async function ClubCmsPage({
   const blogSectionLead = sectionCopy.blogLead?.trim() || '';
   const blogTitleColor = sectionCopy.blogTitleColor?.trim() || textColor;
   const blogLeadColor = sectionCopy.blogLeadColor?.trim() || bodyTextColor;
+  const reviewsSectionTitle = sectionCopy.reviewsTitle?.trim() || '';
+  const reviewsSectionLead = sectionCopy.reviewsLead?.trim() || '';
+  const reviewsTitleColor = sectionCopy.reviewsTitleColor?.trim() || textColor;
+  const reviewsLeadColor = sectionCopy.reviewsLeadColor?.trim() || bodyTextColor;
   const contactMessageColorRaw = sectionCopy.contactMessageColor?.trim();
   const contactMessageColor =
     !contactMessageColorRaw || ['#6B7280', '#9CA3AF'].includes(contactMessageColorRaw.toUpperCase())
@@ -610,7 +641,7 @@ export default async function ClubCmsPage({
   // の順のまま、見た目も一切変わらない。設定されている場合のみ、ブロック単位で並び替えた
   // レイアウトに切り替わる。
   const pageBlocks = (page.blocks as any[]) ?? [];
-  const DEFAULT_BLOCK_ORDER = [...pageBlocks.map((_, i) => `block-${i}`), 'reserve', 'blog'];
+  const DEFAULT_BLOCK_ORDER = [...pageBlocks.map((_, i) => `block-${i}`), 'reserve', 'blog', 'reviews'];
   const configuredBlockOrder = Array.isArray(sectionCopy.blockOrder) ? sectionCopy.blockOrder : [];
   const hasCustomBlockOrder = configuredBlockOrder.length > 0 &&
     JSON.stringify(configuredBlockOrder) !== JSON.stringify(DEFAULT_BLOCK_ORDER);
@@ -839,10 +870,10 @@ export default async function ClubCmsPage({
       <article className={`px-4 ${heroImageMode === 'background' ? 'pt-4 pb-8' : 'pt-4 pb-8'}`}>
 
       {(() => {
-        const renderedContentKeys = contentOrder.filter((key) => key === 'about' || (key === 'reserve' && hasReserveSection) || (key === 'blog' && hasBlogSection));
+        const renderedContentKeys = contentOrder.filter((key) => key === 'about' || (key === 'reserve' && hasReserveSection) || (key === 'blog' && hasBlogSection) || (key === 'reviews' && hasReviewsSection));
         const isFirstContentSection = (key: string) => renderedContentKeys[0] === key;
         const flatRenderedKeys = hasCustomBlockOrder
-          ? blockOrder.filter((key) => key.startsWith('block-') || (key === 'reserve' && hasReserveSection) || (key === 'blog' && hasBlogSection))
+          ? blockOrder.filter((key) => key.startsWith('block-') || (key === 'reserve' && hasReserveSection) || (key === 'blog' && hasBlogSection) || (key === 'reviews' && hasReviewsSection))
           : [];
         const isFirstItem = (key: string) => hasCustomBlockOrder ? flatRenderedKeys[0] === key : isFirstContentSection(key);
 
@@ -965,10 +996,42 @@ export default async function ClubCmsPage({
         </section>
         ) : null;
 
+        const reviewsSection = hasReviewsSection ? (
+        <section key="reviews" id="reviews" className={`relative ${isFirstItem('reviews') ? '' : 'mt-8'} scroll-mt-6 px-5 py-6 shadow-sm`} style={{ backgroundColor: navBg, ...cardBorderStyle }}>
+          {reviewsSectionTitle && (
+            <p className="text-lg font-bold" style={{ color: reviewsTitleColor }}>{reviewsSectionTitle}</p>
+          )}
+          {reviewsSectionLead && (
+            <p className="mt-2 text-sm leading-7" style={{ color: reviewsLeadColor }}>{reviewsSectionLead}</p>
+          )}
+          <div className="mt-4 max-h-[480px] space-y-4 overflow-y-auto pr-1">
+            {reviews.map((review) => (
+              <div key={review.id} className="flex gap-3">
+                {review.authorIconUrl ? (
+                  <Image src={review.authorIconUrl} alt="" width={32} height={32} className="mt-0.5 h-8 w-8 shrink-0 rounded-full object-cover" />
+                ) : (
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-400">
+                    {review.authorName.slice(0, 1)}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="mb-0.5 text-xs font-medium text-gray-700">
+                    {review.authorName}
+                    {review.authorGrade && <span className="ml-1 text-gray-400">{review.authorGrade}</span>}
+                  </p>
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{review.content}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+        ) : null;
+
         if (hasCustomBlockOrder) {
           return blockOrder.map((key) => {
             if (key === 'reserve') return reserveSection;
             if (key === 'blog') return blogSection;
+            if (key === 'reviews') return reviewsSection;
             const idx = Number(key.replace('block-', ''));
             const block = pageBlocks[idx];
             if (!block) return null;
@@ -979,7 +1042,7 @@ export default async function ClubCmsPage({
             );
           });
         }
-        const contentSectionsByKey: Record<string, ReactNode> = { about: aboutSection, reserve: reserveSection, blog: blogSection };
+        const contentSectionsByKey: Record<string, ReactNode> = { about: aboutSection, reserve: reserveSection, blog: blogSection, reviews: reviewsSection };
         return contentOrder.map((key) => contentSectionsByKey[key] ?? null);
       })()}
 
