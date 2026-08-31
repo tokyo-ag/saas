@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { api, setLiffToken } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded, liff, redirectToLiffApp, isLiffLoggedIn } from '@/lib/liff';
 import { useLiffTheme, readableTextColor, isLightHexColor } from '@/components/liff/LiffThemeProvider';
@@ -17,7 +17,6 @@ function isLineAuthErrorMessage(message: string): boolean {
 
 export default function TenantReviewPage() {
   const { tenantId } = useParams<{ tenantId: string }>();
-  const router = useRouter();
   const theme = useLiffTheme();
   const accentColor = theme.accentColor;
   const solidAccentColor = isLightHexColor(accentColor) ? '#111827' : accentColor;
@@ -156,15 +155,7 @@ export default function TenantReviewPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.backgroundColor }}>
-      <div
-        className="flex shrink-0 items-center gap-3 border-b border-gray-100 bg-white px-4"
-        style={{ paddingTop: 'env(safe-area-inset-top, 16px)', paddingBottom: '12px' }}
-      >
-        <button onClick={() => router.back()} className="p-1 text-xl leading-none text-gray-600">‹</button>
-        <p className="text-sm font-bold text-gray-900">口コミを投稿</p>
-      </div>
-
-      <div className="px-4 py-5">
+      <div className="px-4 py-5" style={{ paddingTop: 'calc(env(safe-area-inset-top, 16px) + 20px)' }}>
         <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
           <div>
             <p className="text-sm font-bold text-gray-800">感想を書く</p>
