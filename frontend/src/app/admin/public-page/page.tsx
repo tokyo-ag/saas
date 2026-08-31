@@ -3058,10 +3058,7 @@ export default function AdminPublicPage() {
                                 </div>
                               )}
                               <div className="min-w-0">
-                                <p className="text-[11px] font-medium text-gray-700">
-                                  {review.authorName}
-                                  {review.authorGrade && <span className="ml-1 text-gray-400">{review.authorGrade}</span>}
-                                </p>
+                                <p className="text-[11px] font-medium text-gray-700">{review.authorName}</p>
                                 <p className="whitespace-pre-wrap text-xs leading-relaxed text-gray-600">{review.content}</p>
                               </div>
                             </div>

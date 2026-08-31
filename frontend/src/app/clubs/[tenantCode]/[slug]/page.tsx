@@ -1018,10 +1018,7 @@ export default async function ClubCmsPage({
                     </div>
                   )}
                   <div className="min-w-0">
-                    <p className="mb-0.5 text-xs font-medium text-gray-700">
-                      {review.authorName}
-                      {review.authorGrade && <span className="ml-1 text-gray-400">{review.authorGrade}</span>}
-                    </p>
+                    <p className="mb-0.5 text-xs font-medium text-gray-700">{review.authorName}</p>
                     <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{review.content}</p>
                   </div>
                 </div>

@@ -1216,7 +1216,6 @@ export interface TenantReview {
   content: string;
   createdAt: string;
   authorName: string;
-  authorGrade?: string | null;
   authorIconUrl?: string | null;
 }
 
