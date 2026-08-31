@@ -1028,6 +1028,13 @@ export default async function ClubCmsPage({
               ))}
             </div>
           )}
+          <Link
+            href={`/liff/${page.tenant.code ?? tenantCode}/review`}
+            className="mt-4 inline-flex items-center gap-1 text-sm font-bold hover:underline"
+            style={{ color: accentColor }}
+          >
+            感想を書く →
+          </Link>
         </section>
         ) : null;
 

@@ -188,6 +188,17 @@ export const api = {
         body: JSON.stringify({ content }),
       });
     },
+    myTenantReview: (tenantId: string, lineUserId: string) => {
+      void lineUserId;
+      return request<EventReview | null>(`/liff/${tenantId}/review`);
+    },
+    submitTenantReview: (tenantId: string, lineUserId: string, content: string) => {
+      void lineUserId;
+      return request<EventReview>(`/liff/${tenantId}/review`, {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+      });
+    },
     reserve: (tenantId: string, data: ReserveInput) =>
       request<ReserveResult>(`/liff/${tenantId}/reservations`, {
         method: 'POST',
@@ -384,6 +395,12 @@ export const api = {
       request<SupportMessage>('/admin/tenant/support', {
         method: 'POST',
         body: JSON.stringify({ content }),
+      }),
+    reviews: () => request<AdminTenantReview[]>('/admin/tenant/reviews'),
+    updateReview: (reviewId: string, data: { isPublished?: boolean; content?: string }) =>
+      request<AdminTenantReview>(`/admin/tenant/reviews/${reviewId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
       }),
   },
   auth: {
@@ -757,6 +774,18 @@ export interface AdminEventReview extends EventReview {
     name?: string | null;
     grade?: string | null;
     gender?: string | null;
+  };
+}
+
+export interface AdminTenantReview {
+  id: string;
+  content: string;
+  createdAt: string;
+  isPublished: boolean;
+  member: {
+    id: string;
+    name?: string | null;
+    grade?: string | null;
   };
 }
 

@@ -268,6 +268,40 @@ export class TenantService {
     return this.prisma.member.count({ where: { tenantId } });
   }
 
+  async listTenantReviews(tenantId: string) {
+    return this.prisma.tenantReview.findMany({
+      where: { tenantId },
+      include: { member: { select: { id: true, name: true, grade: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async updateTenantReview(
+    tenantId: string,
+    reviewId: string,
+    data: { isPublished?: boolean; content?: string },
+  ) {
+    const review = await this.prisma.tenantReview.findFirst({
+      where: { id: reviewId, tenantId },
+    });
+    if (!review) throw new NotFoundException('Review not found');
+
+    const content = data.content?.trim();
+    if (content !== undefined && (content.length < 5 || content.length > 300)) {
+      throw new BadRequestException(
+        '感想は5文字以上300文字以内で入力してください',
+      );
+    }
+
+    return this.prisma.tenantReview.update({
+      where: { id: reviewId },
+      data: {
+        ...(data.isPublished !== undefined && { isPublished: data.isPublished }),
+        ...(content !== undefined && { content }),
+      },
+    });
+  }
+
   async getGrowthData(tenantId: string) {
     const now = new Date();
     const months = Array.from({ length: 6 }, (_, i) => {

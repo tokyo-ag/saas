@@ -121,6 +121,26 @@ export class LiffController {
   }
 
   @UseGuards(LiffGuard)
+  @Get('review')
+  getMyTenantReview(
+    @Param('tenantId') tenantId: string,
+    @LiffUser() lineUserId: string,
+  ) {
+    return this.liffService.getMyTenantReview(tenantId, lineUserId);
+  }
+
+  @UseGuards(LiffGuard)
+  @Post('review')
+  submitTenantReview(
+    @Param('tenantId') tenantId: string,
+    @LiffUser() lineUserId: string,
+    @Body() dto: SubmitReviewDto,
+  ) {
+    dto.lineUserId = lineUserId;
+    return this.liffService.submitTenantReview(tenantId, dto);
+  }
+
+  @UseGuards(LiffGuard)
   @Post('reservations')
   createReservation(
     @Param('tenantId') tenantId: string,

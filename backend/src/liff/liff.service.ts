@@ -358,6 +358,44 @@ export class LiffService {
     });
   }
 
+  // 特定のイベントに紐づかない、団体全体への口コミ。予約・参加の有無を問わず、
+  // LINE認証済みのメンバーなら誰でも投稿できる（reviewsRequireReservationの対象外）。
+  async getMyTenantReview(tenantId: string, lineUserId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
+    const member = await this.findMember(tenantId, lineUserId);
+    if (!member) return null;
+    return this.prisma.tenantReview.findUnique({
+      where: { tenantId_memberId: { tenantId, memberId: member.id } },
+    });
+  }
+
+  async submitTenantReview(tenantId: string, dto: SubmitReviewDto) {
+    tenantId = await this.resolveTenantId(tenantId);
+    if (!dto.lineUserId) {
+      throw new UnauthorizedException('LIFF認証が必要です');
+    }
+    const content = dto.content.trim();
+    if (content.length < 5 || content.length > 300) {
+      throw new BadRequestException(
+        '感想は5文字以上300文字以内で入力してください',
+      );
+    }
+
+    const member = await this.findMember(tenantId, dto.lineUserId);
+    if (!member) throw new NotFoundException('メンバーが見つかりません');
+
+    return this.prisma.tenantReview.upsert({
+      where: { tenantId_memberId: { tenantId, memberId: member.id } },
+      create: {
+        tenantId,
+        memberId: member.id,
+        content,
+        isPublished: false,
+      },
+      update: { content, isPublished: false },
+    });
+  }
+
   // 予約登録（重複チェック・キャンセル待ち・LINE通知込み）
   async createReservation(tenantId: string, dto: CreateReservationDto) {
     tenantId = await this.resolveTenantId(tenantId);

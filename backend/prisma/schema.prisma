@@ -72,6 +72,7 @@ model Tenant {
   liffAccesses       TenantLiffAccess[]
   publicPages        PublicPage[]
   blogPosts          BlogPost[]
+  tenantReviews      TenantReview[]
 
   @@map("tenants")
 }
@@ -345,6 +346,7 @@ model Member {
   sentMessages    Message[]
   notifications   Notification[]
   eventReviews     EventReview[]
+  tenantReviews    TenantReview[]
 
   @@unique([tenantId, lineUserId])
   @@map("members")
@@ -453,6 +455,24 @@ model EventReview {
   @@unique([eventId, memberId])
   @@index([tenantId, eventId])
   @@map("event_reviews")
+}
+
+// 特定のイベントに紐づかない、団体全体への口コミ。公開サイトの「口コミ」セクションから
+// LINE認証だけで投稿できる（予約・参加の有無を問わない）。メンバー1人につき1件。
+model TenantReview {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  memberId    String   @map("member_id")
+  content     String   @db.Text
+  isPublished Boolean  @default(false) @map("is_published")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, memberId])
+  @@map("tenant_reviews")
 }
 
 model Reservation {

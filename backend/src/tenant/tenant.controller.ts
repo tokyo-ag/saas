@@ -3,6 +3,8 @@ import {
   Get,
   Put,
   Post,
+  Patch,
+  Param,
   Body,
   BadRequestException,
   UseGuards,
@@ -78,5 +80,19 @@ export class TenantController {
       throw new BadRequestException('plan must be standard or pro');
     }
     return this.tenantService.createBillingCheckout(tenantId, plan);
+  }
+
+  @Get('reviews')
+  listTenantReviews(@TenantId() tenantId: string) {
+    return this.tenantService.listTenantReviews(tenantId);
+  }
+
+  @Patch('reviews/:reviewId')
+  updateTenantReview(
+    @TenantId() tenantId: string,
+    @Param('reviewId') reviewId: string,
+    @Body() body: { isPublished?: boolean; content?: string },
+  ) {
+    return this.tenantService.updateTenantReview(tenantId, reviewId, body);
   }
 }

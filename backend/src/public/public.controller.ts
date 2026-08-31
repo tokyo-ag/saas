@@ -888,10 +888,10 @@ export class PublicController {
 
   @Get('tenants/:tenantCode/reviews')
   async listTenantReviews(@Param('tenantCode') tenantCode: string) {
-    const reviews = await this.prisma.eventReview.findMany({
+    const reviews = await this.prisma.tenantReview.findMany({
       where: {
         isPublished: true,
-        event: { tenant: { code: tenantCode, deletedAt: null, bannedAt: null } },
+        tenant: { code: tenantCode, deletedAt: null, bannedAt: null },
       },
       include: { member: { select: { name: true, grade: true, linePictureUrl: true } } },
       orderBy: { createdAt: 'desc' },
