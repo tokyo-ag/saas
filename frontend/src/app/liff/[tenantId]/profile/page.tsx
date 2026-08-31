@@ -16,6 +16,7 @@ const STATUS_LABEL: Record<string, string> = {
   reserved: '予約済み',
   waitlisted: 'キャンセル待ち',
   waiting_payment: '支払待ち',
+  attended: '参加済み',
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -98,6 +99,10 @@ export default function ProfilePage() {
   const [profileOpen, setProfileOpen] = useState(!!returnTo);
   const [eventsOpen, setEventsOpen] = useState(true);
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const [reviewContent, setReviewContent] = useState<Record<string, string>>({});
+  const [reviewSaving, setReviewSaving] = useState<string | null>(null);
+  const [reviewSavedId, setReviewSavedId] = useState<string | null>(null);
+  const [reviewError, setReviewError] = useState<Record<string, string>>({});
 
   useEffect(() => {
     async function init() {
@@ -237,6 +242,45 @@ export default function ProfilePage() {
       alert('キャンセルに失敗しました');
     } finally {
       setCancellingId(null);
+    }
+  }
+
+  async function toggleExpand(r: LiffMyReservation) {
+    const willExpand = expandedEventId !== r.id;
+    setExpandedEventId(willExpand ? r.id : null);
+    if (willExpand && r.status === 'attended' && !(r.id in reviewContent)) {
+      try {
+        setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
+        const existing = await api.liff.myReview(tenantId, r.event.id, lineUserId);
+        setReviewContent((prev) => ({ ...prev, [r.id]: existing?.content ?? '' }));
+      } catch {
+        setReviewContent((prev) => ({ ...prev, [r.id]: '' }));
+      }
+    }
+  }
+
+  async function handleSubmitReview(r: LiffMyReservation) {
+    const content = (reviewContent[r.id] ?? '').trim();
+    if (content.length < 5 || content.length > 300) {
+      setReviewError((prev) => ({ ...prev, [r.id]: '感想は5文字以上300文字以内で入力してください' }));
+      return;
+    }
+    setReviewSaving(r.id);
+    setReviewError((prev) => ({ ...prev, [r.id]: '' }));
+    try {
+      setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
+      await api.liff.submitReview(tenantId, r.event.id, lineUserId, content);
+      setReviewSavedId(r.id);
+      setTimeout(() => setReviewSavedId((cur) => (cur === r.id ? null : cur)), 2000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (isLineAuthErrorMessage(msg)) {
+        restartLineAuth();
+        return;
+      }
+      setReviewError((prev) => ({ ...prev, [r.id]: msg || '送信に失敗しました' }));
+    } finally {
+      setReviewSaving(null);
     }
   }
 
@@ -419,7 +463,7 @@ export default function ProfilePage() {
                           <div key={r.id} className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
                             <button
                               type="button"
-                              onClick={() => setExpandedEventId(expanded ? null : r.id)}
+                              onClick={() => void toggleExpand(r)}
                               className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left active:bg-black/5"
                             >
                               <div className="min-w-0 flex-1">
@@ -451,6 +495,35 @@ export default function ProfilePage() {
                                 <p><span className="text-gray-400">参加費：</span>{priceLabel(r)}</p>
                                 {r.event.description && (
                                   <p className="whitespace-pre-wrap border-t border-gray-100 pt-2 text-xs leading-relaxed text-gray-500">{r.event.description}</p>
+                                )}
+                                {r.status === 'attended' && (
+                                  <div className="border-t border-gray-100 pt-3">
+                                    <p className="mb-1.5 text-xs font-bold text-gray-600">感想を書く</p>
+                                    <textarea
+                                      value={reviewContent[r.id] ?? ''}
+                                      onChange={(e) => setReviewContent((prev) => ({ ...prev, [r.id]: e.target.value }))}
+                                      rows={3}
+                                      maxLength={300}
+                                      placeholder="参加した感想を書いてみましょう（5〜300文字）"
+                                      className="w-full resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--liff-accent)]"
+                                    />
+                                    <div className="mt-1.5 flex items-center justify-between gap-2">
+                                      <span className="text-[11px] text-gray-400">{(reviewContent[r.id] ?? '').length}/300</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => void handleSubmitReview(r)}
+                                        disabled={reviewSaving === r.id}
+                                        className="shrink-0 rounded-xl px-4 py-2 text-xs font-bold text-white disabled:opacity-50"
+                                        style={{ backgroundColor: solidAccentColor }}
+                                      >
+                                        {reviewSaving === r.id ? '送信中...' : reviewSavedId === r.id ? '送信しました' : '感想を送信'}
+                                      </button>
+                                    </div>
+                                    {reviewError[r.id] && (
+                                      <p className="mt-1 text-xs text-red-500">{reviewError[r.id]}</p>
+                                    )}
+                                    <p className="mt-1.5 text-[11px] text-gray-400">送信した感想は、運営が確認のうえ公開されます。</p>
+                                  </div>
                                 )}
                                 <button
                                   type="button"

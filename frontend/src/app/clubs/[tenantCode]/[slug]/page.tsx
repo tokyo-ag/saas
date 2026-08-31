@@ -579,7 +579,7 @@ export default async function ClubCmsPage({
   const hasReserveSection = reserveActionStyle === 'line' || reserveEvents.length > 0;
   const hasBlogSection = blogPosts.length > 0;
   const reviewsEnabled = sectionCopy.reviewsEnabled !== false;
-  const hasReviewsSection = reviewsEnabled && reviews.length > 0;
+  const hasReviewsSection = reviewsEnabled;
   // ナビボタンの並び順は団体側で自由に入れ替えられる。未設定（既存の団体）の場合は
   // これまでと全く同じ「団体詳細→活動ブログ→予約する→お問い合わせ」の順になる。
   // 「口コミ」は後から追加した項目なので、既存の並び順設定を壊さないようお問い合わせの
@@ -1004,26 +1004,30 @@ export default async function ClubCmsPage({
           {reviewsSectionLead && (
             <p className="mt-2 text-sm leading-7" style={{ color: reviewsLeadColor }}>{reviewsSectionLead}</p>
           )}
-          <div className="mt-4 max-h-[480px] space-y-4 overflow-y-auto pr-1">
-            {reviews.map((review) => (
-              <div key={review.id} className="flex gap-3">
-                {review.authorIconUrl ? (
-                  <Image src={review.authorIconUrl} alt="" width={32} height={32} className="mt-0.5 h-8 w-8 shrink-0 rounded-full object-cover" />
-                ) : (
-                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-400">
-                    {review.authorName.slice(0, 1)}
+          {reviews.length === 0 ? (
+            <p className="mt-4 text-sm text-gray-400">まだ口コミはありません。参加した方の感想をお楽しみに。</p>
+          ) : (
+            <div className="mt-4 max-h-[480px] space-y-4 overflow-y-auto pr-1">
+              {reviews.map((review) => (
+                <div key={review.id} className="flex gap-3">
+                  {review.authorIconUrl ? (
+                    <Image src={review.authorIconUrl} alt="" width={32} height={32} className="mt-0.5 h-8 w-8 shrink-0 rounded-full object-cover" />
+                  ) : (
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-400">
+                      {review.authorName.slice(0, 1)}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="mb-0.5 text-xs font-medium text-gray-700">
+                      {review.authorName}
+                      {review.authorGrade && <span className="ml-1 text-gray-400">{review.authorGrade}</span>}
+                    </p>
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{review.content}</p>
                   </div>
-                )}
-                <div className="min-w-0">
-                  <p className="mb-0.5 text-xs font-medium text-gray-700">
-                    {review.authorName}
-                    {review.authorGrade && <span className="ml-1 text-gray-400">{review.authorGrade}</span>}
-                  </p>
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{review.content}</p>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
         ) : null;
 

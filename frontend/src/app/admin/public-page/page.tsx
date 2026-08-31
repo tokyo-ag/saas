@@ -727,7 +727,7 @@ export default function AdminPublicPage() {
   const hasReserveSection = reserveActionStyle === 'line' || reserveEvents.length > 0;
   const hasBlogSection = blogPosts.length > 0;
   const reviewsEnabled = form.reviewsEnabled !== false;
-  const hasReviewsSection = reviewsEnabled && reviews.length > 0;
+  const hasReviewsSection = reviewsEnabled;
   const navItemsByKey: Record<string, { key: string; label: string } | undefined> = {
     about: { key: 'about', label: navLabels.about },
     blog: hasBlogSection ? { key: 'blog', label: navLabels.blog } : undefined,
@@ -2166,7 +2166,7 @@ export default function AdminPublicPage() {
                 </div>
               ))}
             </div>
-            <p className="mt-1 text-[10px] text-gray-400">構成のブロックを予約ページ・活動ブログ・口コミと自由に入れ替えられます（「予約ページ」「活動ブログ」「口コミ」は記事・予約設定・公開口コミが無い団体では表示されません）。単独で配置したブロックは予約ページ・活動ブログ・口コミと同じカードデザインになります</p>
+            <p className="mt-1 text-[10px] text-gray-400">構成のブロックを予約ページ・活動ブログ・口コミと自由に入れ替えられます（「予約ページ」「活動ブログ」は記事・予約設定が無い団体では表示されません。「口コミ」はON/OFF設定に従い、口コミが無い場合は「まだ口コミはありません」と表示されます）。単独で配置したブロックは予約ページ・活動ブログ・口コミと同じカードデザインになります</p>
           </div>
           {/* 予約表示スタイルは予約ページで設定 */}
           <div>
@@ -2655,12 +2655,12 @@ export default function AdminPublicPage() {
                   <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${reviewsEnabled ? 'left-5' : 'left-0.5'}`} />
                 </button>
               </label>
-              <div className={`rounded-lg px-3 py-2 text-xs font-bold ${hasReviewsSection ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
+              <div className={`rounded-lg px-3 py-2 text-xs font-bold ${reviewsEnabled ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
                 {!reviewsEnabled
                   ? 'このセクションは非表示に設定されています'
-                  : hasReviewsSection
+                  : reviews.length > 0
                     ? `公開口コミ ${reviews.length}件：公開サイトに表示されます`
-                    : '公開口コミ 0件：公開サイトでは非表示になります'}
+                    : '公開口コミ 0件：「まだ口コミはありません」と表示されます'}
               </div>
               <p className="text-[11px] leading-relaxed text-gray-400">
                 口コミの承認・編集は管理画面の「口コミ」ページで行います。ここでは公開サイト側の見た目のみ設定できます。
@@ -3044,26 +3044,30 @@ export default function AdminPublicPage() {
                       {reviewsSectionLead && (
                         <p className="mt-1 text-xs leading-5" style={{ color: reviewsLeadColor }}>{reviewsSectionLead}</p>
                       )}
-                      <div className="mt-3 max-h-[380px] space-y-3 overflow-y-auto pr-1">
-                        {reviews.map((review) => (
-                          <div key={review.id} className="flex gap-2">
-                            {review.authorIconUrl ? (
-                              <img src={review.authorIconUrl} alt="" className="mt-0.5 h-7 w-7 shrink-0 rounded-full object-cover" />
-                            ) : (
-                              <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[10px] text-gray-400">
-                                {review.authorName.slice(0, 1)}
+                      {reviews.length === 0 ? (
+                        <p className="mt-3 text-xs text-gray-400">まだ口コミはありません。参加した方の感想をお楽しみに。</p>
+                      ) : (
+                        <div className="mt-3 max-h-[380px] space-y-3 overflow-y-auto pr-1">
+                          {reviews.map((review) => (
+                            <div key={review.id} className="flex gap-2">
+                              {review.authorIconUrl ? (
+                                <img src={review.authorIconUrl} alt="" className="mt-0.5 h-7 w-7 shrink-0 rounded-full object-cover" />
+                              ) : (
+                                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[10px] text-gray-400">
+                                  {review.authorName.slice(0, 1)}
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <p className="text-[11px] font-medium text-gray-700">
+                                  {review.authorName}
+                                  {review.authorGrade && <span className="ml-1 text-gray-400">{review.authorGrade}</span>}
+                                </p>
+                                <p className="whitespace-pre-wrap text-xs leading-relaxed text-gray-600">{review.content}</p>
                               </div>
-                            )}
-                            <div className="min-w-0">
-                              <p className="text-[11px] font-medium text-gray-700">
-                                {review.authorName}
-                                {review.authorGrade && <span className="ml-1 text-gray-400">{review.authorGrade}</span>}
-                              </p>
-                              <p className="whitespace-pre-wrap text-xs leading-relaxed text-gray-600">{review.content}</p>
                             </div>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </section>
                   ) : null;
                   if (hasCustomBlockOrder) {
