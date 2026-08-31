@@ -3049,7 +3049,7 @@ export default function AdminPublicPage() {
                       ) : (
                         <div className="mt-3 max-h-[380px] space-y-3 overflow-y-auto pr-1">
                           {reviews.map((review) => (
-                            <div key={review.id} className="flex gap-2">
+                            <div key={review.id} className="flex gap-2 p-2" style={{ backgroundColor: blogPostCardBg, ...cardBorderStyle }}>
                               {review.authorIconUrl ? (
                                 <img src={review.authorIconUrl} alt="" className="mt-0.5 h-7 w-7 shrink-0 rounded-full object-cover" />
                               ) : (

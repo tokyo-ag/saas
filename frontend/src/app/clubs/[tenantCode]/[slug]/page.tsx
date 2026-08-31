@@ -1007,9 +1007,9 @@ export default async function ClubCmsPage({
           {reviews.length === 0 ? (
             <p className="mt-4 text-sm text-gray-400">まだ口コミはありません。参加した方の感想をお楽しみに。</p>
           ) : (
-            <div className="mt-4 max-h-[480px] space-y-4 overflow-y-auto pr-1">
+            <div className="mt-4 max-h-[480px] space-y-3 overflow-y-auto pr-1">
               {reviews.map((review) => (
-                <div key={review.id} className="flex gap-3">
+                <div key={review.id} className="flex gap-3 p-3" style={{ backgroundColor: blogPostCardBg, ...cardBorderStyle }}>
                   {review.authorIconUrl ? (
                     <Image src={review.authorIconUrl} alt="" width={32} height={32} className="mt-0.5 h-8 w-8 shrink-0 rounded-full object-cover" />
                   ) : (
