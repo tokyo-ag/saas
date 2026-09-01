@@ -207,13 +207,16 @@ export class PublicController {
   @Get('events')
   async getEvents(
     @Query('category') category?: string,
-    @Query('tag') tag?: string,
+    @Query('tag') tagParam?: string,
     @Query('typeTags') typeTagsParam?: string,
   ) {
     // typeTags (団体種別) broadens the query to every activity category for tenants matching any
     // of the given team-type tags, instead of being restricted to one category - so when present
     // it takes over from `category` entirely rather than being combined with it.
     const typeTags = typeTagsParam ? typeTagsParam.split(',').map((t) => t.trim()).filter(Boolean) : [];
+    // tag can be a comma-separated list (複数選択) - an event must match every selected tag (AND),
+    // unlike typeTags above which broadens with OR semantics.
+    const tags = tagParam ? tagParam.split(',').map((t) => t.trim()).filter(Boolean) : [];
 
     const events = await this.prisma.event.findMany({
       where: {
@@ -226,7 +229,7 @@ export class PublicController {
           ...(typeTags.length > 0 ? { typeTags: { hasSome: typeTags } } : {}),
         },
         ...(typeTags.length === 0 && category ? { category } : {}),
-        ...(tag ? { tags: { has: tag } } : {}),
+        ...(tags.length > 0 ? { tags: { hasEvery: tags } } : {}),
       },
       orderBy: { heldAt: 'asc' },
       include: {

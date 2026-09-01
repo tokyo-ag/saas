@@ -95,14 +95,16 @@ function EventCardMini({ event }: { event: PublicEvent }) {
   );
 }
 
-function EventsBlockPreview({ category, heading, tag, areaSearchEnabled, showFilterTag, typeTags }: { category: string; heading: string; tag?: string; areaSearchEnabled?: boolean; showFilterTag?: boolean; typeTags?: string[] }) {
+function EventsBlockPreview({ category, heading, filterTags, areaSearchEnabled, showFilterTag, typeTags }: { category: string; heading: string; filterTags?: string[]; areaSearchEnabled?: boolean; showFilterTag?: boolean; typeTags?: string[] }) {
   const [events, setEvents] = useState<PublicEvent[]>([]);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const eventCategory = ACTIVITY_TAG_EVENT_CATEGORY[category];
   // showFilterTag turns this into an interactive tag-tab filter (like the area tabs) over every
-  // tag present in the category's events, so the fetch must ignore the single picked tag.
-  const fetchTag = showFilterTag ? undefined : tag;
+  // tag present in the category's events, so the fetch must ignore the picked filter tags.
+  // Multiple filterTags are ANDed together server-side (must match every selected tag).
+  const fetchTag = showFilterTag ? undefined : (filterTags && filterTags.length > 0 ? filterTags.join(',') : undefined);
+  const fetchTagLabel = filterTags && filterTags.length > 0 ? filterTags.join('・') : undefined;
   // typeTags (団体種別) broadens the fetch to every category for matching tenants, ignoring the
   // article's own category entirely.
   const hasTypeTags = (typeTags ?? []).length > 0;
@@ -126,7 +128,7 @@ function EventsBlockPreview({ category, heading, tag, areaSearchEnabled, showFil
     return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">「{category}」は活動種目カテゴリではないため、対象イベントがありません。</p>;
   }
   if (events.length === 0) {
-    return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">{hasTypeTags ? (typeTags ?? []).join('・') : category}{fetchTag ? `・「${fetchTag}」` : ''}に一致する公開中のイベントが見つかりませんでした。</p>;
+    return <p className="my-6 rounded-lg bg-gray-50 px-4 py-3 text-xs text-gray-400">{hasTypeTags ? (typeTags ?? []).join('・') : category}{fetchTagLabel ? `・「${fetchTagLabel}」` : ''}に一致する公開中のイベントが見つかりませんでした。</p>;
   }
   const areas = !showFilterTag && areaSearchEnabled ? computeEventAreas(events) : [];
   const tags = showFilterTag ? computeEventTags(events) : [];
@@ -416,7 +418,7 @@ function BlockView({ block, category }: { block: Block; category: string }) {
     );
   }
   if (block.type === 'events') {
-    return <EventsBlockPreview category={category} heading={block.text} tag={block.tag} areaSearchEnabled={block.eventsAreaSearchEnabled} showFilterTag={block.eventsShowFilterTagEnabled} typeTags={block.eventsTypeTags} />;
+    return <EventsBlockPreview category={category} heading={block.text} filterTags={block.tags} areaSearchEnabled={block.eventsAreaSearchEnabled} showFilterTag={block.eventsShowFilterTagEnabled} typeTags={block.eventsTypeTags} />;
   }
   if (block.type === 'circles') {
     return <CirclesBlockPreview category={category} heading={block.text} typeTags={block.circleTypeTags} />;

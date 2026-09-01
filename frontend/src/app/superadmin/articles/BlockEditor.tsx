@@ -69,7 +69,9 @@ export type Block = {
   text: string;
   imageUrl?: string;
   href?: string;
-  tag?: string;
+  // イベントカード（events）の絞り込みタグ。複数選択すると、選んだタグすべてに
+  // 一致するイベントのみを表示する（AND条件）。
+  tags?: string[];
   listStyle?: ListStyle;
   imageSize?: ImageSize;
   textSize?: TextSize;
@@ -245,7 +247,7 @@ export function parseBodyToBlocks(body: string): Block[] {
         id: newId(),
         type: 'events',
         text: events[1] ?? '',
-        tag: events[2] || undefined,
+        tags: events[2] ? events[2].split(',').filter(Boolean) : [],
         eventsAreaSearchEnabled: events[3] === 'true',
         eventsShowFilterTagEnabled: events[4] === 'true',
         eventsTypeTags: events[5] ? events[5].split(',').filter(Boolean) : [],
@@ -338,11 +340,12 @@ export function blocksToBody(blocks: Block[]): string {
       const areaSearch = block.eventsAreaSearchEnabled ?? false;
       const showFilterTag = block.eventsShowFilterTagEnabled ?? false;
       const typeTags = block.eventsTypeTags ?? [];
+      const tags = block.tags ?? [];
       const hasExtra = areaSearch || showFilterTag || typeTags.length > 0;
-      if (!(block.text || block.tag || hasExtra)) {
+      if (!(block.text || tags.length > 0 || hasExtra)) {
         line = '{{events}}';
       } else {
-        const parts = [block.text ?? '', block.tag ?? ''];
+        const parts = [block.text ?? '', tags.join(',')];
         if (hasExtra) {
           parts.push(String(areaSearch));
           if (showFilterTag || typeTags.length > 0) parts.push(String(showFilterTag));
@@ -1178,32 +1181,33 @@ export default function BlockEditor({
                   className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
                 />
                 <div className={block.eventsShowFilterTagEnabled ? 'opacity-40' : ''}>
-                  <p className="mb-1 text-xs font-medium text-gray-500">絞り込みタグ（任意）</p>
+                  <p className="mb-1 text-xs font-medium text-gray-500">絞り込みタグ（任意・複数選択可）</p>
                   <div className="flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      disabled={block.eventsShowFilterTagEnabled}
-                      onClick={() => updateBlock(block.id, { tag: undefined })}
-                      className={`rounded-full px-3 py-1 text-xs font-bold transition ${
-                        !block.tag ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      指定なし
-                    </button>
-                    {SEARCH_TAGS.map((tag) => (
-                      <button
-                        key={tag}
-                        type="button"
-                        disabled={block.eventsShowFilterTagEnabled}
-                        onClick={() => updateBlock(block.id, { tag })}
-                        className={`rounded-full px-3 py-1 text-xs font-bold transition ${
-                          block.tag === tag ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                      >
-                        {tag}
-                      </button>
-                    ))}
+                    {SEARCH_TAGS.map((tag) => {
+                      const selected = (block.tags ?? []).includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          disabled={block.eventsShowFilterTagEnabled}
+                          onClick={() => {
+                            const current = block.tags ?? [];
+                            updateBlock(block.id, {
+                              tags: selected ? current.filter((t) => t !== tag) : [...current, tag],
+                            });
+                          }}
+                          className={`rounded-full px-3 py-1 text-xs font-bold transition ${
+                            selected ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      );
+                    })}
                   </div>
+                  {(block.tags ?? []).length > 0 && (
+                    <p className="mt-1 text-xs text-gray-400">選んだタグすべてに一致するイベントのみ表示します。</p>
+                  )}
                   {block.eventsShowFilterTagEnabled && (
                     <p className="mt-1 text-xs text-gray-400">下の「タブで絞り込む」がONの間は使いません。</p>
                   )}
