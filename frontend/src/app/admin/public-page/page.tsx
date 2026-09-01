@@ -82,10 +82,12 @@ const SECTION_LABELS: Record<string, string> = { name: '名前', logo: 'ロゴ',
 
 const DEFAULT_NAV_ORDER = ['about', 'blog', 'reserve', 'reviews', 'contact'] as const;
 const NAV_ITEM_LABELS: Record<string, string> = { about: '団体詳細', blog: '活動ブログ', reserve: '予約する', reviews: '口コミ', contact: 'お問い合わせ' };
-function normalizeNavOrder(order: string[]): string[] {
+type CustomNavButton = { id: string; label: string; url: string };
+function normalizeNavOrder(order: string[], customKeys: string[] = []): string[] {
+  const allKeys = [...(DEFAULT_NAV_ORDER as readonly string[]), ...customKeys];
   return [
-    ...order.filter((key) => (DEFAULT_NAV_ORDER as readonly string[]).includes(key)),
-    ...DEFAULT_NAV_ORDER.filter((key) => !order.includes(key)),
+    ...order.filter((key) => allKeys.includes(key)),
+    ...allKeys.filter((key) => !order.includes(key)),
   ];
 }
 
@@ -227,6 +229,7 @@ const emptyForm: PublicPageInput = {
   subtitleHeroY: null as unknown as number,
   sectionOrder: [...DEFAULT_SECTION_ORDER] as string[],
   navOrder: [...DEFAULT_NAV_ORDER] as string[],
+  customNavButtons: [] as CustomNavButton[],
   contentOrder: [...DEFAULT_CONTENT_ORDER] as string[],
   blockOrder: [] as string[],
   displayFields: { location: true, price: true, capacity: false, description: true } as { location: boolean; price: boolean; capacity: boolean; description: boolean },
@@ -728,6 +731,7 @@ export default function AdminPublicPage() {
   const hasBlogSection = blogPosts.length > 0;
   const reviewsEnabled = form.reviewsEnabled !== false;
   const hasReviewsSection = reviewsEnabled;
+  const customNavButtons = (form.customNavButtons ?? []).filter((b) => b.label.trim() && b.url.trim());
   const navItemsByKey: Record<string, { key: string; label: string } | undefined> = {
     about: { key: 'about', label: navLabels.about },
     blog: hasBlogSection ? { key: 'blog', label: navLabels.blog } : undefined,
@@ -735,7 +739,11 @@ export default function AdminPublicPage() {
     reviews: hasReviewsSection ? { key: 'reviews', label: navLabels.reviews } : undefined,
     contact: { key: 'contact', label: navLabels.contact },
   };
-  const visibleNavItems = normalizeNavOrder(form.navOrder ?? [...DEFAULT_NAV_ORDER])
+  customNavButtons.forEach((b) => {
+    navItemsByKey[`custom:${b.id}`] = { key: `custom:${b.id}`, label: b.label.trim() };
+  });
+  const customNavKeys = customNavButtons.map((b) => `custom:${b.id}`);
+  const visibleNavItems = normalizeNavOrder(form.navOrder ?? [...DEFAULT_NAV_ORDER], customNavKeys)
     .map((key) => navItemsByKey[key])
     .filter((item): item is { key: string; label: string } => item !== undefined);
   const contentOrder = normalizeContentOrder(form.contentOrder ?? [...DEFAULT_CONTENT_ORDER])
@@ -959,7 +967,12 @@ export default function AdminPublicPage() {
                   subtitleHeroX: fd.subtitleHeroX ?? 5,
                   subtitleHeroY: fd.subtitleHeroY ?? null,
                   sectionOrder: Array.isArray(fd.sectionOrder) ? normalizeSectionOrder(fd.sectionOrder) : [...DEFAULT_SECTION_ORDER],
-                  navOrder: Array.isArray(fd.navOrder) ? normalizeNavOrder(fd.navOrder) : [...DEFAULT_NAV_ORDER],
+                  customNavButtons: Array.isArray(fd.customNavButtons)
+                    ? fd.customNavButtons.filter((b: any) => b && typeof b.id === 'string').map((b: any) => ({ id: b.id, label: String(b.label ?? ''), url: String(b.url ?? '') }))
+                    : [],
+                  navOrder: Array.isArray(fd.navOrder)
+                    ? normalizeNavOrder(fd.navOrder, (Array.isArray(fd.customNavButtons) ? fd.customNavButtons : []).filter((b: any) => b?.id).map((b: any) => `custom:${b.id}`))
+                    : [...DEFAULT_NAV_ORDER],
                   contentOrder: Array.isArray(fd.contentOrder) ? normalizeContentOrder(fd.contentOrder) : [...DEFAULT_CONTENT_ORDER],
                   blockOrder: Array.isArray(fd.blockOrder) ? fd.blockOrder : [],
                   heroOutsideKeys: Array.isArray(fd.heroOutsideKeys) ? fd.heroOutsideKeys : (first.heroNavPosition === 'inside' ? [] : ['nav']),
@@ -1356,6 +1369,7 @@ export default function AdminPublicPage() {
         subtitleHeroY: form.subtitleHeroY ?? null,
         sectionOrder: form.sectionOrder ?? [...DEFAULT_SECTION_ORDER],
         navOrder: form.navOrder ?? [...DEFAULT_NAV_ORDER],
+        customNavButtons: form.customNavButtons ?? [],
         contentOrder: form.contentOrder ?? [...DEFAULT_CONTENT_ORDER],
         blockOrder: form.blockOrder ?? [],
         heroOutsideKeys: form.heroOutsideKeys ?? ['nav'],
@@ -2089,19 +2103,21 @@ export default function AdminPublicPage() {
               <div>
                 <p className="mb-2 text-[11px] font-bold text-gray-400">ボタンの並び順</p>
                 <div className="space-y-1.5">
-                  {normalizeNavOrder(form.navOrder ?? [...DEFAULT_NAV_ORDER]).map((key, i, arr) => (
+                  {normalizeNavOrder(form.navOrder ?? [...DEFAULT_NAV_ORDER], (form.customNavButtons ?? []).map((b) => `custom:${b.id}`)).map((key, i, arr) => (
                     <div key={key} className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
-                      <span className="flex-1 text-xs font-bold text-gray-700">{NAV_ITEM_LABELS[key] ?? key}</span>
+                      <span className="flex-1 truncate text-xs font-bold text-gray-700">
+                        {NAV_ITEM_LABELS[key] ?? ((form.customNavButtons ?? []).find((b) => `custom:${b.id}` === key)?.label.trim() || 'ボタン')}
+                      </span>
                       <button type="button" disabled={i === 0}
                         onClick={() => setForm((p) => {
-                          const a = normalizeNavOrder(p.navOrder ?? [...DEFAULT_NAV_ORDER]);
+                          const a = normalizeNavOrder(p.navOrder ?? [...DEFAULT_NAV_ORDER], (p.customNavButtons ?? []).map((b) => `custom:${b.id}`));
                           [a[i - 1], a[i]] = [a[i], a[i - 1]];
                           return { ...p, navOrder: a };
                         })}
                         className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs text-gray-400 disabled:opacity-30 hover:enabled:bg-gray-100">↑</button>
                       <button type="button" disabled={i === arr.length - 1}
                         onClick={() => setForm((p) => {
-                          const a = normalizeNavOrder(p.navOrder ?? [...DEFAULT_NAV_ORDER]);
+                          const a = normalizeNavOrder(p.navOrder ?? [...DEFAULT_NAV_ORDER], (p.customNavButtons ?? []).map((b) => `custom:${b.id}`));
                           [a[i + 1], a[i]] = [a[i], a[i + 1]];
                           return { ...p, navOrder: a };
                         })}
@@ -2128,6 +2144,44 @@ export default function AdminPublicPage() {
                     className="min-w-0 flex-1 rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
                 </div>
               ))}
+              <div className="space-y-1.5 border-t border-gray-100 pt-2">
+                {(form.customNavButtons ?? []).map((btn) => (
+                  <div key={btn.id} className="flex gap-1.5">
+                    <input value={btn.label}
+                      onChange={(e) => setForm((p) => ({
+                        ...p,
+                        customNavButtons: (p.customNavButtons ?? []).map((b) => b.id === btn.id ? { ...b, label: e.target.value } : b),
+                      }))}
+                      placeholder="ボタン名（例: Instagram）"
+                      className="w-24 shrink-0 rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                    <input value={btn.url}
+                      onChange={(e) => setForm((p) => ({
+                        ...p,
+                        customNavButtons: (p.customNavButtons ?? []).map((b) => b.id === btn.id ? { ...b, url: e.target.value } : b),
+                      }))}
+                      placeholder="リンク先 (例: https://www.instagram.com/...)"
+                      className="min-w-0 flex-1 rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                    <button type="button"
+                      onClick={() => setForm((p) => ({
+                        ...p,
+                        customNavButtons: (p.customNavButtons ?? []).filter((b) => b.id !== btn.id),
+                      }))}
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded border border-gray-200 text-xs text-gray-400 hover:bg-red-50 hover:text-red-500">×</button>
+                  </div>
+                ))}
+                <button type="button"
+                  onClick={() => setForm((p) => {
+                    const id = crypto.randomUUID();
+                    return {
+                      ...p,
+                      customNavButtons: [...(p.customNavButtons ?? []), { id, label: '', url: '' }],
+                      navOrder: [...normalizeNavOrder(p.navOrder ?? [...DEFAULT_NAV_ORDER], (p.customNavButtons ?? []).map((b) => `custom:${b.id}`)), `custom:${id}`],
+                    };
+                  })}
+                  className="rounded-full border border-dashed border-gray-300 px-3 py-1.5 text-xs text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition">
+                  + ボタンを追加
+                </button>
+              </div>
             </div>
           </SubSection>
           </div>}

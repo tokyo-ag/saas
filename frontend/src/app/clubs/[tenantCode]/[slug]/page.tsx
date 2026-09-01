@@ -473,6 +473,7 @@ export default async function ClubCmsPage({
         blogUrl?: string;
         contactUrl?: string;
         navOrder?: string[];
+        customNavButtons?: Array<{ id: string; label: string; url: string }>;
         contentOrder?: string[];
         blockOrder?: string[];
       };
@@ -584,11 +585,15 @@ export default async function ClubCmsPage({
   // これまでと全く同じ「団体詳細→活動ブログ→予約する→お問い合わせ」の順になる。
   // 「口コミ」は後から追加した項目なので、既存の並び順設定を壊さないようお問い合わせの
   // 直前に追加する。
+  const customNavButtons = (Array.isArray(sectionCopy.customNavButtons) ? sectionCopy.customNavButtons : [])
+    .filter((b) => b?.id && b.label?.trim() && b.url?.trim());
+  const customNavKeys = customNavButtons.map((b) => `custom:${b.id}`);
   const DEFAULT_NAV_ORDER = ['about', 'blog', 'reserve', 'reviews', 'contact'];
+  const allNavKeys = [...DEFAULT_NAV_ORDER, ...customNavKeys];
   const configuredNavOrder = Array.isArray(sectionCopy.navOrder) ? sectionCopy.navOrder : [];
   const navOrder = [
-    ...configuredNavOrder.filter((key) => DEFAULT_NAV_ORDER.includes(key)),
-    ...DEFAULT_NAV_ORDER.filter((key) => !configuredNavOrder.includes(key)),
+    ...configuredNavOrder.filter((key) => allNavKeys.includes(key)),
+    ...allNavKeys.filter((key) => !configuredNavOrder.includes(key)),
   ];
   const navItemsByKey: Record<string, { key: string; label: string; href: string } | undefined> = {
     about: { key: 'about', label: navLabels.about, href: navAboutUrl },
@@ -597,6 +602,9 @@ export default async function ClubCmsPage({
     reviews: hasReviewsSection ? { key: 'reviews', label: navLabels.reviews, href: navReviewsUrl } : undefined,
     contact: { key: 'contact', label: navLabels.contact, href: navContactUrl },
   };
+  customNavButtons.forEach((b) => {
+    navItemsByKey[`custom:${b.id}`] = { key: `custom:${b.id}`, label: b.label.trim(), href: b.url.trim() };
+  });
   const visibleNavItems = navOrder
     .map((key) => navItemsByKey[key])
     .filter((item): item is { key: string; label: string; href: string } => item !== undefined);

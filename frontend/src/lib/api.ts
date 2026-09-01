@@ -1204,6 +1204,7 @@ export interface PublicPageInput {
   subtitleHeroY?: number | null;
   sectionOrder?: string[];
   navOrder?: string[];
+  customNavButtons?: Array<{ id: string; label: string; url: string }>;
   contentOrder?: string[];
   blockOrder?: string[];
   displayFields?: { location?: boolean; price?: boolean; capacity?: boolean; description?: boolean };
