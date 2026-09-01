@@ -384,15 +384,20 @@ export class LiffService {
     const member = await this.findMember(tenantId, dto.lineUserId);
     if (!member) throw new NotFoundException('メンバーが見つかりません');
 
-    return this.prisma.tenantReview.upsert({
+    const existing = await this.prisma.tenantReview.findUnique({
       where: { tenantId_memberId: { tenantId, memberId: member.id } },
-      create: {
+    });
+    if (existing) {
+      throw new ConflictException('すでに感想を投稿済みです。投稿内容は変更できません。');
+    }
+
+    return this.prisma.tenantReview.create({
+      data: {
         tenantId,
         memberId: member.id,
         content,
         isPublished: false,
       },
-      update: { content, isPublished: false },
     });
   }
 

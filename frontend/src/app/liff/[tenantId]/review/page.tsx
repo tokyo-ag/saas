@@ -39,7 +39,6 @@ export default function TenantReviewPage() {
   const [lineUserId, setLineUserId] = useState('');
   const [loading, setLoading] = useState(true);
   const [loginRequired, setLoginRequired] = useState(false);
-  const [mode, setMode] = useState<'view' | 'edit'>('edit');
   const [myReview, setMyReview] = useState<{ content: string; isPublished: boolean } | null>(null);
   const [content, setContent] = useState('');
   const [saving, setSaving] = useState(false);
@@ -78,8 +77,6 @@ export default function TenantReviewPage() {
         const existing = await api.liff.myTenantReview(tenantId, uid);
         if (existing) {
           setMyReview({ content: existing.content, isPublished: !!existing.isPublished });
-          setContent(existing.content);
-          setMode('view');
         }
       } catch {
         // 初回投稿（まだ口コミが無い）は404相当なので、空フォームのまま進める。
@@ -119,7 +116,6 @@ export default function TenantReviewPage() {
       setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
       await api.liff.submitTenantReview(tenantId, lineUserId, trimmed);
       setMyReview({ content: trimmed, isPublished: false });
-      setMode('view');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '送信に失敗しました';
       if (isLineAuthErrorMessage(msg)) {
@@ -171,7 +167,7 @@ export default function TenantReviewPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.backgroundColor }}>
       <div className="px-4 py-5" style={{ paddingTop: 'calc(env(safe-area-inset-top, 16px) + 20px)' }}>
-        {mode === 'view' && myReview ? (
+        {myReview ? (
           <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm font-bold text-gray-800">あなたの投稿</p>
@@ -182,33 +178,26 @@ export default function TenantReviewPage() {
               </span>
             </div>
             <p className="whitespace-pre-wrap rounded-xl bg-gray-50 p-3 text-sm leading-relaxed text-gray-700">{myReview.content}</p>
-            {!myReview.isPublished && (
-              <p className="text-[11px] leading-relaxed text-gray-400">運営が内容を確認したのち、公開サイトに表示されます。内容はあなただけが確認できます。</p>
-            )}
-            <div className="flex items-center gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => setMode('edit')}
-                className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-600"
-              >
-                編集する
-              </button>
-              <button
-                type="button"
-                onClick={backToSite}
-                className="flex-1 rounded-xl px-4 py-2.5 text-sm font-bold"
-                style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
-              >
-                サイトに戻る
-              </button>
-            </div>
+            <p className="text-[11px] leading-relaxed text-gray-400">
+              {myReview.isPublished
+                ? '投稿内容は変更できません。内容の修正が必要な場合は運営にお問い合わせください。'
+                : '運営が内容を確認したのち、公開サイトに表示されます。投稿内容は変更できません。内容はあなただけが確認できます。'}
+            </p>
+            <button
+              type="button"
+              onClick={backToSite}
+              className="w-full rounded-xl px-4 py-2.5 text-sm font-bold"
+              style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
+            >
+              サイトに戻る
+            </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
             <div>
               <p className="text-sm font-bold text-gray-800">感想を書く</p>
               <p className="mt-1 text-xs leading-relaxed text-gray-400">
-                団体についての感想を投稿できます。送信した感想は、運営が確認のうえ公開されます。内容は投稿したあなただけが確認できます。
+                団体についての感想を投稿できます。送信した感想は、運営が確認のうえ公開されます。投稿後の内容変更はできませんので、確認のうえ送信してください。
               </p>
             </div>
             <textarea
@@ -221,25 +210,14 @@ export default function TenantReviewPage() {
             />
             <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] text-gray-400">{content.length}/300</span>
-              <div className="flex shrink-0 gap-2">
-                {myReview && (
-                  <button
-                    type="button"
-                    onClick={() => { setContent(myReview.content); setMode('view'); setError(''); }}
-                    className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-600"
-                  >
-                    キャンセル
-                  </button>
-                )}
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="rounded-xl px-5 py-2.5 text-sm font-bold disabled:opacity-50"
-                  style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
-                >
-                  {saving ? '送信中...' : '感想を送信'}
-                </button>
-              </div>
+              <button
+                type="submit"
+                disabled={saving}
+                className="rounded-xl px-5 py-2.5 text-sm font-bold disabled:opacity-50"
+                style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
+              >
+                {saving ? '送信中...' : '感想を送信'}
+              </button>
             </div>
             {error && <p className="text-xs text-red-500">{error}</p>}
           </form>
