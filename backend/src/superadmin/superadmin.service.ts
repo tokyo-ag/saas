@@ -499,6 +499,17 @@ export class SuperadminService implements OnApplicationBootstrap {
     }
   }
 
+  private async findOfficialArticleByTitle(title: string, excludeId?: string) {
+    const rows = await this.prisma.$queryRaw<
+      Array<{ id: string; slug: string; status: string }>
+    >(
+      excludeId
+        ? Prisma.sql`SELECT id, slug, status FROM official_articles WHERE lower(trim(title)) = lower(trim(${title})) AND id <> ${excludeId} LIMIT 1`
+        : Prisma.sql`SELECT id, slug, status FROM official_articles WHERE lower(trim(title)) = lower(trim(${title})) LIMIT 1`,
+    );
+    return rows[0] ?? null;
+  }
+
   async getOfficialSite() {
     const rows = await this.prisma.$queryRaw<OfficialSiteRow[]>(Prisma.sql`
       SELECT
@@ -698,10 +709,29 @@ export class SuperadminService implements OnApplicationBootstrap {
     if (!dto.title?.trim() || !dto.body?.trim()) {
       throw new BadRequestException('Title and body are required');
     }
+    const duplicate = await this.findOfficialArticleByTitle(dto.title);
+    if (duplicate) {
+      throw new ConflictException(
+        `同じタイトルの記事が既に存在します（${duplicate.status === 'draft' ? '下書き' : '公開中'} / slug: ${duplicate.slug}）。重複作成を避けるため、既存記事の編集画面から更新してください。`,
+      );
+    }
     const status = this.normalizeStatus(dto.status);
-    const slug = await this.uniqueOfficialArticleSlug(
-      this.slugify(dto.slug?.trim() || dto.title),
-    );
+    const explicitSlug = dto.slug?.trim();
+    let slug: string;
+    if (explicitSlug) {
+      const slugified = this.slugify(explicitSlug);
+      const taken = await this.prisma.$queryRaw<Array<{ id: string }>>(
+        Prisma.sql`SELECT id FROM official_articles WHERE slug = ${slugified} LIMIT 1`,
+      );
+      if (taken.length > 0) {
+        throw new ConflictException(
+          `このスラッグ（${slugified}）は既に使用されています。別のスラッグを指定してください。`,
+        );
+      }
+      slug = slugified;
+    } else {
+      slug = await this.uniqueOfficialArticleSlug(this.slugify(dto.title));
+    }
     const areaTags = (dto.areaTags ?? []).map((t) => t.trim()).filter(Boolean);
     const rows = await this.prisma.$queryRaw<OfficialArticleRow[]>(Prisma.sql`
       INSERT INTO official_articles (

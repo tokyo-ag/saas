@@ -76,7 +76,10 @@ export default function ArticleForm({
     };
   }
 
+  const savingRef = useRef(false);
   async function save() {
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     setError('');
     try {
@@ -85,6 +88,7 @@ export default function ArticleForm({
     } catch (err: any) {
       setError(err.message ?? '保存に失敗しました');
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   }
