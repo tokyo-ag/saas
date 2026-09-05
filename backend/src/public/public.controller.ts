@@ -551,6 +551,8 @@ export class PublicController {
       id: event.id,
       title: event.title,
       description: event.description,
+      descriptionMale: event.descriptionMale,
+      descriptionFemale: event.descriptionFemale,
       heldAt: event.heldAt,
       endAt: this.publicEndAt(event.heldAt, event.endAt),
       location: event.location,

@@ -267,6 +267,8 @@ model Event {
   tenantId        String      @map("tenant_id")
   title           String      @db.VarChar(100)
   description     String?     @db.Text
+  descriptionMale   String?   @map("description_male") @db.Text
+  descriptionFemale String?   @map("description_female") @db.Text
   heldAt          DateTime    @map("held_at")
   endAt           DateTime?   @map("end_at")
   location        String      @db.VarChar(200)

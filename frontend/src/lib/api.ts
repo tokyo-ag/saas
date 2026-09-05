@@ -488,6 +488,8 @@ export interface Event {
   id: string;
   title: string;
   description?: string;
+  descriptionMale?: string | null;
+  descriptionFemale?: string | null;
   heldAt: string;
   endAt?: string | null;
   location: string;
@@ -527,6 +529,8 @@ export interface Event {
 export interface EventInput {
   title: string;
   description?: string;
+  descriptionMale?: string | null;
+  descriptionFemale?: string | null;
   heldAt: string;
   endAt?: string | null;
   location: string;
@@ -735,6 +739,8 @@ export interface LiffEvent {
   id: string;
   title: string;
   description?: string;
+  descriptionMale?: string | null;
+  descriptionFemale?: string | null;
   heldAt: string;
   endAt?: string | null;
   location: string;
@@ -933,6 +939,8 @@ export interface LiffMyReservation {
     priceMale?: number | null;
     priceFemale?: number | null;
     description?: string | null;
+    descriptionMale?: string | null;
+    descriptionFemale?: string | null;
     category?: string | null;
   };
 }

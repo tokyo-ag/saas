@@ -493,8 +493,27 @@ export default function ProfilePage() {
                                 <p><span className="text-gray-400">日時：</span>{threadDateLabel(r.event.heldAt)}</p>
                                 <p><span className="text-gray-400">場所：</span>{reservationLocation(r)}</p>
                                 <p><span className="text-gray-400">参加費：</span>{priceLabel(r)}</p>
-                                {r.event.description && (
-                                  <p className="whitespace-pre-wrap border-t border-gray-100 pt-2 text-xs leading-relaxed text-gray-500">{r.event.description}</p>
+                                {(r.event.description || r.event.descriptionMale || r.event.descriptionFemale) && (
+                                  <div className="border-t border-gray-100 pt-2">
+                                    {r.event.descriptionMale || r.event.descriptionFemale ? (
+                                      <div className="space-y-2">
+                                        {r.event.descriptionMale && (
+                                          <div>
+                                            <p className="mb-0.5 text-[11px] font-bold text-gray-400">男性の方へ</p>
+                                            <p className="whitespace-pre-wrap text-xs leading-relaxed text-gray-500">{r.event.descriptionMale}</p>
+                                          </div>
+                                        )}
+                                        {r.event.descriptionFemale && (
+                                          <div>
+                                            <p className="mb-0.5 text-[11px] font-bold text-gray-400">女性の方へ</p>
+                                            <p className="whitespace-pre-wrap text-xs leading-relaxed text-gray-500">{r.event.descriptionFemale}</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <p className="whitespace-pre-wrap text-xs leading-relaxed text-gray-500">{r.event.description}</p>
+                                    )}
+                                  </div>
                                 )}
                                 <div className="border-t border-gray-100 pt-3">
                                   <p className="mb-1.5 text-xs font-bold text-gray-600">感想を書く</p>

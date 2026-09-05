@@ -6,6 +6,8 @@ type EventMessageDetails = {
   locationUrl?: string | null;
   priceMale?: number | null;
   priceFemale?: number | null;
+  descriptionMale?: string | null;
+  descriptionFemale?: string | null;
 };
 
 @Injectable()
@@ -63,24 +65,30 @@ export class LineMessagingService {
       details.priceMale,
       details.priceFemale,
     );
+    const effectiveDescription = this.formatDescription(
+      description,
+      details.descriptionMale,
+      details.descriptionFemale,
+    );
     if (customTemplate?.trim()) {
       const effectiveTemplate = this.omitRedundantTitle(
         customTemplate,
         eventTitle,
-        description,
+        effectiveDescription,
       );
       const text = this.applyTemplate(effectiveTemplate, {
         title: eventTitle,
         date: dateStr,
         location: locationStr,
         price: priceStr ?? '',
-        description: description ?? '',
+        description: effectiveDescription ?? '',
       });
       await this.sendPushMessage(accessToken, lineUserId, text);
       return;
     }
     const descriptionStartsWithTitle = Boolean(
-      eventTitle.trim() && description?.trimStart().startsWith(eventTitle.trim()),
+      eventTitle.trim() &&
+        effectiveDescription?.trimStart().startsWith(eventTitle.trim()),
     );
     const lines = [
       descriptionStartsWithTitle
@@ -89,9 +97,9 @@ export class LineMessagingService {
       `日時：${dateStr}`,
       ...(priceStr ? [`参加費：${priceStr}`] : []),
       `場所：${locationStr}`,
-      ...(description
+      ...(effectiveDescription
         ? [
-            `\n${description.slice(0, 300)}${description.length > 300 ? '…' : ''}`,
+            `\n${effectiveDescription.slice(0, 300)}${effectiveDescription.length > 300 ? '…' : ''}`,
           ]
         : []),
     ];
@@ -263,6 +271,20 @@ export class LineMessagingService {
     }
     if (price == null) return null;
     return price === 0 ? '無料' : `${price.toLocaleString('ja-JP')}円`;
+  }
+
+  private formatDescription(
+    description?: string | null,
+    descriptionMale?: string | null,
+    descriptionFemale?: string | null,
+  ): string | null {
+    if (descriptionMale?.trim() || descriptionFemale?.trim()) {
+      const parts: string[] = [];
+      if (descriptionMale?.trim()) parts.push(`🚹男性の方へ\n${descriptionMale.trim()}`);
+      if (descriptionFemale?.trim()) parts.push(`🚺女性の方へ\n${descriptionFemale.trim()}`);
+      return parts.join('\n\n');
+    }
+    return description ?? null;
   }
 
   private formatLocation(location: string, locationUrl?: string | null): string {

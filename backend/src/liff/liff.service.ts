@@ -154,6 +154,8 @@ export class LiffService {
       id: e.id,
       title: e.title,
       description: e.description,
+      descriptionMale: e.descriptionMale,
+      descriptionFemale: e.descriptionFemale,
       heldAt: e.heldAt,
       endAt: this.publicEndAt(e.heldAt, e.endAt),
       location: e.location,
@@ -647,6 +649,8 @@ export class LiffService {
             locationUrl: event.locationUrl,
             priceMale: event.priceMale,
             priceFemale: event.priceFemale,
+            descriptionMale: event.descriptionMale,
+            descriptionFemale: event.descriptionFemale,
           },
         );
       } else {
@@ -715,6 +719,8 @@ export class LiffService {
         priceMale: r.event.priceMale,
         priceFemale: r.event.priceFemale,
         description: r.event.description,
+        descriptionMale: r.event.descriptionMale,
+        descriptionFemale: r.event.descriptionFemale,
         category: r.event.category,
       },
     }));

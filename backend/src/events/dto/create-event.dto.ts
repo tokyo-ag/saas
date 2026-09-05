@@ -28,6 +28,16 @@ export class CreateEventDto {
   @MaxLength(5000)
   description?: string;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(5000)
+  descriptionMale?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(5000)
+  descriptionFemale?: string | null;
+
   @IsDateString()
   heldAt: string;
 

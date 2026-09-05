@@ -11,7 +11,10 @@ import { Section, Field, RadioGroup, Check, UploadButton } from './EventFormPrim
 
 type EventFormData = {
   title: string;
+  descriptionMode: 'same' | 'gender';
   description: string;
+  descriptionMale: string;
+  descriptionFemale: string;
   heldAt: string;
   endAt: string;
   location: string;
@@ -163,6 +166,16 @@ function formatLinePrice(form: Pick<EventFormData, 'priceMode' | 'price' | 'pric
   return price === 0 ? '無料' : `${price.toLocaleString('ja-JP')}円`;
 }
 
+function formatLineDescription(form: Pick<EventFormData, 'descriptionMode' | 'description' | 'descriptionMale' | 'descriptionFemale'>) {
+  if (form.descriptionMode === 'gender') {
+    const parts: string[] = [];
+    if (form.descriptionMale.trim()) parts.push(`🚹男性の方へ\n${form.descriptionMale.trim()}`);
+    if (form.descriptionFemale.trim()) parts.push(`🚺女性の方へ\n${form.descriptionFemale.trim()}`);
+    return parts.join('\n\n');
+  }
+  return form.description;
+}
+
 function omitRedundantTitle(template: string, title: string, description: string) {
   const normalizedTitle = title.trim();
   const descriptionStartsWithTitle = normalizedTitle
@@ -173,19 +186,20 @@ function omitRedundantTitle(template: string, title: string, description: string
 
 function renderLineMessage(
   template: string,
-  form: Pick<EventFormData, 'title' | 'description' | 'heldAt' | 'endAt' | 'location' | 'locationUrl' | 'priceMode' | 'price' | 'priceMale' | 'priceFemale'>,
+  form: Pick<EventFormData, 'title' | 'description' | 'descriptionMode' | 'descriptionMale' | 'descriptionFemale' | 'heldAt' | 'endAt' | 'location' | 'locationUrl' | 'priceMode' | 'price' | 'priceMale' | 'priceFemale'>,
 ) {
   const location = form.location || '（場所未設定）';
+  const effectiveDescription = formatLineDescription(form);
   const values: Record<string, string> = {
     title: form.title || '（イベント名未設定）',
     date: formatLineDate(form.heldAt, form.endAt),
     price: formatLinePrice(form),
     location: form.locationUrl.trim() ? `${location}\n${form.locationUrl.trim()}` : location,
-    description: form.description
-      ? `${form.description.slice(0, 300)}${form.description.length > 300 ? '…' : ''}`
+    description: effectiveDescription
+      ? `${effectiveDescription.slice(0, 300)}${effectiveDescription.length > 300 ? '…' : ''}`
       : '',
   };
-  const effectiveTemplate = omitRedundantTitle(template, form.title, form.description);
+  const effectiveTemplate = omitRedundantTitle(template, form.title, effectiveDescription);
   return effectiveTemplate.replace(/\{(\w+)\}/g, (match, key) => values[key] ?? match);
 }
 
@@ -307,7 +321,10 @@ export default function EventForm({
 
   const [form, setForm] = useState<EventFormData>({
     title: initial?.title ?? '',
+    descriptionMode: initial?.descriptionMale != null || initial?.descriptionFemale != null ? 'gender' : 'same',
     description: initial?.description ?? '',
+    descriptionMale: initial?.descriptionMale ?? '',
+    descriptionFemale: initial?.descriptionFemale ?? '',
     heldAt: initialHeldAt,
     endAt: initialEndAt,
     location: initial?.location ?? '',
@@ -606,6 +623,8 @@ export default function EventForm({
     const body = {
       title: form.title,
       description: form.description || undefined,
+      descriptionMale: form.descriptionMode === 'gender' ? (form.descriptionMale || null) : null,
+      descriptionFemale: form.descriptionMode === 'gender' ? (form.descriptionFemale || null) : null,
       heldAt: new Date(form.heldAt).toISOString(),
       endAt: form.endAt ? new Date(form.endAt).toISOString() : null,
       location: form.location,
@@ -671,7 +690,10 @@ export default function EventForm({
   const showStripe = form.paymentTiming !== 'onsite' && (
     form.priceMode === 'same' ? Number(form.price) > 0 : Number(form.priceMale) > 0 || Number(form.priceFemale) > 0
   );
-  const defaultReservationTemplate = `${DEFAULT_RESERVATION_MESSAGE}${form.description ? '\n\n{description}' : ''}`;
+  const hasDescriptionContent = form.descriptionMode === 'gender'
+    ? Boolean(form.descriptionMale.trim() || form.descriptionFemale.trim())
+    : Boolean(form.description);
+  const defaultReservationTemplate = `${DEFAULT_RESERVATION_MESSAGE}${hasDescriptionContent ? '\n\n{description}' : ''}`;
   const reservationTemplate = form.reservationMessageTemplate.trim()
     ? form.reservationMessageTemplate
     : tenant?.reservationMessageTemplate?.trim() || defaultReservationTemplate;
@@ -892,7 +914,28 @@ export default function EventForm({
               テンプレートを挿入
             </button>
           )}
-          <textarea rows={5} value={form.description} onChange={(e) => set('description', e.target.value)} className={inputClass} />
+          <div className="mb-2">
+            <RadioGroup
+              value={form.descriptionMode}
+              onChange={(value) => set('descriptionMode', value)}
+              options={[
+                ['same', '共通'],
+                ['gender', '男女別'],
+              ]}
+            />
+          </div>
+          {form.descriptionMode === 'same' ? (
+            <textarea rows={5} value={form.description} onChange={(e) => set('description', e.target.value)} className={inputClass} />
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="男性向け">
+                <textarea rows={5} value={form.descriptionMale} onChange={(e) => set('descriptionMale', e.target.value)} className={inputClass} />
+              </Field>
+              <Field label="女性向け">
+                <textarea rows={5} value={form.descriptionFemale} onChange={(e) => set('descriptionFemale', e.target.value)} className={inputClass} />
+              </Field>
+            </div>
+          )}
         </Field>
       </Section>
 

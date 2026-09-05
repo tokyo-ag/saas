@@ -159,6 +159,8 @@ export class EventsService {
         tenantId,
         title: dto.title,
         description: dto.description,
+        descriptionMale: dto.descriptionMale ?? null,
+        descriptionFemale: dto.descriptionFemale ?? null,
         heldAt,
         endAt,
         location: dto.location,
@@ -228,6 +230,12 @@ export class EventsService {
       data: {
         ...(dto.title !== undefined && { title: dto.title }),
         ...(dto.description !== undefined && { description: dto.description }),
+        ...(dto.descriptionMale !== undefined && {
+          descriptionMale: dto.descriptionMale ?? null,
+        }),
+        ...(dto.descriptionFemale !== undefined && {
+          descriptionFemale: dto.descriptionFemale ?? null,
+        }),
         ...(dto.heldAt !== undefined && { heldAt }),
         ...(dto.endAt !== undefined && { endAt }),
         ...(dto.location !== undefined && { location: dto.location }),

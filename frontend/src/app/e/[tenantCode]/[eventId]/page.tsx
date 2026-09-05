@@ -20,6 +20,8 @@ type EventDetail = {
   id: string;
   title: string;
   description?: string;
+  descriptionMale?: string | null;
+  descriptionFemale?: string | null;
   heldAt: string;
   endAt?: string | null;
   location: string;
@@ -126,8 +128,9 @@ function tagHref(tag: string) {
 }
 
 function buildDescription(event: EventDetail) {
-  if (event.description && event.description.trim()) {
-    return event.description.trim().slice(0, 150).replace(/\n/g, ' ');
+  const base = event.description?.trim() || event.descriptionMale?.trim() || event.descriptionFemale?.trim();
+  if (base) {
+    return base.slice(0, 150).replace(/\n/g, ' ');
   }
   return `${event.locationHint || event.location}で開催。参加費は${priceText(event)}。COMIUでイベント詳細を確認できます。`;
 }
@@ -268,6 +271,7 @@ export async function generateMetadata({
   const hasPastSearchValue = Boolean(
     event.imageUrl ||
       (event.description && event.description.trim().length >= 80) ||
+      ((event.descriptionMale?.trim().length ?? 0) + (event.descriptionFemale?.trim().length ?? 0) >= 80) ||
       (event.reviews && event.reviews.length > 0),
   );
 
@@ -509,14 +513,31 @@ export default async function PublicEventPage({
               )}
             </div>
 
-            {event.description && (
+            {(event.description || event.descriptionMale || event.descriptionFemale) && (
               <div className="mt-4 border-t border-gray-100 pt-4">
                 <h2 className="mb-2 text-sm font-semibold text-gray-800">
                   イベント詳細
                 </h2>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
-                  {event.description}
-                </p>
+                {event.descriptionMale || event.descriptionFemale ? (
+                  <div className="space-y-3">
+                    {event.descriptionMale && (
+                      <div>
+                        <p className="mb-1 text-xs font-semibold text-gray-400">男性の方へ</p>
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{event.descriptionMale}</p>
+                      </div>
+                    )}
+                    {event.descriptionFemale && (
+                      <div>
+                        <p className="mb-1 text-xs font-semibold text-gray-400">女性の方へ</p>
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{event.descriptionFemale}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
+                    {event.description}
+                  </p>
+                )}
               </div>
             )}
 

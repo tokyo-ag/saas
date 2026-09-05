@@ -497,8 +497,27 @@ function ReservePageInner() {
                   <p className="font-semibold text-gray-900">{eventPriceLabel(event)}</p>
                 </div>
               </div>
-              {event.description && (
-                <p className="text-xs text-gray-500 whitespace-pre-wrap leading-relaxed pt-1 border-t border-gray-100">{event.description}</p>
+              {(event.description || event.descriptionMale || event.descriptionFemale) && (
+                <div className="pt-1 border-t border-gray-100">
+                  {event.descriptionMale || event.descriptionFemale ? (
+                    <div className="space-y-2">
+                      {event.descriptionMale && (
+                        <div>
+                          <p className="mb-0.5 text-[11px] font-semibold text-gray-400">男性の方へ</p>
+                          <p className="text-xs text-gray-500 whitespace-pre-wrap leading-relaxed">{event.descriptionMale}</p>
+                        </div>
+                      )}
+                      {event.descriptionFemale && (
+                        <div>
+                          <p className="mb-0.5 text-[11px] font-semibold text-gray-400">女性の方へ</p>
+                          <p className="text-xs text-gray-500 whitespace-pre-wrap leading-relaxed">{event.descriptionFemale}</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-500 whitespace-pre-wrap leading-relaxed">{event.description}</p>
+                  )}
+                </div>
               )}
             </div>
           </div>
