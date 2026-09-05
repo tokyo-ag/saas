@@ -316,6 +316,7 @@ const HERO_IMAGE_MODE_OPTIONS = [
 const BUTTON_LAYOUT_OPTIONS = [
   { label: '2×2', value: 'grid2x2' },
   { label: '1×4', value: 'row1x4' },
+  { label: '上3下2', value: 'row3' },
 ];
 
 const TONE_COLORS = [
@@ -703,7 +704,7 @@ export default function AdminPublicPage() {
       <div key="nav">
         <div className={`text-[11px] font-bold ${previewButtonLayoutClass}`} style={previewButtonGridStyle}>
           {visibleNavItems.map((item) => (
-            <span key={item.key} className={`flex items-center justify-center truncate px-2 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{item.label}</span>
+            <span key={item.key} className={`flex items-center justify-center truncate px-2 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle, ...row3ItemStyle }}>{item.label}</span>
           ))}
         </div>
         <div className="mt-1 flex cursor-ns-resize select-none touch-none justify-center py-1"
@@ -782,7 +783,7 @@ export default function AdminPublicPage() {
   const reviewsTitleColor = form.reviewsTitleColor?.trim() || textColor;
   const reviewsLeadColor = form.reviewsLeadColor?.trim() || bodyTextColor;
   const buttonStyle = form.buttonStyle ?? 'rounded';
-  const buttonLayout = form.buttonLayout === 'row1x4' ? 'row1x4' : 'grid2x2';
+  const buttonLayout = form.buttonLayout === 'row1x4' ? 'row1x4' : form.buttonLayout === 'row3' ? 'row3' : 'grid2x2';
   const buttonOpacity = clampPercent(form.buttonOpacity ?? 100);
   const buttonBgOpacity = clampPercent(form.buttonBgOpacity ?? 100);
   const buttonTextOpacity = clampPercent(form.buttonTextOpacity ?? 100);
@@ -792,10 +793,11 @@ export default function AdminPublicPage() {
   const btnTextColor = hexToRgba(navButtonTextColor, buttonTextOpacity);
   const buttonBgStyle = { backgroundColor: btnFillColor };
   const btnBoxShadow = getBtnBoxShadow(buttonStyle, btnBorderColor);
-  const previewButtonLayoutClass = buttonLayout === 'row1x4' ? 'grid gap-2' : 'grid gap-2';
-  const previewButtonGridStyle = {
+  const previewButtonLayoutClass = buttonLayout === 'row3' ? 'flex flex-wrap justify-center gap-2' : 'grid gap-2';
+  const previewButtonGridStyle = buttonLayout === 'row3' ? {} : {
     gridTemplateColumns: `repeat(${buttonLayout === 'row1x4' ? visibleNavItems.length : Math.min(2, visibleNavItems.length)}, minmax(0, 1fr))`,
   };
+  const row3ItemStyle = buttonLayout === 'row3' ? { flex: '0 0 calc((100% - 16px) / 3)', maxWidth: 'calc((100% - 16px) / 3)' } as CSSProperties : undefined;
   const btnSize = form.buttonSize ?? 40;
   const btnIsPill = buttonStyle === 'pill';
   const dragRef = useRef<{ startY: number; startSize: number } | null>(null);
@@ -2887,7 +2889,7 @@ export default function AdminPublicPage() {
                               <div key="nav">
                                 <div className={`text-[10px] font-bold ${previewButtonLayoutClass}`} style={previewButtonGridStyle}>
                                   {visibleNavItems.map((item) => (
-                                    <span key={item.key} className={`flex items-center justify-center truncate px-1 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{item.label}</span>
+                                    <span key={item.key} className={`flex items-center justify-center truncate px-1 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle, ...row3ItemStyle }}>{item.label}</span>
                                   ))}
                                 </div>
                                 <div className="mt-1 flex cursor-ns-resize select-none touch-none justify-center py-0.5"
@@ -2988,7 +2990,7 @@ export default function AdminPublicPage() {
                       <div key="nav" className="px-4 pb-1 pt-1">
                         <div className={`text-[11px] font-bold ${previewButtonLayoutClass}`} style={previewButtonGridStyle}>
                           {visibleNavItems.map((item) => (
-                            <span key={item.key} className={`flex items-center justify-center truncate px-2 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle }}>{item.label}</span>
+                            <span key={item.key} className={`flex items-center justify-center truncate px-2 text-center leading-tight ${getBtnShapeClass(buttonStyle)}`} style={{ height: btnIsPill ? btnSize : undefined, minHeight: btnSize, borderRadius: btnIsPill ? 9999 : btnRadius, borderColor: btnBorderColor, color: btnTextColor, boxShadow: btnBoxShadow, ...buttonBgStyle, ...row3ItemStyle }}>{item.label}</span>
                           ))}
                         </div>
                         <div className="mt-1 flex cursor-ns-resize select-none touch-none justify-center py-1"

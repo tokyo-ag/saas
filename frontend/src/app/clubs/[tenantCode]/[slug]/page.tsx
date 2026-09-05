@@ -377,7 +377,7 @@ export default async function ClubCmsPage({
     if (key === 'nav') return (
       <nav key="nav" className={buttonLayoutClass} style={buttonGridStyle}>
         {visibleNavItems.map((item) => (
-          <Link key={item.key} href={item.href} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{item.label}</Link>
+          <Link key={item.key} href={item.href} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow, ...row3ItemStyle }}>{item.label}</Link>
         ))}
       </nav>
     );
@@ -490,8 +490,11 @@ export default async function ClubCmsPage({
   };
   const buttonStyle = page.buttonStyle ?? 'rounded';
   const rawButtonLayout = page.buttonLayout ?? 'grid2x2';
-  const buttonLayout = rawButtonLayout === 'row1x4' ? 'row1x4' : 'grid2x2';
-  const buttonLayoutClass = buttonLayout === 'row1x4' ? 'grid gap-2' : 'grid gap-3';
+  const buttonLayout = rawButtonLayout === 'row1x4' ? 'row1x4' : rawButtonLayout === 'row3' ? 'row3' : 'grid2x2';
+  const buttonLayoutClass = buttonLayout === 'row1x4' ? 'grid gap-2' : buttonLayout === 'row3' ? 'flex flex-wrap justify-center gap-3' : 'grid gap-3';
+  const row3ItemStyle: CSSProperties | undefined = buttonLayout === 'row3'
+    ? { flex: '0 0 calc((100% - 24px) / 3)', maxWidth: 'calc((100% - 24px) / 3)' }
+    : undefined;
   const buttonOpacity = clampPercent(page.buttonOpacity ?? 100);
   const buttonOpacityStyle = { opacity: buttonOpacity / 100 };
   const rawHeroImageMode = page.heroImageMode || 'fixed';
@@ -617,7 +620,7 @@ export default async function ClubCmsPage({
     ...configuredContentOrder.filter((key) => DEFAULT_CONTENT_ORDER.includes(key)),
     ...DEFAULT_CONTENT_ORDER.filter((key) => !configuredContentOrder.includes(key)),
   ];
-  const buttonGridStyle: CSSProperties = {
+  const buttonGridStyle: CSSProperties = buttonLayout === 'row3' ? {} : {
     gridTemplateColumns: `repeat(${buttonLayout === 'row1x4' ? visibleNavItems.length : Math.min(2, visibleNavItems.length)}, minmax(0, 1fr))`,
   };
   const blogSectionTitle = sectionCopy.blogTitle?.trim() || '';
@@ -853,7 +856,7 @@ export default async function ClubCmsPage({
               <div key="nav" className="px-5 pt-2 pb-4">
                 <nav className={`${buttonLayoutClass}`} style={buttonGridStyle}>
                   {visibleNavItems.map((item) => (
-                    <Link key={item.key} href={item.href} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow }}>{item.label}</Link>
+                    <Link key={item.key} href={item.href} className={`flex items-center justify-center px-2 text-center text-sm font-bold transition hover:opacity-80 ${btnClass}`} style={{ ...btnSizeStyle, borderColor: btnBorderColor, color: btnTextColor, ...btnBgStyle, ...btnRadiusStyle, ...btnBoxShadow, ...row3ItemStyle }}>{item.label}</Link>
                   ))}
                 </nav>
               </div>
