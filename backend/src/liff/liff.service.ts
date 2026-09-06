@@ -271,97 +271,15 @@ export class LiffService {
       },
     });
 
-    const reviews = await this.getPublishedReviews(tenantId, eventId);
-
     return {
       ...event,
       endAt: this.publicEndAt(event.heldAt, event.endAt),
       reservedCount,
-      reviews,
     };
   }
 
-  async getPublishedReviews(tenantId: string, eventId: string) {
-    tenantId = await this.resolveTenantId(tenantId);
-    await this.ensureEventExists(tenantId, eventId);
-    const reviews = await this.prisma.eventReview.findMany({
-      where: { tenantId, eventId, isPublished: true },
-      include: { member: { select: { name: true, grade: true } } },
-      orderBy: { createdAt: 'desc' },
-      take: 6,
-    });
-
-    return reviews.map((review) => ({
-      id: review.id,
-      content: review.content,
-      createdAt: review.createdAt,
-      memberName: review.member.name,
-      memberGrade: review.member.grade,
-    }));
-  }
-
-  async getMyReview(tenantId: string, eventId: string, lineUserId: string) {
-    tenantId = await this.resolveTenantId(tenantId);
-    const member = await this.findMember(tenantId, lineUserId);
-    if (!member) return null;
-
-    return this.prisma.eventReview.findUnique({
-      where: { eventId_memberId: { eventId, memberId: member.id } },
-    });
-  }
-
-  async submitReview(tenantId: string, eventId: string, dto: SubmitReviewDto) {
-    tenantId = await this.resolveTenantId(tenantId);
-    if (!dto.lineUserId) {
-      throw new UnauthorizedException('LIFF認証が必要です');
-    }
-    const content = dto.content.trim();
-    if (content.length < 5 || content.length > 300) {
-      throw new BadRequestException(
-        '感想は5文字以上300文字以内で入力してください',
-      );
-    }
-
-    await this.ensureEventExists(tenantId, eventId);
-
-    const member = await this.findMember(tenantId, dto.lineUserId);
-    if (!member) throw new NotFoundException('メンバーが見つかりません');
-
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { reviewsRequireReservation: true },
-    });
-    if (tenant?.reviewsRequireReservation !== false) {
-      const reservation = await this.prisma.reservation.findFirst({
-        where: {
-          tenantId,
-          eventId,
-          memberId: member.id,
-          status: { in: ['reserved', 'attended'] },
-        },
-      });
-      if (!reservation) {
-        throw new ForbiddenException(
-          '予約済みまたは参加済みのイベントにのみ感想を投稿できます',
-        );
-      }
-    }
-
-    return this.prisma.eventReview.upsert({
-      where: { eventId_memberId: { eventId, memberId: member.id } },
-      create: {
-        tenantId,
-        eventId,
-        memberId: member.id,
-        content,
-        isPublished: false,
-      },
-      update: { content, isPublished: false },
-    });
-  }
-
   // 特定のイベントに紐づかない、団体全体への口コミ。予約・参加の有無を問わず、
-  // LINE認証済みのメンバーなら誰でも投稿できる（reviewsRequireReservationの対象外）。
+  // LINE認証済みのメンバーなら誰でも投稿できる。
   async getMyTenantReview(tenantId: string, lineUserId: string) {
     tenantId = await this.resolveTenantId(tenantId);
     const member = await this.findMember(tenantId, lineUserId);

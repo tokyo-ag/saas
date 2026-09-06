@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { api, formatDate, downloadWithAuth, API_URL, Event, Reservation, AdminEventReview } from '@/lib/api';
+import { api, formatDate, downloadWithAuth, API_URL, Event, Reservation } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { SITE_URL } from '@/lib/config';
 import { EventBadge, ReservationBadge } from '@/components/ui/StatusBadge';
@@ -24,20 +24,17 @@ export default function EventDetailPage() {
   const { eventId } = useParams<{ eventId: string }>();
   const [event, setEvent] = useState<Event | null>(null);
   const [reservations, setReservations] = useState<EventReservation[]>([]);
-  const [reviews, setReviews] = useState<AdminEventReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [rosterCopied, setRosterCopied] = useState(false);
   const [savingRosterShare, setSavingRosterShare] = useState(false);
 
   const load = useCallback(async () => {
-    const [eventData, reservationList, reviewList] = await Promise.all([
+    const [eventData, reservationList] = await Promise.all([
       api.events.get(eventId),
       api.events.reservations(eventId),
-      api.events.reviews(eventId),
     ]);
     setEvent(eventData);
     setReservations(reservationList as EventReservation[]);
-    setReviews(reviewList);
   }, [eventId]);
 
   useEffect(() => {
@@ -51,15 +48,6 @@ export default function EventDetailPage() {
       setReservations(updated as EventReservation[]);
     } catch {
       alert('ステータスの更新に失敗しました');
-    }
-  }
-
-  async function toggleReview(reviewId: string, isPublished: boolean) {
-    try {
-      await api.events.updateReview(eventId, reviewId, { isPublished });
-      setReviews((prev) => prev.map((review) => (review.id === reviewId ? { ...review, isPublished } : review)));
-    } catch {
-      alert('感想の更新に失敗しました');
     }
   }
 
@@ -247,49 +235,6 @@ export default function EventDetailPage() {
         )}
       </section>
 
-      <section className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-4 md:px-6">
-          <div>
-            <h2 className="font-semibold text-gray-900">参加者の声</h2>
-            <p className="mt-0.5 text-xs text-gray-400">公開ONの感想だけが公開ページに表示されます。</p>
-          </div>
-          <span className="shrink-0 text-xs text-gray-400">{reviews.length}件</span>
-        </div>
-
-        {reviews.length === 0 ? (
-          <div className="p-8 text-center text-sm text-gray-400">まだ感想はありません</div>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {reviews.map((review) => (
-              <div key={review.id} className="flex flex-col gap-4 p-4 md:flex-row md:items-start md:justify-between md:p-6">
-                <div className="min-w-0 flex-1">
-                  <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <Link href={`/admin/members/${review.member.id}`} className="text-sm font-semibold text-[#06C755] hover:underline">
-                      {review.member.name ?? '未入力'}
-                    </Link>
-                    <span className="text-xs text-gray-400">{review.member.grade ?? '-'}</span>
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${review.isPublished ? 'bg-green-50 text-[#06C755]' : 'bg-gray-100 text-gray-500'}`}>
-                      {review.isPublished ? '公開中' : '非公開'}
-                    </span>
-                  </div>
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{review.content}</p>
-                  <p className="mt-2 text-xs text-gray-400">{formatDate(review.createdAt)}</p>
-                </div>
-                <button
-                  onClick={() => toggleReview(review.id, !review.isPublished)}
-                  className={`w-full shrink-0 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors md:w-auto ${
-                    review.isPublished
-                      ? 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                      : 'bg-[#06C755] text-white hover:bg-[#05a847]'
-                  }`}
-                >
-                  {review.isPublished ? '非公開にする' : '公開する'}
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
       <section className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
         <div className="flex items-center justify-between gap-3">
           <div>

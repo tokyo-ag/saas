@@ -8,14 +8,6 @@ import { SmartLiffButton } from '@/components/public/SmartLiffButton';
 import { SITE_URL, API_URL, IMAGE_BASE_URL, buildLiffUrl } from '@/lib/config';
 import { isLightHexColor, readableTextColor } from '@/lib/color';
 
-type Review = {
-  id: string;
-  content: string;
-  createdAt: string;
-  authorName: string;
-  authorIconUrl?: string | null;
-};
-
 type EventDetail = {
   id: string;
   title: string;
@@ -41,7 +33,6 @@ type EventDetail = {
   tenantName: string;
   tenantIconUrl?: string | null;
   isEnded?: boolean;
-  reviews?: Review[];
   footerText?: string | null;
   reserveActionStyle?: string | null;
 };
@@ -238,17 +229,6 @@ function buildJsonLd(event: EventDetail) {
     ],
   };
 
-  const eventNode = (ld['@graph'] as Record<string, unknown>[])[0];
-
-  if (event.reviews && event.reviews.length > 0) {
-    eventNode.review = event.reviews.slice(0, 5).map((review) => ({
-      '@type': 'Review',
-      author: { '@type': 'Person', name: review.authorName },
-      reviewBody: review.content,
-      datePublished: review.createdAt,
-    }));
-  }
-
   return ld;
 }
 
@@ -271,8 +251,7 @@ export async function generateMetadata({
   const hasPastSearchValue = Boolean(
     event.imageUrl ||
       (event.description && event.description.trim().length >= 80) ||
-      ((event.descriptionMale?.trim().length ?? 0) + (event.descriptionFemale?.trim().length ?? 0) >= 80) ||
-      (event.reviews && event.reviews.length > 0),
+      ((event.descriptionMale?.trim().length ?? 0) + (event.descriptionFemale?.trim().length ?? 0) >= 80),
   );
 
   return {
@@ -344,7 +323,6 @@ export default async function PublicEventPage({
   const spotsLeft =
     event.capacity != null ? event.capacity - event.reservedCount : null;
   const isEnded = event.isEnded ?? false;
-  const reviews = event.reviews ?? [];
   const endAt = validEndAt(event);
 
   return (
@@ -567,37 +545,6 @@ export default async function PublicEventPage({
             )}
           </div>
         </section>
-
-        {reviews.length > 0 && (
-          <div className="rounded-2xl bg-white border border-gray-200 px-4 py-4 shadow-sm space-y-4">
-            <h2 className="text-sm font-semibold text-gray-800">参加者の声</h2>
-            {reviews.map((review) => (
-              <div key={review.id} className="flex gap-3">
-                {review.authorIconUrl ? (
-                  <Image
-                    src={review.authorIconUrl}
-                    alt=""
-                    width={32}
-                    height={32}
-                    className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0 mt-0.5 text-xs text-gray-400">
-                    {review.authorName.slice(0, 1)}
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-gray-700 mb-0.5">
-                    {review.authorName}
-                  </p>
-                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
-                    {review.content}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
 
       </div>
       <PublicFooter />

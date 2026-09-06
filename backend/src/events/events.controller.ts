@@ -61,21 +61,6 @@ export class EventsController {
     return this.eventsService.getReservations(tenantId, eventId);
   }
 
-  @Get(':eventId/reviews')
-  getReviews(@TenantId() tenantId: string, @Param('eventId') eventId: string) {
-    return this.eventsService.getReviews(tenantId, eventId);
-  }
-
-  @Patch(':eventId/reviews/:reviewId')
-  updateReview(
-    @TenantId() tenantId: string,
-    @Param('eventId') eventId: string,
-    @Param('reviewId') reviewId: string,
-    @Body() body: { isPublished?: boolean; content?: string },
-  ) {
-    return this.eventsService.updateReview(tenantId, eventId, reviewId, body);
-  }
-
   @Post(':eventId/remind')
   sendRemind(@TenantId() tenantId: string, @Param('eventId') eventId: string) {
     return this.eventsService.sendRemind(tenantId, eventId);

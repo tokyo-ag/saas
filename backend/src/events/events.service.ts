@@ -350,44 +350,6 @@ export class EventsService {
     });
   }
 
-  async getReviews(tenantId: string, eventId: string) {
-    await this.findOne(tenantId, eventId);
-    return this.prisma.eventReview.findMany({
-      where: { tenantId, eventId },
-      include: {
-        member: { select: { id: true, name: true, grade: true, gender: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  async updateReview(
-    tenantId: string,
-    eventId: string,
-    reviewId: string,
-    data: { isPublished?: boolean; content?: string },
-  ) {
-    const review = await this.prisma.eventReview.findFirst({
-      where: { id: reviewId, tenantId, eventId },
-    });
-    if (!review) throw new NotFoundException('Review not found');
-
-    const content = data.content?.trim();
-    if (content !== undefined && (content.length < 5 || content.length > 300)) {
-      throw new BadRequestException(
-        '感想は5文字以上300文字以内で入力してください',
-      );
-    }
-
-    return this.prisma.eventReview.update({
-      where: { id: reviewId },
-      data: {
-        ...(data.isPublished !== undefined && { isPublished: data.isPublished }),
-        ...(content !== undefined && { content }),
-      },
-    });
-  }
-
   async checkin(tenantId: string, eventId: string, memberId: string) {
     const reservation = await this.prisma.reservation.findFirst({
       where: { tenantId, eventId, memberId },

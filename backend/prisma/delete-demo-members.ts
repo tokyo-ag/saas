@@ -21,14 +21,12 @@ async function main() {
   // 関連データを順番に削除
   const reservations = await prisma.reservation.deleteMany({ where: { memberId: { in: ids } } });
   const notifications = await prisma.notification.deleteMany({ where: { memberId: { in: ids } } });
-  const reviews = await prisma.eventReview.deleteMany({ where: { memberId: { in: ids } } });
   const members = await prisma.member.deleteMany({ where: { id: { in: ids } } });
 
   console.log(`\n完了:`);
   console.log(`  メンバー削除: ${members.count}件`);
   console.log(`  予約削除: ${reservations.count}件`);
   console.log(`  通知削除: ${notifications.count}件`);
-  console.log(`  感想削除: ${reviews.count}件`);
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect());

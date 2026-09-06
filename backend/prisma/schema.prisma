@@ -53,7 +53,6 @@ model Tenant {
   reservationMessageTemplate String? @map("reservation_message_template") @db.Text
   reminderMessageTemplate    String? @map("reminder_message_template") @db.Text
   activityTickerEnabled  Boolean   @default(true) @map("activity_ticker_enabled")
-  reviewsRequireReservation Boolean @default(true) @map("reviews_require_reservation")
   themeColor             String    @default("green") @map("theme_color") @db.VarChar(20)
   iconUrl                String?   @map("icon_url") @db.Text
   publicBlogUrl          String?   @map("public_blog_url") @db.VarChar(500)
@@ -306,7 +305,6 @@ model Event {
   tenant       Tenant        @relation(fields: [tenantId], references: [id])
   reservations Reservation[]
   likes        EventLike[]
-  reviews      EventReview[]
 
   @@map("events")
 }
@@ -347,7 +345,6 @@ model Member {
   connections2  Connection[]   @relation("ConnectionMember2")
   sentMessages    Message[]
   notifications   Notification[]
-  eventReviews     EventReview[]
   tenantReviews    TenantReview[]
 
   @@unique([tenantId, lineUserId])
@@ -439,24 +436,6 @@ model EventLike {
 
   @@unique([eventId, anonymousId])
   @@map("event_likes")
-}
-
-model EventReview {
-  id          String   @id @default(uuid())
-  tenantId    String   @map("tenant_id")
-  eventId     String   @map("event_id")
-  memberId    String   @map("member_id")
-  content     String   @db.Text
-  isPublished Boolean  @default(false) @map("is_published")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-  @@unique([eventId, memberId])
-  @@index([tenantId, eventId])
-  @@map("event_reviews")
 }
 
 // 特定のイベントに紐づかない、団体全体への口コミ。公開サイトの「口コミ」セクションから

@@ -61,14 +61,6 @@ export class LiffController {
     return this.liffService.getEvent(tenantId, eventId);
   }
 
-  @Get('events/:eventId/reviews')
-  getPublishedReviews(
-    @Param('tenantId') tenantId: string,
-    @Param('eventId') eventId: string,
-  ) {
-    return this.liffService.getPublishedReviews(tenantId, eventId);
-  }
-
   @Get('members/:memberId')
   getMemberProfile(
     @Param('tenantId') tenantId: string,
@@ -96,28 +88,6 @@ export class LiffController {
     @LiffUser() lineUserId: string,
   ) {
     return this.liffService.getMyReservations(tenantId, lineUserId);
-  }
-
-  @UseGuards(LiffGuard)
-  @Get('events/:eventId/my-review')
-  getMyReview(
-    @Param('tenantId') tenantId: string,
-    @Param('eventId') eventId: string,
-    @LiffUser() lineUserId: string,
-  ) {
-    return this.liffService.getMyReview(tenantId, eventId, lineUserId);
-  }
-
-  @UseGuards(LiffGuard)
-  @Post('events/:eventId/reviews')
-  submitReview(
-    @Param('tenantId') tenantId: string,
-    @Param('eventId') eventId: string,
-    @LiffUser() lineUserId: string,
-    @Body() dto: SubmitReviewDto,
-  ) {
-    dto.lineUserId = lineUserId;
-    return this.liffService.submitReview(tenantId, eventId, dto);
   }
 
   @UseGuards(LiffGuard)

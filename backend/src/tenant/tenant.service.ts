@@ -42,7 +42,6 @@ export class UpdateTenantDto {
   @IsOptional() @IsString() reservationMessageTemplate?: string;
   @IsOptional() @IsString() reminderMessageTemplate?: string;
   @IsOptional() @IsBoolean() activityTickerEnabled?: boolean;
-  @IsOptional() @IsBoolean() reviewsRequireReservation?: boolean;
   @IsOptional() @IsString() themeColor?: string;
   @IsOptional() @IsString() iconUrl?: string;
   @IsOptional() @IsString() code?: string;
@@ -252,9 +251,6 @@ export class TenantService {
         }),
         ...(dto.activityTickerEnabled !== undefined && {
           activityTickerEnabled: dto.activityTickerEnabled,
-        }),
-        ...(dto.reviewsRequireReservation !== undefined && {
-          reviewsRequireReservation: dto.reviewsRequireReservation,
         }),
         ...(dto.themeColor !== undefined && { themeColor: dto.themeColor }),
         ...(dto.iconUrl !== undefined && { iconUrl: dto.iconUrl || null }),

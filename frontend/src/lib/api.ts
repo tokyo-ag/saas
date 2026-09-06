@@ -107,13 +107,6 @@ export const api = {
       request<void>(`/admin/events/${id}`, { method: 'DELETE' }),
     reservations: (id: string) =>
       request<Reservation[]>(`/admin/events/${id}/reservations`),
-    reviews: (id: string) =>
-      request<AdminEventReview[]>(`/admin/events/${id}/reviews`),
-    updateReview: (eventId: string, reviewId: string, data: { isPublished?: boolean; content?: string }) =>
-      request<EventReview>(`/admin/events/${eventId}/reviews/${reviewId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      }),
     remind: (id: string) =>
       request<{ sentCount: number }>(`/admin/events/${id}/remind`, { method: 'POST' }),
     checkin: (id: string, memberId: string) =>
@@ -173,28 +166,13 @@ export const api = {
         `/liff/${tenantId}/events/${eventId}/my-reservation`,
       );
     },
-    reviews: (tenantId: string, eventId: string) =>
-      request<EventReview[]>(`/liff/${tenantId}/events/${eventId}/reviews`),
-    myReview: (tenantId: string, eventId: string, lineUserId: string) => {
-      void lineUserId;
-      return request<EventReview | null>(
-        `/liff/${tenantId}/events/${eventId}/my-review`,
-      );
-    },
-    submitReview: (tenantId: string, eventId: string, lineUserId: string, content: string) => {
-      void lineUserId;
-      return request<EventReview>(`/liff/${tenantId}/events/${eventId}/reviews`, {
-        method: 'POST',
-        body: JSON.stringify({ content }),
-      });
-    },
     myTenantReview: (tenantId: string, lineUserId: string) => {
       void lineUserId;
-      return request<EventReview | null>(`/liff/${tenantId}/review`);
+      return request<LiffTenantReview | null>(`/liff/${tenantId}/review`);
     },
     submitTenantReview: (tenantId: string, lineUserId: string, content: string) => {
       void lineUserId;
-      return request<EventReview>(`/liff/${tenantId}/review`, {
+      return request<LiffTenantReview>(`/liff/${tenantId}/review`, {
         method: 'POST',
         body: JSON.stringify({ content }),
       });
@@ -761,26 +739,13 @@ export interface LiffEvent {
   reserveActionStyle?: string | null;
   category?: string | null;
   friendAttendees?: { id: string; name: string | null }[];
-  reviews?: EventReview[];
 }
 
-export interface EventReview {
+export interface LiffTenantReview {
   id: string;
   content: string;
-  createdAt: string;
-  memberName?: string | null;
-  memberGrade?: string | null;
-  isPublished?: boolean;
-}
-
-export interface AdminEventReview extends EventReview {
   isPublished: boolean;
-  member: {
-    id: string;
-    name?: string | null;
-    grade?: string | null;
-    gender?: string | null;
-  };
+  createdAt: string;
 }
 
 export interface AdminTenantReview {
@@ -848,7 +813,6 @@ export interface Tenant {
   reservationMessageTemplate?: string | null;
   reminderMessageTemplate?: string | null;
   activityTickerEnabled?: boolean;
-  reviewsRequireReservation?: boolean;
   themeColor?: string;
   iconUrl?: string | null;
   createdAt: string;
@@ -881,7 +845,6 @@ export interface TenantInput {
   reservationMessageTemplate?: string;
   reminderMessageTemplate?: string;
   activityTickerEnabled?: boolean;
-  reviewsRequireReservation?: boolean;
   themeColor?: string;
   iconUrl?: string;
   code?: string;

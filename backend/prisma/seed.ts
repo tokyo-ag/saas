@@ -29,7 +29,7 @@ async function clearTenantData() {
   const eventIds = events.map((event) => event.id);
   const memberIds = members.map((member) => member.id);
 
-  await prisma.eventReview.deleteMany({ where: { tenantId } });
+  await prisma.tenantReview.deleteMany({ where: { tenantId } });
   await prisma.eventLike.deleteMany({ where: { eventId: { in: eventIds } } });
   await prisma.notification.deleteMany({ where: { memberId: { in: memberIds } } });
   await prisma.message.deleteMany({
@@ -257,32 +257,28 @@ async function main() {
     data: reservations.map((reservation) => ({ ...reservation, tenantId })),
   });
 
-  await prisma.eventReview.createMany({
+  await prisma.tenantReview.createMany({
     data: [
       {
         tenantId,
-        eventId: pastBadminton.id,
         memberId: demo.id,
         content: '一人参加でしたが、20代が多くて話しやすかったです。初心者でもラリーから楽しめました。',
         isPublished: true,
       },
       {
         tenantId,
-        eventId: pastBadminton.id,
         memberId: yamada.id,
         content: '社会人になってから運動する機会が減っていたので、ちょうどいい雰囲気でした。ガチすぎないのが良かったです。',
         isPublished: true,
       },
       {
         tenantId,
-        eventId: pastBadminton.id,
         memberId: sato.id,
         content: '初参加でもペアを組みやすくて安心でした。女性も参加しやすい空気でした。',
         isPublished: true,
       },
       {
         tenantId,
-        eventId: pastBadminton.id,
         memberId: suzuki.id,
         content: '久しぶりのバドミントンでしたが、ゆるく楽しめました。次回も参加したいです。',
         isPublished: false,

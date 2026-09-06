@@ -529,20 +529,6 @@ export class PublicController {
           },
           select: { id: true },
         },
-        reviews: {
-          where: { isPublished: true },
-          orderBy: { createdAt: 'desc' },
-          take: 20,
-          include: {
-            member: {
-              select: {
-                lineDisplayName: true,
-                linePictureUrl: true,
-                name: true,
-              },
-            },
-          },
-        },
       },
     });
     if (!event) throw new NotFoundException('Event not found');
@@ -574,13 +560,6 @@ export class PublicController {
       footerText: event.tenant.publicPages[0]?.footerText ?? null,
       reserveActionStyle: event.reserveActionStyle,
       isEnded,
-      reviews: event.reviews.map((r) => ({
-        id: r.id,
-        content: r.content,
-        createdAt: r.createdAt,
-        authorName: r.member.lineDisplayName ?? r.member.name ?? '参加者',
-        authorIconUrl: r.member.linePictureUrl,
-      })),
     };
   }
 
