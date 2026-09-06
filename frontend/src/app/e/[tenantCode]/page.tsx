@@ -91,12 +91,16 @@ export default async function TenantEventsPage({
       <div className="mx-auto max-w-lg px-4 py-8">
         <div className="mb-6 flex items-center gap-3">
           {icon && (
-            <img src={icon} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover" />
+            <Link href={`/clubs/${tenantCode}`} className="shrink-0">
+              <img src={icon} alt="" className="h-12 w-12 rounded-full object-cover" />
+            </Link>
           )}
           <div className="min-w-0">
-            <p className="truncate text-lg font-bold" style={{ color: textColor }}>{name}</p>
+            <Link href={`/clubs/${tenantCode}`} className="block truncate text-lg font-bold" style={{ color: textColor }}>
+              {name}
+            </Link>
             {slug && (
-              <Link href={`/clubs/${tenantCode}/${slug}`} className="text-xs underline" style={{ color: accentColor }}>
+              <Link href={`/clubs/${tenantCode}/${slug}`} className="block text-xs underline" style={{ color: accentColor }}>
                 団体ページを見る
               </Link>
             )}

@@ -386,13 +386,15 @@ export default async function PublicEventPage({
               </h1>
               <div className="mt-2 flex items-center gap-2">
                 {imgSrc(event.tenantIconUrl) && (
-                  <Image
-                    src={imgSrc(event.tenantIconUrl)!}
-                    alt={event.tenantName}
-                    width={24}
-                    height={24}
-                    className="w-6 h-6 rounded-full object-cover"
-                  />
+                  <Link href={`/clubs/${event.tenantCode}`}>
+                    <Image
+                      src={imgSrc(event.tenantIconUrl)!}
+                      alt={event.tenantName}
+                      width={24}
+                      height={24}
+                      className="w-6 h-6 rounded-full object-cover"
+                    />
+                  </Link>
                 )}
                 <Link
                   href={`/clubs/${event.tenantCode}`}

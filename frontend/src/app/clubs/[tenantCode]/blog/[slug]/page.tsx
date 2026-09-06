@@ -908,7 +908,9 @@ export default async function BlogPostPage({
 
           <div className="mb-3 flex items-center gap-2">
             {tenantIconUrl && (
-              <Image src={tenantIconUrl} alt="" width={28} height={28} className="h-7 w-7 rounded-full object-cover" unoptimized />
+              <Link href={tenantHomeHref}>
+                <Image src={tenantIconUrl} alt="" width={28} height={28} className="h-7 w-7 rounded-full object-cover" unoptimized />
+              </Link>
             )}
             <Link href={tenantHomeHref} className="text-sm font-bold text-[#06C755] hover:underline">
               {tenantName}

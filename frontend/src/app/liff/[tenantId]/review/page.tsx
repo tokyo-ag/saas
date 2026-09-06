@@ -15,19 +15,23 @@ function isLineAuthErrorMessage(message: string): boolean {
 }
 
 function backToSite() {
+  // このページは公開サイト上のリンクから同じタブで開かれるため、まずはブラウザ履歴で
+  // 元のサイトへ戻す。liff.closeWindow()はLINEアプリから直接起動したLIFFフレームでしか
+  // 期待通りに動かず（履歴のない状態でトーク一覧まで閉じてしまう等）、
+  // このフローでは「戻れない」原因になっていた。
+  if (typeof window !== 'undefined' && window.history.length > 1) {
+    window.history.back();
+    return;
+  }
   try {
     if (liff.isInClient() || liff.isLoggedIn()) {
       liff.closeWindow();
       return;
     }
   } catch {
-    // ignore, fall through to history fallback
+    // ignore
   }
-  if (window.history.length > 1) {
-    window.history.back();
-  } else {
-    window.close();
-  }
+  window.close();
 }
 
 export default function TenantReviewPage() {
