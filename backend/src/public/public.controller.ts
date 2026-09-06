@@ -766,6 +766,7 @@ export class PublicController {
         tenantCode: tenant.code,
         title: e.title,
         heldAt: e.heldAt,
+        endAt: this.publicEndAt(e.heldAt, e.endAt),
         location: e.location,
         locationHint: e.locationHint,
         price: e.price,
