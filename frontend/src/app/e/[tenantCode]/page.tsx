@@ -2,7 +2,6 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import PublicFooter from '@/components/public/PublicFooter';
 import { ReservationViewShowcase, ReservationShowcaseEvent } from '@/components/public/ReservationViewShowcase';
 import { SITE_URL, API_URL } from '@/lib/config';
 
@@ -11,6 +10,7 @@ type TenantEventsData = {
   name: string;
   lineDisplayName?: string | null;
   linePictureUrl?: string | null;
+  liffId?: string | null;
   pages?: Array<{ slug: string }>;
   events: ReservationShowcaseEvent[];
 };
@@ -119,10 +119,11 @@ export default async function TenantEventsPage({
             events={events}
             tenantCode={tenantCode}
             showButton={false}
+            linkToLiff
+            liffId={tenant.liffId}
           />
         )}
       </div>
-      <PublicFooter />
     </div>
   );
 }
