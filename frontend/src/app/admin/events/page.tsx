@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api, formatDate } from '@/lib/api';
 import { getToken } from '@/lib/auth';
-import { SITE_URL, buildLiffUrl } from '@/lib/config';
+import { SITE_URL } from '@/lib/config';
 import { EventStatusBadge } from '@/components/ui/StatusBadge';
 import type { Event } from '@/lib/api';
 
@@ -86,8 +86,6 @@ export default function EventsPage() {
   const [tab, setTab] = useState<Tab>('upcoming');
 
   const [tenantId, setTenantId] = useState<string>('');
-  const [tenantLiffId, setTenantLiffId] = useState<string>('');
-  const [copied, setCopied] = useState(false);
   const [copiedPublic, setCopiedPublic] = useState(false);
   const [publicPageId, setPublicPageId] = useState<string | null>(null);
   const [publicPageData, setPublicPageData] = useState<import('@/lib/api').PublicPage | null>(null);
@@ -109,7 +107,6 @@ export default function EventsPage() {
     load();
     api.tenant.get().then((t) => {
       setTenantId(t.code ?? t.id);
-      setTenantLiffId(t.liffId ?? '');
       setActivityTickerEnabled(t.activityTickerEnabled !== false);
     }).catch(() => {});
     api.publicPages.list().then((pages) => {
@@ -202,23 +199,9 @@ export default function EventsPage() {
   }
 
   const schedulePath = tenantId ? `/liff/${tenantId}` : '';
-  const scheduleUrl = schedulePath
-    ? buildLiffUrl(schedulePath, {
-        liffId: tenantLiffId,
-        endpointPath: '/',
-      }) ?? `${SITE_URL}${schedulePath}`
-    : '';
   // liff.line.me は X-Frame-Options: DENY のため管理画面へ埋め込めない。
-  // コピー用URLは正式なLIFF URLのままにし、スマホプレビューだけ同一originの画面を使う。
+  // スマホプレビューだけ同一originの画面を使う。
   const previewUrl = schedulePath ? `${schedulePath}?preview=1` : '';
-
-  function copyScheduleUrl() {
-    if (!scheduleUrl) return;
-    navigator.clipboard.writeText(scheduleUrl).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }
 
   const publicScheduleUrl = tenantId ? `${SITE_URL}/e/${tenantId}` : '';
 
@@ -487,35 +470,11 @@ export default function EventsPage() {
       </div>
     </div>
 
-    {scheduleUrl && (
+    {publicScheduleUrl && (
       <div className="px-4 pb-6 md:px-6 max-w-5xl">
         <div className="rounded-xl border border-[#06C755]/30 bg-[#06C755]/5 p-4 md:p-5">
           <p className="mb-1 text-sm font-bold text-[#06C755]">☆ COMIUの運営ポイント</p>
-          <p className="mb-3 text-xs font-medium text-gray-700">イベントスケジュールのURL</p>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="flex-1 truncate rounded-lg bg-white border border-gray-200 px-3 py-2 text-xs font-mono text-gray-600">
-              {scheduleUrl}
-            </span>
-            <button
-              type="button"
-              onClick={copyScheduleUrl}
-              className="shrink-0 rounded-lg bg-[#06C755] px-4 py-2 text-xs font-bold text-white hover:bg-[#05a847]"
-            >
-              {copied ? 'コピー済み ✓' : 'コピー'}
-            </button>
-          </div>
-          <p className="text-xs text-gray-500 leading-relaxed">
-            このURLリンクを共有または公式LINEのチャットに貼ると、団体の活動スケジュールを直接共有できます！<br />
-            また外部リンクからのアクセスが多い団体を30日間毎でカウントを行い、COMIU注目の団体！としてCOMIUからPRさせて頂いてます！
-          </p>
-        </div>
-      </div>
-    )}
-
-    {publicScheduleUrl && (
-      <div className="px-4 pb-6 md:px-6 max-w-5xl">
-        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 md:p-5">
-          <p className="mb-3 text-xs font-medium text-gray-700">公開用の予約スケジュールURL（LINEログイン不要）</p>
+          <p className="mb-3 text-xs font-medium text-gray-700">イベントスケジュールのURL（LINEログイン不要）</p>
           <div className="flex items-center gap-2 mb-3">
             <span className="flex-1 truncate rounded-lg bg-white border border-gray-200 px-3 py-2 text-xs font-mono text-gray-600">
               {publicScheduleUrl}
@@ -523,13 +482,14 @@ export default function EventsPage() {
             <button
               type="button"
               onClick={copyPublicScheduleUrl}
-              className="shrink-0 rounded-lg bg-gray-700 px-4 py-2 text-xs font-bold text-white hover:bg-gray-800"
+              className="shrink-0 rounded-lg bg-[#06C755] px-4 py-2 text-xs font-bold text-white hover:bg-[#05a847]"
             >
               {copiedPublic ? 'コピー済み ✓' : 'コピー'}
             </button>
           </div>
           <p className="text-xs text-gray-500 leading-relaxed">
-            LINEログイン前でも誰でも見られる公開ページです。GoogleなどのSEOにも反映されるので、SNSのプロフィール欄やホームページなど、LINEを使わない場所での共有におすすめです。
+            このURLリンクを共有または公式LINEのチャットに貼ると、団体の活動スケジュールを直接共有できます！LINEログイン前でも誰でも見られ、GoogleなどのSEOにも反映されるので、SNSのプロフィール欄やホームページでの共有にもおすすめです。<br />
+            また外部リンクからのアクセスが多い団体を30日間毎でカウントを行い、COMIU注目の団体！としてCOMIUからPRさせて頂いてます！
           </p>
         </div>
       </div>

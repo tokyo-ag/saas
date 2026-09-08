@@ -113,6 +113,9 @@ function ReservePageInner() {
 
   useEffect(() => {
     async function init() {
+      // このページは/e/{tenantCode}のSEO一覧からLINE認証込みで直接開かれる入口にもなるため、
+      // LIFFホーム経由と同様にここでも外部アクセスを記録する。
+      api.liff.recordAccess(tenantId).catch(() => {});
       const tenantInfo = await api.liff.tenant(tenantId).catch(() => null);
       if (tenantInfo) setTenant(tenantInfo);
       const preloadedEvent = await api.liff.event(tenantId, eventId).catch(() => null);
