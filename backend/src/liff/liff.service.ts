@@ -550,6 +550,7 @@ export class LiffService {
             priceFemale: event.priceFemale,
             descriptionMale: event.descriptionMale,
             descriptionFemale: event.descriptionFemale,
+            maleDelayMinutes: event.maleDelayMinutes,
           },
         );
       } else {

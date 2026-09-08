@@ -8,6 +8,7 @@ type EventMessageDetails = {
   priceFemale?: number | null;
   descriptionMale?: string | null;
   descriptionFemale?: string | null;
+  maleDelayMinutes?: number | null;
 };
 
 @Injectable()
@@ -58,7 +59,7 @@ export class LineMessagingService {
     customTemplate?: string | null,
     details: EventMessageDetails = {},
   ): Promise<void> {
-    const dateStr = this.formatDate(heldAt, details.endAt);
+    const dateStr = this.formatDate(heldAt, details.endAt, details.maleDelayMinutes);
     const locationStr = this.formatLocation(location, details.locationUrl);
     const priceStr = this.formatPrice(
       price,
@@ -157,7 +158,7 @@ export class LineMessagingService {
     customTemplate?: string | null,
     details: EventMessageDetails & { price?: number | null } = {},
   ): Promise<void> {
-    const dateStr = this.formatDate(heldAt, details.endAt);
+    const dateStr = this.formatDate(heldAt, details.endAt, details.maleDelayMinutes);
     const locationStr = this.formatLocation(location, details.locationUrl);
     const priceStr = this.formatPrice(
       details.price,
@@ -222,7 +223,20 @@ export class LineMessagingService {
     }
   }
 
-  private formatDate(date: Date, endAt?: Date | null): string {
+  private formatTime(date: Date): string {
+    return date.toLocaleTimeString('ja-JP', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Asia/Tokyo',
+    });
+  }
+
+  private formatDate(
+    date: Date,
+    endAt?: Date | null,
+    maleDelayMinutes?: number | null,
+  ): string {
     const heldAt = new Date(date);
     const day = heldAt.toLocaleDateString('ja-JP', {
       month: 'numeric',
@@ -230,20 +244,15 @@ export class LineMessagingService {
       weekday: 'short',
       timeZone: 'Asia/Tokyo',
     });
-    const startTime = heldAt.toLocaleTimeString('ja-JP', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-      timeZone: 'Asia/Tokyo',
-    });
-    const endTime = endAt
-      ? new Date(endAt).toLocaleTimeString('ja-JP', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-          timeZone: 'Asia/Tokyo',
-        })
-      : null;
+    const endTime = endAt ? this.formatTime(new Date(endAt)) : null;
+    if (maleDelayMinutes) {
+      const femaleStart = this.formatTime(heldAt);
+      const maleStart = this.formatTime(
+        new Date(heldAt.getTime() + maleDelayMinutes * 60000),
+      );
+      return `${day}男性${maleStart}/女性${femaleStart}${endTime ? `~${endTime}` : ''}`;
+    }
+    const startTime = this.formatTime(heldAt);
     return `${day}${startTime}${endTime ? `~${endTime}` : ''}`;
   }
 

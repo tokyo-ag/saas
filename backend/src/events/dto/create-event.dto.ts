@@ -42,6 +42,13 @@ export class CreateEventDto {
   heldAt: string;
 
   @IsOptional()
+  @IsInt()
+  @Transform(({ value }) =>
+    value === null || value === '' ? null : Number(value),
+  )
+  maleDelayMinutes?: number | null;
+
+  @IsOptional()
   @IsDateString()
   endAt?: string | null;
 

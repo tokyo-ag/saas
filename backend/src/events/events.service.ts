@@ -162,6 +162,7 @@ export class EventsService {
         descriptionMale: dto.descriptionMale ?? null,
         descriptionFemale: dto.descriptionFemale ?? null,
         heldAt,
+        maleDelayMinutes: dto.maleDelayMinutes ?? null,
         endAt,
         location: dto.location,
         locationUrl: dto.locationUrl ?? null,
@@ -233,6 +234,9 @@ export class EventsService {
           descriptionFemale: dto.descriptionFemale ?? null,
         }),
         ...(dto.heldAt !== undefined && { heldAt }),
+        ...(dto.maleDelayMinutes !== undefined && {
+          maleDelayMinutes: dto.maleDelayMinutes ?? null,
+        }),
         ...(dto.endAt !== undefined && { endAt }),
         ...(dto.location !== undefined && { location: dto.location }),
         ...(dto.capacity !== undefined && { capacity: dto.capacity ?? null }),

@@ -16,6 +16,7 @@ type EventFormData = {
   descriptionMale: string;
   descriptionFemale: string;
   heldAt: string;
+  maleDelayMinutes: number;
   endAt: string;
   location: string;
   locationUrl: string;
@@ -126,7 +127,16 @@ function sameDayDatetime(dateTime: string, time: string) {
   return `${dateTime.slice(0, 10)}T${time}`;
 }
 
-function formatLineDate(value: string, endValue: string) {
+function formatLineTime(date: Date) {
+  return date.toLocaleTimeString('ja-JP', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Tokyo',
+  });
+}
+
+function formatLineDate(value: string, endValue: string, maleDelayMinutes = 0) {
   if (!value) return '（日時未設定）';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '（日時未設定）';
@@ -136,21 +146,16 @@ function formatLineDate(value: string, endValue: string) {
     weekday: 'short',
     timeZone: 'Asia/Tokyo',
   });
-  const startTime = date.toLocaleTimeString('ja-JP', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: 'Asia/Tokyo',
-  });
   const endDate = endValue ? new Date(endValue) : null;
   const endTime = endDate && !Number.isNaN(endDate.getTime())
-    ? endDate.toLocaleTimeString('ja-JP', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-        timeZone: 'Asia/Tokyo',
-      })
+    ? formatLineTime(endDate)
     : null;
+  if (maleDelayMinutes) {
+    const femaleStart = formatLineTime(date);
+    const maleStart = formatLineTime(new Date(date.getTime() + maleDelayMinutes * 60000));
+    return `${day}男性${maleStart}/女性${femaleStart}${endTime ? `~${endTime}` : ''}`;
+  }
+  const startTime = formatLineTime(date);
   return `${day}${startTime}${endTime ? `~${endTime}` : ''}`;
 }
 
@@ -184,13 +189,13 @@ function omitRedundantTitle(template: string, title: string, description: string
 
 function renderLineMessage(
   template: string,
-  form: Pick<EventFormData, 'title' | 'description' | 'descriptionMode' | 'descriptionMale' | 'descriptionFemale' | 'heldAt' | 'endAt' | 'location' | 'locationUrl' | 'priceMode' | 'price' | 'priceMale' | 'priceFemale'>,
+  form: Pick<EventFormData, 'title' | 'description' | 'descriptionMode' | 'descriptionMale' | 'descriptionFemale' | 'heldAt' | 'endAt' | 'maleDelayMinutes' | 'location' | 'locationUrl' | 'priceMode' | 'price' | 'priceMale' | 'priceFemale'>,
 ) {
   const location = form.location || '（場所未設定）';
   const effectiveDescription = formatLineDescription(form);
   const values: Record<string, string> = {
     title: form.title || '（イベント名未設定）',
-    date: formatLineDate(form.heldAt, form.endAt),
+    date: formatLineDate(form.heldAt, form.endAt, form.maleDelayMinutes),
     price: formatLinePrice(form),
     location: form.locationUrl.trim() ? `${location}\n${form.locationUrl.trim()}` : location,
     description: effectiveDescription
@@ -324,6 +329,7 @@ export default function EventForm({
     descriptionMale: initial?.descriptionMale ?? '',
     descriptionFemale: initial?.descriptionFemale ?? '',
     heldAt: initialHeldAt,
+    maleDelayMinutes: initial?.maleDelayMinutes ?? 0,
     endAt: initialEndAt,
     location: initial?.location ?? '',
     locationUrl: initial?.locationUrl ?? '',
@@ -622,6 +628,7 @@ export default function EventForm({
       descriptionMale: form.descriptionMode === 'gender' ? (form.descriptionMale || null) : null,
       descriptionFemale: form.descriptionMode === 'gender' ? (form.descriptionFemale || null) : null,
       heldAt: new Date(form.heldAt).toISOString(),
+      maleDelayMinutes: form.maleDelayMinutes || null,
       endAt: form.endAt ? new Date(form.endAt).toISOString() : null,
       location: form.location,
       locationUrl: form.locationUrl || undefined,
@@ -972,6 +979,16 @@ export default function EventForm({
               )}
             </div>
           </Field>
+        </div>
+        <div>
+          <Check
+            label="男性の集合時間を15分遅らせて案内する"
+            checked={form.maleDelayMinutes > 0}
+            onChange={(checked) => set('maleDelayMinutes', checked ? 15 : 0)}
+          />
+          <p className="text-xs leading-5 text-gray-500">
+            ONにすると、開始日時（女性向け）より15分後の時刻を男性向けの集合時間として案内します（{'{date}'}に反映されます）。
+          </p>
         </div>
         <Field label="場所名" required>
           <input required maxLength={200} value={form.location} onChange={(e) => set('location', e.target.value)} placeholder="例: 渋谷区スポーツセンター" className={inputClass} />

@@ -64,6 +64,7 @@ export class SchedulerService {
               price: event.price,
               priceMale: event.priceMale,
               priceFemale: event.priceFemale,
+              maleDelayMinutes: event.maleDelayMinutes,
             },
           );
         }

@@ -430,6 +430,7 @@ export interface Event {
   descriptionMale?: string | null;
   descriptionFemale?: string | null;
   heldAt: string;
+  maleDelayMinutes?: number | null;
   endAt?: string | null;
   location: string;
   locationUrl?: string;
@@ -469,6 +470,7 @@ export interface EventInput {
   descriptionMale?: string | null;
   descriptionFemale?: string | null;
   heldAt: string;
+  maleDelayMinutes?: number | null;
   endAt?: string | null;
   location: string;
   locationUrl?: string;

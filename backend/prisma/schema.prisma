@@ -269,6 +269,7 @@ model Event {
   descriptionMale   String?   @map("description_male") @db.Text
   descriptionFemale String?   @map("description_female") @db.Text
   heldAt          DateTime    @map("held_at")
+  maleDelayMinutes Int?       @map("male_delay_minutes")
   endAt           DateTime?   @map("end_at")
   location        String      @db.VarChar(200)
   locationUrl     String?     @map("location_url") @db.VarChar(500)
