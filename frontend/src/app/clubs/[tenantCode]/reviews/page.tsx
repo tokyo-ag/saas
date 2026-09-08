@@ -2,9 +2,10 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { API_URL, IMAGE_BASE_URL, SITE_URL } from '@/lib/config';
+import { API_URL, IMAGE_BASE_URL, SITE_URL, buildLiffUrl } from '@/lib/config';
 import type { TenantReview } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
+import { SmartLiffButton } from '@/components/public/SmartLiffButton';
 
 export const revalidate = 60;
 
@@ -13,10 +14,11 @@ type ReviewsTenantInfo = {
   lineDisplayName?: string | null;
   linePictureUrl?: string | null;
   iconUrl?: string | null;
+  liffId?: string | null;
   pages?: Array<{ slug: string }>;
 };
 
-async function fetchReviews(tenantCode: string): Promise<{ reviews: TenantReview[]; tenantName: string; homeHref: string; tenantIcon: string | null } | null> {
+async function fetchReviews(tenantCode: string): Promise<{ reviews: TenantReview[]; tenantName: string; homeHref: string; tenantIcon: string | null; liffId: string | null } | null> {
   try {
     const [reviewsRes, tenantRes] = await Promise.all([
       fetch(`${API_URL}/api/public/tenants/${tenantCode}/reviews`, { next: { revalidate } }),
@@ -29,7 +31,7 @@ async function fetchReviews(tenantCode: string): Promise<{ reviews: TenantReview
     const primarySlug = tenant?.pages?.[0]?.slug;
     const homeHref = primarySlug ? `/clubs/${tenantCode}/${primarySlug}` : `/clubs/${tenantCode}`;
     const tenantIcon = imgUrl(tenant?.linePictureUrl ?? tenant?.iconUrl, IMAGE_BASE_URL);
-    return { reviews, tenantName, homeHref, tenantIcon };
+    return { reviews, tenantName, homeHref, tenantIcon, liffId: tenant?.liffId ?? null };
   } catch {
     return null;
   }
@@ -78,7 +80,9 @@ export default async function ReviewsListPage({
   const { tenantCode } = await params;
   const data = await fetchReviews(tenantCode);
   if (!data) notFound();
-  const { reviews, tenantName, homeHref, tenantIcon } = data;
+  const { reviews, tenantName, homeHref, tenantIcon, liffId } = data;
+  const reviewPath = `/liff/${tenantCode}/review`;
+  const reviewHref = buildLiffUrl(reviewPath, { liffId, endpointPath: '/' }) ?? reviewPath;
 
   return (
     <main className="min-h-screen bg-[#F7F8FA]">
@@ -121,6 +125,13 @@ export default async function ReviewsListPage({
             ))}
           </div>
         )}
+        <SmartLiffButton
+          href={reviewHref}
+          directHref={`${SITE_URL}${reviewPath}`}
+          className="mt-6 inline-flex items-center gap-1 text-sm font-bold text-[#06C755] hover:underline"
+        >
+          感想を書く →
+        </SmartLiffButton>
       </div>
     </main>
   );

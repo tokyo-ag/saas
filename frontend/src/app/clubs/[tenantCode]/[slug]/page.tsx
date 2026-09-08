@@ -6,8 +6,9 @@ import { Fragment } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import type { BlogPostSummary, LiffEvent, PublicCmsPage, TenantReview } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
-import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
+import { SITE_URL, API_URL, IMAGE_BASE_URL, buildLiffUrl } from '@/lib/config';
 import { ReservationViewShowcase, ReservationButton } from '@/components/public/ReservationViewShowcase';
+import { SmartLiffButton } from '@/components/public/SmartLiffButton';
 import { SnsBlock } from '@/components/public/SnsBlock';
 import { buildAutoSeoTitle, buildAutoSeoDescription, buildSeoProfileFromTenant, type TenantSeoProfile } from '@/lib/tenantSeo';
 
@@ -1036,22 +1037,17 @@ export default async function ClubCmsPage({
               ))}
             </div>
           )}
-          <div className="mt-4 flex flex-wrap items-center gap-4">
-            <Link
-              href={`/clubs/${page.tenant.code ?? tenantCode}/reviews`}
-              className="inline-flex items-center gap-1 text-sm font-bold hover:underline"
-              style={{ color: accentColor }}
-            >
-              口コミ一覧を見る →
-            </Link>
-            <Link
-              href={`/liff/${page.tenant.code ?? tenantCode}/review`}
-              className="inline-flex items-center gap-1 text-sm font-bold hover:underline"
-              style={{ color: accentColor }}
-            >
-              感想を書く →
-            </Link>
-          </div>
+          <SmartLiffButton
+            href={buildLiffUrl(`/liff/${page.tenant.code ?? tenantCode}/review`, {
+              liffId: page.tenant.liffId,
+              endpointPath: '/',
+            }) ?? `/liff/${page.tenant.code ?? tenantCode}/review`}
+            directHref={`${SITE_URL}/liff/${page.tenant.code ?? tenantCode}/review`}
+            className="mt-4 inline-flex items-center gap-1 text-sm font-bold hover:underline"
+            style={{ color: accentColor }}
+          >
+            感想を書く →
+          </SmartLiffButton>
         </section>
         ) : null;
 

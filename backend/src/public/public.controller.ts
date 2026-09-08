@@ -792,6 +792,7 @@ export class PublicController {
             lineDisplayName: true,
             linePictureUrl: true,
             iconUrl: true,
+            liffId: true,
           },
         },
       },

@@ -1243,6 +1243,7 @@ export interface PublicCmsPage {
     lineDisplayName?: string | null;
     linePictureUrl?: string | null;
     iconUrl?: string | null;
+    liffId?: string | null;
   };
 }
 
