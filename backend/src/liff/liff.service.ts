@@ -551,6 +551,7 @@ export class LiffService {
             descriptionMale: event.descriptionMale,
             descriptionFemale: event.descriptionFemale,
             maleDelayMinutes: event.maleDelayMinutes,
+            gender: member.gender,
           },
         );
       } else {

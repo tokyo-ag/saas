@@ -136,7 +136,7 @@ function formatLineTime(date: Date) {
   });
 }
 
-function formatLineDate(value: string, endValue: string, maleDelayMinutes = 0) {
+function formatLineDate(value: string, endValue: string, maleDelayMinutes = 0, gender?: '男性' | '女性') {
   if (!value) return '（日時未設定）';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '（日時未設定）';
@@ -151,6 +151,14 @@ function formatLineDate(value: string, endValue: string, maleDelayMinutes = 0) {
     ? formatLineTime(endDate)
     : null;
   if (maleDelayMinutes) {
+    if (gender === '男性') {
+      const maleStart = formatLineTime(new Date(date.getTime() + maleDelayMinutes * 60000));
+      return `${day}${maleStart}${endTime ? `~${endTime}` : ''}`;
+    }
+    if (gender === '女性') {
+      const femaleStart = formatLineTime(date);
+      return `${day}${femaleStart}${endTime ? `~${endTime}` : ''}`;
+    }
     const femaleStart = formatLineTime(date);
     const maleStart = formatLineTime(new Date(date.getTime() + maleDelayMinutes * 60000));
     return `${day}男性${maleStart}/女性${femaleStart}${endTime ? `~${endTime}` : ''}`;
@@ -190,12 +198,13 @@ function omitRedundantTitle(template: string, title: string, description: string
 function renderLineMessage(
   template: string,
   form: Pick<EventFormData, 'title' | 'description' | 'descriptionMode' | 'descriptionMale' | 'descriptionFemale' | 'heldAt' | 'endAt' | 'maleDelayMinutes' | 'location' | 'locationUrl' | 'priceMode' | 'price' | 'priceMale' | 'priceFemale'>,
+  gender?: '男性' | '女性',
 ) {
   const location = form.location || '（場所未設定）';
   const effectiveDescription = formatLineDescription(form);
   const values: Record<string, string> = {
     title: form.title || '（イベント名未設定）',
-    date: formatLineDate(form.heldAt, form.endAt, form.maleDelayMinutes),
+    date: formatLineDate(form.heldAt, form.endAt, form.maleDelayMinutes, gender),
     price: formatLinePrice(form),
     location: form.locationUrl.trim() ? `${location}\n${form.locationUrl.trim()}` : location,
     description: effectiveDescription
@@ -220,7 +229,7 @@ function LineMessageEditor({
   enabled: boolean;
   value: string;
   effectiveTemplate: string;
-  preview: string;
+  preview: string | { male: string; female: string };
   onChange: (value: string) => void;
 }) {
   return (
@@ -263,11 +272,32 @@ function LineMessageEditor({
         </div>
         <div>
           <p className="mb-1.5 text-xs font-medium text-gray-600">実際に送られる文章</p>
-          <div className="rounded-xl bg-[#e8f7e8] p-3">
-            <div className="ml-auto max-w-[94%] rounded-2xl rounded-tr-sm bg-white px-3 py-2 shadow-sm">
-              <p className="whitespace-pre-wrap break-words text-xs leading-5 text-gray-800">{preview}</p>
+          {typeof preview === 'string' ? (
+            <div className="rounded-xl bg-[#e8f7e8] p-3">
+              <div className="ml-auto max-w-[94%] rounded-2xl rounded-tr-sm bg-white px-3 py-2 shadow-sm">
+                <p className="whitespace-pre-wrap break-words text-xs leading-5 text-gray-800">{preview}</p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <p className="mb-1 text-[11px] font-semibold text-gray-500">男性向け</p>
+                <div className="rounded-xl bg-[#e8f7e8] p-3">
+                  <div className="ml-auto max-w-[94%] rounded-2xl rounded-tr-sm bg-white px-3 py-2 shadow-sm">
+                    <p className="whitespace-pre-wrap break-words text-xs leading-5 text-gray-800">{preview.male}</p>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <p className="mb-1 text-[11px] font-semibold text-gray-500">女性向け</p>
+                <div className="rounded-xl bg-[#e8f7e8] p-3">
+                  <div className="ml-auto max-w-[94%] rounded-2xl rounded-tr-sm bg-white px-3 py-2 shadow-sm">
+                    <p className="whitespace-pre-wrap break-words text-xs leading-5 text-gray-800">{preview.female}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           <p className="mt-1.5 text-[11px] text-gray-400">
             {'{title}・{date}・{price}・{location}・{description}'} は上のイベント情報で置き換えています。
           </p>
@@ -701,8 +731,12 @@ export default function EventForm({
   const reminderTemplate = form.reminderMessageTemplate.trim()
     ? form.reminderMessageTemplate
     : tenant?.reminderMessageTemplate?.trim() || DEFAULT_REMINDER_MESSAGE;
-  const reservationPreview = renderLineMessage(reservationTemplate, form);
-  const reminderPreview = renderLineMessage(reminderTemplate, form);
+  const reservationPreview = form.maleDelayMinutes > 0
+    ? { male: renderLineMessage(reservationTemplate, form, '男性'), female: renderLineMessage(reservationTemplate, form, '女性') }
+    : renderLineMessage(reservationTemplate, form);
+  const reminderPreview = form.maleDelayMinutes > 0
+    ? { male: renderLineMessage(reminderTemplate, form, '男性'), female: renderLineMessage(reminderTemplate, form, '女性') }
+    : renderLineMessage(reminderTemplate, form);
 
   return (
     <form onSubmit={handleSubmit} className="grid max-w-6xl items-start gap-6 xl:grid-cols-[minmax(0,672px)_minmax(360px,1fr)]">

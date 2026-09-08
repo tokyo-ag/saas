@@ -9,6 +9,7 @@ type EventMessageDetails = {
   descriptionMale?: string | null;
   descriptionFemale?: string | null;
   maleDelayMinutes?: number | null;
+  gender?: string | null;
 };
 
 @Injectable()
@@ -59,7 +60,7 @@ export class LineMessagingService {
     customTemplate?: string | null,
     details: EventMessageDetails = {},
   ): Promise<void> {
-    const dateStr = this.formatDate(heldAt, details.endAt, details.maleDelayMinutes);
+    const dateStr = this.formatDate(heldAt, details.endAt, details.maleDelayMinutes, details.gender);
     const locationStr = this.formatLocation(location, details.locationUrl);
     const priceStr = this.formatPrice(
       price,
@@ -158,7 +159,7 @@ export class LineMessagingService {
     customTemplate?: string | null,
     details: EventMessageDetails & { price?: number | null } = {},
   ): Promise<void> {
-    const dateStr = this.formatDate(heldAt, details.endAt, details.maleDelayMinutes);
+    const dateStr = this.formatDate(heldAt, details.endAt, details.maleDelayMinutes, details.gender);
     const locationStr = this.formatLocation(location, details.locationUrl);
     const priceStr = this.formatPrice(
       details.price,
@@ -236,6 +237,7 @@ export class LineMessagingService {
     date: Date,
     endAt?: Date | null,
     maleDelayMinutes?: number | null,
+    gender?: string | null,
   ): string {
     const heldAt = new Date(date);
     const day = heldAt.toLocaleDateString('ja-JP', {
@@ -246,6 +248,18 @@ export class LineMessagingService {
     });
     const endTime = endAt ? this.formatTime(new Date(endAt)) : null;
     if (maleDelayMinutes) {
+      // 受信者の性別が分かる場合は、その性別の集合時間だけを案内する。
+      // 不明な場合のみ両方を併記する。
+      if (gender === '男性') {
+        const maleStart = this.formatTime(
+          new Date(heldAt.getTime() + maleDelayMinutes * 60000),
+        );
+        return `${day}${maleStart}${endTime ? `~${endTime}` : ''}`;
+      }
+      if (gender === '女性') {
+        const femaleStart = this.formatTime(heldAt);
+        return `${day}${femaleStart}${endTime ? `~${endTime}` : ''}`;
+      }
       const femaleStart = this.formatTime(heldAt);
       const maleStart = this.formatTime(
         new Date(heldAt.getTime() + maleDelayMinutes * 60000),
