@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { api, setLiffToken, TenantReview } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded, liff, redirectToLiffApp, isLiffLoggedIn } from '@/lib/liff';
 import { useLiffTheme, readableTextColor, isLightHexColor } from '@/components/liff/LiffThemeProvider';
+import { SITE_URL } from '@/lib/config';
 
 function isLineAuthErrorMessage(message: string): boolean {
   return (
@@ -14,24 +15,9 @@ function isLineAuthErrorMessage(message: string): boolean {
   );
 }
 
-function backToSite() {
-  // このページは公開サイト上のリンクから同じタブで開かれるため、まずはブラウザ履歴で
-  // 元のサイトへ戻す。liff.closeWindow()はLINEアプリから直接起動したLIFFフレームでしか
-  // 期待通りに動かず（履歴のない状態でトーク一覧まで閉じてしまう等）、
-  // このフローでは「戻れない」原因になっていた。
-  if (typeof window !== 'undefined' && window.history.length > 1) {
-    window.history.back();
-    return;
-  }
-  try {
-    if (liff.isInClient() || liff.isLoggedIn()) {
-      liff.closeWindow();
-      return;
-    }
-  } catch {
-    // ignore
-  }
-  window.close();
+function backToSite(tenantId: string) {
+  // 経由元のページによらず、口コミSEOページへ確実に戻す。
+  window.location.href = `${SITE_URL}/clubs/${tenantId}/reviews`;
 }
 
 export default function TenantReviewPage() {
@@ -218,7 +204,7 @@ export default function TenantReviewPage() {
             </p>
             <button
               type="button"
-              onClick={backToSite}
+              onClick={() => backToSite(tenantId)}
               className="w-full rounded-xl px-4 py-2.5 text-sm font-bold"
               style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
             >
