@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api, AdminTenantReview, formatDate } from '@/lib/api';
+import { SITE_URL } from '@/lib/config';
 
 function TenantReviewSection({
   rows,
@@ -191,6 +192,8 @@ export default function AdminReviewsPage() {
   const [rows, setRows] = useState<AdminTenantReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [tenantCode, setTenantCode] = useState('');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -198,8 +201,19 @@ export default function AdminReviewsPage() {
       .then((data) => { if (active) setRows(data); })
       .catch((err) => { if (active) setError(err?.message ?? 'サイト全体の口コミの読み込みに失敗しました'); })
       .finally(() => { if (active) setLoading(false); });
+    api.tenant.get().then((t) => { if (active) setTenantCode(t.code ?? t.id); }).catch(() => {});
     return () => { active = false; };
   }, []);
+
+  const publicReviewsUrl = tenantCode ? `${SITE_URL}/clubs/${tenantCode}/reviews` : '';
+
+  function copyPublicReviewsUrl() {
+    if (!publicReviewsUrl) return;
+    navigator.clipboard.writeText(publicReviewsUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   async function handleToggle(row: AdminTenantReview) {
     const nextPublished = !row.isPublished;
@@ -222,6 +236,27 @@ export default function AdminReviewsPage() {
       <div className="mb-5">
         <h1 className="text-xl font-bold text-gray-900 md:text-2xl">口コミ</h1>
       </div>
+
+      {publicReviewsUrl && (
+        <div className="mb-6 max-w-3xl rounded-xl border border-gray-200 bg-gray-50 p-4 md:p-5">
+          <p className="mb-3 text-xs font-medium text-gray-700">公開用の口コミURL（LINEログイン不要・SEO対象）</p>
+          <div className="flex items-center gap-2">
+            <span className="flex-1 truncate rounded-lg bg-white border border-gray-200 px-3 py-2 text-xs font-mono text-gray-600">
+              {publicReviewsUrl}
+            </span>
+            <button
+              type="button"
+              onClick={copyPublicReviewsUrl}
+              className="shrink-0 rounded-lg bg-gray-700 px-4 py-2 text-xs font-bold text-white hover:bg-gray-800"
+            >
+              {copied ? 'コピー済み ✓' : 'コピー'}
+            </button>
+          </div>
+          <p className="mt-3 text-xs text-gray-500 leading-relaxed">
+            公開中の口コミだけをまとめた専用ページです。「団体名 + 評判」「団体名 + 口コミ」などの検索でも見つけてもらえるよう、SEOにも対応しています。
+          </p>
+        </div>
+      )}
 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
         <div className="min-w-0 flex-1">

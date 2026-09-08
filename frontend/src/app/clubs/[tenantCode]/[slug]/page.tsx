@@ -1036,13 +1036,22 @@ export default async function ClubCmsPage({
               ))}
             </div>
           )}
-          <Link
-            href={`/liff/${page.tenant.code ?? tenantCode}/review`}
-            className="mt-4 inline-flex items-center gap-1 text-sm font-bold hover:underline"
-            style={{ color: accentColor }}
-          >
-            感想を書く →
-          </Link>
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            <Link
+              href={`/clubs/${page.tenant.code ?? tenantCode}/reviews`}
+              className="inline-flex items-center gap-1 text-sm font-bold hover:underline"
+              style={{ color: accentColor }}
+            >
+              口コミ一覧を見る →
+            </Link>
+            <Link
+              href={`/liff/${page.tenant.code ?? tenantCode}/review`}
+              className="inline-flex items-center gap-1 text-sm font-bold hover:underline"
+              style={{ color: accentColor }}
+            >
+              感想を書く →
+            </Link>
+          </div>
         </section>
         ) : null;
 

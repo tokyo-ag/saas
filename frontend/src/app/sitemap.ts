@@ -127,6 +127,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  const reviewsIndexPages: MetadataRoute.Sitemap = pages.map((p) => ({
+    url: `${SITE_URL}/clubs/${p.tenantCode}/reviews`,
+    lastModified: p.updatedAt ? new Date(p.updatedAt) : STATIC_LAST_MODIFIED,
+    changeFrequency: 'weekly' as const,
+    priority: 0.65,
+  }));
+
+  const eventsIndexPages: MetadataRoute.Sitemap = pages.map((p) => ({
+    url: `${SITE_URL}/e/${p.tenantCode}`,
+    lastModified: p.updatedAt ? new Date(p.updatedAt) : STATIC_LAST_MODIFIED,
+    changeFrequency: 'daily' as const,
+    priority: 0.7,
+  }));
+
   const blogIndexByTenant = new Map<string, Date>();
   for (const post of blogPosts) {
     const updatedAt = post.updatedAt ? new Date(post.updatedAt) : STATIC_LAST_MODIFIED;
@@ -174,5 +188,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   ];
 
-  return [...staticPages, ...officialArticlePages, ...guideHubPages, ...cmsPages, ...blogIndexPages, ...blogPostPages, ...eventPages];
+  return [...staticPages, ...officialArticlePages, ...guideHubPages, ...cmsPages, ...reviewsIndexPages, ...eventsIndexPages, ...blogIndexPages, ...blogPostPages, ...eventPages];
 }
