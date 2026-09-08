@@ -178,6 +178,27 @@ export default function TenantReviewPage() {
     <div className="min-h-screen sm:bg-gray-200" style={{ backgroundColor: theme.backgroundColor }}>
       <div className="mx-auto w-full max-w-[480px] sm:my-8 sm:overflow-hidden sm:rounded-3xl sm:shadow-2xl" style={{ backgroundColor: theme.backgroundColor, minHeight: '100dvh' }}>
       <div className="px-4 py-5" style={{ paddingTop: 'calc(env(safe-area-inset-top, 16px) + 20px)' }}>
+        {reviews.length > 0 && (
+          <div className="mb-4 space-y-3">
+            <p className="text-sm font-bold text-gray-800">みんなの声</p>
+            {reviews.map((review) => (
+              <div key={review.id} className="flex gap-3 rounded-2xl bg-white p-4 shadow-sm">
+                {review.authorIconUrl ? (
+                  <img src={review.authorIconUrl} alt="" className="mt-0.5 h-8 w-8 shrink-0 rounded-full object-cover" />
+                ) : (
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-400">
+                    {review.authorName.slice(0, 1)}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="mb-0.5 text-xs font-medium text-gray-700">{review.authorName}</p>
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{review.content}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {myReview ? (
           <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between gap-2">
@@ -232,27 +253,6 @@ export default function TenantReviewPage() {
             </div>
             {error && <p className="text-xs text-red-500">{error}</p>}
           </form>
-        )}
-
-        {reviews.length > 0 && (
-          <div className="mt-4 space-y-3">
-            <p className="text-sm font-bold text-gray-800">みんなの声</p>
-            {reviews.map((review) => (
-              <div key={review.id} className="flex gap-3 rounded-2xl bg-white p-4 shadow-sm">
-                {review.authorIconUrl ? (
-                  <img src={review.authorIconUrl} alt="" className="mt-0.5 h-8 w-8 shrink-0 rounded-full object-cover" />
-                ) : (
-                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-400">
-                    {review.authorName.slice(0, 1)}
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <p className="mb-0.5 text-xs font-medium text-gray-700">{review.authorName}</p>
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{review.content}</p>
-                </div>
-              </div>
-            ))}
-          </div>
         )}
       </div>
       </div>
