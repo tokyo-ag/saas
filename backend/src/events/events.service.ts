@@ -176,10 +176,8 @@ export class EventsService {
         paymentRequired: dto.paymentTiming === 'prepay',
         paymentTiming: dto.paymentTiming ?? 'onsite',
         notifyOnReserve: dto.notifyOnReserve,
-        notifyOnReserveApp: dto.notifyOnReserveApp ?? false,
         reservationMessageTemplate: dto.reservationMessageTemplate || null,
         remindEnabled: dto.remindEnabled,
-        remindApp: dto.remindApp ?? false,
         remindAt,
         reminderMessageTemplate: dto.reminderMessageTemplate || null,
         imageUrl: dto.imageUrl ?? null,
@@ -217,10 +215,8 @@ export class EventsService {
       dto.rosterShareEnabled && !current.rosterShareToken
         ? this.generateRosterShareToken()
         : undefined;
-    const wasReminderActive = current.remindEnabled || current.remindApp;
-    const willReminderBeActive =
-      (dto.remindEnabled ?? current.remindEnabled) ||
-      (dto.remindApp ?? current.remindApp);
+    const wasReminderActive = current.remindEnabled;
+    const willReminderBeActive = dto.remindEnabled ?? current.remindEnabled;
     const remindAtChanged =
       (remindAt?.getTime() ?? null) !== (current.remindAt?.getTime() ?? null);
     const shouldResetReminder =
@@ -270,16 +266,12 @@ export class EventsService {
         ...(dto.notifyOnReserve !== undefined && {
           notifyOnReserve: dto.notifyOnReserve,
         }),
-        ...(dto.notifyOnReserveApp !== undefined && {
-          notifyOnReserveApp: dto.notifyOnReserveApp,
-        }),
         ...(dto.reservationMessageTemplate !== undefined && {
           reservationMessageTemplate: dto.reservationMessageTemplate || null,
         }),
         ...(dto.remindEnabled !== undefined && {
           remindEnabled: dto.remindEnabled,
         }),
-        ...(dto.remindApp !== undefined && { remindApp: dto.remindApp }),
         ...(dto.remindAt !== undefined && {
           remindAt,
         }),
@@ -383,7 +375,6 @@ export class EventsService {
     eventId: string,
     content: string,
     sendLine: boolean,
-    sendApp: boolean,
   ) {
     const event = await this.findOne(tenantId, eventId);
     const tenant = await this.prisma.tenant.findUnique({
@@ -400,7 +391,6 @@ export class EventsService {
     });
 
     let lineSentCount = 0;
-    let appSentCount = 0;
 
     for (const r of reservations) {
       if (sendLine && tenant?.lineChannelAccessToken) {
@@ -411,20 +401,9 @@ export class EventsService {
         );
         lineSentCount++;
       }
-      if (sendApp) {
-        await this.prisma.notification.create({
-          data: {
-            tenantId,
-            memberId: r.memberId,
-            title: event.title,
-            body: content,
-          },
-        });
-        appSentCount++;
-      }
     }
 
-    return { lineSentCount, appSentCount, total: reservations.length };
+    return { lineSentCount, total: reservations.length };
   }
 
   async sendRemind(tenantId: string, eventId: string) {

@@ -2,10 +2,6 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-function sortedPair(a: string, b: string): [string, string] {
-  return a < b ? [a, b] : [b, a];
-}
-
 async function seedTenant001() {
   const tenantId = 'tenant-001';
 
@@ -112,25 +108,6 @@ async function seedTenant001() {
     prisma.reservation.create({ data: { tenantId, eventId: event3.id, memberId: m4.id, status: 'attended' } }),
     prisma.reservation.create({ data: { tenantId, eventId: event3.id, memberId: m6.id, status: 'attended' } }),
   ]);
-
-  const [a1, b1] = sortedPair(m0.id, m1.id);
-  const conn1 = await prisma.connection.create({ data: { tenantId, member1Id: a1, member2Id: b1 } });
-  const [a2, b2] = sortedPair(m0.id, m2.id);
-  const conn2 = await prisma.connection.create({ data: { tenantId, member1Id: a2, member2Id: b2 } });
-
-  for (const msg of [
-    { connectionId: conn1.id, senderId: m1.id, content: 'はじめまして！今日はよろしくお願いします😊' },
-    { connectionId: conn1.id, senderId: m0.id, content: 'こちらこそ！楽しみましょう' },
-    { connectionId: conn1.id, senderId: m1.id, content: '次のBBQ交流会も参加しますか？' },
-    { connectionId: conn1.id, senderId: m0.id, content: '行く予定です！一緒に行きましょう' },
-    { connectionId: conn1.id, senderId: m1.id, content: 'やったー！楽しみにしてます🎉' },
-  ]) { await prisma.message.create({ data: msg }); }
-
-  for (const msg of [
-    { connectionId: conn2.id, senderId: m0.id, content: 'QRスキャンありがとうございました！' },
-    { connectionId: conn2.id, senderId: m2.id, content: 'こちらこそ！またイベントで会いましょう' },
-    { connectionId: conn2.id, senderId: m2.id, content: '次の交流会はいつですか？' },
-  ]) { await prisma.message.create({ data: msg }); }
 
   console.log('✅ tenant-001: 大学生交流サークル Connect');
 }

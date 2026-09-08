@@ -49,29 +49,12 @@ export class LiffController {
     return this.liffService.getPublishedTenantReviews(tenantId);
   }
 
-  @UseGuards(LiffGuard)
-  @Get('events/with-friends')
-  getEventsWithFriends(
-    @Param('tenantId') tenantId: string,
-    @LiffUser() lineUserId: string,
-  ) {
-    return this.liffService.getEvents(tenantId, lineUserId);
-  }
-
   @Get('events/:eventId')
   getEvent(
     @Param('tenantId') tenantId: string,
     @Param('eventId') eventId: string,
   ) {
     return this.liffService.getEvent(tenantId, eventId);
-  }
-
-  @Get('members/:memberId')
-  getMemberProfile(
-    @Param('tenantId') tenantId: string,
-    @Param('memberId') memberId: string,
-  ) {
-    return this.liffService.getMemberProfile(tenantId, memberId);
   }
 
   // ---- 認証必須（LINEトークン検証） ----
@@ -182,101 +165,6 @@ export class LiffController {
     @Body() body: { lineDisplayName?: string; linePictureUrl?: string },
   ) {
     return this.liffService.syncLineProfile(tenantId, lineUserId, body);
-  }
-
-  @UseGuards(LiffGuard)
-  @Patch('profile/settings')
-  updateSettings(
-    @Param('tenantId') tenantId: string,
-    @LiffUser() lineUserId: string,
-    @Body() body: { showEventsToConnections: boolean },
-  ) {
-    return this.liffService.updateSettings(
-      tenantId,
-      lineUserId,
-      body.showEventsToConnections,
-    );
-  }
-
-  @UseGuards(LiffGuard)
-  @Post('connections')
-  createConnection(
-    @Param('tenantId') tenantId: string,
-    @LiffUser() lineUserId: string,
-    @Body() body: { targetMemberId: string },
-  ) {
-    return this.liffService.createConnection(
-      tenantId,
-      lineUserId,
-      body.targetMemberId,
-    );
-  }
-
-  @UseGuards(LiffGuard)
-  @Get('connections')
-  getConnections(
-    @Param('tenantId') tenantId: string,
-    @LiffUser() lineUserId: string,
-  ) {
-    return this.liffService.getConnections(tenantId, lineUserId);
-  }
-
-  @UseGuards(LiffGuard)
-  @Get('connections/:connectionId/messages')
-  getMessages(
-    @Param('tenantId') tenantId: string,
-    @Param('connectionId') connectionId: string,
-    @LiffUser() lineUserId: string,
-  ) {
-    return this.liffService.getMessages(tenantId, connectionId, lineUserId);
-  }
-
-  @UseGuards(LiffGuard)
-  @Post('connections/:connectionId/messages')
-  sendMessage(
-    @Param('tenantId') tenantId: string,
-    @Param('connectionId') connectionId: string,
-    @LiffUser() lineUserId: string,
-    @Body() dto: SendMessageDto,
-  ) {
-    return this.liffService.sendMessage(
-      tenantId,
-      connectionId,
-      lineUserId,
-      dto.content,
-    );
-  }
-
-  @UseGuards(LiffGuard)
-  @Get('notifications')
-  getNotifications(
-    @Param('tenantId') tenantId: string,
-    @LiffUser() lineUserId: string,
-  ) {
-    return this.liffService.getNotifications(tenantId, lineUserId);
-  }
-
-  @UseGuards(LiffGuard)
-  @Patch('notifications/:notificationId/read')
-  markRead(
-    @Param('tenantId') tenantId: string,
-    @Param('notificationId') notificationId: string,
-    @LiffUser() lineUserId: string,
-  ) {
-    return this.liffService.markNotificationRead(
-      tenantId,
-      notificationId,
-      lineUserId,
-    );
-  }
-
-  @UseGuards(LiffGuard)
-  @Patch('notifications/read-all')
-  markAllRead(
-    @Param('tenantId') tenantId: string,
-    @LiffUser() lineUserId: string,
-  ) {
-    return this.liffService.markAllNotificationsRead(tenantId, lineUserId);
   }
 
   @UseGuards(LiffGuard)

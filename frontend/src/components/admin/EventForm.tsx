@@ -31,10 +31,8 @@ type EventFormData = {
   priceFemale: string;
   paymentTiming: 'onsite' | 'prepay' | 'both';
   notifyOnReserve: boolean;
-  notifyOnReserveApp: boolean;
   reservationMessageTemplate: string;
   remindEnabled: boolean;
-  remindApp: boolean;
   remindPreset: 'prev18' | 'day9' | 'custom';
   remindAt: string;
   reminderMessageTemplate: string;
@@ -341,10 +339,8 @@ export default function EventForm({
     priceFemale: initial?.priceFemale?.toString() ?? '0',
     paymentTiming: (initial?.paymentTiming ?? 'onsite') as 'onsite' | 'prepay' | 'both',
     notifyOnReserve: initial?.notifyOnReserve ?? true,
-    notifyOnReserveApp: initial?.notifyOnReserveApp ?? true,
     reservationMessageTemplate: initial?.reservationMessageTemplate ?? '',
     remindEnabled: initial?.remindEnabled ?? false,
-    remindApp: initial?.remindApp ?? false,
     remindPreset: 'prev18',
     remindAt: toLocalDatetimeValue(initial?.remindAt),
     reminderMessageTemplate: initial?.reminderMessageTemplate ?? '',
@@ -599,7 +595,7 @@ export default function EventForm({
     }
 
     let remindAt: string | null = null;
-    if (form.remindEnabled || form.remindApp) {
+    if (form.remindEnabled) {
       const value = form.remindPreset !== 'custom' ? calcRemindAt(form.remindPreset, form.heldAt) : form.remindAt;
       if (value && new Date(value).getTime() >= heldAtMs) {
         setError('リマインド日時は開始日時より前にしてください。');
@@ -640,10 +636,8 @@ export default function EventForm({
       paymentRequired: form.paymentTiming === 'prepay',
       paymentTiming: form.paymentTiming,
       notifyOnReserve: form.notifyOnReserve,
-      notifyOnReserveApp: form.notifyOnReserveApp,
       reservationMessageTemplate: form.reservationMessageTemplate || null,
       remindEnabled: form.remindEnabled,
-      remindApp: form.remindApp,
       remindAt,
       reminderMessageTemplate: form.reminderMessageTemplate || null,
       levelEnabled: form.levelEnabled,
@@ -1152,7 +1146,7 @@ export default function EventForm({
               <Link href="/admin/settings/line" className="ml-1 underline">LINE設定へ</Link>
             </p>
           )}
-          {(form.remindEnabled || form.remindApp) && (
+          {form.remindEnabled && (
             <div className="space-y-2 border-l-2 border-[#06C755]/30 pl-4 pt-1">
               <RadioGroup
                 value={form.remindPreset}

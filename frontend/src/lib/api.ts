@@ -114,8 +114,8 @@ export const api = {
         `/admin/events/${id}/checkin`,
         { method: 'POST', body: JSON.stringify({ memberId }) },
       ),
-    sendMessage: (id: string, data: { content: string; sendLine: boolean; sendApp: boolean }) =>
-      request<{ lineSentCount: number; appSentCount: number; total: number }>(
+    sendMessage: (id: string, data: { content: string; sendLine: boolean }) =>
+      request<{ lineSentCount: number; total: number }>(
         `/admin/events/${id}/message`,
         { method: 'POST', body: JSON.stringify(data) },
       ),
@@ -148,10 +148,8 @@ export const api = {
   liff: {
     recordAccess: (tenantId: string) => request<{ ok: boolean }>(`/liff/${tenantId}/access`, { method: 'POST' }),
     tenant: (tenantId: string) => request<LiffTenant>(`/liff/${tenantId}`),
-    events: (tenantId: string, includeFriends?: boolean) =>
-      request<LiffEvent[]>(
-        `/liff/${tenantId}/${includeFriends ? 'events/with-friends' : 'events'}`,
-      ),
+    events: (tenantId: string) =>
+      request<LiffEvent[]>(`/liff/${tenantId}/events`),
     event: (tenantId: string, eventId: string) =>
       request<LiffEvent>(`/liff/${tenantId}/events/${eventId}`),
     activity: (tenantId: string) =>
@@ -192,28 +190,6 @@ export const api = {
       void lineUserId;
       return request<LiffProfile>(`/liff/${tenantId}/profile`);
     },
-    memberProfile: (tenantId: string, memberId: string) =>
-      request<LiffProfile>(`/liff/${tenantId}/members/${memberId}`),
-    createConnection: (tenantId: string, _myLineUserId: string, targetMemberId: string) =>
-      request<LiffConnection & { alreadyConnected: boolean }>(`/liff/${tenantId}/connections`, {
-        method: 'POST',
-        body: JSON.stringify({ targetMemberId }),
-      }),
-    connections: (tenantId: string, lineUserId: string) => {
-      void lineUserId;
-      return request<LiffConnection[]>(`/liff/${tenantId}/connections`);
-    },
-    messages: (tenantId: string, connectionId: string, lineUserId: string) => {
-      void lineUserId;
-      return request<ChatRoom>(`/liff/${tenantId}/connections/${connectionId}/messages`);
-    },
-    sendMessage: (tenantId: string, connectionId: string, lineUserId: string, content: string) => {
-      void lineUserId;
-      return request<ChatMessage>(`/liff/${tenantId}/connections/${connectionId}/messages`, {
-        method: 'POST',
-        body: JSON.stringify({ content }),
-      });
-    },
     updateProfile: (tenantId: string, _lineUserId: string, data: { name: string; grade: string; gender: string; level?: string; comment?: string }) =>
       request<LiffProfile>(
         `/liff/${tenantId}/profile`,
@@ -226,11 +202,6 @@ export const api = {
         `/liff/${tenantId}/profile/line`,
         { method: 'PATCH', body: JSON.stringify(data) },
       ),
-    updateSettings: (tenantId: string, _lineUserId: string, settings: { showEventsToConnections: boolean }) =>
-      request<{ showEventsToConnections: boolean }>(
-        `/liff/${tenantId}/profile/settings`,
-        { method: 'PATCH', body: JSON.stringify(settings) },
-      ),
     supportMessages: (tenantId: string, lineUserId: string) => {
       void lineUserId;
       return request<SupportMessage[]>(`/liff/${tenantId}/support`);
@@ -241,18 +212,6 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ content }),
       });
-    },
-  },
-  notifications: {
-    list: (tenantId: string, lineUserId: string) => {
-      void lineUserId;
-      return request<AppNotification[]>(`/liff/${tenantId}/notifications`);
-    },
-    markRead: (tenantId: string, id: string) =>
-      request(`/liff/${tenantId}/notifications/${id}/read`, { method: 'PATCH' }),
-    markAllRead: (tenantId: string, lineUserId: string) => {
-      void lineUserId;
-      return request(`/liff/${tenantId}/notifications/read-all`, { method: 'PATCH' });
     },
   },
   public: {
@@ -485,10 +444,8 @@ export interface Event {
   paymentRequired: boolean;
   paymentTiming?: string;
   notifyOnReserve: boolean;
-  notifyOnReserveApp?: boolean;
   reservationMessageTemplate?: string | null;
   remindEnabled: boolean;
-  remindApp?: boolean;
   remindAt?: string;
   remindedAt?: string;
   reminderMessageTemplate?: string | null;
@@ -526,10 +483,8 @@ export interface EventInput {
   paymentRequired?: boolean;
   paymentTiming?: string;
   notifyOnReserve?: boolean;
-  notifyOnReserveApp?: boolean;
   reservationMessageTemplate?: string | null;
   remindEnabled?: boolean;
-  remindApp?: boolean;
   remindAt?: string | null;
   reminderMessageTemplate?: string | null;
   imageUrl?: string | null;
@@ -740,7 +695,6 @@ export interface LiffEvent {
   rosterShareToken?: string | null;
   reserveActionStyle?: string | null;
   category?: string | null;
-  friendAttendees?: { id: string; name: string | null }[];
 }
 
 export interface LiffTenantReview {
@@ -886,7 +840,6 @@ export interface LiffProfile {
   gender?: string;
   level?: string;
   comment?: string;
-  showEventsToConnections: boolean;
 }
 
 export interface LiffMyReservation {
@@ -908,27 +861,6 @@ export interface LiffMyReservation {
     descriptionFemale?: string | null;
     category?: string | null;
   };
-}
-
-export interface LiffConnection {
-  id: string;
-  partner: { id: string; name?: string; grade?: string };
-  lastMessage: { content: string; createdAt: string } | null;
-  createdAt: string;
-}
-
-export interface ChatMessage {
-  id: string;
-  content: string;
-  senderId: string;
-  createdAt: string;
-}
-
-export interface ChatRoom {
-  partnerId: string;
-  partnerName?: string;
-  myMemberId: string;
-  messages: ChatMessage[];
 }
 
 export interface ReserveResult {
@@ -1362,14 +1294,6 @@ export interface PublicEvent {
     linePictureUrl?: string;
     iconUrl?: string;
   };
-}
-
-export interface AppNotification {
-  id: string;
-  title: string;
-  body: string;
-  read: boolean;
-  createdAt: string;
 }
 
 export function formatDateShort(dateStr: string): string {

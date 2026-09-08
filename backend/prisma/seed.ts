@@ -12,32 +12,16 @@ function daysFromNow(days: number, hour: number, minute = 0) {
   return date;
 }
 
-function sortedPair(a: string, b: string): [string, string] {
-  return a < b ? [a, b] : [b, a];
-}
-
 async function clearTenantData() {
   const events = await prisma.event.findMany({
     where: { tenantId },
     select: { id: true },
   });
-  const members = await prisma.member.findMany({
-    where: { tenantId },
-    select: { id: true },
-  });
 
   const eventIds = events.map((event) => event.id);
-  const memberIds = members.map((member) => member.id);
 
   await prisma.tenantReview.deleteMany({ where: { tenantId } });
   await prisma.eventLike.deleteMany({ where: { eventId: { in: eventIds } } });
-  await prisma.notification.deleteMany({ where: { memberId: { in: memberIds } } });
-  await prisma.message.deleteMany({
-    where: {
-      connection: { tenantId },
-    },
-  });
-  await prisma.connection.deleteMany({ where: { tenantId } });
   await prisma.reservation.deleteMany({ where: { tenantId } });
   await prisma.member.deleteMany({ where: { tenantId } });
   await prisma.event.deleteMany({ where: { tenantId } });
@@ -86,7 +70,6 @@ async function main() {
         price: 1000,
         paymentRequired: false,
         notifyOnReserve: true,
-        notifyOnReserveApp: true,
         remindEnabled: true,
         remindAt: daysFromNow(9, 18),
       },
@@ -105,7 +88,6 @@ async function main() {
         price: 1500,
         paymentRequired: false,
         notifyOnReserve: true,
-        notifyOnReserveApp: true,
         remindEnabled: false,
       },
     }),
@@ -123,7 +105,6 @@ async function main() {
         price: 1200,
         paymentRequired: false,
         notifyOnReserve: true,
-        notifyOnReserveApp: false,
         remindEnabled: false,
       },
     }),
@@ -141,7 +122,6 @@ async function main() {
         price: 1000,
         paymentRequired: false,
         notifyOnReserve: true,
-        notifyOnReserveApp: true,
         remindEnabled: false,
       },
     }),
@@ -158,7 +138,6 @@ async function main() {
         price: 0,
         paymentRequired: false,
         notifyOnReserve: true,
-        notifyOnReserveApp: false,
         remindEnabled: false,
       },
     }),
@@ -173,7 +152,6 @@ async function main() {
         name: 'デモユーザー',
         grade: '社会人',
         gender: '男性',
-        showEventsToConnections: true,
       },
     }),
     prisma.member.create({
@@ -184,7 +162,6 @@ async function main() {
         name: '山田 太郎',
         grade: '社会人',
         gender: '男性',
-        showEventsToConnections: true,
       },
     }),
     prisma.member.create({
@@ -195,7 +172,6 @@ async function main() {
         name: '佐藤 花子',
         grade: '大学4年',
         gender: '女性',
-        showEventsToConnections: true,
       },
     }),
     prisma.member.create({
@@ -206,7 +182,6 @@ async function main() {
         name: '鈴木 一郎',
         grade: '社会人',
         gender: '男性',
-        showEventsToConnections: true,
       },
     }),
     prisma.member.create({
@@ -217,7 +192,6 @@ async function main() {
         name: '田中 美咲',
         grade: '大学2年',
         gender: '女性',
-        showEventsToConnections: false,
       },
     }),
     prisma.member.create({
@@ -228,7 +202,6 @@ async function main() {
         name: '高橋 健太',
         grade: '社会人',
         gender: '男性',
-        showEventsToConnections: true,
       },
     }),
   ]);
@@ -282,58 +255,6 @@ async function main() {
         memberId: suzuki.id,
         content: '久しぶりのバドミントンでしたが、ゆるく楽しめました。次回も参加したいです。',
         isPublished: false,
-      },
-    ],
-  });
-
-  const [a1, b1] = sortedPair(demo.id, yamada.id);
-  const connection1 = await prisma.connection.create({
-    data: { tenantId, member1Id: a1, member2Id: b1 },
-  });
-
-  const [a2, b2] = sortedPair(demo.id, sato.id);
-  const connection2 = await prisma.connection.create({
-    data: { tenantId, member1Id: a2, member2Id: b2 },
-  });
-
-  await prisma.message.createMany({
-    data: [
-      {
-        connectionId: connection1.id,
-        senderId: yamada.id,
-        content: 'この前のバドミントン楽しかったです。次のフットサルも行きますか？',
-      },
-      {
-        connectionId: connection1.id,
-        senderId: demo.id,
-        content: '行く予定です！初心者でも大丈夫そうなので一緒に行きましょう。',
-      },
-      {
-        connectionId: connection2.id,
-        senderId: sato.id,
-        content: '友達紹介のリンクありがとう！次回も参加してみます。',
-      },
-      {
-        connectionId: connection2.id,
-        senderId: demo.id,
-        content: 'ぜひぜひ。初参加でも浮かない雰囲気で良かったです。',
-      },
-    ],
-  });
-
-  await prisma.notification.createMany({
-    data: [
-      {
-        tenantId,
-        memberId: demo.id,
-        title: '予約が完了しました',
-        body: '東京20代バドミントン交流会の予約が完了しました。',
-      },
-      {
-        tenantId,
-        memberId: sato.id,
-        title: '主催者から返信が届きました',
-        body: '友達紹介について主催者から返信が届きました。',
       },
     ],
   });

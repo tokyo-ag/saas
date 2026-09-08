@@ -120,22 +120,12 @@ export class CreateEventDto {
   notifyOnReserve: boolean;
 
   @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => Boolean(value))
-  notifyOnReserveApp?: boolean;
-
-  @IsOptional()
   @IsString()
   reservationMessageTemplate?: string | null;
 
   @IsBoolean()
   @Transform(({ value }) => Boolean(value))
   remindEnabled: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => Boolean(value))
-  remindApp?: boolean;
 
   @IsOptional()
   @IsDateString()

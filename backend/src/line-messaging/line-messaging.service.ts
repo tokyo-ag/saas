@@ -106,20 +106,6 @@ export class LineMessagingService {
     await this.sendPushMessage(accessToken, lineUserId, lines.join('\n'));
   }
 
-  async sendTalkNotification(
-    accessToken: string,
-    lineUserId: string,
-    senderName: string,
-    content: string,
-  ): Promise<void> {
-    const preview = content.length > 50 ? content.slice(0, 50) + '…' : content;
-    await this.sendPushMessage(
-      accessToken,
-      lineUserId,
-      `💬 ${senderName}さんからメッセージが届きました\n「${preview}」`,
-    );
-  }
-
   async sendWaitlistRegistered(
     accessToken: string,
     lineUserId: string,

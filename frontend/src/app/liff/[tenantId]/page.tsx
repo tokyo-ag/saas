@@ -24,10 +24,8 @@ function displayLocation(event: { location: string; locationHint?: string | null
   return event.locationHint || event.location;
 }
 
-function AvatarRow({ count, friends }: { count: number; friends?: { id: string; name: string | null }[] }) {
-  const friendCount = friends?.length ?? 0;
-  const total = count;
-  const shown = Math.min(total, 4);
+function AvatarRow({ count }: { count: number }) {
+  const shown = Math.min(count, 4);
   if (shown === 0) return null;
   const colors = ['bg-green-200', 'bg-blue-200', 'bg-yellow-200', 'bg-pink-200'];
   return (
@@ -36,15 +34,12 @@ function AvatarRow({ count, friends }: { count: number; friends?: { id: string; 
         {Array.from({ length: shown }).map((_, i) => (
           <div key={i} className={`w-4 h-4 rounded-full border border-white ${colors[i % colors.length]}`} />
         ))}
-        {total > 4 && (
+        {count > 4 && (
           <div className="w-4 h-4 rounded-full border border-white bg-gray-200 flex items-center justify-center">
-            <span className="text-[7px] text-gray-500 font-bold">+{total - 4}</span>
+            <span className="text-[7px] text-gray-500 font-bold">+{count - 4}</span>
           </div>
         )}
       </div>
-      {friendCount > 0 && (
-        <span className="text-[10px] font-medium text-green-600">友達{friendCount}人</span>
-      )}
     </div>
   );
 }
@@ -94,7 +89,7 @@ function EventCard({ event, tenantId, accentColor, cardBg, myStatus }: { event: 
       {/* info */}
       <div className="px-2.5 pt-2 pb-2.5 space-y-1" style={{ color: readableTextColor(cardBg) }}>
         <p className="text-[10px] opacity-60">{formatDateShort(event.heldAt)}</p>
-        <AvatarRow count={event.reservedCount} friends={event.friendAttendees} />
+        <AvatarRow count={event.reservedCount} />
         <div className="flex items-center gap-1 flex-wrap">
           <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">{displayLocation(event, myStatus)}</span>
           {event.priceMale != null && event.priceFemale != null ? (
@@ -567,11 +562,6 @@ export default function LiffTopPage() {
       if (lineProfile?.userId) setIsLoggedIn(true);
       const uid = lineProfile?.userId ?? `demo-${tenantId}`;
       if (uid && lineProfile?.userId) {
-        const eventsWithFriends = await api.liff
-          .events(tenantId, true)
-          .catch(() => null);
-        if (eventsWithFriends) setEvents(eventsWithFriends);
-
         const myReservations = await api.liff.myReservations(tenantId).catch(() => []);
         setMyStatusByEvent(
           Object.fromEntries(myReservations.map((r) => [r.event.id, r.status])),

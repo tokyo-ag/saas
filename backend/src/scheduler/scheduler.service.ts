@@ -49,9 +49,6 @@ export class SchedulerService {
         include: { member: true },
       });
 
-      const dateStr = new Date(event.heldAt).toLocaleString('ja-JP', {
-        timeZone: 'Asia/Tokyo',
-      });
       for (const r of reservations) {
         if (r.member.lineUserId && tenant?.lineChannelAccessToken) {
           await this.lineMessaging.sendRemind(
@@ -69,16 +66,6 @@ export class SchedulerService {
               priceFemale: event.priceFemale,
             },
           );
-        }
-        if (event.remindApp) {
-          await this.prisma.notification.create({
-            data: {
-              tenantId: event.tenantId,
-              memberId: r.member.id,
-              title: 'イベントリマインド',
-              body: `【${event.title}】まもなく開催です！\n日時：${dateStr}\n場所：${event.location}`,
-            },
-          });
         }
       }
 

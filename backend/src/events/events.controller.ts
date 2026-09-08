@@ -79,14 +79,13 @@ export class EventsController {
   sendMessage(
     @TenantId() tenantId: string,
     @Param('eventId') eventId: string,
-    @Body() body: { content: string; sendLine: boolean; sendApp: boolean },
+    @Body() body: { content: string; sendLine: boolean },
   ) {
     return this.eventsService.sendMessage(
       tenantId,
       eventId,
       body.content,
       body.sendLine,
-      body.sendApp,
     );
   }
 

@@ -131,7 +131,7 @@ export class LiffService {
   }
 
   // イベント一覧（status=open のものだけ）
-  async getEvents(tenantId: string, lineUserId?: string) {
+  async getEvents(tenantId: string) {
     tenantId = await this.resolveTenantId(tenantId);
     const events = await this.prisma.event.findMany({
       where: {
@@ -150,7 +150,7 @@ export class LiffService {
       orderBy: { heldAt: 'asc' },
     });
 
-    const mapped = events.map((e) => ({
+    return events.map((e) => ({
       id: e.id,
       title: e.title,
       description: e.description,
@@ -171,44 +171,6 @@ export class LiffService {
       iconUrl: e.iconUrl,
       category: e.category,
       levelEnabled: e.levelEnabled,
-      friendAttendees: [] as { id: string; name: string | null }[],
-    }));
-
-    if (!lineUserId) return mapped;
-
-    const me = await this.findMember(tenantId, lineUserId);
-    if (!me) return mapped;
-
-    const connections = await this.prisma.connection.findMany({
-      where: { OR: [{ member1Id: me.id }, { member2Id: me.id }] },
-    });
-    const partnerIds = connections.map((c) =>
-      c.member1Id === me.id ? c.member2Id : c.member1Id,
-    );
-    if (partnerIds.length === 0) return mapped;
-
-    const partners = await this.prisma.member.findMany({
-      where: { id: { in: partnerIds }, showEventsToConnections: true },
-      select: { id: true, name: true },
-    });
-    if (partners.length === 0) return mapped;
-
-    const partnerReservations = await this.prisma.reservation.findMany({
-      where: {
-        memberId: { in: partners.map((p) => p.id) },
-        tenantId,
-        status: { in: ['reserved', 'waitlisted'] },
-      },
-      select: { eventId: true, memberId: true },
-    });
-
-    const partnerMap = new Map(partners.map((p) => [p.id, p]));
-    return mapped.map((event) => ({
-      ...event,
-      friendAttendees: partnerReservations
-        .filter((r) => r.eventId === event.id)
-        .map((r) => partnerMap.get(r.memberId)!)
-        .filter(Boolean),
     }));
   }
 
@@ -711,7 +673,6 @@ export class LiffService {
       gender: member.gender,
       level: member.level,
       comment: member.comment,
-      showEventsToConnections: member.showEventsToConnections,
     };
   }
 
@@ -726,7 +687,6 @@ export class LiffService {
       gender: member.gender,
       level: member.level,
       comment: member.comment,
-      showEventsToConnections: member.showEventsToConnections,
     };
   }
 
@@ -768,7 +728,6 @@ export class LiffService {
       gender: updated.gender,
       level: updated.level,
       comment: updated.comment,
-      showEventsToConnections: updated.showEventsToConnections,
     };
   }
 
@@ -789,177 +748,6 @@ export class LiffService {
         ...(data.linePictureUrl && { linePictureUrl: data.linePictureUrl }),
       },
     });
-  }
-
-  async updateSettings(
-    tenantId: string,
-    lineUserId: string,
-    showEventsToConnections: boolean,
-  ) {
-    tenantId = await this.resolveTenantId(tenantId);
-    const member = await this.prisma.member.update({
-      where: { tenantId_lineUserId: { tenantId, lineUserId } },
-      data: { showEventsToConnections },
-    });
-    return { showEventsToConnections: member.showEventsToConnections };
-  }
-
-  async getMemberProfile(tenantId: string, memberId: string) {
-    tenantId = await this.resolveTenantId(tenantId);
-    const member = await this.prisma.member.findFirst({
-      where: { id: memberId, tenantId },
-    });
-    if (!member) throw new NotFoundException('メンバーが見つかりません');
-    return {
-      id: member.id,
-      name: member.name,
-      grade: member.grade,
-      gender: member.gender,
-    };
-  }
-
-  async createConnection(
-    tenantId: string,
-    myLineUserId: string,
-    targetMemberId: string,
-  ) {
-    tenantId = await this.resolveTenantId(tenantId);
-    const me = await this.findMember(tenantId, myLineUserId);
-    if (!me) throw new NotFoundException('自分のプロフィールが見つかりません');
-    if (me.id === targetMemberId)
-      throw new BadRequestException('自分自身と繋がることはできません');
-
-    const target = await this.prisma.member.findFirst({
-      where: { id: targetMemberId, tenantId },
-    });
-    if (!target) throw new NotFoundException('相手が見つかりません');
-
-    const [m1, m2] = [me.id, targetMemberId].sort();
-    const existing = await this.prisma.connection.findUnique({
-      where: { member1Id_member2Id: { member1Id: m1, member2Id: m2 } },
-    });
-    if (existing) return { ...existing, alreadyConnected: true };
-
-    const conn = await this.prisma.connection.create({
-      data: { tenantId, member1Id: m1, member2Id: m2 },
-    });
-    return { ...conn, alreadyConnected: false };
-  }
-
-  async getConnections(tenantId: string, lineUserId: string) {
-    tenantId = await this.resolveTenantId(tenantId);
-    const me = await this.findMember(tenantId, lineUserId);
-    if (!me) return [];
-
-    const conns = await this.prisma.connection.findMany({
-      where: { tenantId, OR: [{ member1Id: me.id }, { member2Id: me.id }] },
-      include: {
-        member1: { select: { id: true, name: true, grade: true } },
-        member2: { select: { id: true, name: true, grade: true } },
-        messages: { orderBy: { createdAt: 'desc' }, take: 1 },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return conns.map((c) => {
-      const partner = c.member1Id === me.id ? c.member2 : c.member1;
-      const last = c.messages[0];
-      return {
-        id: c.id,
-        partner,
-        lastMessage: last
-          ? { content: last.content, createdAt: last.createdAt }
-          : null,
-        createdAt: c.createdAt,
-      };
-    });
-  }
-
-  async getMessages(
-    tenantId: string,
-    connectionId: string,
-    lineUserId: string,
-  ) {
-    tenantId = await this.resolveTenantId(tenantId);
-    const me = await this.findMember(tenantId, lineUserId);
-    if (!me) throw new NotFoundException('メンバーが見つかりません');
-
-    const conn = await this.prisma.connection.findFirst({
-      where: {
-        id: connectionId,
-        tenantId,
-        OR: [{ member1Id: me.id }, { member2Id: me.id }],
-      },
-      include: {
-        member1: { select: { id: true, name: true } },
-        member2: { select: { id: true, name: true } },
-      },
-    });
-    if (!conn) throw new NotFoundException('会話が見つかりません');
-
-    const partner = conn.member1Id === me.id ? conn.member2 : conn.member1;
-
-    const messages = await this.prisma.message.findMany({
-      where: { connectionId },
-      orderBy: { createdAt: 'asc' },
-      take: 100,
-    });
-
-    return {
-      partnerId: partner.id,
-      partnerName: partner.name,
-      myMemberId: me.id,
-      messages: messages.map((m) => ({
-        id: m.id,
-        content: m.content,
-        senderId: m.senderId,
-        createdAt: m.createdAt,
-      })),
-    };
-  }
-
-  async sendMessage(
-    tenantId: string,
-    connectionId: string,
-    lineUserId: string,
-    content: string,
-  ) {
-    tenantId = await this.resolveTenantId(tenantId);
-    const me = await this.findMember(tenantId, lineUserId);
-    if (!me) throw new NotFoundException('メンバーが見つかりません');
-
-    const conn = await this.prisma.connection.findFirst({
-      where: {
-        id: connectionId,
-        tenantId,
-        OR: [{ member1Id: me.id }, { member2Id: me.id }],
-      },
-      include: {
-        member1: { select: { id: true, lineUserId: true } },
-        member2: { select: { id: true, lineUserId: true } },
-      },
-    });
-    if (!conn) throw new NotFoundException('会話が見つかりません');
-
-    const message = await this.prisma.message.create({
-      data: { connectionId, senderId: me.id, content },
-    });
-
-    // 相手にLINEプッシュ通知
-    const partner = conn.member1Id === me.id ? conn.member2 : conn.member1;
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-    });
-    if (partner.lineUserId) {
-      await this.lineMessaging.sendTalkNotification(
-        tenant?.lineChannelAccessToken ?? '',
-        partner.lineUserId,
-        me.name ?? 'メンバー',
-        content,
-      );
-    }
-
-    return message;
   }
 
   // キャンセル（キャンセル待ちの自動繰り上げ込み）
@@ -1045,42 +833,6 @@ export class LiffService {
     }
 
     return { message: 'キャンセルしました' };
-  }
-
-  async getNotifications(tenantId: string, lineUserId: string) {
-    tenantId = await this.resolveTenantId(tenantId);
-    const member = await this.findMember(tenantId, lineUserId);
-    if (!member) return [];
-
-    return this.prisma.notification.findMany({
-      where: { memberId: member.id },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
-  }
-
-  async markNotificationRead(
-    tenantId: string,
-    notificationId: string,
-    lineUserId: string,
-  ) {
-    tenantId = await this.resolveTenantId(tenantId);
-    const member = await this.findMember(tenantId, lineUserId);
-    if (!member) return;
-    return this.prisma.notification.updateMany({
-      where: { id: notificationId, tenantId, memberId: member.id },
-      data: { read: true },
-    });
-  }
-
-  async markAllNotificationsRead(tenantId: string, lineUserId: string) {
-    tenantId = await this.resolveTenantId(tenantId);
-    const member = await this.findMember(tenantId, lineUserId);
-    if (!member) return;
-    return this.prisma.notification.updateMany({
-      where: { memberId: member.id, read: false },
-      data: { read: true },
-    });
   }
 
   // サポートメッセージ（ユーザー↔COMIU）
