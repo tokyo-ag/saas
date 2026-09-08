@@ -3,37 +3,28 @@
 import { useEffect, useState } from 'react';
 import { api, AdminTenantReview, formatDate } from '@/lib/api';
 
-function TenantReviewSection() {
-  const [rows, setRows] = useState<AdminTenantReview[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+function TenantReviewSection({
+  rows,
+  loading,
+  error,
+  onToggle,
+  onSaveEdit,
+}: {
+  rows: AdminTenantReview[];
+  loading: boolean;
+  error: string;
+  onToggle: (row: AdminTenantReview) => void;
+  onSaveEdit: (row: AdminTenantReview, content: string) => Promise<void>;
+}) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    api.tenant.reviews()
-      .then((data) => { if (active) setRows(data); })
-      .catch((err) => { if (active) setError(err?.message ?? 'サイト全体の口コミの読み込みに失敗しました'); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, []);
-
-  async function toggleReview(row: AdminTenantReview) {
-    const nextPublished = !row.isPublished;
-    setRows((prev) => prev.map((item) => (item.id === row.id ? { ...item, isPublished: nextPublished } : item)));
-    try {
-      await api.tenant.updateReview(row.id, { isPublished: nextPublished });
-    } catch {
-      setRows((prev) => prev.map((item) => (item.id === row.id ? { ...item, isPublished: row.isPublished } : item)));
-      setError('公開設定の更新に失敗しました');
-    }
-  }
+  const [saveError, setSaveError] = useState('');
 
   function startEdit(row: AdminTenantReview) {
     setEditingId(row.id);
     setEditContent(row.content);
+    setSaveError('');
   }
 
   function cancelEdit() {
@@ -44,17 +35,16 @@ function TenantReviewSection() {
   async function saveEdit(row: AdminTenantReview) {
     const content = editContent.trim();
     if (content.length < 5 || content.length > 300) {
-      setError('感想は5文字以上300文字以内で入力してください');
+      setSaveError('感想は5文字以上300文字以内で入力してください');
       return;
     }
     setSaving(true);
     try {
-      await api.tenant.updateReview(row.id, { content });
-      setRows((prev) => prev.map((item) => (item.id === row.id ? { ...item, content } : item)));
-      setError('');
+      await onSaveEdit(row, content);
+      setSaveError('');
       setEditingId(null);
     } catch {
-      setError('口コミの更新に失敗しました');
+      setSaveError('口コミの更新に失敗しました');
     } finally {
       setSaving(false);
     }
@@ -67,9 +57,9 @@ function TenantReviewSection() {
         <p className="mt-1 text-xs text-gray-400">公開サイトの「口コミ」セクションに表示されます。LINE連携済みのメンバーなら、予約の有無に関わらず投稿できます。</p>
       </div>
 
-      {error && (
+      {(error || saveError) && (
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
+          {error || saveError}
         </div>
       )}
 
@@ -143,7 +133,7 @@ function TenantReviewSection() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => void toggleReview(row)}
+                        onClick={() => onToggle(row)}
                         className={`rounded-lg px-4 py-2 text-xs font-bold ${
                           row.isPublished
                             ? 'border border-gray-200 text-gray-600 hover:bg-gray-50'
@@ -164,14 +154,87 @@ function TenantReviewSection() {
   );
 }
 
+function TenantReviewPreview({ rows }: { rows: AdminTenantReview[] }) {
+  const publishedRows = rows.filter((row) => row.isPublished);
+  return (
+    <aside className="hidden w-full max-w-[380px] shrink-0 lg:block">
+      <div className="sticky top-4">
+        <p className="mb-2 text-xs font-bold text-gray-500">個人のLIFF画面での見え方</p>
+        <div className="overflow-hidden rounded-2xl bg-gray-100 p-2 shadow-inner">
+          <div className="mx-auto max-h-[70vh] max-w-[350px] overflow-y-auto rounded-xl border border-gray-200 bg-[#F7F8FA]">
+            <div className="space-y-3 px-4 py-4">
+              <p className="text-sm font-bold text-gray-800">みんなの声</p>
+              {publishedRows.length === 0 ? (
+                <p className="text-xs text-gray-400">公開中の口コミがまだありません</p>
+              ) : (
+                publishedRows.map((row) => (
+                  <div key={row.id} className="flex gap-3 rounded-2xl bg-white p-4 shadow-sm">
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-400">
+                      {(row.member.name ?? '参').slice(0, 1)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="mb-0.5 text-xs font-medium text-gray-700">{row.member.name ?? '参加者'}</p>
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{row.content}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
 export default function AdminReviewsPage() {
+  const [rows, setRows] = useState<AdminTenantReview[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    api.tenant.reviews()
+      .then((data) => { if (active) setRows(data); })
+      .catch((err) => { if (active) setError(err?.message ?? 'サイト全体の口コミの読み込みに失敗しました'); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
+
+  async function handleToggle(row: AdminTenantReview) {
+    const nextPublished = !row.isPublished;
+    setRows((prev) => prev.map((item) => (item.id === row.id ? { ...item, isPublished: nextPublished } : item)));
+    try {
+      await api.tenant.updateReview(row.id, { isPublished: nextPublished });
+    } catch {
+      setRows((prev) => prev.map((item) => (item.id === row.id ? { ...item, isPublished: row.isPublished } : item)));
+      setError('公開設定の更新に失敗しました');
+    }
+  }
+
+  async function handleSaveEdit(row: AdminTenantReview, content: string) {
+    await api.tenant.updateReview(row.id, { content });
+    setRows((prev) => prev.map((item) => (item.id === row.id ? { ...item, content } : item)));
+  }
+
   return (
     <div className="px-4 py-4 md:px-6 md:py-6">
       <div className="mb-5">
         <h1 className="text-xl font-bold text-gray-900 md:text-2xl">口コミ</h1>
       </div>
 
-      <TenantReviewSection />
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+        <div className="min-w-0 flex-1">
+          <TenantReviewSection
+            rows={rows}
+            loading={loading}
+            error={error}
+            onToggle={handleToggle}
+            onSaveEdit={handleSaveEdit}
+          />
+        </div>
+        <TenantReviewPreview rows={rows} />
+      </div>
     </div>
   );
 }

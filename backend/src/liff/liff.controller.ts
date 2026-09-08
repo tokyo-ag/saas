@@ -44,6 +44,11 @@ export class LiffController {
     return this.liffService.getRecentActivity(tenantId);
   }
 
+  @Get('reviews')
+  getPublishedTenantReviews(@Param('tenantId') tenantId: string) {
+    return this.liffService.getPublishedTenantReviews(tenantId);
+  }
+
   @UseGuards(LiffGuard)
   @Get('events/with-friends')
   getEventsWithFriends(

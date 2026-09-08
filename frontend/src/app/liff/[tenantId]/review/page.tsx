@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { api, setLiffToken } from '@/lib/api';
+import { api, setLiffToken, TenantReview } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded, liff, redirectToLiffApp, isLiffLoggedIn } from '@/lib/liff';
 import { useLiffTheme, readableTextColor, isLightHexColor } from '@/components/liff/LiffThemeProvider';
 
@@ -47,6 +47,7 @@ export default function TenantReviewPage() {
   const [content, setContent] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [reviews, setReviews] = useState<TenantReview[]>([]);
 
   useEffect(() => {
     async function init() {
@@ -84,6 +85,11 @@ export default function TenantReviewPage() {
         }
       } catch {
         // 初回投稿（まだ口コミが無い）は404相当なので、空フォームのまま進める。
+      }
+      try {
+        setReviews(await api.liff.tenantReviews(tenantId));
+      } catch {
+        // 一覧の取得に失敗しても投稿自体は継続できるようにする。
       }
       setLoading(false);
     }
@@ -225,6 +231,27 @@ export default function TenantReviewPage() {
             </div>
             {error && <p className="text-xs text-red-500">{error}</p>}
           </form>
+        )}
+
+        {reviews.length > 0 && (
+          <div className="mt-4 space-y-3">
+            <p className="text-sm font-bold text-gray-800">みんなの声</p>
+            {reviews.map((review) => (
+              <div key={review.id} className="flex gap-3 rounded-2xl bg-white p-4 shadow-sm">
+                {review.authorIconUrl ? (
+                  <img src={review.authorIconUrl} alt="" className="mt-0.5 h-8 w-8 shrink-0 rounded-full object-cover" />
+                ) : (
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-400">
+                    {review.authorName.slice(0, 1)}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="mb-0.5 text-xs font-medium text-gray-700">{review.authorName}</p>
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{review.content}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

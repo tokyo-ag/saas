@@ -289,6 +289,25 @@ export class LiffService {
     });
   }
 
+  // 公開済みの団体全体の口コミ一覧（公開サイトの口コミセクションと同じ内容）。
+  async getPublishedTenantReviews(tenantId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
+    const reviews = await this.prisma.tenantReview.findMany({
+      where: { tenantId, isPublished: true },
+      include: { member: { select: { name: true, linePictureUrl: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 30,
+    });
+
+    return reviews.map((review) => ({
+      id: review.id,
+      content: review.content,
+      createdAt: review.createdAt,
+      authorName: review.member.name ?? '参加者',
+      authorIconUrl: review.member.linePictureUrl,
+    }));
+  }
+
   async submitTenantReview(tenantId: string, dto: SubmitReviewDto) {
     tenantId = await this.resolveTenantId(tenantId);
     if (!dto.lineUserId) {

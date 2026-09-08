@@ -177,6 +177,8 @@ export const api = {
         body: JSON.stringify({ content }),
       });
     },
+    tenantReviews: (tenantId: string) =>
+      request<TenantReview[]>(`/liff/${tenantId}/reviews`),
     reserve: (tenantId: string, data: ReserveInput) =>
       request<ReserveResult>(`/liff/${tenantId}/reservations`, {
         method: 'POST',
