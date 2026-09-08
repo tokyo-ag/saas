@@ -143,11 +143,12 @@ export default function TenantReviewPage() {
       window.location.reload();
       return;
     }
-    if (redirectToLiffApp()) return;
+    // liff.line.me経由だとLINEアプリを強制的に開こうとするため、
+    // ブラウザ内で完結するliff.login()を優先する。
     try {
       liff.login({ redirectUri: window.location.href });
     } catch {
-      window.location.reload();
+      if (!redirectToLiffApp()) window.location.reload();
     }
   }
 
