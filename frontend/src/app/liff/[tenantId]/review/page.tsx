@@ -175,7 +175,8 @@ export default function TenantReviewPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: theme.backgroundColor }}>
+    <div className="min-h-screen sm:bg-gray-200" style={{ backgroundColor: theme.backgroundColor }}>
+      <div className="mx-auto w-full max-w-[480px] sm:my-8 sm:overflow-hidden sm:rounded-3xl sm:shadow-2xl" style={{ backgroundColor: theme.backgroundColor, minHeight: '100dvh' }}>
       <div className="px-4 py-5" style={{ paddingTop: 'calc(env(safe-area-inset-top, 16px) + 20px)' }}>
         {myReview ? (
           <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
@@ -253,6 +254,7 @@ export default function TenantReviewPage() {
             ))}
           </div>
         )}
+      </div>
       </div>
     </div>
   );
