@@ -13,7 +13,12 @@ let initInfo: { ok: boolean; hasId: boolean; loggedIn: boolean } | null = null;
 const LIFF_LOGIN_TRY_KEY = 'liff-login-tried';
 const LIFF_LOGIN_RETRY_INTERVAL_MS = 5 * 60 * 1000;
 
-async function getLiffId(): Promise<string> {
+async function getLiffId(liffIdOverride?: string): Promise<string> {
+  if (liffIdOverride) {
+    resolvedLiffId = liffIdOverride;
+    usingTenantLiff = false;
+    return resolvedLiffId;
+  }
   if (resolvedLiffId) return resolvedLiffId;
   if (typeof window !== 'undefined') {
     const match = window.location.pathname.match(/^\/liff\/([^/]+)/);
@@ -56,8 +61,8 @@ export function isLiffLoggedIn(): boolean {
   }
 }
 
-export async function initLiff(): Promise<boolean> {
-  const id = await getLiffId();
+export async function initLiff(liffIdOverride?: string): Promise<boolean> {
+  const id = await getLiffId(liffIdOverride);
   if (initialized && initializedLiffId === id) {
     // 既に初期化済みでも、ページ遷移や時間経過でトークンが古くなっている可能性があるため
     // liff.init()はスキップしつつ、トークンだけは毎回取り直す。

@@ -2,10 +2,10 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { API_URL, IMAGE_BASE_URL, SITE_URL, buildLiffUrl } from '@/lib/config';
+import { API_URL, IMAGE_BASE_URL, SITE_URL } from '@/lib/config';
 import type { TenantReview } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
-import { SmartLiffButton } from '@/components/public/SmartLiffButton';
+import { TenantReviewComposer } from '@/components/public/TenantReviewComposer';
 
 export const revalidate = 60;
 
@@ -106,8 +106,6 @@ export default async function ReviewsListPage({
   const textColor = page?.textColor || '#111827';
   const name = tenant.lineDisplayName || tenant.name || tenantCode;
   const icon = imgUrl(tenant.linePictureUrl ?? tenant.iconUrl, IMAGE_BASE_URL);
-  const reviewPath = `/liff/${tenantCode}/review`;
-  const reviewHref = buildLiffUrl(reviewPath, { liffId: tenant.liffId, endpointPath: '/' }) ?? reviewPath;
 
   return (
     <div style={{ backgroundColor, minHeight: '100vh' }}>
@@ -132,14 +130,7 @@ export default async function ReviewsListPage({
 
         <h1 className="mb-4 text-sm font-bold" style={{ color: textColor }}>口コミ・評判</h1>
 
-        <SmartLiffButton
-          href={reviewHref}
-          directHref={`${SITE_URL}${reviewPath}`}
-          className="mb-4 inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 text-sm font-bold"
-          style={{ backgroundColor: accentColor, color: '#ffffff' }}
-        >
-          感想を書く
-        </SmartLiffButton>
+        <TenantReviewComposer tenantId={tenantCode} liffId={tenant.liffId} accentColor={accentColor} />
 
         {reviews.length === 0 ? (
           <p className="text-sm text-gray-400">まだ口コミはありません。参加した方の感想をお楽しみに。</p>
