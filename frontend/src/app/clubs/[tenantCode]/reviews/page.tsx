@@ -18,20 +18,43 @@ type ReviewsTenantInfo = {
   pages?: Array<{ slug: string }>;
 };
 
-async function fetchReviews(tenantCode: string): Promise<{ reviews: TenantReview[]; tenantName: string; homeHref: string; tenantIcon: string | null; liffId: string | null } | null> {
+type TenantPageStyle = {
+  accentColor?: string | null;
+  backgroundColor?: string | null;
+  textColor?: string | null;
+};
+
+async function fetchTenant(tenantCode: string): Promise<ReviewsTenantInfo | null> {
   try {
-    const [reviewsRes, tenantRes] = await Promise.all([
-      fetch(`${API_URL}/api/public/tenants/${tenantCode}/reviews`, { next: { revalidate } }),
-      fetch(`${API_URL}/api/public/tenants/${tenantCode}`, { next: { revalidate } }),
-    ]);
-    if (!reviewsRes.ok) return null;
-    const reviews = await reviewsRes.json();
-    const tenant = tenantRes.ok ? ((await tenantRes.json()) as ReviewsTenantInfo) : null;
-    const tenantName = tenant?.name ?? tenant?.lineDisplayName ?? tenantCode;
-    const primarySlug = tenant?.pages?.[0]?.slug;
-    const homeHref = primarySlug ? `/clubs/${tenantCode}/${primarySlug}` : `/clubs/${tenantCode}`;
-    const tenantIcon = imgUrl(tenant?.linePictureUrl ?? tenant?.iconUrl, IMAGE_BASE_URL);
-    return { reviews, tenantName, homeHref, tenantIcon, liffId: tenant?.liffId ?? null };
+    const res = await fetch(`${API_URL}/api/public/tenants/${tenantCode}`, {
+      next: { revalidate },
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+async function fetchReviews(tenantCode: string): Promise<TenantReview[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/tenants/${tenantCode}/reviews`, {
+      next: { revalidate },
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+async function fetchPageStyle(tenantCode: string, slug: string): Promise<TenantPageStyle | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/tenants/${tenantCode}/pages/${slug}`, {
+      next: { revalidate },
+    });
+    if (!res.ok) return null;
+    return res.json();
   } catch {
     return null;
   }
@@ -43,27 +66,18 @@ export async function generateMetadata({
   params: Promise<{ tenantCode: string }>;
 }): Promise<Metadata> {
   const { tenantCode } = await params;
-  const data = await fetchReviews(tenantCode);
-  const tenantName = data?.tenantName ?? tenantCode;
-  const title = `${tenantName}の口コミ・評判 | COMIU`;
-  const description = `${tenantName}に実際に参加したメンバーのリアルな口コミ・感想を掲載。入会や参加を検討している方はぜひ参考にしてください。`;
+  const tenant = await fetchTenant(tenantCode);
+  if (!tenant) {
+    return { title: '団体が見つかりません', robots: { index: false, follow: false } };
+  }
+  const name = tenant.lineDisplayName || tenant.name || tenantCode;
+  const title = `${name}の口コミ・評判 | COMIU`;
+  const description = `${name}に実際に参加したメンバーのリアルな口コミ・感想を掲載。入会や参加を検討している方はぜひ参考にしてください。`;
   return {
     title,
     description,
     alternates: { canonical: `${SITE_URL}/clubs/${tenantCode}/reviews` },
-    openGraph: {
-      title,
-      description,
-      type: 'website',
-      url: `${SITE_URL}/clubs/${tenantCode}/reviews`,
-      locale: 'ja_JP',
-    },
-    twitter: {
-      card: 'summary',
-      title,
-      description,
-    },
-    robots: { index: true, follow: true },
+    openGraph: { title, description, url: `${SITE_URL}/clubs/${tenantCode}/reviews` },
   };
 }
 
@@ -78,29 +92,46 @@ export default async function ReviewsListPage({
   params: Promise<{ tenantCode: string }>;
 }) {
   const { tenantCode } = await params;
-  const data = await fetchReviews(tenantCode);
-  if (!data) notFound();
-  const { reviews, tenantName, homeHref, tenantIcon, liffId } = data;
+  const tenant = await fetchTenant(tenantCode);
+  if (!tenant) notFound();
+
+  const slug = tenant.pages?.[0]?.slug;
+  const [reviews, page] = await Promise.all([
+    fetchReviews(tenantCode),
+    slug ? fetchPageStyle(tenantCode, slug) : Promise.resolve(null),
+  ]);
+
+  const accentColor = page?.accentColor || '#06C755';
+  const backgroundColor = page?.backgroundColor || '#F7F8FA';
+  const textColor = page?.textColor || '#111827';
+  const name = tenant.lineDisplayName || tenant.name || tenantCode;
+  const icon = imgUrl(tenant.linePictureUrl ?? tenant.iconUrl, IMAGE_BASE_URL);
   const reviewPath = `/liff/${tenantCode}/review`;
-  const reviewHref = buildLiffUrl(reviewPath, { liffId, endpointPath: '/' }) ?? reviewPath;
+  const reviewHref = buildLiffUrl(reviewPath, { liffId: tenant.liffId, endpointPath: '/' }) ?? reviewPath;
 
   return (
-    <main className="min-h-screen bg-[#F7F8FA]">
-      <div className="mx-auto max-w-2xl px-4 py-10">
-        <div className="mb-8 flex items-center gap-3">
-          <Link href={homeHref} className="text-sm text-[#06C755] hover:underline">
-            ← {tenantName}
-          </Link>
-        </div>
+    <div style={{ backgroundColor, minHeight: '100vh' }}>
+      <div className="mx-auto max-w-lg px-4 py-8">
         <div className="mb-6 flex items-center gap-3">
-          {tenantIcon && (
-            <Image src={tenantIcon} alt="" width={40} height={40} className="h-10 w-10 shrink-0 rounded-full object-cover" />
+          {icon && (
+            <Link href={`/clubs/${tenantCode}`} className="shrink-0">
+              <Image src={icon} alt="" width={48} height={48} className="h-12 w-12 rounded-full object-cover" />
+            </Link>
           )}
-          <h1 className="text-2xl font-bold text-gray-900">{tenantName}の口コミ・評判</h1>
+          <div className="min-w-0">
+            <Link href={`/clubs/${tenantCode}`} className="block truncate text-lg font-bold" style={{ color: textColor }}>
+              {name}
+            </Link>
+            {slug && (
+              <Link href={`/clubs/${tenantCode}/${slug}`} className="block text-xs underline" style={{ color: accentColor }}>
+                団体ページを見る
+              </Link>
+            )}
+          </div>
         </div>
-        <p className="mb-6 text-sm leading-relaxed text-gray-500">
-          実際に参加したメンバーの感想です。運営が確認したうえで掲載しています。
-        </p>
+
+        <h1 className="mb-4 text-sm font-bold" style={{ color: textColor }}>口コミ・評判</h1>
+
         {reviews.length === 0 ? (
           <p className="text-sm text-gray-400">まだ口コミはありません。参加した方の感想をお楽しみに。</p>
         ) : (
@@ -125,14 +156,16 @@ export default async function ReviewsListPage({
             ))}
           </div>
         )}
+
         <SmartLiffButton
           href={reviewHref}
           directHref={`${SITE_URL}${reviewPath}`}
-          className="mt-6 inline-flex items-center gap-1 text-sm font-bold text-[#06C755] hover:underline"
+          className="mt-4 inline-flex items-center gap-1 text-xs font-bold hover:underline"
+          style={{ color: accentColor }}
         >
           感想を書く →
         </SmartLiffButton>
       </div>
-    </main>
+    </div>
   );
 }
