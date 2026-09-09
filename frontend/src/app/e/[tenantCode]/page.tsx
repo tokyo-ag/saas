@@ -110,6 +110,18 @@ function eventJsonLd(event: ReservationShowcaseEvent, tenantCode: string, tenant
   };
 }
 
+function breadcrumbJsonLd(tenantCode: string, tenantName: string) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'ホーム', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: tenantName, item: `${SITE_URL}/clubs/${tenantCode}` },
+      { '@type': 'ListItem', position: 3, name: '予約スケジュール', item: `${SITE_URL}/e/${tenantCode}` },
+    ],
+  };
+}
+
 export default async function TenantEventsPage({
   params,
 }: {
@@ -129,15 +141,14 @@ export default async function TenantEventsPage({
   const icon = tenant.linePictureUrl;
   const events = tenant.events ?? [];
   const eventsJsonLd = events.map((event) => eventJsonLd(event, tenantCode, name));
+  const jsonLd = [breadcrumbJsonLd(tenantCode, name), ...eventsJsonLd];
 
   return (
     <div style={{ backgroundColor, minHeight: '100vh' }}>
-      {eventsJsonLd.length > 0 && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(eventsJsonLd) }}
-        />
-      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="mx-auto max-w-lg px-4 py-8">
         <div className="mb-6 flex items-center gap-3">
           {icon && (

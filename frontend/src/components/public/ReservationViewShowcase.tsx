@@ -353,14 +353,8 @@ function CardMini({
               showCapacity && event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : null,
               showPrice && price,
             ].filter(Boolean).join(' / ');
-            return (
-              <Link
-                key={event.id}
-                href={linkToLiff ? eventReserveHref(tenantCode, event.id, liffId) : eventDetailHref(tenantCode, event.id, fallbackHref)}
-                onClick={linkToLiff ? handleLiffLinkClick(tenantCode, event.id) : undefined}
-                className="block shrink-0 snap-start overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
-                style={{ backgroundColor: cardBg || '#ffffff', width: 'calc(50% - 6px)' }}
-              >
+            const cardBody = (
+              <>
                 <div className="relative aspect-[3/2] bg-gray-100">
                   {image ? (
                     <img src={image} alt={event.title} className="h-full w-full object-cover" />
@@ -379,7 +373,39 @@ function CardMini({
                   <p className="text-xs font-medium" style={{ color: eventDateColor || cardText, opacity: eventDateColor ? 1 : 0.7 }}>{eventFullDateTime(event)}</p>
                   {showLocation && event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{event.locationHint || event.location}</p>}
                   {metaLine && <p className="text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{metaLine}</p>}
+                  {linkToLiff && tenantCode && (
+                    <Link href={eventDetailHref(tenantCode, event.id)} className="relative z-[1] inline-block text-[11px] underline" style={{ color: eventMetaColor || cardText, opacity: 0.6 }}>
+                      詳細を見る
+                    </Link>
+                  )}
                 </div>
+              </>
+            );
+            if (linkToLiff) {
+              return (
+                <div
+                  key={event.id}
+                  className="relative block shrink-0 snap-start overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
+                  style={{ backgroundColor: cardBg || '#ffffff', width: 'calc(50% - 6px)' }}
+                >
+                  <Link
+                    href={eventReserveHref(tenantCode, event.id, liffId)}
+                    onClick={handleLiffLinkClick(tenantCode, event.id)}
+                    className="absolute inset-0 z-0"
+                    aria-label={event.title}
+                  />
+                  <div className="relative">{cardBody}</div>
+                </div>
+              );
+            }
+            return (
+              <Link
+                key={event.id}
+                href={eventDetailHref(tenantCode, event.id, fallbackHref)}
+                className="block shrink-0 snap-start overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
+                style={{ backgroundColor: cardBg || '#ffffff', width: 'calc(50% - 6px)' }}
+              >
+                {cardBody}
               </Link>
             );
           })}
@@ -447,28 +473,48 @@ function ThreadMini({
                   showCapacity && event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : null,
                   showPrice && price,
                 ].filter(Boolean).join(' / ');
+                const rowBody = (
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold" style={{ color: eventTitleColor || cardText }}>{event.title}</p>
+                      <p className="mt-1 text-xs" style={{ color: eventDateColor || cardText, opacity: eventDateColor ? 1 : 0.7 }}>{eventFullDateTime(event)}</p>
+                      {showLocation && event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{event.locationHint || event.location}</p>}
+                      {metaLine && <p className="text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{metaLine}</p>}
+                      {showDescription && (event as any).description && (
+                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{(event as any).description}</p>
+                      )}
+                      {linkToLiff && tenantCode && (
+                        <Link href={eventDetailHref(tenantCode, event.id)} className="relative z-[1] mt-1 inline-block text-[11px] underline" style={{ color: eventMetaColor || cardText, opacity: 0.6 }}>
+                          詳細を見る
+                        </Link>
+                      )}
+                    </div>
+                    <span className={`shrink-0 rounded-md px-2.5 py-1 text-[11px] font-bold ${full ? 'bg-gray-100 text-gray-400' : ''}`} style={full ? undefined : { backgroundColor: visible.accent, color: visible.text }}>
+                      {status}
+                    </span>
+                  </div>
+                );
+                if (linkToLiff) {
+                  return (
+                    <div key={event.id} className="relative block rounded-xl border border-gray-200 px-4 py-3 shadow-sm transition hover:opacity-90" style={{ backgroundColor: cardBg || '#ffffff' }}>
+                      <Link
+                        href={eventReserveHref(tenantCode, event.id, liffId)}
+                        onClick={handleLiffLinkClick(tenantCode, event.id)}
+                        className="absolute inset-0 z-0"
+                        aria-label={event.title}
+                      />
+                      <div className="relative">{rowBody}</div>
+                    </div>
+                  );
+                }
                 return (
                   <Link
                     key={event.id}
-                    href={linkToLiff ? eventReserveHref(tenantCode, event.id, liffId) : eventDetailHref(tenantCode, event.id, fallbackHref)}
-                    onClick={linkToLiff ? handleLiffLinkClick(tenantCode, event.id) : undefined}
+                    href={eventDetailHref(tenantCode, event.id, fallbackHref)}
                     className="block rounded-xl border border-gray-200 px-4 py-3 shadow-sm transition hover:opacity-90"
                     style={{ backgroundColor: cardBg || '#ffffff' }}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold" style={{ color: eventTitleColor || cardText }}>{event.title}</p>
-                        <p className="mt-1 text-xs" style={{ color: eventDateColor || cardText, opacity: eventDateColor ? 1 : 0.7 }}>{eventFullDateTime(event)}</p>
-                        {showLocation && event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{event.locationHint || event.location}</p>}
-                        {metaLine && <p className="text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{metaLine}</p>}
-                        {showDescription && (event as any).description && (
-                          <p className="mt-1 line-clamp-2 text-xs leading-relaxed" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{(event as any).description}</p>
-                        )}
-                      </div>
-                      <span className={`shrink-0 rounded-md px-2.5 py-1 text-[11px] font-bold ${full ? 'bg-gray-100 text-gray-400' : ''}`} style={full ? undefined : { backgroundColor: visible.accent, color: visible.text }}>
-                        {status}
-                      </span>
-                    </div>
+                    {rowBody}
                   </Link>
                 );
               })}
