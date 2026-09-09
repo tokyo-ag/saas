@@ -4,6 +4,7 @@ import Link from 'next/link';
 
 import { ReservationViewShowcase, ReservationShowcaseEvent } from '@/components/public/ReservationViewShowcase';
 import { SITE_URL, API_URL } from '@/lib/config';
+import { imgUrl } from '@/lib/imgUrl';
 
 type TenantEventsData = {
   code?: string | null;
@@ -67,6 +68,39 @@ export async function generateMetadata({
   };
 }
 
+function eventJsonLd(event: ReservationShowcaseEvent, tenantCode: string, tenantName: string) {
+  const isFull = event.capacity != null && (event.reservedCount ?? 0) >= event.capacity;
+  const url = `${SITE_URL}/e/${tenantCode}/${event.id}`;
+  const offers =
+    event.priceMale != null && event.priceFemale != null
+      ? [
+          { '@type': 'Offer', name: '男性', price: String(event.priceMale), priceCurrency: 'JPY', availability: isFull ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock', url },
+          { '@type': 'Offer', name: '女性', price: String(event.priceFemale), priceCurrency: 'JPY', availability: isFull ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock', url },
+        ]
+      : event.price != null
+        ? { '@type': 'Offer', price: String(event.price), priceCurrency: 'JPY', availability: isFull ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock', url }
+        : undefined;
+  const image = imgUrl(event.imageUrl, API_URL);
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: event.title,
+    startDate: event.heldAt,
+    ...(event.endAt && { endDate: event.endAt }),
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    eventStatus: 'https://schema.org/EventScheduled',
+    location: {
+      '@type': 'Place',
+      name: event.locationHint || event.location || tenantName,
+    },
+    ...(image && { image: [image] }),
+    organizer: { '@type': 'Organization', name: tenantName },
+    ...(offers && { offers }),
+    url,
+  };
+}
+
 export default async function TenantEventsPage({
   params,
 }: {
@@ -85,9 +119,16 @@ export default async function TenantEventsPage({
   const name = tenant.lineDisplayName || tenant.name;
   const icon = tenant.linePictureUrl;
   const events = tenant.events ?? [];
+  const eventsJsonLd = events.map((event) => eventJsonLd(event, tenantCode, name));
 
   return (
     <div style={{ backgroundColor, minHeight: '100vh' }}>
+      {eventsJsonLd.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(eventsJsonLd) }}
+        />
+      )}
       <div className="mx-auto max-w-lg px-4 py-8">
         <div className="mb-6 flex items-center gap-3">
           {icon && (
