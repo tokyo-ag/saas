@@ -55,7 +55,9 @@ export function TenantReviewComposer({
   const [reviewed] = useState(() => (typeof window !== 'undefined' ? hasReviewedBefore(tenantId) : false));
 
   function goToCleanReviewsPage() {
-    window.location.href = `${SITE_URL}/clubs/${tenantId}/reviews`;
+    // localStorageのフラグはクライアント側のタイミング/ブロック設定に依存するため、
+    // サーバー側（SSR）で確実にボタンを消せるようクエリパラメータでも投稿済みを伝える。
+    window.location.href = `${SITE_URL}/clubs/${tenantId}/reviews?reviewed=1`;
   }
 
   async function startReview() {

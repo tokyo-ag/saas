@@ -88,10 +88,13 @@ function formatDate(iso: string | null | undefined) {
 
 export default async function ReviewsListPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ tenantCode: string }>;
+  searchParams: Promise<{ reviewed?: string }>;
 }) {
   const { tenantCode } = await params;
+  const { reviewed } = await searchParams;
   const tenant = await fetchTenant(tenantCode);
   if (!tenant) notFound();
 
@@ -130,7 +133,9 @@ export default async function ReviewsListPage({
 
         <h1 className="mb-4 text-sm font-bold" style={{ color: textColor }}>口コミ・評判</h1>
 
-        <TenantReviewComposer tenantId={tenantCode} liffId={tenant.liffId} accentColor={accentColor} />
+        {reviewed !== '1' && (
+          <TenantReviewComposer tenantId={tenantCode} liffId={tenant.liffId} accentColor={accentColor} />
+        )}
 
         {reviews.length === 0 ? (
           <p className="text-sm text-gray-400">まだ口コミはありません。参加した方の感想をお楽しみに。</p>
