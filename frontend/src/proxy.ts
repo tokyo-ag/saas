@@ -56,7 +56,9 @@ function getLiffStateRedirectUrl(request: NextRequest) {
   const path = state.startsWith('/') ? state : `/${state}`;
   if (path === '/' || path.startsWith('//')) return null;
 
-  const target = path.startsWith('/liff/') ? path : `/liff${path}`;
+  // /clubs/... (SEOページ上でのインラインLINEログイン)はそのまま、それ以外は
+  // 従来通り/liff/{tenantId}/...配下のページ向けとして/liffを補う。
+  const target = path.startsWith('/liff/') || path.startsWith('/clubs/') ? path : `/liff${path}`;
   const redirectUrl = new URL(target, request.url);
   request.nextUrl.searchParams.forEach((value, key) => {
     if (key !== 'liff.state') redirectUrl.searchParams.append(key, value);
