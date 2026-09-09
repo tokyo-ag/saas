@@ -6,9 +6,8 @@ import { Fragment } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import type { BlogPostSummary, LiffEvent, PublicCmsPage, TenantReview } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
-import { SITE_URL, API_URL, IMAGE_BASE_URL, buildLiffUrl } from '@/lib/config';
+import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
 import { ReservationViewShowcase, ReservationButton } from '@/components/public/ReservationViewShowcase';
-import { SmartLiffButton } from '@/components/public/SmartLiffButton';
 import { SnsBlock } from '@/components/public/SnsBlock';
 import { buildAutoSeoTitle, buildAutoSeoDescription, buildSeoProfileFromTenant, type TenantSeoProfile } from '@/lib/tenantSeo';
 
@@ -1017,44 +1016,36 @@ export default async function ClubCmsPage({
 
         const reviewsSection = hasReviewsSection ? (
         <section key="reviews" id="reviews" className={`relative ${isFirstItem('reviews') ? '' : 'mt-8'} scroll-mt-6 px-5 py-6 shadow-sm`} style={{ backgroundColor: navBg, ...cardBorderStyle }}>
-          {reviewsSectionTitle && (
-            <p className="text-lg font-bold" style={{ color: reviewsTitleColor }}>{reviewsSectionTitle}</p>
-          )}
-          {reviewsSectionLead && (
-            <p className="mt-2 text-sm leading-7" style={{ color: reviewsLeadColor }}>{reviewsSectionLead}</p>
-          )}
-          {reviews.length === 0 ? (
-            <p className="mt-4 text-sm text-gray-400">まだ口コミはありません。参加した方の感想をお楽しみに。</p>
-          ) : (
-            <div className="mt-4 max-h-[480px] space-y-3 overflow-y-auto pr-1">
-              {reviews.map((review) => (
-                <div key={review.id} className="flex gap-3 p-3" style={{ backgroundColor: blogPostCardBg, ...cardBorderStyle }}>
-                  {review.authorIconUrl ? (
-                    <Image src={review.authorIconUrl} alt="" width={32} height={32} className="mt-0.5 h-8 w-8 shrink-0 rounded-full object-cover" />
-                  ) : (
-                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-400">
-                      {review.authorName.slice(0, 1)}
+          <Link href={`/clubs/${page.tenant.code ?? tenantCode}/reviews`} className="absolute inset-0 rounded-xl" aria-label="口コミ・評判を見る" />
+          <div className="relative">
+            {reviewsSectionTitle && (
+              <p className="text-lg font-bold" style={{ color: reviewsTitleColor }}>{reviewsSectionTitle}</p>
+            )}
+            {reviewsSectionLead && (
+              <p className="mt-2 text-sm leading-7" style={{ color: reviewsLeadColor }}>{reviewsSectionLead}</p>
+            )}
+            {reviews.length === 0 ? (
+              <p className="mt-4 text-sm text-gray-400">まだ口コミはありません。参加した方の感想をお楽しみに。</p>
+            ) : (
+              <div className="mt-4 max-h-[480px] space-y-3 overflow-y-auto pr-1">
+                {reviews.map((review) => (
+                  <div key={review.id} className="flex gap-3 p-3" style={{ backgroundColor: blogPostCardBg, ...cardBorderStyle }}>
+                    {review.authorIconUrl ? (
+                      <Image src={review.authorIconUrl} alt="" width={32} height={32} className="mt-0.5 h-8 w-8 shrink-0 rounded-full object-cover" />
+                    ) : (
+                      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-400">
+                        {review.authorName.slice(0, 1)}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="mb-0.5 text-xs font-medium text-gray-700">{review.authorName}</p>
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{review.content}</p>
                     </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="mb-0.5 text-xs font-medium text-gray-700">{review.authorName}</p>
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{review.content}</p>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-          <SmartLiffButton
-            href={buildLiffUrl(`/liff/${page.tenant.code ?? tenantCode}/review`, {
-              liffId: page.tenant.liffId,
-              endpointPath: '/',
-            }) ?? `/liff/${page.tenant.code ?? tenantCode}/review`}
-            directHref={`${SITE_URL}/liff/${page.tenant.code ?? tenantCode}/review`}
-            className="mt-4 inline-flex items-center gap-1 text-sm font-bold hover:underline"
-            style={{ color: accentColor }}
-          >
-            感想を書く →
-          </SmartLiffButton>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
         ) : null;
 

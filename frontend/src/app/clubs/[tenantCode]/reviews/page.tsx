@@ -132,6 +132,15 @@ export default async function ReviewsListPage({
 
         <h1 className="mb-4 text-sm font-bold" style={{ color: textColor }}>口コミ・評判</h1>
 
+        <SmartLiffButton
+          href={reviewHref}
+          directHref={`${SITE_URL}${reviewPath}`}
+          className="mb-4 inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 text-sm font-bold"
+          style={{ backgroundColor: accentColor, color: '#ffffff' }}
+        >
+          感想を書く
+        </SmartLiffButton>
+
         {reviews.length === 0 ? (
           <p className="text-sm text-gray-400">まだ口コミはありません。参加した方の感想をお楽しみに。</p>
         ) : (
@@ -156,15 +165,6 @@ export default async function ReviewsListPage({
             ))}
           </div>
         )}
-
-        <SmartLiffButton
-          href={reviewHref}
-          directHref={`${SITE_URL}${reviewPath}`}
-          className="mt-4 inline-flex items-center gap-1 text-xs font-bold hover:underline"
-          style={{ color: accentColor }}
-        >
-          感想を書く →
-        </SmartLiffButton>
       </div>
     </div>
   );
