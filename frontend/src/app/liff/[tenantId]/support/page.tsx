@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api, SupportMessage } from '@/lib/api';
-import { initLiff, getLiffUserId, loginIfNeeded } from '@/lib/liff';
+import { initLiff, getLiffUserId, loginIfNeeded, liff } from '@/lib/liff';
 import { ChatBubble, ChatInput } from '@/components/ui/ChatBubble';
 
 function formatTime(dateStr: string) {
@@ -17,6 +17,7 @@ export default function SupportPage() {
   const [lineUserId, setLineUserId] = useState('');
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [loginRequired, setLoginRequired] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback((uid: string) => {
@@ -40,11 +41,27 @@ export default function SupportPage() {
       } else {
         uid = `demo-${tenantId}`;
       }
+      if (!uid) {
+        setLoginRequired(true);
+        return;
+      }
       setLineUserId(uid);
-      if (uid) load(uid);
+      load(uid);
     }
     init();
   }, [tenantId, load]);
+
+  function handleLoginRetry() {
+    if (liff.isInClient()) {
+      window.location.reload();
+      return;
+    }
+    try {
+      liff.login({ redirectUri: window.location.href });
+    } catch {
+      window.location.reload();
+    }
+  }
 
   useEffect(() => {
     if (!lineUserId) return;
@@ -69,6 +86,20 @@ export default function SupportPage() {
   const comiuAvatar = (
     <div className="w-8 h-8 rounded-full bg-[#06C755]/10 flex items-center justify-center text-base">🛟</div>
   );
+
+  if (loginRequired) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-[#F5F5F5] px-6 text-center">
+        <p className="text-sm text-gray-500">LINEへのログインが必要です。</p>
+        <button
+          onClick={handleLoginRetry}
+          className="rounded-2xl bg-[#06C755] px-8 py-3.5 text-sm font-bold text-white active:opacity-90"
+        >
+          LINEログインをやり直す
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-[#F5F5F5]">
