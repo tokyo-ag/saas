@@ -298,6 +298,16 @@ export class TenantService {
     });
   }
 
+  async deleteTenantReview(tenantId: string, reviewId: string) {
+    const review = await this.prisma.tenantReview.findFirst({
+      where: { id: reviewId, tenantId },
+    });
+    if (!review) throw new NotFoundException('Review not found');
+
+    await this.prisma.tenantReview.delete({ where: { id: reviewId } });
+    return { success: true };
+  }
+
   async getGrowthData(tenantId: string) {
     const now = new Date();
     const months = Array.from({ length: 6 }, (_, i) => {

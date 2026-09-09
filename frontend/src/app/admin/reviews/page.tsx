@@ -10,12 +10,14 @@ function TenantReviewSection({
   error,
   onToggle,
   onSaveEdit,
+  onDelete,
 }: {
   rows: AdminTenantReview[];
   loading: boolean;
   error: string;
   onToggle: (row: AdminTenantReview) => void;
   onSaveEdit: (row: AdminTenantReview, content: string) => Promise<void>;
+  onDelete: (row: AdminTenantReview) => void;
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
@@ -143,6 +145,13 @@ function TenantReviewSection({
                       >
                         {row.isPublished ? '非公開にする' : '公開する'}
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => onDelete(row)}
+                        className="rounded-lg border border-gray-200 px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50"
+                      >
+                        削除
+                      </button>
                     </>
                   )}
                 </div>
@@ -231,6 +240,16 @@ export default function AdminReviewsPage() {
     setRows((prev) => prev.map((item) => (item.id === row.id ? { ...item, content } : item)));
   }
 
+  async function handleDelete(row: AdminTenantReview) {
+    if (!confirm('この口コミを削除しますか？元に戻せません。')) return;
+    try {
+      await api.tenant.deleteReview(row.id);
+      setRows((prev) => prev.filter((item) => item.id !== row.id));
+    } catch {
+      setError('口コミの削除に失敗しました');
+    }
+  }
+
   return (
     <div className="px-4 py-4 md:px-6 md:py-6">
       <div className="mb-5">
@@ -266,6 +285,7 @@ export default function AdminReviewsPage() {
             error={error}
             onToggle={handleToggle}
             onSaveEdit={handleSaveEdit}
+            onDelete={handleDelete}
           />
         </div>
         <TenantReviewPreview rows={rows} />

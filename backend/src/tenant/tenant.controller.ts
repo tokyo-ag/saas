@@ -4,6 +4,7 @@ import {
   Put,
   Post,
   Patch,
+  Delete,
   Param,
   Body,
   BadRequestException,
@@ -94,5 +95,13 @@ export class TenantController {
     @Body() body: { isPublished?: boolean; content?: string },
   ) {
     return this.tenantService.updateTenantReview(tenantId, reviewId, body);
+  }
+
+  @Delete('reviews/:reviewId')
+  deleteTenantReview(
+    @TenantId() tenantId: string,
+    @Param('reviewId') reviewId: string,
+  ) {
+    return this.tenantService.deleteTenantReview(tenantId, reviewId);
   }
 }

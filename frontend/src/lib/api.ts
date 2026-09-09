@@ -341,6 +341,10 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify(data),
       }),
+    deleteReview: (reviewId: string) =>
+      request<{ success: boolean }>(`/admin/tenant/reviews/${reviewId}`, {
+        method: 'DELETE',
+      }),
   },
   auth: {
     reconfirm: (email: string, password: string) =>
