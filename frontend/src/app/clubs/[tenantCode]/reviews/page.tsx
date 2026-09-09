@@ -11,12 +11,18 @@ export const revalidate = 60;
 
 type ReviewsTenantInfo = {
   name?: string | null;
+  description?: string | null;
   lineDisplayName?: string | null;
   linePictureUrl?: string | null;
   iconUrl?: string | null;
   liffId?: string | null;
   pages?: Array<{ slug: string }>;
 };
+
+function shortDescription(description: string | null | undefined): string {
+  if (!description) return '';
+  return description.trim().replace(/\s+/g, ' ').slice(0, 150);
+}
 
 type TenantPageStyle = {
   accentColor?: string | null;
@@ -72,7 +78,10 @@ export async function generateMetadata({
   }
   const name = tenant.lineDisplayName || tenant.name || tenantCode;
   const title = `${name}の口コミ・評判 | COMIU`;
-  const description = `${name}に実際に参加したメンバーのリアルな口コミ・感想を掲載。入会や参加を検討している方はぜひ参考にしてください。`;
+  const bio = shortDescription(tenant.description);
+  const description = bio
+    ? `${bio}／${name}に実際に参加したメンバーのリアルな口コミ・感想を掲載。入会や参加を検討している方はぜひ参考にしてください。`
+    : `${name}に実際に参加したメンバーのリアルな口コミ・感想を掲載。入会や参加を検討している方はぜひ参考にしてください。`;
   return {
     title,
     description,
@@ -84,6 +93,18 @@ export async function generateMetadata({
 function formatDate(iso: string | null | undefined) {
   if (!iso) return '';
   return new Date(iso).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function breadcrumbJsonLd(tenantCode: string, tenantName: string) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'ホーム', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: tenantName, item: `${SITE_URL}/clubs/${tenantCode}` },
+      { '@type': 'ListItem', position: 3, name: '口コミ・評判', item: `${SITE_URL}/clubs/${tenantCode}/reviews` },
+    ],
+  };
 }
 
 export default async function ReviewsListPage({
@@ -112,6 +133,10 @@ export default async function ReviewsListPage({
 
   return (
     <div style={{ backgroundColor, minHeight: '100vh' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(tenantCode, name)) }}
+      />
       <div className="mx-auto max-w-lg px-4 py-8">
         <div className="mb-6 flex items-center gap-3">
           {icon && (
@@ -131,7 +156,13 @@ export default async function ReviewsListPage({
           </div>
         </div>
 
-        <h1 className="mb-4 text-sm font-bold" style={{ color: textColor }}>口コミ・評判</h1>
+        <h1 className="mb-2 text-sm font-bold" style={{ color: textColor }}>{name}の口コミ・評判</h1>
+
+        {shortDescription(tenant.description) && (
+          <p className="mb-4 text-xs leading-relaxed" style={{ color: textColor, opacity: 0.7 }}>
+            {shortDescription(tenant.description)}
+          </p>
+        )}
 
         {reviewed !== '1' && (
           <TenantReviewComposer tenantId={tenantCode} liffId={tenant.liffId} accentColor={accentColor} />
