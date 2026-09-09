@@ -9,12 +9,18 @@ import { imgUrl } from '@/lib/imgUrl';
 type TenantEventsData = {
   code?: string | null;
   name: string;
+  description?: string | null;
   lineDisplayName?: string | null;
   linePictureUrl?: string | null;
   liffId?: string | null;
   pages?: Array<{ slug: string }>;
   events: ReservationShowcaseEvent[];
 };
+
+function shortDescription(description: string | null | undefined): string {
+  if (!description) return '';
+  return description.trim().replace(/\s+/g, ' ').slice(0, 150);
+}
 
 type TenantPageStyle = {
   accentColor?: string | null;
@@ -59,7 +65,10 @@ export async function generateMetadata({
   }
   const name = tenant.lineDisplayName || tenant.name;
   const title = `${name}の予約スケジュール | COMIU`;
-  const description = `${name}が開催するイベントの予約スケジュール一覧です。LINEなしでもご覧いただけます。`;
+  const bio = shortDescription(tenant.description);
+  const description = bio
+    ? `${bio}／${name}が開催するイベントの予約スケジュール一覧です。LINEなしでもご覧いただけます。`
+    : `${name}が開催するイベントの予約スケジュール一覧です。LINEなしでもご覧いただけます。`;
   return {
     title,
     description,
@@ -148,7 +157,13 @@ export default async function TenantEventsPage({
           </div>
         </div>
 
-        <h1 className="mb-4 text-sm font-bold" style={{ color: textColor }}>予約スケジュール</h1>
+        <h1 className="mb-2 text-sm font-bold" style={{ color: textColor }}>{name}の予約スケジュール</h1>
+
+        {shortDescription(tenant.description) && (
+          <p className="mb-4 text-xs leading-relaxed" style={{ color: textColor, opacity: 0.7 }}>
+            {shortDescription(tenant.description)}
+          </p>
+        )}
 
         {events.length === 0 ? (
           <p className="text-sm text-gray-400">現在受付中のイベントはありません。</p>
