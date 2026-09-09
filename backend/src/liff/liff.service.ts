@@ -256,7 +256,7 @@ export class LiffService {
     tenantId = await this.resolveTenantId(tenantId);
     const reviews = await this.prisma.tenantReview.findMany({
       where: { tenantId, isPublished: true },
-      include: { member: { select: { name: true, linePictureUrl: true } } },
+      include: { member: { select: { name: true, lineDisplayName: true, linePictureUrl: true } } },
       orderBy: { createdAt: 'desc' },
       take: 30,
     });
@@ -265,7 +265,7 @@ export class LiffService {
       id: review.id,
       content: review.content,
       createdAt: review.createdAt,
-      authorName: review.member.name ?? '参加者',
+      authorName: review.member.name ?? review.member.lineDisplayName ?? '参加者',
       authorIconUrl: review.member.linePictureUrl,
     }));
   }
@@ -282,8 +282,30 @@ export class LiffService {
       );
     }
 
-    const member = await this.findMember(tenantId, dto.lineUserId);
-    if (!member) throw new NotFoundException('メンバーが見つかりません');
+    // 予約・参加の有無を問わず投稿できる仕様のため、まだメンバー登録が無い
+    // （プロフィール未入力・未予約）LINEユーザーの場合は、ここで最小限の
+    // メンバーを作成する（エラーにしない）。
+    let member = await this.findMember(tenantId, dto.lineUserId);
+    if (!member) {
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+      });
+      const lineProfile = await this.lineMessaging
+        .getLineProfile(tenant?.lineChannelAccessToken ?? '', dto.lineUserId)
+        .catch(() => null);
+      member = await this.prisma.member.create({
+        data: {
+          tenantId,
+          lineUserId: dto.lineUserId,
+          ...(lineProfile?.displayName && {
+            lineDisplayName: lineProfile.displayName,
+          }),
+          ...(lineProfile?.pictureUrl && {
+            linePictureUrl: lineProfile.pictureUrl,
+          }),
+        },
+      });
+    }
 
     const existing = await this.prisma.tenantReview.findUnique({
       where: { tenantId_memberId: { tenantId, memberId: member.id } },

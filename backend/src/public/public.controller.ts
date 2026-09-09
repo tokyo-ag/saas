@@ -879,7 +879,7 @@ export class PublicController {
         isPublished: true,
         tenant: { code: tenantCode, deletedAt: null, bannedAt: null },
       },
-      include: { member: { select: { name: true, linePictureUrl: true } } },
+      include: { member: { select: { name: true, lineDisplayName: true, linePictureUrl: true } } },
       orderBy: { createdAt: 'desc' },
       take: 30,
     });
@@ -888,7 +888,7 @@ export class PublicController {
       id: review.id,
       content: review.content,
       createdAt: review.createdAt,
-      authorName: review.member.name ?? '参加者',
+      authorName: review.member.name ?? review.member.lineDisplayName ?? '参加者',
       authorIconUrl: review.member.linePictureUrl,
     }));
   }
