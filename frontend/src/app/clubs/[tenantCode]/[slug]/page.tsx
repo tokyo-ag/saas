@@ -945,6 +945,13 @@ export default async function ClubCmsPage({
                 showButton={false}
               />
             ) : null}
+            <Link
+              href={`/e/${page.tenant.code ?? tenantCode}`}
+              className="mt-4 inline-flex items-center gap-1 text-xs font-bold hover:underline"
+              style={{ color: accentColor }}
+            >
+              予約スケジュール一覧を見る →
+            </Link>
           </div>
         </div>
         {(reserveActionStyle === 'line' && reserveEvents.length === 0) ? (
