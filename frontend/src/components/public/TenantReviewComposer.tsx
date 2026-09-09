@@ -92,8 +92,17 @@ export function TenantReviewComposer({
         goToCleanReviewsPage();
         return;
       }
-    } catch {
-      // 初回投稿（まだ口コミが無い）は404相当なので、空フォームのまま進める。
+    } catch (err: unknown) {
+      // LIFFセッションは残っているがトークンが期限切れの場合、isLiffLoggedIn()はtrueのまま
+      // 実際のAPI呼び出しだけが401で失敗する。この場合は再度クリックしても同じ結果になるため、
+      // ここで強制的にliff.login()へ誘導してトークンを取り直す。
+      const msg = err instanceof Error ? err.message : '';
+      if (isLineAuthErrorMessage(msg)) {
+        setLiffToken(null);
+        liff.login({ redirectUri: window.location.href });
+        return;
+      }
+      // それ以外（本当に初回投稿でまだ口コミが無い場合等）は空フォームのまま進める。
     }
     setStage('ready');
   }
@@ -115,8 +124,11 @@ export function TenantReviewComposer({
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '送信に失敗しました';
       if (isLineAuthErrorMessage(msg)) {
+        // isLiffLoggedIn()の内部フラグは残っていてもトークンが期限切れの場合がある。
+        // 単にstartに戻すと同じ状態でループするため、強制的に再ログインさせる。
         setLiffToken(null);
-        setStage('start');
+        setError('LINEの認証が切れていました。再度ログインします…');
+        liff.login({ redirectUri: window.location.href });
         return;
       }
       setError(msg);
