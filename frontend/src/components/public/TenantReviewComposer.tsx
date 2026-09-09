@@ -16,6 +16,26 @@ function isLineAuthErrorMessage(message: string): boolean {
   );
 }
 
+function reviewedStorageKey(tenantId: string): string {
+  return `comiu-reviewed-${tenantId}`;
+}
+
+function markReviewed(tenantId: string): void {
+  try {
+    window.localStorage.setItem(reviewedStorageKey(tenantId), '1');
+  } catch {
+    // localStorageが使えない場合は何もしない（次回また表示されるだけ）
+  }
+}
+
+function hasReviewedBefore(tenantId: string): boolean {
+  try {
+    return window.localStorage.getItem(reviewedStorageKey(tenantId)) === '1';
+  } catch {
+    return false;
+  }
+}
+
 export function TenantReviewComposer({
   tenantId,
   liffId,
@@ -32,6 +52,7 @@ export function TenantReviewComposer({
   const [content, setContent] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [reviewed] = useState(() => (typeof window !== 'undefined' ? hasReviewedBefore(tenantId) : false));
 
   function goToCleanReviewsPage() {
     window.location.href = `${SITE_URL}/clubs/${tenantId}/reviews`;
@@ -67,6 +88,7 @@ export function TenantReviewComposer({
     try {
       const existing = await api.liff.myTenantReview(tenantId, uid);
       if (existing) {
+        markReviewed(tenantId);
         goToCleanReviewsPage();
         return;
       }
@@ -88,6 +110,7 @@ export function TenantReviewComposer({
     try {
       setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
       await api.liff.submitTenantReview(tenantId, lineUserId, trimmed);
+      markReviewed(tenantId);
       goToCleanReviewsPage();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '送信に失敗しました';
@@ -100,6 +123,10 @@ export function TenantReviewComposer({
     } finally {
       setSaving(false);
     }
+  }
+
+  if (reviewed) {
+    return null;
   }
 
   if (stage !== 'ready') {
