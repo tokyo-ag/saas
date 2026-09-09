@@ -133,9 +133,9 @@ export default async function ReviewsListPage({
         <TenantReviewComposer tenantId={tenantCode} liffId={tenant.liffId} accentColor={accentColor} />
 
         {reviews.length === 0 ? (
-          <p className="text-sm text-gray-400">まだ口コミはありません。参加した方の感想をお楽しみに。</p>
+          <p id="reviews-list" className="text-sm text-gray-400">まだ口コミはありません。参加した方の感想をお楽しみに。</p>
         ) : (
-          <div className="space-y-3">
+          <div id="reviews-list" className="space-y-3">
             {reviews.map((review) => (
               <div key={review.id} className="flex gap-3 rounded-xl border border-gray-200 bg-white px-5 py-4">
                 {review.authorIconUrl ? (
