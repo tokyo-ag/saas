@@ -224,9 +224,10 @@ function ReservePageInner() {
       }
       if (myRes.status === 'fulfilled') setMyReservation(myRes.value);
 
-      const profileComplete = prof.status === 'fulfilled' && prof.value?.name && prof.value?.grade && prof.value?.gender;
+      // イベント予約は必ず公式LINEの友だちであることを要求する。過去にプロフィールを
+      // 入力済みでも、その後に友だちを解除していれば予約させない（毎回チェックする）。
       const tenantLineId = tenantInfo?.lineChannelId ?? null;
-      if (!profileComplete && tenantLineId) {
+      if (tenantLineId) {
         const friend = await checkFriendship();
         setIsFriend(friend);
       } else {
