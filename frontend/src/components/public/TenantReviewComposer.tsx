@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { api, setLiffToken } from '@/lib/api';
-import { initLiff, getLiffUserId, loginIfNeeded, liff, isLiffLoggedIn, getInitError, hasRecentLoginAttempt } from '@/lib/liff';
+import { initLiff, getLiffUserId, liff, isLiffLoggedIn } from '@/lib/liff';
 import { isLightHexColor, readableTextColor } from '@/lib/color';
+import { SITE_URL } from '@/lib/config';
 
 type Stage = 'start' | 'loading' | 'ready';
 
@@ -28,47 +29,35 @@ export function TenantReviewComposer({
 
   const [stage, setStage] = useState<Stage>('start');
   const [lineUserId, setLineUserId] = useState('');
-  const [loginRequired, setLoginRequired] = useState(false);
-  const [debugInfo, setDebugInfo] = useState('');
-  const [myReview, setMyReview] = useState<{ content: string; isPublished: boolean } | null>(null);
   const [content, setContent] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (stage === 'ready' && myReview) {
-      document.getElementById('reviews-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [stage, myReview]);
+  function goToCleanReviewsPage() {
+    window.location.href = `${SITE_URL}/clubs/${tenantId}/reviews`;
+  }
 
   async function startReview() {
     setStage('loading');
-    setLoginRequired(false);
-    setDebugInfo('');
 
     const ok = await initLiff(liffId ?? undefined);
     let uid = '';
     if (ok) {
       if (liff.isInClient()) {
         uid = (await getLiffUserId()) ?? '';
+      } else if (isLiffLoggedIn()) {
+        uid = (await getLiffUserId()) ?? '';
       } else {
-        const loggedIn = await loginIfNeeded();
-        if (loggedIn) {
-          uid = (await getLiffUserId()) ?? '';
-        } else {
-          setLoginRequired(true);
-          setDebugInfo(hasRecentLoginAttempt() ? 'cooldown中（前回の試行から5分以内）' : 'liff.login()呼び出し済み・リダイレクト待ち');
-          setStage('start');
-          return;
-        }
+        // ブラウザ内で完結するliff.login()でLINEログインへ遷移する。
+        // 戻ってきた後、もう一度このボタンを押すとログイン済み状態で続行できる。
+        liff.login({ redirectUri: window.location.href });
+        return;
       }
     } else {
       uid = `demo-${tenantId}`;
     }
 
     if (!uid) {
-      setLoginRequired(true);
-      setDebugInfo(getInitError() ?? 'uid取得失敗');
       setStage('start');
       return;
     }
@@ -78,26 +67,13 @@ export function TenantReviewComposer({
     try {
       const existing = await api.liff.myTenantReview(tenantId, uid);
       if (existing) {
-        setMyReview({ content: existing.content, isPublished: !!existing.isPublished });
+        goToCleanReviewsPage();
+        return;
       }
     } catch {
       // 初回投稿（まだ口コミが無い）は404相当なので、空フォームのまま進める。
     }
     setStage('ready');
-  }
-
-  function handleLoginRetry() {
-    if (liff.isInClient()) {
-      window.location.reload();
-      return;
-    }
-    // liff.line.me経由だとLINEアプリを強制的に開こうとするため、
-    // ブラウザ内で完結するliff.login()を優先する。
-    try {
-      liff.login({ redirectUri: window.location.href });
-    } catch {
-      window.location.reload();
-    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -112,13 +88,12 @@ export function TenantReviewComposer({
     try {
       setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
       await api.liff.submitTenantReview(tenantId, lineUserId, trimmed);
-      setMyReview({ content: trimmed, isPublished: false });
+      goToCleanReviewsPage();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '送信に失敗しました';
       if (isLineAuthErrorMessage(msg)) {
         setLiffToken(null);
         setStage('start');
-        setLoginRequired(true);
         return;
       }
       setError(msg);
@@ -139,25 +114,8 @@ export function TenantReviewComposer({
         >
           {stage === 'loading' ? '読み込み中...' : '感想を書く'}
         </button>
-        {loginRequired && (
-          <div className="mt-2 space-y-2 text-center">
-            <p className="text-xs text-gray-500">LINEへのログインが必要です。</p>
-            <button
-              type="button"
-              onClick={handleLoginRetry}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-600"
-            >
-              LINEログインをやり直す
-            </button>
-            {debugInfo && <p className="text-[10px] text-gray-300">{debugInfo}</p>}
-          </div>
-        )}
       </div>
     );
-  }
-
-  if (myReview) {
-    return null;
   }
 
   return (
