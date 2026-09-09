@@ -12,6 +12,7 @@ let initInfo: { ok: boolean; hasId: boolean; loggedIn: boolean } | null = null;
 
 const LIFF_LOGIN_TRY_KEY = 'liff-login-tried';
 const LIFF_LOGIN_RETRY_INTERVAL_MS = 5 * 60 * 1000;
+const LIFF_ID_MISMATCH_RELOAD_KEY = 'liff-id-mismatch-reload';
 
 async function getLiffId(liffIdOverride?: string): Promise<string> {
   if (liffIdOverride) {
@@ -74,6 +75,14 @@ export async function initLiff(liffIdOverride?: string): Promise<boolean> {
     return false;
   }
   if (initialized && initializedLiffId !== id) {
+    // SPA内のソフト遷移で別テナント(別LIFF ID)のページを経由した後にこのページへ来ると、
+    // liff.init()済みの状態のままIDだけ変わってしまう。LIFF SDKはID切り替えでの
+    // 再初期化に対応していないため、1度だけハードリロードしてモジュール状態を作り直す。
+    if (typeof window !== 'undefined' && !window.sessionStorage.getItem(LIFF_ID_MISMATCH_RELOAD_KEY)) {
+      window.sessionStorage.setItem(LIFF_ID_MISMATCH_RELOAD_KEY, '1');
+      window.location.reload();
+      return false;
+    }
     lastError = 'LIFF_ID changed after initialization';
     return false;
   }
@@ -87,6 +96,7 @@ export async function initLiff(liffIdOverride?: string): Promise<boolean> {
     initialized = true;
     initializedLiffId = id;
     lastError = null;
+    if (typeof window !== 'undefined') window.sessionStorage.removeItem(LIFF_ID_MISMATCH_RELOAD_KEY);
     setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
     initInfo = { ok: true, hasId: Boolean(id), loggedIn: isLiffLoggedIn() };
     exposeDebugValue('__LIFF_INIT_INFO', initInfo);

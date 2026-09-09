@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api, setLiffToken } from '@/lib/api';
-import { initLiff, getLiffUserId, loginIfNeeded, liff, isLiffLoggedIn } from '@/lib/liff';
+import { initLiff, getLiffUserId, loginIfNeeded, liff, isLiffLoggedIn, getInitError, hasRecentLoginAttempt } from '@/lib/liff';
 import { isLightHexColor, readableTextColor } from '@/lib/color';
 
 type Stage = 'start' | 'loading' | 'ready';
@@ -29,6 +29,7 @@ export function TenantReviewComposer({
   const [stage, setStage] = useState<Stage>('start');
   const [lineUserId, setLineUserId] = useState('');
   const [loginRequired, setLoginRequired] = useState(false);
+  const [debugInfo, setDebugInfo] = useState('');
   const [myReview, setMyReview] = useState<{ content: string; isPublished: boolean } | null>(null);
   const [content, setContent] = useState('');
   const [saving, setSaving] = useState(false);
@@ -43,6 +44,7 @@ export function TenantReviewComposer({
   async function startReview() {
     setStage('loading');
     setLoginRequired(false);
+    setDebugInfo('');
 
     const ok = await initLiff(liffId ?? undefined);
     let uid = '';
@@ -55,6 +57,7 @@ export function TenantReviewComposer({
           uid = (await getLiffUserId()) ?? '';
         } else {
           setLoginRequired(true);
+          setDebugInfo(hasRecentLoginAttempt() ? 'cooldown中（前回の試行から5分以内）' : 'liff.login()呼び出し済み・リダイレクト待ち');
           setStage('start');
           return;
         }
@@ -65,6 +68,7 @@ export function TenantReviewComposer({
 
     if (!uid) {
       setLoginRequired(true);
+      setDebugInfo(getInitError() ?? 'uid取得失敗');
       setStage('start');
       return;
     }
@@ -145,6 +149,7 @@ export function TenantReviewComposer({
             >
               LINEログインをやり直す
             </button>
+            {debugInfo && <p className="text-[10px] text-gray-300">{debugInfo}</p>}
           </div>
         )}
       </div>
