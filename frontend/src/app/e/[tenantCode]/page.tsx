@@ -86,7 +86,7 @@ export async function generateMetadata({
     return { title: '団体が見つかりません', robots: { index: false, follow: false } };
   }
   const name = tenant.lineDisplayName || tenant.name;
-  const title = `${name}の予約スケジュール | COMIU`;
+  const title = `${name}の予約スケジュール`;
   const bio = eventsMetaDescriptionSource(tenant);
   const description = bio
     ? `${bio}／${name}が開催するイベントの予約スケジュール一覧です。LINEなしでもご覧いただけます。`

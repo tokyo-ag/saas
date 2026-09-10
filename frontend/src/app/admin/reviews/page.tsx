@@ -165,33 +165,41 @@ function TenantReviewSection({
   );
 }
 
-function TenantReviewPreview({ rows }: { rows: AdminTenantReview[] }) {
-  const publishedRows = rows.filter((row) => row.isPublished);
+function ReviewsSeoPreview({
+  previewUrl,
+  iframeKey,
+  onReload,
+}: {
+  previewUrl: string;
+  iframeKey: number;
+  onReload: () => void;
+}) {
+  if (!previewUrl) return null;
   return (
-    <aside className="hidden w-full max-w-[380px] shrink-0 lg:block">
+    <aside className="hidden shrink-0 lg:block">
       <div className="sticky top-4">
-        <p className="mb-2 text-xs font-bold text-gray-500">個人のLIFF画面での見え方</p>
-        <div className="overflow-hidden rounded-2xl bg-gray-100 p-2 shadow-inner">
-          <div className="mx-auto max-h-[70vh] max-w-[350px] overflow-y-auto rounded-xl border border-gray-200 bg-[#F7F8FA]">
-            <div className="space-y-3 px-4 py-4">
-              <p className="text-sm font-bold text-gray-800">みんなの声</p>
-              {publishedRows.length === 0 ? (
-                <p className="text-xs text-gray-400">公開中の口コミがまだありません</p>
-              ) : (
-                publishedRows.map((row) => (
-                  <div key={row.id} className="flex gap-3 rounded-2xl bg-white p-4 shadow-sm">
-                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-400">
-                      {(row.member.name ?? '参').slice(0, 1)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="mb-0.5 text-xs font-medium text-gray-700">{row.member.name ?? '参加者'}</p>
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{row.content}</p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <p className="text-[11px] font-bold text-gray-400">🔍 SEOページはこう見えます</p>
+          <button
+            type="button"
+            onClick={onReload}
+            className="text-[10px] text-gray-400 hover:text-gray-600 underline"
+          >
+            再読込
+          </button>
+        </div>
+        <div className="overflow-hidden rounded-[2.5rem] border-[6px] border-gray-800 bg-white shadow-2xl" style={{ width: '220px' }}>
+          <div className="flex items-center justify-center gap-2 bg-gray-800 py-2">
+            <div className="h-1.5 w-12 rounded-full bg-gray-600" />
           </div>
+          <iframe
+            key={iframeKey}
+            src={previewUrl}
+            width="375"
+            height="667"
+            style={{ zoom: 0.587, border: 'none', display: 'block' }}
+            title="SEOページプレビュー"
+          />
         </div>
       </div>
     </aside>
@@ -205,6 +213,7 @@ export default function AdminReviewsPage() {
   const [tenantCode, setTenantCode] = useState('');
   const [copied, setCopied] = useState(false);
   const [seoDescription, setSeoDescription] = useState<string | null>(null);
+  const [iframeKey, setIframeKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -290,7 +299,7 @@ export default function AdminReviewsPage() {
           helpText="公開用の口コミページの見出し下とmeta descriptionに使われます。空欄の場合は団体の紹介文が使われます。「評判」「口コミ」で検索して不安を持っている人に向けて、団体の雰囲気や安心して参加できる理由を書くのがおすすめです。"
           placeholder="例：飲み会中心の雰囲気ではなく、初参加や1人参加の方でも安心して楽しめるサークルです。"
           initialValue={seoDescription}
-          onSaved={setSeoDescription}
+          onSaved={(value) => { setSeoDescription(value); setIframeKey((k) => k + 1); }}
         />
       )}
 
@@ -305,7 +314,11 @@ export default function AdminReviewsPage() {
             onDelete={handleDelete}
           />
         </div>
-        <TenantReviewPreview rows={rows} />
+        <ReviewsSeoPreview
+          previewUrl={tenantCode ? `/clubs/${tenantCode}/reviews` : ''}
+          iframeKey={iframeKey}
+          onReload={() => setIframeKey((k) => k + 1)}
+        />
       </div>
     </div>
   );

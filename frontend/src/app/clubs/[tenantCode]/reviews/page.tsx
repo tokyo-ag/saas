@@ -99,7 +99,7 @@ export async function generateMetadata({
     return { title: '団体が見つかりません', robots: { index: false, follow: false } };
   }
   const name = tenant.lineDisplayName || tenant.name || tenantCode;
-  const title = `${name}の口コミ・評判 | COMIU`;
+  const title = `${name}の口コミ・評判`;
   const bio = reviewsMetaDescriptionSource(tenant);
   const description = bio
     ? `${bio}／${name}に実際に参加したメンバーのリアルな口コミ・感想を掲載。入会や参加を検討している方はぜひ参考にしてください。`

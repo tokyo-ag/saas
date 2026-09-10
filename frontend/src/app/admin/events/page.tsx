@@ -201,12 +201,10 @@ export default function EventsPage() {
     }
   }
 
-  const schedulePath = tenantId ? `/liff/${tenantId}` : '';
-  // liff.line.me は X-Frame-Options: DENY のため管理画面へ埋め込めない。
-  // スマホプレビューだけ同一originの画面を使う。
-  const previewUrl = schedulePath ? `${schedulePath}?preview=1` : '';
-
   const publicScheduleUrl = tenantId ? `${SITE_URL}/e/${tenantId}` : '';
+  // LINE認証後の画面ではなく、Googleなどからそのまま見られるSEOページ
+  // (/e/{tenantId})をプレビューに使う。
+  const previewUrl = tenantId ? `/e/${tenantId}` : '';
 
   function copyPublicScheduleUrl() {
     if (!publicScheduleUrl) return;
@@ -446,7 +444,7 @@ export default function EventsPage() {
         {previewUrl && (
           <div className="shrink-0 hidden lg:block">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-[11px] font-bold text-gray-400">👤 ユーザーにはこう見えます</p>
+              <p className="text-[11px] font-bold text-gray-400">🔍 SEOページはこう見えます</p>
               <button
                 type="button"
                 onClick={() => setIframeKey((k) => k + 1)}
