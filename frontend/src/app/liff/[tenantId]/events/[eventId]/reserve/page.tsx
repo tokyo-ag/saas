@@ -78,7 +78,8 @@ function ReservePageInner() {
   const [myReservation, setMyReservation] = useState<LiffReservation | null>(null);
 
   const requiresLevel = event?.levelEnabled;
-  const hasProfile = !!(profile && profile.name && profile.grade && profile.gender && (!requiresLevel || profile.level));
+  const profileRequired = tenant?.requireProfile !== false;
+  const hasProfile = !profileRequired || !!(profile && profile.name && profile.grade && profile.gender && (!requiresLevel || profile.level));
   const effectiveActionStyle = event?.reserveActionStyle || tenant?.reserveActionStyle;
   const isLineMode = effectiveActionStyle === 'line' && !!tenant?.reserveLineUrl;
 
@@ -262,18 +263,19 @@ function ReservePageInner() {
   }, [authStatus, isFriend, lineUserId, hasProfile, tenantId, eventId, router]);
 
   async function submit() {
-    if (!lineUserId || !profile) return;
+    if (!lineUserId) return;
+    if (profileRequired && !profile) return;
     setError('');
     setSubmitting(true);
     try {
       setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
       const body = {
         eventId,
-        name: profile.name,
-        grade: profile.grade,
-        gender: profile.gender,
-        ...(profile.level && { level: profile.level }),
-        ...(profile.comment && { comment: profile.comment }),
+        ...(profile?.name && { name: profile.name }),
+        ...(profile?.grade && { grade: profile.grade }),
+        ...(profile?.gender && { gender: profile.gender }),
+        ...(profile?.level && { level: profile.level }),
+        ...(profile?.comment && { comment: profile.comment }),
         ...(liffProfile?.displayName && { lineDisplayName: liffProfile.displayName }),
         ...(liffProfile?.pictureUrl && { linePictureUrl: liffProfile.pictureUrl }),
       };

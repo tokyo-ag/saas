@@ -44,6 +44,7 @@ export class UpdateTenantDto {
   @IsOptional() @IsString() reservationMessageTemplate?: string;
   @IsOptional() @IsString() reminderMessageTemplate?: string;
   @IsOptional() @IsBoolean() activityTickerEnabled?: boolean;
+  @IsOptional() @IsBoolean() requireProfile?: boolean;
   @IsOptional() @IsString() themeColor?: string;
   @IsOptional() @IsString() iconUrl?: string;
   @IsOptional() @IsString() code?: string;
@@ -196,6 +197,17 @@ export class TenantService {
       reauthToken,
     );
 
+    if (dto.requireProfile === false) {
+      const eventWithGenderDelay = await this.prisma.event.findFirst({
+        where: { tenantId, maleDelayMinutes: { not: null } },
+      });
+      if (eventWithGenderDelay) {
+        throw new BadRequestException(
+          '集合時間の性別別案内（男性の集合時間を遅らせる設定）を使っているイベントがあるため、プロフィール入力を必須なしにはできません。',
+        );
+      }
+    }
+
     const typeTags =
       dto.typeTags !== undefined
         ? normalizeAllowedTags(dto.typeTags, TENANT_TYPE_TAGS, 10)
@@ -259,6 +271,9 @@ export class TenantService {
         }),
         ...(dto.activityTickerEnabled !== undefined && {
           activityTickerEnabled: dto.activityTickerEnabled,
+        }),
+        ...(dto.requireProfile !== undefined && {
+          requireProfile: dto.requireProfile,
         }),
         ...(dto.themeColor !== undefined && { themeColor: dto.themeColor }),
         ...(dto.iconUrl !== undefined && { iconUrl: dto.iconUrl || null }),

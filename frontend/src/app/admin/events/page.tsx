@@ -99,6 +99,7 @@ export default function EventsPage() {
   const [reflected, setReflected] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const [eventsSeoDescription, setEventsSeoDescription] = useState<string | null>(null);
+  const [requireProfile, setRequireProfile] = useState(true);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -111,6 +112,7 @@ export default function EventsPage() {
       setTenantId(t.code ?? t.id);
       setActivityTickerEnabled(t.activityTickerEnabled !== false);
       setEventsSeoDescription(t.eventsSeoDescription ?? '');
+      setRequireProfile(t.requireProfile !== false);
     }).catch(() => {});
     api.publicPages.list().then((pages) => {
       const first = pages[0];
@@ -161,6 +163,17 @@ export default function EventsPage() {
     try {
       await api.tenant.update({ activityTickerEnabled: next });
     } catch { /* silent */ }
+  }
+
+  async function toggleRequireProfile() {
+    const next = !requireProfile;
+    setRequireProfile(next);
+    try {
+      await api.tenant.update({ requireProfile: next });
+    } catch (err: any) {
+      setRequireProfile(!next);
+      alert(err?.message ?? '設定の更新に失敗しました');
+    }
   }
 
   async function toggleDisplayField(key: keyof DisplayFields) {
@@ -378,6 +391,29 @@ export default function EventsPage() {
                 }`}
               >
                 {activityTickerEnabled ? 'ON' : 'OFF'}
+              </button>
+            </div>
+          </div>
+
+          {/* プロフィール入力必須 */}
+          <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold text-gray-500">プロフィール入力を必須にする</p>
+                <p className="mt-0.5 text-[11px] text-gray-400">
+                  ONだと初回予約時に名前・学年・性別の入力が必須になります。OFFだとイベント詳細画面から「予約する」のワンタップだけで予約が完了し、マイページのプロフィール編集は非表示になります。
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={toggleRequireProfile}
+                className={`shrink-0 rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
+                  requireProfile
+                    ? 'border-[#06C755] bg-[#06C755]/8 text-[#06C755]'
+                    : 'border-gray-200 bg-gray-50 text-gray-400'
+                }`}
+              >
+                {requireProfile ? 'ON' : 'OFF'}
               </button>
             </div>
           </div>

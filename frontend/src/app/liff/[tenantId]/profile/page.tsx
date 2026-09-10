@@ -99,9 +99,11 @@ export default function ProfilePage() {
   const [profileOpen, setProfileOpen] = useState(!!returnTo);
   const [eventsOpen, setEventsOpen] = useState(true);
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const [profileRequired, setProfileRequired] = useState(true);
 
   useEffect(() => {
     async function init() {
+      api.liff.tenant(tenantId).then((t) => setProfileRequired(t.requireProfile !== false)).catch(() => {});
       const ok = await initLiff();
       let uid = '';
       if (ok) {
@@ -308,7 +310,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="px-4 py-5 space-y-5">
-        {returnTo && (
+        {returnTo && profileRequired && (
           <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-xl text-sm">
             予約を続けるには、プロフィールを入力して保存してください。
           </div>
@@ -318,6 +320,7 @@ export default function ProfilePage() {
           <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>
         )}
 
+        {profileRequired && (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-4">
             <button
@@ -397,6 +400,7 @@ export default function ProfilePage() {
           </button>
           )}
         </form>
+        )}
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
           <button

@@ -91,6 +91,7 @@ export class LiffService {
       liffEventView: tenant.liffEventView,
       themeColor: tenant.themeColor,
       activityTickerEnabled: tenant.activityTickerEnabled,
+      requireProfile: tenant.requireProfile,
       ...reserveSettings,
     };
   }
@@ -379,25 +380,28 @@ export class LiffService {
 
     if (!member) {
       const requiresLevel = event.levelEnabled;
-      if (
-        !dto.name ||
-        !dto.grade ||
-        !dto.gender ||
-        (requiresLevel && !dto.level)
-      ) {
-        throw new BadRequestException(
-          requiresLevel
-            ? '初回予約時はお名前・年齢・性別・レベルを入力してください'
-            : '初回予約時はお名前・年齢・性別を入力してください',
-        );
+      // プロフィール入力を必須にしていない団体は、名前・学年・性別なしでも予約できる。
+      if (tenant?.requireProfile !== false) {
+        if (
+          !dto.name ||
+          !dto.grade ||
+          !dto.gender ||
+          (requiresLevel && !dto.level)
+        ) {
+          throw new BadRequestException(
+            requiresLevel
+              ? '初回予約時はお名前・年齢・性別・レベルを入力してください'
+              : '初回予約時はお名前・年齢・性別を入力してください',
+          );
+        }
       }
       member = await this.prisma.member.create({
         data: {
           tenantId,
           lineUserId: dto.lineUserId,
-          name: dto.name,
-          grade: dto.grade,
-          gender: dto.gender,
+          ...(dto.name && { name: dto.name }),
+          ...(dto.grade && { grade: dto.grade }),
+          ...(dto.gender && { gender: dto.gender }),
           ...(dto.level && { level: dto.level }),
           ...(dto.comment !== undefined && { comment: dto.comment }),
           ...(resolvedDisplayName && { lineDisplayName: resolvedDisplayName }),

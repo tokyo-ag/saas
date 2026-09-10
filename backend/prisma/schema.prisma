@@ -33,6 +33,7 @@ model Tenant {
   description            String?   @db.Text
   reviewsSeoDescription  String?   @map("reviews_seo_description") @db.VarChar(300)
   eventsSeoDescription   String?   @map("events_seo_description") @db.VarChar(300)
+  requireProfile         Boolean   @default(true) @map("require_profile")
   lineChannelId          String?   @map("line_channel_id") @db.VarChar(100)
   lineChannelSecret      String?   @map("line_channel_secret") @db.VarChar(100)
   lineChannelAccessToken String?   @map("line_channel_access_token") @db.Text

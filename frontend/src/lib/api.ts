@@ -777,6 +777,7 @@ export interface Tenant {
   reservationMessageTemplate?: string | null;
   reminderMessageTemplate?: string | null;
   activityTickerEnabled?: boolean;
+  requireProfile?: boolean;
   themeColor?: string;
   iconUrl?: string | null;
   createdAt: string;
@@ -811,6 +812,7 @@ export interface TenantInput {
   reservationMessageTemplate?: string;
   reminderMessageTemplate?: string;
   activityTickerEnabled?: boolean;
+  requireProfile?: boolean;
   themeColor?: string;
   iconUrl?: string;
   code?: string;
@@ -830,6 +832,7 @@ export interface LiffTenant {
   liffId?: string;
   liffEventView?: string;
   activityTickerEnabled?: boolean;
+  requireProfile?: boolean;
   themeColor?: string;
   reserveActionStyle?: string | null;
   reserveLineUrl?: string | null;
