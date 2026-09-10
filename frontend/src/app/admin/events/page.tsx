@@ -7,6 +7,7 @@ import { api, formatDate } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { SITE_URL } from '@/lib/config';
 import { EventStatusBadge } from '@/components/ui/StatusBadge';
+import { TenantSeoTextSection } from '@/components/admin/TenantSeoTextSection';
 import type { Event } from '@/lib/api';
 
 const reserveViewOptions = [
@@ -97,6 +98,7 @@ export default function EventsPage() {
   const [savingStyle, setSavingStyle] = useState(false);
   const [reflected, setReflected] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
+  const [eventsSeoDescription, setEventsSeoDescription] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -108,6 +110,7 @@ export default function EventsPage() {
     api.tenant.get().then((t) => {
       setTenantId(t.code ?? t.id);
       setActivityTickerEnabled(t.activityTickerEnabled !== false);
+      setEventsSeoDescription(t.eventsSeoDescription ?? '');
     }).catch(() => {});
     api.publicPages.list().then((pages) => {
       const first = pages[0];
@@ -492,6 +495,19 @@ export default function EventsPage() {
             また外部リンクからのアクセスが多い団体を30日間毎でカウントを行い、COMIU注目の団体！としてCOMIUからPRさせて頂いてます！
           </p>
         </div>
+      </div>
+    )}
+
+    {eventsSeoDescription !== null && (
+      <div className="px-4 pb-6 md:px-6 max-w-5xl">
+        <TenantSeoTextSection
+          field="eventsSeoDescription"
+          title="予約スケジュールページのSEO文言"
+          helpText="公開用の予約スケジュールページの見出し下とmeta descriptionに使われます。空欄の場合は団体の紹介文が使われます。"
+          placeholder="例：池袋・新宿・渋谷で活動するインカレサークルBELL。初参加・一人参加も大歓迎です。"
+          initialValue={eventsSeoDescription}
+          onSaved={setEventsSeoDescription}
+        />
       </div>
     )}
     </>

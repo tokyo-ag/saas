@@ -726,6 +726,7 @@ export class PublicController {
       name: tenant.name,
       description: tenant.description,
       reviewsSeoDescription: tenant.reviewsSeoDescription,
+      eventsSeoDescription: tenant.eventsSeoDescription,
       tags: tenant.tags,
       typeTags: tenant.typeTags,
       activityTags: tenant.activityTags,

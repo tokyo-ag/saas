@@ -752,6 +752,7 @@ export interface Tenant {
   name: string;
   description?: string;
   reviewsSeoDescription?: string | null;
+  eventsSeoDescription?: string | null;
   publicBlogUrl?: string;
   tags?: string[];
   typeTags?: string[];
@@ -793,6 +794,7 @@ export interface TenantInput {
   name: string;
   description?: string;
   reviewsSeoDescription?: string;
+  eventsSeoDescription?: string;
   publicBlogUrl?: string;
   tags?: string[];
   typeTags?: string[];

@@ -20,7 +20,19 @@ type ReviewsTenantInfo = {
   pages?: Array<{ slug: string }>;
 };
 
+// ページ上の表示用：改行はそのまま残し、行内の余分な空白だけ整える。
 function shortDescription(description: string | null | undefined): string {
+  if (!description) return '';
+  return description
+    .trim()
+    .split('\n')
+    .map((line) => line.trim().replace(/[ \t]+/g, ' '))
+    .join('\n')
+    .slice(0, 300);
+}
+
+// meta description用：改行を含め1行に平坦化する。
+function flattenForMeta(description: string | null | undefined): string {
   if (!description) return '';
   return description.trim().replace(/\s+/g, ' ').slice(0, 150);
 }
@@ -28,6 +40,10 @@ function shortDescription(description: string | null | undefined): string {
 // 口コミページ専用のSEO文言があれば優先し、無ければ団体の紹介文にフォールバックする。
 function reviewsIntroText(tenant: ReviewsTenantInfo): string {
   return shortDescription(tenant.reviewsSeoDescription) || shortDescription(tenant.description);
+}
+
+function reviewsMetaDescriptionSource(tenant: ReviewsTenantInfo): string {
+  return flattenForMeta(tenant.reviewsSeoDescription) || flattenForMeta(tenant.description);
 }
 
 type TenantPageStyle = {
@@ -84,7 +100,7 @@ export async function generateMetadata({
   }
   const name = tenant.lineDisplayName || tenant.name || tenantCode;
   const title = `${name}の口コミ・評判 | COMIU`;
-  const bio = reviewsIntroText(tenant);
+  const bio = reviewsMetaDescriptionSource(tenant);
   const description = bio
     ? `${bio}／${name}に実際に参加したメンバーのリアルな口コミ・感想を掲載。入会や参加を検討している方はぜひ参考にしてください。`
     : `${name}に実際に参加したメンバーのリアルな口コミ・感想を掲載。入会や参加を検討している方はぜひ参考にしてください。`;
@@ -165,7 +181,7 @@ export default async function ReviewsListPage({
         <h1 className="mb-2 text-sm font-bold" style={{ color: textColor }}>{name}の口コミ・評判</h1>
 
         {reviewsIntroText(tenant) && (
-          <p className="mb-4 text-xs leading-relaxed" style={{ color: textColor, opacity: 0.7 }}>
+          <p className="mb-4 whitespace-pre-wrap text-xs leading-relaxed" style={{ color: textColor, opacity: 0.7 }}>
             {reviewsIntroText(tenant)}
           </p>
         )}

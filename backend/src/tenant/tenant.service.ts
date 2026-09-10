@@ -27,6 +27,7 @@ export class UpdateTenantDto {
   @IsOptional() @IsString() name?: string;
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsString() reviewsSeoDescription?: string;
+  @IsOptional() @IsString() eventsSeoDescription?: string;
   @IsOptional() @IsString() publicBlogUrl?: string;
   @IsOptional() @IsArray() @IsString({ each: true }) tags?: string[];
   @IsOptional() @IsArray() @IsString({ each: true }) typeTags?: string[];
@@ -213,6 +214,9 @@ export class TenantService {
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.reviewsSeoDescription !== undefined && {
           reviewsSeoDescription: dto.reviewsSeoDescription.trim() || null,
+        }),
+        ...(dto.eventsSeoDescription !== undefined && {
+          eventsSeoDescription: dto.eventsSeoDescription.trim() || null,
         }),
         ...(dto.publicBlogUrl !== undefined && {
           publicBlogUrl: dto.publicBlogUrl || null,

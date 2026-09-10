@@ -10,6 +10,7 @@ type TenantEventsData = {
   code?: string | null;
   name: string;
   description?: string | null;
+  eventsSeoDescription?: string | null;
   lineDisplayName?: string | null;
   linePictureUrl?: string | null;
   liffId?: string | null;
@@ -17,9 +18,30 @@ type TenantEventsData = {
   events: ReservationShowcaseEvent[];
 };
 
+// ページ上の表示用：改行はそのまま残し、行内の余分な空白だけ整える。
 function shortDescription(description: string | null | undefined): string {
   if (!description) return '';
+  return description
+    .trim()
+    .split('\n')
+    .map((line) => line.trim().replace(/[ \t]+/g, ' '))
+    .join('\n')
+    .slice(0, 300);
+}
+
+// meta description用：改行を含め1行に平坦化する。
+function flattenForMeta(description: string | null | undefined): string {
+  if (!description) return '';
   return description.trim().replace(/\s+/g, ' ').slice(0, 150);
+}
+
+// 予約スケジュールページ専用のSEO文言があれば優先し、無ければ団体の紹介文にフォールバックする。
+function eventsIntroText(tenant: TenantEventsData): string {
+  return shortDescription(tenant.eventsSeoDescription) || shortDescription(tenant.description);
+}
+
+function eventsMetaDescriptionSource(tenant: TenantEventsData): string {
+  return flattenForMeta(tenant.eventsSeoDescription) || flattenForMeta(tenant.description);
 }
 
 type TenantPageStyle = {
@@ -65,7 +87,7 @@ export async function generateMetadata({
   }
   const name = tenant.lineDisplayName || tenant.name;
   const title = `${name}の予約スケジュール | COMIU`;
-  const bio = shortDescription(tenant.description);
+  const bio = eventsMetaDescriptionSource(tenant);
   const description = bio
     ? `${bio}／${name}が開催するイベントの予約スケジュール一覧です。LINEなしでもご覧いただけます。`
     : `${name}が開催するイベントの予約スケジュール一覧です。LINEなしでもご覧いただけます。`;
@@ -170,9 +192,9 @@ export default async function TenantEventsPage({
 
         <h1 className="mb-2 text-sm font-bold" style={{ color: textColor }}>{name}の予約スケジュール</h1>
 
-        {shortDescription(tenant.description) && (
-          <p className="mb-4 text-xs leading-relaxed" style={{ color: textColor, opacity: 0.7 }}>
-            {shortDescription(tenant.description)}
+        {eventsIntroText(tenant) && (
+          <p className="mb-4 whitespace-pre-wrap text-xs leading-relaxed" style={{ color: textColor, opacity: 0.7 }}>
+            {eventsIntroText(tenant)}
           </p>
         )}
 
