@@ -751,6 +751,7 @@ export interface Tenant {
   code?: string;
   name: string;
   description?: string;
+  reviewsSeoDescription?: string | null;
   publicBlogUrl?: string;
   tags?: string[];
   typeTags?: string[];
@@ -791,6 +792,7 @@ export interface TenantWithStats extends Tenant {
 export interface TenantInput {
   name: string;
   description?: string;
+  reviewsSeoDescription?: string;
   publicBlogUrl?: string;
   tags?: string[];
   typeTags?: string[];

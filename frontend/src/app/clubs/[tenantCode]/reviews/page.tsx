@@ -12,6 +12,7 @@ export const revalidate = 60;
 type ReviewsTenantInfo = {
   name?: string | null;
   description?: string | null;
+  reviewsSeoDescription?: string | null;
   lineDisplayName?: string | null;
   linePictureUrl?: string | null;
   iconUrl?: string | null;
@@ -22,6 +23,11 @@ type ReviewsTenantInfo = {
 function shortDescription(description: string | null | undefined): string {
   if (!description) return '';
   return description.trim().replace(/\s+/g, ' ').slice(0, 150);
+}
+
+// 口コミページ専用のSEO文言があれば優先し、無ければ団体の紹介文にフォールバックする。
+function reviewsIntroText(tenant: ReviewsTenantInfo): string {
+  return shortDescription(tenant.reviewsSeoDescription) || shortDescription(tenant.description);
 }
 
 type TenantPageStyle = {
@@ -78,7 +84,7 @@ export async function generateMetadata({
   }
   const name = tenant.lineDisplayName || tenant.name || tenantCode;
   const title = `${name}の口コミ・評判 | COMIU`;
-  const bio = shortDescription(tenant.description);
+  const bio = reviewsIntroText(tenant);
   const description = bio
     ? `${bio}／${name}に実際に参加したメンバーのリアルな口コミ・感想を掲載。入会や参加を検討している方はぜひ参考にしてください。`
     : `${name}に実際に参加したメンバーのリアルな口コミ・感想を掲載。入会や参加を検討している方はぜひ参考にしてください。`;
@@ -158,9 +164,9 @@ export default async function ReviewsListPage({
 
         <h1 className="mb-2 text-sm font-bold" style={{ color: textColor }}>{name}の口コミ・評判</h1>
 
-        {shortDescription(tenant.description) && (
+        {reviewsIntroText(tenant) && (
           <p className="mb-4 text-xs leading-relaxed" style={{ color: textColor, opacity: 0.7 }}>
-            {shortDescription(tenant.description)}
+            {reviewsIntroText(tenant)}
           </p>
         )}
 

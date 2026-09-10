@@ -26,6 +26,7 @@ function normalizeAllowedTags(tags: string[] | undefined, allowedTags: string[],
 export class UpdateTenantDto {
   @IsOptional() @IsString() name?: string;
   @IsOptional() @IsString() description?: string;
+  @IsOptional() @IsString() reviewsSeoDescription?: string;
   @IsOptional() @IsString() publicBlogUrl?: string;
   @IsOptional() @IsArray() @IsString({ each: true }) tags?: string[];
   @IsOptional() @IsArray() @IsString({ each: true }) typeTags?: string[];
@@ -210,6 +211,9 @@ export class TenantService {
       data: {
         ...(dto.name !== undefined && { name: dto.name }),
         ...(dto.description !== undefined && { description: dto.description }),
+        ...(dto.reviewsSeoDescription !== undefined && {
+          reviewsSeoDescription: dto.reviewsSeoDescription.trim() || null,
+        }),
         ...(dto.publicBlogUrl !== undefined && {
           publicBlogUrl: dto.publicBlogUrl || null,
         }),
