@@ -10,7 +10,6 @@ import { SaveToast } from '@/components/ui/SaveToast';
 
 const tabs = [
   { label: '団体情報', href: '/admin/settings', active: true },
-  { label: '参加者フォーム', href: '/admin/settings/profile-form' },
   { label: 'LINE連携', href: '/admin/settings/line' },
   { label: 'Stripe決済', href: '/admin/settings/stripe' },
   { label: 'プラン', href: '/admin/settings/plan' },

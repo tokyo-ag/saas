@@ -26,6 +26,7 @@ export default function Sidebar() {
   const links = [
     { href: '/admin/public-page', label: '公開サイト', icon: 'P' },
     { href: '/admin/events', label: '予約ページ', icon: 'E' },
+    { href: '/admin/profile-form', label: '参加者フォーム', icon: 'F' },
     { href: '/admin/blog', label: 'ブログ', icon: 'B' },
     { href: '/admin/reviews', label: '口コミ', icon: 'R' },
     { href: '/admin/messages', label: 'お問い合わせ', icon: 'C' },

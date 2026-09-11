@@ -1,36 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { api } from '@/lib/api';
 
-const tabs = [
-  { label: '団体情報', href: '/admin/settings' },
-  { label: '参加者フォーム', href: '/admin/settings/profile-form', active: true },
-  { label: 'LINE連携', href: '/admin/settings/line' },
-  { label: 'Stripe決済', href: '/admin/settings/stripe' },
-  { label: 'プラン', href: '/admin/settings/plan' },
-];
-
-function SettingsTabs() {
-  return (
-    <nav className="-mx-4 mb-6 flex gap-1 overflow-x-auto border-b border-gray-200 px-4 md:mx-0 md:px-0">
-      {tabs.map((tab) =>
-        tab.active ? (
-          <span key={tab.href} className="whitespace-nowrap border-b-2 border-[#06C755] px-4 py-2 text-sm font-medium text-[#06C755]">
-            {tab.label}
-          </span>
-        ) : (
-          <Link key={tab.href} href={tab.href} className="whitespace-nowrap border-b-2 border-transparent px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700">
-            {tab.label}
-          </Link>
-        ),
-      )}
-    </nav>
-  );
-}
-
-export default function ProfileFormSettingsPage() {
+export default function ProfileFormPage() {
   const [requireProfile, setRequireProfile] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -52,8 +25,10 @@ export default function ProfileFormSettingsPage() {
   return (
     <div className="px-4 py-4 md:px-6 md:py-6">
       <div className="mx-auto max-w-2xl">
-        <h1 className="mb-5 text-2xl font-bold text-gray-900">設定</h1>
-        <SettingsTabs />
+        <div className="mb-5">
+          <h1 className="text-xl font-bold text-gray-900 md:text-2xl">参加者フォーム</h1>
+          <p className="mt-1 text-sm text-gray-500">初回予約時にどんなプロフィール情報を求めるかを設定します。</p>
+        </div>
 
         {requireProfile === null ? (
           <p className="text-sm text-gray-400">読み込み中...</p>

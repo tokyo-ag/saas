@@ -13,7 +13,6 @@ type Step = 1 | 2 | 3 | 4;
 
 const tabs = [
   { label: '団体情報', href: '/admin/settings' },
-  { label: '参加者フォーム', href: '/admin/settings/profile-form' },
   { label: 'LINE連携', href: '/admin/settings/line', active: true },
   { label: 'Stripe決済', href: '/admin/settings/stripe' },
   { label: 'プラン', href: '/admin/settings/plan' },
