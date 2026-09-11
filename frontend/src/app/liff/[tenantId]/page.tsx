@@ -2,13 +2,13 @@
 
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api, API_URL, formatDateShort, LiffEvent, LiffTenant, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { getDefaultEventImage } from '@/lib/defaultImages';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
-import { initLiff, getLiffProfile } from '@/lib/liff';
+import { initLiff, getLiffProfile, loginIfNeeded, liff } from '@/lib/liff';
 import { EventCardSkeleton } from '@/components/liff/EventCardSkeleton';
 import { useLiffTheme, readableTextColor } from '@/components/liff/LiffThemeProvider';
 import { ActivityTicker } from '@/components/liff/ActivityTicker';
@@ -495,6 +495,7 @@ function LiffCalendarCard({ events, tenantId, accentColor, myStatusByEvent }: { 
 
 export default function LiffTopPage() {
   const { tenantId } = useParams<{ tenantId: string }>();
+  const router = useRouter();
   const theme = useLiffTheme();
   const [tenant, setTenant] = useState<LiffTenant | null>(null);
   const [events, setEvents] = useState<LiffEvent[]>([]);
@@ -557,17 +558,43 @@ export default function LiffTopPage() {
       if (isPreview) return;
 
       const ok = await initLiff();
-      const lineProfile = ok ? await getLiffProfile().catch(() => null) : null;
+      let lineProfile: { userId: string; displayName: string; pictureUrl?: string } | null = null;
+      if (ok) {
+        if (liff.isInClient()) {
+          lineProfile = await getLiffProfile().catch(() => null);
+        } else {
+          // 外部ブラウザから開かれた場合（SEOの詳細ページの「LINEでログイン」など）は、
+          // ここで実際にLINEログインを走らせる。未ログインならliff.login()でリダイレクトする。
+          const loggedIn = await loginIfNeeded();
+          if (loggedIn) lineProfile = await getLiffProfile().catch(() => null);
+        }
+      }
       if (lineProfile?.pictureUrl) setMyPictureUrl(lineProfile.pictureUrl);
       if (lineProfile?.userId) setIsLoggedIn(true);
-      const uid = lineProfile?.userId ?? `demo-${tenantId}`;
-      if (uid && lineProfile?.userId) {
+
+      if (lineProfile?.userId) {
+        // 初回登録チェック：団体が必須にしている項目が未入力なら登録画面へ誘導する。
+        const requireName = t?.requireName !== false;
+        const requireGrade = t?.requireGrade !== false;
+        const requireGender = t?.requireGender !== false;
+        if (requireName || requireGrade || requireGender) {
+          const prof = await api.liff.profile(tenantId, lineProfile.userId).catch(() => null);
+          const hasProfile = !!(
+            (!requireName || prof?.name) &&
+            (!requireGrade || prof?.grade) &&
+            (!requireGender || prof?.gender)
+          );
+          if (!hasProfile) {
+            const returnTo = `/liff/${tenantId}`;
+            router.replace(`/liff/${tenantId}/profile?returnTo=${encodeURIComponent(returnTo)}`);
+            return;
+          }
+        }
+
         const myReservations = await api.liff.myReservations(tenantId).catch(() => []);
         setMyStatusByEvent(
           Object.fromEntries(myReservations.map((r) => [r.event.id, r.status])),
         );
-      }
-      if (lineProfile?.userId) {
         api.liff.syncLineProfile(tenantId, lineProfile.userId, {
           lineDisplayName: lineProfile.displayName,
           linePictureUrl: lineProfile.pictureUrl,

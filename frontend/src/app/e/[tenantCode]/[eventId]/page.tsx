@@ -309,15 +309,17 @@ export default async function PublicEventPage({
     }
   })();
   const configuredLineUrl = footerSettings.reserveLineUrl?.trim() || footerSettings.line?.trim();
-  const reservePath = `/liff/${event.tenantCode}/events/${event.id}/reserve`;
+  // このページはSEO向けの詳細ページなので、ボタンはこの特定イベントの予約確認へ
+  // 直接飛ばすのではなく、LINEログインを行ってからLIFFのイベント一覧に誘導する。
+  const loginPath = `/liff/${event.tenantCode}`;
   const effectiveActionStyle = event.reserveActionStyle || footerSettings.reserveActionStyle;
   const isExternalLineUrl = effectiveActionStyle === 'line' && !!configuredLineUrl;
   const reserveUrl = isExternalLineUrl
     ? configuredLineUrl!
-    : buildLiffUrl(reservePath, {
+    : buildLiffUrl(loginPath, {
         liffId: event.liffId,
         endpointPath: '/',
-      }) ?? reservePath;
+      }) ?? loginPath;
   const isFull =
     event.capacity != null && event.reservedCount >= event.capacity;
   const spotsLeft =
@@ -345,7 +347,7 @@ export default async function PublicEventPage({
             className="rounded-full px-4 py-1.5 text-sm font-semibold hover:opacity-90"
             style={{ backgroundColor: accentColor, color: readableTextColor(accentColor) }}
           >
-            LINEで予約
+            LINEでログイン
           </Link>
         )}
       </header>
@@ -535,13 +537,13 @@ export default async function PublicEventPage({
               ) : (
                 <SmartLiffButton
                   href={reserveUrl}
-                  directHref={`${SITE_URL}${reservePath}`}
+                  directHref={`${SITE_URL}${loginPath}`}
                   className={`mt-5 block w-full rounded-xl py-3.5 text-center text-sm font-bold transition-colors ${
                     isFull ? 'bg-gray-400 text-white pointer-events-none' : 'hover:opacity-90'
                   }`}
                   style={isFull ? undefined : { backgroundColor: accentColor, color: readableTextColor(accentColor) }}
                 >
-                  {isFull ? '満席のため受付終了' : 'LINEで予約する'}
+                  {isFull ? '満席のため受付終了' : 'LINEでログイン'}
                 </SmartLiffButton>
               )
             )}
