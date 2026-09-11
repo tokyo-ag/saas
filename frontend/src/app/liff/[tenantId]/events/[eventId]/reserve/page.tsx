@@ -78,8 +78,15 @@ function ReservePageInner() {
   const [myReservation, setMyReservation] = useState<LiffReservation | null>(null);
 
   const requiresLevel = event?.levelEnabled;
-  const profileRequired = tenant?.requireProfile !== false;
-  const hasProfile = !profileRequired || !!(profile && profile.name && profile.grade && profile.gender && (!requiresLevel || profile.level));
+  const requireName = tenant?.requireName !== false;
+  const requireGrade = tenant?.requireGrade !== false;
+  const requireGender = tenant?.requireGender !== false;
+  const hasProfile = !!(
+    (!requireName || profile?.name) &&
+    (!requireGrade || profile?.grade) &&
+    (!requireGender || profile?.gender) &&
+    (!requiresLevel || profile?.level)
+  );
   const effectiveActionStyle = event?.reserveActionStyle || tenant?.reserveActionStyle;
   const isLineMode = effectiveActionStyle === 'line' && !!tenant?.reserveLineUrl;
 
@@ -263,8 +270,7 @@ function ReservePageInner() {
   }, [authStatus, isFriend, lineUserId, hasProfile, tenantId, eventId, router]);
 
   async function submit() {
-    if (!lineUserId) return;
-    if (profileRequired && !profile) return;
+    if (!lineUserId || !hasProfile) return;
     setError('');
     setSubmitting(true);
     try {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { api, LiffMyReservation, LiffProfile, setLiffToken } from '@/lib/api';
+import { api, CustomProfileQuestion, LiffMyReservation, LiffProfile, setLiffToken } from '@/lib/api';
 import { initLiff, getLiffUserId, loginIfNeeded, liff, redirectToLiffApp, isLiffLoggedIn } from '@/lib/liff';
 import { useLiffTheme, readableTextColor, isLightHexColor } from '@/components/liff/LiffThemeProvider';
 import { ConfirmDialog } from '@/components/liff/ConfirmDialog';
@@ -99,11 +99,26 @@ export default function ProfilePage() {
   const [profileOpen, setProfileOpen] = useState(!!returnTo);
   const [eventsOpen, setEventsOpen] = useState(true);
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
-  const [profileRequired, setProfileRequired] = useState(true);
+  const [formConfig, setFormConfig] = useState({
+    requireName: true,
+    requireGrade: true,
+    requireGender: true,
+    showLevel: true,
+    showComment: true,
+    customProfileQuestions: [] as CustomProfileQuestion[],
+  });
+  const [customAnswers, setCustomAnswers] = useState<Record<string, string>>({});
 
   useEffect(() => {
     async function init() {
-      api.liff.tenant(tenantId).then((t) => setProfileRequired(t.requireProfile !== false)).catch(() => {});
+      api.liff.tenant(tenantId).then((t) => setFormConfig({
+        requireName: t.requireName !== false,
+        requireGrade: t.requireGrade !== false,
+        requireGender: t.requireGender !== false,
+        showLevel: t.showLevel !== false,
+        showComment: t.showComment !== false,
+        customProfileQuestions: t.customProfileQuestions ?? [],
+      })).catch(() => {});
       const ok = await initLiff();
       let uid = '';
       if (ok) {
@@ -162,6 +177,7 @@ export default function ProfilePage() {
         setGender(resolvedProf.gender ?? '');
         setLevel(resolvedProf.level ?? '');
         setComment(resolvedProf.comment ?? '');
+        setCustomAnswers(resolvedProf.customAnswers ?? {});
       } else {
         setProfileOpen(true);
       }
@@ -197,7 +213,7 @@ export default function ProfilePage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!gender) {
+    if (formConfig.requireGender && !gender) {
       setError('性別を選択してください');
       return;
     }
@@ -205,7 +221,14 @@ export default function ProfilePage() {
     setSaving(true);
     try {
       setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
-      const updated = await api.liff.updateProfile(tenantId, lineUserId, { name, grade, gender, level, comment });
+      const updated = await api.liff.updateProfile(tenantId, lineUserId, {
+        ...(formConfig.requireName && { name }),
+        ...(formConfig.requireGrade && { grade }),
+        ...(formConfig.requireGender && { gender }),
+        ...(formConfig.showLevel && { level }),
+        ...(formConfig.showComment && { comment }),
+        ...(formConfig.customProfileQuestions.length > 0 && { customAnswers }),
+      });
       setProfile(updated);
       if (returnTo) {
         router.push(returnTo);
@@ -248,6 +271,8 @@ export default function ProfilePage() {
   }
 
   const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--liff-accent)] focus:border-transparent';
+  const hasAnyProfileField = formConfig.requireName || formConfig.requireGrade || formConfig.requireGender
+    || formConfig.showLevel || formConfig.showComment || formConfig.customProfileQuestions.length > 0;
 
   if (loading) {
     return (
@@ -310,7 +335,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="px-4 py-5 space-y-5">
-        {returnTo && profileRequired && (
+        {returnTo && hasAnyProfileField && (
           <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-xl text-sm">
             予約を続けるには、プロフィールを入力して保存してください。
           </div>
@@ -320,7 +345,7 @@ export default function ProfilePage() {
           <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>
         )}
 
-        {profileRequired && (
+        {hasAnyProfileField && (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-4">
             <button
@@ -335,6 +360,7 @@ export default function ProfilePage() {
             </button>
             {profileOpen && (
             <>
+            {formConfig.requireName && (
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1.5">お名前 <span className="text-red-400">*</span></label>
               <input required minLength={1} maxLength={50}
@@ -343,6 +369,8 @@ export default function ProfilePage() {
                 className={inputClass}
               />
             </div>
+            )}
+            {formConfig.requireGrade && (
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1.5">年齢 <span className="text-red-400">*</span></label>
               <select required value={grade} onChange={(e) => setGrade(e.target.value)} className={inputClass}>
@@ -350,6 +378,8 @@ export default function ProfilePage() {
                 {GRADES.map((g) => <option key={g} value={g}>{g}</option>)}
               </select>
             </div>
+            )}
+            {formConfig.requireGender && (
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-2">性別 <span className="text-red-400">*</span></label>
               <div className="flex gap-2">
@@ -364,6 +394,8 @@ export default function ProfilePage() {
                 ))}
               </div>
             </div>
+            )}
+            {formConfig.showLevel && (
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-2">スポーツレベル（任意）</label>
               <div className="flex gap-2">
@@ -378,6 +410,8 @@ export default function ProfilePage() {
                 ))}
               </div>
             </div>
+            )}
+            {formConfig.showComment && (
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1.5">一言（任意）</label>
               <input maxLength={200}
@@ -386,6 +420,18 @@ export default function ProfilePage() {
                 className={inputClass}
               />
             </div>
+            )}
+            {formConfig.customProfileQuestions.map((q) => (
+            <div key={q.id}>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">{q.label}（任意）</label>
+              <input maxLength={200}
+                value={customAnswers[q.id] ?? ''}
+                onChange={(e) => setCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                placeholder={q.placeholder ?? ''}
+                className={inputClass}
+              />
+            </div>
+            ))}
             </>
             )}
           </div>

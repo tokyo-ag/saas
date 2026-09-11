@@ -190,7 +190,7 @@ export const api = {
       void lineUserId;
       return request<LiffProfile>(`/liff/${tenantId}/profile`);
     },
-    updateProfile: (tenantId: string, _lineUserId: string, data: { name: string; grade: string; gender: string; level?: string; comment?: string }) =>
+    updateProfile: (tenantId: string, _lineUserId: string, data: { name?: string; grade?: string; gender?: string; level?: string; comment?: string; customAnswers?: Record<string, string> }) =>
       request<LiffProfile>(
         `/liff/${tenantId}/profile`,
         { method: 'PATCH', body: JSON.stringify(data) },
@@ -651,6 +651,8 @@ export interface SupportThread {
 }
 
 export interface MemberDetail extends Member {
+  comment?: string | null;
+  customAnswers?: Record<string, string> | null;
   reservations: Array<{
     id: string;
     status: ReservationStatus;
@@ -725,11 +727,12 @@ export interface AdminTenantReview {
 export interface ReserveInput {
   eventId: string;
   lineUserId: string;
-  name: string;
-  grade: string;
-  gender: string;
+  name?: string;
+  grade?: string;
+  gender?: string;
   level?: string;
   comment?: string;
+  customAnswers?: Record<string, string>;
 }
 
 export interface MobileManageDisplayFields {
@@ -744,6 +747,12 @@ export interface MobileManageSettings {
   hideLevel: boolean;
   hideLineNotify: boolean;
   reserveActionStyle: 'comiu' | 'line';
+}
+
+export interface CustomProfileQuestion {
+  id: string;
+  label: string;
+  placeholder?: string;
 }
 
 export interface Tenant {
@@ -777,7 +786,12 @@ export interface Tenant {
   reservationMessageTemplate?: string | null;
   reminderMessageTemplate?: string | null;
   activityTickerEnabled?: boolean;
-  requireProfile?: boolean;
+  requireName?: boolean;
+  requireGrade?: boolean;
+  requireGender?: boolean;
+  showLevel?: boolean;
+  showComment?: boolean;
+  customProfileQuestions?: CustomProfileQuestion[] | null;
   themeColor?: string;
   iconUrl?: string | null;
   createdAt: string;
@@ -812,7 +826,12 @@ export interface TenantInput {
   reservationMessageTemplate?: string;
   reminderMessageTemplate?: string;
   activityTickerEnabled?: boolean;
-  requireProfile?: boolean;
+  requireName?: boolean;
+  requireGrade?: boolean;
+  requireGender?: boolean;
+  showLevel?: boolean;
+  showComment?: boolean;
+  customProfileQuestions?: CustomProfileQuestion[];
   themeColor?: string;
   iconUrl?: string;
   code?: string;
@@ -832,7 +851,12 @@ export interface LiffTenant {
   liffId?: string;
   liffEventView?: string;
   activityTickerEnabled?: boolean;
-  requireProfile?: boolean;
+  requireName?: boolean;
+  requireGrade?: boolean;
+  requireGender?: boolean;
+  showLevel?: boolean;
+  showComment?: boolean;
+  customProfileQuestions?: CustomProfileQuestion[] | null;
   themeColor?: string;
   reserveActionStyle?: string | null;
   reserveLineUrl?: string | null;
@@ -853,6 +877,7 @@ export interface LiffProfile {
   gender?: string;
   level?: string;
   comment?: string;
+  customAnswers?: Record<string, string> | null;
 }
 
 export interface LiffMyReservation {

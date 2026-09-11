@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { api, formatDate, formatDateOnly, MemberDetail } from '@/lib/api';
+import { api, CustomProfileQuestion, formatDate, formatDateOnly, MemberDetail } from '@/lib/api';
 import { ReservationBadge } from '@/components/ui/StatusBadge';
 
 function paymentLabel(reservation: MemberDetail['reservations'][number]) {
@@ -16,6 +16,7 @@ function paymentLabel(reservation: MemberDetail['reservations'][number]) {
 export default function MemberDetailPage() {
   const { memberId } = useParams<{ memberId: string }>();
   const [member, setMember] = useState<MemberDetail | null>(null);
+  const [customQuestions, setCustomQuestions] = useState<CustomProfileQuestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [blocking, setBlocking] = useState(false);
 
@@ -24,6 +25,7 @@ export default function MemberDetailPage() {
       .then(setMember)
       .catch(console.error)
       .finally(() => setLoading(false));
+    api.tenant.get().then((t) => setCustomQuestions(t.customProfileQuestions ?? [])).catch(() => {});
   }, [memberId]);
 
   async function handleBlock() {
@@ -133,7 +135,33 @@ export default function MemberDetailPage() {
             <dt className="text-gray-500">参加回数</dt>
             <dd className="mt-1 font-medium text-gray-900">{member.eventCount ?? member.reservations.length}回</dd>
           </div>
+          {member.level && (
+            <div>
+              <dt className="text-gray-500">スポーツレベル</dt>
+              <dd className="mt-1 font-medium text-gray-900">{member.level}</dd>
+            </div>
+          )}
+          {member.comment && (
+            <div className="col-span-2 md:col-span-4">
+              <dt className="text-gray-500">一言</dt>
+              <dd className="mt-1 whitespace-pre-wrap font-medium text-gray-900">{member.comment}</dd>
+            </div>
+          )}
         </dl>
+
+        {member.customAnswers && Object.keys(member.customAnswers).length > 0 && (
+          <div className="mt-4 border-t border-gray-100 pt-4">
+            <p className="mb-2 text-xs font-semibold text-gray-500">カスタム質問への回答</p>
+            <dl className="space-y-2 text-sm">
+              {Object.entries(member.customAnswers).filter(([, v]) => v).map(([questionId, value]) => (
+                <div key={questionId}>
+                  <dt className="text-gray-500">{customQuestions.find((q) => q.id === questionId)?.label ?? '質問'}</dt>
+                  <dd className="mt-0.5 whitespace-pre-wrap font-medium text-gray-900">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
       </section>
 
       <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">

@@ -3,7 +3,7 @@
  * Run: npx ts-node -e "require('./prisma/migrate-tenant-id')"
  * Or:  npx ts-node prisma/migrate-tenant-id.ts
  */
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
@@ -21,7 +21,7 @@ async function main() {
 
   // Step 1: 新IDで同じデータのテナントを作成（FK子テーブルが参照できる親を先に作る）
   const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = old;
-  await prisma.tenant.create({ data: { id: newId, ...rest } });
+  await prisma.tenant.create({ data: { id: newId, ...rest } as Prisma.TenantCreateInput });
 
   // Step 2: FK制約のある子テーブルを更新
   await prisma.$executeRaw`UPDATE organizer_accounts SET tenant_id = ${newId} WHERE tenant_id = ${OLD_ID}`;

@@ -23,6 +23,22 @@ function normalizeAllowedTags(tags: string[] | undefined, allowedTags: string[],
     .slice(0, limit);
 }
 
+const MAX_CUSTOM_PROFILE_QUESTIONS = 10;
+
+function sanitizeCustomProfileQuestions(
+  questions: CustomProfileQuestionInput[] | undefined,
+): { id: string; label: string; placeholder?: string }[] {
+  if (!Array.isArray(questions)) return [];
+  return questions
+    .map((q, i) => ({
+      id: (q.id && q.id.trim()) || `q${Date.now()}_${i}`,
+      label: (q.label ?? '').trim().slice(0, 100),
+      ...(q.placeholder?.trim() && { placeholder: q.placeholder.trim().slice(0, 100) }),
+    }))
+    .filter((q) => q.label.length > 0)
+    .slice(0, MAX_CUSTOM_PROFILE_QUESTIONS);
+}
+
 export class UpdateTenantDto {
   @IsOptional() @IsString() name?: string;
   @IsOptional() @IsString() description?: string;
@@ -44,10 +60,21 @@ export class UpdateTenantDto {
   @IsOptional() @IsString() reservationMessageTemplate?: string;
   @IsOptional() @IsString() reminderMessageTemplate?: string;
   @IsOptional() @IsBoolean() activityTickerEnabled?: boolean;
-  @IsOptional() @IsBoolean() requireProfile?: boolean;
+  @IsOptional() @IsBoolean() requireName?: boolean;
+  @IsOptional() @IsBoolean() requireGrade?: boolean;
+  @IsOptional() @IsBoolean() requireGender?: boolean;
+  @IsOptional() @IsBoolean() showLevel?: boolean;
+  @IsOptional() @IsBoolean() showComment?: boolean;
+  @IsOptional() @IsArray() customProfileQuestions?: CustomProfileQuestionInput[];
   @IsOptional() @IsString() themeColor?: string;
   @IsOptional() @IsString() iconUrl?: string;
   @IsOptional() @IsString() code?: string;
+}
+
+export interface CustomProfileQuestionInput {
+  id?: string;
+  label: string;
+  placeholder?: string;
 }
 
 @Injectable()
@@ -197,16 +224,31 @@ export class TenantService {
       reauthToken,
     );
 
-    if (dto.requireProfile === false) {
+    if (dto.requireGender === false) {
       const eventWithGenderDelay = await this.prisma.event.findFirst({
         where: { tenantId, maleDelayMinutes: { not: null } },
       });
       if (eventWithGenderDelay) {
         throw new BadRequestException(
-          '集合時間の性別別案内（男性の集合時間を遅らせる設定）を使っているイベントがあるため、プロフィール入力を必須なしにはできません。',
+          '集合時間の性別別案内（男性の集合時間を遅らせる設定）を使っているイベントがあるため、性別の入力を必須なしにはできません。',
         );
       }
     }
+    if (dto.showLevel === false) {
+      const eventWithLevel = await this.prisma.event.findFirst({
+        where: { tenantId, levelEnabled: true },
+      });
+      if (eventWithLevel) {
+        throw new BadRequestException(
+          'スポーツレベルを必須にしているイベントがあるため、レベル項目を非表示にはできません。',
+        );
+      }
+    }
+
+    const customProfileQuestions =
+      dto.customProfileQuestions !== undefined
+        ? sanitizeCustomProfileQuestions(dto.customProfileQuestions)
+        : undefined;
 
     const typeTags =
       dto.typeTags !== undefined
@@ -272,8 +314,13 @@ export class TenantService {
         ...(dto.activityTickerEnabled !== undefined && {
           activityTickerEnabled: dto.activityTickerEnabled,
         }),
-        ...(dto.requireProfile !== undefined && {
-          requireProfile: dto.requireProfile,
+        ...(dto.requireName !== undefined && { requireName: dto.requireName }),
+        ...(dto.requireGrade !== undefined && { requireGrade: dto.requireGrade }),
+        ...(dto.requireGender !== undefined && { requireGender: dto.requireGender }),
+        ...(dto.showLevel !== undefined && { showLevel: dto.showLevel }),
+        ...(dto.showComment !== undefined && { showComment: dto.showComment }),
+        ...(customProfileQuestions !== undefined && {
+          customProfileQuestions,
         }),
         ...(dto.themeColor !== undefined && { themeColor: dto.themeColor }),
         ...(dto.iconUrl !== undefined && { iconUrl: dto.iconUrl || null }),

@@ -33,7 +33,12 @@ model Tenant {
   description            String?   @db.Text
   reviewsSeoDescription  String?   @map("reviews_seo_description") @db.VarChar(300)
   eventsSeoDescription   String?   @map("events_seo_description") @db.VarChar(300)
-  requireProfile         Boolean   @default(true) @map("require_profile")
+  requireName            Boolean   @default(true) @map("require_name")
+  requireGrade           Boolean   @default(true) @map("require_grade")
+  requireGender          Boolean   @default(true) @map("require_gender")
+  showLevel              Boolean   @default(true) @map("show_level")
+  showComment            Boolean   @default(true) @map("show_comment")
+  customProfileQuestions Json?     @map("custom_profile_questions")
   lineChannelId          String?   @map("line_channel_id") @db.VarChar(100)
   lineChannelSecret      String?   @map("line_channel_secret") @db.VarChar(100)
   lineChannelAccessToken String?   @map("line_channel_access_token") @db.Text
@@ -322,6 +327,7 @@ model Member {
   gender              String?   @db.VarChar(20)
   level               String?   @db.VarChar(20)
   comment             String?   @db.VarChar(200)
+  customAnswers       Json?     @map("custom_answers")
   blockedAt           DateTime? @map("blocked_at")
   createdAt           DateTime  @default(now()) @map("created_at")
 

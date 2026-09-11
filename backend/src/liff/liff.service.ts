@@ -20,6 +20,7 @@ export class CreateReservationDto {
   @IsOptional() @IsString() gender?: string;
   @IsOptional() @IsString() level?: string;
   @IsOptional() @IsString() @MaxLength(200) comment?: string;
+  @IsOptional() customAnswers?: Record<string, string>;
   @IsOptional() @IsString() lineDisplayName?: string;
   @IsOptional() @IsString() linePictureUrl?: string;
 }
@@ -91,7 +92,12 @@ export class LiffService {
       liffEventView: tenant.liffEventView,
       themeColor: tenant.themeColor,
       activityTickerEnabled: tenant.activityTickerEnabled,
-      requireProfile: tenant.requireProfile,
+      requireName: tenant.requireName,
+      requireGrade: tenant.requireGrade,
+      requireGender: tenant.requireGender,
+      showLevel: tenant.showLevel,
+      showComment: tenant.showComment,
+      customProfileQuestions: tenant.customProfileQuestions,
       ...reserveSettings,
     };
   }
@@ -380,20 +386,16 @@ export class LiffService {
 
     if (!member) {
       const requiresLevel = event.levelEnabled;
-      // プロフィール入力を必須にしていない団体は、名前・学年・性別なしでも予約できる。
-      if (tenant?.requireProfile !== false) {
-        if (
-          !dto.name ||
-          !dto.grade ||
-          !dto.gender ||
-          (requiresLevel && !dto.level)
-        ) {
-          throw new BadRequestException(
-            requiresLevel
-              ? '初回予約時はお名前・年齢・性別・レベルを入力してください'
-              : '初回予約時はお名前・年齢・性別を入力してください',
-          );
-        }
+      // 団体ごとの設定で必須にしていない項目は、未入力でも予約できる。
+      const missingFields: string[] = [];
+      if (tenant?.requireName !== false && !dto.name) missingFields.push('お名前');
+      if (tenant?.requireGrade !== false && !dto.grade) missingFields.push('年齢');
+      if (tenant?.requireGender !== false && !dto.gender) missingFields.push('性別');
+      if (requiresLevel && !dto.level) missingFields.push('レベル');
+      if (missingFields.length > 0) {
+        throw new BadRequestException(
+          `初回予約時は${missingFields.join('・')}を入力してください`,
+        );
       }
       member = await this.prisma.member.create({
         data: {
@@ -404,6 +406,7 @@ export class LiffService {
           ...(dto.gender && { gender: dto.gender }),
           ...(dto.level && { level: dto.level }),
           ...(dto.comment !== undefined && { comment: dto.comment }),
+          ...(dto.customAnswers && { customAnswers: dto.customAnswers }),
           ...(resolvedDisplayName && { lineDisplayName: resolvedDisplayName }),
           ...(resolvedPictureUrl && { linePictureUrl: resolvedPictureUrl }),
         },
@@ -417,6 +420,7 @@ export class LiffService {
           ...(dto.gender && { gender: dto.gender }),
           ...(dto.level && { level: dto.level }),
           ...(dto.comment !== undefined && { comment: dto.comment }),
+          ...(dto.customAnswers && { customAnswers: dto.customAnswers }),
           ...(resolvedDisplayName && { lineDisplayName: resolvedDisplayName }),
           ...(resolvedPictureUrl && { linePictureUrl: resolvedPictureUrl }),
         },
@@ -715,6 +719,7 @@ export class LiffService {
       gender: member.gender,
       level: member.level,
       comment: member.comment,
+      customAnswers: member.customAnswers,
     };
   }
 
@@ -722,11 +727,12 @@ export class LiffService {
     tenantId: string,
     lineUserId: string,
     data: {
-      name: string;
-      grade: string;
-      gender: string;
+      name?: string;
+      grade?: string;
+      gender?: string;
       level?: string;
       comment?: string;
+      customAnswers?: Record<string, string>;
     },
   ) {
     tenantId = await this.resolveTenantId(tenantId);
@@ -735,18 +741,20 @@ export class LiffService {
       create: {
         tenantId,
         lineUserId,
-        name: data.name,
-        grade: data.grade,
-        gender: data.gender,
+        name: data.name || null,
+        grade: data.grade || null,
+        gender: data.gender || null,
         level: data.level || null,
         comment: data.comment || null,
+        ...(data.customAnswers && { customAnswers: data.customAnswers }),
       },
       update: {
-        name: data.name,
-        grade: data.grade,
-        gender: data.gender,
-        level: data.level || null,
-        comment: data.comment || null,
+        ...(data.name !== undefined && { name: data.name || null }),
+        ...(data.grade !== undefined && { grade: data.grade || null }),
+        ...(data.gender !== undefined && { gender: data.gender || null }),
+        ...(data.level !== undefined && { level: data.level || null }),
+        ...(data.comment !== undefined && { comment: data.comment || null }),
+        ...(data.customAnswers && { customAnswers: data.customAnswers }),
       },
     });
     return {
