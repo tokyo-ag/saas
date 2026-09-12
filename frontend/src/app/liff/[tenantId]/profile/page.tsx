@@ -111,7 +111,8 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function init() {
-      api.liff.tenant(tenantId).then((t) => setFormConfig({
+      const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
+      await api.liff.tenant(tenantId).then((t) => setFormConfig({
         requireName: t.requireName !== false,
         requireGrade: t.requireGrade !== false,
         requireGender: t.requireGender !== false,
@@ -119,6 +120,14 @@ export default function ProfilePage() {
         showComment: t.showComment !== false,
         customProfileQuestions: t.customProfileQuestions ?? [],
       })).catch(() => {});
+
+      // 管理画面内のプレビューではLINE SDKを初期化せず、フォームの見た目だけ表示する。
+      if (isPreview) {
+        setProfileOpen(true);
+        setLoading(false);
+        return;
+      }
+
       const ok = await initLiff();
       let uid = '';
       if (ok) {

@@ -15,6 +15,47 @@ const FIXED_FIELDS: { key: FieldKey; label: string; help: string }[] = [
 
 type FieldState = Record<FieldKey, boolean>;
 
+function ProfileFormPreview({
+  previewUrl,
+  iframeKey,
+  onReload,
+}: {
+  previewUrl: string;
+  iframeKey: number;
+  onReload: () => void;
+}) {
+  if (!previewUrl) return null;
+  return (
+    <aside className="hidden shrink-0 lg:block">
+      <div className="sticky top-4">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <p className="text-[11px] font-bold text-gray-400">👤 ユーザーにはこう見えます</p>
+          <button
+            type="button"
+            onClick={onReload}
+            className="text-[10px] text-gray-400 hover:text-gray-600 underline"
+          >
+            再読込
+          </button>
+        </div>
+        <div className="overflow-hidden rounded-[2.5rem] border-[6px] border-gray-800 bg-white shadow-2xl" style={{ width: '220px' }}>
+          <div className="flex items-center justify-center gap-2 bg-gray-800 py-2">
+            <div className="h-1.5 w-12 rounded-full bg-gray-600" />
+          </div>
+          <iframe
+            key={iframeKey}
+            src={previewUrl}
+            width="375"
+            height="667"
+            style={{ zoom: 0.587, border: 'none', display: 'block' }}
+            title="参加者フォームプレビュー"
+          />
+        </div>
+      </div>
+    </aside>
+  );
+}
+
 export default function ProfileFormPage() {
   const [fields, setFields] = useState<FieldState | null>(null);
   const [questions, setQuestions] = useState<CustomProfileQuestion[]>([]);
@@ -22,9 +63,12 @@ export default function ProfileFormPage() {
   const [newPlaceholder, setNewPlaceholder] = useState('');
   const [savingQuestions, setSavingQuestions] = useState(false);
   const [error, setError] = useState('');
+  const [tenantId, setTenantId] = useState('');
+  const [iframeKey, setIframeKey] = useState(0);
 
   useEffect(() => {
     api.tenant.get().then((t) => {
+      setTenantId(t.code ?? t.id);
       setFields({
         requireName: t.requireName !== false,
         requireGrade: t.requireGrade !== false,
@@ -43,6 +87,7 @@ export default function ProfileFormPage() {
     setError('');
     try {
       await api.tenant.update({ [key]: next[key] });
+      setIframeKey((k) => k + 1);
     } catch (err: any) {
       setFields(fields);
       setError(err?.message ?? '設定の更新に失敗しました');
@@ -55,6 +100,7 @@ export default function ProfileFormPage() {
     try {
       await api.tenant.update({ customProfileQuestions: nextQuestions });
       setQuestions(nextQuestions);
+      setIframeKey((k) => k + 1);
     } catch (err: any) {
       setError(err?.message ?? '質問の更新に失敗しました');
     } finally {
@@ -85,7 +131,8 @@ export default function ProfileFormPage() {
 
   return (
     <div className="px-4 py-4 md:px-6 md:py-6">
-      <div className="mx-auto max-w-2xl">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+      <div className="min-w-0 flex-1">
         <div className="mb-5">
           <h1 className="text-xl font-bold text-gray-900 md:text-2xl">参加者フォーム</h1>
           <p className="mt-1 text-sm text-gray-500">初回予約時にどんなプロフィール情報を求めるかを設定します。</p>
@@ -177,6 +224,13 @@ export default function ProfileFormPage() {
             </div>
           </>
         )}
+      </div>
+
+      <ProfileFormPreview
+        previewUrl={tenantId ? `/liff/${tenantId}/profile?preview=1` : ''}
+        iframeKey={iframeKey}
+        onReload={() => setIframeKey((k) => k + 1)}
+      />
       </div>
     </div>
   );
