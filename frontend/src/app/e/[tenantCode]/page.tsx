@@ -208,8 +208,6 @@ export default async function TenantEventsPage({
             events={events}
             tenantCode={tenantCode}
             showButton={false}
-            linkToLiff
-            liffId={tenant.liffId}
           />
         )}
       </div>
