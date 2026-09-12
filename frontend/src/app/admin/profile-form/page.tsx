@@ -14,11 +14,11 @@ const QUESTION_TYPES: CustomProfileQuestionType[] = ['text', 'radio', 'checkbox'
 type FieldKey = 'requireName' | 'requireGrade' | 'requireGender' | 'showLevel' | 'showComment';
 
 const FIXED_FIELDS: { key: FieldKey; label: string; help: string }[] = [
-  { key: 'requireName', label: '名前', help: 'ONだと初回予約時に必須になります。' },
-  { key: 'requireGrade', label: '学年', help: 'ONだと初回予約時に必須になります。' },
-  { key: 'requireGender', label: '性別', help: 'ONだと初回予約時に必須になります。集合時間の性別別案内を使っているイベントがある場合はOFFにできません。' },
-  { key: 'showLevel', label: 'スポーツレベル', help: '項目自体の表示/非表示です（任意項目のまま）。レベルを必須にしているイベントがある場合はOFFにできません。' },
-  { key: 'showComment', label: '一言コメント', help: '項目自体の表示/非表示です（任意項目のまま）。' },
+  { key: 'requireName', label: '名前', help: '非表示にするとフォームから消え、必須項目からも外れます。' },
+  { key: 'requireGrade', label: '学年', help: '非表示にするとフォームから消え、必須項目からも外れます。' },
+  { key: 'requireGender', label: '性別', help: '表示中は初回予約時に必須になります。男女別価格や集合時間の性別別案内を使っているイベントがある場合は非表示にできません。' },
+  { key: 'showLevel', label: 'スポーツレベル', help: '表示しても必須にはなりません（任意項目）。レベルを必須にしているイベントがある場合は非表示にできません。' },
+  { key: 'showComment', label: '一言コメント', help: '表示しても必須にはなりません（任意項目）。' },
 ];
 
 type FieldState = Record<FieldKey, boolean>;
@@ -229,7 +229,7 @@ export default function ProfileFormPage() {
                         : 'border-gray-200 bg-gray-50 text-gray-400'
                     }`}
                   >
-                    {fields[key] ? 'ON' : 'OFF'}
+                    {fields[key] ? '表示' : '非表示'}
                   </button>
                 </div>
               ))}
