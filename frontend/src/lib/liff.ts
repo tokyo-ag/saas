@@ -2,6 +2,7 @@
 
 import liff from '@line/liff';
 import { setLiffToken } from './api';
+import { isInLineInAppBrowser } from './config';
 
 let initialized = false;
 let initializedLiffId: string | null = null;
@@ -138,6 +139,13 @@ export function buildCurrentLiffUrl(): string | null {
 }
 
 export function redirectToLiffApp(): boolean {
+  // 既にLINEアプリ内ブラウザで開いている状態でliff.line.meへ遷移すると、
+  // LINEが確認を挟んで新しいブラウザ画面を上に重ねて開いてしまう（二重表示）。
+  // 既にLINE内ならリロードだけで十分なので、liff.line.meへの遷移は行わない。
+  if (typeof window !== 'undefined' && isInLineInAppBrowser()) {
+    window.location.reload();
+    return true;
+  }
   const url = buildCurrentLiffUrl();
   if (!url) return false;
   window.location.href = url;
