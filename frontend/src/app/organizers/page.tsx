@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
 import ComiuLandingPage, { type TrialBanner } from "./OrganizersLanding";
-import { API_URL } from "@/lib/config";
+import { API_URL, SITE_URL } from "@/lib/config";
 
 export const revalidate = 60;
 
-const DEFAULT_TITLE = "イベント・サークルの集客ならCOMIU | 無料で団体ページを作成";
+const DEFAULT_TITLE = "イベント・サークルの集客・無料で団体ページを作成";
 const DEFAULT_DESCRIPTION =
   "掲載用のホームページなら、もういらない。団体ページ、イベント募集、予約管理、活動ブログ、公式LINE連携をまとめて、Webサイトを育てるWebアプリケーションへ。";
 
@@ -30,9 +30,26 @@ async function fetchOfficialSite(): Promise<OfficialSite | null> {
 
 export async function generateMetadata(): Promise<Metadata> {
   const site = await fetchOfficialSite();
+  const title = site?.seoTitle || DEFAULT_TITLE;
+  const description = site?.seoDescription || DEFAULT_DESCRIPTION;
   return {
-    title: site?.seoTitle || DEFAULT_TITLE,
-    description: site?.seoDescription || DEFAULT_DESCRIPTION,
+    title,
+    description,
+    alternates: { canonical: `${SITE_URL}/organizers` },
+    openGraph: {
+      title: `${title} | COMIU`,
+      description,
+      url: `${SITE_URL}/organizers`,
+      locale: 'ja_JP',
+      type: 'website',
+      images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${title} | COMIU`,
+      description,
+      images: [`${SITE_URL}/opengraph-image`],
+    },
   };
 }
 

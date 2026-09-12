@@ -29,7 +29,7 @@ async function fetchTenants(): Promise<PublicTenant[]> {
 }
 
 export const metadata: Metadata = {
-  title: 'コミュニティを探す | COMIU',
+  title: 'コミュニティを探す',
   description:
     '専門学校生・短大生・通信大学生・社会人でも参加できるスポーツ・交流コミュニティを探せます。大学のサークルがなくても大丈夫。COMIUで運営されているオープンなコミュニティ一覧です。',
   alternates: { canonical: `${SITE_URL}/find` },
