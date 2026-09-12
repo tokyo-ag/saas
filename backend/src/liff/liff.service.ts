@@ -25,6 +25,11 @@ export class CreateReservationDto {
   @IsOptional() @IsString() linePictureUrl?: string;
 }
 
+function hasCustomAnswer(value: string | string[] | undefined): boolean {
+  if (Array.isArray(value)) return value.length > 0;
+  return !!value && value.trim().length > 0;
+}
+
 export class SubmitReviewDto {
   @IsOptional() @IsString() lineUserId?: string;
   @IsString() @MaxLength(2000) content!: string;
@@ -736,6 +741,18 @@ export class LiffService {
     },
   ) {
     tenantId = await this.resolveTenantId(tenantId);
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { customProfileQuestions: true },
+    });
+    const questions =
+      (tenant?.customProfileQuestions as { id: string; label: string; required?: boolean }[] | null) ?? [];
+    const missingQuestions = questions.filter((q) => q.required && !hasCustomAnswer(data.customAnswers?.[q.id]));
+    if (missingQuestions.length > 0) {
+      throw new BadRequestException(`${missingQuestions.map((q) => q.label).join('・')}を入力してください`);
+    }
+
     const updated = await this.prisma.member.upsert({
       where: { tenantId_lineUserId: { tenantId, lineUserId } },
       create: {

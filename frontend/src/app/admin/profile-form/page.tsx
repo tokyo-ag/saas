@@ -81,6 +81,7 @@ export default function ProfileFormPage() {
   const [draftType, setDraftType] = useState<CustomProfileQuestionType>('text');
   const [draftPlaceholder, setDraftPlaceholder] = useState('');
   const [draftOptions, setDraftOptions] = useState<string[]>(['', '']);
+  const [draftRequired, setDraftRequired] = useState(false);
 
   useEffect(() => {
     api.tenant.get().then((t) => {
@@ -130,6 +131,7 @@ export default function ProfileFormPage() {
     setDraftType('text');
     setDraftPlaceholder('');
     setDraftOptions(['', '']);
+    setDraftRequired(false);
     setError('');
   }
 
@@ -139,6 +141,7 @@ export default function ProfileFormPage() {
     setDraftType(q.type ?? 'text');
     setDraftPlaceholder(q.placeholder ?? '');
     setDraftOptions(q.options && q.options.length > 0 ? q.options : ['', '']);
+    setDraftRequired(!!q.required);
     setError('');
   }
 
@@ -176,6 +179,7 @@ export default function ProfileFormPage() {
       id: editingId === 'new' ? `q${Date.now()}` : editingId,
       label,
       type: draftType,
+      required: draftRequired,
       ...(draftType === 'text' && draftPlaceholder.trim() && { placeholder: draftPlaceholder.trim() }),
       ...(isChoice && { options }),
     };
@@ -288,7 +292,10 @@ export default function ProfileFormPage() {
                           </button>
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-gray-700">{q.label}</p>
+                          <p className="truncate text-sm font-medium text-gray-700">
+                            {q.label}
+                            {q.required && <span className="ml-1 rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-bold text-red-500">必須</span>}
+                          </p>
                           <p className="truncate text-xs text-gray-400">
                             {QUESTION_TYPE_LABELS[q.type ?? 'text']}
                             {q.placeholder ? `・例：${q.placeholder}` : ''}
@@ -379,6 +386,16 @@ export default function ProfileFormPage() {
                       )}
                     </div>
                   )}
+
+                  <label className="flex items-center gap-2 pt-1 text-sm text-gray-600">
+                    <input
+                      type="checkbox"
+                      checked={draftRequired}
+                      onChange={(e) => setDraftRequired(e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-[#06C755] focus:ring-[#06C755]"
+                    />
+                    この質問を必須にする
+                  </label>
 
                   <div className="flex gap-2 pt-1">
                     <button

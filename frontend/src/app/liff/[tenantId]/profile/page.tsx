@@ -226,6 +226,15 @@ export default function ProfilePage() {
       setError('性別を選択してください');
       return;
     }
+    const missingQuestion = formConfig.customProfileQuestions.find((q) => {
+      if (!q.required) return false;
+      const value = customAnswers[q.id];
+      return Array.isArray(value) ? value.length === 0 : !value;
+    });
+    if (missingQuestion) {
+      setError(`${missingQuestion.label}を入力してください`);
+      return;
+    }
     setError('');
     setSaving(true);
     try {
@@ -435,9 +444,12 @@ export default function ProfilePage() {
               const value = customAnswers[q.id];
               return (
               <div key={q.id}>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">{q.label}（任意）</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                  {q.label} {q.required ? <span className="text-red-400">*</span> : '（任意）'}
+                </label>
                 {type === 'text' && (
                   <input maxLength={200}
+                    required={q.required}
                     value={typeof value === 'string' ? value : ''}
                     onChange={(e) => setCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
                     placeholder={q.placeholder ?? ''}
@@ -446,6 +458,7 @@ export default function ProfilePage() {
                 )}
                 {type === 'select' && (
                   <select
+                    required={q.required}
                     value={typeof value === 'string' ? value : ''}
                     onChange={(e) => setCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
                     className={inputClass}

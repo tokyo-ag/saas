@@ -29,7 +29,7 @@ const CUSTOM_PROFILE_QUESTION_TYPES: CustomProfileQuestionType[] = ['text', 'rad
 
 function sanitizeCustomProfileQuestions(
   questions: CustomProfileQuestionInput[] | undefined,
-): { id: string; label: string; type: CustomProfileQuestionType; placeholder?: string; options?: string[] }[] {
+): { id: string; label: string; type: CustomProfileQuestionType; placeholder?: string; options?: string[]; required: boolean }[] {
   if (!Array.isArray(questions)) return [];
   return questions
     .map((q, i) => {
@@ -48,6 +48,7 @@ function sanitizeCustomProfileQuestions(
         id: (q.id && q.id.trim()) || `q${Date.now()}_${i}`,
         label: (q.label ?? '').trim().slice(0, 100),
         type,
+        required: !!q.required,
         ...(type === 'text' && q.placeholder?.trim() && { placeholder: q.placeholder.trim().slice(0, 100) }),
         ...(type !== 'text' && { options }),
       };
@@ -96,6 +97,7 @@ export interface CustomProfileQuestionInput {
   type?: CustomProfileQuestionType;
   placeholder?: string;
   options?: string[];
+  required?: boolean;
 }
 
 @Injectable()

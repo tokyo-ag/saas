@@ -757,6 +757,7 @@ export interface CustomProfileQuestion {
   type?: CustomProfileQuestionType;
   placeholder?: string;
   options?: string[];
+  required?: boolean;
 }
 
 export type CustomAnswerValue = string | string[];
