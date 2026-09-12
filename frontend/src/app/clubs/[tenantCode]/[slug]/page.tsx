@@ -1028,22 +1028,29 @@ export default async function ClubCmsPage({
             {reviews.length === 0 ? (
               <p className="mt-4 text-sm text-gray-400">まだ口コミはありません。参加した方の感想をお楽しみに。</p>
             ) : (
-              <div className="mt-4 max-h-[480px] space-y-3 overflow-y-auto pr-1">
-                {reviews.map((review) => (
-                  <div key={review.id} className="flex gap-3 p-3" style={{ backgroundColor: blogPostCardBg, ...cardBorderStyle }}>
-                    {review.authorIconUrl ? (
-                      <Image src={review.authorIconUrl} alt="" width={32} height={32} className="mt-0.5 h-8 w-8 shrink-0 rounded-full object-cover" />
-                    ) : (
-                      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-400">
-                        {review.authorName.slice(0, 1)}
+              <div className="mt-4 space-y-3">
+                <div className="max-h-[480px] space-y-3 overflow-y-auto pr-1">
+                  {reviews.map((review) => (
+                    <div key={review.id} className="flex gap-3 p-3" style={{ backgroundColor: blogPostCardBg, ...cardBorderStyle }}>
+                      {review.authorIconUrl ? (
+                        <Image src={review.authorIconUrl} alt="" width={32} height={32} className="mt-0.5 h-8 w-8 shrink-0 rounded-full object-cover" />
+                      ) : (
+                        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-400">
+                          {review.authorName.slice(0, 1)}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="mb-0.5 text-xs font-medium text-gray-700">{review.authorName}</p>
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{review.content}</p>
                       </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="mb-0.5 text-xs font-medium text-gray-700">{review.authorName}</p>
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{review.content}</p>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                <Link href={`/clubs/${page.tenant.code ?? tenantCode}/reviews`}
+                  className="relative z-[1] inline-flex text-xs font-bold transition hover:underline"
+                  style={{ color: accentColor }}>
+                  口コミ一覧を見る
+                </Link>
               </div>
             )}
           </div>
