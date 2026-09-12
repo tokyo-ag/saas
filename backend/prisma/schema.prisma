@@ -34,7 +34,7 @@ model Tenant {
   reviewsSeoDescription  String?   @map("reviews_seo_description") @db.VarChar(300)
   eventsSeoDescription   String?   @map("events_seo_description") @db.VarChar(300)
   requireName            Boolean   @default(true) @map("require_name")
-  requireGrade           Boolean   @default(true) @map("require_grade")
+  requireGrade           Boolean   @default(false) @map("require_grade")
   requireGender          Boolean   @default(true) @map("require_gender")
   showLevel              Boolean   @default(true) @map("show_level")
   showComment            Boolean   @default(true) @map("show_comment")

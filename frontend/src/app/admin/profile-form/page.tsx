@@ -15,13 +15,13 @@ type FieldKey = 'requireName' | 'requireGrade' | 'requireGender' | 'showLevel' |
 
 const FIXED_FIELDS: { key: FieldKey; label: string; help: string }[] = [
   { key: 'requireName', label: '名前', help: '非表示にするとフォームから消え、必須項目からも外れます。' },
-  { key: 'requireGrade', label: '学年', help: '非表示にするとフォームから消え、必須項目からも外れます。' },
   { key: 'requireGender', label: '性別', help: '表示中は初回予約時に必須になります。男女別価格や集合時間の性別別案内を使っているイベントがある場合は非表示にできません。' },
 ];
 
-type BuiltinItemKey = 'showLevel' | 'showComment';
+type BuiltinItemKey = 'requireGrade' | 'showLevel' | 'showComment';
 
 const BUILTIN_QUESTION_ITEMS: { key: BuiltinItemKey; label: string; description: string; lockHelp: string }[] = [
+  { key: 'requireGrade', label: '学年', description: '「大学生（18～22歳）」「社会人」から選択（表示中は必須）', lockHelp: '' },
   { key: 'showLevel', label: 'スポーツレベル', description: '初心者／中級／上級から選択（任意）', lockHelp: 'レベルを必須にしているイベントがあるため削除できません。' },
   { key: 'showComment', label: '一言コメント', description: '自由記述・200文字まで（任意）', lockHelp: '' },
 ];
@@ -400,7 +400,7 @@ export default function ProfileFormPage() {
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  {BUILTIN_QUESTION_ITEMS.filter((b) => !fields[b.key]).map((b) => (
+                  {BUILTIN_QUESTION_ITEMS.filter((b) => !fields[b.key] && b.key !== 'requireGrade').map((b) => (
                     <button
                       key={b.key}
                       type="button"
