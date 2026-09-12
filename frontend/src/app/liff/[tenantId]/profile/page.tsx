@@ -107,7 +107,7 @@ export default function ProfilePage() {
     showComment: true,
     customProfileQuestions: [] as CustomProfileQuestion[],
   });
-  const [customAnswers, setCustomAnswers] = useState<Record<string, string>>({});
+  const [customAnswers, setCustomAnswers] = useState<Record<string, string | string[]>>({});
 
   useEffect(() => {
     async function init() {
@@ -430,17 +430,68 @@ export default function ProfilePage() {
               />
             </div>
             )}
-            {formConfig.customProfileQuestions.map((q) => (
-            <div key={q.id}>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">{q.label}（任意）</label>
-              <input maxLength={200}
-                value={customAnswers[q.id] ?? ''}
-                onChange={(e) => setCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
-                placeholder={q.placeholder ?? ''}
-                className={inputClass}
-              />
-            </div>
-            ))}
+            {formConfig.customProfileQuestions.map((q) => {
+              const type = q.type ?? 'text';
+              const value = customAnswers[q.id];
+              return (
+              <div key={q.id}>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">{q.label}（任意）</label>
+                {type === 'text' && (
+                  <input maxLength={200}
+                    value={typeof value === 'string' ? value : ''}
+                    onChange={(e) => setCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                    placeholder={q.placeholder ?? ''}
+                    className={inputClass}
+                  />
+                )}
+                {type === 'select' && (
+                  <select
+                    value={typeof value === 'string' ? value : ''}
+                    onChange={(e) => setCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                    className={inputClass}
+                  >
+                    <option value="">選択してください</option>
+                    {(q.options ?? []).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                )}
+                {type === 'radio' && (
+                  <div className="flex flex-wrap gap-2">
+                    {(q.options ?? []).map((opt) => (
+                      <button key={opt} type="button"
+                        onClick={() => setCustomAnswers((prev) => ({ ...prev, [q.id]: opt }))}
+                        className="rounded-full border px-4 py-1.5 text-sm font-bold transition"
+                        style={value === opt
+                          ? { backgroundColor: solidAccentColor, borderColor: solidAccentColor, color: readableTextColor(solidAccentColor) }
+                          : { borderColor: '#e5e7eb', color: '#374151' }}>
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {type === 'checkbox' && (
+                  <div className="flex flex-wrap gap-2">
+                    {(q.options ?? []).map((opt) => {
+                      const selected = Array.isArray(value) && value.includes(opt);
+                      return (
+                        <button key={opt} type="button"
+                          onClick={() => setCustomAnswers((prev) => {
+                            const current = Array.isArray(prev[q.id]) ? (prev[q.id] as string[]) : [];
+                            const next = current.includes(opt) ? current.filter((v) => v !== opt) : [...current, opt];
+                            return { ...prev, [q.id]: next };
+                          })}
+                          className="rounded-full border px-4 py-1.5 text-sm font-bold transition"
+                          style={selected
+                            ? { backgroundColor: solidAccentColor, borderColor: solidAccentColor, color: readableTextColor(solidAccentColor) }
+                            : { borderColor: '#e5e7eb', color: '#374151' }}>
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              );
+            })}
             </>
             )}
           </div>

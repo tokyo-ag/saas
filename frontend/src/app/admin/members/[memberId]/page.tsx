@@ -153,10 +153,14 @@ export default function MemberDetailPage() {
           <div className="mt-4 border-t border-gray-100 pt-4">
             <p className="mb-2 text-xs font-semibold text-gray-500">カスタム質問への回答</p>
             <dl className="space-y-2 text-sm">
-              {Object.entries(member.customAnswers).filter(([, v]) => v).map(([questionId, value]) => (
+              {Object.entries(member.customAnswers)
+                .filter(([, v]) => (Array.isArray(v) ? v.length > 0 : !!v))
+                .map(([questionId, value]) => (
                 <div key={questionId}>
                   <dt className="text-gray-500">{customQuestions.find((q) => q.id === questionId)?.label ?? '質問'}</dt>
-                  <dd className="mt-0.5 whitespace-pre-wrap font-medium text-gray-900">{value}</dd>
+                  <dd className="mt-0.5 whitespace-pre-wrap font-medium text-gray-900">
+                    {Array.isArray(value) ? value.join('、') : value}
+                  </dd>
                 </div>
               ))}
             </dl>

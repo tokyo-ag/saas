@@ -1,7 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api, CustomProfileQuestion } from '@/lib/api';
+import { api, CustomProfileQuestion, CustomProfileQuestionType } from '@/lib/api';
+
+const QUESTION_TYPE_LABELS: Record<CustomProfileQuestionType, string> = {
+  text: '自由記述',
+  radio: '単一選択（ラジオ）',
+  checkbox: '複数選択（チェックボックス）',
+  select: 'プルダウン',
+};
+const QUESTION_TYPES: CustomProfileQuestionType[] = ['text', 'radio', 'checkbox', 'select'];
 
 type FieldKey = 'requireName' | 'requireGrade' | 'requireGender' | 'showLevel' | 'showComment';
 
@@ -59,12 +67,15 @@ function ProfileFormPreview({
 export default function ProfileFormPage() {
   const [fields, setFields] = useState<FieldState | null>(null);
   const [questions, setQuestions] = useState<CustomProfileQuestion[]>([]);
-  const [newLabel, setNewLabel] = useState('');
-  const [newPlaceholder, setNewPlaceholder] = useState('');
   const [savingQuestions, setSavingQuestions] = useState(false);
   const [error, setError] = useState('');
   const [tenantId, setTenantId] = useState('');
   const [iframeKey, setIframeKey] = useState(0);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftLabel, setDraftLabel] = useState('');
+  const [draftType, setDraftType] = useState<CustomProfileQuestionType>('text');
+  const [draftPlaceholder, setDraftPlaceholder] = useState('');
+  const [draftOptions, setDraftOptions] = useState<string[]>(['', '']);
 
   useEffect(() => {
     api.tenant.get().then((t) => {
@@ -108,25 +119,81 @@ export default function ProfileFormPage() {
     }
   }
 
-  function addQuestion() {
-    const label = newLabel.trim();
-    if (!label) return;
-    if (questions.length >= 10) {
+  function openNewQuestion() {
+    setEditingId('new');
+    setDraftLabel('');
+    setDraftType('text');
+    setDraftPlaceholder('');
+    setDraftOptions(['', '']);
+    setError('');
+  }
+
+  function openEditQuestion(q: CustomProfileQuestion) {
+    setEditingId(q.id);
+    setDraftLabel(q.label);
+    setDraftType(q.type ?? 'text');
+    setDraftPlaceholder(q.placeholder ?? '');
+    setDraftOptions(q.options && q.options.length > 0 ? q.options : ['', '']);
+    setError('');
+  }
+
+  function closeEditor() {
+    setEditingId(null);
+  }
+
+  function updateDraftOption(index: number, value: string) {
+    setDraftOptions((prev) => prev.map((o, i) => (i === index ? value : o)));
+  }
+
+  function addDraftOption() {
+    if (draftOptions.length >= 8) return;
+    setDraftOptions((prev) => [...prev, '']);
+  }
+
+  function removeDraftOption(index: number) {
+    setDraftOptions((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function saveDraft() {
+    const label = draftLabel.trim();
+    if (!label || editingId === null) return;
+    const isChoice = draftType !== 'text';
+    const options = draftOptions.map((o) => o.trim()).filter((o) => o.length > 0);
+    if (isChoice && options.length < 2) {
+      setError('選択肢は2つ以上入力してください');
+      return;
+    }
+    if (editingId === 'new' && questions.length >= 10) {
       setError('カスタム質問は10個まで追加できます');
       return;
     }
     const question: CustomProfileQuestion = {
-      id: `q${Date.now()}`,
+      id: editingId === 'new' ? `q${Date.now()}` : editingId,
       label,
-      ...(newPlaceholder.trim() && { placeholder: newPlaceholder.trim() }),
+      type: draftType,
+      ...(draftType === 'text' && draftPlaceholder.trim() && { placeholder: draftPlaceholder.trim() }),
+      ...(isChoice && { options }),
     };
-    saveQuestions([...questions, question]);
-    setNewLabel('');
-    setNewPlaceholder('');
+    const nextQuestions =
+      editingId === 'new'
+        ? [...questions, question]
+        : questions.map((q) => (q.id === editingId ? question : q));
+    await saveQuestions(nextQuestions);
+    setEditingId(null);
   }
 
   function removeQuestion(id: string) {
+    if (editingId === id) setEditingId(null);
     saveQuestions(questions.filter((q) => q.id !== id));
+  }
+
+  function moveQuestion(id: string, direction: -1 | 1) {
+    const index = questions.findIndex((q) => q.id === id);
+    const targetIndex = index + direction;
+    if (index < 0 || targetIndex < 0 || targetIndex >= questions.length) return;
+    const next = [...questions];
+    [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+    saveQuestions(next);
   }
 
   return (
@@ -169,57 +236,157 @@ export default function ProfileFormPage() {
             </div>
 
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-6">
-              <p className="mb-1 text-sm font-medium text-gray-700">カスタム質問（自由記述）</p>
+              <p className="mb-1 text-sm font-medium text-gray-700">カスタム質問</p>
               <p className="mb-4 text-xs leading-relaxed text-gray-500">
-                上の項目に加えて、自由記述の質問を追加できます。初回予約時のフォームの一番下に表示されます（任意項目）。
+                上の項目に加えて、自由記述・選択式の質問を追加できます。初回予約時のフォームの一番下に表示されます（任意項目）。
               </p>
 
               {questions.length > 0 && (
                 <div className="mb-4 space-y-2">
-                  {questions.map((q) => (
+                  {questions.map((q, i) => (
                     <div key={q.id} className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-gray-700">{q.label}</p>
-                        {q.placeholder && <p className="truncate text-xs text-gray-400">例：{q.placeholder}</p>}
+                      <div className="flex min-w-0 items-center gap-2">
+                        <div className="flex shrink-0 flex-col leading-none">
+                          <button
+                            type="button"
+                            onClick={() => moveQuestion(q.id, -1)}
+                            disabled={i === 0 || savingQuestions}
+                            aria-label="上へ移動"
+                            className="px-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                          >
+                            ▲
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveQuestion(q.id, 1)}
+                            disabled={i === questions.length - 1 || savingQuestions}
+                            aria-label="下へ移動"
+                            className="px-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                          >
+                            ▼
+                          </button>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-gray-700">{q.label}</p>
+                          <p className="truncate text-xs text-gray-400">
+                            {QUESTION_TYPE_LABELS[q.type ?? 'text']}
+                            {q.placeholder ? `・例：${q.placeholder}` : ''}
+                            {q.options && q.options.length > 0 ? `・${q.options.join('／')}` : ''}
+                          </p>
+                        </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => removeQuestion(q.id)}
-                        disabled={savingQuestions}
-                        className="shrink-0 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-red-500 hover:bg-red-50 disabled:opacity-50"
-                      >
-                        削除
-                      </button>
+                      <div className="flex shrink-0 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEditQuestion(q)}
+                          disabled={savingQuestions}
+                          className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                        >
+                          編集
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeQuestion(q.id)}
+                          disabled={savingQuestions}
+                          className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-red-500 hover:bg-red-50 disabled:opacity-50"
+                        >
+                          削除
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
 
-              {questions.length < 10 && (
+              {editingId !== null ? (
                 <div className="space-y-2 rounded-lg border border-dashed border-gray-200 p-3">
                   <input
-                    value={newLabel}
-                    onChange={(e) => setNewLabel(e.target.value)}
+                    value={draftLabel}
+                    onChange={(e) => setDraftLabel(e.target.value)}
                     maxLength={100}
                     placeholder="質問（例：得意なスポーツはありますか？）"
                     className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#06C755] focus:outline-none"
                   />
-                  <input
-                    value={newPlaceholder}
-                    onChange={(e) => setNewPlaceholder(e.target.value)}
-                    maxLength={100}
-                    placeholder="入力例（任意・プレースホルダーとして表示）"
+                  <select
+                    value={draftType}
+                    onChange={(e) => setDraftType(e.target.value as CustomProfileQuestionType)}
                     className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#06C755] focus:outline-none"
-                  />
+                  >
+                    {QUESTION_TYPES.map((t) => (
+                      <option key={t} value={t}>{QUESTION_TYPE_LABELS[t]}</option>
+                    ))}
+                  </select>
+
+                  {draftType === 'text' ? (
+                    <input
+                      value={draftPlaceholder}
+                      onChange={(e) => setDraftPlaceholder(e.target.value)}
+                      maxLength={100}
+                      placeholder="入力例（任意・プレースホルダーとして表示）"
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#06C755] focus:outline-none"
+                    />
+                  ) : (
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-medium text-gray-500">選択肢（2つ以上）</p>
+                      {draftOptions.map((opt, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <input
+                            value={opt}
+                            onChange={(e) => updateDraftOption(i, e.target.value)}
+                            maxLength={50}
+                            placeholder={`選択肢${i + 1}`}
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#06C755] focus:outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeDraftOption(i)}
+                            disabled={draftOptions.length <= 2}
+                            className="shrink-0 text-xs font-bold text-red-500 disabled:opacity-30"
+                          >
+                            削除
+                          </button>
+                        </div>
+                      ))}
+                      {draftOptions.length < 8 && (
+                        <button
+                          type="button"
+                          onClick={addDraftOption}
+                          className="text-xs font-bold text-[#06C755]"
+                        >
+                          + 選択肢を追加
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={closeEditor}
+                      className="flex-1 rounded-lg border border-gray-200 px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-50"
+                    >
+                      キャンセル
+                    </button>
+                    <button
+                      type="button"
+                      onClick={saveDraft}
+                      disabled={savingQuestions || !draftLabel.trim()}
+                      className="flex-1 rounded-lg bg-[#06C755] px-4 py-2 text-sm font-bold text-white hover:bg-[#05a847] disabled:opacity-50"
+                    >
+                      {savingQuestions ? '保存中...' : editingId === 'new' ? '質問を追加' : '保存する'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                questions.length < 10 && (
                   <button
                     type="button"
-                    onClick={addQuestion}
-                    disabled={savingQuestions || !newLabel.trim()}
-                    className="w-full rounded-lg bg-[#06C755] px-4 py-2 text-sm font-bold text-white hover:bg-[#05a847] disabled:opacity-50"
+                    onClick={openNewQuestion}
+                    className="w-full rounded-lg border border-dashed border-gray-300 px-4 py-2.5 text-sm font-bold text-gray-500 hover:bg-gray-50"
                   >
-                    {savingQuestions ? '追加中...' : '質問を追加'}
+                    + 質問を追加する
                   </button>
-                </div>
+                )
               )}
             </div>
           </>

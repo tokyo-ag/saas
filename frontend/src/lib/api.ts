@@ -190,7 +190,7 @@ export const api = {
       void lineUserId;
       return request<LiffProfile>(`/liff/${tenantId}/profile`);
     },
-    updateProfile: (tenantId: string, _lineUserId: string, data: { name?: string; grade?: string; gender?: string; level?: string; comment?: string; customAnswers?: Record<string, string> }) =>
+    updateProfile: (tenantId: string, _lineUserId: string, data: { name?: string; grade?: string; gender?: string; level?: string; comment?: string; customAnswers?: Record<string, CustomAnswerValue> }) =>
       request<LiffProfile>(
         `/liff/${tenantId}/profile`,
         { method: 'PATCH', body: JSON.stringify(data) },
@@ -652,7 +652,7 @@ export interface SupportThread {
 
 export interface MemberDetail extends Member {
   comment?: string | null;
-  customAnswers?: Record<string, string> | null;
+  customAnswers?: Record<string, CustomAnswerValue> | null;
   reservations: Array<{
     id: string;
     status: ReservationStatus;
@@ -732,7 +732,7 @@ export interface ReserveInput {
   gender?: string;
   level?: string;
   comment?: string;
-  customAnswers?: Record<string, string>;
+  customAnswers?: Record<string, CustomAnswerValue>;
 }
 
 export interface MobileManageDisplayFields {
@@ -749,11 +749,17 @@ export interface MobileManageSettings {
   reserveActionStyle: 'comiu' | 'line';
 }
 
+export type CustomProfileQuestionType = 'text' | 'radio' | 'checkbox' | 'select';
+
 export interface CustomProfileQuestion {
   id: string;
   label: string;
+  type?: CustomProfileQuestionType;
   placeholder?: string;
+  options?: string[];
 }
+
+export type CustomAnswerValue = string | string[];
 
 export interface Tenant {
   id: string;
@@ -877,7 +883,7 @@ export interface LiffProfile {
   gender?: string;
   level?: string;
   comment?: string;
-  customAnswers?: Record<string, string> | null;
+  customAnswers?: Record<string, CustomAnswerValue> | null;
 }
 
 export interface LiffMyReservation {

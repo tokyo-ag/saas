@@ -152,7 +152,7 @@ export class LiffController {
   updateProfile(
     @Param('tenantId') tenantId: string,
     @LiffUser() lineUserId: string,
-    @Body() body: { name?: string; grade?: string; gender?: string; level?: string; comment?: string; customAnswers?: Record<string, string> },
+    @Body() body: { name?: string; grade?: string; gender?: string; level?: string; comment?: string; customAnswers?: Record<string, string | string[]> },
   ) {
     return this.liffService.updateProfile(tenantId, lineUserId, body);
   }

@@ -24,17 +24,34 @@ function normalizeAllowedTags(tags: string[] | undefined, allowedTags: string[],
 }
 
 const MAX_CUSTOM_PROFILE_QUESTIONS = 10;
+const MAX_CUSTOM_PROFILE_QUESTION_OPTIONS = 8;
+const CUSTOM_PROFILE_QUESTION_TYPES: CustomProfileQuestionType[] = ['text', 'radio', 'checkbox', 'select'];
 
 function sanitizeCustomProfileQuestions(
   questions: CustomProfileQuestionInput[] | undefined,
-): { id: string; label: string; placeholder?: string }[] {
+): { id: string; label: string; type: CustomProfileQuestionType; placeholder?: string; options?: string[] }[] {
   if (!Array.isArray(questions)) return [];
   return questions
-    .map((q, i) => ({
-      id: (q.id && q.id.trim()) || `q${Date.now()}_${i}`,
-      label: (q.label ?? '').trim().slice(0, 100),
-      ...(q.placeholder?.trim() && { placeholder: q.placeholder.trim().slice(0, 100) }),
-    }))
+    .map((q, i) => {
+      const options = Array.isArray(q.options)
+        ? q.options
+            .map((o) => (o ?? '').trim().slice(0, 50))
+            .filter((o) => o.length > 0)
+            .slice(0, MAX_CUSTOM_PROFILE_QUESTION_OPTIONS)
+        : [];
+      // 選択肢が2つ未満の選択式は成立しないので自由記述にフォールバックする。
+      const type: CustomProfileQuestionType =
+        CUSTOM_PROFILE_QUESTION_TYPES.includes(q.type as CustomProfileQuestionType) && q.type !== 'text' && options.length >= 2
+          ? (q.type as CustomProfileQuestionType)
+          : 'text';
+      return {
+        id: (q.id && q.id.trim()) || `q${Date.now()}_${i}`,
+        label: (q.label ?? '').trim().slice(0, 100),
+        type,
+        ...(type === 'text' && q.placeholder?.trim() && { placeholder: q.placeholder.trim().slice(0, 100) }),
+        ...(type !== 'text' && { options }),
+      };
+    })
     .filter((q) => q.label.length > 0)
     .slice(0, MAX_CUSTOM_PROFILE_QUESTIONS);
 }
@@ -71,10 +88,14 @@ export class UpdateTenantDto {
   @IsOptional() @IsString() code?: string;
 }
 
+export type CustomProfileQuestionType = 'text' | 'radio' | 'checkbox' | 'select';
+
 export interface CustomProfileQuestionInput {
   id?: string;
   label: string;
+  type?: CustomProfileQuestionType;
   placeholder?: string;
+  options?: string[];
 }
 
 @Injectable()

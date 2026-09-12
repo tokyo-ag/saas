@@ -20,7 +20,7 @@ export class CreateReservationDto {
   @IsOptional() @IsString() gender?: string;
   @IsOptional() @IsString() level?: string;
   @IsOptional() @IsString() @MaxLength(200) comment?: string;
-  @IsOptional() customAnswers?: Record<string, string>;
+  @IsOptional() customAnswers?: Record<string, string | string[]>;
   @IsOptional() @IsString() lineDisplayName?: string;
   @IsOptional() @IsString() linePictureUrl?: string;
 }
@@ -732,7 +732,7 @@ export class LiffService {
       gender?: string;
       level?: string;
       comment?: string;
-      customAnswers?: Record<string, string>;
+      customAnswers?: Record<string, string | string[]>;
     },
   ) {
     tenantId = await this.resolveTenantId(tenantId);
