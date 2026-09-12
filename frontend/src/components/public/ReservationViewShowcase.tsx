@@ -48,6 +48,9 @@ type ReservationViewShowcaseProps = {
   // LIFFの予約フローへ直接遷移する（SEO用の予約スケジュール一覧ページなど向け）。
   linkToLiff?: boolean;
   liffId?: string | null;
+  // trueの場合、各イベントカードはイベント個別ページではなく、
+  // SEO予約一覧ページ（/e/:tenantCode）へ遷移する（団体公開サイトの埋め込み向け）。
+  linkToEventList?: boolean;
 };
 
 export function ReservationButton({
@@ -159,7 +162,8 @@ function eventPrice(event: ReservationShowcaseEvent) {
   return event.price === 0 ? '無料' : `参加費：${event.price.toLocaleString()}円`;
 }
 
-function eventDetailHref(tenantCode: string | undefined, eventId: string, fallbackHref?: string) {
+function eventDetailHref(tenantCode: string | undefined, eventId: string, fallbackHref?: string, linkToEventList?: boolean) {
+  if (linkToEventList && tenantCode) return `/e/${tenantCode}`;
   return tenantCode ? `/e/${tenantCode}/${eventId}` : (fallbackHref || '#');
 }
 
@@ -213,6 +217,7 @@ function CalendarPreview({
   cardBg,
   linkToLiff,
   liffId,
+  linkToEventList,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
@@ -223,6 +228,7 @@ function CalendarPreview({
   cardBg?: string;
   linkToLiff?: boolean;
   liffId?: string | null;
+  linkToEventList?: boolean;
 }) {
   const visible = readableAccent(accentColor);
   const actualEvents = events ?? [];
@@ -287,7 +293,7 @@ function CalendarPreview({
                   {dayEvents.map((event) => (
                     <Link
                       key={event.id}
-                      href={linkToLiff ? eventReserveHref(tenantCode, event.id, liffId) : eventDetailHref(tenantCode, event.id, fallbackHref)}
+                      href={linkToLiff ? eventReserveHref(tenantCode, event.id, liffId) : eventDetailHref(tenantCode, event.id, fallbackHref, linkToEventList)}
                       onClick={linkToLiff ? handleLiffLinkClick(tenantCode, event.id) : undefined}
                       className="mb-0.5 block rounded px-1 py-0.5"
                       style={{ backgroundColor: visible.accent }}
@@ -324,7 +330,7 @@ function CardMini({
   accentColor, events, fallbackHref, tenantCode,
   eventTitleColor, eventDateColor, eventMetaColor, cardBg,
   showLocation = true, showPrice = true, showCapacity = true,
-  linkToLiff, liffId,
+  linkToLiff, liffId, linkToEventList,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
@@ -336,6 +342,7 @@ function CardMini({
   cardBg?: string;
   linkToLiff?: boolean;
   liffId?: string | null;
+  linkToEventList?: boolean;
 } & FieldFlags) {
   const visible = readableAccent(accentColor);
   const cardText = readableAccent(cardBg || '#ffffff').text;
@@ -401,7 +408,7 @@ function CardMini({
             return (
               <Link
                 key={event.id}
-                href={eventDetailHref(tenantCode, event.id, fallbackHref)}
+                href={eventDetailHref(tenantCode, event.id, fallbackHref, linkToEventList)}
                 className="block shrink-0 snap-start overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
                 style={{ backgroundColor: cardBg || '#ffffff', width: 'calc(50% - 6px)' }}
               >
@@ -433,7 +440,7 @@ function ThreadMini({
   accentColor, events, fallbackHref, tenantCode,
   eventTitleColor, eventDateColor, eventMetaColor, cardBg,
   showLocation = true, showPrice = true, showCapacity = true, showDescription = true,
-  linkToLiff, liffId,
+  linkToLiff, liffId, linkToEventList,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
@@ -445,6 +452,7 @@ function ThreadMini({
   cardBg?: string;
   linkToLiff?: boolean;
   liffId?: string | null;
+  linkToEventList?: boolean;
 } & FieldFlags) {
   const visible = readableAccent(accentColor);
   const cardText = readableAccent(cardBg || '#ffffff').text;
@@ -510,7 +518,7 @@ function ThreadMini({
                 return (
                   <Link
                     key={event.id}
-                    href={eventDetailHref(tenantCode, event.id, fallbackHref)}
+                    href={eventDetailHref(tenantCode, event.id, fallbackHref, linkToEventList)}
                     className="block rounded-xl border border-gray-200 px-4 py-3 shadow-sm transition hover:opacity-90"
                     style={{ backgroundColor: cardBg || '#ffffff' }}
                   >
@@ -567,6 +575,7 @@ export function ReservationViewShowcase({
   showButton = true,
   linkToLiff,
   liffId,
+  linkToEventList,
 }: ReservationViewShowcaseProps) {
   const selectedView = viewStyle === 'card' || viewStyle === 'thread' ? viewStyle : 'calendar';
   const fieldProps = { showLocation, showPrice, showCapacity, showDescription };
@@ -574,11 +583,11 @@ export function ReservationViewShowcase({
   return (
     <div className={`space-y-4 ${className}`}>
       {selectedView === 'calendar' ? (
-        <CalendarPreview accentColor={accentColor} events={events} fallbackHref={href} tenantCode={tenantCode} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} cardBg={eventCardBg} linkToLiff={linkToLiff} liffId={liffId} />
+        <CalendarPreview accentColor={accentColor} events={events} fallbackHref={href} tenantCode={tenantCode} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} cardBg={eventCardBg} linkToLiff={linkToLiff} liffId={liffId} linkToEventList={linkToEventList} />
       ) : (
         <div className="rounded-xl">
-          {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} fallbackHref={href} tenantCode={tenantCode} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} linkToLiff={linkToLiff} liffId={liffId} {...fieldProps} />}
-          {selectedView === 'thread' && <ThreadMini accentColor={accentColor} events={events} fallbackHref={href} tenantCode={tenantCode} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} linkToLiff={linkToLiff} liffId={liffId} {...fieldProps} />}
+          {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} fallbackHref={href} tenantCode={tenantCode} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} linkToLiff={linkToLiff} liffId={liffId} linkToEventList={linkToEventList} {...fieldProps} />}
+          {selectedView === 'thread' && <ThreadMini accentColor={accentColor} events={events} fallbackHref={href} tenantCode={tenantCode} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} linkToLiff={linkToLiff} liffId={liffId} linkToEventList={linkToEventList} {...fieldProps} />}
         </div>
       )}
       {showButton && selectedView !== 'card' && (

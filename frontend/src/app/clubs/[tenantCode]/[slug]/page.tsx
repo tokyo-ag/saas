@@ -392,7 +392,7 @@ export default async function ClubCmsPage({
   const imageCaptions = images.map((_, index) => (page.imageCaptions?.[index] ?? '').slice(0, 80));
   const image = images[0];
   const clubHref = `/clubs/${page.tenant.code ?? tenantCode}`;
-  const reserveHref = '#reserve';
+  const reserveHref = `/e/${page.tenant.code ?? tenantCode}`;
   const textColor = page.textColor || '#111827';
   const bodyTextColor = typeof parsedFt.bodyTextColor === 'string' && parsedFt.bodyTextColor.trim()
     ? parsedFt.bodyTextColor.trim()
@@ -578,7 +578,7 @@ export default async function ClubCmsPage({
   const lineReserveUrl = configuredLineUrl || configuredReserveUrl || '#contact';
   const navReserveUrl = reserveActionStyle === 'line' ? lineReserveUrl : (configuredReserveUrl || reserveHref);
   const navBlogUrl = sectionCopy.blogUrl?.trim() || '#blog';
-  const navReviewsUrl = '#reviews';
+  const navReviewsUrl = `/clubs/${page.tenant.code ?? tenantCode}/reviews`;
   const navContactUrl = sectionCopy.contactUrl?.trim() || '#contact';
   const hasReserveSection = reserveActionStyle === 'line' || reserveEvents.length > 0;
   const hasBlogSection = blogPosts.length > 0;
@@ -942,6 +942,7 @@ export default async function ClubCmsPage({
                 eventCardBg={reserveEventCardBg}
                 className="mt-4"
                 showButton={false}
+                linkToEventList
               />
             ) : null}
             <Link
