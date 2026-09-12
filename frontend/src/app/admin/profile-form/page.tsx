@@ -17,8 +17,13 @@ const FIXED_FIELDS: { key: FieldKey; label: string; help: string }[] = [
   { key: 'requireName', label: '名前', help: '非表示にするとフォームから消え、必須項目からも外れます。' },
   { key: 'requireGrade', label: '学年', help: '非表示にするとフォームから消え、必須項目からも外れます。' },
   { key: 'requireGender', label: '性別', help: '表示中は初回予約時に必須になります。男女別価格や集合時間の性別別案内を使っているイベントがある場合は非表示にできません。' },
-  { key: 'showLevel', label: 'スポーツレベル', help: '表示しても必須にはなりません（任意項目）。レベルを必須にしているイベントがある場合は非表示にできません。' },
-  { key: 'showComment', label: '一言コメント', help: '表示しても必須にはなりません（任意項目）。' },
+];
+
+type BuiltinItemKey = 'showLevel' | 'showComment';
+
+const BUILTIN_QUESTION_ITEMS: { key: BuiltinItemKey; label: string; description: string; lockHelp: string }[] = [
+  { key: 'showLevel', label: 'スポーツレベル', description: '初心者／中級／上級から選択（任意）', lockHelp: 'レベルを必須にしているイベントがあるため削除できません。' },
+  { key: 'showComment', label: '一言コメント', description: '自由記述・200文字まで（任意）', lockHelp: '' },
 ];
 
 type FieldState = Record<FieldKey, boolean>;
@@ -238,11 +243,27 @@ export default function ProfileFormPage() {
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-6">
               <p className="mb-1 text-sm font-medium text-gray-700">カスタム質問</p>
               <p className="mb-4 text-xs leading-relaxed text-gray-500">
-                上の項目に加えて、自由記述・選択式の質問を追加できます。初回予約時のフォームの一番下に表示されます（任意項目）。
+                上の項目に加えて、自由記述・選択式の質問を追加できます。スポーツレベルや一言コメントもここから追加・削除できます。初回予約時のフォームの一番下に表示されます（任意項目）。
               </p>
 
-              {questions.length > 0 && (
+              {(BUILTIN_QUESTION_ITEMS.some((b) => fields[b.key]) || questions.length > 0) && (
                 <div className="mb-4 space-y-2">
+                  {BUILTIN_QUESTION_ITEMS.filter((b) => fields[b.key]).map((b) => (
+                    <div key={b.key} className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-gray-700">{b.label}</p>
+                        <p className="truncate text-xs text-gray-400">{b.description}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => toggleField(b.key)}
+                        title={b.lockHelp || undefined}
+                        className="shrink-0 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-red-500 hover:bg-red-50"
+                      >
+                        削除
+                      </button>
+                    </div>
+                  ))}
                   {questions.map((q, i) => (
                     <div key={q.id} className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
                       <div className="flex min-w-0 items-center gap-2">
@@ -378,15 +399,27 @@ export default function ProfileFormPage() {
                   </div>
                 </div>
               ) : (
-                questions.length < 10 && (
-                  <button
-                    type="button"
-                    onClick={openNewQuestion}
-                    className="w-full rounded-lg border border-dashed border-gray-300 px-4 py-2.5 text-sm font-bold text-gray-500 hover:bg-gray-50"
-                  >
-                    + 質問を追加する
-                  </button>
-                )
+                <div className="flex flex-wrap gap-2">
+                  {BUILTIN_QUESTION_ITEMS.filter((b) => !fields[b.key]).map((b) => (
+                    <button
+                      key={b.key}
+                      type="button"
+                      onClick={() => toggleField(b.key)}
+                      className="rounded-lg border border-dashed border-gray-300 px-4 py-2.5 text-sm font-bold text-gray-500 hover:bg-gray-50"
+                    >
+                      + {b.label}を追加
+                    </button>
+                  ))}
+                  {questions.length < 10 && (
+                    <button
+                      type="button"
+                      onClick={openNewQuestion}
+                      className="flex-1 rounded-lg border border-dashed border-gray-300 px-4 py-2.5 text-sm font-bold text-gray-500 hover:bg-gray-50"
+                    >
+                      + 質問を追加する
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </>
