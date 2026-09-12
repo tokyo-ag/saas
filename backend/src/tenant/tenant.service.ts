@@ -246,12 +246,18 @@ export class TenantService {
     );
 
     if (dto.requireGender === false) {
-      const eventWithGenderDelay = await this.prisma.event.findFirst({
-        where: { tenantId, maleDelayMinutes: { not: null } },
+      const eventWithGenderDependency = await this.prisma.event.findFirst({
+        where: {
+          tenantId,
+          OR: [
+            { maleDelayMinutes: { not: null } },
+            { AND: [{ priceMale: { not: null } }, { priceFemale: { not: null } }] },
+          ],
+        },
       });
-      if (eventWithGenderDelay) {
+      if (eventWithGenderDependency) {
         throw new BadRequestException(
-          '集合時間の性別別案内（男性の集合時間を遅らせる設定）を使っているイベントがあるため、性別の入力を必須なしにはできません。',
+          '男女別の価格設定、または集合時間の性別別案内（男性の集合時間を遅らせる設定）を使っているイベントがあるため、性別の入力を必須なしにはできません。',
         );
       }
     }
