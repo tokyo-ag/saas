@@ -624,6 +624,34 @@ export class LiffService {
     return reservation;
   }
 
+  // 予約直後の画面に、前日リマインドと同じ文面（当日の詳細案内）をその場で見せるためのプレビュー。
+  async getRemindPreview(tenantId: string, eventId: string, lineUserId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
+    const [event, tenant, member] = await Promise.all([
+      this.prisma.event.findFirst({ where: { id: eventId, tenantId } }),
+      this.prisma.tenant.findUnique({ where: { id: tenantId } }),
+      this.findMember(tenantId, lineUserId),
+    ]);
+    if (!event) throw new NotFoundException('イベントが見つかりません');
+
+    const text = this.lineMessaging.composeRemindMessage(
+      event.title,
+      event.heldAt,
+      event.location,
+      event.reminderMessageTemplate ?? tenant?.reminderMessageTemplate,
+      {
+        endAt: event.endAt,
+        locationUrl: event.locationUrl,
+        price: event.price,
+        priceMale: event.priceMale,
+        priceFemale: event.priceFemale,
+        maleDelayMinutes: event.maleDelayMinutes,
+        gender: member?.gender,
+      },
+    );
+    return { text };
+  }
+
   // 自分の予約一覧（マイページ用）
   async getMyReservations(tenantId: string, lineUserId: string) {
     tenantId = await this.resolveTenantId(tenantId);

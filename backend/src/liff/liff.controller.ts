@@ -70,6 +70,16 @@ export class LiffController {
   }
 
   @UseGuards(LiffGuard)
+  @Get('events/:eventId/remind-preview')
+  getRemindPreview(
+    @Param('tenantId') tenantId: string,
+    @Param('eventId') eventId: string,
+    @LiffUser() lineUserId: string,
+  ) {
+    return this.liffService.getRemindPreview(tenantId, eventId, lineUserId);
+  }
+
+  @UseGuards(LiffGuard)
   @Get('my-reservations')
   getMyReservations(
     @Param('tenantId') tenantId: string,

@@ -76,6 +76,7 @@ function ReservePageInner() {
   const [rosterOpen, setRosterOpen] = useState(false);
   const [expandedComment, setExpandedComment] = useState<number | null>(null);
   const [myReservation, setMyReservation] = useState<LiffReservation | null>(null);
+  const [remindText, setRemindText] = useState('');
 
   const requiresLevel = event?.levelEnabled;
   const requireName = tenant?.requireName !== false;
@@ -259,6 +260,16 @@ function ReservePageInner() {
     }
     refetchRoster();
   }, [event?.rosterShareEnabled, event?.rosterShareToken]);
+
+  // 予約確定後（または既に予約済みで再訪した場合）、前日リマインドと同じ当日案内をその場で見せる。
+  useEffect(() => {
+    const status = myReservation?.status;
+    if (!lineUserId || (status !== 'reserved' && status !== 'attended')) {
+      setRemindText('');
+      return;
+    }
+    api.liff.remindPreview(tenantId, eventId).then((r) => setRemindText(r.text)).catch(() => setRemindText(''));
+  }, [myReservation?.status, tenantId, eventId, lineUserId]);
 
   // プロフィール未入力ならマイページへ誘導し、入力後にこのページへ戻ってきてもらう
   useEffect(() => {
@@ -590,13 +601,21 @@ function ReservePageInner() {
         )}
 
         {myReservation ? (
-          <div className="w-full rounded-2xl py-4 text-center shadow-sm" style={{ backgroundColor: '#10b981' }}>
-            <p className="font-bold text-base text-white">
-              {myReservation.status === 'reserved' ? '予約完了！' : STATUS_LABEL[myReservation.status] ?? myReservation.status}
-              {myReservation.status === 'waitlisted' && myReservation.waitlistOrder ? `（${myReservation.waitlistOrder}番目）` : ''}
-            </p>
-            <p className="mt-1 text-xs text-white/80">キャンセルはマイページから</p>
-          </div>
+          <>
+            <div className="w-full rounded-2xl py-4 text-center shadow-sm" style={{ backgroundColor: '#10b981' }}>
+              <p className="font-bold text-base text-white">
+                {myReservation.status === 'reserved' ? '予約完了！' : STATUS_LABEL[myReservation.status] ?? myReservation.status}
+                {myReservation.status === 'waitlisted' && myReservation.waitlistOrder ? `（${myReservation.waitlistOrder}番目）` : ''}
+              </p>
+              <p className="mt-1 text-xs text-white/80">キャンセルはマイページから</p>
+            </div>
+            {remindText && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                <p className="mb-2 text-xs font-bold text-gray-400">当日のご案内</p>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">{remindText}</p>
+              </div>
+            )}
+          </>
         ) : isLineMode ? (
           <a
             href={tenant?.reserveLineUrl ?? ''}

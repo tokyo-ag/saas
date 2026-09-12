@@ -164,6 +164,8 @@ export const api = {
         `/liff/${tenantId}/events/${eventId}/my-reservation`,
       );
     },
+    remindPreview: (tenantId: string, eventId: string) =>
+      request<{ text: string }>(`/liff/${tenantId}/events/${eventId}/remind-preview`),
     myTenantReview: (tenantId: string, lineUserId: string) => {
       void lineUserId;
       return request<LiffTenantReview | null>(`/liff/${tenantId}/review`);

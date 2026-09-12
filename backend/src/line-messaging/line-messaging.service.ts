@@ -159,6 +159,18 @@ export class LineMessagingService {
     customTemplate?: string | null,
     details: EventMessageDetails & { price?: number | null } = {},
   ): Promise<void> {
+    const text = this.composeRemindMessage(eventTitle, heldAt, location, customTemplate, details);
+    await this.sendPushMessage(accessToken, lineUserId, text);
+  }
+
+  // 実際に送信されるリマインド文面を、送信せずに組み立てる（予約直後のプレビュー表示などに使う）。
+  composeRemindMessage(
+    eventTitle: string,
+    heldAt: Date,
+    location: string,
+    customTemplate?: string | null,
+    details: EventMessageDetails & { price?: number | null } = {},
+  ): string {
     const dateStr = this.formatDate(heldAt, details.endAt, details.maleDelayMinutes, details.gender);
     const locationStr = this.formatLocation(location, details.locationUrl);
     const priceStr = this.formatPrice(
@@ -167,14 +179,12 @@ export class LineMessagingService {
       details.priceFemale,
     );
     if (customTemplate?.trim()) {
-      const text = this.applyTemplate(customTemplate, {
+      return this.applyTemplate(customTemplate, {
         title: eventTitle,
         date: dateStr,
         location: locationStr,
         price: priceStr ?? '',
       });
-      await this.sendPushMessage(accessToken, lineUserId, text);
-      return;
     }
     const lines = [
       `【${eventTitle}】まもなく開催です！`,
@@ -182,7 +192,7 @@ export class LineMessagingService {
       ...(priceStr ? [`参加費：${priceStr}`] : []),
       `場所：${locationStr}`,
     ];
-    await this.sendPushMessage(accessToken, lineUserId, lines.join('\n'));
+    return lines.join('\n');
   }
 
   private applyTemplate(
