@@ -484,11 +484,15 @@ export class EventsService {
     ]
       .map(csvCell)
       .join(',');
+    // priceMale/priceFemaleを使う男女別価格イベントは、priceフィールド自体は0のまま
+    // 未使用のため、price===0だけでは「無料」と誤判定してしまう。
+    const isFreeEvent =
+      event.price === 0 && event.priceMale == null && event.priceFemale == null;
     const rows = reservations.map((r) => {
       const statusLabel = this.statusLabel(r.status, r.waitlistOrder);
       const paymentLabel = r.paidAt
         ? '支払済'
-        : event.price === 0
+        : isFreeEvent
           ? '無料'
           : '未払い';
       const date = new Date(r.reservedAt).toLocaleString('ja-JP', {
