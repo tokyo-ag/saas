@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { api, formatDate, downloadWithAuth, API_URL, Event, Reservation } from '@/lib/api';
+import { api, formatDate, downloadWithAuth, API_URL, Event, Reservation, CustomProfileQuestion } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { SITE_URL } from '@/lib/config';
 import { EventBadge, ReservationBadge } from '@/components/ui/StatusBadge';
@@ -17,13 +17,31 @@ type EventReservation = Reservation & {
     grade?: string | null;
     gender?: string | null;
     level?: string | null;
+    comment?: string | null;
+    customAnswers?: Record<string, string | string[]> | null;
   };
 };
+
+function formatCustomAnswers(
+  customAnswers: Record<string, string | string[]> | null | undefined,
+  customQuestions: CustomProfileQuestion[],
+): string {
+  if (!customAnswers) return '';
+  return Object.entries(customAnswers)
+    .filter(([, value]) => (Array.isArray(value) ? value.length > 0 : !!value))
+    .map(([id, value]) => {
+      const label = customQuestions.find((q) => q.id === id)?.label ?? '質問';
+      const text = Array.isArray(value) ? value.join('、') : value;
+      return `${label}：${text}`;
+    })
+    .join(' / ');
+}
 
 export default function EventDetailPage() {
   const { eventId } = useParams<{ eventId: string }>();
   const [event, setEvent] = useState<Event | null>(null);
   const [reservations, setReservations] = useState<EventReservation[]>([]);
+  const [customQuestions, setCustomQuestions] = useState<CustomProfileQuestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [rosterCopied, setRosterCopied] = useState(false);
   const [savingRosterShare, setSavingRosterShare] = useState(false);
@@ -39,6 +57,7 @@ export default function EventDetailPage() {
 
   useEffect(() => {
     load().catch(console.error).finally(() => setLoading(false));
+    api.tenant.get().then((t) => setCustomQuestions(t.customProfileQuestions ?? [])).catch(() => {});
   }, [load]);
 
   async function updateStatus(reservationId: string, status: string) {
@@ -157,6 +176,14 @@ export default function EventDetailPage() {
                     </div>
                   </div>
                   <p className="mt-3 text-xs text-gray-500">予約日時: {formatDate(reservation.reservedAt)}</p>
+                  {reservation.member.comment && (
+                    <p className="mt-1 text-xs text-gray-500">一言: {reservation.member.comment}</p>
+                  )}
+                  {formatCustomAnswers(reservation.member.customAnswers, customQuestions) && (
+                    <p className="mt-1 text-xs leading-relaxed text-gray-500">
+                      {formatCustomAnswers(reservation.member.customAnswers, customQuestions)}
+                    </p>
+                  )}
                   <div className="mt-3 flex flex-wrap gap-2">
                     {reservation.status === 'reserved' && (
                       <button onClick={() => updateStatus(reservation.id, 'attended')} className="rounded-lg bg-green-50 px-3 py-2 text-xs font-medium text-green-700">
@@ -181,6 +208,7 @@ export default function EventDetailPage() {
                     <th className="px-6 py-3 text-left">年齢</th>
                     <th className="px-6 py-3 text-left">性別</th>
                     {event.levelEnabled && <th className="px-6 py-3 text-left">レベル</th>}
+                    <th className="px-6 py-3 text-left">回答</th>
                     <th className="px-6 py-3 text-left">予約日時</th>
                     <th className="px-6 py-3 text-left">ステータス</th>
                     <th className="px-6 py-3 text-left">操作</th>
@@ -211,6 +239,12 @@ export default function EventDetailPage() {
                       <td className="px-6 py-4 text-gray-600">{reservation.member.grade ?? '-'}</td>
                       <td className="px-6 py-4 text-gray-600">{reservation.member.gender ?? '-'}</td>
                       {event.levelEnabled && <td className="px-6 py-4 text-gray-600">{reservation.member.level ?? '-'}</td>}
+                      <td className="max-w-[240px] px-6 py-4 text-xs text-gray-500">
+                        {[
+                          reservation.member.comment ? `一言：${reservation.member.comment}` : '',
+                          formatCustomAnswers(reservation.member.customAnswers, customQuestions),
+                        ].filter(Boolean).join(' / ') || '-'}
+                      </td>
                       <td className="px-6 py-4 text-gray-500">{formatDate(reservation.reservedAt)}</td>
                       <td className="px-6 py-4">
                         <ReservationBadge status={reservation.status} />

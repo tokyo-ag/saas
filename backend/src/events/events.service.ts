@@ -336,6 +336,8 @@ export class EventsService {
             grade: true,
             gender: true,
             level: true,
+            comment: true,
+            customAnswers: true,
             lineUserId: true,
             lineDisplayName: true,
             linePictureUrl: true,
