@@ -452,18 +452,38 @@ export class EventsService {
 
   async exportCsv(tenantId: string, eventId: string): Promise<string> {
     const event = await this.findOne(tenantId, eventId);
-    const reservations = await this.prisma.reservation.findMany({
-      where: { eventId, tenantId },
-      include: { member: true },
-      orderBy: { reservedAt: 'asc' },
-    });
+    const [reservations, tenant] = await Promise.all([
+      this.prisma.reservation.findMany({
+        where: { eventId, tenantId },
+        include: { member: true },
+        orderBy: { reservedAt: 'asc' },
+      }),
+      this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { customProfileQuestions: true },
+      }),
+    ]);
+    const customQuestions =
+      (tenant?.customProfileQuestions as { id: string; label: string }[] | null) ?? [];
 
     const csvCell = (value: string | number | null | undefined) => {
       const text = String(value ?? '');
       return `"${text.replace(/"/g, '""')}"`;
     };
 
-    const header = '名前,年齢,性別,レベル,予約日時,ステータス,支払い状況';
+    const header = [
+      '名前',
+      '年齢',
+      '性別',
+      'レベル',
+      '一言',
+      ...customQuestions.map((q) => q.label),
+      '予約日時',
+      'ステータス',
+      '支払い状況',
+    ]
+      .map(csvCell)
+      .join(',');
     const rows = reservations.map((r) => {
       const statusLabel = this.statusLabel(r.status, r.waitlistOrder);
       const paymentLabel = r.paidAt
@@ -474,11 +494,19 @@ export class EventsService {
       const date = new Date(r.reservedAt).toLocaleString('ja-JP', {
         timeZone: 'Asia/Tokyo',
       });
+      const customAnswers =
+        (r.member.customAnswers as Record<string, string | string[]> | null) ?? {};
+      const customCells = customQuestions.map((q) => {
+        const value = customAnswers[q.id];
+        return Array.isArray(value) ? value.join('、') : value ?? '';
+      });
       return [
         r.member.name,
         r.member.grade,
         r.member.gender,
         r.member.level,
+        r.member.comment,
+        ...customCells,
         date,
         statusLabel,
         paymentLabel,
