@@ -45,6 +45,7 @@ export async function generateMetadata({
   const tenantName = data?.tenantName ?? tenantCode;
   const title = `ブログ | ${tenantName}`;
   const description = `${tenantName}の活動ブログ・お知らせ一覧`;
+  const image = data?.tenantIcon ?? `${SITE_URL}/opengraph-image`;
   return {
     title,
     description,
@@ -55,11 +56,13 @@ export async function generateMetadata({
       type: 'website',
       url: `${SITE_URL}/clubs/${tenantCode}/blog`,
       locale: 'ja_JP',
+      images: [{ url: image, width: 1200, height: 630 }],
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title,
       description,
+      images: [image],
     },
     robots: { index: true, follow: true },
   };

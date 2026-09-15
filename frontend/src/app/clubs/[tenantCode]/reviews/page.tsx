@@ -104,11 +104,25 @@ export async function generateMetadata({
   const description = bio
     ? `${bio}／${name}に実際に参加したメンバーのリアルな口コミ・感想を掲載。入会や参加を検討している方はぜひ参考にしてください。`
     : `${name}に実際に参加したメンバーのリアルな口コミ・感想を掲載。入会や参加を検討している方はぜひ参考にしてください。`;
+  const image = imgUrl(tenant.linePictureUrl ?? tenant.iconUrl, IMAGE_BASE_URL) ?? `${SITE_URL}/opengraph-image`;
   return {
     title,
     description,
     alternates: { canonical: `${SITE_URL}/clubs/${tenantCode}/reviews` },
-    openGraph: { title, description, url: `${SITE_URL}/clubs/${tenantCode}/reviews` },
+    openGraph: {
+      title,
+      description,
+      url: `${SITE_URL}/clubs/${tenantCode}/reviews`,
+      locale: 'ja_JP',
+      type: 'website',
+      images: [{ url: image, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [image],
+    },
   };
 }
 

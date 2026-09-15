@@ -247,7 +247,7 @@ export async function generateMetadata({
   }
 
   const description = buildDescription(event);
-  const ogImage = imgSrc(event.imageUrl) ?? imgSrc(event.iconUrl);
+  const ogImage = imgSrc(event.imageUrl) ?? imgSrc(event.iconUrl) ?? imgSrc(event.tenantIconUrl) ?? `${SITE_URL}/opengraph-image`;
   const hasPastSearchValue = Boolean(
     event.imageUrl ||
       (event.description && event.description.trim().length >= 80) ||
@@ -269,13 +269,13 @@ export async function generateMetadata({
       url: `${SITE_URL}/e/${event.tenantCode}/${event.id}`,
       locale: 'ja_JP',
       type: 'website',
-      ...(ogImage ? { images: [{ url: ogImage, width: 1200, height: 630 }] } : {}),
+      images: [{ url: ogImage, width: 1200, height: 630 }],
     },
     twitter: {
-      card: ogImage ? 'summary_large_image' : 'summary',
+      card: 'summary_large_image',
       title: event.title,
       description,
-      ...(ogImage ? { images: [ogImage] } : {}),
+      images: [ogImage],
     },
   };
 }

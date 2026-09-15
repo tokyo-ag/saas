@@ -91,11 +91,25 @@ export async function generateMetadata({
   const description = bio
     ? `${bio}／${name}が開催するイベントの予約スケジュール一覧です。LINEなしでもご覧いただけます。`
     : `${name}が開催するイベントの予約スケジュール一覧です。LINEなしでもご覧いただけます。`;
+  const image = imgUrl(tenant.linePictureUrl, API_URL) ?? `${SITE_URL}/opengraph-image`;
   return {
     title,
     description,
     alternates: { canonical: `${SITE_URL}/e/${tenantCode}` },
-    openGraph: { title, description, url: `${SITE_URL}/e/${tenantCode}` },
+    openGraph: {
+      title,
+      description,
+      url: `${SITE_URL}/e/${tenantCode}`,
+      locale: 'ja_JP',
+      type: 'website',
+      images: [{ url: image, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [image],
+    },
   };
 }
 
