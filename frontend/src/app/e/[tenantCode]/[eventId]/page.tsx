@@ -77,6 +77,36 @@ function formatDate(iso: string) {
   });
 }
 
+function formatEventSchedule(heldAt: string, endAt?: string | null) {
+  const dateFormatter = new Intl.DateTimeFormat('ja-JP', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'short',
+  });
+  const timeFormatter = new Intl.DateTimeFormat('ja-JP', {
+    timeZone: 'Asia/Tokyo',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  const start = new Date(heldAt);
+  const end = endAt ? new Date(endAt) : null;
+  const startDate = dateFormatter.format(start).replace(/\(([^)]+)\)/, '（$1）');
+  const startTime = timeFormatter.format(start);
+
+  if (!end) return { date: startDate, time: startTime, endDate: null };
+
+  const endDate = dateFormatter.format(end).replace(/\(([^)]+)\)/, '（$1）');
+  const endTime = timeFormatter.format(end);
+  if (startDate === endDate) {
+    return { date: startDate, time: `${startTime}〜${endTime}`, endDate: null };
+  }
+
+  return { date: startDate, time: `${startTime}〜`, endDate: `${endDate} ${endTime}` };
+}
+
 function imgSrc(url?: string | null) {
   if (!url) return null;
   return url.startsWith('/') ? `${IMAGE_BASE_URL}${url}` : url;
@@ -326,6 +356,7 @@ export default async function PublicEventPage({
     event.capacity != null ? event.capacity - event.reservedCount : null;
   const isEnded = event.isEnded ?? false;
   const endAt = validEndAt(event);
+  const schedule = formatEventSchedule(event.heldAt, endAt);
 
   return (
     <main className="min-h-screen sm:bg-gray-200" style={{ backgroundColor: backgroundColor || '#F9FAFB' }}>
@@ -428,10 +459,15 @@ export default async function PublicEventPage({
             <div className="mt-4 grid gap-2 rounded-2xl bg-gray-50 p-3 text-sm">
               <div className="flex items-start gap-2">
                 <span className="mt-0.5 text-gray-400">日</span>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold text-gray-400">日時</p>
-                  <p className="text-gray-800">{formatDate(event.heldAt)}</p>
-                  {endAt && <p className="text-gray-500">終了 {formatDate(endAt)}</p>}
+                  <p className="mt-1 font-semibold text-gray-900">{schedule.date}</p>
+                  <p className="mt-0.5 text-lg font-bold tabular-nums" style={{ color: accentColor }}>
+                    {schedule.time}
+                  </p>
+                  {schedule.endDate && (
+                    <p className="mt-0.5 text-sm text-gray-500">終了 {schedule.endDate}</p>
+                  )}
                 </div>
               </div>
 
