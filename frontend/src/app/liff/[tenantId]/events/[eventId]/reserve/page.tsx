@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { api, API_URL, LiffEvent, LiffProfile, LiffReservation, LiffTenant, PublicRoster, setLiffToken, formatDate } from '@/lib/api';
+import { api, API_URL, LiffEvent, LiffProfile, LiffReservation, LiffTenant, setLiffToken, formatDate } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { getDefaultEventImage } from '@/lib/defaultImages';
 import {
@@ -74,9 +74,6 @@ function ReservePageInner() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [roster, setRoster] = useState<PublicRoster | null>(null);
-  const [rosterOpen, setRosterOpen] = useState(false);
-  const [expandedComment, setExpandedComment] = useState<number | null>(null);
   const [myReservation, setMyReservation] = useState<LiffReservation | null>(null);
   const [remindText, setRemindText] = useState('');
 
@@ -250,19 +247,6 @@ function ReservePageInner() {
     init();
   }, [tenantId, eventId]);
 
-  function refetchRoster() {
-    if (!event?.rosterShareEnabled || !event.rosterShareToken) return;
-    api.public.roster(event.rosterShareToken).then(setRoster).catch(() => setRoster(null));
-  }
-
-  useEffect(() => {
-    if (!event?.rosterShareEnabled || !event.rosterShareToken) {
-      setRoster(null);
-      return;
-    }
-    refetchRoster();
-  }, [event?.rosterShareEnabled, event?.rosterShareToken]);
-
   // 予約確定後（または既に予約済みで再訪した場合）、前日リマインドと同じ当日案内をその場で見せる。
   useEffect(() => {
     const status = myReservation?.status;
@@ -316,7 +300,6 @@ function ReservePageInner() {
         waitlistOrder: result.waitlistOrder,
         reservedAt: new Date().toISOString(),
       });
-      refetchRoster();
       return;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '予約に失敗しました';
@@ -545,60 +528,6 @@ function ReservePageInner() {
                 </div>
               )}
             </div>
-          </div>
-        )}
-
-        {event?.rosterShareEnabled && roster && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
-            <button
-              type="button"
-              onClick={() => setRosterOpen((v) => !v)}
-              className="w-full flex items-center justify-between px-4 py-3.5 text-left"
-            >
-              <span className="text-sm font-bold text-gray-900">参加者名簿をみる（{roster.reservations.length}人）</span>
-              <svg className={`w-4 h-4 text-gray-400 transition-transform ${rosterOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
-              </svg>
-            </button>
-            {rosterOpen && (
-            <div className="px-4 pb-4">
-            {roster.reservations.length === 0 ? (
-              <p className="text-xs text-gray-400">まだ参加者はいません</p>
-            ) : (
-              <ul className="space-y-2">
-                {roster.reservations.map((r, i) => (
-                  <li key={i} className="text-xs">
-                    <div className="flex items-center gap-1.5 overflow-hidden">
-                      <span className="shrink-0 text-gray-400">{i + 1}.</span>
-                      {r.linePictureUrl ? (
-                        <img src={r.linePictureUrl} alt="" className="h-4 w-4 shrink-0 rounded-full object-cover" />
-                      ) : (
-                        <span className="h-4 w-4 shrink-0 rounded-full bg-gray-200" />
-                      )}
-                      <span className="min-w-0 flex-1 truncate font-medium text-gray-900">{r.name ?? '未入力'}</span>
-                      {r.comment && (
-                        <button
-                          type="button"
-                          onClick={() => setExpandedComment(expandedComment === i ? null : i)}
-                          className="shrink-0 text-gray-300"
-                          aria-label="一言を表示"
-                        >
-                          💬
-                        </button>
-                      )}
-                      <span className="shrink-0 text-gray-500">
-                        {[r.grade, r.gender, roster.event.levelEnabled ? r.level : null].filter(Boolean).join(' / ')}
-                      </span>
-                    </div>
-                    {r.comment && expandedComment === i && (
-                      <p className="mt-0.5 pl-5 text-gray-400">{r.comment}</p>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-            </div>
-            )}
           </div>
         )}
 

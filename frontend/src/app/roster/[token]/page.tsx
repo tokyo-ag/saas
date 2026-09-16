@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { api, formatDate, PublicRoster } from '@/lib/api';
 import { ReservationBadge } from '@/components/ui/StatusBadge';
+import { initLiff, loginIfNeeded, liff } from '@/lib/liff';
 
 const POLL_INTERVAL_MS = 15000;
 
@@ -12,6 +13,7 @@ export default function RosterSharePage() {
   const [roster, setRoster] = useState<PublicRoster | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [loginRequired, setLoginRequired] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -21,7 +23,22 @@ export default function RosterSharePage() {
         .catch(() => { if (!cancelled) setNotFound(true); })
         .finally(() => { if (!cancelled) setLoading(false); });
     }
-    load();
+    async function init() {
+      const ok = await initLiff();
+      if (!ok) {
+        if (!cancelled) { setLoginRequired(true); setLoading(false); }
+        return;
+      }
+      if (!liff.isInClient()) {
+        const loggedIn = await loginIfNeeded();
+        if (!loggedIn) {
+          if (!cancelled) { setLoginRequired(true); setLoading(false); }
+          return;
+        }
+      }
+      load();
+    }
+    init();
     const id = setInterval(load, POLL_INTERVAL_MS);
     return () => { cancelled = true; clearInterval(id); };
   }, [token]);
@@ -30,6 +47,20 @@ export default function RosterSharePage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-[#06C755] text-sm">読み込み中...</div>
+      </div>
+    );
+  }
+
+  if (loginRequired) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center gap-4">
+        <p className="text-sm text-gray-600">この名簿を見るにはLINEへのログインが必要です。</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="font-bold px-8 py-3.5 rounded-2xl text-sm bg-[#06C755] text-white active:opacity-90"
+        >
+          もう一度試す
+        </button>
       </div>
     );
   }
