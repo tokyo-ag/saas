@@ -99,6 +99,10 @@ export default function EventsPage() {
   const [reflected, setReflected] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const [eventsSeoDescription, setEventsSeoDescription] = useState<string | null>(null);
+  const [staffViewEnabled, setStaffViewEnabled] = useState(false);
+  const [staffViewToken, setStaffViewToken] = useState<string | null>(null);
+  const [savingStaffView, setSavingStaffView] = useState(false);
+  const [staffViewCopied, setStaffViewCopied] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -111,6 +115,8 @@ export default function EventsPage() {
       setTenantId(t.code ?? t.id);
       setActivityTickerEnabled(t.activityTickerEnabled !== false);
       setEventsSeoDescription(t.eventsSeoDescription ?? '');
+      setStaffViewEnabled(!!t.staffViewEnabled);
+      setStaffViewToken(t.staffViewToken ?? null);
     }).catch(() => {});
     api.publicPages.list().then((pages) => {
       const first = pages[0];
@@ -211,6 +217,27 @@ export default function EventsPage() {
     navigator.clipboard.writeText(publicScheduleUrl).then(() => {
       setCopiedPublic(true);
       setTimeout(() => setCopiedPublic(false), 2000);
+    });
+  }
+
+  async function toggleStaffView(enabled: boolean) {
+    setSavingStaffView(true);
+    try {
+      const updated = await api.tenant.toggleStaffView(enabled);
+      setStaffViewEnabled(!!updated.staffViewEnabled);
+      setStaffViewToken(updated.staffViewToken ?? null);
+    } catch {
+      alert('運営用リンクの設定に失敗しました');
+    } finally {
+      setSavingStaffView(false);
+    }
+  }
+
+  function copyStaffViewUrl() {
+    if (!staffViewToken) return;
+    navigator.clipboard.writeText(`${SITE_URL}/staff/${staffViewToken}`).then(() => {
+      setStaffViewCopied(true);
+      setTimeout(() => setStaffViewCopied(false), 2000);
     });
   }
 
@@ -330,6 +357,42 @@ export default function EventsPage() {
           ))}
         </div>
       )}
+
+      {/* 運営用の閲覧専用リンク */}
+      <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-800">運営用の閲覧リンク</h2>
+            <p className="mt-1 text-xs leading-relaxed text-gray-400">ONにすると、ログイン不要で予約ページ一覧と各イベントの予約者一覧（人数・男女比を含む）を閲覧できるリンクを発行できます。編集はできません。</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={staffViewEnabled}
+            disabled={savingStaffView}
+            onClick={() => toggleStaffView(!staffViewEnabled)}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${staffViewEnabled ? 'bg-[#06C755]' : 'bg-gray-300'}`}
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${staffViewEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+        </div>
+        {staffViewEnabled && staffViewToken && (
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <input
+              readOnly
+              value={`${SITE_URL}/staff/${staffViewToken}`}
+              className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600"
+              onFocus={(e) => e.target.select()}
+            />
+            <button
+              onClick={copyStaffViewUrl}
+              className="shrink-0 rounded-lg border border-gray-300 px-4 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              {staffViewCopied ? 'コピーしました' : 'コピー'}
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* 表示スタイル設定 + プレビュー */}
       <div className="mt-6 flex gap-6 items-start">

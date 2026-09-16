@@ -42,6 +42,14 @@ export class TenantController {
     );
   }
 
+  @Patch('staff-view')
+  toggleStaffView(
+    @TenantId() tenantId: string,
+    @Body() body: { enabled: boolean },
+  ) {
+    return this.tenantService.toggleStaffView(tenantId, body.enabled);
+  }
+
   @Get('stats')
   getStats(@TenantId() tenantId: string) {
     return this.tenantService.getDashboardStats(tenantId);

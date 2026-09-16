@@ -58,6 +58,8 @@ model Tenant {
   mobileManageToken      String?   @unique @map("mobile_manage_token") @db.VarChar(64)
   mobileManageHideLevel  Boolean   @default(true) @map("mobile_manage_hide_level")
   mobileManageHideLineNotify Boolean @default(true) @map("mobile_manage_hide_line_notify")
+  staffViewEnabled       Boolean   @default(false) @map("staff_view_enabled")
+  staffViewToken         String?   @unique @map("staff_view_token") @db.VarChar(64)
   reservationMessageTemplate String? @map("reservation_message_template") @db.Text
   reminderMessageTemplate    String? @map("reminder_message_template") @db.Text
   activityTickerEnabled  Boolean   @default(true) @map("activity_ticker_enabled")

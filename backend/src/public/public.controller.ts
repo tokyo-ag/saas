@@ -102,6 +102,29 @@ export class PublicController {
     return endAt;
   }
 
+  private mapCustomAnswers(
+    customQuestions: { id: string; label: string }[],
+    raw: Record<string, string | string[]> | null,
+  ) {
+    const answers = raw ?? {};
+    return customQuestions
+      .map((q) => ({ label: q.label, value: answers[q.id] }))
+      .filter((a): a is { label: string; value: string | string[] } => !!a.value && a.value.length > 0);
+  }
+
+  private genderSummary(reservations: { status: string; member: { gender: string | null } }[]) {
+    const active = reservations.filter((r) => r.status !== 'waitlisted');
+    return {
+      total: active.length,
+      male: active.filter((r) => r.member.gender === '男性').length,
+      female: active.filter((r) => r.member.gender === '女性').length,
+      waitlisted: reservations.length - active.length,
+    };
+  }
+
+  // 参加者同士が見る名簿のため、学校名や自由記述などのカスタム質問回答（回答時に
+  // 「他の人には見られません」と案内しているものを含む）は含めない。運営がその情報まで
+  // 見たい場合はstaff-view（ログイン不要だが参加者には共有しない専用リンク）を使う。
   @Get('roster/:token')
   async getRoster(@Param('token') token: string) {
     const event = await this.prisma.event.findFirst({
@@ -109,31 +132,13 @@ export class PublicController {
     });
     if (!event) throw new NotFoundException('名簿が見つかりません');
 
-    const [reservations, tenant] = await Promise.all([
-      this.prisma.reservation.findMany({
-        where: { eventId: event.id, status: { not: 'cancelled' } },
-        include: {
-          member: {
-            select: {
-              name: true,
-              grade: true,
-              gender: true,
-              level: true,
-              comment: true,
-              customAnswers: true,
-              linePictureUrl: true,
-            },
-          },
-        },
-        orderBy: [{ status: 'asc' }, { reservedAt: 'asc' }],
-      }),
-      this.prisma.tenant.findUnique({
-        where: { id: event.tenantId },
-        select: { customProfileQuestions: true },
-      }),
-    ]);
-    const customQuestions =
-      (tenant?.customProfileQuestions as { id: string; label: string }[] | null) ?? [];
+    const reservations = await this.prisma.reservation.findMany({
+      where: { eventId: event.id, status: { not: 'cancelled' } },
+      include: {
+        member: { select: { name: true, grade: true, gender: true, level: true, comment: true, linePictureUrl: true } },
+      },
+      orderBy: [{ status: 'asc' }, { reservedAt: 'asc' }],
+    });
 
     return {
       event: {
@@ -143,25 +148,118 @@ export class PublicController {
         locationHint: event.locationHint,
         levelEnabled: event.levelEnabled,
       },
-      reservations: reservations.map((r) => {
-        const customAnswersRaw =
-          (r.member.customAnswers as Record<string, string | string[]> | null) ?? {};
-        const customAnswers = customQuestions
-          .map((q) => ({ label: q.label, value: customAnswersRaw[q.id] }))
-          .filter((a): a is { label: string; value: string | string[] } => !!a.value && a.value.length > 0);
-        return {
-          name: r.member.name,
-          grade: r.member.grade,
-          gender: r.member.gender,
-          level: r.member.level,
-          comment: r.member.comment,
-          customAnswers,
-          linePictureUrl: r.member.linePictureUrl,
-          status: r.status,
-          waitlistOrder: r.waitlistOrder,
-          reservedAt: r.reservedAt,
-        };
-      }),
+      reservations: reservations.map((r) => ({
+        name: r.member.name,
+        grade: r.member.grade,
+        gender: r.member.gender,
+        level: r.member.level,
+        comment: r.member.comment,
+        linePictureUrl: r.member.linePictureUrl,
+        status: r.status,
+        waitlistOrder: r.waitlistOrder,
+      })),
+    };
+  }
+
+  @Get('staff-view/:token/events')
+  async getStaffViewEvents(@Param('token') token: string) {
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { staffViewToken: token, staffViewEnabled: true },
+      select: { id: true, name: true, lineDisplayName: true },
+    });
+    if (!tenant) throw new NotFoundException('リンクが見つかりません');
+
+    const events = await this.prisma.event.findMany({
+      where: { tenantId: tenant.id, status: { not: 'draft' } },
+      include: {
+        reservations: {
+          where: { status: { not: 'cancelled' } },
+          select: { status: true, member: { select: { gender: true } } },
+        },
+      },
+      orderBy: { heldAt: 'desc' },
+    });
+
+    return {
+      tenantName: tenant.name ?? tenant.lineDisplayName,
+      events: events.map((e) => ({
+        id: e.id,
+        title: e.title,
+        status: e.status,
+        heldAt: e.heldAt,
+        location: e.location,
+        locationHint: e.locationHint,
+        capacity: e.capacity,
+        ...this.genderSummary(e.reservations),
+      })),
+    };
+  }
+
+  @Get('staff-view/:token/events/:eventId')
+  async getStaffViewEvent(
+    @Param('token') token: string,
+    @Param('eventId') eventId: string,
+  ) {
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { staffViewToken: token, staffViewEnabled: true },
+      select: { id: true, customProfileQuestions: true },
+    });
+    if (!tenant) throw new NotFoundException('リンクが見つかりません');
+
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId, tenantId: tenant.id },
+    });
+    if (!event) throw new NotFoundException('イベントが見つかりません');
+
+    const reservations = await this.prisma.reservation.findMany({
+      where: { eventId: event.id, status: { not: 'cancelled' } },
+      include: {
+        member: {
+          select: {
+            name: true,
+            grade: true,
+            gender: true,
+            level: true,
+            comment: true,
+            customAnswers: true,
+            linePictureUrl: true,
+          },
+        },
+      },
+      orderBy: [{ status: 'asc' }, { reservedAt: 'asc' }],
+    });
+    const customQuestions =
+      (tenant.customProfileQuestions as { id: string; label: string }[] | null) ?? [];
+
+    return {
+      event: {
+        title: event.title,
+        heldAt: event.heldAt,
+        endAt: event.endAt,
+        location: event.location,
+        locationHint: event.locationHint,
+        capacity: event.capacity,
+        capacityMale: event.capacityMale,
+        capacityFemale: event.capacityFemale,
+        levelEnabled: event.levelEnabled,
+        status: event.status,
+      },
+      summary: this.genderSummary(reservations),
+      reservations: reservations.map((r) => ({
+        name: r.member.name,
+        grade: r.member.grade,
+        gender: r.member.gender,
+        level: r.member.level,
+        comment: r.member.comment,
+        customAnswers: this.mapCustomAnswers(
+          customQuestions,
+          r.member.customAnswers as Record<string, string | string[]> | null,
+        ),
+        linePictureUrl: r.member.linePictureUrl,
+        status: r.status,
+        waitlistOrder: r.waitlistOrder,
+        reservedAt: r.reservedAt,
+      })),
     };
   }
 

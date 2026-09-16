@@ -250,6 +250,10 @@ export const api = {
     reviews: (tenantCode: string) =>
       request<TenantReview[]>(`/public/tenants/${tenantCode}/reviews`),
     roster: (token: string) => request<PublicRoster>(`/public/roster/${token}`),
+    staffViewEvents: (token: string) =>
+      request<StaffViewEventList>(`/public/staff-view/${token}/events`),
+    staffViewEvent: (token: string, eventId: string) =>
+      request<StaffViewEventDetail>(`/public/staff-view/${token}/events/${eventId}`),
   },
   blog: {
     list: () => request<BlogPost[]>('/admin/blog'),
@@ -346,6 +350,11 @@ export const api = {
     deleteReview: (reviewId: string) =>
       request<{ success: boolean }>(`/admin/tenant/reviews/${reviewId}`, {
         method: 'DELETE',
+      }),
+    toggleStaffView: (enabled: boolean) =>
+      request<Tenant>('/admin/tenant/staff-view', {
+        method: 'PATCH',
+        body: JSON.stringify({ enabled }),
       }),
   },
   auth: {
@@ -803,6 +812,8 @@ export interface Tenant {
   customProfileQuestions?: CustomProfileQuestion[] | null;
   themeColor?: string;
   iconUrl?: string | null;
+  staffViewEnabled?: boolean;
+  staffViewToken?: string | null;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;
@@ -1308,12 +1319,62 @@ export interface PublicRoster {
     gender: string | null;
     level: string | null;
     comment: string | null;
-    customAnswers: { label: string; value: string | string[] }[];
     linePictureUrl: string | null;
     status: ReservationStatus;
     waitlistOrder: number | null;
-    reservedAt: string;
   }[];
+}
+
+// 運営専用リンク（ログイン不要だが参加者へは共有しないURL）でのみ、学校名などの
+// カスタム質問回答や予約日時まで見せる。参加者向けのPublicRosterには含めない。
+export interface StaffViewReservation {
+  name: string | null;
+  grade: string | null;
+  gender: string | null;
+  level: string | null;
+  comment: string | null;
+  customAnswers: { label: string; value: string | string[] }[];
+  linePictureUrl: string | null;
+  status: ReservationStatus;
+  waitlistOrder: number | null;
+  reservedAt: string;
+}
+
+export interface StaffViewGenderSummary {
+  total: number;
+  male: number;
+  female: number;
+  waitlisted: number;
+}
+
+export interface StaffViewEventList {
+  tenantName: string;
+  events: ({
+    id: string;
+    title: string;
+    status: EventStatus;
+    heldAt: string;
+    location: string;
+    locationHint?: string | null;
+    capacity: number | null;
+  } & StaffViewGenderSummary)[];
+}
+
+export interface StaffViewEventDetail {
+  event: {
+    title: string;
+    heldAt: string;
+    endAt: string | null;
+    location: string;
+    locationHint?: string | null;
+    capacity: number | null;
+    capacityMale: number | null;
+    capacityFemale: number | null;
+    levelEnabled: boolean;
+    status: EventStatus;
+  };
+  summary: StaffViewGenderSummary;
+  reservations: StaffViewReservation[];
 }
 
 export interface PublicEvent {

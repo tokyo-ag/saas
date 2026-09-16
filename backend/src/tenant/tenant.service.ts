@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import Stripe from 'stripe';
+import { randomBytes } from 'crypto';
 import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -146,6 +147,25 @@ export class TenantService {
   async findOne(tenantId: string) {
     const tenant = await this.findRaw(tenantId);
     return this.toSafeTenant(tenant);
+  }
+
+  async toggleStaffView(tenantId: string, enabled: boolean) {
+    const current = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { staffViewToken: true },
+    });
+    const staffViewToken =
+      enabled && !current?.staffViewToken
+        ? randomBytes(24).toString('base64url')
+        : current?.staffViewToken;
+    const updated = await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        staffViewEnabled: enabled,
+        ...(staffViewToken && { staffViewToken }),
+      },
+    });
+    return this.toSafeTenant(updated);
   }
 
   private assertSensitiveSettingsReconfirmed(
