@@ -117,11 +117,20 @@ export function buildCategoryAreaPath(category: string, area?: string): string {
   return `/guide/${categorySlug}/${parts.map((p) => AREA_SLUGS[p] ?? p).join('/')}`;
 }
 
-// category is Event.category's English slug ('meetup', 'badminton', ...) - see ACTIVITY_TAG_EVENT_CATEGORY.
-export function getEventTagGroups(category: string) {
+// categories are Event.categories' English slugs ('meetup', 'badminton', ...).
+// Accept a string as well so older callers remain compatible while the event model migrates.
+export function getEventTagGroups(category: string | readonly string[]) {
+  const categories = typeof category === 'string' ? [category] : category;
+  const hasMeetup = categories.includes('meetup');
+  const hasSport = categories.some((value) => value !== '' && value !== 'meetup');
+  const searchTags = hasMeetup && hasSport
+    ? [...MEETUP_SEARCH_TAGS, ...SEARCH_TAGS]
+    : hasMeetup
+      ? MEETUP_SEARCH_TAGS
+      : SEARCH_TAGS;
   return [
     { label: '場所タグ', tags: LOCATION_TAGS, single: true },
-    { label: '検索タグ', tags: category === 'meetup' ? MEETUP_SEARCH_TAGS : SEARCH_TAGS, single: false },
+    { label: '検索タグ', tags: searchTags, single: false },
   ] as const;
 }
 

@@ -103,6 +103,55 @@ describe('EventsService date validation', () => {
     );
   });
 
+  it('saves every selected category while keeping the first as the legacy category', async () => {
+    await service.create(
+      'tenant-1',
+      eventDto({
+        category: 'badminton',
+        categories: ['badminton', 'basketball'],
+      }),
+    );
+
+    expect(prisma.event.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          category: 'badminton',
+          categories: ['badminton', 'basketball'],
+        }),
+      }),
+    );
+  });
+
+  it('keeps legacy single-category clients compatible', async () => {
+    await service.create('tenant-1', eventDto({ category: 'meetup' }));
+
+    expect(prisma.event.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          category: 'meetup',
+          categories: ['meetup'],
+        }),
+      }),
+    );
+  });
+
+  it('updates all selected categories from the event edit form', async () => {
+    await service.update('tenant-1', 'event-1', {
+      category: 'badminton',
+      categories: ['badminton', 'basketball'],
+    });
+
+    expect(prisma.event.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'event-1' },
+        data: expect.objectContaining({
+          category: 'badminton',
+          categories: ['badminton', 'basketball'],
+        }),
+      }),
+    );
+  });
+
   it('clears existing event images when null is sent', async () => {
     await service.update('tenant-1', 'event-1', {
       imageUrl: null,

@@ -474,6 +474,7 @@ export interface Event {
   imageUrl?: string | null;
   iconUrl?: string | null;
   category?: string | null;
+  categories?: string[];
   tags?: string[];
   levelEnabled?: boolean;
   rosterShareEnabled?: boolean;
@@ -509,6 +510,7 @@ export interface EventInput {
   imageUrl?: string | null;
   iconUrl?: string | null;
   category?: string | null;
+  categories?: string[];
   tags?: string[];
   levelEnabled?: boolean;
   rosterShareEnabled?: boolean;
@@ -716,6 +718,7 @@ export interface LiffEvent {
   rosterShareToken?: string | null;
   reserveActionStyle?: string | null;
   category?: string | null;
+  categories?: string[];
 }
 
 export interface LiffTenantReview {
@@ -920,6 +923,7 @@ export interface LiffMyReservation {
     descriptionMale?: string | null;
     descriptionFemale?: string | null;
     category?: string | null;
+    categories?: string[];
   };
 }
 
@@ -1418,6 +1422,7 @@ export interface PublicEvent {
   viewCount: number;
   tenantAccessCount: number;
   category?: string | null;
+  categories?: string[];
   tags: string[];
   tenant: {
     id: string;

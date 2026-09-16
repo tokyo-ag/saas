@@ -378,7 +378,14 @@ export class PublicController {
           code: { not: null },
           ...(typeTags.length > 0 ? { typeTags: { hasSome: typeTags } } : {}),
         },
-        ...(typeTags.length === 0 && category ? { category } : {}),
+        ...(typeTags.length === 0 && category
+          ? {
+              OR: [
+                { category },
+                { categories: { has: category } },
+              ],
+            }
+          : {}),
         ...(tags.length > 0 ? { tags: { hasEvery: tags } } : {}),
       },
       orderBy: { heldAt: 'asc' },
@@ -430,6 +437,7 @@ export class PublicController {
       iconUrl: e.iconUrl,
       imageUrl: e.imageUrl,
       category: e.category,
+      categories: e.categories,
       tags: e.tags,
       viewCount: e.viewCount,
       tenantAccessCount: e.tenant._count.liffAccesses,
@@ -702,6 +710,7 @@ export class PublicController {
       imageUrl: event.imageUrl,
       iconUrl: event.iconUrl,
       category: event.category,
+      categories: event.categories,
       tags: event.tags,
       tenantCode: event.tenant.code,
       liffId: event.tenant.liffId,
@@ -908,6 +917,7 @@ export class PublicController {
         iconUrl: e.iconUrl,
         imageUrl: e.imageUrl,
         category: e.category,
+        categories: e.categories,
         tags: e.tags,
         viewCount: e.viewCount,
         tenantAccessCount: tenant._count.liffAccesses,

@@ -175,5 +175,11 @@ export class CreateEventDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @MaxLength(50, { each: true })
+  categories?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
   tags?: string[];
 }

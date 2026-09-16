@@ -42,9 +42,18 @@ type EventFormData = {
   reserveActionStyle: '' | 'comiu' | 'line';
   imageUrl: string;
   iconUrl: string;
-  category: string;
+  categories: string[];
   tags: string[];
 };
+
+const EVENT_CATEGORY_OPTIONS = [
+  { value: 'meetup', label: '交流会' },
+  { value: 'badminton', label: 'バドミントン' },
+  { value: 'futsal', label: 'フットサル' },
+  { value: 'basketball', label: 'バスケットボール' },
+  { value: 'volleyball', label: 'バレー' },
+  { value: 'tabletennis', label: '卓球' },
+] as const;
 
 const inputClass = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]';
 const DEFAULT_RESERVATION_MESSAGE = '【{title}】ご予約ありがとうございます！\n日時：{date}\n参加費：{price}\n場所：{location}';
@@ -388,7 +397,11 @@ export default function EventForm({
     reserveActionStyle: (initial?.reserveActionStyle === 'line' ? 'line' : initial?.reserveActionStyle === 'comiu' ? 'comiu' : '') as '' | 'comiu' | 'line',
     imageUrl: initial?.imageUrl ?? '',
     iconUrl: initial?.iconUrl ?? '',
-    category: initial?.category ?? '',
+    categories: initial?.categories?.length
+      ? [...initial.categories]
+      : initial?.category
+        ? [initial.category]
+        : [],
     tags: normalizeEventTags(initial?.tags ?? []),
   });
 
@@ -418,6 +431,7 @@ export default function EventForm({
   }, [tenant, initial]);
 
   const set = (key: keyof EventFormData, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
+  const primaryCategory = form.categories[0] ?? '';
 
   function handleHeldDateChange(date: string) {
     const time = timeFromLocalDatetime(form.heldAt) || '19:00';
@@ -547,21 +561,34 @@ export default function EventForm({
   };
 
   function insertTemplate() {
-    const tmpl = DESCRIPTION_TEMPLATES[form.category];
+    const tmpl = DESCRIPTION_TEMPLATES[primaryCategory];
     if (tmpl) set('description', tmpl);
   }
 
-  // The 検索タグ options shown depend on category (meetup vs. everything else) - drop any
-  // already-selected search tag that isn't valid for the newly picked category, so switching
-  // e.g. バドミントン -> 交流会 doesn't silently keep "ラケット貸出有り" selected.
-  function handleCategoryChange(category: string) {
-    const validSearchTags: readonly string[] = category === 'meetup' ? MEETUP_SEARCH_TAGS : SEARCH_TAGS;
+  // The 検索タグ options shown depend on the selected categories. When 交流会 and a sport are
+  // selected together both tag sets remain available; otherwise invalid search tags are dropped.
+  function updateCategories(categories: string[]) {
+    const hasMeetup = categories.includes('meetup');
+    const hasSport = categories.some((category) => category !== 'meetup');
+    const validSearchTags: readonly string[] = hasMeetup && hasSport
+      ? [...MEETUP_SEARCH_TAGS, ...SEARCH_TAGS]
+      : hasMeetup
+        ? MEETUP_SEARCH_TAGS
+        : SEARCH_TAGS;
     const allSearchTags: readonly string[] = [...SEARCH_TAGS, ...MEETUP_SEARCH_TAGS];
     setForm((prev) => ({
       ...prev,
-      category,
+      categories,
       tags: prev.tags.filter((tag) => !allSearchTags.includes(tag) || validSearchTags.includes(tag)),
     }));
+  }
+
+  function toggleCategory(category: string) {
+    updateCategories(
+      form.categories.includes(category)
+        ? form.categories.filter((value) => value !== category)
+        : [...form.categories, category],
+    );
   }
 
   function toggleTag(tag: string, groupTags: readonly string[], single: boolean) {
@@ -686,7 +713,8 @@ export default function EventForm({
       // 編集時に画像を削除した場合も、nullを明示して既存URLをDBから消す。
       imageUrl: form.imageUrl || null,
       iconUrl: form.iconUrl || null,
-      category: form.category || null,
+      category: primaryCategory || null,
+      categories: form.categories,
       tags: normalizeEventTags(form.tags),
     };
 
@@ -776,16 +804,40 @@ export default function EventForm({
       </div>
 
       <Section title="基本情報">
-        <Field label="カテゴリ">
-          <select value={form.category} onChange={(e) => handleCategoryChange(e.target.value)} className={inputClass}>
-            <option value="">なし</option>
-            <option value="meetup">交流会</option>
-            <option value="badminton">バドミントン</option>
-            <option value="futsal">フットサル</option>
-            <option value="basketball">バスケットボール</option>
-            <option value="volleyball">バレー</option>
-            <option value="tabletennis">卓球</option>
-          </select>
+        <Field label="カテゴリ（複数選択可）">
+          <div className="flex flex-wrap gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
+            <button
+              type="button"
+              aria-pressed={form.categories.length === 0}
+              onClick={() => updateCategories([])}
+              className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                form.categories.length === 0
+                  ? 'border-[#06C755] bg-[#06C755] text-white'
+                  : 'border-gray-300 bg-white text-gray-600 hover:border-[#06C755]'
+              }`}
+            >
+              なし
+            </button>
+            {EVENT_CATEGORY_OPTIONS.map((option) => {
+              const selected = form.categories.includes(option.value);
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => toggleCategory(option.value)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                    selected
+                      ? 'border-[#06C755] bg-[#06C755] text-white'
+                      : 'border-gray-300 bg-white text-gray-600 hover:border-[#06C755]'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-xs text-gray-500">公開したイベントは、選択したすべてのカテゴリでCOMIUブログ・イベント検索に反映されます。</p>
         </Field>
         <Field label="タイトル" required>
           <input
@@ -793,13 +845,13 @@ export default function EventForm({
             maxLength={100}
             value={form.title}
             onChange={(e) => set('title', e.target.value)}
-            placeholder={TITLE_PLACEHOLDERS[form.category] ?? TITLE_PLACEHOLDERS['']}
+            placeholder={TITLE_PLACEHOLDERS[primaryCategory] ?? TITLE_PLACEHOLDERS['']}
             className={inputClass}
           />
         </Field>
         <Field label="LP用タグ">
           <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
-            {getEventTagGroups(form.category).map((group) => {
+            {getEventTagGroups(form.categories).map((group) => {
               if (group.label === '場所タグ') {
                 const selectedWard = TOKYO_WARDS.find((t) => form.tags.includes(t));
                 const selectedCity = TOKYO_CITIES.find((t) => form.tags.includes(t));
@@ -943,7 +995,7 @@ export default function EventForm({
           )}
         </Field>
         <Field label="説明">
-          {DESCRIPTION_TEMPLATES[form.category] && (
+          {DESCRIPTION_TEMPLATES[primaryCategory] && (
             <button
               type="button"
               onClick={insertTemplate}

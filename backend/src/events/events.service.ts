@@ -27,6 +27,21 @@ function normalizePortalCategoryTags(tags?: string[] | null) {
   );
 }
 
+function normalizeEventCategories(
+  category?: string | null,
+  categories?: string[] | null,
+) {
+  const values = categories == null ? [category] : [category, ...categories];
+  return Array.from(
+    new Set(
+      values
+        .filter((value): value is string => typeof value === 'string')
+        .map((value) => value.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
 @Injectable()
 export class EventsService {
   constructor(
@@ -101,6 +116,7 @@ export class EventsService {
         imageUrl: e.imageUrl,
         iconUrl: e.iconUrl,
         category: e.category,
+        categories: e.categories,
         tags: e.tags,
         createdAt: e.createdAt,
         updatedAt: e.updatedAt,
@@ -133,6 +149,7 @@ export class EventsService {
 
   async create(tenantId: string, dto: CreateEventDto) {
     const { heldAt, endAt, remindAt } = this.validateEventDates(dto);
+    const categories = normalizeEventCategories(dto.category, dto.categories);
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
     });
@@ -183,7 +200,8 @@ export class EventsService {
         reminderMessageTemplate: dto.reminderMessageTemplate || null,
         imageUrl: dto.imageUrl ?? null,
         iconUrl: dto.iconUrl ?? null,
-        category: dto.category ?? null,
+        category: categories[0] ?? null,
+        categories,
         tags: normalizePortalCategoryTags(dto.tags),
         levelEnabled: dto.levelEnabled ?? false,
         rosterShareEnabled,
@@ -197,6 +215,10 @@ export class EventsService {
 
   async update(tenantId: string, id: string, dto: Partial<CreateEventDto>) {
     const current = await this.findOne(tenantId, id);
+    const categories =
+      dto.category !== undefined || dto.categories !== undefined
+        ? normalizeEventCategories(dto.category, dto.categories)
+        : null;
     const { heldAt, endAt, remindAt } = this.validateEventDates(dto, {
       heldAt: current.heldAt,
       endAt: current.endAt,
@@ -285,7 +307,10 @@ export class EventsService {
         }),
         ...(dto.imageUrl !== undefined && { imageUrl: dto.imageUrl || null }),
         ...(dto.iconUrl !== undefined && { iconUrl: dto.iconUrl || null }),
-        ...(dto.category !== undefined && { category: dto.category ?? null }),
+        ...(categories !== null && {
+          category: categories[0] ?? null,
+          categories,
+        }),
         ...(dto.tags !== undefined && {
           tags: normalizePortalCategoryTags(dto.tags),
         }),

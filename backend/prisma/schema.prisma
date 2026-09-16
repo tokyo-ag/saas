@@ -304,6 +304,7 @@ model Event {
   rosterShareEnabled Boolean  @default(false) @map("roster_share_enabled")
   rosterShareToken String?    @unique @map("roster_share_token") @db.VarChar(64)
   category        String?     @db.VarChar(50)
+  categories      String[]    @default([])
   tags            String[]    @default([])
   imageUrl        String?     @map("image_url") @db.Text
   iconUrl         String?     @map("icon_url") @db.Text

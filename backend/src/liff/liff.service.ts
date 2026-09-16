@@ -182,6 +182,7 @@ export class LiffService {
       imageUrl: e.imageUrl,
       iconUrl: e.iconUrl,
       category: e.category,
+      categories: e.categories,
       levelEnabled: e.levelEnabled,
     }));
   }
@@ -657,6 +658,7 @@ export class LiffService {
         descriptionMale: r.event.descriptionMale,
         descriptionFemale: r.event.descriptionFemale,
         category: r.event.category,
+        categories: r.event.categories,
       },
     }));
   }

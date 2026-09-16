@@ -615,7 +615,7 @@ export class SuperadminService implements OnApplicationBootstrap {
           heldAt: { gte: new Date() },
           tenant: { deletedAt: null, bannedAt: null, code: { not: null } },
         },
-        select: { category: true, tags: true },
+        select: { category: true, categories: true, tags: true },
       }),
     ]);
 
@@ -668,11 +668,17 @@ export class SuperadminService implements OnApplicationBootstrap {
     }
 
     for (const event of events) {
-      const category = event.category ? EVENT_CATEGORY_TO_ACTIVITY_TAG[event.category] : undefined;
-      if (!category) continue;
-      for (const tag of event.tags) {
-        if (!LOCATION_TAG_SET.has(tag)) continue;
-        bucketFor(category, tag).eventCount += 1;
+      const eventCategories = new Set([
+        ...(event.category ? [event.category] : []),
+        ...event.categories,
+      ]);
+      for (const eventCategory of eventCategories) {
+        const category = EVENT_CATEGORY_TO_ACTIVITY_TAG[eventCategory];
+        if (!category) continue;
+        for (const tag of event.tags) {
+          if (!LOCATION_TAG_SET.has(tag)) continue;
+          bucketFor(category, tag).eventCount += 1;
+        }
       }
     }
 
