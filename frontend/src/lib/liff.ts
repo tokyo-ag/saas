@@ -97,7 +97,10 @@ export async function initLiff(liffIdOverride?: string): Promise<boolean> {
     initialized = true;
     initializedLiffId = id;
     lastError = null;
-    if (typeof window !== 'undefined') window.sessionStorage.removeItem(LIFF_ID_MISMATCH_RELOAD_KEY);
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem(LIFF_ID_MISMATCH_RELOAD_KEY);
+      scrubLiffCallbackParamsFromAddressBar();
+    }
     setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
     initInfo = { ok: true, hasId: Boolean(id), loggedIn: isLiffLoggedIn() };
     exposeDebugValue('__LIFF_INIT_INFO', initInfo);
@@ -113,16 +116,34 @@ export async function initLiff(liffIdOverride?: string): Promise<boolean> {
   }
 }
 
+// LINEログインの往復でURLに付与されるOAuthコールバック用パラメータ。
+// これらを残したままredirectUriに使い回すと、古い認可コードを次回のログインに
+// 巻き込んでしまいstate検証が失敗し続け、再ログインしても同じ画面に戻るループになる。
+const LIFF_CALLBACK_PARAM_KEYS = ['code', 'state', 'liff.state', 'liffClientId', 'liffRedirectUri', 'liff.referrer'];
+
+function stripLiffCallbackParams(url: URL): URL {
+  for (const key of LIFF_CALLBACK_PARAM_KEYS) url.searchParams.delete(key);
+  return url;
+}
+
+// liff.init()がcode/state等のOAuthコールバックパラメータを消費した後は、アドレスバーから
+// 取り除いておく。残したままだと、後で何かがwindow.location.hrefを再ログインの
+// redirectUriや保存先として読み取った際に、使用済みの認可コードを巻き込んでしまう。
+function scrubLiffCallbackParamsFromAddressBar(): void {
+  const current = new URL(window.location.href);
+  const hasCallbackParams = LIFF_CALLBACK_PARAM_KEYS.some((key) => current.searchParams.has(key));
+  if (!hasCallbackParams) return;
+  const cleaned = stripLiffCallbackParams(current);
+  window.history.replaceState(window.history.state, '', cleaned.toString());
+}
+
 export function buildCurrentLiffUrl(): string | null {
   if (typeof window === 'undefined') return null;
   const id = initializedLiffId ?? resolvedLiffId;
   if (!id) return null;
 
-  const current = new URL(window.location.href);
-  const params = new URLSearchParams(current.search);
-  params.delete('code');
-  params.delete('state');
-  params.delete('liff.state');
+  const current = stripLiffCallbackParams(new URL(window.location.href));
+  const params = current.searchParams;
 
   if (!usingTenantLiff) {
     const pathWithQuery = `${current.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
@@ -192,6 +213,17 @@ function recordLoginAttempt(): void {
   );
 }
 
+// liff.login()のredirectUriには必ずこちらを使う。window.location.hrefをそのまま渡すと、
+// 前回のログイン往復で残ったcode/state等が次回のログインに混入し、再ログインしても
+// 同じ画面に戻り続けるループになる。
+export function currentRedirectUri(): string {
+  return stripLiffCallbackParams(new URL(window.location.href)).toString();
+}
+
+export function loginWithRedirect(): void {
+  liff.login({ redirectUri: currentRedirectUri() });
+}
+
 export async function loginIfNeeded(): Promise<boolean> {
   if (isLiffLoggedIn()) return true;
 
@@ -204,7 +236,7 @@ export async function loginIfNeeded(): Promise<boolean> {
   if (hasRecentLoginAttempt()) return false;
 
   recordLoginAttempt();
-  liff.login({ redirectUri: window.location.href });
+  loginWithRedirect();
   return false;
 }
 

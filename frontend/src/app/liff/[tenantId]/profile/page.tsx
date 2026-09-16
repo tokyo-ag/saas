@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { api, CustomProfileQuestion, LiffMyReservation, LiffProfile, setLiffToken } from '@/lib/api';
-import { initLiff, getLiffUserId, loginIfNeeded, liff, redirectToLiffApp, isLiffLoggedIn } from '@/lib/liff';
+import { initLiff, getLiffUserId, loginIfNeeded, loginWithRedirect, currentRedirectUri, liff, redirectToLiffApp, isLiffLoggedIn } from '@/lib/liff';
 import { useLiffTheme, readableTextColor, isLightHexColor } from '@/components/liff/LiffThemeProvider';
 import { ConfirmDialog } from '@/components/liff/ConfirmDialog';
 import { LiffToast } from '@/components/liff/LiffToast';
@@ -201,7 +201,7 @@ export default function ProfilePage() {
     localStorage.removeItem('liff-login-tried');
     localStorage.setItem(
       'liff-pending-redirect',
-      JSON.stringify({ url: window.location.href, expires: Date.now() + 10 * 60 * 1000 }),
+      JSON.stringify({ url: currentRedirectUri(), expires: Date.now() + 10 * 60 * 1000 }),
     );
     setLiffToken(null);
 
@@ -216,7 +216,7 @@ export default function ProfilePage() {
       // ignore
     }
     if (!redirectToLiffApp()) {
-      liff.login({ redirectUri: window.location.href });
+      loginWithRedirect();
     }
   }
 
@@ -308,7 +308,7 @@ export default function ProfilePage() {
     // liff.line.me経由だとLINEアプリを強制的に開こうとするため、
     // ブラウザ内で完結するliff.login()を優先する。
     try {
-      liff.login({ redirectUri: window.location.href });
+      loginWithRedirect();
     } catch {
       if (!redirectToLiffApp()) window.location.reload();
     }

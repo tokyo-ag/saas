@@ -14,6 +14,8 @@ import {
   liff,
   getInitError,
   loginIfNeeded,
+  loginWithRedirect,
+  currentRedirectUri,
   redirectToLiffApp,
   hasRecentLoginAttempt,
   isLiffLoggedIn,
@@ -97,7 +99,7 @@ function ReservePageInner() {
     localStorage.removeItem('liff-login-tried');
     localStorage.setItem(
       'liff-pending-redirect',
-      JSON.stringify({ url: window.location.href, expires: Date.now() + 10 * 60 * 1000 }),
+      JSON.stringify({ url: currentRedirectUri(), expires: Date.now() + 10 * 60 * 1000 }),
     );
     setLiffToken(null);
 
@@ -114,7 +116,7 @@ function ReservePageInner() {
     // liff.line.me経由だとLINEアプリを強制的に開こうとするため、
     // ブラウザ内で完結するliff.login()を優先する。
     try {
-      liff.login({ redirectUri: window.location.href });
+      loginWithRedirect();
     } catch {
       if (!redirectToLiffApp()) window.location.reload();
     }
@@ -376,7 +378,7 @@ function ReservePageInner() {
     // liff.line.me経由だとLINEアプリを強制的に開こうとするため、
     // ブラウザ内で完結するliff.login()を優先する。
     try {
-      liff.login({ redirectUri: window.location.href });
+      loginWithRedirect();
     } catch {
       if (!redirectToLiffApp()) window.location.reload();
     }

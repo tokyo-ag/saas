@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { api, setLiffToken } from '@/lib/api';
-import { initLiff, getLiffUserId, liff, isLiffLoggedIn } from '@/lib/liff';
+import { initLiff, getLiffUserId, liff, isLiffLoggedIn, loginWithRedirect } from '@/lib/liff';
 import { isLightHexColor, readableTextColor } from '@/lib/color';
 import { SITE_URL } from '@/lib/config';
 
@@ -73,7 +73,7 @@ export function TenantReviewComposer({
       } else {
         // ブラウザ内で完結するliff.login()でLINEログインへ遷移する。
         // 戻ってきた後、もう一度このボタンを押すとログイン済み状態で続行できる。
-        liff.login({ redirectUri: window.location.href });
+        loginWithRedirect();
         return;
       }
     } else {
@@ -101,7 +101,7 @@ export function TenantReviewComposer({
       const msg = err instanceof Error ? err.message : '';
       if (isLineAuthErrorMessage(msg)) {
         setLiffToken(null);
-        liff.login({ redirectUri: window.location.href });
+        loginWithRedirect();
         return;
       }
       // それ以外（本当に初回投稿でまだ口コミが無い場合等）は空フォームのまま進める。
@@ -130,7 +130,7 @@ export function TenantReviewComposer({
         // 単にstartに戻すと同じ状態でループするため、強制的に再ログインさせる。
         setLiffToken(null);
         setError('LINEの認証が切れていました。再度ログインします…');
-        liff.login({ redirectUri: window.location.href });
+        loginWithRedirect();
         return;
       }
       setError(msg);
