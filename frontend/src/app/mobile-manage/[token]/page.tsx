@@ -6,7 +6,6 @@ import Image from 'next/image';
 import {
   api,
   formatDate,
-  formatEventSchedule,
   downloadWithAuth,
   API_URL,
   setMobileManageToken,
@@ -303,7 +302,7 @@ function EventListScreen({
                   <EventStatusBadge status={event.status} />
                   <span className="truncate text-sm font-bold text-gray-900">{event.title}</span>
                 </div>
-                <p className="mt-0.5 text-xs text-gray-400">{formatEventSchedule(event.heldAt, event.endAt)}</p>
+                <p className="mt-0.5 text-xs text-gray-400">{formatDate(event.heldAt)}</p>
               </div>
               <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
                 <button type="button" onClick={() => onOpen(event.id)} className="rounded-lg bg-[#06C755]/10 px-2.5 py-1.5 text-xs font-bold text-[#06C755]">詳細</button>
@@ -407,7 +406,7 @@ function DetailScreen({ eventId, onBack, onEdit }: { eventId: string; onBack: ()
           編集
         </button>
       </div>
-      <p className="-mt-2 mb-4 text-sm text-gray-500">{formatEventSchedule(event.heldAt, event.endAt)} ・ {event.location}</p>
+      <p className="-mt-2 mb-4 text-sm text-gray-500">{formatDate(event.heldAt)} ・ {event.location}</p>
 
       <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="border-b border-gray-200 px-4 py-3">

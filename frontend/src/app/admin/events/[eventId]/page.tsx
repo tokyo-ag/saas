@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { api, formatDate, formatEventSchedule, downloadWithAuth, API_URL, Event, Reservation, CustomProfileQuestion } from '@/lib/api';
+import { api, formatDate, downloadWithAuth, API_URL, Event, Reservation, CustomProfileQuestion } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { SITE_URL } from '@/lib/config';
 import { EventBadge, ReservationBadge } from '@/components/ui/StatusBadge';
@@ -117,7 +117,7 @@ export default function EventDetailPage() {
               <h1 className="break-words text-xl font-bold leading-tight text-gray-900 md:text-2xl">{event.title}</h1>
               <EventBadge status={event.status} />
             </div>
-            <p className="mt-1 text-sm leading-relaxed text-gray-500">{formatEventSchedule(event.heldAt, event.endAt)} ・ {event.location}</p>
+            <p className="mt-1 text-sm leading-relaxed text-gray-500">{formatDate(event.heldAt)} ・ {event.location}</p>
             <p className="mt-1 text-sm text-gray-600">
               予約: {event.reservedCount}{event.capacity ? ` / ${event.capacity}` : ''}人
               {(event.waitlistedCount ?? 0) > 0 && ` ・ キャンセル待ち ${event.waitlistedCount}人`}

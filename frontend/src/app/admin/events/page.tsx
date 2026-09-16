@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { api, formatEventSchedule } from '@/lib/api';
+import { api, formatDate } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { SITE_URL } from '@/lib/config';
 import { EventStatusBadge } from '@/components/ui/StatusBadge';
@@ -345,7 +345,7 @@ export default function EventsPage() {
                     {event.title}
                   </Link>
                 </div>
-                <p className="mt-0.5 text-xs text-gray-400">{formatEventSchedule(event.heldAt, event.endAt)}</p>
+                <p className="mt-0.5 text-xs text-gray-400">{formatDate(event.heldAt)}</p>
               </div>
               <div className="flex shrink-0 gap-1.5">
                 <Link href={`/admin/events/${event.id}`} className="rounded-lg bg-[#06C755]/10 px-2.5 py-1.5 text-xs font-bold text-[#06C755]">詳細</Link>
