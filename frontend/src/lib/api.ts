@@ -326,6 +326,8 @@ export const api = {
       totalReservationCount: number;
       thisMonthReservationCount: number;
       totalRevenue: number;
+      todayAccessCount: number;
+      todayReservationCount: number;
     }>('/admin/tenant/stats'),
     syncLineProfile: () => request<Tenant>('/admin/tenant/sync-line-profile', { method: 'POST' }),
     billingCheckout: (plan: 'standard' | 'pro') =>

@@ -524,12 +524,22 @@ export class TenantService {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
+    // JST基準の「今日」の範囲（サーバーはUTCで動いているため）。
+    const jstOffset = 9 * 60 * 60 * 1000;
+    const nowJst = new Date(now.getTime() + jstOffset);
+    const todayStart = new Date(
+      Date.UTC(nowJst.getUTCFullYear(), nowJst.getUTCMonth(), nowJst.getUTCDate()) - jstOffset,
+    );
+    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+
     const [
       memberCount,
       thisMonthEventCount,
       totalReservationCount,
       thisMonthReservationCount,
       paidReservations,
+      todayAccessCount,
+      todayReservationCount,
     ] = await Promise.all([
       this.prisma.member.count({ where: { tenantId } }),
       this.prisma.event.count({
@@ -552,6 +562,16 @@ export class TenantService {
         },
         include: { event: { select: { price: true } } },
       }),
+      this.prisma.tenantLiffAccess.count({
+        where: { tenantId, accessedAt: { gte: todayStart, lt: todayEnd } },
+      }),
+      this.prisma.reservation.count({
+        where: {
+          tenantId,
+          status: { notIn: ['cancelled'] },
+          reservedAt: { gte: todayStart, lt: todayEnd },
+        },
+      }),
     ]);
 
     const totalRevenue = paidReservations.reduce(
@@ -565,6 +585,8 @@ export class TenantService {
       totalReservationCount,
       thisMonthReservationCount,
       totalRevenue,
+      todayAccessCount,
+      todayReservationCount,
     };
   }
 

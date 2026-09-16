@@ -24,6 +24,8 @@ type Stats = {
   totalReservationCount: number;
   thisMonthReservationCount: number;
   totalRevenue: number;
+  todayAccessCount: number;
+  todayReservationCount: number;
 };
 type GrowthPoint = { label: string; members: number; reservations: number };
 type Activity = { type: string; text: string; at: string };
@@ -178,6 +180,29 @@ export default function DashboardPage() {
           <StatCard label="累計参加者" value={`${stats.memberCount}人`} sub={memberDiff > 0 ? `前月比 +${memberDiff}人` : undefined} highlight={memberDiff > 0} />
           <StatCard label="参加費売上" value={`¥${stats.totalRevenue.toLocaleString()}`} sub="予約確定分の合計" />
           <StatCard label="直近イベント" value={`${upcoming.length}件`} sub="開催予定" />
+        </section>
+      )}
+
+      {stats && (
+        <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
+          <h2 className="mb-3 text-sm font-semibold text-gray-800">今日のアクセスと予約</h2>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-center">
+              <p className="text-[11px] text-gray-500">アクセス</p>
+              <p className="mt-0.5 text-xl font-bold text-gray-900">{stats.todayAccessCount}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-center">
+              <p className="text-[11px] text-gray-500">予約</p>
+              <p className="mt-0.5 text-xl font-bold text-[#06C755]">{stats.todayReservationCount}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-center">
+              <p className="text-[11px] text-gray-500">見送った可能性</p>
+              <p className="mt-0.5 text-xl font-bold text-amber-600">{Math.max(stats.todayAccessCount - stats.todayReservationCount, 0)}</p>
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-gray-400">
+            「アクセス」はLIFFホーム・予約ページを開いた回数（同じ人の複数回アクセスも含む概算値）。「見送った可能性」はアクセス数から予約数を引いた参考値です。
+          </p>
         </section>
       )}
 
