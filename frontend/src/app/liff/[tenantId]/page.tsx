@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { api, API_URL, formatDateShort, LiffEvent, LiffTenant, PublicTenant } from '@/lib/api';
+import { api, API_URL, formatDateShort, formatEventSchedule, LiffEvent, LiffTenant, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { getDefaultEventImage } from '@/lib/defaultImages';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
@@ -109,25 +109,7 @@ function EventCard({ event, tenantId, accentColor, cardBg, myStatus }: { event: 
 }
 
 function formatThreadDate(event: LiffEvent) {
-  const start = new Date(event.heldAt);
-  const date = start.toLocaleDateString('ja-JP', {
-    month: 'numeric',
-    day: 'numeric',
-    weekday: 'short',
-    timeZone: 'Asia/Tokyo',
-  });
-  const startTime = start.toLocaleTimeString('ja-JP', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Asia/Tokyo',
-  });
-  if (!event.endAt) return `${date} ${startTime}`;
-  const endTime = new Date(event.endAt).toLocaleTimeString('ja-JP', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Asia/Tokyo',
-  });
-  return `${date} ${startTime}-${endTime}`;
+  return formatEventSchedule(event.heldAt, event.endAt);
 }
 
 function threadMonthLabel(dateStr: string) {
@@ -247,7 +229,7 @@ function eventTimeRange(event: LiffEvent) {
   const start = new Date(event.heldAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
   if (!event.endAt) return start;
   const end = new Date(event.endAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
-  return `${start}-${end}`;
+  return `${start}~${end}`;
 }
 
 function eventDateLabel(event: LiffEvent) {
@@ -473,7 +455,7 @@ function LiffCalendarCard({ events, tenantId, accentColor, myStatusByEvent }: { 
                               />
                             )}
                             <p className="truncate text-[9px] font-bold leading-tight">{locationPreview}</p>
-                            <p className="mt-0.5 truncate text-[8px] font-semibold leading-none opacity-95">{eventTimeRange(event).replace('-', '~')}</p>
+                            <p className="mt-0.5 truncate text-[8px] font-semibold leading-none opacity-95">{eventTimeRange(event)}</p>
                             <p className="mt-0.5 truncate text-[8px] font-semibold leading-none opacity-95">{eventPriceLabel(event).replace(',', '')}</p>
                           </Link>
                         );

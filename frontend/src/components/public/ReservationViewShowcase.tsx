@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { API_URL } from '@/lib/api';
+import { API_URL, formatEventSchedule } from '@/lib/api';
 import { isInLineInAppBrowser, buildLiffUrl, SITE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { getDefaultEventImage } from '@/lib/defaultImages';
@@ -130,20 +130,9 @@ function eventTime(event: ReservationShowcaseEvent) {
   });
 }
 
-// Full date + start-end time range for the schedule list (e.g. "2026年7月23日（木）19:00〜22:00") -
-// scoped to this component only, unlike the shared formatDateShort() used elsewhere (LIFF pages
-// etc.) which stays in its shorter "7/23(木) 19:00" form.
+// 日程表示は他のLIFFページ等と揃えて「10/30(金)18:00~21:00」の形に統一する。
 function eventFullDateTime(event: ReservationShowcaseEvent) {
-  const start = new Date(event.heldAt);
-  const datePart = start
-    .toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short', timeZone: 'Asia/Tokyo' })
-    .replace('(', '（')
-    .replace(')', '）');
-  const startTime = start.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
-  const endTime = event.endAt
-    ? new Date(event.endAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })
-    : null;
-  return endTime ? `${datePart}${startTime}〜${endTime}` : `${datePart}${startTime}`;
+  return formatEventSchedule(event.heldAt, event.endAt);
 }
 
 function eventStatus(event: ReservationShowcaseEvent) {
