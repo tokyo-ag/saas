@@ -4,57 +4,36 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { api, formatDate, PublicRoster } from '@/lib/api';
 import { ReservationBadge } from '@/components/ui/StatusBadge';
-import { initLiff, loginIfNeeded, liff } from '@/lib/liff';
+
+const POLL_INTERVAL_MS = 15000;
+
+function formatAnswerValue(value: string | string[]) {
+  return Array.isArray(value) ? value.join('、') : value;
+}
 
 export default function RosterSharePage() {
   const { token } = useParams<{ token: string }>();
   const [roster, setRoster] = useState<PublicRoster | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [loginRequired, setLoginRequired] = useState(false);
 
   useEffect(() => {
-    async function init() {
-      const ok = await initLiff();
-      if (!ok) {
-        setLoginRequired(true);
-        setLoading(false);
-        return;
-      }
-      if (!liff.isInClient()) {
-        const loggedIn = await loginIfNeeded();
-        if (!loggedIn) {
-          setLoginRequired(true);
-          setLoading(false);
-          return;
-        }
-      }
+    let cancelled = false;
+    function load() {
       api.public.roster(token)
-        .then(setRoster)
-        .catch(() => setNotFound(true))
-        .finally(() => setLoading(false));
+        .then((data) => { if (!cancelled) setRoster(data); })
+        .catch(() => { if (!cancelled) setNotFound(true); })
+        .finally(() => { if (!cancelled) setLoading(false); });
     }
-    init();
+    load();
+    const id = setInterval(load, POLL_INTERVAL_MS);
+    return () => { cancelled = true; clearInterval(id); };
   }, [token]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-[#06C755] text-sm">読み込み中...</div>
-      </div>
-    );
-  }
-
-  if (loginRequired) {
-    return (
-      <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center gap-4">
-        <p className="text-sm text-gray-600">この名簿を見るにはLINEへのログインが必要です。</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="font-bold px-8 py-3.5 rounded-2xl text-sm bg-[#06C755] text-white active:opacity-90"
-        >
-          もう一度試す
-        </button>
       </div>
     );
   }
@@ -80,8 +59,9 @@ export default function RosterSharePage() {
 
       <div className="px-4 py-5">
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-          <div className="border-b border-gray-200 px-4 py-3">
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
             <h2 className="text-sm font-semibold text-gray-900">参加者一覧 ({reservations.length}件)</h2>
+            <span className="text-[11px] text-gray-400">自動更新中</span>
           </div>
 
           {reservations.length === 0 ? (
@@ -109,6 +89,15 @@ export default function RosterSharePage() {
                       </div>
                       <ReservationBadge status={r.status} />
                     </div>
+                    {(r.comment || r.customAnswers.length > 0) && (
+                      <div className="mt-2 space-y-0.5 pl-8 text-xs text-gray-500">
+                        {r.comment && <p>一言：{r.comment}</p>}
+                        {r.customAnswers.map((a, j) => (
+                          <p key={j}>{a.label}：{formatAnswerValue(a.value)}</p>
+                        ))}
+                      </div>
+                    )}
+                    <p className="mt-2 pl-8 text-[11px] text-gray-400">予約：{formatDate(r.reservedAt)}</p>
                   </div>
                 ))}
               </div>
@@ -121,6 +110,8 @@ export default function RosterSharePage() {
                       <th className="px-6 py-3 text-left">年齢</th>
                       <th className="px-6 py-3 text-left">性別</th>
                       {event.levelEnabled && <th className="px-6 py-3 text-left">レベル</th>}
+                      <th className="px-6 py-3 text-left">回答</th>
+                      <th className="px-6 py-3 text-left">予約日時</th>
                       <th className="px-6 py-3 text-left">ステータス</th>
                     </tr>
                   </thead>
@@ -140,6 +131,13 @@ export default function RosterSharePage() {
                         <td className="px-6 py-4 text-gray-600">{r.grade ?? '-'}</td>
                         <td className="px-6 py-4 text-gray-600">{r.gender ?? '-'}</td>
                         {event.levelEnabled && <td className="px-6 py-4 text-gray-600">{r.level ?? '-'}</td>}
+                        <td className="px-6 py-4 text-xs text-gray-500">
+                          {r.comment && <p>一言：{r.comment}</p>}
+                          {r.customAnswers.map((a, j) => (
+                            <p key={j}>{a.label}：{formatAnswerValue(a.value)}</p>
+                          ))}
+                        </td>
+                        <td className="px-6 py-4 text-xs text-gray-500">{formatDate(r.reservedAt)}</td>
                         <td className="px-6 py-4">
                           <ReservationBadge status={r.status} />
                           {r.waitlistOrder && <span className="ml-1 text-xs text-gray-500">({r.waitlistOrder}番目)</span>}

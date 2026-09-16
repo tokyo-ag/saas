@@ -5,12 +5,10 @@ import {
   Param,
   Query,
   NotFoundException,
-  UseGuards,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BlogService } from '../blog/blog.service';
-import { LiffGuard } from '../auth/liff.guard';
 
 // Mirrors frontend/src/lib/lpTags.ts LOCATION_TAGS - kept in sync manually since Event.tags
 // mixes location tags together with other tag groups (search tags etc.) in one flat array.
@@ -104,7 +102,6 @@ export class PublicController {
     return endAt;
   }
 
-  @UseGuards(LiffGuard)
   @Get('roster/:token')
   async getRoster(@Param('token') token: string) {
     const event = await this.prisma.event.findFirst({
@@ -112,13 +109,31 @@ export class PublicController {
     });
     if (!event) throw new NotFoundException('名簿が見つかりません');
 
-    const reservations = await this.prisma.reservation.findMany({
-      where: { eventId: event.id, status: { not: 'cancelled' } },
-      include: {
-        member: { select: { name: true, grade: true, gender: true, level: true, comment: true, linePictureUrl: true } },
-      },
-      orderBy: [{ status: 'asc' }, { reservedAt: 'asc' }],
-    });
+    const [reservations, tenant] = await Promise.all([
+      this.prisma.reservation.findMany({
+        where: { eventId: event.id, status: { not: 'cancelled' } },
+        include: {
+          member: {
+            select: {
+              name: true,
+              grade: true,
+              gender: true,
+              level: true,
+              comment: true,
+              customAnswers: true,
+              linePictureUrl: true,
+            },
+          },
+        },
+        orderBy: [{ status: 'asc' }, { reservedAt: 'asc' }],
+      }),
+      this.prisma.tenant.findUnique({
+        where: { id: event.tenantId },
+        select: { customProfileQuestions: true },
+      }),
+    ]);
+    const customQuestions =
+      (tenant?.customProfileQuestions as { id: string; label: string }[] | null) ?? [];
 
     return {
       event: {
@@ -128,16 +143,25 @@ export class PublicController {
         locationHint: event.locationHint,
         levelEnabled: event.levelEnabled,
       },
-      reservations: reservations.map((r) => ({
-        name: r.member.name,
-        grade: r.member.grade,
-        gender: r.member.gender,
-        level: r.member.level,
-        comment: r.member.comment,
-        linePictureUrl: r.member.linePictureUrl,
-        status: r.status,
-        waitlistOrder: r.waitlistOrder,
-      })),
+      reservations: reservations.map((r) => {
+        const customAnswersRaw =
+          (r.member.customAnswers as Record<string, string | string[]> | null) ?? {};
+        const customAnswers = customQuestions
+          .map((q) => ({ label: q.label, value: customAnswersRaw[q.id] }))
+          .filter((a): a is { label: string; value: string | string[] } => !!a.value && a.value.length > 0);
+        return {
+          name: r.member.name,
+          grade: r.member.grade,
+          gender: r.member.gender,
+          level: r.member.level,
+          comment: r.member.comment,
+          customAnswers,
+          linePictureUrl: r.member.linePictureUrl,
+          status: r.status,
+          waitlistOrder: r.waitlistOrder,
+          reservedAt: r.reservedAt,
+        };
+      }),
     };
   }
 

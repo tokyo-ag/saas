@@ -1308,9 +1308,11 @@ export interface PublicRoster {
     gender: string | null;
     level: string | null;
     comment: string | null;
+    customAnswers: { label: string; value: string | string[] }[];
     linePictureUrl: string | null;
     status: ReservationStatus;
     waitlistOrder: number | null;
+    reservedAt: string;
   }[];
 }
 
