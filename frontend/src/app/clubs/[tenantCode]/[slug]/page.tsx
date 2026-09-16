@@ -963,15 +963,6 @@ export default async function ClubCmsPage({
             buttonBorderColor={reserveButtonBorderColor}
             className="mt-4"
           />
-        ) : reserveActionStyle !== 'line' && page.reserveViewStyle !== 'card' ? (
-          <ReservationButton
-            buttonLabel={navLabels.reserve}
-            href={navReserveUrl}
-            buttonBgColor={reserveButtonBgColor}
-            buttonTextColor={reserveButtonTextColor}
-            buttonBorderColor={reserveButtonBorderColor}
-            className="mt-4"
-          />
         ) : null}
         </Fragment>
         ) : null;

@@ -3057,14 +3057,6 @@ export default function AdminPublicPage() {
                         buttonTextColor={reserveButtonTextColor}
                         buttonBorderColor={reserveButtonBorderColor}
                       />
-                    ) : form.reserveViewStyle !== 'card' ? (
-                      <ReservationButton
-                        buttonLabel={reserveActionStyle === 'line' ? 'LINEで友達追加して予約する' : navLabels.reserve}
-                        href={reserveActionStyle === 'line' ? (form.reserveLineUrl?.trim() || form.navContactUrl?.trim() || '#') : undefined}
-                        buttonBgColor={reserveButtonBgColor}
-                        buttonTextColor={reserveButtonTextColor}
-                        buttonBorderColor={reserveButtonBorderColor}
-                      />
                     ) : null}
                     </Fragment>
                   ) : null;
