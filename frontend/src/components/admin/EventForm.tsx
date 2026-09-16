@@ -309,11 +309,14 @@ function LineMessageEditor({
 
 // ネイティブのtime入力はブラウザによって15分刻みの候補リストが効かないことがあるため、
 // selectで明示的に15分単位の選択肢のみを提示する。
-const TIME_OPTIONS_15MIN: string[] = Array.from({ length: 96 }, (_, i) => {
-  const h = Math.floor(i / 4);
-  const m = (i % 4) * 15;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-});
+const TIME_OPTIONS_15MIN: string[] = [
+  ...Array.from({ length: 96 }, (_, i) => {
+    const h = Math.floor(i / 4);
+    const m = (i % 4) * 15;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }),
+  '24:00',
+];
 
 function timeOptionsWith(value: string): string[] {
   if (!value || TIME_OPTIONS_15MIN.includes(value)) return TIME_OPTIONS_15MIN;
