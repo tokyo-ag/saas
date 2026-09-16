@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { api, formatDate, StaffViewEventList } from '@/lib/api';
+import { api, formatEventSchedule, StaffViewEventList } from '@/lib/api';
 import { EventStatusBadge } from '@/components/ui/StatusBadge';
 
 const POLL_INTERVAL_MS = 15000;
@@ -72,7 +72,7 @@ export default function StaffViewListPage() {
                       <EventStatusBadge status={event.status} />
                       <p className="text-sm font-bold text-gray-900 truncate">{event.title}</p>
                     </div>
-                    <p className="mt-0.5 text-xs text-gray-400">{formatDate(event.heldAt)}</p>
+                    <p className="mt-0.5 text-xs text-gray-400">{formatEventSchedule(event.heldAt, event.endAt)}</p>
                     <p className="mt-0.5 truncate text-xs text-gray-500">{event.locationHint || event.location}</p>
                   </div>
                   <div className="shrink-0 text-right text-xs text-gray-500">

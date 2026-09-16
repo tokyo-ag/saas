@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { api, API_URL, LiffEvent, LiffProfile, LiffReservation, LiffTenant, setLiffToken, formatDate } from '@/lib/api';
+import { api, API_URL, LiffEvent, LiffProfile, LiffReservation, LiffTenant, setLiffToken, formatEventSchedule } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { getDefaultEventImage } from '@/lib/defaultImages';
 import {
@@ -490,7 +490,7 @@ function ReservePageInner() {
               <div className="grid gap-2 rounded-2xl bg-gray-50 p-3 text-sm">
                 <div className="flex items-start gap-2">
                   <span className="mt-0.5 shrink-0 text-xs text-gray-400">日時</span>
-                  <p className="text-gray-800">{formatDate(event.heldAt)}</p>
+                  <p className="text-gray-800">{formatEventSchedule(event.heldAt, event.endAt)}</p>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="mt-0.5 shrink-0 text-xs text-gray-400">場所</span>

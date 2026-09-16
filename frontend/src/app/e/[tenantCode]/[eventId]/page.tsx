@@ -7,6 +7,7 @@ import PublicFooter from '@/components/public/PublicFooter';
 import { SmartLiffButton } from '@/components/public/SmartLiffButton';
 import { SITE_URL, API_URL, IMAGE_BASE_URL, buildLiffUrl } from '@/lib/config';
 import { isLightHexColor, readableTextColor } from '@/lib/color';
+import { formatEventSchedule } from '@/lib/api';
 
 type EventDetail = {
   id: string;
@@ -63,18 +64,6 @@ async function fetchTenantStyling(tenantCode: string): Promise<{ backgroundColor
   } catch {
     return { backgroundColor: null, accentColor: null };
   }
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleString('ja-JP', {
-    timeZone: 'Asia/Tokyo',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    weekday: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }
 
 function imgSrc(url?: string | null) {
@@ -430,8 +419,7 @@ export default async function PublicEventPage({
                 <span className="mt-0.5 text-gray-400">日</span>
                 <div>
                   <p className="text-xs font-semibold text-gray-400">日時</p>
-                  <p className="text-gray-800">{formatDate(event.heldAt)}</p>
-                  {endAt && <p className="text-gray-500">終了 {formatDate(endAt)}</p>}
+                  <p className="text-gray-800">{formatEventSchedule(event.heldAt, endAt)}</p>
                 </div>
               </div>
 

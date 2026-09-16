@@ -172,6 +172,7 @@ export class PublicController {
       event: {
         title: event.title,
         heldAt: event.heldAt,
+        endAt: event.endAt,
         location: event.location,
         locationHint: event.locationHint,
         levelEnabled: event.levelEnabled,
@@ -215,6 +216,7 @@ export class PublicController {
         title: e.title,
         status: e.status,
         heldAt: e.heldAt,
+        endAt: e.endAt,
         location: e.location,
         locationHint: e.locationHint,
         capacity: e.capacity,

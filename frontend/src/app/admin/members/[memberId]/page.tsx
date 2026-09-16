@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { api, CustomProfileQuestion, formatDate, formatDateOnly, MemberDetail } from '@/lib/api';
+import { api, CustomProfileQuestion, formatEventSchedule, formatDateOnly, MemberDetail } from '@/lib/api';
 import { ReservationBadge } from '@/components/ui/StatusBadge';
 
 function paymentLabel(reservation: MemberDetail['reservations'][number]) {
@@ -191,7 +191,7 @@ export default function MemberDetailPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-gray-500">
                     <span>開催</span>
-                    <span className="text-right text-gray-700">{formatDate(reservation.event.heldAt)}</span>
+                    <span className="text-right text-gray-700">{formatEventSchedule(reservation.event.heldAt, reservation.event.endAt)}</span>
                     <span>支払い</span>
                     <span className="text-right text-gray-700">{paymentLabel(reservation)}</span>
                   </div>
@@ -217,7 +217,7 @@ export default function MemberDetailPage() {
                           {reservation.event.title}
                         </Link>
                       </td>
-                      <td className="px-6 py-4 text-gray-500">{formatDate(reservation.event.heldAt)}</td>
+                      <td className="px-6 py-4 text-gray-500">{formatEventSchedule(reservation.event.heldAt, reservation.event.endAt)}</td>
                       <td className="px-6 py-4">
                         <ReservationBadge status={reservation.status} />
                       </td>

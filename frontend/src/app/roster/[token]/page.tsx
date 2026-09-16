@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { api, formatDate, PublicRoster } from '@/lib/api';
+import { api, formatEventSchedule, PublicRoster } from '@/lib/api';
 import { ReservationBadge } from '@/components/ui/StatusBadge';
 import { initLiff, loginIfNeeded, liff } from '@/lib/liff';
 
@@ -81,7 +81,7 @@ export default function RosterSharePage() {
       <div className="bg-[#06C755] text-white px-4 py-5">
         <p className="text-xs opacity-80">参加者名簿</p>
         <h1 className="text-base font-bold mt-1">{event.title}</h1>
-        <p className="text-xs mt-1 opacity-90">{formatDate(event.heldAt)} ・ {event.locationHint || event.location}</p>
+        <p className="text-xs mt-1 opacity-90">{formatEventSchedule(event.heldAt, event.endAt)} ・ {event.locationHint || event.location}</p>
       </div>
 
       <div className="px-4 py-5">

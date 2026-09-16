@@ -1331,6 +1331,7 @@ export interface PublicRoster {
   event: {
     title: string;
     heldAt: string;
+    endAt: string | null;
     location: string;
     locationHint?: string | null;
     levelEnabled: boolean;
@@ -1376,6 +1377,7 @@ export interface StaffViewEventList {
     title: string;
     status: EventStatus;
     heldAt: string;
+    endAt: string | null;
     location: string;
     locationHint?: string | null;
     capacity: number | null;
