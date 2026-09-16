@@ -448,35 +448,6 @@ export class LiffService {
       throw new ConflictException('このイベントはすでに予約済みです');
     }
 
-    // 同じ日の別イベントへの予約チェック（JST基準）
-    const jstOffset = 9 * 60 * 60 * 1000;
-    const eventDateJST = new Date(event.heldAt.getTime() + jstOffset);
-    const dayStart = new Date(
-      Date.UTC(
-        eventDateJST.getUTCFullYear(),
-        eventDateJST.getUTCMonth(),
-        eventDateJST.getUTCDate(),
-      ) - jstOffset,
-    );
-    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
-
-    const sameDayReservation = await this.prisma.reservation.findFirst({
-      where: {
-        memberId: member.id,
-        tenantId,
-        eventId: { not: dto.eventId },
-        status: {
-          in: ['reserved', 'attended', 'waiting_payment', 'waitlisted'],
-        },
-        event: { heldAt: { gte: dayStart, lt: dayEnd } },
-      },
-    });
-    if (sameDayReservation) {
-      throw new ConflictException(
-        '同じ日に別のイベントへの予約があるため、予約できません',
-      );
-    }
-
     // 定員チェック
     const reservedCount = await this.prisma.reservation.count({
       where: {

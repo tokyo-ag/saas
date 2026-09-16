@@ -322,7 +322,7 @@ function ReservePageInner() {
         restartLineAuth();
         return;
       }
-      const isDuplicate = msg.includes('予約済み') || msg.includes('同じ日');
+      const isDuplicate = msg.includes('予約済み');
       if (isDuplicate) {
         alert('既に予約済みです');
         window.location.href = `/liff/${tenantId}/profile`;
