@@ -713,19 +713,23 @@ export default async function ClubCmsPage({
     }
     if (block.type === 'faq') {
       const items = (block.faqItems ?? []).filter((item: {q:string;a:string}) => item.q);
+      const faqTitle = typeof block.content === 'string' && block.content.trim() ? block.content.trim() : 'Q&A';
       return (
-        <div className="space-y-1.5">
-          {items.map((item: {q:string;a:string}, j: number) => (
-            <details key={j} className="group overflow-hidden" style={{ backgroundColor: block.faqCardBg?.trim() || navBg, ...cardBorderStyle }}>
-              <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 select-none" style={{ color: bodyTextColor }}>
-                <span className="flex-1 font-bold" style={blockTextStyle}>{item.q}</span>
-                <span className="ml-2 shrink-0 text-xs text-gray-400 transition-transform duration-200 group-open:rotate-180">▼</span>
-              </summary>
-              <div className={`border-t border-gray-100 px-4 py-3 leading-relaxed whitespace-pre-wrap ${blockBodyClass}`} style={{ color: bodyTextColor, opacity: 0.8, ...blockTextStyle }}>
-                {linkifyText(item.a, `faq-${i}-${j}`)}
-              </div>
-            </details>
-          ))}
+        <div>
+          <p className="mb-3 text-lg font-bold" style={{ color: bodyTextColor }}>{faqTitle}</p>
+          <div className="space-y-1.5">
+            {items.map((item: {q:string;a:string}, j: number) => (
+              <details key={j} className="group overflow-hidden" style={{ backgroundColor: block.faqCardBg?.trim() || navBg, ...cardBorderStyle }}>
+                <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 select-none" style={{ color: bodyTextColor }}>
+                  <span className="flex-1 font-bold" style={blockTextStyle}>{item.q}</span>
+                  <span className="ml-2 shrink-0 text-xs text-gray-400 transition-transform duration-200 group-open:rotate-180">▼</span>
+                </summary>
+                <div className={`border-t border-gray-100 px-4 py-3 leading-relaxed whitespace-pre-wrap ${blockBodyClass}`} style={{ color: bodyTextColor, opacity: 0.8, ...blockTextStyle }}>
+                  {linkifyText(item.a, `faq-${i}-${j}`)}
+                </div>
+              </details>
+            ))}
+          </div>
         </div>
       );
     }

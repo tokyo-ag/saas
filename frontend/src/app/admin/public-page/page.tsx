@@ -1187,15 +1187,19 @@ export default function AdminPublicPage() {
     if (block.type === 'faq') {
       const items = block.faqItems ?? [];
       const faqTextStyle = { fontSize: blockFontSize, color: bodyTextColor };
+      const faqTitle = block.content?.trim() || 'Q&A';
       return (
-        <div className="space-y-1.5">
-          {items.length === 0 && <p className="text-xs text-gray-400">Q&Aを追加してください</p>}
-          {items.map((item, j) => (
-            <div key={j} className="px-3 py-2" style={{ backgroundColor: block.faqCardBg?.trim() || navBg, ...cardBorderStyle }}>
-              <p className="font-bold" style={faqTextStyle}>Q. {item.q || '（質問）'}</p>
-              {item.a && <p className="mt-0.5 opacity-60" style={faqTextStyle}>A. {item.a}</p>}
-            </div>
-          ))}
+        <div>
+          <p className="mb-2 text-sm font-bold" style={{ color: bodyTextColor }}>{faqTitle}</p>
+          <div className="space-y-1.5">
+            {items.length === 0 && <p className="text-xs text-gray-400">Q&Aを追加してください</p>}
+            {items.map((item, j) => (
+              <div key={j} className="px-3 py-2" style={{ backgroundColor: block.faqCardBg?.trim() || navBg, ...cardBorderStyle }}>
+                <p className="font-bold" style={faqTextStyle}>Q. {item.q || '（質問）'}</p>
+                {item.a && <p className="mt-0.5 opacity-60" style={faqTextStyle}>A. {item.a}</p>}
+              </div>
+            ))}
+          </div>
         </div>
       );
     }
@@ -2356,6 +2360,16 @@ export default function AdminPublicPage() {
                   {/* FAQ フィールド */}
                   {block.type === 'faq' && (
                     <div className="space-y-2">
+                      <label className="block">
+                        <span className="mb-1 block text-[11px] font-bold text-gray-400">タイトル</span>
+                        <input
+                          type="text"
+                          value={block.content ?? ''}
+                          onChange={(e) => updateBlock(block.id, { content: e.target.value })}
+                          placeholder="Q&A"
+                          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                        />
+                      </label>
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] font-bold text-gray-400">カードの背景色</span>
                         <input type="color" value={block.faqCardBg || '#F9FAFB'}
