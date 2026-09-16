@@ -465,7 +465,7 @@ function ThreadMini({
     }, {});
 
     return (
-      <div className="max-h-[380px] space-y-5 overflow-y-auto pr-1">
+      <div className="space-y-5">
         {Object.entries(groups).map(([month, monthEvents]) => (
           <section key={month}>
             <div className="mb-2 flex items-center gap-2 px-1">
