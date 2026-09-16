@@ -6,10 +6,12 @@ type EventMessageDetails = {
   locationUrl?: string | null;
   priceMale?: number | null;
   priceFemale?: number | null;
+  description?: string | null;
   descriptionMale?: string | null;
   descriptionFemale?: string | null;
   maleDelayMinutes?: number | null;
   gender?: string | null;
+  includeDescriptionByDefault?: boolean;
 };
 
 @Injectable()
@@ -178,12 +180,32 @@ export class LineMessagingService {
       details.priceMale,
       details.priceFemale,
     );
+    const effectiveDescription = this.formatDescription(
+      details.description,
+      details.descriptionMale,
+      details.descriptionFemale,
+    );
+    const renderedDescription = effectiveDescription
+      ? `${effectiveDescription.slice(0, 300)}${effectiveDescription.length > 300 ? '…' : ''}`
+      : '';
     if (customTemplate?.trim()) {
-      return this.applyTemplate(customTemplate, {
+      const templateWithDescription =
+        details.includeDescriptionByDefault &&
+        renderedDescription &&
+        !customTemplate.includes('{description}')
+          ? `${customTemplate}\n\n{description}`
+          : customTemplate;
+      const effectiveTemplate = this.omitRedundantTitle(
+        templateWithDescription,
+        eventTitle,
+        effectiveDescription,
+      );
+      return this.applyTemplate(effectiveTemplate, {
         title: eventTitle,
         date: dateStr,
         location: locationStr,
         price: priceStr ?? '',
+        description: renderedDescription,
       });
     }
     const lines = [
@@ -191,6 +213,9 @@ export class LineMessagingService {
       `日時：${dateStr}`,
       ...(priceStr ? [`参加費：${priceStr}`] : []),
       `場所：${locationStr}`,
+      ...(details.includeDescriptionByDefault && renderedDescription
+        ? [`\n${renderedDescription}`]
+        : []),
     ];
     return lines.join('\n');
   }

@@ -75,4 +75,33 @@ describe('LineMessagingService event templates', () => {
 
     expect(sendPushMessage).toHaveBeenCalledWith('token', 'U123', '池袋');
   });
+
+  it('appends the event description when the reminder field is left empty', async () => {
+    const service = new LineMessagingService();
+    const sendPushMessage = jest
+      .spyOn(service, 'sendPushMessage')
+      .mockResolvedValue(undefined);
+
+    await service.sendRemind(
+      'token',
+      'U123',
+      '男女混合バスケ',
+      new Date('2026-07-23T08:00:00.000Z'),
+      '池袋',
+      '【{title}】まもなく開催です！\n日時：{date}\n場所：{location}',
+      {
+        description: '初心者も経験者も歓迎です。',
+        includeDescriptionByDefault: true,
+      },
+    );
+
+    expect(sendPushMessage).toHaveBeenCalledWith(
+      'token',
+      'U123',
+      '【男女混合バスケ】まもなく開催です！\n' +
+        '日時：7/23(木)17:00\n' +
+        '場所：池袋\n\n' +
+        '初心者も経験者も歓迎です。',
+    );
+  });
 });

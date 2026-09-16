@@ -64,8 +64,12 @@ export class SchedulerService {
               price: event.price,
               priceMale: event.priceMale,
               priceFemale: event.priceFemale,
+              description: event.description,
+              descriptionMale: event.descriptionMale,
+              descriptionFemale: event.descriptionFemale,
               maleDelayMinutes: event.maleDelayMinutes,
               gender: r.member.gender,
+              includeDescriptionByDefault: !event.reminderMessageTemplate?.trim(),
             },
           );
         }

@@ -759,9 +759,12 @@ export default function EventForm({
   const reservationTemplate = form.reservationMessageTemplate.trim()
     ? form.reservationMessageTemplate
     : tenant?.reservationMessageTemplate?.trim() || defaultReservationTemplate;
+  const inheritedReminderTemplate = tenant?.reminderMessageTemplate?.trim() || DEFAULT_REMINDER_MESSAGE;
   const reminderTemplate = form.reminderMessageTemplate.trim()
     ? form.reminderMessageTemplate
-    : tenant?.reminderMessageTemplate?.trim() || DEFAULT_REMINDER_MESSAGE;
+    : hasDescriptionContent && !inheritedReminderTemplate.includes('{description}')
+      ? `${inheritedReminderTemplate}\n\n{description}`
+      : inheritedReminderTemplate;
   const reservationPreview = form.maleDelayMinutes > 0
     ? { male: renderLineMessage(reservationTemplate, form, '男性'), female: renderLineMessage(reservationTemplate, form, '女性') }
     : renderLineMessage(reservationTemplate, form);

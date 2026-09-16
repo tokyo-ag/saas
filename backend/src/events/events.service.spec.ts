@@ -184,6 +184,10 @@ describe('EventsService date validation', () => {
       price: 0,
       priceMale: 3000,
       priceFemale: 1000,
+      description: '初心者も歓迎です。',
+      descriptionMale: null,
+      descriptionFemale: null,
+      maleDelayMinutes: null,
     });
     prisma.tenant.findUnique.mockResolvedValue({
       id: 'tenant-1',
@@ -204,13 +208,61 @@ describe('EventsService date validation', () => {
       new Date('2026-06-12T11:00:00.000Z'),
       '池袋',
       eventTemplate,
-      {
+      expect.objectContaining({
         endAt: new Date('2026-06-12T13:00:00.000Z'),
         locationUrl: 'https://maps.example.com/ikebukuro',
         price: 0,
         priceMale: 3000,
         priceFemale: 1000,
-      },
+        description: '初心者も歓迎です。',
+        includeDescriptionByDefault: false,
+      }),
+    );
+  });
+
+  it('includes the description by default when the event reminder field is empty', async () => {
+    prisma.event.findFirst.mockResolvedValue({
+      id: 'event-1',
+      tenantId: 'tenant-1',
+      title: '20代交流会',
+      heldAt: new Date('2026-06-12T11:00:00.000Z'),
+      endAt: new Date('2026-06-12T13:00:00.000Z'),
+      remindAt: new Date('2026-06-11T09:00:00.000Z'),
+      reminderMessageTemplate: null,
+      description: '初心者も歓迎です。',
+      descriptionMale: null,
+      descriptionFemale: null,
+      maleDelayMinutes: null,
+      location: '池袋',
+      locationUrl: null,
+      price: 1000,
+      priceMale: null,
+      priceFemale: null,
+    });
+    prisma.tenant.findUnique.mockResolvedValue({
+      id: 'tenant-1',
+      plan: 'pro',
+      lineChannelAccessToken: 'token',
+      reminderMessageTemplate: '【{title}】まもなく開催です！',
+    });
+    prisma.reservation.findMany.mockResolvedValue([
+      { member: { lineUserId: 'U123', gender: '女性' } },
+    ]);
+
+    await service.sendRemind('tenant-1', 'event-1');
+
+    expect(lineMessaging.sendRemind).toHaveBeenCalledWith(
+      'token',
+      'U123',
+      '20代交流会',
+      new Date('2026-06-12T11:00:00.000Z'),
+      '池袋',
+      '【{title}】まもなく開催です！',
+      expect.objectContaining({
+        description: '初心者も歓迎です。',
+        gender: '女性',
+        includeDescriptionByDefault: true,
+      }),
     );
   });
 });
