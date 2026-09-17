@@ -4,9 +4,10 @@ import { LiffService } from './liff.service';
 import { TenantCodeMiddleware } from './tenant-code.middleware';
 import { StripeModule } from '../stripe/stripe.module';
 import { LiffGuard } from '../auth/liff.guard';
+import { EventSocialProofModule } from '../event-social-proof/event-social-proof.module';
 
 @Module({
-  imports: [StripeModule],
+  imports: [StripeModule, EventSocialProofModule],
   controllers: [LiffController],
   providers: [LiffService, TenantCodeMiddleware, LiffGuard],
 })

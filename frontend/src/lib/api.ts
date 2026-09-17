@@ -719,6 +719,56 @@ export interface LiffEvent {
   reserveActionStyle?: string | null;
   category?: string | null;
   categories?: string[];
+  socialProof?: EventSocialProof | null;
+}
+
+export type EventSocialProofKind =
+  | 'balanced'
+  | 'female_high'
+  | 'ratio_3_2'
+  | 'both_genders'
+  | 'size'
+  | 'above_average'
+  | 'participation'
+  | 'combined';
+
+export interface EventSocialProof {
+  kind: EventSocialProofKind;
+  text: string;
+}
+
+export interface EventSocialProofRule {
+  enabled: boolean;
+  label: string;
+}
+
+export interface EventSocialProofSizeTier extends EventSocialProofRule {
+  min: 40 | 50 | 60 | 100;
+  combinedLabel: string;
+}
+
+export interface EventSocialProofSettings {
+  enabled: boolean;
+  combineLabels: boolean;
+  minGenderSample: number;
+  balanced: EventSocialProofRule;
+  femaleHigh: EventSocialProofRule;
+  ratio32: EventSocialProofRule;
+  bothGenders: EventSocialProofRule;
+  participationLabel: string;
+  balanceDifference4To9: number;
+  balanceDifference10To39: number;
+  balanceDifference40To69: number;
+  balanceDifference70To99: number;
+  balanceDifference100PlusPercent: number;
+  ratio32MinMalePercent: number;
+  ratio32MaxMalePercent: number;
+  sizeTiers: EventSocialProofSizeTier[];
+  aboveAverage: EventSocialProofRule & {
+    historyCount: number;
+    minimumIncreaseCount: number;
+    minimumIncreasePercent: number;
+  };
 }
 
 export interface LiffTenantReview {
@@ -809,6 +859,7 @@ export interface Tenant {
   reservationMessageTemplate?: string | null;
   reminderMessageTemplate?: string | null;
   activityTickerEnabled?: boolean;
+  eventSocialProofSettings?: EventSocialProofSettings | null;
   requireName?: boolean;
   requireGrade?: boolean;
   requireGender?: boolean;
@@ -851,6 +902,7 @@ export interface TenantInput {
   reservationMessageTemplate?: string;
   reminderMessageTemplate?: string;
   activityTickerEnabled?: boolean;
+  eventSocialProofSettings?: EventSocialProofSettings;
   requireName?: boolean;
   requireGrade?: boolean;
   requireGender?: boolean;
@@ -1417,6 +1469,7 @@ export interface PublicEvent {
   priceFemale?: number | null;
   capacity?: number;
   reservedCount: number;
+  socialProof?: EventSocialProof | null;
   iconUrl?: string;
   imageUrl?: string;
   viewCount: number;

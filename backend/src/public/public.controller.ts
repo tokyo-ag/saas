@@ -14,6 +14,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BlogService } from '../blog/blog.service';
 import { LiffGuard } from '../auth/liff.guard';
+import { EventSocialProofService } from '../event-social-proof/event-social-proof.service';
 
 // Mirrors frontend/src/lib/lpTags.ts LOCATION_TAGS - kept in sync manually since Event.tags
 // mixes location tags together with other tag groups (search tags etc.) in one flat array.
@@ -66,6 +67,7 @@ export class PublicController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly blogService: BlogService,
+    private readonly eventSocialProofService: EventSocialProofService,
   ) {}
 
   private firstMarkdownImage(body: string | null | undefined) {
@@ -875,7 +877,9 @@ export class PublicController {
               where: {
                 status: { in: ['reserved', 'attended', 'waiting_payment'] },
               },
-              select: { id: true },
+              select: {
+                member: { select: { gender: true } },
+              },
             },
           },
         },
@@ -894,6 +898,12 @@ export class PublicController {
     });
 
     if (!tenant) throw new NotFoundException('Tenant not found');
+
+    const socialProofByEvent = await this.eventSocialProofService.buildForEvents(
+      tenant.id,
+      tenant.eventSocialProofSettings,
+      tenant.events,
+    );
 
     const tenantName = tenant.lineDisplayName ?? tenant.name;
     const publicTenant = {
@@ -931,6 +941,7 @@ export class PublicController {
         priceFemale: e.priceFemale,
         capacity: e.capacity,
         reservedCount: e.reservations.length,
+        socialProof: socialProofByEvent.get(e.id) ?? null,
         iconUrl: e.iconUrl,
         imageUrl: e.imageUrl,
         category: e.category,

@@ -21,6 +21,7 @@ export type ReservationShowcaseEvent = {
   priceFemale?: number | null;
   imageUrl?: string | null;
   category?: string | null;
+  socialProof?: { kind: string; text: string } | null;
 };
 
 type ReservationViewShowcaseProps = {
@@ -428,7 +429,7 @@ function CardMini({
 function ThreadMini({
   accentColor, events, fallbackHref, tenantCode,
   eventTitleColor, eventDateColor, eventMetaColor, cardBg,
-  showLocation = true, showPrice = true, showCapacity = true, showDescription = true,
+  showLocation = true, showPrice = true, showDescription = true,
   linkToLiff, liffId, linkToEventList,
 }: {
   accentColor: string;
@@ -466,10 +467,8 @@ function ThreadMini({
                 const status = eventStatus(event);
                 const full = status === '満席';
                 const price = eventPrice(event);
-                const metaLine = [
-                  showCapacity && event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : null,
-                  showPrice && price,
-                ].filter(Boolean).join(' / ');
+                // スレッドでは正確な予約人数を出さず、右下の段階的な注目表示だけを使う。
+                const metaLine = showPrice ? price : '';
                 const rowBody = (
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -486,9 +485,19 @@ function ThreadMini({
                         </Link>
                       )}
                     </div>
-                    <span className={`shrink-0 rounded-md px-2.5 py-1 text-[11px] font-bold ${full ? 'bg-gray-100 text-gray-400' : ''}`} style={full ? undefined : { backgroundColor: visible.accent, color: visible.text }}>
-                      {status}
-                    </span>
+                    <div className="flex shrink-0 self-stretch flex-col items-end justify-between gap-3">
+                      <span className={`rounded-md px-2.5 py-1 text-[11px] font-bold ${full ? 'bg-gray-100 text-gray-400' : ''}`} style={full ? undefined : { backgroundColor: visible.accent, color: visible.text }}>
+                        {status}
+                      </span>
+                      {event.socialProof?.text && (
+                        <span
+                          className="max-w-[140px] text-right text-[10px] font-bold leading-snug"
+                          style={{ color: eventMetaColor || visible.accent }}
+                        >
+                          {event.socialProof.text}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
                 if (linkToLiff) {

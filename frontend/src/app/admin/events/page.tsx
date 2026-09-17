@@ -8,7 +8,11 @@ import { getToken } from '@/lib/auth';
 import { SITE_URL } from '@/lib/config';
 import { EventStatusBadge } from '@/components/ui/StatusBadge';
 import { TenantSeoTextSection } from '@/components/admin/TenantSeoTextSection';
-import type { Event } from '@/lib/api';
+import {
+  DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
+  normalizeEventSocialProofSettings,
+} from '@/lib/eventSocialProof';
+import type { Event, EventSocialProofRule, EventSocialProofSettings } from '@/lib/api';
 
 const reserveViewOptions = [
   { label: 'カレンダー', value: 'calendar' },
@@ -18,6 +22,7 @@ const reserveViewOptions = [
 
 type ReservationActionStyle = 'comiu' | 'line';
 type DisplayFields = { location: boolean; price: boolean; capacity: boolean; description: boolean };
+type SocialProofRuleKey = 'balanced' | 'femaleHigh' | 'ratio32' | 'bothGenders';
 
 const DEFAULT_DISPLAY_FIELDS: DisplayFields = { location: true, price: true, capacity: false, description: true };
 
@@ -95,6 +100,9 @@ export default function EventsPage() {
   const [reservationLineUrl, setReservationLineUrl] = useState('');
   const [displayFields, setDisplayFields] = useState<DisplayFields>(DEFAULT_DISPLAY_FIELDS);
   const [activityTickerEnabled, setActivityTickerEnabled] = useState(true);
+  const [socialProofSettings, setSocialProofSettings] = useState<EventSocialProofSettings>(DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS);
+  const [savingSocialProof, setSavingSocialProof] = useState(false);
+  const [socialProofSaved, setSocialProofSaved] = useState(false);
   const [savingStyle, setSavingStyle] = useState(false);
   const [reflected, setReflected] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
@@ -114,6 +122,7 @@ export default function EventsPage() {
     api.tenant.get().then((t) => {
       setTenantId(t.code ?? t.id);
       setActivityTickerEnabled(t.activityTickerEnabled !== false);
+      setSocialProofSettings(normalizeEventSocialProofSettings(t.eventSocialProofSettings));
       setEventsSeoDescription(t.eventsSeoDescription ?? '');
       setStaffViewEnabled(!!t.staffViewEnabled);
       setStaffViewToken(t.staffViewToken ?? null);
@@ -179,14 +188,45 @@ export default function EventsPage() {
     } catch { /* silent */ }
   }
 
-  async function revalidate(tenantCode: string, slug: string) {
-    if (!tenantCode || !slug) return;
+  async function revalidate(tenantCode: string, slug?: string) {
+    if (!tenantCode) return;
     const token = getToken();
     await fetch('/api/revalidate-public-page', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: JSON.stringify({ tenantCode, slug }),
+      body: JSON.stringify({ tenantCode, ...(slug ? { slug } : {}) }),
     }).catch(() => null);
+  }
+
+  function updateSocialProofRule(key: SocialProofRuleKey, patch: Partial<EventSocialProofRule>) {
+    setSocialProofSettings((current) => ({
+      ...current,
+      [key]: { ...current[key], ...patch },
+    }));
+  }
+
+  function updateSocialProofTier(min: 40 | 50 | 60 | 100, patch: Partial<EventSocialProofSettings['sizeTiers'][number]>) {
+    setSocialProofSettings((current) => ({
+      ...current,
+      sizeTiers: current.sizeTiers.map((tier) => tier.min === min ? { ...tier, ...patch } : tier),
+    }));
+  }
+
+  async function saveSocialProofSettings() {
+    setSavingSocialProof(true);
+    setSocialProofSaved(false);
+    try {
+      const updated = await api.tenant.update({ eventSocialProofSettings: socialProofSettings });
+      setSocialProofSettings(normalizeEventSocialProofSettings(updated.eventSocialProofSettings));
+      await revalidate(tenantId, publicPageData?.slug);
+      setIframeKey((key) => key + 1);
+      setSocialProofSaved(true);
+      setTimeout(() => setSocialProofSaved(false), 2500);
+    } catch (error: any) {
+      alert(error?.message ?? '注目表示の設定を保存できませんでした');
+    } finally {
+      setSavingSocialProof(false);
+    }
   }
 
   async function saveAndReflect() {
@@ -422,6 +462,268 @@ export default function EventsPage() {
                 );
               })}
             </div>
+          </div>
+
+          {/* イベントカードの注目表示 */}
+          <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold text-gray-700">イベントカードの注目表示</p>
+                <p className="mt-0.5 text-[11px] leading-relaxed text-gray-400">
+                  スレッド右下に、実際の予約状況から作った男女比・参加規模を表示します。正確な人数と判定条件は公開しません。
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={socialProofSettings.enabled}
+                onClick={() => setSocialProofSettings((current) => ({ ...current, enabled: !current.enabled }))}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${socialProofSettings.enabled ? 'bg-[#06C755]' : 'bg-gray-300'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${socialProofSettings.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            {socialProofSettings.enabled && (
+              <div className="mt-4 space-y-4 border-t border-gray-100 pt-4">
+                <div>
+                  <p className="mb-2 text-[11px] font-bold text-gray-500">表示する判定</p>
+                  <div className="flex flex-wrap gap-2">
+                    {([
+                      ['balanced', '男女比ほぼ半々'],
+                      ['femaleHigh', '女性参加率高め'],
+                      ['ratio32', '男女比約3:2'],
+                      ['bothGenders', '男女とも参加予定'],
+                    ] as const).map(([key, label]) => {
+                      const enabled = socialProofSettings[key].enabled;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => updateSocialProofRule(key, { enabled: !enabled })}
+                          className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${enabled ? 'border-[#06C755] bg-[#06C755]/8 text-[#06C755]' : 'border-gray-200 bg-gray-50 text-gray-400 line-through'}`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => setSocialProofSettings((current) => ({
+                        ...current,
+                        aboveAverage: { ...current.aboveAverage, enabled: !current.aboveAverage.enabled },
+                      }))}
+                      className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${socialProofSettings.aboveAverage.enabled ? 'border-[#06C755] bg-[#06C755]/8 text-[#06C755]' : 'border-gray-200 bg-gray-50 text-gray-400 line-through'}`}
+                    >
+                      いつもより参加多め
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-2 text-[11px] font-bold text-gray-500">参加規模</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[...socialProofSettings.sizeTiers].sort((a, b) => a.min - b.min).map((tier) => (
+                      <button
+                        key={tier.min}
+                        type="button"
+                        onClick={() => updateSocialProofTier(tier.min, { enabled: !tier.enabled })}
+                        className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${tier.enabled ? 'border-[#06C755] bg-[#06C755]/8 text-[#06C755]' : 'border-gray-200 bg-gray-50 text-gray-400 line-through'}`}
+                      >
+                        {tier.min}人以上
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <label className="flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2">
+                  <span>
+                    <span className="block text-xs font-bold text-gray-600">よい条件を組み合わせる</span>
+                    <span className="block text-[10px] text-gray-400">例：男女比ほぼ半々の50人規模</span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={socialProofSettings.combineLabels}
+                    onChange={(event) => setSocialProofSettings((current) => ({ ...current, combineLabels: event.target.checked }))}
+                    className="h-4 w-4 accent-[#06C755]"
+                  />
+                </label>
+
+                <details className="rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2">
+                  <summary className="cursor-pointer text-xs font-bold text-gray-600">表示文言を編集</summary>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {([
+                      ['balanced', '男女比が半々'],
+                      ['femaleHigh', '女性が多い'],
+                      ['ratio32', '男女比が約3:2'],
+                      ['bothGenders', '男女とも参加'],
+                    ] as const).map(([key, label]) => (
+                      <label key={key} className="text-[11px] font-medium text-gray-500">
+                        {label}
+                        <input
+                          type="text"
+                          maxLength={40}
+                          value={socialProofSettings[key].label}
+                          onChange={(event) => updateSocialProofRule(key, { label: event.target.value })}
+                          className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
+                        />
+                      </label>
+                    ))}
+                    <label className="text-[11px] font-medium text-gray-500">
+                      平均より多い
+                      <input
+                        type="text"
+                        maxLength={40}
+                        value={socialProofSettings.aboveAverage.label}
+                        onChange={(event) => setSocialProofSettings((current) => ({
+                          ...current,
+                          aboveAverage: { ...current.aboveAverage, label: event.target.value },
+                        }))}
+                        className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
+                      />
+                    </label>
+                    <label className="text-[11px] font-medium text-gray-500">
+                      その他の予約あり
+                      <input
+                        type="text"
+                        maxLength={40}
+                        value={socialProofSettings.participationLabel}
+                        onChange={(event) => setSocialProofSettings((current) => ({ ...current, participationLabel: event.target.value }))}
+                        className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
+                      />
+                    </label>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {[...socialProofSettings.sizeTiers].sort((a, b) => a.min - b.min).map((tier) => (
+                      <div key={tier.min} className="grid gap-2 sm:grid-cols-[70px_1fr_1fr] sm:items-end">
+                        <span className="pb-2 text-[11px] font-bold text-gray-500">{tier.min}人～</span>
+                        <label className="text-[10px] text-gray-400">
+                          単独表示
+                          <input
+                            type="text"
+                            maxLength={40}
+                            value={tier.label}
+                            onChange={(event) => updateSocialProofTier(tier.min, { label: event.target.value })}
+                            className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
+                          />
+                        </label>
+                        <label className="text-[10px] text-gray-400">
+                          男女比との組み合わせ
+                          <input
+                            type="text"
+                            maxLength={40}
+                            value={tier.combinedLabel}
+                            onChange={(event) => updateSocialProofTier(tier.min, { combinedLabel: event.target.value })}
+                            className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
+                          />
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+
+                <details className="rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2">
+                  <summary className="cursor-pointer text-xs font-bold text-gray-600">判定条件の詳細</summary>
+                  <p className="mt-2 text-[10px] leading-relaxed text-gray-400">
+                    性別未回答者は参加規模には含め、男女比の計算からは除外します。1～3人では性別を推測されないよう男女比を表示しません。
+                  </p>
+                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {([
+                      ['minGenderSample', '男女比を出す最低人数', 4, 100],
+                      ['balanceDifference4To9', '4～9人の許容差', 0, 9],
+                      ['balanceDifference10To39', '10～39人の許容差', 0, 39],
+                      ['balanceDifference40To69', '40～69人の許容差', 0, 69],
+                      ['balanceDifference70To99', '70～99人の許容差', 0, 99],
+                      ['balanceDifference100PlusPercent', '100人以上の許容率（%）', 0, 50],
+                      ['ratio32MinMalePercent', '3:2 男性比率 最小（%）', 50, 100],
+                      ['ratio32MaxMalePercent', '3:2 男性比率 最大（%）', 50, 100],
+                    ] as const).map(([key, label, min, max]) => (
+                      <label key={key} className="text-[10px] font-medium text-gray-500">
+                        {label}
+                        <input
+                          type="number"
+                          min={min}
+                          max={max}
+                          value={socialProofSettings[key]}
+                          onChange={(event) => setSocialProofSettings((current) => ({
+                            ...current,
+                            [key]: Number(event.target.value),
+                          }))}
+                          className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    <label className="text-[10px] font-medium text-gray-500">
+                      比較する過去イベント数
+                      <input
+                        type="number"
+                        min={3}
+                        max={30}
+                        value={socialProofSettings.aboveAverage.historyCount}
+                        onChange={(event) => setSocialProofSettings((current) => ({ ...current, aboveAverage: { ...current.aboveAverage, historyCount: Number(event.target.value) } }))}
+                        className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
+                      />
+                    </label>
+                    <label className="text-[10px] font-medium text-gray-500">
+                      平均より多い最低人数
+                      <input
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={socialProofSettings.aboveAverage.minimumIncreaseCount}
+                        onChange={(event) => setSocialProofSettings((current) => ({ ...current, aboveAverage: { ...current.aboveAverage, minimumIncreaseCount: Number(event.target.value) } }))}
+                        className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
+                      />
+                    </label>
+                    <label className="text-[10px] font-medium text-gray-500">
+                      平均より多い最低率（%）
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={socialProofSettings.aboveAverage.minimumIncreasePercent}
+                        onChange={(event) => setSocialProofSettings((current) => ({ ...current, aboveAverage: { ...current.aboveAverage, minimumIncreasePercent: Number(event.target.value) } }))}
+                        className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
+                      />
+                    </label>
+                  </div>
+                </details>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#06C755]/20 bg-[#06C755]/5 px-3 py-2">
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400">表示例</p>
+                    <p className="text-xs font-bold text-[#06C755]">
+                      {socialProofSettings.combineLabels
+                        ? `${socialProofSettings.balanced.label}の${socialProofSettings.sizeTiers.find((tier) => tier.min === 50)?.combinedLabel ?? '50人規模'}`
+                        : socialProofSettings.balanced.label}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={saveSocialProofSettings}
+                    disabled={savingSocialProof}
+                    className="rounded-lg bg-[#06C755] px-4 py-2 text-xs font-bold text-white hover:bg-[#05a847] disabled:opacity-50"
+                  >
+                    {savingSocialProof ? '保存中...' : socialProofSaved ? '保存しました ✓' : '設定を保存'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {!socialProofSettings.enabled && (
+              <div className="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={saveSocialProofSettings}
+                  disabled={savingSocialProof}
+                  className="rounded-lg bg-[#06C755] px-4 py-2 text-xs font-bold text-white hover:bg-[#05a847] disabled:opacity-50"
+                >
+                  {savingSocialProof ? '保存中...' : socialProofSaved ? '保存しました ✓' : '設定を保存'}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* ライブフィード */}

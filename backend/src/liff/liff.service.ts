@@ -12,6 +12,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LineMessagingService } from '../line-messaging/line-messaging.service';
 import { StripeService } from '../stripe/stripe.service';
 import { PLAN_LIMITS } from '../config/plan-limits';
+import { EventSocialProofService } from '../event-social-proof/event-social-proof.service';
 export class CreateReservationDto {
   @IsString() eventId!: string;
   @IsOptional() @IsString() lineUserId?: string;
@@ -45,6 +46,7 @@ export class LiffService {
     private prisma: PrismaService,
     private lineMessaging: LineMessagingService,
     private stripeService: StripeService,
+    private eventSocialProofService: EventSocialProofService,
   ) {}
 
   private async resolveTenantId(codeOrId: string): Promise<string> {
@@ -156,11 +158,23 @@ export class LiffService {
           where: {
             status: { in: ['reserved', 'attended', 'waiting_payment'] },
           },
-          select: { id: true },
+          select: {
+            member: { select: { gender: true } },
+          },
         },
       },
       orderBy: { heldAt: 'asc' },
     });
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { eventSocialProofSettings: true },
+    });
+    const socialProofByEvent = await this.eventSocialProofService.buildForEvents(
+      tenantId,
+      tenant?.eventSocialProofSettings,
+      events,
+    );
 
     return events.map((e) => ({
       id: e.id,
@@ -179,6 +193,7 @@ export class LiffService {
       priceFemale: e.priceFemale,
       paymentRequired: e.paymentRequired,
       reservedCount: e.reservations.length,
+      socialProof: socialProofByEvent.get(e.id) ?? null,
       imageUrl: e.imageUrl,
       iconUrl: e.iconUrl,
       category: e.category,

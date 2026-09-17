@@ -30,10 +30,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const slug = typeof body.slug === 'string' ? body.slug.trim() : '';
   const blogSlug = typeof body.blogSlug === 'string' ? body.blogSlug.trim() : '';
 
-  if (!tenantCode || (!slug && !blogSlug)) {
-    return NextResponse.json({ error: 'tenantCode and slug or blogSlug are required' }, { status: 400 });
+  if (!tenantCode) {
+    return NextResponse.json({ error: 'tenantCode is required' }, { status: 400 });
   }
 
+  revalidatePath(`/e/${tenantCode}`);
   revalidatePath(`/clubs/${tenantCode}`);
   if (slug) {
     revalidatePath(`/clubs/${tenantCode}/${slug}`);

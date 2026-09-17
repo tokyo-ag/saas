@@ -11,7 +11,9 @@ describe('PublicController', () => {
     },
   };
 
-  const controller = new PublicController(prisma as never, {} as never);
+  const controller = new PublicController(prisma as never, {} as never, {
+    buildForEvents: jest.fn().mockResolvedValue(new Map()),
+  } as never);
 
   beforeEach(() => {
     jest.clearAllMocks();

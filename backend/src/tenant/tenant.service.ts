@@ -10,8 +10,10 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import Stripe from 'stripe';
 import { randomBytes } from 'crypto';
-import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
+import { Prisma } from '@prisma/client';
+import { IsArray, IsBoolean, IsObject, IsOptional, IsString } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
+import { normalizeEventSocialProofSettings } from '../event-social-proof/event-social-proof.service';
 
 const TENANT_TYPE_TAGS = ['インカレサークル', '学生団体', 'イベント団体', '社会人サークル'];
 const TENANT_ACTIVITY_TAGS = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー', '卓球'];
@@ -79,6 +81,7 @@ export class UpdateTenantDto {
   @IsOptional() @IsString() reservationMessageTemplate?: string;
   @IsOptional() @IsString() reminderMessageTemplate?: string;
   @IsOptional() @IsBoolean() activityTickerEnabled?: boolean;
+  @IsOptional() @IsObject() eventSocialProofSettings?: Record<string, unknown>;
   @IsOptional() @IsBoolean() requireName?: boolean;
   @IsOptional() @IsBoolean() requireGrade?: boolean;
   @IsOptional() @IsBoolean() requireGender?: boolean;
@@ -362,6 +365,11 @@ export class TenantService {
         }),
         ...(dto.activityTickerEnabled !== undefined && {
           activityTickerEnabled: dto.activityTickerEnabled,
+        }),
+        ...(dto.eventSocialProofSettings !== undefined && {
+          eventSocialProofSettings: normalizeEventSocialProofSettings(
+            dto.eventSocialProofSettings,
+          ) as unknown as Prisma.InputJsonValue,
         }),
         ...(dto.requireName !== undefined && { requireName: dto.requireName }),
         ...(dto.requireGrade !== undefined && { requireGrade: dto.requireGrade }),

@@ -63,6 +63,7 @@ model Tenant {
   reservationMessageTemplate String? @map("reservation_message_template") @db.Text
   reminderMessageTemplate    String? @map("reminder_message_template") @db.Text
   activityTickerEnabled  Boolean   @default(true) @map("activity_ticker_enabled")
+  eventSocialProofSettings Json?     @map("event_social_proof_settings")
   themeColor             String    @default("green") @map("theme_color") @db.VarChar(20)
   iconUrl                String?   @map("icon_url") @db.Text
   publicBlogUrl          String?   @map("public_blog_url") @db.VarChar(500)
