@@ -197,15 +197,23 @@ export class PublicController {
     });
     if (!tenant) throw new NotFoundException('リンクが見つかりません');
 
+    const now = new Date();
     const events = await this.prisma.event.findMany({
-      where: { tenantId: tenant.id, status: { not: 'draft' } },
+      where: {
+        tenantId: tenant.id,
+        status: { not: 'draft' },
+        OR: [
+          { endAt: { gte: now } },
+          { endAt: null, heldAt: { gte: now } },
+        ],
+      },
       include: {
         reservations: {
           where: { status: { not: 'cancelled' } },
           select: { status: true, member: { select: { gender: true } } },
         },
       },
-      orderBy: { heldAt: 'desc' },
+      orderBy: { heldAt: 'asc' },
     });
 
     return {
@@ -234,8 +242,17 @@ export class PublicController {
     });
     if (!tenant) throw new NotFoundException('リンクが見つかりません');
 
+    const now = new Date();
     const event = await this.prisma.event.findFirst({
-      where: { id: eventId, tenantId: tenant.id },
+      where: {
+        id: eventId,
+        tenantId: tenant.id,
+        status: { not: 'draft' },
+        OR: [
+          { endAt: { gte: now } },
+          { endAt: null, heldAt: { gte: now } },
+        ],
+      },
     });
     if (!event) throw new NotFoundException('イベントが見つかりません');
 
