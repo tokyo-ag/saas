@@ -187,6 +187,22 @@ export class LiffService {
     }));
   }
 
+  // 同じ性別の実績が連続で固まって見えないよう、各性別グループ内の新しい順を保ったまま
+  // グループ間で均等に散らして並べ替える（水増しはせず、実際にある件数分しか出さない）。
+  private fairInterleaveByGender<T extends { gender: string | null }>(items: T[]): T[] {
+    const groups = new Map<string, T[]>();
+    for (const item of items) {
+      const key = item.gender ?? 'unknown';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(item);
+    }
+    const positioned = Array.from(groups.values()).flatMap((group) =>
+      group.map((item, i) => ({ item, pos: (i + 0.5) / group.length })),
+    );
+    positioned.sort((a, b) => a.pos - b.pos);
+    return positioned.map((p) => p.item);
+  }
+
   // ヘッダー下に流す「最近のログイン・予約」テロップ用
   async getRecentActivity(tenantId: string) {
     tenantId = await this.resolveTenantId(tenantId);
@@ -198,14 +214,14 @@ export class LiffService {
         select: {
           id: true,
           reservedAt: true,
-          member: { select: { name: true, lineDisplayName: true, linePictureUrl: true } },
+          member: { select: { name: true, lineDisplayName: true, linePictureUrl: true, gender: true } },
         },
       }),
       this.prisma.member.findMany({
         where: { tenantId },
         orderBy: { createdAt: 'desc' },
         take: 15,
-        select: { id: true, createdAt: true, name: true, lineDisplayName: true, linePictureUrl: true },
+        select: { id: true, createdAt: true, name: true, lineDisplayName: true, linePictureUrl: true, gender: true },
       }),
     ]);
 
@@ -216,6 +232,7 @@ export class LiffService {
         at: r.reservedAt,
         name: r.member.lineDisplayName ?? r.member.name ?? '参加者',
         pictureUrl: r.member.linePictureUrl,
+        gender: r.member.gender,
       })),
       ...newMembers.map((m) => ({
         id: `l-${m.id}`,
@@ -223,12 +240,15 @@ export class LiffService {
         at: m.createdAt,
         name: m.lineDisplayName ?? m.name ?? '参加者',
         pictureUrl: m.linePictureUrl,
+        gender: m.gender,
       })),
     ];
 
-    return items
+    const mostRecent = items
       .sort((a, b) => b.at.getTime() - a.at.getTime())
       .slice(0, 15);
+
+    return this.fairInterleaveByGender(mostRecent).map(({ gender: _gender, ...rest }) => rest);
   }
 
   // イベント詳細1件
