@@ -120,13 +120,29 @@ function ReservePageInner() {
   }
 
   useEffect(() => {
+    // Next.jsのApp Routerは同じルート内でパラメータ（eventId）だけが変わる遷移では
+    // コンポーネントを再マウントしない。そのため、この効果を「前のイベント用に開始した
+    // 非同期処理の続き」が新しいイベントの画面に対して誤発火しないよう、cancelledで
+    // 確実にガードする。また、前のイベントの表示が一瞬残って見える（文字化けのように
+    // 見える）のを防ぐため、開始時点で表示系のstateを即座にリセットする。
+    let cancelled = false;
+    setAuthStatus('loading');
+    setAuthError('');
+    setEvent(null);
+    setMyReservation(null);
+    setRemindText('');
+    setError('');
+    setIsFriend(null);
+
     async function init() {
       // このページは/e/{tenantCode}のSEO一覧からLINE認証込みで直接開かれる入口にもなるため、
       // LIFFホーム経由と同様にここでも外部アクセスを記録する。
       api.liff.recordAccess(tenantId).catch(() => {});
       const tenantInfo = await api.liff.tenant(tenantId).catch(() => null);
+      if (cancelled) return;
       if (tenantInfo) setTenant(tenantInfo);
       const preloadedEvent = await api.liff.event(tenantId, eventId).catch(() => null);
+      if (cancelled) return;
       const effectiveActionStyle = preloadedEvent?.reserveActionStyle || tenantInfo?.reserveActionStyle;
 
       // LINE直通イベント/テナントはLIFFログイン自体が不要。認証なしで詳細だけ見せて、
@@ -140,6 +156,7 @@ function ReservePageInner() {
 
       // ── Step 1: LIFF初期化 ──
       const initOk = await initLiff();
+      if (cancelled) return;
 
       if (!initOk) {
         setAuthError(`Step1: ${getInitError() ?? '不明'}`);
@@ -160,6 +177,7 @@ function ReservePageInner() {
 
           const alreadyTried = hasRecentLoginAttempt();
           const loggedIn = await loginIfNeeded();
+          if (cancelled) return;
           if (!loggedIn) {
             setLoginRequired(true);
             setAuthError(
@@ -172,6 +190,7 @@ function ReservePageInner() {
           }
         }
       } catch (e) {
+        if (cancelled) return;
         setAuthError(`Step2-catch: ${e instanceof Error ? e.message : String(e)}`);
         setAuthStatus('error');
         return;
@@ -189,9 +208,11 @@ function ReservePageInner() {
       let uid = '';
       try {
         const lp = await getLiffProfile();
+        if (cancelled) return;
         uid = lp?.userId ?? '';
         if (lp) setLiffProfile({ displayName: lp.displayName, pictureUrl: lp.pictureUrl });
       } catch (e) {
+        if (cancelled) return;
         setAuthError(`Step3: ${e instanceof Error ? e.message : String(e)}`);
         setAuthStatus('error');
         return;
@@ -209,6 +230,7 @@ function ReservePageInner() {
         api.liff.profile(tenantId, uid),
         api.liff.myReservation(tenantId, eventId, uid).catch(() => null),
       ]);
+      if (cancelled) return;
       if (ev.status === 'fulfilled') setEvent(ev.value);
       if (prof.status === 'fulfilled') {
         setProfile(prof.value);
@@ -219,6 +241,7 @@ function ReservePageInner() {
           // それでも失敗する場合のみ再認証（ログイン画面）に進む＝二重ログイン要求を避ける。
           setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
           const retryProf = await api.liff.profile(tenantId, uid).catch(() => null);
+          if (cancelled) return;
           if (retryProf) {
             setProfile(retryProf);
           } else {
@@ -237,6 +260,7 @@ function ReservePageInner() {
       const tenantLineId = tenantInfo?.lineChannelId ?? null;
       if (tenantLineId) {
         const friend = await checkFriendship();
+        if (cancelled) return;
         setIsFriend(friend);
       } else {
         setIsFriend(true);
@@ -245,6 +269,7 @@ function ReservePageInner() {
       setAuthStatus('ok');
     }
     init();
+    return () => { cancelled = true; };
   }, [tenantId, eventId]);
 
   // 予約確定後（または既に予約済みで再訪した場合）、前日リマインドと同じ当日案内をその場で見せる。
