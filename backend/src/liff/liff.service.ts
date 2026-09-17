@@ -203,14 +203,20 @@ export class LiffService {
     return positioned.map((p) => p.item);
   }
 
-  // ヘッダー下に流す「最近のログイン・予約」テロップ用
-  async getRecentActivity(tenantId: string) {
-    tenantId = await this.resolveTenantId(tenantId);
+  // 性別ごとに直近の実績を取得する。「最近N件」を全体から一括で取ると件数の多い
+  // 性別に埋もれてしまうため、性別ごとに個別に直近分を取ってから後で均等に混ぜる
+  // （実績を水増しするのではなく、既存の実績を性別に偏らず拾えるようにするだけ）。
+  private async fetchRecentActivityByGender(
+    tenantId: string,
+    gender: string | null,
+    take: number,
+  ) {
+    const genderFilter = { gender };
     const [reservations, newMembers] = await Promise.all([
       this.prisma.reservation.findMany({
-        where: { tenantId, status: { in: ['reserved', 'attended'] } },
+        where: { tenantId, status: { in: ['reserved', 'attended'] }, member: genderFilter },
         orderBy: { reservedAt: 'desc' },
-        take: 15,
+        take,
         select: {
           id: true,
           reservedAt: true,
@@ -218,14 +224,14 @@ export class LiffService {
         },
       }),
       this.prisma.member.findMany({
-        where: { tenantId },
+        where: { tenantId, ...genderFilter },
         orderBy: { createdAt: 'desc' },
-        take: 15,
+        take,
         select: { id: true, createdAt: true, name: true, lineDisplayName: true, linePictureUrl: true, gender: true },
       }),
     ]);
 
-    const items = [
+    return [
       ...reservations.map((r) => ({
         id: `r-${r.id}`,
         type: 'reservation' as const,
@@ -243,12 +249,21 @@ export class LiffService {
         gender: m.gender,
       })),
     ];
+  }
 
-    const mostRecent = items
-      .sort((a, b) => b.at.getTime() - a.at.getTime())
-      .slice(0, 15);
+  // ヘッダー下に流す「最近のログイン・予約」テロップ用
+  async getRecentActivity(tenantId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
+    const PER_GENDER = 8;
+    const [maleItems, femaleItems, unsetItems] = await Promise.all([
+      this.fetchRecentActivityByGender(tenantId, '男性', PER_GENDER),
+      this.fetchRecentActivityByGender(tenantId, '女性', PER_GENDER),
+      this.fetchRecentActivityByGender(tenantId, null, PER_GENDER),
+    ]);
 
-    return this.fairInterleaveByGender(mostRecent).map(({ gender: _gender, ...rest }) => rest);
+    return this.fairInterleaveByGender([...maleItems, ...femaleItems, ...unsetItems]).map(
+      ({ gender: _gender, ...rest }) => rest,
+    );
   }
 
   // イベント詳細1件
