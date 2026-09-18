@@ -79,6 +79,17 @@ export class LiffController {
     return this.liffService.getReservationPreview(tenantId, eventId, lineUserId);
   }
 
+  // 旧フロントが残っている間も、予約時メッセージを正しく返す。
+  @UseGuards(LiffGuard)
+  @Get('events/:eventId/remind-preview')
+  getLegacyReservationPreview(
+    @Param('tenantId') tenantId: string,
+    @Param('eventId') eventId: string,
+    @LiffUser() lineUserId: string,
+  ) {
+    return this.liffService.getReservationPreview(tenantId, eventId, lineUserId);
+  }
+
   @UseGuards(LiffGuard)
   @Get('my-reservations')
   getMyReservations(
