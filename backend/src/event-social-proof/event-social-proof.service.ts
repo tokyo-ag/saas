@@ -8,7 +8,6 @@ export type EventSocialProofKind =
   | 'both_genders'
   | 'size'
   | 'above_average'
-  | 'participation'
   | 'combined';
 
 export interface EventSocialProofResult {
@@ -23,18 +22,15 @@ export interface EventSocialProofRule {
 
 export interface EventSocialProofSizeTier extends EventSocialProofRule {
   min: 40 | 50 | 60 | 100;
-  combinedLabel: string;
 }
 
 export interface EventSocialProofSettings {
   enabled: boolean;
-  combineLabels: boolean;
   minGenderSample: number;
   balanced: EventSocialProofRule;
   femaleHigh: EventSocialProofRule;
   ratio32: EventSocialProofRule;
   bothGenders: EventSocialProofRule;
-  participationLabel: string;
   balanceDifference4To9: number;
   balanceDifference10To39: number;
   balanceDifference40To69: number;
@@ -52,13 +48,11 @@ export interface EventSocialProofSettings {
 
 export const DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS: EventSocialProofSettings = {
   enabled: true,
-  combineLabels: true,
   minGenderSample: 4,
-  balanced: { enabled: true, label: '男女比ほぼ半々' },
+  balanced: { enabled: true, label: '男女比半々' },
   femaleHigh: { enabled: true, label: '女性参加率高め！' },
   ratio32: { enabled: true, label: '男女比約3:2' },
   bothGenders: { enabled: true, label: '男女とも参加予定' },
-  participationLabel: '参加予定あり',
   balanceDifference4To9: 1,
   balanceDifference10To39: 5,
   balanceDifference40To69: 8,
@@ -71,25 +65,21 @@ export const DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS: EventSocialProofSettings = {
       min: 100,
       enabled: true,
       label: '100人以上参加予定',
-      combinedLabel: '100人規模',
     },
     {
       min: 60,
       enabled: true,
       label: '60人以上参加予定',
-      combinedLabel: '60人規模',
     },
     {
       min: 50,
       enabled: true,
       label: '50人以上参加予定',
-      combinedLabel: '50人規模',
     },
     {
       min: 40,
       enabled: true,
       label: '40人以上参加予定',
-      combinedLabel: '40人規模',
     },
   ],
   aboveAverage: {
@@ -156,7 +146,6 @@ export function normalizeEventSocialProofSettings(
         min: fallback.min,
         enabled: booleanValue(saved.enabled, fallback.enabled),
         label: labelValue(saved.label, fallback.label),
-        combinedLabel: labelValue(saved.combinedLabel, fallback.combinedLabel),
       };
     },
   );
@@ -167,20 +156,21 @@ export function normalizeEventSocialProofSettings(
       raw.enabled,
       DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.enabled,
     ),
-    combineLabels: booleanValue(
-      raw.combineLabels,
-      DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.combineLabels,
-    ),
     minGenderSample: integerValue(
       raw.minGenderSample,
       DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.minGenderSample,
       4,
       100,
     ),
-    balanced: normalizeRule(
-      raw.balanced,
-      DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.balanced,
-    ),
+    balanced: (() => {
+      const rule = normalizeRule(
+        raw.balanced,
+        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.balanced,
+      );
+      return rule.label === '男女比ほぼ半々'
+        ? { ...rule, label: DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.balanced.label }
+        : rule;
+    })(),
     femaleHigh: normalizeRule(
       raw.femaleHigh,
       DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.femaleHigh,
@@ -192,10 +182,6 @@ export function normalizeEventSocialProofSettings(
     bothGenders: normalizeRule(
       raw.bothGenders,
       DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.bothGenders,
-    ),
-    participationLabel: labelValue(
-      raw.participationLabel,
-      DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.participationLabel,
     ),
     balanceDifference4To9: integerValue(
       raw.balanceDifference4To9,
@@ -368,12 +354,10 @@ export function buildEventSocialProof(
   let volume: {
     kind: EventSocialProofKind;
     text: string;
-    combinedLabel: string;
   } | null = sizeTier
     ? {
         kind: 'size',
         text: sizeTier.label,
-        combinedLabel: sizeTier.combinedLabel,
       }
     : null;
 
@@ -395,30 +379,17 @@ export function buildEventSocialProof(
         volume = {
           kind: 'above_average',
           text: settings.aboveAverage.label,
-          combinedLabel: settings.aboveAverage.label,
         };
       }
     }
   }
 
-  if (gender && volume && settings.combineLabels) {
-    if (
-      volume.kind === 'size' &&
-      (gender.kind === 'balanced' || gender.kind === 'ratio_3_2')
-    ) {
-      return {
-        kind: 'combined',
-        text: `${gender.text}の${volume.combinedLabel}`,
-      };
-    }
-    if (gender.kind === 'female_high') {
-      return { kind: 'combined', text: `${gender.text} ${volume.text}` };
-    }
-    return { kind: 'combined', text: `${gender.text}・${volume.text}` };
+  if (gender && volume) {
+    return { kind: 'combined', text: `${gender.text}\n${volume.text}` };
   }
   if (gender) return gender;
   if (volume) return { kind: volume.kind, text: volume.text };
-  return { kind: 'participation', text: settings.participationLabel };
+  return null;
 }
 
 @Injectable()

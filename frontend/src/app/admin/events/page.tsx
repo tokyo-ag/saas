@@ -470,7 +470,7 @@ export default function EventsPage() {
               <div>
                 <p className="text-xs font-bold text-gray-700">イベントカードの注目表示</p>
                 <p className="mt-0.5 text-[11px] leading-relaxed text-gray-400">
-                  スレッド右下に、実際の予約状況から作った男女比・参加規模を表示します。正確な人数と判定条件は公開しません。
+                  LINEログイン後の予約ページで、スレッド右下に男女比・参加規模を表示します。公開SEOページや、該当情報がないイベントには表示しません。
                 </p>
               </div>
               <button
@@ -490,7 +490,7 @@ export default function EventsPage() {
                   <p className="mb-2 text-[11px] font-bold text-gray-500">表示する判定</p>
                   <div className="flex flex-wrap gap-2">
                     {([
-                      ['balanced', '男女比ほぼ半々'],
+                      ['balanced', '男女比半々'],
                       ['femaleHigh', '女性参加率高め'],
                       ['ratio32', '男女比約3:2'],
                       ['bothGenders', '男女とも参加予定'],
@@ -536,19 +536,6 @@ export default function EventsPage() {
                   </div>
                 </div>
 
-                <label className="flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2">
-                  <span>
-                    <span className="block text-xs font-bold text-gray-600">よい条件を組み合わせる</span>
-                    <span className="block text-[10px] text-gray-400">例：男女比ほぼ半々の50人規模</span>
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={socialProofSettings.combineLabels}
-                    onChange={(event) => setSocialProofSettings((current) => ({ ...current, combineLabels: event.target.checked }))}
-                    className="h-4 w-4 accent-[#06C755]"
-                  />
-                </label>
-
                 <details className="rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2">
                   <summary className="cursor-pointer text-xs font-bold text-gray-600">表示文言を編集</summary>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -582,20 +569,10 @@ export default function EventsPage() {
                         className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
                       />
                     </label>
-                    <label className="text-[11px] font-medium text-gray-500">
-                      その他の予約あり
-                      <input
-                        type="text"
-                        maxLength={40}
-                        value={socialProofSettings.participationLabel}
-                        onChange={(event) => setSocialProofSettings((current) => ({ ...current, participationLabel: event.target.value }))}
-                        className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
-                      />
-                    </label>
                   </div>
                   <div className="mt-3 space-y-2">
                     {[...socialProofSettings.sizeTiers].sort((a, b) => a.min - b.min).map((tier) => (
-                      <div key={tier.min} className="grid gap-2 sm:grid-cols-[70px_1fr_1fr] sm:items-end">
+                      <div key={tier.min} className="grid gap-2 sm:grid-cols-[70px_1fr] sm:items-end">
                         <span className="pb-2 text-[11px] font-bold text-gray-500">{tier.min}人～</span>
                         <label className="text-[10px] text-gray-400">
                           単独表示
@@ -604,16 +581,6 @@ export default function EventsPage() {
                             maxLength={40}
                             value={tier.label}
                             onChange={(event) => updateSocialProofTier(tier.min, { label: event.target.value })}
-                            className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
-                          />
-                        </label>
-                        <label className="text-[10px] text-gray-400">
-                          男女比との組み合わせ
-                          <input
-                            type="text"
-                            maxLength={40}
-                            value={tier.combinedLabel}
-                            onChange={(event) => updateSocialProofTier(tier.min, { combinedLabel: event.target.value })}
                             className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
                           />
                         </label>
@@ -694,10 +661,9 @@ export default function EventsPage() {
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#06C755]/20 bg-[#06C755]/5 px-3 py-2">
                   <div>
                     <p className="text-[10px] font-bold text-gray-400">表示例</p>
+                    <p className="text-xs font-bold text-[#06C755]">{socialProofSettings.balanced.label}</p>
                     <p className="text-xs font-bold text-[#06C755]">
-                      {socialProofSettings.combineLabels
-                        ? `${socialProofSettings.balanced.label}の${socialProofSettings.sizeTiers.find((tier) => tier.min === 50)?.combinedLabel ?? '50人規模'}`
-                        : socialProofSettings.balanced.label}
+                      {socialProofSettings.sizeTiers.find((tier) => tier.min === 50)?.label ?? '50人以上参加予定'}
                     </p>
                   </div>
                   <button

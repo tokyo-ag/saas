@@ -729,7 +729,6 @@ export type EventSocialProofKind =
   | 'both_genders'
   | 'size'
   | 'above_average'
-  | 'participation'
   | 'combined';
 
 export interface EventSocialProof {
@@ -744,18 +743,15 @@ export interface EventSocialProofRule {
 
 export interface EventSocialProofSizeTier extends EventSocialProofRule {
   min: 40 | 50 | 60 | 100;
-  combinedLabel: string;
 }
 
 export interface EventSocialProofSettings {
   enabled: boolean;
-  combineLabels: boolean;
   minGenderSample: number;
   balanced: EventSocialProofRule;
   femaleHigh: EventSocialProofRule;
   ratio32: EventSocialProofRule;
   bothGenders: EventSocialProofRule;
-  participationLabel: string;
   balanceDifference4To9: number;
   balanceDifference10To39: number;
   balanceDifference40To69: number;

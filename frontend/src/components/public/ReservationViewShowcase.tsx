@@ -21,7 +21,6 @@ export type ReservationShowcaseEvent = {
   priceFemale?: number | null;
   imageUrl?: string | null;
   category?: string | null;
-  socialProof?: { kind: string; text: string } | null;
 };
 
 type ReservationViewShowcaseProps = {
@@ -489,14 +488,6 @@ function ThreadMini({
                       <span className={`rounded-md px-2.5 py-1 text-[11px] font-bold ${full ? 'bg-gray-100 text-gray-400' : ''}`} style={full ? undefined : { backgroundColor: visible.accent, color: visible.text }}>
                         {status}
                       </span>
-                      {event.socialProof?.text && (
-                        <span
-                          className="max-w-[140px] text-right text-[10px] font-bold leading-snug"
-                          style={{ color: eventMetaColor || visible.accent }}
-                        >
-                          {event.socialProof.text}
-                        </span>
-                      )}
                     </div>
                   </div>
                 );

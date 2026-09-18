@@ -29,7 +29,7 @@ describe('event social proof', () => {
         [],
         DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
       )?.text,
-    ).toBe('男女比ほぼ半々の100人規模');
+    ).toBe('男女比半々\n100人以上参加予定');
   });
 
   it('uses the 3:2 label below 100 when the configured balance difference is exceeded', () => {
@@ -39,7 +39,7 @@ describe('event social proof', () => {
         [],
         DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
       )?.text,
-    ).toBe('男女比約3:2の50人規模');
+    ).toBe('男女比約3:2\n50人以上参加予定');
   });
 
   it('shows the female-high label only outside the balanced tolerance', () => {
@@ -59,17 +59,17 @@ describe('event social proof', () => {
         [],
         DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
       )?.text,
-    ).toBe('女性参加率高め！ 50人以上参加予定');
+    ).toBe('女性参加率高め！\n50人以上参加予定');
   });
 
-  it('uses a generic non-gender label for very small attendance', () => {
+  it('returns no label when attendance has no useful signal', () => {
     expect(
       buildEventSocialProof(
         event(0, 1),
         [],
         DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
-      )?.text,
-    ).toBe('参加予定あり');
+      ),
+    ).toBeNull();
   });
 
   it('uses the above-average label below the size tiers', () => {
@@ -84,7 +84,7 @@ describe('event social proof', () => {
         history,
         DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
       )?.text,
-    ).toBe('男女比ほぼ半々・いつもより参加多め');
+    ).toBe('男女比半々\nいつもより参加多め');
   });
 
   it('returns no label when the feature is disabled or nobody has reserved', () => {
