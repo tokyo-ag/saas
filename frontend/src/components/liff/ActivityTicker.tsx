@@ -18,6 +18,7 @@ function formatActivity(item: ActivityItem): string {
 export function ActivityTicker({ tenantId, accentColor }: { tenantId: string; accentColor: string }) {
   const [items, setItems] = useState<ActivityItem[] | null>(null);
   const trackRef = useRef<HTMLDivElement>(null);
+  const durationRef = useRef(55);
   const pointerRef = useRef<{
     id: number;
     startX: number;
@@ -29,6 +30,26 @@ export function ActivityTicker({ tenantId, accentColor }: { tenantId: string; ac
   useEffect(() => {
     api.liff.activity(tenantId).then(setItems).catch(() => setItems([]));
   }, [tenantId]);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track || !items?.length) return;
+
+    // 表示件数が増えても見た目の移動速度が変わらないよう、横幅から一周時間を決める。
+    // 従来の表示件数で22秒だった頃と同程度（約110px/秒）を基準にする。
+    const updateDuration = () => {
+      const loopDistance = track.scrollWidth / 2;
+      const durationSeconds = Math.min(90, Math.max(30, loopDistance / 110));
+      durationRef.current = durationSeconds;
+      track.style.setProperty('--ticker-duration', `${durationSeconds.toFixed(1)}s`);
+    };
+
+    updateDuration();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(updateDuration);
+    observer.observe(track);
+    return () => observer.disconnect();
+  }, [items]);
 
   function getAnimation(): Animation | undefined {
     return trackRef.current?.getAnimations()[0];
@@ -74,7 +95,7 @@ export function ActivityTicker({ tenantId, accentColor }: { tenantId: string; ac
 
     const loopDistance = track.scrollWidth / 2;
     if (loopDistance <= 0) return;
-    const durationMs = 22_000;
+    const durationMs = durationRef.current * 1000;
     const dragDelta = event.clientX - pointer.startX;
     const rawTime = pointer.startTime - (dragDelta / loopDistance) * durationMs;
     animation.currentTime = ((rawTime % durationMs) + durationMs) % durationMs;
