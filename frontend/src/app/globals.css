@@ -66,7 +66,7 @@ body {
   to   { transform: translateX(-50%); }
 }
 .animate-ticker {
-  animation: ticker-scroll 22s linear infinite;
+  animation: ticker-scroll var(--ticker-duration, 60s) linear infinite;
 }
 
 .organizer-lp {
