@@ -646,8 +646,8 @@ export class LiffService {
     return reservation;
   }
 
-  // 予約直後の画面に、前日リマインドと同じ文面（当日の詳細案内）をその場で見せるためのプレビュー。
-  async getRemindPreview(tenantId: string, eventId: string, lineUserId: string) {
+  // 予約直後の画面に、実際の予約時LINE通知と同じ文面を表示するためのプレビュー。
+  async getReservationPreview(tenantId: string, eventId: string, lineUserId: string) {
     tenantId = await this.resolveTenantId(tenantId);
     const [event, tenant, member] = await Promise.all([
       this.prisma.event.findFirst({ where: { id: eventId, tenantId } }),
@@ -656,17 +656,20 @@ export class LiffService {
     ]);
     if (!event) throw new NotFoundException('イベントが見つかりません');
 
-    const text = this.lineMessaging.composeRemindMessage(
+    const text = this.lineMessaging.composeReservationConfirmMessage(
       event.title,
       event.heldAt,
       event.location,
-      event.reminderMessageTemplate ?? tenant?.reminderMessageTemplate,
+      event.price,
+      event.description,
+      event.reservationMessageTemplate ?? tenant?.reservationMessageTemplate,
       {
         endAt: event.endAt,
         locationUrl: event.locationUrl,
-        price: event.price,
         priceMale: event.priceMale,
         priceFemale: event.priceFemale,
+        descriptionMale: event.descriptionMale,
+        descriptionFemale: event.descriptionFemale,
         maleDelayMinutes: event.maleDelayMinutes,
         gender: member?.gender,
       },

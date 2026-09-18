@@ -75,7 +75,7 @@ function ReservePageInner() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [myReservation, setMyReservation] = useState<LiffReservation | null>(null);
-  const [remindText, setRemindText] = useState('');
+  const [reservationMessageText, setReservationMessageText] = useState('');
 
   const requiresLevel = event?.levelEnabled;
   const requireName = tenant?.requireName !== false;
@@ -130,7 +130,7 @@ function ReservePageInner() {
     setAuthError('');
     setEvent(null);
     setMyReservation(null);
-    setRemindText('');
+    setReservationMessageText('');
     setError('');
     setIsFriend(null);
 
@@ -272,14 +272,16 @@ function ReservePageInner() {
     return () => { cancelled = true; };
   }, [tenantId, eventId]);
 
-  // 予約確定後（または既に予約済みで再訪した場合）、前日リマインドと同じ当日案内をその場で見せる。
+  // 予約確定後（または既に予約済みで再訪した場合）、予約完了時と同じ案内をその場で見せる。
   useEffect(() => {
     const status = myReservation?.status;
     if (!lineUserId || (status !== 'reserved' && status !== 'attended')) {
-      setRemindText('');
+      setReservationMessageText('');
       return;
     }
-    api.liff.remindPreview(tenantId, eventId).then((r) => setRemindText(r.text)).catch(() => setRemindText(''));
+    api.liff.reservationPreview(tenantId, eventId)
+      .then((r) => setReservationMessageText(r.text))
+      .catch(() => setReservationMessageText(''));
   }, [myReservation?.status, tenantId, eventId, lineUserId]);
 
   // プロフィール未入力ならマイページへ誘導し、入力後にこのページへ戻ってきてもらう
@@ -565,10 +567,10 @@ function ReservePageInner() {
               </p>
               <p className="mt-1 text-xs text-white/80">キャンセルはマイページから</p>
             </div>
-            {remindText && (
+            {reservationMessageText && (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                <p className="mb-2 text-xs font-bold text-gray-400">当日のご案内</p>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">{remindText}</p>
+                <p className="mb-2 text-xs font-bold text-gray-400">予約完了時のご案内</p>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">{reservationMessageText}</p>
               </div>
             )}
           </>

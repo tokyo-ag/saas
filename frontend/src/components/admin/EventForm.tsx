@@ -83,6 +83,28 @@ function toLocalDatetimeValue(iso?: string | null): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function inferRemindPreset(
+  remindAt?: string | null,
+  heldAt?: string | null,
+): EventFormData['remindPreset'] {
+  if (!remindAt || !heldAt) return 'prev18';
+  const actual = new Date(remindAt);
+  const eventDate = new Date(heldAt);
+  if (Number.isNaN(actual.getTime()) || Number.isNaN(eventDate.getTime())) return 'custom';
+
+  const previousDayAt18 = new Date(eventDate);
+  previousDayAt18.setDate(previousDayAt18.getDate() - 1);
+  previousDayAt18.setHours(18, 0, 0, 0);
+
+  const eventDayAt9 = new Date(eventDate);
+  eventDayAt9.setHours(9, 0, 0, 0);
+
+  const withinOneMinute = (date: Date) => Math.abs(actual.getTime() - date.getTime()) < 60_000;
+  if (withinOneMinute(previousDayAt18)) return 'prev18';
+  if (withinOneMinute(eventDayAt9)) return 'day9';
+  return 'custom';
+}
+
 async function compressImage(file: File, maxBytes = 4 * 1024 * 1024): Promise<Blob> {
   if (file.size <= maxBytes) return file;
   return new Promise((resolve) => {
@@ -389,7 +411,7 @@ export default function EventForm({
     notifyOnReserve: initial?.notifyOnReserve ?? true,
     reservationMessageTemplate: initial?.reservationMessageTemplate ?? '',
     remindEnabled: initial?.remindEnabled ?? false,
-    remindPreset: 'prev18',
+    remindPreset: inferRemindPreset(initial?.remindAt, initial?.heldAt),
     remindAt: toLocalDatetimeValue(initial?.remindAt),
     reminderMessageTemplate: initial?.reminderMessageTemplate ?? '',
     levelEnabled: initial?.levelEnabled ?? false,
@@ -1231,14 +1253,14 @@ export default function EventForm({
             </p>
           )}
           {form.notifyOnReserve && (
-            <p className="text-xs text-gray-400">送信文面は右側の「事前リマインド」で編集・確認できます。</p>
+            <p className="text-xs text-gray-400">送信文面は右側の「予約時リマインド」で編集・確認できます。</p>
           )}
         </div>
 
         {/* リマインド通知 */}
         <div className="space-y-2 pt-3">
           <p className={`text-sm font-medium ${isFreePlan ? 'text-gray-400' : 'text-gray-700'}`}>
-            事前リマインド
+            前日・当日リマインド
             {isFreePlan && <span className="ml-2 text-xs text-[#06C755]">スタンダード以上</span>}
           </p>
           <div className={`flex flex-wrap gap-3 ${!isLineConfigured || isFreePlan ? 'pointer-events-none opacity-35' : ''}`}>
@@ -1269,7 +1291,7 @@ export default function EventForm({
               {form.remindPreset === 'custom' && (
                 <input type="datetime-local" step={1800} value={form.remindAt} onChange={(e) => set('remindAt', e.target.value)} className={`${inputClass} max-w-xs`} />
               )}
-              <p className="text-xs text-gray-400">送信文面は右側の「前日リマインド」で編集・確認できます。</p>
+              <p className="text-xs text-gray-400">送信文面は右側のリマインド欄で編集・確認できます。</p>
             </div>
           )}
         </div>
@@ -1291,26 +1313,30 @@ export default function EventForm({
       </div>
       </div>
 
-      {!hideLineNotify && form.remindEnabled && (
+      {!hideLineNotify && (form.notifyOnReserve || form.remindEnabled) && (
         <aside className="space-y-5 xl:sticky xl:top-6">
-          <LineMessageEditor
-            title="事前リマインド"
-            timing="予約完了時に送信"
-            enabled={form.notifyOnReserve}
-            value={form.reservationMessageTemplate}
-            effectiveTemplate={reservationTemplate}
-            preview={reservationPreview}
-            onChange={(value) => set('reservationMessageTemplate', value)}
-          />
-          <LineMessageEditor
-            title="前日リマインド"
-            timing={form.remindPreset === 'prev18' ? '前日 18:00に送信' : form.remindPreset === 'day9' ? '当日 09:00に送信' : `${form.remindAt || 'カスタム日時未設定'}に送信`}
-            enabled={form.remindEnabled}
-            value={form.reminderMessageTemplate}
-            effectiveTemplate={reminderTemplate}
-            preview={reminderPreview}
-            onChange={(value) => set('reminderMessageTemplate', value)}
-          />
+          {form.notifyOnReserve && (
+            <LineMessageEditor
+              title="予約時リマインド"
+              timing="予約完了時に送信"
+              enabled
+              value={form.reservationMessageTemplate}
+              effectiveTemplate={reservationTemplate}
+              preview={reservationPreview}
+              onChange={(value) => set('reservationMessageTemplate', value)}
+            />
+          )}
+          {form.remindEnabled && (
+            <LineMessageEditor
+              title={form.remindPreset === 'prev18' ? '前日リマインド' : form.remindPreset === 'day9' ? '当日リマインド' : '日時指定リマインド'}
+              timing={form.remindPreset === 'prev18' ? '前日 18:00に送信' : form.remindPreset === 'day9' ? '当日 09:00に送信' : `${form.remindAt || 'カスタム日時未設定'}に送信`}
+              enabled
+              value={form.reminderMessageTemplate}
+              effectiveTemplate={reminderTemplate}
+              preview={reminderPreview}
+              onChange={(value) => set('reminderMessageTemplate', value)}
+            />
+          )}
         </aside>
       )}
     </form>

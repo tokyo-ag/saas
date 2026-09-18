@@ -62,6 +62,28 @@ export class LineMessagingService {
     customTemplate?: string | null,
     details: EventMessageDetails = {},
   ): Promise<void> {
+    const text = this.composeReservationConfirmMessage(
+      eventTitle,
+      heldAt,
+      location,
+      price,
+      description,
+      customTemplate,
+      details,
+    );
+    await this.sendPushMessage(accessToken, lineUserId, text);
+  }
+
+  // 予約完了時に実際に送信する文面を、送信せずに組み立てる。
+  composeReservationConfirmMessage(
+    eventTitle: string,
+    heldAt: Date,
+    location: string,
+    price?: number,
+    description?: string | null,
+    customTemplate?: string | null,
+    details: EventMessageDetails = {},
+  ): string {
     const dateStr = this.formatDate(heldAt, details.endAt, details.maleDelayMinutes, details.gender);
     const locationStr = this.formatLocation(location, details.locationUrl);
     const priceStr = this.formatPrice(
@@ -87,8 +109,7 @@ export class LineMessagingService {
         price: priceStr ?? '',
         description: effectiveDescription ?? '',
       });
-      await this.sendPushMessage(accessToken, lineUserId, text);
-      return;
+      return text;
     }
     const descriptionStartsWithTitle = Boolean(
       eventTitle.trim() &&
@@ -107,7 +128,7 @@ export class LineMessagingService {
           ]
         : []),
     ];
-    await this.sendPushMessage(accessToken, lineUserId, lines.join('\n'));
+    return lines.join('\n');
   }
 
   async sendWaitlistRegistered(
@@ -165,7 +186,7 @@ export class LineMessagingService {
     await this.sendPushMessage(accessToken, lineUserId, text);
   }
 
-  // 実際に送信されるリマインド文面を、送信せずに組み立てる（予約直後のプレビュー表示などに使う）。
+  // 実際に送信される前日・当日リマインド文面を、送信せずに組み立てる。
   composeRemindMessage(
     eventTitle: string,
     heldAt: Date,
