@@ -175,17 +175,22 @@ function LiffThreadView({ events, tenantId, accentColor, cardBg, myStatusByEvent
                         <p className="flex items-center gap-1.5"><span>🕐</span><span>{formatThreadDate(event)}</span></p>
                         <p className="flex items-center gap-1.5"><span>📍</span><span className="truncate">{displayLocation(event, myStatusByEvent?.[event.id])}</span></p>
                         <p className="flex items-center gap-1.5 flex-wrap">
-                          {event.capacity != null && (
-                            <span className="flex items-center gap-1.5">👥<span>{event.reservedCount}/{event.capacity}人</span></span>
-                          )}
                           <span className="flex items-center gap-1.5">💴<span>{threadPriceLabel(event)}</span></span>
                         </p>
                       </div>
                     </div>
-                    <div className="shrink-0 flex flex-col items-end gap-1">
+                    <div className="flex shrink-0 self-stretch flex-col items-end justify-between gap-3">
                       <span className={`rounded-full px-3 py-1.5 text-[13px] font-bold ${badgeColorClass}`}>
                         {badgeLabel}
                       </span>
+                      {event.socialProof?.text && (
+                        <span
+                          className="max-w-[140px] text-right text-[10px] font-bold leading-snug"
+                          style={{ color: readableTextColor(cardBg), opacity: 0.72 }}
+                        >
+                          {event.socialProof.text}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </Link>
