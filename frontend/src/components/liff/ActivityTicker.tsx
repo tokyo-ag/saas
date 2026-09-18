@@ -8,6 +8,7 @@ import { isLightHexColor } from '@/lib/color';
 type ActivityItem = { id: string; type: 'login' | 'reservation'; at: string; name: string; pictureUrl: string | null };
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+const TICKER_DURATION_MS = 36_000;
 
 function formatActivity(item: ActivityItem): string {
   const d = new Date(item.at);
@@ -18,7 +19,6 @@ function formatActivity(item: ActivityItem): string {
 export function ActivityTicker({ tenantId, accentColor }: { tenantId: string; accentColor: string }) {
   const [items, setItems] = useState<ActivityItem[] | null>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  const durationRef = useRef(55);
   const pointerRef = useRef<{
     id: number;
     startX: number;
@@ -30,26 +30,6 @@ export function ActivityTicker({ tenantId, accentColor }: { tenantId: string; ac
   useEffect(() => {
     api.liff.activity(tenantId).then(setItems).catch(() => setItems([]));
   }, [tenantId]);
-
-  useEffect(() => {
-    const track = trackRef.current;
-    if (!track || !items?.length) return;
-
-    // 表示件数が増えても見た目の移動速度が変わらないよう、横幅から一周時間を決める。
-    // 従来の表示件数で22秒だった頃と同程度（約110px/秒）を基準にする。
-    const updateDuration = () => {
-      const loopDistance = track.scrollWidth / 2;
-      const durationSeconds = Math.min(90, Math.max(30, loopDistance / 110));
-      durationRef.current = durationSeconds;
-      track.style.setProperty('--ticker-duration', `${durationSeconds.toFixed(1)}s`);
-    };
-
-    updateDuration();
-    if (typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(updateDuration);
-    observer.observe(track);
-    return () => observer.disconnect();
-  }, [items]);
 
   function getAnimation(): Animation | undefined {
     return trackRef.current?.getAnimations()[0];
@@ -69,6 +49,7 @@ export function ActivityTicker({ tenantId, accentColor }: { tenantId: string; ac
 
   function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
     const animation = getAnimation();
+    event.currentTarget.setPointerCapture(event.pointerId);
     pointerRef.current = {
       id: event.pointerId,
       startX: event.clientX,
@@ -90,12 +71,11 @@ export function ActivityTicker({ tenantId, accentColor }: { tenantId: string; ac
     if (!pointer.dragging) {
       if (Math.abs(deltaX) < 6 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
       pointer.dragging = true;
-      event.currentTarget.setPointerCapture(event.pointerId);
     }
 
     const loopDistance = track.scrollWidth / 2;
     if (loopDistance <= 0) return;
-    const durationMs = durationRef.current * 1000;
+    const durationMs = TICKER_DURATION_MS;
     const dragDelta = event.clientX - pointer.startX;
     const rawTime = pointer.startTime - (dragDelta / loopDistance) * durationMs;
     animation.currentTime = ((rawTime % durationMs) + durationMs) % durationMs;
@@ -118,6 +98,12 @@ export function ActivityTicker({ tenantId, accentColor }: { tenantId: string; ac
     playTicker();
   }
 
+  function handleLostPointerCapture(event: React.PointerEvent<HTMLDivElement>) {
+    if (pointerRef.current?.id !== event.pointerId) return;
+    pointerRef.current = null;
+    playTicker();
+  }
+
   if (!items || items.length === 0) return null;
 
   const loop = [...items, ...items];
@@ -132,6 +118,7 @@ export function ActivityTicker({ tenantId, accentColor }: { tenantId: string; ac
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
+      onLostPointerCapture={handleLostPointerCapture}
     >
       <div ref={trackRef} className="flex w-max animate-ticker gap-6 px-4">
         {loop.map((item, i) => (
