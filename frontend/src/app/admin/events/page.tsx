@@ -515,7 +515,17 @@ export default function EventsPage() {
                       }))}
                       className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${socialProofSettings.aboveAverage.enabled ? 'border-[#06C755] bg-[#06C755]/8 text-[#06C755]' : 'border-gray-200 bg-gray-50 text-gray-400 line-through'}`}
                     >
-                      いつもより参加多め
+                      いつもより参加者多めです！
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSocialProofSettings((current) => ({
+                        ...current,
+                        femaleAboveAverage: { ...current.femaleAboveAverage, enabled: !current.femaleAboveAverage.enabled },
+                      }))}
+                      className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${socialProofSettings.femaleAboveAverage.enabled ? 'border-[#06C755] bg-[#06C755]/8 text-[#06C755]' : 'border-gray-200 bg-gray-50 text-gray-400 line-through'}`}
+                    >
+                      いつもより女性参加率高めです！
                     </button>
                   </div>
                 </div>
@@ -565,6 +575,19 @@ export default function EventsPage() {
                         onChange={(event) => setSocialProofSettings((current) => ({
                           ...current,
                           aboveAverage: { ...current.aboveAverage, label: event.target.value },
+                        }))}
+                        className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
+                      />
+                    </label>
+                    <label className="text-[11px] font-medium text-gray-500">
+                      女性参加率が平均より高い
+                      <input
+                        type="text"
+                        maxLength={40}
+                        value={socialProofSettings.femaleAboveAverage.label}
+                        onChange={(event) => setSocialProofSettings((current) => ({
+                          ...current,
+                          femaleAboveAverage: { ...current.femaleAboveAverage, label: event.target.value },
                         }))}
                         className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
                       />
@@ -652,6 +675,28 @@ export default function EventsPage() {
                         max={100}
                         value={socialProofSettings.aboveAverage.minimumIncreasePercent}
                         onChange={(event) => setSocialProofSettings((current) => ({ ...current, aboveAverage: { ...current.aboveAverage, minimumIncreasePercent: Number(event.target.value) } }))}
+                        className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
+                      />
+                    </label>
+                    <label className="text-[10px] font-medium text-gray-500">
+                      女性比率の比較イベント数
+                      <input
+                        type="number"
+                        min={3}
+                        max={30}
+                        value={socialProofSettings.femaleAboveAverage.historyCount}
+                        onChange={(event) => setSocialProofSettings((current) => ({ ...current, femaleAboveAverage: { ...current.femaleAboveAverage, historyCount: Number(event.target.value) } }))}
+                        className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
+                      />
+                    </label>
+                    <label className="text-[10px] font-medium text-gray-500">
+                      女性比率の最低上昇幅（ポイント）
+                      <input
+                        type="number"
+                        min={1}
+                        max={50}
+                        value={socialProofSettings.femaleAboveAverage.minimumIncreasePercentagePoints}
+                        onChange={(event) => setSocialProofSettings((current) => ({ ...current, femaleAboveAverage: { ...current.femaleAboveAverage, minimumIncreasePercentagePoints: Number(event.target.value) } }))}
                         className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
                       />
                     </label>

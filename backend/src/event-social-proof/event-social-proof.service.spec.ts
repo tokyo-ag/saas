@@ -84,7 +84,41 @@ describe('event social proof', () => {
         history,
         DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
       )?.text,
-    ).toBe('男女比半々\nいつもより参加多め');
+    ).toBe('男女比半々\nいつもより参加者多めです！');
+  });
+
+  it('shows when the female participation rate is above the historical average', () => {
+    const history = Array.from({ length: 5 }, () => ({
+      category: 'バドミントン',
+      categories: ['バドミントン'],
+      reservedCount: 10,
+      maleCount: 7,
+      femaleCount: 3,
+    }));
+    expect(
+      buildEventSocialProof(
+        event(5, 5),
+        history,
+        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
+      )?.text,
+    ).toBe('いつもより女性参加率高めです！');
+  });
+
+  it('shows both historical comparison labels when both averages are exceeded', () => {
+    const history = Array.from({ length: 5 }, () => ({
+      category: 'バドミントン',
+      categories: ['バドミントン'],
+      reservedCount: 10,
+      maleCount: 7,
+      femaleCount: 3,
+    }));
+    expect(
+      buildEventSocialProof(
+        event(6, 12),
+        history,
+        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
+      )?.text,
+    ).toBe('いつもより女性参加率高めです！\nいつもより参加者多めです！');
   });
 
   it('returns no label when the feature is disabled or nobody has reserved', () => {

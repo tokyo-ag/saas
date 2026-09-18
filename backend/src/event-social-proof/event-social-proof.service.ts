@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export type EventSocialProofKind =
   | 'balanced'
   | 'female_high'
+  | 'female_above_average'
   | 'ratio_3_2'
   | 'both_genders'
   | 'size'
@@ -29,6 +30,10 @@ export interface EventSocialProofSettings {
   minGenderSample: number;
   balanced: EventSocialProofRule;
   femaleHigh: EventSocialProofRule;
+  femaleAboveAverage: EventSocialProofRule & {
+    historyCount: number;
+    minimumIncreasePercentagePoints: number;
+  };
   ratio32: EventSocialProofRule;
   bothGenders: EventSocialProofRule;
   balanceDifference4To9: number;
@@ -51,6 +56,12 @@ export const DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS: EventSocialProofSettings = {
   minGenderSample: 4,
   balanced: { enabled: true, label: '男女比半々' },
   femaleHigh: { enabled: true, label: '女性参加率高め！' },
+  femaleAboveAverage: {
+    enabled: true,
+    label: 'いつもより女性参加率高めです！',
+    historyCount: 10,
+    minimumIncreasePercentagePoints: 10,
+  },
   ratio32: { enabled: true, label: '男女比約3:2' },
   bothGenders: { enabled: true, label: '男女とも参加予定' },
   balanceDifference4To9: 1,
@@ -84,7 +95,7 @@ export const DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS: EventSocialProofSettings = {
   ],
   aboveAverage: {
     enabled: true,
-    label: 'いつもより参加多め',
+    label: 'いつもより参加者多めです！',
     historyCount: 10,
     minimumIncreaseCount: 3,
     minimumIncreasePercent: 10,
@@ -150,6 +161,7 @@ export function normalizeEventSocialProofSettings(
     },
   );
   const aboveAverage = record(raw.aboveAverage);
+  const femaleAboveAverage = record(raw.femaleAboveAverage);
 
   return {
     enabled: booleanValue(
@@ -175,6 +187,24 @@ export function normalizeEventSocialProofSettings(
       raw.femaleHigh,
       DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.femaleHigh,
     ),
+    femaleAboveAverage: {
+      ...normalizeRule(
+        femaleAboveAverage,
+        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.femaleAboveAverage,
+      ),
+      historyCount: integerValue(
+        femaleAboveAverage.historyCount,
+        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.femaleAboveAverage.historyCount,
+        3,
+        30,
+      ),
+      minimumIncreasePercentagePoints: integerValue(
+        femaleAboveAverage.minimumIncreasePercentagePoints,
+        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.femaleAboveAverage.minimumIncreasePercentagePoints,
+        1,
+        50,
+      ),
+    },
     ratio32: normalizeRule(
       raw.ratio32,
       DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.ratio32,
@@ -227,10 +257,15 @@ export function normalizeEventSocialProofSettings(
     ),
     sizeTiers,
     aboveAverage: {
-      ...normalizeRule(
-        aboveAverage,
-        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.aboveAverage,
-      ),
+      ...(() => {
+        const rule = normalizeRule(
+          aboveAverage,
+          DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.aboveAverage,
+        );
+        return rule.label === 'いつもより参加多め'
+          ? { ...rule, label: DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.aboveAverage.label }
+          : rule;
+      })(),
       historyCount: integerValue(
         aboveAverage.historyCount,
         DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.aboveAverage.historyCount,
@@ -264,6 +299,8 @@ export interface EventSocialProofHistory {
   category?: string | null;
   categories?: string[];
   reservedCount: number;
+  maleCount?: number;
+  femaleCount?: number;
 }
 
 function categorySet(event: {
@@ -323,6 +360,7 @@ export function buildEventSocialProof(
     (reservation) => reservation.member.gender === '女性',
   ).length;
   const knownGenderCount = male + female;
+  const comparisonHistory = relevantHistory(event, history);
   let gender: { kind: EventSocialProofKind; text: string } | null = null;
 
   if (knownGenderCount >= settings.minGenderSample) {
@@ -330,12 +368,44 @@ export function buildEventSocialProof(
     const balanced = difference <= balanceTolerance(knownGenderCount, settings);
     const malePercent =
       knownGenderCount > 0 ? (male / knownGenderCount) * 100 : 0;
+    const femalePercent =
+      knownGenderCount > 0 ? (female / knownGenderCount) * 100 : 0;
 
-    if (balanced && settings.balanced.enabled) {
+    if (settings.femaleAboveAverage.enabled) {
+      const genderHistory = comparisonHistory
+        .filter((past) => (past.maleCount ?? 0) + (past.femaleCount ?? 0) > 0)
+        .slice(0, settings.femaleAboveAverage.historyCount);
+      if (genderHistory.length >= 3) {
+        const historicalFemale = genderHistory.reduce(
+          (sum, past) => sum + (past.femaleCount ?? 0),
+          0,
+        );
+        const historicalKnown = genderHistory.reduce(
+          (sum, past) => sum + (past.maleCount ?? 0) + (past.femaleCount ?? 0),
+          0,
+        );
+        const historicalFemalePercent = historicalKnown > 0
+          ? (historicalFemale / historicalKnown) * 100
+          : 0;
+        if (
+          femalePercent >=
+          historicalFemalePercent +
+            settings.femaleAboveAverage.minimumIncreasePercentagePoints
+        ) {
+          gender = {
+            kind: 'female_above_average',
+            text: settings.femaleAboveAverage.label,
+          };
+        }
+      }
+    }
+
+    if (!gender && balanced && settings.balanced.enabled) {
       gender = { kind: 'balanced', text: settings.balanced.label };
-    } else if (!balanced && female > male && settings.femaleHigh.enabled) {
+    } else if (!gender && !balanced && female > male && settings.femaleHigh.enabled) {
       gender = { kind: 'female_high', text: settings.femaleHigh.label };
     } else if (
+      !gender &&
       !balanced &&
       male > female &&
       malePercent >= settings.ratio32MinMalePercent &&
@@ -343,7 +413,7 @@ export function buildEventSocialProof(
       settings.ratio32.enabled
     ) {
       gender = { kind: 'ratio_3_2', text: settings.ratio32.label };
-    } else if (male > 0 && female > 0 && settings.bothGenders.enabled) {
+    } else if (!gender && male > 0 && female > 0 && settings.bothGenders.enabled) {
       gender = { kind: 'both_genders', text: settings.bothGenders.label };
     }
   }
@@ -362,7 +432,7 @@ export function buildEventSocialProof(
     : null;
 
   if (!volume && settings.aboveAverage.enabled) {
-    const comparison = relevantHistory(event, history).slice(
+    const comparison = comparisonHistory.slice(
       0,
       settings.aboveAverage.historyCount,
     );
@@ -405,7 +475,7 @@ export class EventSocialProofService {
     if (!settings.enabled || events.length === 0) return new Map();
 
     let history: EventSocialProofHistory[] = [];
-    if (settings.aboveAverage.enabled) {
+    if (settings.aboveAverage.enabled || settings.femaleAboveAverage.enabled) {
       const historicalEvents = await this.prisma.event.findMany({
         where: {
           tenantId,
@@ -415,18 +485,23 @@ export class EventSocialProofService {
         orderBy: { heldAt: 'desc' },
         take: Math.min(
           100,
-          Math.max(30, settings.aboveAverage.historyCount * 5),
+          Math.max(
+            30,
+            Math.max(
+              settings.aboveAverage.historyCount,
+              settings.femaleAboveAverage.historyCount,
+            ) * 5,
+          ),
         ),
         select: {
           category: true,
           categories: true,
-          _count: {
+          reservations: {
+            where: {
+              status: { in: ['reserved', 'attended', 'waiting_payment'] },
+            },
             select: {
-              reservations: {
-                where: {
-                  status: { in: ['reserved', 'attended', 'waiting_payment'] },
-                },
-              },
+              member: { select: { gender: true } },
             },
           },
         },
@@ -434,7 +509,13 @@ export class EventSocialProofService {
       history = historicalEvents.map((event) => ({
         category: event.category,
         categories: event.categories,
-        reservedCount: event._count.reservations,
+        reservedCount: event.reservations.length,
+        maleCount: event.reservations.filter(
+          (reservation) => reservation.member.gender === '男性',
+        ).length,
+        femaleCount: event.reservations.filter(
+          (reservation) => reservation.member.gender === '女性',
+        ).length,
       }));
     }
 

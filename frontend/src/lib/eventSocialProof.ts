@@ -9,6 +9,12 @@ export const DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS: EventSocialProofSettings = {
   minGenderSample: 4,
   balanced: { enabled: true, label: '男女比半々' },
   femaleHigh: { enabled: true, label: '女性参加率高め！' },
+  femaleAboveAverage: {
+    enabled: true,
+    label: 'いつもより女性参加率高めです！',
+    historyCount: 10,
+    minimumIncreasePercentagePoints: 10,
+  },
   ratio32: { enabled: true, label: '男女比約3:2' },
   bothGenders: { enabled: true, label: '男女とも参加予定' },
   balanceDifference4To9: 1,
@@ -26,7 +32,7 @@ export const DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS: EventSocialProofSettings = {
   ],
   aboveAverage: {
     enabled: true,
-    label: 'いつもより参加多め',
+    label: 'いつもより参加者多めです！',
     historyCount: 10,
     minimumIncreaseCount: 3,
     minimumIncreasePercent: 10,
@@ -64,13 +70,23 @@ export function normalizeEventSocialProofSettings(
       return rule.label === '男女比ほぼ半々' ? { ...rule, label: defaults.balanced.label } : rule;
     })(),
     femaleHigh: normalizeRule(value?.femaleHigh, defaults.femaleHigh),
+    femaleAboveAverage: {
+      ...defaults.femaleAboveAverage,
+      ...value?.femaleAboveAverage,
+      ...normalizeRule(value?.femaleAboveAverage, defaults.femaleAboveAverage),
+    },
     ratio32: normalizeRule(value?.ratio32, defaults.ratio32),
     bothGenders: normalizeRule(value?.bothGenders, defaults.bothGenders),
     sizeTiers,
     aboveAverage: {
       ...defaults.aboveAverage,
       ...value?.aboveAverage,
-      ...normalizeRule(value?.aboveAverage, defaults.aboveAverage),
+      ...(() => {
+        const rule = normalizeRule(value?.aboveAverage, defaults.aboveAverage);
+        return rule.label === 'いつもより参加多め'
+          ? { ...rule, label: defaults.aboveAverage.label }
+          : rule;
+      })(),
     },
   };
 }

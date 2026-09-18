@@ -725,6 +725,7 @@ export interface LiffEvent {
 export type EventSocialProofKind =
   | 'balanced'
   | 'female_high'
+  | 'female_above_average'
   | 'ratio_3_2'
   | 'both_genders'
   | 'size'
@@ -750,6 +751,10 @@ export interface EventSocialProofSettings {
   minGenderSample: number;
   balanced: EventSocialProofRule;
   femaleHigh: EventSocialProofRule;
+  femaleAboveAverage: EventSocialProofRule & {
+    historyCount: number;
+    minimumIncreasePercentagePoints: number;
+  };
   ratio32: EventSocialProofRule;
   bothGenders: EventSocialProofRule;
   balanceDifference4To9: number;
