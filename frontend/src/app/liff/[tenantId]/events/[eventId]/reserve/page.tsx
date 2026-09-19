@@ -19,6 +19,7 @@ import {
   redirectToLiffApp,
   hasRecentLoginAttempt,
   isLiffLoggedIn,
+  syncLiffApiToken,
 } from '@/lib/liff';
 import { useLiffTheme, hexToRgba, readableTextColor, isLightHexColor } from '@/components/liff/LiffThemeProvider';
 import { LiffToast } from '@/components/liff/LiffToast';
@@ -239,7 +240,7 @@ function ReservePageInner() {
         if (isLineAuthErrorMessage(msg)) {
           // トークンが一時的に古い可能性があるので、取り直して一度だけ再試行する。
           // それでも失敗する場合のみ再認証（ログイン画面）に進む＝二重ログイン要求を避ける。
-          setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
+          syncLiffApiToken();
           const retryProf = await api.liff.profile(tenantId, uid).catch(() => null);
           if (cancelled) return;
           if (retryProf) {
@@ -298,7 +299,7 @@ function ReservePageInner() {
     setError('');
     setSubmitting(true);
     try {
-      setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
+      syncLiffApiToken();
       const body = {
         eventId,
         ...(profile?.name && { name: profile.name }),

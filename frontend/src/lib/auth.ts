@@ -16,6 +16,10 @@ export function getToken(): string | null {
 }
 
 export function setToken(token: string) {
+  // 通常ログインを明示的に完了したら、同じタブに残った代理ログイン用トークンを
+  // 必ず破棄する。残したままだとgetToken()で古いsessionStorage側が優先され、
+  // ログイン直後の最初のAPIが401になって再びログイン画面へ戻される。
+  sessionStorage.removeItem(TOKEN_KEY);
   localStorage.setItem(TOKEN_KEY, token);
   setCookie(token);
 }

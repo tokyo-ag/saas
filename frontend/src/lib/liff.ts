@@ -63,12 +63,39 @@ export function isLiffLoggedIn(): boolean {
   }
 }
 
+// LIFFアプリのscopeやSDKの状態によっては、ログイン済みでもIDトークンが
+// 取得できない場合がある。保護APIにはIDトークンを優先し、取得できない場合だけ
+// アクセストークンを渡す。バックエンド側で発行元チャネルを必ず検証する。
+export function syncLiffApiToken(): string | null {
+  let token: string | null = null;
+  let source: 'id' | 'access' | 'none' = 'none';
+  if (isLiffLoggedIn()) {
+    try {
+      token = liff.getIDToken();
+      if (token) source = 'id';
+    } catch {
+      token = null;
+    }
+    if (!token) {
+      try {
+        token = liff.getAccessToken();
+        if (token) source = 'access';
+      } catch {
+        token = null;
+      }
+    }
+  }
+  setLiffToken(token);
+  exposeDebugValue('__LIFF_API_TOKEN_SOURCE', source);
+  return token;
+}
+
 export async function initLiff(liffIdOverride?: string): Promise<boolean> {
   const id = await getLiffId(liffIdOverride);
   if (initialized && initializedLiffId === id) {
     // 既に初期化済みでも、ページ遷移や時間経過でトークンが古くなっている可能性があるため
     // liff.init()はスキップしつつ、トークンだけは毎回取り直す。
-    setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
+    syncLiffApiToken();
     return true;
   }
   if (!id) {
@@ -101,7 +128,7 @@ export async function initLiff(liffIdOverride?: string): Promise<boolean> {
       window.sessionStorage.removeItem(LIFF_ID_MISMATCH_RELOAD_KEY);
       scrubLiffCallbackParamsFromAddressBar();
     }
-    setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
+    syncLiffApiToken();
     initInfo = { ok: true, hasId: Boolean(id), loggedIn: isLiffLoggedIn() };
     exposeDebugValue('__LIFF_INIT_INFO', initInfo);
     return true;

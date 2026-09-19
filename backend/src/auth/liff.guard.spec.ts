@@ -67,10 +67,14 @@ describe('LiffGuard', () => {
   });
 
   it('verifies against the tenant LIFF channel when configured', async () => {
-    const config = { get: jest.fn(() => 'shared-channel') } as unknown as ConfigService;
+    const config = {
+      get: jest.fn(() => 'shared-channel'),
+    } as unknown as ConfigService;
     const tenantPrisma = {
       tenant: {
-        findFirst: jest.fn().mockResolvedValue({ liffId: '2012345678-liffapp' }),
+        findFirst: jest
+          .fn()
+          .mockResolvedValue({ liffId: '2012345678-liffapp' }),
       },
     } as unknown as PrismaService;
     const guard = new LiffGuard(config, tenantPrisma);
@@ -87,5 +91,79 @@ describe('LiffGuard', () => {
     expect(String(fetchMock.mock.calls[0][1].body)).toContain(
       'client_id=2012345678',
     );
+  });
+
+  it('accepts a LIFF access token only after verifying its channel', async () => {
+    const config = {
+      get: jest.fn(() => 'shared-channel'),
+    } as unknown as ConfigService;
+    const tenantPrisma = {
+      tenant: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValue({ liffId: '2012345678-liffapp' }),
+      },
+    } as unknown as PrismaService;
+    const guard = new LiffGuard(config, tenantPrisma);
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        text: () => Promise.resolve('invalid id token'),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({ client_id: '2012345678', expires_in: 3600 }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ userId: 'access-token-user' }),
+      });
+    global.fetch = fetchMock;
+
+    await expect(
+      guard.canActivate(createContext('Bearer opaque-access-token')),
+    ).resolves.toBe(true);
+    expect(fetchMock.mock.calls[1][0]).toBe(
+      'https://api.line.me/oauth2/v2.1/verify?access_token=opaque-access-token',
+    );
+    expect(fetchMock.mock.calls[2][1]).toEqual({
+      headers: { Authorization: 'Bearer opaque-access-token' },
+    });
+  });
+
+  it('rejects an access token issued for a different LINE channel', async () => {
+    const config = {
+      get: jest.fn(() => 'shared-channel'),
+    } as unknown as ConfigService;
+    const tenantPrisma = {
+      tenant: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValue({ liffId: '2012345678-liffapp' }),
+      },
+    } as unknown as PrismaService;
+    const guard = new LiffGuard(config, tenantPrisma);
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        text: () => Promise.resolve('invalid id token'),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({ client_id: 'different-channel', expires_in: 3600 }),
+      });
+
+    await expect(
+      guard.canActivate(createContext('Bearer wrong-channel-token')),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 });

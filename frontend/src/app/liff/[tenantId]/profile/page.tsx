@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { api, CustomProfileQuestion, LiffMyReservation, LiffProfile, setLiffToken } from '@/lib/api';
-import { initLiff, getLiffUserId, loginIfNeeded, loginWithRedirect, currentRedirectUri, liff, redirectToLiffApp, isLiffLoggedIn } from '@/lib/liff';
+import { initLiff, getLiffUserId, loginIfNeeded, loginWithRedirect, currentRedirectUri, liff, redirectToLiffApp, isLiffLoggedIn, syncLiffApiToken } from '@/lib/liff';
 import { useLiffTheme, readableTextColor, isLightHexColor } from '@/components/liff/LiffThemeProvider';
 import { ConfirmDialog } from '@/components/liff/ConfirmDialog';
 import { LiffToast } from '@/components/liff/LiffToast';
@@ -158,7 +158,7 @@ export default function ProfilePage() {
       }
       localStorage.removeItem('liff-login-tried');
       setLineUserId(uid);
-      setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
+      syncLiffApiToken();
 
       const [profResult, myReservations] = await Promise.all([
         api.liff.profile(tenantId, uid).then((v) => ({ ok: true as const, v })).catch((e) => ({ ok: false as const, e })),
@@ -170,7 +170,7 @@ export default function ProfilePage() {
         if (isLineAuthErrorMessage(msg)) {
           // トークンが一時的に古い可能性があるので、取り直して一度だけ再試行する。
           // それでも失敗する場合のみ再認証（ログイン画面）に進む＝二重ログイン要求を避ける。
-          setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
+          syncLiffApiToken();
           resolvedProf = await api.liff.profile(tenantId, uid).catch(() => null);
           if (!resolvedProf) {
             restartLineAuth();
@@ -238,7 +238,7 @@ export default function ProfilePage() {
     setError('');
     setSaving(true);
     try {
-      setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
+      syncLiffApiToken();
       const updated = await api.liff.updateProfile(tenantId, lineUserId, {
         ...(formConfig.requireName && { name }),
         ...(formConfig.requireGrade && { grade }),
@@ -269,7 +269,7 @@ export default function ProfilePage() {
   async function handleCancel(reservationId: string) {
     setCancellingId(reservationId);
     try {
-      setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
+      syncLiffApiToken();
       await api.liff.cancel(tenantId, reservationId);
       setReservations((prev) => prev.filter((r) => r.id !== reservationId));
     } catch (err: unknown) {

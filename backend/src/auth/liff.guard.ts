@@ -14,6 +14,12 @@ interface LiffIdTokenPayload {
   exp: number;
 }
 
+interface LiffAccessTokenPayload {
+  client_id?: string;
+  expires_in?: number;
+  scope?: string;
+}
+
 @Injectable()
 export class LiffGuard implements CanActivate {
   private readonly cache = new Map<
@@ -27,7 +33,9 @@ export class LiffGuard implements CanActivate {
     private prisma: PrismaService,
   ) {}
 
-  private async getExpectedChannelId(tenantId?: string): Promise<string | null> {
+  private async getExpectedChannelId(
+    tenantId?: string,
+  ): Promise<string | null> {
     if (tenantId) {
       const tenant = await this.prisma.tenant.findFirst({
         where: { OR: [{ id: tenantId }, { code: tenantId }] },
@@ -72,28 +80,76 @@ export class LiffGuard implements CanActivate {
       return true;
     }
 
-    const res = await fetch('https://api.line.me/oauth2/v2.1/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ id_token: idToken, client_id: channelId }),
-    });
+    const idTokenResponse = await fetch(
+      'https://api.line.me/oauth2/v2.1/verify',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ id_token: idToken, client_id: channelId }),
+      },
+    );
 
-    if (!res.ok) {
-      const body = await res.text().catch(() => '<no-body>');
-      this.logger.warn(
-        `LINE token verify failed: status=${res.status} body=${body}`,
+    let lineUserId = '';
+    let cacheTtlMs = 5 * 60 * 1000;
+
+    if (idTokenResponse.ok) {
+      const payload = (await idTokenResponse.json()) as LiffIdTokenPayload;
+      lineUserId = payload.sub;
+      if (typeof payload.exp === 'number') {
+        cacheTtlMs = Math.min(
+          cacheTtlMs,
+          Math.max(1, payload.exp * 1000 - Date.now()),
+        );
+      }
+    } else {
+      // openid scopeがないLIFFでは、ログイン済みでもIDトークンが取得できない。
+      // その場合はアクセストークンの発行元チャネルを検証してからプロフィールを取得する。
+      const idTokenError = await idTokenResponse
+        .text()
+        .catch(() => '<no-body>');
+      const accessTokenResponse = await fetch(
+        `https://api.line.me/oauth2/v2.1/verify?access_token=${encodeURIComponent(idToken)}`,
       );
-      throw new UnauthorizedException('LINEトークンが無効です');
+      const accessPayload = (await accessTokenResponse
+        .json()
+        .catch(() => ({}))) as LiffAccessTokenPayload;
+      const accessTokenValid =
+        accessTokenResponse.ok &&
+        accessPayload.client_id === channelId &&
+        typeof accessPayload.expires_in === 'number' &&
+        accessPayload.expires_in > 0;
+
+      if (accessTokenValid) {
+        const profileResponse = await fetch('https://api.line.me/v2/profile', {
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
+        const profile = (await profileResponse.json().catch(() => ({}))) as {
+          userId?: string;
+        };
+        if (profileResponse.ok && profile.userId) {
+          lineUserId = profile.userId;
+          cacheTtlMs = Math.min(
+            cacheTtlMs,
+            Math.max(1, accessPayload.expires_in! * 1000),
+          );
+        }
+      }
+
+      if (!lineUserId) {
+        this.logger.warn(
+          `LINE token verify failed: idStatus=${idTokenResponse.status} idBody=${idTokenError} accessStatus=${accessTokenResponse.status}`,
+        );
+        throw new UnauthorizedException('LINEトークンが無効です');
+      }
     }
 
-    const payload = (await res.json()) as LiffIdTokenPayload;
-    req.lineUserId = payload.sub;
-    this.logger.debug(`LIFF token verified for user=${payload.sub}`);
+    req.lineUserId = lineUserId;
+    this.logger.debug(`LIFF token verified for user=${lineUserId}`);
 
     // Cache for 5 minutes (tokens expire at 10 min; 5 min gives safety margin)
     this.cache.set(cacheKey, {
-      lineUserId: payload.sub,
-      exp: Date.now() + 5 * 60 * 1000,
+      lineUserId,
+      exp: Date.now() + cacheTtlMs,
     });
     if (this.cache.size > 1000) {
       const now = Date.now();

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { api, setLiffToken } from '@/lib/api';
-import { initLiff, getLiffUserId, liff, isLiffLoggedIn, loginWithRedirect } from '@/lib/liff';
+import { initLiff, getLiffUserId, liff, isLiffLoggedIn, loginWithRedirect, syncLiffApiToken } from '@/lib/liff';
 import { isLightHexColor, readableTextColor } from '@/lib/color';
 import { SITE_URL } from '@/lib/config';
 
@@ -85,7 +85,7 @@ export function TenantReviewComposer({
       return;
     }
     setLineUserId(uid);
-    setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
+    syncLiffApiToken();
 
     try {
       const existing = await api.liff.myTenantReview(tenantId, uid);
@@ -119,7 +119,7 @@ export function TenantReviewComposer({
     setError('');
     setSaving(true);
     try {
-      setLiffToken(isLiffLoggedIn() ? liff.getIDToken() : null);
+      syncLiffApiToken();
       await api.liff.submitTenantReview(tenantId, lineUserId, trimmed);
       markReviewed(tenantId);
       goToCleanReviewsPage();
