@@ -526,6 +526,7 @@ export default async function ClubCmsPage({
     </Link>
   );
 
+  const instagramUrl = sectionCopy.instagram?.trim() || '';
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'SportsOrganization',
@@ -533,6 +534,7 @@ export default async function ClubCmsPage({
     description: descriptionFromPage(page),
     url: `${SITE_URL}/clubs/${page.tenant.code ?? tenantCode}/${page.slug}`,
     ...(image ? { image, logo: image } : {}),
+    ...(instagramUrl ? { sameAs: [instagramUrl] } : {}),
   };
 
   const faqItems = ((page.blocks as any[]) ?? [])
