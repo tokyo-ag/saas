@@ -26,7 +26,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const isLiffPublicEndpoint =
     isLiff &&
     ((method === 'GET' &&
-      /^\/liff\/[^/]+(\/(events(|\/[^/]+(|\/reviews))|members\/[^/]+)?)?$/.test(path)) ||
+      /^\/liff\/[^/]+(\/(events(|\/[^/]+(|\/reviews))|members\/[^/]+|activity)?)?$/.test(path)) ||
       (method === 'POST' && /^\/liff\/[^/]+\/access$/.test(path)));
   const needsAuth = isSuperadmin || isAdmin || isMobileManageSession || path === '/auth/reconfirm' || path === '/auth/me' || path === '/auth/set-email-password' || path === '/auth/resend-verification';
   const token = (isAdmin || isMobileManageSession) && _mobileManageToken ? _mobileManageToken : needsAuth ? getToken() : null;

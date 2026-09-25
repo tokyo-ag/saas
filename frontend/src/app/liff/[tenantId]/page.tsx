@@ -135,7 +135,7 @@ function threadStatusLabel(event: LiffEvent) {
   return '募集中';
 }
 
-function LiffThreadView({ events, tenantId, accentColor, cardBg, myStatusByEvent, showSocialProof }: { events: LiffEvent[]; tenantId: string; accentColor: string; cardBg: string; myStatusByEvent?: Record<string, string>; showSocialProof: boolean }) {
+function LiffThreadView({ events, tenantId, accentColor, cardBg, myStatusByEvent }: { events: LiffEvent[]; tenantId: string; accentColor: string; cardBg: string; myStatusByEvent?: Record<string, string> }) {
   const groups = events.reduce<Record<string, LiffEvent[]>>((acc, event) => {
     const key = threadMonthLabel(event.heldAt);
     (acc[key] ??= []).push(event);
@@ -183,7 +183,7 @@ function LiffThreadView({ events, tenantId, accentColor, cardBg, myStatusByEvent
                       <span className={`rounded-full px-3 py-1.5 text-[13px] font-bold ${badgeColorClass}`}>
                         {badgeLabel}
                       </span>
-                      {showSocialProof && event.socialProof?.text && (
+                      {event.socialProof?.text && (
                         <span
                           className="max-w-[140px] space-y-0.5 text-right text-[10px] font-bold leading-snug"
                           style={{ color: readableTextColor(cardBg), opacity: 0.72 }}
@@ -674,7 +674,7 @@ export default function LiffTopPage() {
           ) : tenant?.liffEventView === 'calendar' ? (
             <LiffCalendarCard events={events} tenantId={tenantId} accentColor={theme.accentColor} myStatusByEvent={myStatusByEvent} />
           ) : tenant?.liffEventView === 'thread' ? (
-            <LiffThreadView events={events} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg || '#ffffff'} myStatusByEvent={myStatusByEvent} showSocialProof={isLoggedIn} />
+            <LiffThreadView events={events} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg || '#ffffff'} myStatusByEvent={myStatusByEvent} />
           ) : (
             <div className="grid grid-cols-2 gap-2">
               {events.map((ev) => <EventCard key={ev.id} event={ev} tenantId={tenantId} accentColor={theme.accentColor} cardBg={theme.eventCardBg || '#ffffff'} myStatus={myStatusByEvent[ev.id]} />)}

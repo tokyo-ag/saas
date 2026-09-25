@@ -12,6 +12,7 @@ import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BlogService } from '../blog/blog.service';
+import { EventSocialProofService } from '../event-social-proof/event-social-proof.service';
 
 class UpdateRosterReservationDto {
   @IsOptional() @IsString() @MaxLength(100) referrer?: string;
@@ -69,6 +70,7 @@ export class PublicController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly blogService: BlogService,
+    private readonly eventSocialProofService: EventSocialProofService,
   ) {}
 
   private firstMarkdownImage(body: string | null | undefined) {
@@ -706,6 +708,7 @@ export class PublicController {
             linePictureUrl: true,
             iconUrl: true,
             liffId: true,
+            eventSocialProofSettings: true,
             publicPages: {
               take: 1,
               select: { footerText: true },
@@ -716,12 +719,17 @@ export class PublicController {
           where: {
             status: { in: ['reserved', 'attended', 'waiting_payment'] },
           },
-          select: { id: true },
+          select: { id: true, member: { select: { gender: true } } },
         },
       },
     });
     if (!event) throw new NotFoundException('Event not found');
     const isEnded = event.status !== 'open' || event.heldAt < new Date();
+    const socialProofByEvent = await this.eventSocialProofService.buildForEvents(
+      event.tenantId,
+      event.tenant.eventSocialProofSettings,
+      [event],
+    );
     return {
       id: event.id,
       title: event.title,
@@ -738,6 +746,7 @@ export class PublicController {
       priceFemale: event.priceFemale,
       capacity: event.capacity,
       reservedCount: event.reservations.length,
+      socialProof: socialProofByEvent.get(event.id) ?? null,
       imageUrl: event.imageUrl,
       iconUrl: event.iconUrl,
       category: event.category,
@@ -911,6 +920,12 @@ export class PublicController {
 
     if (!tenant) throw new NotFoundException('Tenant not found');
 
+    const socialProofByEvent = await this.eventSocialProofService.buildForEvents(
+      tenant.id,
+      tenant.eventSocialProofSettings,
+      tenant.events,
+    );
+
     const tenantName = tenant.lineDisplayName ?? tenant.name;
     const publicTenant = {
       id: tenant.id,
@@ -947,6 +962,7 @@ export class PublicController {
         priceFemale: e.priceFemale,
         capacity: e.capacity,
         reservedCount: e.reservations.length,
+        socialProof: socialProofByEvent.get(e.id) ?? null,
         iconUrl: e.iconUrl,
         imageUrl: e.imageUrl,
         category: e.category,

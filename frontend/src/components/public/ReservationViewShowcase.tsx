@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { API_URL, formatEventSchedule } from '@/lib/api';
+import { API_URL, formatEventSchedule, EventSocialProof } from '@/lib/api';
 import { isInLineInAppBrowser, buildLiffUrl, SITE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { getDefaultEventImage } from '@/lib/defaultImages';
@@ -21,6 +21,7 @@ export type ReservationShowcaseEvent = {
   priceFemale?: number | null;
   imageUrl?: string | null;
   category?: string | null;
+  socialProof?: EventSocialProof | null;
 };
 
 type ReservationViewShowcaseProps = {
@@ -369,6 +370,11 @@ function CardMini({
                   <p className="text-xs font-medium" style={{ color: eventDateColor || cardText, opacity: eventDateColor ? 1 : 0.7 }}>{eventFullDateTime(event)}</p>
                   {showLocation && event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{event.locationHint || event.location}</p>}
                   {metaLine && <p className="text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{metaLine}</p>}
+                  {event.socialProof?.text && (
+                    <p className="text-[11px] font-bold" style={{ color: eventMetaColor || accentColor, opacity: eventMetaColor ? 1 : 0.9 }}>
+                      {event.socialProof.text.replace('\n', ' ・ ')}
+                    </p>
+                  )}
                   {linkToLiff && tenantCode && (
                     <Link href={eventDetailHref(tenantCode, event.id)} className="relative z-[1] inline-block text-[11px] underline" style={{ color: eventMetaColor || cardText, opacity: 0.6 }}>
                       詳細を見る
@@ -488,6 +494,16 @@ function ThreadMini({
                       <span className={`rounded-md px-2.5 py-1 text-[11px] font-bold ${full ? 'bg-gray-100 text-gray-400' : ''}`} style={full ? undefined : { backgroundColor: visible.accent, color: visible.text }}>
                         {status}
                       </span>
+                      {event.socialProof?.text && (
+                        <span
+                          className="max-w-[140px] space-y-0.5 text-right text-[10px] font-bold leading-snug"
+                          style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.72 }}
+                        >
+                          {event.socialProof.text.split('\n').map((line) => (
+                            <span key={line} className="block">{line}</span>
+                          ))}
+                        </span>
+                      )}
                     </div>
                   </div>
                 );

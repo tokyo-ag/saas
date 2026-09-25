@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { ReservationViewShowcase, ReservationShowcaseEvent } from '@/components/public/ReservationViewShowcase';
+import { ActivityTicker } from '@/components/liff/ActivityTicker';
 import { SITE_URL, API_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 
@@ -202,6 +203,10 @@ export default async function TenantEventsPage({
               </Link>
             )}
           </div>
+        </div>
+
+        <div className="-mx-4 mb-4">
+          <ActivityTicker tenantId={tenantCode} accentColor={accentColor} />
         </div>
 
         <h1 className="mb-2 text-sm font-bold" style={{ color: textColor }}>{name}の予約スケジュール</h1>

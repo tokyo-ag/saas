@@ -563,7 +563,7 @@ function ReservePageInner() {
           <>
             <div className="w-full rounded-2xl py-4 text-center shadow-sm" style={{ backgroundColor: '#10b981' }}>
               <p className="font-bold text-base text-white">
-                {myReservation.status === 'reserved' ? '予約完了！' : STATUS_LABEL[myReservation.status] ?? myReservation.status}
+                {myReservation.status === 'reserved' ? '予約しました！' : STATUS_LABEL[myReservation.status] ?? myReservation.status}
                 {myReservation.status === 'waitlisted' && myReservation.waitlistOrder ? `（${myReservation.waitlistOrder}番目）` : ''}
               </p>
               <p className="mt-1 text-xs text-white/80">キャンセルはマイページから</p>
