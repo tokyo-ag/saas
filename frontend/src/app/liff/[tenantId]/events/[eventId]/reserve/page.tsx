@@ -4,7 +4,8 @@ import { Suspense, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { api, API_URL, LiffEvent, LiffProfile, LiffReservation, LiffTenant, setLiffToken, formatDate } from '@/lib/api';
+import { api, API_URL, LiffEvent, LiffProfile, LiffReservation, LiffTenant, setLiffToken, formatEventSchedule } from '@/lib/api';
+import { SITE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { getDefaultEventImage } from '@/lib/defaultImages';
 import {
@@ -42,13 +43,6 @@ function isLineAuthErrorMessage(message: string): boolean {
   );
 }
 
-function eventPriceLabel(event: LiffEvent) {
-  if (event.priceMale != null && event.priceFemale != null) {
-    return `男性 ¥${event.priceMale.toLocaleString()} / 女性 ¥${event.priceFemale.toLocaleString()}`;
-  }
-  return event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
-}
-
 function ReservePageInner() {
   const { tenantId, eventId } = useParams<{ tenantId: string; eventId: string }>();
   const searchParams = useSearchParams();
@@ -77,6 +71,7 @@ function ReservePageInner() {
   const [error, setError] = useState('');
   const [myReservation, setMyReservation] = useState<LiffReservation | null>(null);
   const [reservationMessageText, setReservationMessageText] = useState('');
+  const [inviteCopied, setInviteCopied] = useState(false);
 
   const requiresLevel = event?.levelEnabled;
   const requireName = tenant?.requireName !== false;
@@ -294,6 +289,16 @@ function ReservePageInner() {
     }
   }, [authStatus, isFriend, lineUserId, hasProfile, tenantId, eventId, router]);
 
+  function copyInviteLink() {
+    if (!event) return;
+    const schedule = formatEventSchedule(event.heldAt, event.endAt);
+    const url = `${SITE_URL}/e/${tenantId}/${eventId}`;
+    navigator.clipboard.writeText(`${schedule}、簡単予約 ${url}`).then(() => {
+      setInviteCopied(true);
+      setTimeout(() => setInviteCopied(false), 2000);
+    });
+  }
+
   async function submit() {
     if (!lineUserId || !hasProfile) return;
     setError('');
@@ -485,7 +490,6 @@ function ReservePageInner() {
             )}
             <div className="text-right">
               <p className="text-[13px] font-bold text-gray-900 leading-tight">マイページ</p>
-              <p className="text-[10px] text-gray-800 leading-tight">ログイン中</p>
             </div>
           </Link>
         </div>
@@ -515,24 +519,6 @@ function ReservePageInner() {
                 </span>
               )}
               <p className="font-bold text-gray-900 text-base leading-snug">{event.title}</p>
-              <div className="grid gap-2 rounded-2xl bg-gray-50 p-3 text-sm">
-                <div className="flex items-start gap-2">
-                  <span className="mt-0.5 shrink-0 text-xs text-gray-400">日時</span>
-                  <p className="text-gray-800">{formatDate(event.heldAt)}</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="mt-0.5 shrink-0 text-xs text-gray-400">場所</span>
-                  <p className="text-gray-800">
-                    {myReservation && (myReservation.status === 'reserved' || myReservation.status === 'attended')
-                      ? event.location
-                      : event.locationHint || event.location}
-                  </p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="mt-0.5 shrink-0 text-xs text-gray-400">参加費</span>
-                  <p className="font-semibold text-gray-900">{eventPriceLabel(event)}</p>
-                </div>
-              </div>
               {(event.description || event.descriptionMale || event.descriptionFemale) && (
                 <div className="pt-1 border-t border-gray-100">
                   {event.descriptionMale || event.descriptionFemale ? (
@@ -574,6 +560,14 @@ function ReservePageInner() {
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">{reservationMessageText}</p>
               </div>
             )}
+            <button
+              type="button"
+              onClick={copyInviteLink}
+              className="w-full rounded-2xl border py-3.5 text-sm font-bold transition-colors active:opacity-80"
+              style={{ borderColor: solidAccentColor, color: solidAccentColor }}
+            >
+              {inviteCopied ? 'コピーしました' : '友達に紹介する（リンクをコピー）'}
+            </button>
           </>
         ) : isLineMode ? (
           <a
