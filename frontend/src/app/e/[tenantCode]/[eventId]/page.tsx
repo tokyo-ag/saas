@@ -333,13 +333,14 @@ export default async function PublicEventPage({
           COMIU
         </Link>
         {!isEnded && (
-          <Link
+          <SmartLiffButton
             href={reserveUrl}
+            directHref={`${SITE_URL}${loginPath}`}
             className="rounded-full px-4 py-1.5 text-sm font-semibold hover:opacity-90"
             style={{ backgroundColor: accentColor, color: readableTextColor(accentColor) }}
           >
             予約する
-          </Link>
+          </SmartLiffButton>
         )}
       </header>
 
