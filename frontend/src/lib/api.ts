@@ -21,7 +21,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const isSuperadmin = path.startsWith('/superadmin');
   const isAdmin = path.startsWith('/admin');
   const isMobileManageSession = path.startsWith('/mobile-manage/') && path !== '/mobile-manage/verify';
-  const isLiff = path.startsWith('/liff/') || path.startsWith('/public/roster/');
+  const isLiff = path.startsWith('/liff/');
   const method = (options?.method ?? 'GET').toString().toUpperCase();
   const isLiffPublicEndpoint =
     isLiff &&

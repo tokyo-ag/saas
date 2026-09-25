@@ -4,16 +4,11 @@ import {
   Post,
   Param,
   Query,
-  Req,
   NotFoundException,
-  ForbiddenException,
-  UseGuards,
 } from '@nestjs/common';
-import type { Request } from 'express';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BlogService } from '../blog/blog.service';
-import { LiffGuard } from '../auth/liff.guard';
 
 // Mirrors frontend/src/lib/lpTags.ts LOCATION_TAGS - kept in sync manually since Event.tags
 // mixes location tags together with other tag groups (search tags etc.) in one flat array.
@@ -127,38 +122,16 @@ export class PublicController {
     };
   }
 
-  // 参加者同士が見る名簿のため、学校名や自由記述などのカスタム質問回答（回答時に
-  // 「他の人には見られません」と案内しているものを含む）は含めない。運営がその情報まで
-  // 見たい場合はstaff-view（ログイン不要だが参加者には共有しない専用リンク）を使う。
-  // LINEログインを必須にした上で、さらにこのイベントに実際予約している本人以外には
-  // 公開しない（LINEログインさえすれば誰でも通れてしまうのを防ぐ）。
-  @UseGuards(LiffGuard)
+  // このリンクは管理画面のトグルをONにした管理者が手動でコピーしてスタッフに
+  // 配布する運営用のリンクであり、参加者向けの導線（予約ページ埋め込み等）
+  // からは一切リンクしていない。学校名や自由記述などのカスタム質問回答
+  // （回答時に「他の人には見られません」と案内しているもの）は含めない。
   @Get('roster/:token')
-  async getRoster(
-    @Param('token') token: string,
-    @Req() req: Request & { lineUserId?: string },
-  ) {
+  async getRoster(@Param('token') token: string) {
     const event = await this.prisma.event.findFirst({
       where: { rosterShareToken: token, rosterShareEnabled: true },
     });
     if (!event) throw new NotFoundException('名簿が見つかりません');
-
-    const requester = await this.prisma.member.findFirst({
-      where: { tenantId: event.tenantId, lineUserId: req.lineUserId },
-      select: { id: true },
-    });
-    const isParticipant = requester
-      ? (await this.prisma.reservation.count({
-          where: {
-            eventId: event.id,
-            memberId: requester.id,
-            status: { not: 'cancelled' },
-          },
-        })) > 0
-      : false;
-    if (!isParticipant) {
-      throw new ForbiddenException('この名簿は参加者のみ閲覧できます');
-    }
 
     const reservations = await this.prisma.reservation.findMany({
       where: { eventId: event.id, status: { not: 'cancelled' } },
