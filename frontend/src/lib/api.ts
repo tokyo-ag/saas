@@ -358,6 +358,8 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify({ enabled }),
       }),
+    regenerateStaffView: () =>
+      request<Tenant>('/admin/tenant/staff-view/regenerate', { method: 'POST' }),
   },
   auth: {
     reconfirm: (email: string, password: string) =>

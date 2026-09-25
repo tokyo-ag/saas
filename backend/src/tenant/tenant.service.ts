@@ -171,6 +171,18 @@ export class TenantService {
     return this.toSafeTenant(updated);
   }
 
+  // 配布済みのリンクが漏れた場合に、新しいトークンへ差し替えて古いURLを無効化する。
+  async regenerateStaffViewToken(tenantId: string) {
+    const updated = await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        staffViewEnabled: true,
+        staffViewToken: randomBytes(24).toString('base64url'),
+      },
+    });
+    return this.toSafeTenant(updated);
+  }
+
   private assertSensitiveSettingsReconfirmed(
     tenantId: string,
     accountId: string,

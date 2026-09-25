@@ -281,6 +281,20 @@ export default function EventsPage() {
     });
   }
 
+  async function regenerateStaffViewUrl() {
+    if (!confirm('新しいリンクを発行しますか？\n今のリンクはこの操作の直後から見られなくなります。既にスタッフへ配布している場合は、新しいリンクを配り直してください。')) return;
+    setSavingStaffView(true);
+    try {
+      const updated = await api.tenant.regenerateStaffView();
+      setStaffViewEnabled(!!updated.staffViewEnabled);
+      setStaffViewToken(updated.staffViewToken ?? null);
+    } catch {
+      alert('リンクの再発行に失敗しました');
+    } finally {
+      setSavingStaffView(false);
+    }
+  }
+
   const now = new Date();
   const filtered = events
     .filter((event) => {
@@ -398,11 +412,11 @@ export default function EventsPage() {
         </div>
       )}
 
-      {/* 運営用の閲覧専用リンク */}
+      {/* 運営用参加者閲覧リンク（閲覧専用） */}
       <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-sm font-semibold text-gray-800">運営用の閲覧リンク</h2>
+            <h2 className="text-sm font-semibold text-gray-800">運営用参加者閲覧リンク</h2>
             <p className="mt-1 text-xs leading-relaxed text-gray-400">ONにすると、ログイン不要で予約ページ一覧と各イベントの予約者一覧（人数・男女比を含む）を閲覧できるリンクを発行できます。編集はできません。</p>
           </div>
           <button
@@ -430,7 +444,19 @@ export default function EventsPage() {
             >
               {staffViewCopied ? 'コピーしました' : 'コピー'}
             </button>
+            <button
+              onClick={regenerateStaffViewUrl}
+              disabled={savingStaffView}
+              className="shrink-0 rounded-lg border border-gray-300 px-4 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+            >
+              リンクを再発行
+            </button>
           </div>
+        )}
+        {staffViewEnabled && staffViewToken && (
+          <p className="mt-2 text-[11px] leading-relaxed text-gray-400">
+            再発行すると今のリンクは無効になります。配布済みのスタッフには新しいリンクを共有してください。
+          </p>
         )}
       </div>
 

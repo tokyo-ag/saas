@@ -50,6 +50,11 @@ export class TenantController {
     return this.tenantService.toggleStaffView(tenantId, body.enabled);
   }
 
+  @Post('staff-view/regenerate')
+  regenerateStaffView(@TenantId() tenantId: string) {
+    return this.tenantService.regenerateStaffViewToken(tenantId);
+  }
+
   @Get('stats')
   getStats(@TenantId() tenantId: string) {
     return this.tenantService.getDashboardStats(tenantId);
