@@ -250,6 +250,11 @@ export const api = {
     reviews: (tenantCode: string) =>
       request<TenantReview[]>(`/public/tenants/${tenantCode}/reviews`),
     roster: (token: string) => request<PublicRoster>(`/public/roster/${token}`),
+    updateRosterReservation: (token: string, reservationId: string, data: { referrer?: string; staffNote?: string }) =>
+      request<{ id: string; referrer: string | null; staffNote: string | null }>(
+        `/public/roster/${token}/reservations/${reservationId}`,
+        { method: 'PATCH', body: JSON.stringify(data) },
+      ),
     staffViewEvents: (token: string) =>
       request<StaffViewEventList>(`/public/staff-view/${token}/events`),
     staffViewEvent: (token: string, eventId: string) =>
@@ -1395,6 +1400,7 @@ export interface PublicRoster {
     levelEnabled: boolean;
   };
   reservations: {
+    id: string;
     name: string | null;
     grade: string | null;
     gender: string | null;
@@ -1403,6 +1409,8 @@ export interface PublicRoster {
     linePictureUrl: string | null;
     status: ReservationStatus;
     waitlistOrder: number | null;
+    referrer: string | null;
+    staffNote: string | null;
   }[];
 }
 

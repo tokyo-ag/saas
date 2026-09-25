@@ -2,13 +2,21 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Param,
   Query,
+  Body,
   NotFoundException,
 } from '@nestjs/common';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BlogService } from '../blog/blog.service';
+
+class UpdateRosterReservationDto {
+  @IsOptional() @IsString() @MaxLength(100) referrer?: string;
+  @IsOptional() @IsString() @MaxLength(1000) staffNote?: string;
+}
 
 // Mirrors frontend/src/lib/lpTags.ts LOCATION_TAGS - kept in sync manually since Event.tags
 // mixes location tags together with other tag groups (search tags etc.) in one flat array.
@@ -150,6 +158,7 @@ export class PublicController {
         levelEnabled: event.levelEnabled,
       },
       reservations: reservations.map((r) => ({
+        id: r.id,
         name: r.member.name,
         grade: r.member.grade,
         gender: r.member.gender,
@@ -158,8 +167,40 @@ export class PublicController {
         linePictureUrl: r.member.linePictureUrl,
         status: r.status,
         waitlistOrder: r.waitlistOrder,
+        referrer: r.referrer,
+        staffNote: r.staffNote,
       })),
     };
+  }
+
+  // 運営が配布するこのページ限定の編集項目（紹介者・備考）。ログイン不要でリンクを
+  // 知っている人なら更新できる想定なので、対象イベントをこのroster tokenで
+  // 絞り込んだ上でしか更新できないようにする。
+  @Patch('roster/:token/reservations/:reservationId')
+  async updateRosterReservation(
+    @Param('token') token: string,
+    @Param('reservationId') reservationId: string,
+    @Body() dto: UpdateRosterReservationDto,
+  ) {
+    const event = await this.prisma.event.findFirst({
+      where: { rosterShareToken: token, rosterShareEnabled: true },
+    });
+    if (!event) throw new NotFoundException('名簿が見つかりません');
+
+    const reservation = await this.prisma.reservation.findFirst({
+      where: { id: reservationId, eventId: event.id },
+    });
+    if (!reservation) throw new NotFoundException('予約が見つかりません');
+
+    const updated = await this.prisma.reservation.update({
+      where: { id: reservationId },
+      data: {
+        ...(dto.referrer !== undefined && { referrer: dto.referrer.trim() || null }),
+        ...(dto.staffNote !== undefined && { staffNote: dto.staffNote.trim() || null }),
+      },
+    });
+
+    return { id: updated.id, referrer: updated.referrer, staffNote: updated.staffNote };
   }
 
   @Get('staff-view/:token/events')

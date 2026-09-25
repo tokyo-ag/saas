@@ -430,6 +430,8 @@ model Reservation {
   stripePaymentIntentId String?           @map("stripe_payment_intent_id") @db.VarChar(100)
   paidAt                DateTime?         @map("paid_at")
   reservedAt            DateTime          @default(now()) @map("reserved_at")
+  referrer              String?           @db.VarChar(100)
+  staffNote             String?           @map("staff_note") @db.Text
 
   event  Event  @relation(fields: [eventId], references: [id])
   member Member @relation(fields: [memberId], references: [id])
