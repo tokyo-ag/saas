@@ -43,6 +43,20 @@ function isLineAuthErrorMessage(message: string): boolean {
   );
 }
 
+// リマインド文中のURLをタップできるリンクに変換する
+const URL_RE = /(https?:\/\/[^\s]+)/g;
+function linkifyText(text: string) {
+  return text.split(URL_RE).map((part, i) =>
+    /^https?:\/\//.test(part) ? (
+      <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="underline break-all text-blue-600">
+        {part}
+      </a>
+    ) : (
+      <span key={i}>{part}</span>
+    ),
+  );
+}
+
 function ReservePageInner() {
   const { tenantId, eventId } = useParams<{ tenantId: string; eventId: string }>();
   const searchParams = useSearchParams();
@@ -534,7 +548,7 @@ function ReservePageInner() {
             {reservationMessageText && (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
                 <p className="mb-2 text-xs font-bold text-gray-400">予約完了時のご案内</p>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">{reservationMessageText}</p>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">{linkifyText(reservationMessageText)}</p>
               </div>
             )}
             <button
