@@ -250,10 +250,15 @@ export const api = {
     reviews: (tenantCode: string) =>
       request<TenantReview[]>(`/public/tenants/${tenantCode}/reviews`),
     roster: (token: string) => request<PublicRoster>(`/public/roster/${token}`),
-    updateRosterReservation: (token: string, reservationId: string, data: { referrer?: string; staffNote?: string }) =>
+    updateRosterReservation: (
+      token: string,
+      reservationId: string,
+      data: { referrer?: string; staffNote?: string },
+      options?: { keepalive?: boolean },
+    ) =>
       request<{ id: string; referrer: string | null; staffNote: string | null }>(
         `/public/roster/${token}/reservations/${reservationId}`,
-        { method: 'PATCH', body: JSON.stringify(data) },
+        { method: 'PATCH', body: JSON.stringify(data), keepalive: options?.keepalive },
       ),
     staffViewEvents: (token: string) =>
       request<StaffViewEventList>(`/public/staff-view/${token}/events`),
