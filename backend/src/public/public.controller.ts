@@ -708,7 +708,6 @@ export class PublicController {
             linePictureUrl: true,
             iconUrl: true,
             liffId: true,
-            eventSocialProofSettings: true,
             publicPages: {
               take: 1,
               select: { footerText: true },
@@ -719,17 +718,12 @@ export class PublicController {
           where: {
             status: { in: ['reserved', 'attended', 'waiting_payment'] },
           },
-          select: { id: true, member: { select: { gender: true } } },
+          select: { id: true },
         },
       },
     });
     if (!event) throw new NotFoundException('Event not found');
     const isEnded = event.status !== 'open' || event.heldAt < new Date();
-    const socialProofByEvent = await this.eventSocialProofService.buildForEvents(
-      event.tenantId,
-      event.tenant.eventSocialProofSettings,
-      [event],
-    );
     return {
       id: event.id,
       title: event.title,
@@ -746,7 +740,6 @@ export class PublicController {
       priceFemale: event.priceFemale,
       capacity: event.capacity,
       reservedCount: event.reservations.length,
-      socialProof: socialProofByEvent.get(event.id) ?? null,
       imageUrl: event.imageUrl,
       iconUrl: event.iconUrl,
       category: event.category,

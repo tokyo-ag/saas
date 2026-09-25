@@ -5,10 +5,9 @@ import Link from 'next/link';
 
 import PublicFooter from '@/components/public/PublicFooter';
 import { SmartLiffButton } from '@/components/public/SmartLiffButton';
-import { ActivityTicker } from '@/components/liff/ActivityTicker';
 import { SITE_URL, API_URL, IMAGE_BASE_URL, buildLiffUrl } from '@/lib/config';
 import { isLightHexColor, readableTextColor } from '@/lib/color';
-import { formatEventSchedule, EventSocialProof } from '@/lib/api';
+import { formatEventSchedule } from '@/lib/api';
 
 type EventDetail = {
   id: string;
@@ -26,7 +25,6 @@ type EventDetail = {
   priceFemale?: number | null;
   capacity?: number | null;
   reservedCount: number;
-  socialProof?: EventSocialProof | null;
   imageUrl?: string;
   iconUrl?: string;
   category?: string | null;
@@ -301,9 +299,10 @@ export default async function PublicEventPage({
   })();
   const configuredLineUrl = footerSettings.reserveLineUrl?.trim() || footerSettings.line?.trim();
   // このページはSEO向けの詳細ページ。ボタンからはLINEログインを経由しつつ、
-  // ログイン後はこのイベントの予約ページへ直接着地させる（予約完了後は
-  // そのままリマインド案内が表示される）。
-  const loginPath = `/liff/${event.tenantCode}/events/${event.id}/reserve`;
+  // ログイン後はこのイベントの予約ページへ直接着地させる。auto=1は
+  // 「予約する」のクリックで既に意思表示済みという合図で、遷移先の
+  // 予約ページで再度ボタンを押させず自動で予約を確定させる。
+  const loginPath = `/liff/${event.tenantCode}/events/${event.id}/reserve?auto=1`;
   const effectiveActionStyle = event.reserveActionStyle || footerSettings.reserveActionStyle;
   const isExternalLineUrl = effectiveActionStyle === 'line' && !!configuredLineUrl;
   const reserveUrl = isExternalLineUrl
@@ -344,8 +343,6 @@ export default async function PublicEventPage({
         )}
       </header>
 
-      <ActivityTicker tenantId={event.tenantCode ?? tenantCode} accentColor={accentColor} />
-
       <div className="px-4 py-5 space-y-4">
         {isEnded && (
           <div className="rounded-2xl bg-gray-100 border border-gray-200 px-4 py-3 text-center text-sm text-gray-500">
@@ -380,19 +377,6 @@ export default async function PublicEventPage({
               <h1 className="text-xl font-bold text-gray-900 leading-snug">
                 {event.title}
               </h1>
-              {event.socialProof?.text && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {event.socialProof.text.split('\n').map((line) => (
-                    <span
-                      key={line}
-                      className="inline-block rounded-full px-2.5 py-0.5 text-xs font-bold"
-                      style={{ backgroundColor: `${accentColor}1a`, color: accentColor }}
-                    >
-                      {line}
-                    </span>
-                  ))}
-                </div>
-              )}
               <div className="mt-2 flex items-center gap-2">
                 {imgSrc(event.tenantIconUrl) && (
                   <Link href={`/clubs/${event.tenantCode}`}>

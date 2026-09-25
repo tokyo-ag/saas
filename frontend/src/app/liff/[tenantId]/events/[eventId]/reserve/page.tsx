@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -53,6 +53,8 @@ function ReservePageInner() {
   // 背景に同化して見えなくなる。その場合は濃色にフォールバックする。
   const solidAccentColor = isLightHexColor(accentColor) ? '#111827' : accentColor;
   const isWaitlist = searchParams.get('waitlist') === '1';
+  const isAutoReserve = searchParams.get('auto') === '1';
+  const autoSubmitTriggeredRef = useRef(false);
 
   const [authStatus, setAuthStatus] = useState<AuthStatus>('loading');
   const [authError, setAuthError] = useState('');
@@ -284,10 +286,19 @@ function ReservePageInner() {
   useEffect(() => {
     if (authStatus !== 'ok' || isFriend !== true || !lineUserId) return;
     if (!hasProfile) {
-      const returnTo = `/liff/${tenantId}/events/${eventId}/reserve`;
+      const returnTo = `/liff/${tenantId}/events/${eventId}/reserve${isAutoReserve ? '?auto=1' : ''}`;
       router.replace(`/liff/${tenantId}/profile?returnTo=${encodeURIComponent(returnTo)}`);
     }
-  }, [authStatus, isFriend, lineUserId, hasProfile, tenantId, eventId, router]);
+  }, [authStatus, isFriend, lineUserId, hasProfile, isAutoReserve, tenantId, eventId, router]);
+
+  // SEOページの「予約する」を経由した場合（auto=1）は、確認画面を挟まず自動で予約を確定する
+  useEffect(() => {
+    if (!isAutoReserve || autoSubmitTriggeredRef.current) return;
+    if (authStatus !== 'ok' || isFriend !== true || !hasProfile || isLineMode || isClosed) return;
+    if (myReservation || submitting) return;
+    autoSubmitTriggeredRef.current = true;
+    submit();
+  }, [isAutoReserve, authStatus, isFriend, hasProfile, isLineMode, isClosed, myReservation, submitting]);
 
   function copyInviteLink() {
     if (!event) return;
@@ -513,47 +524,13 @@ function ReservePageInner() {
               </div>
             )}
             <div className="p-4 space-y-3">
-              {event.category && (
-                <span className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium" style={{ backgroundColor: hexToRgba(accentColor, 10), color: solidAccentColor }}>
-                  {event.category}
-                </span>
-              )}
               <p className="font-bold text-gray-900 text-base leading-snug">{event.title}</p>
-              {(event.description || event.descriptionMale || event.descriptionFemale) && (
-                <div className="pt-1 border-t border-gray-100">
-                  {event.descriptionMale || event.descriptionFemale ? (
-                    <div className="space-y-2">
-                      {event.descriptionMale && (
-                        <div>
-                          <p className="mb-0.5 text-[11px] font-semibold text-gray-400">男性の方へ</p>
-                          <p className="text-xs text-gray-500 whitespace-pre-wrap leading-relaxed">{event.descriptionMale}</p>
-                        </div>
-                      )}
-                      {event.descriptionFemale && (
-                        <div>
-                          <p className="mb-0.5 text-[11px] font-semibold text-gray-400">女性の方へ</p>
-                          <p className="text-xs text-gray-500 whitespace-pre-wrap leading-relaxed">{event.descriptionFemale}</p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-gray-500 whitespace-pre-wrap leading-relaxed">{event.description}</p>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         )}
 
         {myReservation ? (
           <>
-            <div className="w-full rounded-2xl py-4 text-center shadow-sm" style={{ backgroundColor: '#10b981' }}>
-              <p className="font-bold text-base text-white">
-                {myReservation.status === 'reserved' ? '予約しました！' : STATUS_LABEL[myReservation.status] ?? myReservation.status}
-                {myReservation.status === 'waitlisted' && myReservation.waitlistOrder ? `（${myReservation.waitlistOrder}番目）` : ''}
-              </p>
-              <p className="mt-1 text-xs text-white/80">キャンセルはマイページから</p>
-            </div>
             {reservationMessageText && (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
                 <p className="mb-2 text-xs font-bold text-gray-400">予約完了時のご案内</p>
@@ -568,6 +545,13 @@ function ReservePageInner() {
             >
               {inviteCopied ? 'コピーしました' : '友達に紹介する（リンクをコピー）'}
             </button>
+            <div className="w-full rounded-2xl py-4 text-center shadow-sm" style={{ backgroundColor: '#10b981' }}>
+              <p className="font-bold text-base text-white">
+                {myReservation.status === 'reserved' ? '予約しました！' : STATUS_LABEL[myReservation.status] ?? myReservation.status}
+                {myReservation.status === 'waitlisted' && myReservation.waitlistOrder ? `（${myReservation.waitlistOrder}番目）` : ''}
+              </p>
+              <p className="mt-1 text-xs text-white/80">キャンセルはマイページから</p>
+            </div>
           </>
         ) : isLineMode ? (
           <a
