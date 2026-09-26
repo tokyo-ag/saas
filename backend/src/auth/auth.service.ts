@@ -9,7 +9,6 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
-import { SmsService } from '../sms/sms.service';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 
@@ -22,7 +21,6 @@ export class AuthService {
     private jwtService: JwtService,
     private config: ConfigService,
     private email: EmailService,
-    private sms: SmsService,
   ) {}
 
   private async generateUniqueCode(): Promise<string> {
@@ -60,31 +58,19 @@ export class AuthService {
     return `${user.slice(0, 1)}${'*'.repeat(Math.max(user.length - 1, 3))}@${domain}`;
   }
 
-  private maskPhone(phone: string): string {
-    const digits = phone.replace(/\D/g, '');
-    if (digits.length < 4) return '****';
-    return `***-****-${digits.slice(-4)}`;
-  }
-
   private isSuperadminAccount(email: string | null): boolean {
     const superadminEmail = this.config.get<string>('SUPERADMIN_EMAIL');
     return !!superadminEmail && email === superadminEmail;
   }
 
-  // ログインの第1段階（パスワード確認）を通過したアカウントへ確認コードを送り、
-  // 本人確認が済むまでは実際のセッションを発行しない。スーパーアドミンは
-  // 電話番号へSMSで、それ以外の主催者はメールでコードを送る。
+  // ログインの第1段階（パスワード確認）を通過したアカウントへ確認コードを
+  // メールで送り、本人確認が済むまでは実際のセッションを発行しない。
+  // スーパーアドミンも含め、主催者は全員メールでコードを受け取る。
   private async issuePendingTwoFactor(account: {
     id: string;
     tenantId: string;
     email: string | null;
-  }): Promise<{
-    pendingToken: string;
-    channel: 'email' | 'sms';
-    maskedDestination: string;
-  }> {
-    const isSuperadmin = this.isSuperadminAccount(account.email);
-
+  }): Promise<{ pendingToken: string; maskedDestination: string }> {
     const code = this.generateSixDigitCode();
     const codeHash = await bcrypt.hash(code, 10);
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -97,34 +83,13 @@ export class AuthService {
       },
     });
 
-    let channel: 'email' | 'sms';
-    let maskedDestination: string;
-    const phone = this.config.get<string>('SUPERADMIN_PHONE_NUMBER');
-    if (isSuperadmin && phone && this.sms.isConfigured()) {
-      await this.sms.send(
-        phone,
-        `【COMIU】ログイン確認コード: ${code}（10分間有効）`,
-      );
-      channel = 'sms';
-      maskedDestination = this.maskPhone(phone);
-    } else {
-      // SMS未設定（Twilio未契約など）の間は、スーパーアドミンもメールへ
-      // フォールバックする。設定が揃い次第、自動的にSMSへ切り替わる。
-      if (isSuperadmin) {
-        this.logger.warn(
-          'SMS is not configured for superadmin 2FA; falling back to email',
+    await this.email
+      .sendTwoFactorCodeEmail(account.email!, code)
+      .catch((err) => {
+        this.logger.error(
+          `Failed to send 2FA code to ${account.email}: ${err?.message ?? err}`,
         );
-      }
-      await this.email
-        .sendTwoFactorCodeEmail(account.email!, code)
-        .catch((err) => {
-          this.logger.error(
-            `Failed to send 2FA code to ${account.email}: ${err?.message ?? err}`,
-          );
-        });
-      channel = 'email';
-      maskedDestination = this.maskEmail(account.email!);
-    }
+      });
 
     const pendingToken = this.jwtService.sign(
       {
@@ -134,7 +99,7 @@ export class AuthService {
       },
       { expiresIn: '10m' },
     );
-    return { pendingToken, channel, maskedDestination };
+    return { pendingToken, maskedDestination: this.maskEmail(account.email!) };
   }
 
   private verifyPendingTwoFactorToken(pendingToken: string): {

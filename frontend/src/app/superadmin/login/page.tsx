@@ -16,7 +16,6 @@ export default function SuperadminLoginPage() {
 
   const [pendingToken, setPendingToken] = useState('');
   const [maskedDestination, setMaskedDestination] = useState('');
-  const [channel, setChannel] = useState<'email' | 'sms'>('sms');
   const [code, setCode] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
@@ -48,7 +47,6 @@ export default function SuperadminLoginPage() {
       if (!res.ok) throw new Error(data.message ?? 'ログインに失敗しました');
       setPendingToken(data.pendingToken);
       setMaskedDestination(data.maskedDestination ?? '');
-      setChannel(data.channel === 'email' ? 'email' : 'sms');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'ログインに失敗しました');
     } finally {
@@ -93,7 +91,6 @@ export default function SuperadminLoginPage() {
       if (!res.ok) throw new Error(data.message ?? '再送に失敗しました');
       setPendingToken(data.pendingToken);
       setMaskedDestination(data.maskedDestination ?? '');
-      setChannel(data.channel === 'email' ? 'email' : 'sms');
       setResent(true);
       setTimeout(() => setResent(false), 3000);
     } catch (err: unknown) {
@@ -146,9 +143,7 @@ export default function SuperadminLoginPage() {
               {error && <p className="text-red-500 text-sm text-center">{error}</p>}
               <div>
                 <p className="text-sm text-gray-700 mb-1.5">
-                  {maskedDestination
-                    ? `${maskedDestination} 宛に${channel === 'email' ? 'メール' : 'SMS'}で確認コードを送信しました。`
-                    : `${channel === 'email' ? 'メール' : 'SMS'}で確認コードを送信しました。`}
+                  {maskedDestination ? `${maskedDestination} 宛にメールで確認コードを送信しました。` : 'メールで確認コードを送信しました。'}
                 </p>
                 <label className="block text-sm font-medium text-gray-700 mb-1">確認コード（6桁）</label>
                 <input
