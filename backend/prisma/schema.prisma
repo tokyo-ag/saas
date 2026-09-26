@@ -266,6 +266,10 @@ model OrganizerAccount {
   passwordResetToken     String?   @unique @map("password_reset_token") @db.VarChar(200)
   passwordResetExpiresAt DateTime? @map("password_reset_expires_at")
 
+  twoFactorCodeHash      String?   @map("two_factor_code_hash") @db.VarChar(100)
+  twoFactorCodeExpiresAt DateTime? @map("two_factor_code_expires_at")
+  twoFactorAttempts      Int       @default(0) @map("two_factor_attempts")
+
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])

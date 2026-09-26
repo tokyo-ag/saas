@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
+import { SmsService } from '../sms/sms.service';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 
@@ -21,6 +22,7 @@ export class AuthService {
     private jwtService: JwtService,
     private config: ConfigService,
     private email: EmailService,
+    private sms: SmsService,
   ) {}
 
   private async generateUniqueCode(): Promise<string> {
@@ -48,150 +50,109 @@ export class AuthService {
     return crypto.randomBytes(32).toString('hex');
   }
 
-  private getBackendUrl(): string {
-    return (this.config.get<string>('BACKEND_URL') ?? 'http://localhost:3001')
-      .trim()
-      .replace(/\/$/, '');
+  private generateSixDigitCode(): string {
+    return crypto.randomInt(0, 1000000).toString().padStart(6, '0');
   }
 
-  private getFrontendUrl(): string {
-    return (this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:3000')
-      .trim()
-      .replace(/\/$/, '');
+  private maskEmail(email: string): string {
+    const [user, domain] = email.split('@');
+    if (!domain) return email;
+    return `${user.slice(0, 1)}${'*'.repeat(Math.max(user.length - 1, 3))}@${domain}`;
   }
 
-  getLineFailureRedirectUrl(reason = 'line_auth_failed'): string {
-    const params = new URLSearchParams({ lineError: reason });
-    return `${this.getFrontendUrl()}/login?${params}`;
+  private maskPhone(phone: string): string {
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length < 4) return '****';
+    return `***-****-${digits.slice(-4)}`;
   }
 
-  getLineAuthUrl(): string {
-    const channelId = this.config.get<string>('LINE_LOGIN_CHANNEL_ID');
-    if (!channelId) throw new BadRequestException('LINE Login未設定');
-    const backendUrl = this.getBackendUrl();
-    const state = this.jwtService.sign(
-      { ts: Date.now() },
+  private isSuperadminAccount(email: string | null): boolean {
+    const superadminEmail = this.config.get<string>('SUPERADMIN_EMAIL');
+    return !!superadminEmail && email === superadminEmail;
+  }
+
+  // ログインの第1段階（パスワード確認）を通過したアカウントへ確認コードを送り、
+  // 本人確認が済むまでは実際のセッションを発行しない。スーパーアドミンは
+  // 電話番号へSMSで、それ以外の主催者はメールでコードを送る。
+  private async issuePendingTwoFactor(account: {
+    id: string;
+    tenantId: string;
+    email: string | null;
+  }): Promise<{
+    pendingToken: string;
+    channel: 'email' | 'sms';
+    maskedDestination: string;
+  }> {
+    const isSuperadmin = this.isSuperadminAccount(account.email);
+
+    const code = this.generateSixDigitCode();
+    const codeHash = await bcrypt.hash(code, 10);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    await this.prisma.organizerAccount.update({
+      where: { id: account.id },
+      data: {
+        twoFactorCodeHash: codeHash,
+        twoFactorCodeExpiresAt: expiresAt,
+        twoFactorAttempts: 0,
+      },
+    });
+
+    let channel: 'email' | 'sms';
+    let maskedDestination: string;
+    const phone = this.config.get<string>('SUPERADMIN_PHONE_NUMBER');
+    if (isSuperadmin && phone && this.sms.isConfigured()) {
+      await this.sms.send(
+        phone,
+        `【COMIU】ログイン確認コード: ${code}（10分間有効）`,
+      );
+      channel = 'sms';
+      maskedDestination = this.maskPhone(phone);
+    } else {
+      // SMS未設定（Twilio未契約など）の間は、スーパーアドミンもメールへ
+      // フォールバックする。設定が揃い次第、自動的にSMSへ切り替わる。
+      if (isSuperadmin) {
+        this.logger.warn(
+          'SMS is not configured for superadmin 2FA; falling back to email',
+        );
+      }
+      await this.email
+        .sendTwoFactorCodeEmail(account.email!, code)
+        .catch((err) => {
+          this.logger.error(
+            `Failed to send 2FA code to ${account.email}: ${err?.message ?? err}`,
+          );
+        });
+      channel = 'email';
+      maskedDestination = this.maskEmail(account.email!);
+    }
+
+    const pendingToken = this.jwtService.sign(
+      {
+        accountId: account.id,
+        tenantId: account.tenantId,
+        purpose: 'pending-2fa',
+      },
       { expiresIn: '10m' },
     );
-    const params = new URLSearchParams({
-      response_type: 'code',
-      client_id: channelId,
-      redirect_uri: `${backendUrl}/api/auth/line/callback`,
-      state,
-      scope: 'profile openid',
-    });
-    return `https://access.line.me/oauth2/v2.1/authorize?${params}`;
+    return { pendingToken, channel, maskedDestination };
   }
 
-  async handleLineCallback(
-    code: string,
-    state: string,
-  ): Promise<{ redirectUrl: string }> {
-    if (!code || !state) {
-      throw new BadRequestException('LINE認証情報が不足しています');
-    }
-
-    const channelId = this.config.get<string>('LINE_LOGIN_CHANNEL_ID');
-    const channelSecret = this.config.get<string>('LINE_LOGIN_CHANNEL_SECRET');
-    if (!channelId || !channelSecret) {
-      throw new BadRequestException('LINE Login未設定');
-    }
-
-    const backendUrl = this.getBackendUrl();
-    const frontendUrl = this.getFrontendUrl();
-
+  private verifyPendingTwoFactorToken(pendingToken: string): {
+    accountId: string;
+    tenantId: string;
+  } {
+    let payload: { accountId: string; tenantId: string; purpose: string };
     try {
-      this.jwtService.verify(state);
+      payload = this.jwtService.verify(pendingToken);
     } catch {
-      throw new BadRequestException('Invalid state');
-    }
-
-    const tokenRes = await fetch('https://api.line.me/oauth2/v2.1/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: `${backendUrl}/api/auth/line/callback`,
-        client_id: channelId,
-        client_secret: channelSecret,
-      }),
-    });
-    const tokenData = (await tokenRes.json().catch(() => ({}))) as {
-      access_token?: string;
-      error?: string;
-      error_description?: string;
-    };
-    if (!tokenRes.ok || !tokenData.access_token) {
-      this.logger.warn(
-        `LINE token exchange failed: ${tokenData.error_description ?? tokenData.error ?? tokenRes.statusText}`,
-      );
-      throw new BadRequestException(
-        'LINE認証に失敗しました。Callback URLとChannel設定を確認してください。',
+      throw new UnauthorizedException(
+        'セッションの有効期限が切れました。もう一度ログインしてください。',
       );
     }
-
-    const profileRes = await fetch('https://api.line.me/v2/profile', {
-      headers: { Authorization: `Bearer ${tokenData.access_token}` },
-    });
-    const profile = (await profileRes.json().catch(() => ({}))) as {
-      userId?: string;
-      displayName?: string;
-    };
-    if (!profileRes.ok || !profile.userId) {
-      this.logger.warn(`LINE profile fetch failed: ${profileRes.statusText}`);
-      throw new BadRequestException('LINEプロフィール取得に失敗しました');
+    if (payload.purpose !== 'pending-2fa') {
+      throw new UnauthorizedException('無効なリクエストです');
     }
-
-    const account = await this.prisma.organizerAccount.findUnique({
-      where: { lineUserId: profile.userId },
-    });
-
-    if (account) {
-      const token = this.issueToken(account.tenantId, account.id);
-      return { redirectUrl: `${frontendUrl}/auth/callback?token=${token}` };
-    }
-
-    const lineToken = this.jwtService.sign(
-      { lineUserId: profile.userId, displayName: profile.displayName ?? '' },
-      { expiresIn: '30m' },
-    );
-    return {
-      redirectUrl: `${frontendUrl}/register/line?lineToken=${encodeURIComponent(lineToken)}`,
-    };
-  }
-
-  async completeLineRegistration(lineToken: string, orgName: string) {
-    let payload: { lineUserId: string; displayName: string };
-    try {
-      payload = this.jwtService.verify(lineToken);
-    } catch {
-      throw new BadRequestException(
-        'セッションが切れました。もう一度LINEでログインしてください。',
-      );
-    }
-
-    const existing = await this.prisma.organizerAccount.findUnique({
-      where: { lineUserId: payload.lineUserId },
-    });
-    if (existing)
-      throw new ConflictException('このLINEアカウントは既に登録されています');
-
-    const code = await this.generateUniqueCode();
-    const tenant = await this.prisma.tenant.create({
-      data: {
-        id: `tenant-${Date.now()}`,
-        name: orgName,
-        code,
-        organizerAccounts: { create: { lineUserId: payload.lineUserId } },
-      },
-      include: { organizerAccounts: true },
-    });
-    const account = tenant.organizerAccounts[0];
-    return {
-      token: this.issueToken(tenant.id, account.id),
-      tenantId: tenant.id,
-    };
+    return { accountId: payload.accountId, tenantId: payload.tenantId };
   }
 
   async register(email: string, password: string, orgName: string) {
@@ -251,13 +212,80 @@ export class AuthService {
       );
     if (!account.emailVerifiedAt)
       throw new UnauthorizedException('EMAIL_NOT_VERIFIED');
-    const superadminEmail = this.config.get<string>('SUPERADMIN_EMAIL');
-    const isSuperadmin = !!superadminEmail && account.email === superadminEmail;
+
+    return this.issuePendingTwoFactor(account);
+  }
+
+  async verifyTwoFactor(pendingToken: string, code: string) {
+    const { accountId, tenantId } =
+      this.verifyPendingTwoFactorToken(pendingToken);
+
+    const account = await this.prisma.organizerAccount.findUnique({
+      where: { id: accountId },
+    });
+    if (
+      !account ||
+      account.tenantId !== tenantId ||
+      !account.twoFactorCodeHash ||
+      !account.twoFactorCodeExpiresAt
+    ) {
+      throw new UnauthorizedException('もう一度ログインしてください');
+    }
+    if (account.twoFactorCodeExpiresAt < new Date()) {
+      throw new UnauthorizedException(
+        '確認コードの有効期限が切れました。もう一度ログインしてください。',
+      );
+    }
+    if (account.twoFactorAttempts >= 5) {
+      await this.prisma.organizerAccount.update({
+        where: { id: account.id },
+        data: {
+          twoFactorCodeHash: null,
+          twoFactorCodeExpiresAt: null,
+          twoFactorAttempts: 0,
+        },
+      });
+      throw new UnauthorizedException(
+        '試行回数が上限に達しました。もう一度ログインしてください。',
+      );
+    }
+
+    const validCode = await bcrypt.compare(code, account.twoFactorCodeHash);
+    if (!validCode) {
+      await this.prisma.organizerAccount.update({
+        where: { id: account.id },
+        data: { twoFactorAttempts: { increment: 1 } },
+      });
+      throw new UnauthorizedException('確認コードが正しくありません');
+    }
+
+    await this.prisma.organizerAccount.update({
+      where: { id: account.id },
+      data: {
+        twoFactorCodeHash: null,
+        twoFactorCodeExpiresAt: null,
+        twoFactorAttempts: 0,
+      },
+    });
+
+    const isSuperadmin = this.isSuperadminAccount(account.email);
     return {
       token: this.issueToken(account.tenantId, account.id, isSuperadmin),
       tenantId: account.tenantId,
       emailVerified: true,
     };
+  }
+
+  async resendTwoFactor(pendingToken: string) {
+    const { accountId, tenantId } =
+      this.verifyPendingTwoFactorToken(pendingToken);
+    const account = await this.prisma.organizerAccount.findUnique({
+      where: { id: accountId },
+    });
+    if (!account || account.tenantId !== tenantId) {
+      throw new UnauthorizedException('もう一度ログインしてください');
+    }
+    return this.issuePendingTwoFactor(account);
   }
 
   async reconfirmPassword(

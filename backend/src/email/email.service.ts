@@ -69,6 +69,21 @@ export class EmailService {
     );
   }
 
+  async sendTwoFactorCodeEmail(to: string, code: string): Promise<void> {
+    await this.send(
+      to,
+      '【COMIU】ログイン確認コード',
+      `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
+        <h2 style="color:#06C755">ログイン確認コード</h2>
+        <p>以下の確認コードをログイン画面に入力してください。</p>
+        <p style="font-size:32px;font-weight:bold;letter-spacing:6px;color:#111">${code}</p>
+        <p style="color:#888;font-size:13px">このコードは10分間有効です。心当たりがない場合はこのメールを無視してください。</p>
+      </div>
+      `,
+    );
+  }
+
   async sendPasswordResetEmail(to: string, token: string): Promise<void> {
     const frontendUrl =
       this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:3000';

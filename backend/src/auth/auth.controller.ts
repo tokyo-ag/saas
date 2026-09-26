@@ -5,11 +5,10 @@ import {
   Body,
   Query,
   Req,
-  Res,
   UseGuards,
   BadRequestException,
 } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
 import { IsString, IsNotEmpty, IsEmail, MinLength } from 'class-validator';
 import { Throttle } from '@nestjs/throttler';
 import { ConfigService } from '@nestjs/config';
@@ -32,9 +31,13 @@ class ReconfirmDto {
   @IsString() @IsNotEmpty() password: string;
 }
 
-class LineCompleteDto {
-  @IsString() lineToken: string;
-  @IsNotEmpty() @IsString() orgName: string;
+class VerifyTwoFactorDto {
+  @IsString() @IsNotEmpty() pendingToken: string;
+  @IsString() @IsNotEmpty() code: string;
+}
+
+class ResendTwoFactorDto {
+  @IsString() @IsNotEmpty() pendingToken: string;
 }
 
 class LineLoginPublicDto {
@@ -73,6 +76,18 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto.email, dto.password);
+  }
+
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
+  @Post('verify-2fa')
+  verifyTwoFactor(@Body() dto: VerifyTwoFactorDto) {
+    return this.authService.verifyTwoFactor(dto.pendingToken, dto.code);
+  }
+
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @Post('resend-2fa')
+  resendTwoFactor(@Body() dto: ResendTwoFactorDto) {
+    return this.authService.resendTwoFactor(dto.pendingToken);
   }
 
   @Throttle({ default: { ttl: 60000, limit: 5 } })
@@ -136,43 +151,6 @@ export class AuthController {
   @Post('resend-verification-by-email')
   resendVerificationByEmail(@Body() dto: ForgotPasswordDto) {
     return this.authService.resendVerificationEmailByEmail(dto.email);
-  }
-
-  @Get('line')
-  lineStart(@Res() res: Response) {
-    const url = this.authService.getLineAuthUrl();
-    res.redirect(url);
-  }
-
-  @Get('line/callback')
-  async lineCallback(
-    @Query('code') code: string,
-    @Query('state') state: string,
-    @Query('error') error: string | undefined,
-    @Res() res: Response,
-  ) {
-    if (error) {
-      res.redirect(this.authService.getLineFailureRedirectUrl(error));
-      return;
-    }
-
-    try {
-      const { redirectUrl } = await this.authService.handleLineCallback(
-        code,
-        state,
-      );
-      res.redirect(redirectUrl);
-    } catch {
-      res.redirect(this.authService.getLineFailureRedirectUrl());
-    }
-  }
-
-  @Post('line/complete')
-  completeLineRegistration(@Body() dto: LineCompleteDto) {
-    return this.authService.completeLineRegistration(
-      dto.lineToken,
-      dto.orgName,
-    );
   }
 
   @Throttle({ default: { ttl: 60000, limit: 20 } })
