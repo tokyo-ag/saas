@@ -114,7 +114,7 @@ export async function generateMetadata({
   };
 }
 
-function eventJsonLd(event: ReservationShowcaseEvent, tenantCode: string, tenantName: string) {
+function eventJsonLd(event: ReservationShowcaseEvent, tenantCode: string, tenantName: string, tenantIcon: string | null | undefined) {
   const isFull = event.capacity != null && (event.reservedCount ?? 0) >= event.capacity;
   const url = `${SITE_URL}/e/${tenantCode}/${event.id}`;
   const offers =
@@ -126,7 +126,7 @@ function eventJsonLd(event: ReservationShowcaseEvent, tenantCode: string, tenant
       : event.price != null
         ? { '@type': 'Offer', price: String(event.price), priceCurrency: 'JPY', availability: isFull ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock', url }
         : undefined;
-  const image = imgUrl(event.imageUrl, API_URL);
+  const image = imgUrl(event.imageUrl, API_URL) ?? imgUrl(tenantIcon, API_URL) ?? `${SITE_URL}/opengraph-image`;
 
   return {
     '@context': 'https://schema.org',
@@ -140,7 +140,7 @@ function eventJsonLd(event: ReservationShowcaseEvent, tenantCode: string, tenant
       '@type': 'Place',
       name: event.locationHint || event.location || tenantName,
     },
-    ...(image && { image: [image] }),
+    image: [image],
     organizer: { '@type': 'Organization', name: tenantName },
     ...(offers && { offers }),
     url,
@@ -177,7 +177,7 @@ export default async function TenantEventsPage({
   const name = tenant.lineDisplayName || tenant.name;
   const icon = tenant.linePictureUrl;
   const events = tenant.events ?? [];
-  const eventsJsonLd = events.map((event) => eventJsonLd(event, tenantCode, name));
+  const eventsJsonLd = events.map((event) => eventJsonLd(event, tenantCode, name, icon));
   const jsonLd = [breadcrumbJsonLd(tenantCode, name), ...eventsJsonLd];
 
   return (

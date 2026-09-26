@@ -139,7 +139,11 @@ function buildJsonLd(event: EventDetail) {
         };
 
   const eventUrl = `${SITE_URL}/e/${event.tenantCode}/${event.id}`;
-  const image = imgSrc(event.imageUrl) ?? imgSrc(event.iconUrl) ?? undefined;
+  const image =
+    imgSrc(event.imageUrl) ??
+    imgSrc(event.iconUrl) ??
+    imgSrc(event.tenantIconUrl) ??
+    `${SITE_URL}/opengraph-image`;
   const endAt = validEndAt(event);
   const inventoryLevel =
     event.capacity != null
@@ -154,7 +158,7 @@ function buildJsonLd(event: EventDetail) {
         description: buildDescription(event),
         startDate: event.heldAt,
         ...(endAt ? { endDate: endAt } : {}),
-        ...(image ? { image: [image] } : {}),
+        image: [image],
         location: {
           '@type': 'Place',
           name: event.locationHint || event.location,
