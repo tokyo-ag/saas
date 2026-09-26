@@ -83,13 +83,16 @@ export class AuthService {
       },
     });
 
-    await this.email
-      .sendTwoFactorCodeEmail(account.email!, code)
-      .catch((err) => {
-        this.logger.error(
-          `Failed to send 2FA code to ${account.email}: ${err?.message ?? err}`,
-        );
-      });
+    try {
+      await this.email.sendTwoFactorCodeEmail(account.email!, code);
+    } catch (err: any) {
+      this.logger.error(
+        `Failed to send 2FA code to ${account.email}: ${err?.message ?? err}`,
+      );
+      throw new BadRequestException(
+        '確認コードの送信に失敗しました。しばらくしてから再度お試しください。',
+      );
+    }
 
     const pendingToken = this.jwtService.sign(
       {

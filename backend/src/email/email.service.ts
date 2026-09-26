@@ -15,6 +15,12 @@ export class EmailService {
     const gmailUser = this.config.get<string>('GMAIL_USER');
 
     if (!clientId || !clientSecret || !refreshToken || !gmailUser) {
+      if (process.env.NODE_ENV === 'production') {
+        this.logger.error(
+          'Gmail credentials are not configured; cannot send email in production',
+        );
+        throw new Error('メール送信の設定が正しくありません');
+      }
       this.logger.warn(`[DEV] Email to ${to} | ${subject}`);
       return;
     }
