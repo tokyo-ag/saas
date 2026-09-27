@@ -107,6 +107,18 @@ function tagHref(tag: string) {
   return links[tag] ?? null;
 }
 
+// タイトルタグ用に「9/28開催・池袋」のような短い日付＋エリアの補足を作る。
+// イベント名自体（絵文字混じりのSNS向け文言）は変えず、検索向けの文脈だけ足す。
+function titleContext(event: EventDetail): string {
+  const date = new Date(event.heldAt).toLocaleDateString('ja-JP', {
+    month: 'numeric',
+    day: 'numeric',
+    timeZone: 'Asia/Tokyo',
+  });
+  const area = event.tags && event.tags.length > 0 ? event.tags.slice(0, 2).join('・') : null;
+  return area ? `${date}開催・${area}` : `${date}開催`;
+}
+
 function buildDescription(event: EventDetail) {
   const base = event.description?.trim() || event.descriptionMale?.trim() || event.descriptionFemale?.trim();
   if (base) {
@@ -248,7 +260,7 @@ export async function generateMetadata({
   );
 
   return {
-    title: `${event.title} | ${event.tenantName}`,
+    title: `${event.title}｜${titleContext(event)}｜${event.tenantName}`,
     description,
     ...(event.isEnded && !hasPastSearchValue
       ? { robots: { index: false, follow: true } }
