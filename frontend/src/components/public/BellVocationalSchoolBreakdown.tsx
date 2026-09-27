@@ -31,8 +31,52 @@ const TOKYO: Slice[] = [
   { name: 'その他', value: 27.0 },
 ];
 
+const SAITAMA: Slice[] = [
+  { name: '大宮国際動物専門学校', value: 8.0 },
+  { name: '埼玉コンピュータ＆医療事務専門学校', value: 7.5 },
+  { name: '中央情報専門学校', value: 7.0 },
+  { name: 'さいたまIT・WEB専門学校', value: 6.5 },
+  { name: '大宮情報ITクリエイター専門学校', value: 6.0 },
+  { name: '西武調理師アート専門学校', value: 5.5 },
+  { name: '埼玉県調理師専門学校', value: 5.0 },
+  { name: '国際医療専門学校', value: 4.8 },
+  { name: '早稲田医療技術専門学校', value: 4.5 },
+  { name: '専門学校日本医科学大学校', value: 4.2 },
+  { name: '大宮呉竹医療専門学校', value: 4.0 },
+  { name: '専門学校埼玉自動車大学校', value: 3.8 },
+  { name: 'ホンダテクニカルカレッジ関東', value: 3.5 },
+  { name: '専門学校関東工業自動車大学校', value: 3.2 },
+  { name: '秋草学園福祉教育専門学校', value: 3.0 },
+  { name: '国際航空専門学校', value: 2.8 },
+  { name: '埼玉歯科衛生専門学校', value: 2.5 },
+  { name: '大宮歯科衛生士専門学校', value: 2.3 },
+  { name: 'テクノ・ホルティ園芸専門学校', value: 2.0 },
+  { name: '埼玉医療福祉専門学校', value: 1.8 },
+  { name: '専門学校越生自動車大学校', value: 1.0 },
+  { name: '上尾中央医療専門学校', value: 0.9 },
+  { name: '幸手看護専門学校', value: 0.8 },
+  { name: '済生会川口看護専門学校', value: 0.8 },
+  { name: '埼玉医療福祉会看護専門学校', value: 0.8 },
+  { name: 'さいたま柔整専門学校', value: 0.7 },
+  { name: '坂戸鶴ヶ島医師会立看護専門学校', value: 0.7 },
+  { name: '新洋国際専門学校', value: 0.7 },
+  { name: '西武学園医学技術専門学校', value: 0.6 },
+  { name: '専門学校浜西ファッションアカデミー', value: 0.6 },
+  { name: '秩父看護専門学校', value: 0.6 },
+  { name: '東京国際学園外語専門学校', value: 0.5 },
+  { name: '東京国際学園情報専門学校', value: 0.5 },
+  { name: '所沢看護専門学校', value: 0.5 },
+  { name: '戸田中央看護専門学校', value: 0.5 },
+  { name: '獨協医科大学附属看護専門学校三郷校', value: 0.5 },
+  { name: '日本グローバル専門学校', value: 0.5 },
+  { name: '飯能看護専門学校', value: 0.4 },
+  { name: '本庄児玉看護専門学校', value: 0.4 },
+  { name: '蕨戸田市医師会看護専門学校', value: 0.1 },
+];
+
 const REGIONS = [
   { key: 'tokyo', label: '東京エリア', title: '東京エリアの専門学生 参加分布', data: TOKYO, caption: '' },
+  { key: 'saitama', label: '埼玉エリア', title: '埼玉エリアの専門学生 参加分布', data: SAITAMA, caption: '' },
 ] as const;
 
 const TRUNCATE_TOP_N = 10;
@@ -94,7 +138,7 @@ function RegionPanel({
               onClick={onToggleShowAll}
               className="text-xs text-gray-400 underline hover:text-gray-600"
             >
-              {showAllSchools ? '閉じる' : `もっと見る（全${region.data.length - 1}校）`}
+              {showAllSchools ? '閉じる' : `もっと見る（全${region.data.filter((s) => s.name !== 'その他').length}校）`}
             </button>
           </div>
         </>
