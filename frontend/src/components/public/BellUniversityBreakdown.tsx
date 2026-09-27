@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-
-type Slice = { name: string; value: number };
+import { Slice, COLORS, formatPercent, splitTopAndOthers, SchoolRow } from './schoolChartShared';
 
 // インカレサークルBELL専用のハードコードされた参加実績データ（仮割合）。
 // 予約実績が増えたら「その他」から個別の大学が独立していく想定で、
@@ -239,36 +238,6 @@ const TABS = [
 ] as const;
 
 const TRUNCATE_TOP_N = 10;
-
-const COLORS = [
-  '#06C755', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6',
-  '#EC4899', '#14B8A6', '#F97316', '#6366F1', '#84CC16',
-  '#0EA5E9', '#D946EF', '#22C55E', '#EAB308', '#F43F5E',
-  '#A855F7', '#10B981', '#FB923C', '#64748B', '#9CA3AF',
-];
-
-function formatPercent(value: number): string {
-  return Number.isInteger(value) ? `${value}%` : `${value.toFixed(1)}%`;
-}
-
-// 上位N校と、残りを「その他」にまとめた合計に分ける（円グラフが埋まりすぎないように）
-function splitTopAndOthers(data: Slice[], topN: number): { top: Slice[]; rest: Slice[]; othersTotal: number } {
-  const sorted = [...data].sort((a, b) => b.value - a.value);
-  const top = sorted.slice(0, topN);
-  const rest = sorted.slice(topN);
-  const othersTotal = Math.round(rest.reduce((sum, s) => sum + s.value, 0) * 10) / 10;
-  return { top, rest, othersTotal };
-}
-
-function SchoolRow({ slice, colorIndex }: { slice: Slice; colorIndex: number }) {
-  return (
-    <li className="flex items-center gap-1.5">
-      <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: COLORS[colorIndex % COLORS.length] }} />
-      <span className="truncate">{slice.name}</span>
-      <span className="ml-auto shrink-0 font-semibold">{formatPercent(slice.value)}</span>
-    </li>
-  );
-}
 
 // このタブのHTMLは常にDOMへ出力する（大学名がクロールされるように）。
 // 開閉やタブ切り替えは見た目上のCSS制御のみで行い、円グラフだけ開いた

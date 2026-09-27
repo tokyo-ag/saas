@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { ReservationViewShowcase, ReservationShowcaseEvent } from '@/components/public/ReservationViewShowcase';
 import { ActivityTicker } from '@/components/liff/ActivityTicker';
 import { BellUniversityBreakdown } from '@/components/public/BellUniversityBreakdown';
+import { BellVocationalSchoolBreakdown } from '@/components/public/BellVocationalSchoolBreakdown';
 import { SITE_URL, API_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 
-// インカレサークルBELL専用のカスタマイズ（大学参加分布グラフ）
+// インカレサークルBELL専用のカスタマイズ（大学・専門学校の参加分布グラフ）
 const BELL_TENANT_CODE = '11221185';
 
 type TenantEventsData = {
@@ -234,7 +235,12 @@ export default async function TenantEventsPage({
           />
         )}
 
-        {tenantCode === BELL_TENANT_CODE && <BellUniversityBreakdown />}
+        {tenantCode === BELL_TENANT_CODE && (
+          <>
+            <BellUniversityBreakdown />
+            <BellVocationalSchoolBreakdown />
+          </>
+        )}
       </div>
     </div>
   );
