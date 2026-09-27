@@ -149,9 +149,27 @@ const WOMENS: Slice[] = [
 ];
 
 const TABS = [
-  { key: 'national-coed', label: '国公立・共学', data: NATIONAL_COED, truncate: false },
-  { key: 'private-coed', label: '私立・共学', data: PRIVATE_COED_FULL, truncate: true },
-  { key: 'womens', label: '女子大', data: WOMENS, truncate: false },
+  {
+    key: 'national-coed',
+    label: '国公立・共学',
+    data: NATIONAL_COED,
+    truncate: false,
+    caption: '新歓シーズンに出遅れた人、サークルに入りそびれた人も大歓迎◎学年・学部関係なく今から参加できます',
+  },
+  {
+    key: 'private-coed',
+    label: '私立・共学',
+    data: PRIVATE_COED_FULL,
+    truncate: true,
+    caption: '「インカレサークルって大丈夫？」はもう卒業。ノンアル参加OK・初参加＆1人参加大歓迎だから、学内にはない出会いを気軽に広げられます◎',
+  },
+  {
+    key: 'womens',
+    label: '女子大',
+    data: WOMENS,
+    truncate: false,
+    caption: '',
+  },
 ] as const;
 
 const TRUNCATE_TOP_N = 10;
@@ -167,12 +185,92 @@ function formatPercent(value: number): string {
   return Number.isInteger(value) ? `${value}%` : `${value.toFixed(1)}%`;
 }
 
-// 上位N校＋「その他」にまとめた表示用データを作る（円グラフが埋まりすぎないように）
-function topSlicesWithOthers(data: Slice[], topN: number): Slice[] {
+// 上位N校と、残りを「その他」にまとめた合計に分ける（円グラフが埋まりすぎないように）
+function splitTopAndOthers(data: Slice[], topN: number): { top: Slice[]; rest: Slice[]; othersTotal: number } {
   const sorted = [...data].sort((a, b) => b.value - a.value);
   const top = sorted.slice(0, topN);
-  const restTotal = sorted.slice(topN).reduce((sum, s) => sum + s.value, 0);
-  return restTotal > 0 ? [...top, { name: 'その他', value: Math.round(restTotal * 10) / 10 }] : top;
+  const rest = sorted.slice(topN);
+  const othersTotal = Math.round(rest.reduce((sum, s) => sum + s.value, 0) * 10) / 10;
+  return { top, rest, othersTotal };
+}
+
+function SchoolRow({ slice, colorIndex }: { slice: Slice; colorIndex: number }) {
+  return (
+    <li className="flex items-center gap-1.5">
+      <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: COLORS[colorIndex % COLORS.length] }} />
+      <span className="truncate">{slice.name}</span>
+      <span className="ml-auto shrink-0 font-semibold">{formatPercent(slice.value)}</span>
+    </li>
+  );
+}
+
+// このタブのHTMLは常にDOMへ出力する（大学名がクロールされるように）。
+// 開閉やタブ切り替えは見た目上のCSS制御のみで行い、円グラフだけ開いた
+// タブに限って描画する（非表示要素内だとrechartsが幅0のまま固まるため）。
+function TabPanel({
+  tab,
+  isActiveTab,
+  isSectionOpen,
+  showAllSchools,
+  onToggleShowAll,
+}: {
+  tab: (typeof TABS)[number];
+  isActiveTab: boolean;
+  isSectionOpen: boolean;
+  showAllSchools: boolean;
+  onToggleShowAll: () => void;
+}) {
+  const { top, rest, othersTotal } = tab.truncate
+    ? splitTopAndOthers(tab.data, TRUNCATE_TOP_N)
+    : { top: tab.data, rest: [] as Slice[], othersTotal: 0 };
+  const pieData = tab.truncate && othersTotal > 0 ? [...top, { name: 'その他', value: othersTotal }] : top;
+
+  return (
+    <div className={isActiveTab ? '' : 'hidden'}>
+      {tab.caption && <p className="mb-3 text-xs leading-relaxed text-gray-700">{tab.caption}</p>}
+
+      {isSectionOpen && isActiveTab && (
+        <ResponsiveContainer width="100%" height={240}>
+          <PieChart>
+            <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90}>
+              {pieData.map((slice, i) => (
+                <Cell key={slice.name} fill={COLORS[i % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(value, name) => [formatPercent(Number(value)), name]} />
+          </PieChart>
+        </ResponsiveContainer>
+      )}
+
+      <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-gray-600">
+        {top.map((slice, i) => (
+          <SchoolRow key={slice.name} slice={slice} colorIndex={i} />
+        ))}
+        {tab.truncate && othersTotal > 0 && (
+          <SchoolRow slice={{ name: 'その他', value: othersTotal }} colorIndex={top.length} />
+        )}
+      </ul>
+
+      {tab.truncate && rest.length > 0 && (
+        <>
+          <ul className={`mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-gray-600 ${showAllSchools ? '' : 'hidden'}`}>
+            {rest.map((slice, i) => (
+              <SchoolRow key={slice.name} slice={slice} colorIndex={top.length + 1 + i} />
+            ))}
+          </ul>
+          <div className="mt-3 text-center">
+            <button
+              type="button"
+              onClick={onToggleShowAll}
+              className="text-xs text-gray-400 underline hover:text-gray-600"
+            >
+              {showAllSchools ? '閉じる' : `もっと見る（全${tab.data.length}校）`}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 export function BellUniversityBreakdown() {
@@ -180,77 +278,55 @@ export function BellUniversityBreakdown() {
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['key']>('national-coed');
   const [showAllSchools, setShowAllSchools] = useState(false);
 
-  if (!open) {
-    return (
-      <div className="mt-8 text-center">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="text-sm text-gray-400 underline hover:text-gray-600"
-        >
-          もっとみる
-        </button>
-      </div>
-    );
-  }
-
-  const active = TABS.find((t) => t.key === activeTab)!;
-  const pieData = active.truncate ? topSlicesWithOthers(active.data, TRUNCATE_TOP_N) : active.data;
-  const listData = active.truncate && !showAllSchools ? pieData : active.data;
-
   return (
-    <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-4">
-      <h2 className="mb-3 text-sm font-bold text-gray-900">インカレサークルBELLの大学参加分布</h2>
-
-      <div className="mb-4 flex gap-1.5 overflow-x-auto">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveTab(tab.key)}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-              activeTab === tab.key ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      <ResponsiveContainer width="100%" height={240}>
-        <PieChart>
-          <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90}>
-            {pieData.map((slice, i) => (
-              <Cell key={slice.name} fill={COLORS[i % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip formatter={(value, name) => [formatPercent(Number(value)), name]} />
-        </PieChart>
-      </ResponsiveContainer>
-
-      <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-gray-600">
-        {listData.map((slice, i) => (
-          <li key={slice.name} className="flex items-center gap-1.5">
-            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-            <span className="truncate">{slice.name}</span>
-            <span className="ml-auto shrink-0 font-semibold">{formatPercent(slice.value)}</span>
-          </li>
-        ))}
-      </ul>
-
-      {active.truncate && (
-        <div className="mt-3 text-center">
+    <div className="mt-8">
+      {!open && (
+        <div className="text-center">
           <button
             type="button"
-            onClick={() => setShowAllSchools((v) => !v)}
-            className="text-xs text-gray-400 underline hover:text-gray-600"
+            onClick={() => setOpen(true)}
+            className="text-sm text-gray-400 underline hover:text-gray-600"
           >
-            {showAllSchools ? '閉じる' : `もっと見る（全${active.data.length}校）`}
+            もっとみる
           </button>
         </div>
       )}
 
-      <p className="mt-3 text-[11px] text-gray-400">※ 過去の参加実績をもとにした概算です</p>
+      {/* 折りたたみ中もHTML自体は出力し、CSSでのみ見た目を隠す（クロール対策） */}
+      <div className={open ? 'rounded-2xl border border-gray-200 bg-white p-4' : 'hidden'}>
+        <h2 className="mb-1 text-sm font-bold text-gray-900">インカレサークルBELLの大学参加分布</h2>
+        <p className="mb-3 text-xs leading-relaxed text-gray-500">
+          BELLには国公立・私立を問わず幅広い大学から参加しています。学年・学部もバラバラだから、あなたと同じ境遇の子もきっといます。
+        </p>
+
+        <div className="mb-3 flex gap-1.5 overflow-x-auto">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key)}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                activeTab === tab.key ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {TABS.map((tab) => (
+          <TabPanel
+            key={tab.key}
+            tab={tab}
+            isActiveTab={activeTab === tab.key}
+            isSectionOpen={open}
+            showAllSchools={showAllSchools}
+            onToggleShowAll={() => setShowAllSchools((v) => !v)}
+          />
+        ))}
+
+        <p className="mt-3 text-[11px] text-gray-400">※ 過去の参加実績をもとにした概算です</p>
+      </div>
     </div>
   );
 }
