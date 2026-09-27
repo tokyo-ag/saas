@@ -234,7 +234,7 @@ const TABS = [
     label: '短大',
     data: JUNIOR_COLLEGE,
     truncate: true,
-    caption: '',
+    caption: '実習やテストで忙しい短大生でも大丈夫。BELLは単発参加OKだから、空いてる日だけサクッと参加して出会いを増やせます🙌',
   },
 ] as const;
 
