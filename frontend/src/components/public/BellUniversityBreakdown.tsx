@@ -154,7 +154,7 @@ const TABS = [
     label: '国公立・共学',
     data: NATIONAL_COED,
     truncate: false,
-    caption: '新歓シーズンに出遅れた人、サークルに入りそびれた人も大歓迎◎学年・学部関係なく今から参加できます',
+    caption: '『大学の友達が少ない』を解決。学年・学部関係なく、友達の幅を広げに来てください',
   },
   {
     key: 'private-coed',
@@ -168,7 +168,7 @@ const TABS = [
     label: '女子大',
     data: WOMENS,
     truncate: false,
-    caption: '',
+    caption: 'お酒が苦手でも大丈夫、無理な勧誘もなし。安心して参加できるから、女子大の方にも人気です',
   },
 ] as const;
 
