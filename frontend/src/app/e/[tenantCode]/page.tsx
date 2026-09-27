@@ -4,8 +4,7 @@ import Link from 'next/link';
 
 import { ReservationViewShowcase, ReservationShowcaseEvent } from '@/components/public/ReservationViewShowcase';
 import { ActivityTicker } from '@/components/liff/ActivityTicker';
-import { BellUniversityBreakdown } from '@/components/public/BellUniversityBreakdown';
-import { BellVocationalSchoolBreakdown } from '@/components/public/BellVocationalSchoolBreakdown';
+import { BellSchoolBreakdownSections } from '@/components/public/BellSchoolBreakdownSections';
 import { SITE_URL, API_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 
@@ -235,12 +234,7 @@ export default async function TenantEventsPage({
           />
         )}
 
-        {tenantCode === BELL_TENANT_CODE && (
-          <>
-            <BellUniversityBreakdown />
-            <BellVocationalSchoolBreakdown />
-          </>
-        )}
+        {tenantCode === BELL_TENANT_CODE && <BellSchoolBreakdownSections />}
       </div>
     </div>
   );

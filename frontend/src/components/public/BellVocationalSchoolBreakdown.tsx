@@ -557,7 +557,7 @@ function RegionPanel({
   );
 }
 
-export function BellVocationalSchoolBreakdown() {
+export function BellVocationalSchoolBreakdown({ locked = false }: { locked?: boolean }) {
   const [open, setOpen] = useState(false);
   const [activeRegion, setActiveRegion] = useState<(typeof REGIONS)[number]['key']>('tokyo');
   const [showAllSchools, setShowAllSchools] = useState(false);
@@ -569,10 +569,12 @@ export function BellVocationalSchoolBreakdown() {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="text-sm text-gray-400 underline hover:text-gray-600"
+            disabled={locked}
+            className="text-sm text-gray-400 underline hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:no-underline"
           >
             もっとみる
           </button>
+          {locked && <p className="mt-1 text-[11px] text-gray-400">↑ 大学の参加分布を先にご覧ください</p>}
         </div>
       )}
 

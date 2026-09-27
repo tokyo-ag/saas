@@ -308,10 +308,15 @@ function TabPanel({
   );
 }
 
-export function BellUniversityBreakdown() {
+export function BellUniversityBreakdown({ onOpen }: { onOpen?: () => void }) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['key']>('national-coed');
   const [showAllSchools, setShowAllSchools] = useState(false);
+
+  function handleOpen() {
+    setOpen(true);
+    onOpen?.();
+  }
 
   return (
     <div className="mt-8">
@@ -319,7 +324,7 @@ export function BellUniversityBreakdown() {
         <div className="text-center">
           <button
             type="button"
-            onClick={() => setOpen(true)}
+            onClick={handleOpen}
             className="text-sm text-gray-400 underline hover:text-gray-600"
           >
             もっとみる
