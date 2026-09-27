@@ -564,17 +564,15 @@ export function BellVocationalSchoolBreakdown({ locked = false }: { locked?: boo
 
   return (
     <div className="mt-4">
-      {!open && (
+      {!open && !locked && (
         <div className="text-center">
           <button
             type="button"
             onClick={() => setOpen(true)}
-            disabled={locked}
-            className="text-sm text-gray-400 underline hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:no-underline"
+            className="text-sm text-gray-400 underline hover:text-gray-600"
           >
             もっとみる
           </button>
-          {locked && <p className="mt-1 text-[11px] text-gray-400">↑ 大学の参加分布を先にご覧ください</p>}
         </div>
       )}
 
