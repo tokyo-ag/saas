@@ -3107,7 +3107,9 @@ export default function AdminPublicPage() {
                         <p className="mt-1 text-xs leading-5" style={{ color: reviewsLeadColor }}>{reviewsSectionLead}</p>
                       )}
                       {reviews.length === 0 ? (
-                        <p className="mt-3 text-xs text-gray-400">まだ口コミはありません。参加した方の感想をお楽しみに。</p>
+                        <p className="mt-3 text-xs leading-5" style={{ color: bodyTextColor }}>
+                          まだ公開中の口コミはありません。口コミは運営の確認後に表示されます。
+                        </p>
                       ) : (
                         <div className="mt-3 max-h-[380px] space-y-3 overflow-y-auto pr-1">
                           {reviews.map((review) => (

@@ -6,6 +6,7 @@ import { API_URL, IMAGE_BASE_URL, SITE_URL } from '@/lib/config';
 import type { TenantReview } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { TenantReviewComposer } from '@/components/public/TenantReviewComposer';
+import { isLightHexColor } from '@/lib/color';
 
 export const revalidate = 60;
 
@@ -145,13 +146,10 @@ function breadcrumbJsonLd(tenantCode: string, tenantName: string) {
 
 export default async function ReviewsListPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ tenantCode: string }>;
-  searchParams: Promise<{ reviewed?: string }>;
 }) {
   const { tenantCode } = await params;
-  const { reviewed } = await searchParams;
   const tenant = await fetchTenant(tenantCode);
   if (!tenant) notFound();
 
@@ -162,6 +160,7 @@ export default async function ReviewsListPage({
   ]);
 
   const accentColor = page?.accentColor || '#06C755';
+  const accentTextColor = isLightHexColor(accentColor) ? '#111827' : accentColor;
   const backgroundColor = page?.backgroundColor || '#F7F8FA';
   const textColor = page?.textColor || '#111827';
   const name = tenant.lineDisplayName || tenant.name || tenantCode;
@@ -185,7 +184,7 @@ export default async function ReviewsListPage({
               {name}
             </Link>
             {slug && (
-              <Link href={`/clubs/${tenantCode}/${slug}`} className="block text-xs underline" style={{ color: accentColor }}>
+              <Link href={`/clubs/${tenantCode}/${slug}`} className="block text-xs font-medium underline" style={{ color: accentTextColor }}>
                 団体ページを見る
               </Link>
             )}
@@ -195,17 +194,24 @@ export default async function ReviewsListPage({
         <h1 className="mb-2 text-sm font-bold" style={{ color: textColor }}>{name}の口コミ・評判</h1>
 
         {reviewsIntroText(tenant) && (
-          <p className="mb-4 whitespace-pre-wrap text-xs leading-relaxed" style={{ color: textColor, opacity: 0.7 }}>
+          <p className="mb-4 whitespace-pre-wrap text-xs leading-relaxed" style={{ color: textColor }}>
             {reviewsIntroText(tenant)}
           </p>
         )}
 
-        {reviewed !== '1' && (
-          <TenantReviewComposer tenantId={tenantCode} liffId={tenant.liffId} accentColor={accentColor} />
-        )}
+        <TenantReviewComposer
+          tenantId={tenantCode}
+          liffId={tenant.liffId}
+          accentColor={accentColor}
+          mode="public"
+        />
 
         {reviews.length === 0 ? (
-          <p className="text-sm text-gray-400">まだ口コミはありません。参加した方の感想をお楽しみに。</p>
+          <div className="rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+            <p className="text-sm leading-6 text-gray-700">
+              まだ公開中の口コミはありません。投稿内容は運営の確認後に表示されます。
+            </p>
+          </div>
         ) : (
           <div className="space-y-3">
             {reviews.map((review) => (

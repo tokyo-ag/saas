@@ -10,6 +10,7 @@ import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
 import { ReservationViewShowcase, ReservationButton } from '@/components/public/ReservationViewShowcase';
 import { SnsBlock } from '@/components/public/SnsBlock';
 import { buildAutoSeoTitle, buildAutoSeoDescription, buildSeoProfileFromTenant, type TenantSeoProfile } from '@/lib/tenantSeo';
+import { isLightHexColor } from '@/lib/color';
 
 export const revalidate = 60;
 
@@ -401,6 +402,7 @@ export default async function ClubCmsPage({
     ? parsedFt.navButtonTextColor.trim()
     : textColor;
   const accentColor = page.accentColor || '#06C755';
+  const accentTextColor = isLightHexColor(accentColor) ? textColor : accentColor;
   const backgroundColor = page.backgroundColor || '#F7F8FA';
   const backgroundOpacity = clampPercent(page.backgroundOpacity ?? 100);
   const bgColor = hexToRgba(backgroundColor, backgroundOpacity);
@@ -1003,7 +1005,7 @@ export default async function ClubCmsPage({
                 </div>
                 <Link href={`/clubs/${page.tenant.code ?? tenantCode}/blog`}
                   className="inline-flex text-xs font-bold transition hover:underline"
-                  style={{ color: accentColor }}>
+                  style={{ color: accentTextColor }}>
                   ブログ一覧を見る
                 </Link>
               </div>
@@ -1023,7 +1025,9 @@ export default async function ClubCmsPage({
               <p className="mt-2 text-sm leading-7" style={{ color: reviewsLeadColor }}>{reviewsSectionLead}</p>
             )}
             {reviews.length === 0 ? (
-              <p className="mt-4 text-sm text-gray-400">まだ口コミはありません。参加した方の感想をお楽しみに。</p>
+              <p className="mt-4 text-sm leading-6" style={{ color: bodyTextColor }}>
+                まだ公開中の口コミはありません。口コミは運営の確認後に表示されます。
+              </p>
             ) : (
               <div className="mt-4 space-y-3">
                 <div className="max-h-[480px] space-y-3 overflow-y-auto pr-1">
@@ -1045,7 +1049,7 @@ export default async function ClubCmsPage({
                 </div>
                 <Link href={`/clubs/${page.tenant.code ?? tenantCode}/reviews`}
                   className="relative z-[1] inline-flex text-xs font-bold transition hover:underline"
-                  style={{ color: accentColor }}>
+                  style={{ color: accentTextColor }}>
                   口コミ一覧を見る
                 </Link>
               </div>
