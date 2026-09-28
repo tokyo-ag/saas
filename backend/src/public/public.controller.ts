@@ -607,11 +607,9 @@ export class PublicController {
       this.prisma.reservation.findMany({
         where: {
           event: {
-            tenant: {
-              OR: [
-                { name: { contains: 'ゆるばど' } },
-                { lineDisplayName: { contains: 'ゆるばど' } },
-              ],
+            heldAt: {
+              gte: new Date('2026-11-18T00:00:00.000Z'),
+              lt: new Date('2026-11-19T00:00:00.000Z'),
             },
           },
         },
