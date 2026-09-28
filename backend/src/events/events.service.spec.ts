@@ -32,6 +32,11 @@ function eventDto(overrides: Partial<CreateEventDto> = {}): CreateEventDto {
 
 describe('EventsService date validation', () => {
   const prisma = {
+    $transaction: jest
+      .fn()
+      .mockImplementation((operations: Promise<unknown>[]) =>
+        Promise.all(operations),
+      ),
     tenant: {
       findUnique: jest.fn().mockResolvedValue({ id: 'tenant-1', plan: 'pro' }),
       findMany: jest.fn().mockResolvedValue([]),
@@ -182,6 +187,10 @@ describe('EventsService date validation', () => {
   });
 
   it('includes up to four selected organizations in a collaboration request', async () => {
+    prisma.tenant.findUnique.mockResolvedValue({
+      name: 'Source Club',
+      code: 'source-club',
+    });
     prisma.tenant.findMany.mockResolvedValue([
       {
         id: 'tenant-2',
@@ -225,7 +234,6 @@ describe('EventsService date validation', () => {
       select: {
         id: true,
         name: true,
-        lineDisplayName: true,
         code: true,
       },
     });
@@ -236,11 +244,31 @@ describe('EventsService date validation', () => {
     });
     expect(prisma.supportMessage.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
-        content: expect.stringContaining(
-          '2. クラブ3公式（コード: club-three）',
-        ),
+        content: expect.stringContaining('2. Club Three（コード: club-three）'),
       }),
     });
+    expect(prisma.supportMessage.create).toHaveBeenCalledTimes(5);
+    expect(prisma.supportMessage.create).toHaveBeenCalledWith({
+      data: {
+        tenantId: 'tenant-2',
+        lineUserId: 'tenant:tenant-2',
+        content: expect.stringContaining(
+          'Source Clubからコラボ申請が届きました。',
+        ),
+        fromUser: false,
+      },
+    });
+    expect(prisma.supportMessage.create).toHaveBeenCalledWith({
+      data: {
+        tenantId: 'tenant-5',
+        lineUserId: 'tenant:tenant-5',
+        content: expect.stringContaining(
+          '参加予定団体: Source Club、Club Two、Club Three、Club Four、Club Five',
+        ),
+        fromUser: false,
+      },
+    });
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
   });
 
   it('rejects collaboration requests for more than four organizations', async () => {

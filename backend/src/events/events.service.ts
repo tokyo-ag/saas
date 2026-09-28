@@ -159,9 +159,8 @@ export class EventsService {
     };
   }
 
-  // 合同開催（他テナントとのコラボ）をCOMIUに相談する。既存のお問い合わせ
-  // （テナント↔COMIUサポート）にそのまま合流させ、新しいチャンネルは作らない。
-  // 相手団体は必ず選択させ、あいまいな自由記述だけには頼らない。
+  // 合同開催（他テナントとのコラボ）を申請する。申請元からCOMIUへの相談履歴と、
+  // 選択された各団体への受信メッセージを同時に作成する。
   async requestCollab(
     tenantId: string,
     eventId: string,
@@ -186,14 +185,23 @@ export class EventsService {
     }
 
     const event = await this.findOne(tenantId, eventId);
-    const targetTenants = await this.prisma.tenant.findMany({
-      where: {
-        id: { in: uniqueTargetTenantIds },
-        deletedAt: null,
-        bannedAt: null,
-      },
-      select: { id: true, name: true, lineDisplayName: true, code: true },
-    });
+    const [sourceTenant, targetTenants] = await Promise.all([
+      this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { name: true, code: true },
+      }),
+      this.prisma.tenant.findMany({
+        where: {
+          id: { in: uniqueTargetTenantIds },
+          deletedAt: null,
+          bannedAt: null,
+        },
+        select: { id: true, name: true, code: true },
+      }),
+    ]);
+    if (!sourceTenant) {
+      throw new NotFoundException('申請元の団体が見つかりません');
+    }
     if (targetTenants.length !== uniqueTargetTenantIds.length) {
       throw new NotFoundException('指定された団体の一部が見つかりません');
     }
@@ -203,25 +211,59 @@ export class EventsService {
     );
     const targetTenantLines = uniqueTargetTenantIds.map((id, index) => {
       const tenant = targetTenantById.get(id)!;
-      return `${index + 1}. ${tenant.lineDisplayName ?? tenant.name}（コード: ${tenant.code ?? '未設定'}）`;
+      return `${index + 1}. ${tenant.name}（コード: ${tenant.code ?? '未設定'}）`;
     });
-    const content = [
+    const heldAt = new Date(event.heldAt).toLocaleString('ja-JP', {
+      timeZone: 'Asia/Tokyo',
+    });
+    const sourceTenantName = sourceTenant.name;
+    const sourceContent = [
       '【コラボイベント申請】',
       `イベント名: ${event.title}`,
-      `開催日: ${new Date(event.heldAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}`,
+      `開催日: ${heldAt}`,
       `イベントID: ${event.id}`,
       `相手団体:\n${targetTenantLines.join('\n')}`,
       '他団体との合同開催として、参加者名簿を統合した運営用ページの発行を希望します。',
     ].join('\n');
 
-    return this.prisma.supportMessage.create({
-      data: {
-        tenantId,
-        lineUserId: `tenant:${tenantId}`,
-        content,
-        fromUser: true,
-      },
-    });
+    const participatingTenantNames = [
+      sourceTenantName,
+      ...uniqueTargetTenantIds.map((id) => {
+        const tenant = targetTenantById.get(id)!;
+        return tenant.name;
+      }),
+    ];
+    const targetContent = [
+      '【コラボ申請】',
+      `${sourceTenantName}からコラボ申請が届きました。`,
+      `イベント名: ${event.title}`,
+      `開催日: ${heldAt}`,
+      `参加予定団体: ${participatingTenantNames.join('、')}`,
+      '参加可否や確認事項は、このチャットへ返信してください。',
+    ].join('\n');
+
+    const createMessages = [
+      this.prisma.supportMessage.create({
+        data: {
+          tenantId,
+          lineUserId: `tenant:${tenantId}`,
+          content: sourceContent,
+          fromUser: true,
+        },
+      }),
+      ...uniqueTargetTenantIds.map((targetTenantId) =>
+        this.prisma.supportMessage.create({
+          data: {
+            tenantId: targetTenantId,
+            lineUserId: `tenant:${targetTenantId}`,
+            content: targetContent,
+            fromUser: false,
+          },
+        }),
+      ),
+    ];
+    const [sourceMessage] = await this.prisma.$transaction(createMessages);
+    return sourceMessage;
   }
 
   private generateRosterShareToken(): string {
