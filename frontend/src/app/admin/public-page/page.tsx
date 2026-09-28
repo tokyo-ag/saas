@@ -1536,11 +1536,30 @@ export default function AdminPublicPage() {
                     buttonBgColor: color,
                     buttonBgOpacity: 100,
                     footerContactColor: color,
+                    reserveButtonBgColor: color,
                   }));
                   setBlocks((prev) => prev.map((b) => (b.type === 'faq' ? { ...b, faqCardBg: color } : b)));
                 }}
                 className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-              <span className="text-[11px] text-gray-500">ナビボタン・お問い合わせボタン・予約イベントカード・記事カード・Q&amp;Aカードの色を一括で変更します</span>
+              <span className="text-[11px] text-gray-500">ナビボタン・予約ボタン・お問い合わせボタン・予約イベントカード・記事カード・Q&amp;Aカードの色を一括で変更します</span>
+            </div>
+          </div>
+          {/* ボタン文字色（ナビ・予約・お問い合わせの各ボタン） */}
+          <div className="space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
+            <div className="flex items-center gap-3">
+              <span className="w-20 shrink-0 text-xs font-bold text-gray-700">ボタン文字色</span>
+              <input type="color" value={navButtonTextColor}
+                onChange={(e) => {
+                  const color = e.target.value;
+                  setForm((p) => ({
+                    ...p,
+                    navButtonTextColor: color,
+                    reserveButtonTextColor: color,
+                    footerContactTextColor: color,
+                  }));
+                }}
+                className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+              <span className="text-[11px] text-gray-500">ナビボタン・予約ボタン・お問い合わせボタンの文字色を一括で変更します</span>
             </div>
           </div>
           {/* 全体の外枠色 */}
@@ -1548,9 +1567,12 @@ export default function AdminPublicPage() {
             <div className="flex items-center gap-3">
               <span className="w-16 shrink-0 text-xs font-bold text-gray-500">外枠色</span>
               <input type="color" value={globalBorderColor}
-                onChange={(e) => setForm((p) => ({ ...p, globalBorderColor: e.target.value }))}
+                onChange={(e) => {
+                  const color = e.target.value;
+                  setForm((p) => ({ ...p, globalBorderColor: color, accentColor: color }));
+                }}
                 className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-              <span className="text-[11px] text-gray-400">予約ボタン・お問い合わせボタンなど、サイト全体のボタンの外枠に使われます</span>
+              <span className="text-[11px] text-gray-400">ナビボタン・予約ボタン・お問い合わせボタンなど、サイト全体のボタンの外枠に使われます</span>
             </div>
           </div>
           {/* カードの角の丸み・枠線の太さ */}
@@ -2022,11 +2044,9 @@ export default function AdminPublicPage() {
           </SubSection>
           <SubSection label="ボタンのスタイル" open={openSections.headerButton} onToggle={() => toggleSection('headerButton')}>
             <div className="space-y-2">
+              <p className="text-[11px] text-gray-400">外枠色・ボタン文字色は「全体の設定」で一括設定できます。ここでは透明度と中の色だけ調整できます。</p>
               <div className="flex items-center gap-3">
-                <span className="w-14 shrink-0 text-xs font-bold text-gray-500">外枠色</span>
-                <input type="color" value={accentColor}
-                  onChange={(e) => setForm((p) => ({ ...p, accentColor: e.target.value }))}
-                  className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+                <span className="w-14 shrink-0 text-xs font-bold text-gray-500">外枠の透明度</span>
                 <input type="range" min="20" max="100" step="5" value={buttonOpacity}
                   onChange={(e) => setForm((p) => ({ ...p, buttonOpacity: Number(e.target.value) }))}
                   className="flex-1 accent-[#06C755]" />
@@ -2051,10 +2071,7 @@ export default function AdminPublicPage() {
                 )}
               </div>
               <div className="flex items-center gap-3">
-                <span className="w-14 shrink-0 text-xs font-bold text-gray-500">文字色</span>
-                <input type="color" value={navButtonTextColor}
-                  onChange={(e) => setForm((p) => ({ ...p, navButtonTextColor: e.target.value }))}
-                  className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+                <span className="w-14 shrink-0 text-xs font-bold text-gray-500">文字の透明度</span>
                 <input type="range" min="0" max="100" step="5" value={buttonTextOpacity}
                   onChange={(e) => setForm((p) => ({ ...p, buttonTextOpacity: Number(e.target.value) }))}
                   className="flex-1 accent-[#06C755]" />
@@ -2553,34 +2570,7 @@ export default function AdminPublicPage() {
               </div>
               <div className="space-y-3 rounded-lg bg-gray-50 p-3">
                 <p className="text-[11px] font-bold text-gray-400">イベントカードの見た目</p>
-                <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
-                  <span className="text-[11px] font-bold text-gray-500">カード背景色</span>
-                  <input
-                    type="color"
-                    value={form.reserveEventCardBg?.trim() || '#ffffff'}
-                    onChange={(e) => setForm((p) => ({ ...p, reserveEventCardBg: e.target.value }))}
-                    className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
-                  />
-                </label>
-                <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
-                  <span className="text-[11px] font-bold text-gray-500">予約ボタンの色</span>
-                  <input
-                    type="color"
-                    value={reserveButtonBgColor}
-                    onChange={(e) => setForm((p) => ({ ...p, reserveButtonBgColor: e.target.value }))}
-                    className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
-                  />
-                </label>
-                <label className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
-                  <span className="text-[11px] font-bold text-gray-500">予約ボタンの文字色</span>
-                  <input
-                    type="color"
-                    value={reserveButtonTextColor}
-                    onChange={(e) => setForm((p) => ({ ...p, reserveButtonTextColor: e.target.value }))}
-                    className="h-7 w-9 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
-                  />
-                </label>
-                <p className="text-[11px] text-gray-400">外枠色は「全体の設定」で一括設定できます。</p>
+                <p className="text-[11px] text-gray-400">カード背景色・予約ボタンの色・文字色・外枠色は「全体の設定」で一括設定できます。</p>
                 <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-3">
                   <p className="text-[11px] font-bold text-gray-400">予約スタイル</p>
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -2787,18 +2777,8 @@ export default function AdminPublicPage() {
               {/* 問い合わせボタン */}
               <div className="space-y-2">
                 <p className="text-[11px] font-bold text-gray-400">問い合わせボタン</p>
+                <p className="text-[11px] text-gray-400">ボタンの色・文字色は「全体の設定」で一括設定できます。</p>
                 <div className="flex items-center gap-2">
-                  <label className="cursor-pointer">
-                    <input type="color" value={form.footerContactColor || accentColor}
-                      onChange={(e) => setForm((p) => ({ ...p, footerContactColor: e.target.value }))}
-                      className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-                  </label>
-                  <label className="flex items-center gap-1 text-[11px] font-bold text-gray-400">
-                    文字色
-                    <input type="color" value={form.footerContactTextColor || '#111827'}
-                      onChange={(e) => setForm((p) => ({ ...p, footerContactTextColor: e.target.value }))}
-                      className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
-                  </label>
                   <input type="text" value={form.footerContact ?? ''}
                     onChange={(e) => setForm((p) => ({ ...p, footerContact: e.target.value }))}
                     placeholder="メール・電話番号・LINE URL（空欄=アプリ内メッセージ）"
