@@ -369,10 +369,8 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ content }),
       }),
-    searchForCollab: (q: string) =>
-      request<{ id: string; name: string; lineDisplayName: string | null; code: string | null }[]>(
-        `/admin/tenant/collab-search?q=${encodeURIComponent(q)}`,
-      ),
+    listForCollab: () =>
+      request<{ id: string; name: string }[]>('/admin/tenant/collab-tenants'),
     reviews: () => request<AdminTenantReview[]>('/admin/tenant/reviews'),
     updateReview: (reviewId: string, data: { isPublished?: boolean; content?: string }) =>
       request<AdminTenantReview>(`/admin/tenant/reviews/${reviewId}`, {

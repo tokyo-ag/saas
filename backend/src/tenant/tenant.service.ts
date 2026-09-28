@@ -670,24 +670,12 @@ export class TenantService {
     });
   }
 
-  async searchTenantsForCollab(excludeTenantId: string, query: string) {
-    const trimmed = query.trim();
-    if (!trimmed) return [];
-    const tenants = await this.prisma.tenant.findMany({
-      where: {
-        id: { not: excludeTenantId },
-        deletedAt: null,
-        bannedAt: null,
-        OR: [
-          { name: { contains: trimmed, mode: 'insensitive' } },
-          { lineDisplayName: { contains: trimmed, mode: 'insensitive' } },
-          { code: { contains: trimmed, mode: 'insensitive' } },
-        ],
-      },
-      select: { id: true, name: true, lineDisplayName: true, code: true },
-      take: 10,
+  async listTenantsForCollab(excludeTenantId: string) {
+    return this.prisma.tenant.findMany({
+      where: { id: { not: excludeTenantId }, deletedAt: null, bannedAt: null },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
     });
-    return tenants;
   }
 
   async createBillingCheckout(tenantId: string, plan: 'standard' | 'pro') {

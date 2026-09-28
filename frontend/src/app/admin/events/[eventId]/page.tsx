@@ -22,6 +22,11 @@ type EventReservation = Reservation & {
   };
 };
 
+type CollabTenantOption = {
+  id: string;
+  name: string;
+};
+
 function formatCustomAnswers(
   customAnswers: Record<string, string | string[]> | null | undefined,
   customQuestions: CustomProfileQuestion[],
@@ -49,9 +54,10 @@ export default function EventDetailPage() {
   const [collabNote, setCollabNote] = useState('');
   const [sendingCollab, setSendingCollab] = useState(false);
   const [collabRequested, setCollabRequested] = useState(false);
-  const [collabQuery, setCollabQuery] = useState('');
-  const [collabResults, setCollabResults] = useState<{ id: string; name: string; lineDisplayName: string | null; code: string | null }[]>([]);
-  const [collabSelected, setCollabSelected] = useState<{ id: string; name: string; lineDisplayName: string | null } | null>(null);
+  const [collabTenants, setCollabTenants] = useState<CollabTenantOption[]>([]);
+  const [collabTenantsLoading, setCollabTenantsLoading] = useState(true);
+  const [collabTenantsError, setCollabTenantsError] = useState(false);
+  const [collabTargetId, setCollabTargetId] = useState('');
 
   const load = useCallback(async () => {
     const [eventData, reservationList] = await Promise.all([
@@ -65,18 +71,11 @@ export default function EventDetailPage() {
   useEffect(() => {
     load().catch(console.error).finally(() => setLoading(false));
     api.tenant.get().then((t) => setCustomQuestions(t.customProfileQuestions ?? [])).catch(() => {});
+    api.tenant.listForCollab()
+      .then(setCollabTenants)
+      .catch(() => setCollabTenantsError(true))
+      .finally(() => setCollabTenantsLoading(false));
   }, [load]);
-
-  useEffect(() => {
-    if (collabSelected || !collabQuery.trim()) {
-      setCollabResults([]);
-      return;
-    }
-    const id = setTimeout(() => {
-      api.tenant.searchForCollab(collabQuery.trim()).then(setCollabResults).catch(() => setCollabResults([]));
-    }, 300);
-    return () => clearTimeout(id);
-  }, [collabQuery, collabSelected]);
 
   async function updateStatus(reservationId: string, status: string) {
     try {
@@ -117,16 +116,25 @@ export default function EventDetailPage() {
   }
 
   async function submitCollabRequest() {
-    if (!collabSelected) return;
+    if (!collabTargetId) return;
     setSendingCollab(true);
     try {
-      await api.events.requestCollab(eventId, collabSelected.id, collabNote);
+      await api.events.requestCollab(eventId, collabTargetId, collabNote);
       setCollabRequested(true);
     } catch (e: any) {
       alert(e.message ?? '送信に失敗しました');
     } finally {
       setSendingCollab(false);
     }
+  }
+
+  let collabTenantSelectLabel = '団体を選択';
+  if (collabTenantsLoading) {
+    collabTenantSelectLabel = '団体を読み込み中...';
+  } else if (collabTenantsError) {
+    collabTenantSelectLabel = '団体一覧を取得できませんでした';
+  } else if (collabTenants.length === 0) {
+    collabTenantSelectLabel = '選択できる団体がありません';
   }
 
   if (loading) return <div className="px-4 py-12 text-center text-sm text-gray-400">読み込み中...</div>;
@@ -379,43 +387,17 @@ export default function EventDetailPage() {
 
             <div>
               <label className="mb-1 block text-xs font-semibold text-gray-500">コラボしたい団体</label>
-              {collabSelected ? (
-                <div className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm">
-                  <span className="truncate font-medium text-gray-800">{collabSelected.lineDisplayName ?? collabSelected.name}</span>
-                  <button
-                    onClick={() => setCollabSelected(null)}
-                    className="shrink-0 text-xs text-gray-400 hover:text-gray-600"
-                  >
-                    変更
-                  </button>
-                </div>
-              ) : (
-                <div className="relative">
-                  <input
-                    value={collabQuery}
-                    onChange={(e) => setCollabQuery(e.target.value)}
-                    placeholder="団体名で検索"
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                  />
-                  {collabResults.length > 0 && (
-                    <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-sm">
-                      {collabResults.map((t) => (
-                        <button
-                          key={t.id}
-                          onClick={() => {
-                            setCollabSelected(t);
-                            setCollabQuery('');
-                            setCollabResults([]);
-                          }}
-                          className="block w-full truncate px-3 py-2 text-left text-sm hover:bg-gray-50"
-                        >
-                          {t.lineDisplayName ?? t.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+              <select
+                value={collabTargetId}
+                onChange={(e) => setCollabTargetId(e.target.value)}
+                disabled={collabTenantsLoading || collabTenantsError || collabTenants.length === 0}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+              >
+                <option value="">{collabTenantSelectLabel}</option>
+                {collabTenants.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
             </div>
 
             <textarea
@@ -427,7 +409,7 @@ export default function EventDetailPage() {
             />
             <button
               onClick={submitCollabRequest}
-              disabled={sendingCollab || !collabSelected}
+              disabled={sendingCollab || !collabTargetId}
               className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
             >
               {sendingCollab ? '送信中...' : 'コラボ開催をCOMIUに相談する'}

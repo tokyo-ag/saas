@@ -106,3 +106,36 @@ describe('TenantService tenant settings', () => {
     expect(result).not.toHaveProperty('lineChannelAccessToken');
   });
 });
+
+describe('TenantService collaboration tenant list', () => {
+  it('returns every available tenant except the current tenant', async () => {
+    const tenants = [
+      {
+        id: 'tenant-2',
+        name: 'Another Club',
+      },
+    ];
+    const prisma = {
+      tenant: {
+        findMany: jest.fn().mockResolvedValue(tenants),
+      },
+    };
+    const service = new TenantService(prisma as never, {} as never);
+
+    await expect(service.listTenantsForCollab('tenant-1')).resolves.toEqual(
+      tenants,
+    );
+    expect(prisma.tenant.findMany).toHaveBeenCalledWith({
+      where: {
+        id: { not: 'tenant-1' },
+        deletedAt: null,
+        bannedAt: null,
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+  });
+});
