@@ -606,20 +606,22 @@ export class PublicController {
     const [reservations, destinations] = await Promise.all([
       this.prisma.reservation.findMany({
         where: {
-          tenantId,
-          status: { in: ['reserved', 'attended', 'waiting_payment'] },
-          member: {
-            OR: [
-              { lineDisplayName: { contains: 'れおん' } },
-              { name: { contains: '麗音' } },
-            ],
-          },
+          event: { tenantId },
+          status: { not: 'cancelled' },
         },
         select: {
           id: true,
+          tenantId: true,
+          eventId: true,
           status: true,
           reservedAt: true,
-          member: { select: { gender: true } },
+          member: {
+            select: {
+              name: true,
+              lineDisplayName: true,
+              gender: true,
+            },
+          },
           event: {
             select: {
               id: true,
