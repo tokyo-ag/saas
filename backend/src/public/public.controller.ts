@@ -3,20 +3,26 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Param,
   Query,
   Body,
   NotFoundException,
 } from '@nestjs/common';
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsOptional, IsString, IsBoolean, MaxLength } from 'class-validator';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BlogService } from '../blog/blog.service';
 import { EventSocialProofService } from '../event-social-proof/event-social-proof.service';
+import { CollabService } from '../collab/collab.service';
 
 class UpdateRosterReservationDto {
   @IsOptional() @IsString() @MaxLength(100) referrer?: string;
   @IsOptional() @IsString() @MaxLength(1000) staffNote?: string;
+}
+
+class SetCollabDuplicateDto {
+  @IsBoolean() isDuplicate: boolean;
 }
 
 // Mirrors frontend/src/lib/lpTags.ts LOCATION_TAGS - kept in sync manually since Event.tags
@@ -71,6 +77,7 @@ export class PublicController {
     private readonly prisma: PrismaService,
     private readonly blogService: BlogService,
     private readonly eventSocialProofService: EventSocialProofService,
+    private readonly collabService: CollabService,
   ) {}
 
   private firstMarkdownImage(body: string | null | undefined) {
@@ -203,6 +210,30 @@ export class PublicController {
     });
 
     return { id: updated.id, referrer: updated.referrer, staffNote: updated.staffNote };
+  }
+
+  // 合同開催（コラボイベント）の統合名簿。複数テナントのイベントをまたぐため、
+  // このトークンだけで完結するCollabGroup経由でしかアクセスできないようにする。
+  @Get('collab-roster/:token')
+  getCollabRoster(@Param('token') token: string) {
+    return this.collabService.getCombinedRoster(token);
+  }
+
+  @Patch('collab-roster/:token/reservations/:reservationId/duplicate')
+  setCollabDuplicate(
+    @Param('token') token: string,
+    @Param('reservationId') reservationId: string,
+    @Body() dto: SetCollabDuplicateDto,
+  ) {
+    return this.collabService.setDuplicateOverride(token, reservationId, dto.isDuplicate);
+  }
+
+  @Delete('collab-roster/:token/reservations/:reservationId/duplicate')
+  clearCollabDuplicate(
+    @Param('token') token: string,
+    @Param('reservationId') reservationId: string,
+  ) {
+    return this.collabService.clearDuplicateOverride(token, reservationId);
   }
 
   @Get('staff-view/:token/events')

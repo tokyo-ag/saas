@@ -320,6 +320,7 @@ model Event {
   tenant       Tenant        @relation(fields: [tenantId], references: [id])
   reservations Reservation[]
   likes        EventLike[]
+  collabLink   CollabEventLink?
 
   @@map("events")
 }
@@ -440,7 +441,54 @@ model Reservation {
   event  Event  @relation(fields: [eventId], references: [id])
   member Member @relation(fields: [memberId], references: [id])
 
+  collabDuplicateOverride CollabDuplicateOverride?
+
   @@map("reservations")
+}
+
+// 合同開催（コラボイベント）機能：複数テナントの既存Event/Reservation/Memberには
+// 一切書き込まず、追加専用のテーブルだけで運営用の統合閲覧リンクを実現する。
+model CollabGroup {
+  id        String   @id @default(uuid())
+  label     String?  @db.VarChar(100)
+  viewToken String   @unique @map("view_token") @db.VarChar(64)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  eventLinks         CollabEventLink[]
+  duplicateOverrides CollabDuplicateOverride[]
+
+  @@map("collab_groups")
+}
+
+model CollabEventLink {
+  id            String   @id @default(uuid())
+  collabGroupId String   @map("collab_group_id")
+  eventId       String   @unique @map("event_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  collabGroup CollabGroup @relation(fields: [collabGroupId], references: [id], onDelete: Cascade)
+  event       Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([collabGroupId])
+  @@map("collab_event_links")
+}
+
+// 自動判定（Member.lineUserId一致）を手動で上書きするための最小限のフラグ。1予約につき最大1件。
+model CollabDuplicateOverride {
+  id            String   @id @default(uuid())
+  collabGroupId String   @map("collab_group_id")
+  reservationId String   @unique @map("reservation_id")
+  isDuplicate   Boolean  @map("is_duplicate")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  collabGroup CollabGroup @relation(fields: [collabGroupId], references: [id], onDelete: Cascade)
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+  @@index([collabGroupId])
+  @@map("collab_duplicate_overrides")
 }
 
 

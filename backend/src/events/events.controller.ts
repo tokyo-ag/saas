@@ -102,6 +102,15 @@ export class EventsController {
     );
   }
 
+  @Post(':eventId/collab-request')
+  requestCollab(
+    @TenantId() tenantId: string,
+    @Param('eventId') eventId: string,
+    @Body() body: { note?: string },
+  ) {
+    return this.eventsService.requestCollab(tenantId, eventId, body?.note);
+  }
+
   @Get(':eventId/export')
   async exportCsv(
     @TenantId() tenantId: string,

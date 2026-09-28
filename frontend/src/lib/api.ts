@@ -125,6 +125,11 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify({ enabled }),
       }),
+    requestCollab: (id: string, note?: string) =>
+      request<{ id: string }>(`/admin/events/${id}/collab-request`, {
+        method: 'POST',
+        body: JSON.stringify({ note }),
+      }),
   },
   members: {
     list: (params?: { name?: string; grade?: string; gender?: string; level?: string }) => {
@@ -264,6 +269,17 @@ export const api = {
       request<StaffViewEventList>(`/public/staff-view/${token}/events`),
     staffViewEvent: (token: string, eventId: string) =>
       request<StaffViewEventDetail>(`/public/staff-view/${token}/events/${eventId}`),
+    collabRoster: (token: string) => request<CollabRoster>(`/public/collab-roster/${token}`),
+    setCollabDuplicate: (token: string, reservationId: string, isDuplicate: boolean) =>
+      request<{ reservationId: string; isDuplicateOverride: boolean | null }>(
+        `/public/collab-roster/${token}/reservations/${reservationId}/duplicate`,
+        { method: 'PATCH', body: JSON.stringify({ isDuplicate }) },
+      ),
+    clearCollabDuplicate: (token: string, reservationId: string) =>
+      request<{ reservationId: string; isDuplicateOverride: boolean | null }>(
+        `/public/collab-roster/${token}/reservations/${reservationId}/duplicate`,
+        { method: 'DELETE' },
+      ),
   },
   blog: {
     list: () => request<BlogPost[]>('/admin/blog'),
@@ -413,6 +429,30 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ content }),
       }),
+    listTenantEventsForCollab: (tenantId: string) =>
+      request<{ id: string; title: string; heldAt: string; status: EventStatus }[]>(
+        `/superadmin/tenants/${tenantId}/events`,
+      ),
+    collabGroups: () => request<CollabGroupAdmin[]>('/superadmin/collab-groups'),
+    createCollabGroup: (data: { eventIds: string[]; label?: string }) =>
+      request<CollabGroupAdmin>('/superadmin/collab-groups', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    updateCollabGroup: (id: string, data: { label?: string; active?: boolean }) =>
+      request<CollabGroupAdmin>(`/superadmin/collab-groups/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    addCollabGroupEvent: (id: string, eventId: string) =>
+      request<CollabGroupAdmin>(`/superadmin/collab-groups/${id}/events`, {
+        method: 'POST',
+        body: JSON.stringify({ eventId }),
+      }),
+    removeCollabGroupEvent: (id: string, eventId: string) =>
+      request<void>(`/superadmin/collab-groups/${id}/events/${eventId}`, { method: 'DELETE' }),
+    deleteCollabGroup: (id: string) =>
+      request<void>(`/superadmin/collab-groups/${id}`, { method: 'DELETE' }),
     errorLogs: () => request<ErrorLog[]>('/superadmin/errors'),
     clearErrorLogs: () => request<void>('/superadmin/errors', { method: 'DELETE' }),
     backfillPublicPageCardColors: () =>
@@ -492,6 +532,7 @@ export interface Event {
   rosterShareEnabled?: boolean;
   rosterShareToken?: string | null;
   reserveActionStyle?: string | null;
+  collab?: { groupId: string; viewToken: string; label: string | null; active: boolean } | null;
 }
 
 export interface EventInput {
@@ -1416,6 +1457,56 @@ export interface PublicRoster {
     waitlistOrder: number | null;
     referrer: string | null;
     staffNote: string | null;
+  }[];
+}
+
+// 合同開催（コラボイベント）の統合名簿。複数テナントの予約をまたいで表示するが、
+// 参加者側には一切見せない運営専用ページでのみ使う。編集できるのは重複フラグだけ。
+export interface CollabRosterParticipant {
+  id: string;
+  tenantId: string;
+  tenantName: string;
+  eventId: string;
+  name: string | null;
+  grade: string | null;
+  gender: string | null;
+  level: string | null;
+  comment: string | null;
+  linePictureUrl: string | null;
+  status: ReservationStatus;
+  waitlistOrder: number | null;
+  isDuplicateAuto: boolean;
+  isDuplicateOverride: boolean | null;
+  isDuplicate: boolean;
+}
+
+export interface CollabRoster {
+  group: { label: string | null };
+  tenants: {
+    tenantId: string;
+    tenantName: string;
+    eventId: string;
+    eventTitle: string;
+    heldAt: string;
+  }[];
+  participants: CollabRosterParticipant[];
+}
+
+export interface CollabGroupAdmin {
+  id: string;
+  label: string | null;
+  viewToken: string;
+  active: boolean;
+  createdAt: string;
+  eventLinks: {
+    eventId: string;
+    event: {
+      id: string;
+      title: string;
+      heldAt: string;
+      tenantId: string;
+      tenant: { id: string; name: string; lineDisplayName: string | null };
+    };
   }[];
 }
 

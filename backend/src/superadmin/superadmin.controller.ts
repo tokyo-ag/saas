@@ -109,6 +109,50 @@ export class SuperadminController {
     return this.service.replySupportMessage(lineUserId, content);
   }
 
+  @Get('tenants/:tenantId/events')
+  listTenantEventsForCollab(@Param('tenantId') tenantId: string) {
+    return this.service.listTenantEventsForCollab(tenantId);
+  }
+
+  @Get('collab-groups')
+  listCollabGroups() {
+    return this.service.listCollabGroups();
+  }
+
+  @Post('collab-groups')
+  createCollabGroup(@Body() body: { eventIds: string[]; label?: string }) {
+    return this.service.createCollabGroup(body.eventIds, body.label);
+  }
+
+  @Patch('collab-groups/:id')
+  updateCollabGroup(
+    @Param('id') id: string,
+    @Body() body: { label?: string; active?: boolean },
+  ) {
+    return this.service.updateCollabGroup(id, body);
+  }
+
+  @Post('collab-groups/:id/events')
+  addCollabGroupEvent(
+    @Param('id') id: string,
+    @Body('eventId') eventId: string,
+  ) {
+    return this.service.addCollabEventLink(id, eventId);
+  }
+
+  @Delete('collab-groups/:id/events/:eventId')
+  removeCollabGroupEvent(
+    @Param('id') id: string,
+    @Param('eventId') eventId: string,
+  ) {
+    return this.service.removeCollabEventLink(id, eventId);
+  }
+
+  @Delete('collab-groups/:id')
+  deleteCollabGroup(@Param('id') id: string) {
+    return this.service.deleteCollabGroup(id);
+  }
+
   @Get('official-site')
   getOfficialSite() {
     return this.service.getOfficialSite();

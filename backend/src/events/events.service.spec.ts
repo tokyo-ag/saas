@@ -45,6 +45,9 @@ describe('EventsService date validation', () => {
       count: jest.fn().mockResolvedValue(0),
       findMany: jest.fn().mockResolvedValue([]),
     },
+    collabEventLink: {
+      findUnique: jest.fn().mockResolvedValue(null),
+    },
   };
   const lineMessaging = {
     sendRemind: jest.fn().mockResolvedValue(undefined),
@@ -65,6 +68,7 @@ describe('EventsService date validation', () => {
       remindAt: null,
     });
     prisma.reservation.count.mockResolvedValue(0);
+    prisma.collabEventLink.findUnique.mockResolvedValue(null);
   });
 
   it('rejects an event whose end time is not after its start time', async () => {

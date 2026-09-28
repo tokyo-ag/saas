@@ -45,6 +45,10 @@ export default function EventDetailPage() {
   const [loading, setLoading] = useState(true);
   const [rosterCopied, setRosterCopied] = useState(false);
   const [savingRosterShare, setSavingRosterShare] = useState(false);
+  const [collabCopied, setCollabCopied] = useState(false);
+  const [collabNote, setCollabNote] = useState('');
+  const [sendingCollab, setSendingCollab] = useState(false);
+  const [collabRequested, setCollabRequested] = useState(false);
 
   const load = useCallback(async () => {
     const [eventData, reservationList] = await Promise.all([
@@ -88,6 +92,26 @@ export default function EventDetailPage() {
       setRosterCopied(true);
       setTimeout(() => setRosterCopied(false), 2000);
     });
+  }
+
+  function copyCollabUrl() {
+    if (!event?.collab?.viewToken) return;
+    navigator.clipboard.writeText(`${SITE_URL}/collab-roster/${event.collab.viewToken}`).then(() => {
+      setCollabCopied(true);
+      setTimeout(() => setCollabCopied(false), 2000);
+    });
+  }
+
+  async function submitCollabRequest() {
+    setSendingCollab(true);
+    try {
+      await api.events.requestCollab(eventId, collabNote);
+      setCollabRequested(true);
+    } catch {
+      alert('送信に失敗しました');
+    } finally {
+      setSendingCollab(false);
+    }
   }
 
   if (loading) return <div className="px-4 py-12 text-center text-sm text-gray-400">読み込み中...</div>;
@@ -299,6 +323,57 @@ export default function EventDetailPage() {
               className="shrink-0 rounded-lg border border-gray-300 px-4 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
             >
               {rosterCopied ? 'コピーしました' : 'コピー'}
+            </button>
+          </div>
+        )}
+      </section>
+
+      <section className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
+        <h2 className="text-sm font-semibold text-gray-800">コラボ開催（合同イベント）</h2>
+        {event.collab ? (
+          <div className="mt-2 space-y-2">
+            <p className="text-xs leading-relaxed text-gray-400">
+              他団体との合同開催として連携されています{!event.collab.active && '（現在は無効化されています）'}。以下のリンクで参加者名簿を統合して確認できます。
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <input
+                readOnly
+                value={`${SITE_URL}/collab-roster/${event.collab.viewToken}`}
+                className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600"
+                onFocus={(e) => e.target.select()}
+              />
+              <button
+                onClick={copyCollabUrl}
+                className="shrink-0 rounded-lg border border-gray-300 px-4 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                {collabCopied ? 'コピーしました' : 'コピー'}
+              </button>
+            </div>
+          </div>
+        ) : collabRequested ? (
+          <p className="mt-2 text-xs leading-relaxed text-gray-500">
+            COMIUサポートに申請を送信しました。担当者からのご連絡をお待ちください。内容は
+            <Link href="/admin/support" className="text-[#06C755] hover:underline">サポート</Link>
+            からもご確認いただけます。
+          </p>
+        ) : (
+          <div className="mt-2 space-y-2">
+            <p className="text-xs leading-relaxed text-gray-400">
+              他団体との合同開催の場合、参加者名簿を統合した運営専用ページを発行できます。参加者には合同開催であることは表示されません。
+            </p>
+            <textarea
+              value={collabNote}
+              onChange={(e) => setCollabNote(e.target.value)}
+              placeholder="担当者への一言（任意）"
+              rows={2}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            />
+            <button
+              onClick={submitCollabRequest}
+              disabled={sendingCollab}
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+            >
+              {sendingCollab ? '送信中...' : 'コラボ開催をCOMIUに相談する'}
             </button>
           </div>
         )}

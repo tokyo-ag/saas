@@ -17,7 +17,7 @@ import {
   IsInt,
 } from 'class-validator';
 import { Prisma } from '@prisma/client';
-import { randomUUID } from 'crypto';
+import { randomUUID, randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 
@@ -400,6 +400,119 @@ export class SuperadminService implements OnApplicationBootstrap {
         fromUser: false,
       },
     });
+  }
+
+  // 合同開催（コラボイベント）：申請はお問い合わせ経由で受け、実際の紐付けは
+  // スーパーアドミンが手動で行う。既存のEvent/Reservation/Memberには書き込まない。
+  async listTenantEventsForCollab(tenantId: string) {
+    return this.prisma.event.findMany({
+      where: { tenantId },
+      select: { id: true, title: true, heldAt: true, status: true },
+      orderBy: { heldAt: 'desc' },
+    });
+  }
+
+  async listCollabGroups() {
+    return this.prisma.collabGroup.findMany({
+      include: {
+        eventLinks: {
+          include: {
+            event: {
+              select: {
+                id: true,
+                title: true,
+                heldAt: true,
+                tenantId: true,
+                tenant: {
+                  select: { id: true, name: true, lineDisplayName: true },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async createCollabGroup(eventIds: string[], label?: string) {
+    const uniqueIds = Array.from(new Set(eventIds ?? []));
+    if (uniqueIds.length < 2) {
+      throw new BadRequestException('2件以上のイベントを指定してください');
+    }
+    if (uniqueIds.length > 4) {
+      throw new BadRequestException('4件までのイベントを指定できます');
+    }
+    const events = await this.prisma.event.findMany({
+      where: { id: { in: uniqueIds } },
+    });
+    if (events.length !== uniqueIds.length) {
+      throw new NotFoundException('存在しないイベントIDが含まれています');
+    }
+    const alreadyLinked = await this.prisma.collabEventLink.count({
+      where: { eventId: { in: uniqueIds } },
+    });
+    if (alreadyLinked > 0) {
+      throw new BadRequestException(
+        '既に別のコラボグループに紐づいているイベントがあります',
+      );
+    }
+
+    const viewToken = randomBytes(24).toString('base64url');
+    return this.prisma.collabGroup.create({
+      data: {
+        label,
+        viewToken,
+        eventLinks: { create: uniqueIds.map((eventId) => ({ eventId })) },
+      },
+      include: { eventLinks: { include: { event: true } } },
+    });
+  }
+
+  async updateCollabGroup(
+    id: string,
+    data: { label?: string; active?: boolean },
+  ) {
+    return this.prisma.collabGroup.update({
+      where: { id },
+      data: {
+        ...(data.label !== undefined && { label: data.label }),
+        ...(data.active !== undefined && { active: data.active }),
+      },
+    });
+  }
+
+  async addCollabEventLink(collabGroupId: string, eventId: string) {
+    const count = await this.prisma.collabEventLink.count({
+      where: { collabGroupId },
+    });
+    if (count >= 4) {
+      throw new BadRequestException('1グループにつき4件までです');
+    }
+    const alreadyLinked = await this.prisma.collabEventLink.findUnique({
+      where: { eventId },
+    });
+    if (alreadyLinked) {
+      throw new BadRequestException('既に別のコラボグループに紐づいています');
+    }
+    return this.prisma.collabEventLink.create({
+      data: { collabGroupId, eventId },
+    });
+  }
+
+  async removeCollabEventLink(collabGroupId: string, eventId: string) {
+    const link = await this.prisma.collabEventLink.findUnique({
+      where: { eventId },
+    });
+    if (!link || link.collabGroupId !== collabGroupId) {
+      throw new NotFoundException('紐付けが見つかりません');
+    }
+    return this.prisma.collabEventLink.delete({ where: { eventId } });
+  }
+
+  async deleteCollabGroup(id: string) {
+    await this.prisma.collabGroup.delete({ where: { id } });
+    return { message: 'deleted' };
   }
 
   private mapOfficialSite(row: OfficialSiteRow) {

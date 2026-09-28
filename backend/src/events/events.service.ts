@@ -140,7 +140,49 @@ export class EventsService {
     const waitlisted = await this.prisma.reservation.count({
       where: { eventId: id, status: 'waitlisted' },
     });
-    return { ...event, reservedCount: reserved, waitlistedCount: waitlisted };
+    const collabLink = await this.prisma.collabEventLink.findUnique({
+      where: { eventId: id },
+      include: { collabGroup: true },
+    });
+    return {
+      ...event,
+      reservedCount: reserved,
+      waitlistedCount: waitlisted,
+      collab: collabLink
+        ? {
+            groupId: collabLink.collabGroupId,
+            viewToken: collabLink.collabGroup.viewToken,
+            label: collabLink.collabGroup.label,
+            active: collabLink.collabGroup.active,
+          }
+        : null,
+    };
+  }
+
+  // 合同開催（他テナントとのコラボ）をCOMIUに相談する。既存のお問い合わせ
+  // （テナント↔COMIUサポート）にそのまま合流させ、新しいチャンネルは作らない。
+  async requestCollab(tenantId: string, eventId: string, note?: string) {
+    const event = await this.findOne(tenantId, eventId);
+    const trimmedNote = note?.trim();
+    const content = [
+      '【コラボイベント申請】',
+      `イベント名: ${event.title}`,
+      `開催日: ${new Date(event.heldAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}`,
+      `イベントID: ${event.id}`,
+      trimmedNote ? `担当者からのメモ: ${trimmedNote}` : null,
+      '他団体との合同開催として、参加者名簿を統合した運営用ページの発行を希望します。',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    return this.prisma.supportMessage.create({
+      data: {
+        tenantId,
+        lineUserId: `tenant:${tenantId}`,
+        content,
+        fromUser: true,
+      },
+    });
   }
 
   private generateRosterShareToken(): string {
