@@ -605,15 +605,20 @@ export class PublicController {
     const tenantId = 'tenant-1779169630551';
     const [reservations, destinations, members, legacyEvents] =
       await Promise.all([
-        this.prisma.reservation.findMany({
-          where: {
-            event: {
-              heldAt: {
-                gte: new Date('2026-11-18T00:00:00.000Z'),
-                lt: new Date('2026-11-19T00:00:00.000Z'),
+      this.prisma.reservation.findMany({
+        where: {
+          OR: [
+            { memberId: 'aca4e2bd-d716-4030-9834-3671699d6452' },
+            {
+              event: {
+                heldAt: {
+                  gte: new Date('2026-11-18T00:00:00.000Z'),
+                  lt: new Date('2026-11-19T00:00:00.000Z'),
+                },
               },
             },
-          },
+          ],
+        },
           select: {
             id: true,
             tenantId: true,
