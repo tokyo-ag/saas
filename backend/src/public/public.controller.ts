@@ -603,56 +603,83 @@ export class PublicController {
     }
 
     const tenantId = 'tenant-1779169630551';
-    const [reservations, destinations] = await Promise.all([
-      this.prisma.reservation.findMany({
-        where: {
-          event: {
-            heldAt: {
-              gte: new Date('2026-11-18T00:00:00.000Z'),
-              lt: new Date('2026-11-19T00:00:00.000Z'),
-            },
-          },
-        },
-        select: {
-          id: true,
-          tenantId: true,
-          eventId: true,
-          status: true,
-          reservedAt: true,
-          member: {
-            select: {
-              name: true,
-              lineDisplayName: true,
-              gender: true,
-            },
-          },
-          event: {
-            select: {
-              id: true,
-              title: true,
-              heldAt: true,
-              collabReadOnly: true,
-              collabLink: { select: { collabGroupId: true } },
-              tenant: {
-                select: { id: true, name: true, lineDisplayName: true },
+    const [reservations, destinations, members, legacyEvents] =
+      await Promise.all([
+        this.prisma.reservation.findMany({
+          where: {
+            event: {
+              heldAt: {
+                gte: new Date('2026-11-18T00:00:00.000Z'),
+                lt: new Date('2026-11-19T00:00:00.000Z'),
               },
             },
           },
-        },
-        orderBy: { reservedAt: 'desc' },
-      }),
-      this.prisma.event.findMany({
-        where: { tenantId, collabLink: { isNot: null } },
-        select: {
-          id: true,
-          title: true,
-          heldAt: true,
-          collabReadOnly: true,
-          collabLink: { select: { collabGroupId: true } },
-        },
-        orderBy: { heldAt: 'desc' },
-      }),
-    ]);
+          select: {
+            id: true,
+            tenantId: true,
+            eventId: true,
+            status: true,
+            reservedAt: true,
+            member: {
+              select: {
+                name: true,
+                lineDisplayName: true,
+                gender: true,
+              },
+            },
+            event: {
+              select: {
+                id: true,
+                title: true,
+                heldAt: true,
+                collabReadOnly: true,
+                collabLink: { select: { collabGroupId: true } },
+                tenant: {
+                  select: { id: true, name: true, lineDisplayName: true },
+                },
+              },
+            },
+          },
+          orderBy: { reservedAt: 'desc' },
+        }),
+        this.prisma.event.findMany({
+          where: { tenantId, collabLink: { isNot: null } },
+          select: {
+            id: true,
+            title: true,
+            heldAt: true,
+            collabReadOnly: true,
+            collabLink: { select: { collabGroupId: true } },
+          },
+          orderBy: { heldAt: 'desc' },
+        }),
+        this.prisma.member.findMany({
+          where: {
+            OR: [
+              { lineDisplayName: { contains: 'れおん' } },
+              { name: { contains: '麗音' } },
+            ],
+          },
+          select: {
+            id: true,
+            tenantId: true,
+            name: true,
+            lineDisplayName: true,
+            gender: true,
+            tenant: { select: { name: true, lineDisplayName: true } },
+          },
+        }),
+        this.prisma.event.findMany({
+          where: { title: { contains: '合同で100人規模' } },
+          select: {
+            id: true,
+            tenantId: true,
+            title: true,
+            heldAt: true,
+            tenant: { select: { name: true, lineDisplayName: true } },
+          },
+        }),
+      ]);
 
     if (body.reservationId || body.destinationEventId) {
       const reservation = reservations.find(
@@ -671,7 +698,7 @@ export class PublicController {
       return { moved: true, reservationId: reservation.id, destination };
     }
 
-    return { moved: false, reservations, destinations };
+    return { moved: false, reservations, destinations, members, legacyEvents };
   }
 
   @Get('tenant-theme/:tenantId')
