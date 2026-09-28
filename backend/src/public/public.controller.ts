@@ -590,6 +590,7 @@ export class PublicController {
       key?: string;
       reservationId?: string;
       destinationEventId?: string;
+      memberId?: string;
     },
   ) {
     const keyHash = createHash('sha256')
@@ -605,20 +606,20 @@ export class PublicController {
     const tenantId = 'tenant-1779169630551';
     const [reservations, destinations, members, legacyEvents] =
       await Promise.all([
-      this.prisma.reservation.findMany({
-        where: {
-          OR: [
-            { memberId: 'aca4e2bd-d716-4030-9834-3671699d6452' },
-            {
-              event: {
-                heldAt: {
-                  gte: new Date('2026-11-18T00:00:00.000Z'),
-                  lt: new Date('2026-11-19T00:00:00.000Z'),
+        this.prisma.reservation.findMany({
+          where: {
+            OR: [
+              { memberId: 'aca4e2bd-d716-4030-9834-3671699d6452' },
+              {
+                event: {
+                  heldAt: {
+                    gte: new Date('2026-11-18T00:00:00.000Z'),
+                    lt: new Date('2026-11-19T00:00:00.000Z'),
+                  },
                 },
               },
-            },
-          ],
-        },
+            ],
+          },
           select: {
             id: true,
             tenantId: true,
@@ -686,15 +687,61 @@ export class PublicController {
         }),
       ]);
 
-    if (body.reservationId || body.destinationEventId) {
-      const reservation = reservations.find(
-        (item) => item.id === body.reservationId,
-      );
+    if (body.reservationId || body.destinationEventId || body.memberId) {
       const destination = destinations.find(
         (item) => item.id === body.destinationEventId,
       );
-      if (!reservation || !destination) {
+      if (!destination) {
         throw new NotFoundException('Maintenance target not found');
+      }
+
+      if (body.memberId) {
+        const member = members.find((item) => item.id === body.memberId);
+        if (!member || member.tenantId !== tenantId) {
+          throw new NotFoundException('Maintenance member not found');
+        }
+        const existing = await this.prisma.reservation.findFirst({
+          where: { eventId: destination.id, memberId: member.id },
+        });
+        if (existing) {
+          return {
+            moved: false,
+            alreadyPresent: true,
+            reservationId: existing.id,
+            destination,
+          };
+        }
+        const source = await this.prisma.reservation.findFirst({
+          where: { memberId: member.id },
+          orderBy: { reservedAt: 'desc' },
+        });
+        const restored = source
+          ? await this.prisma.reservation.update({
+              where: { id: source.id },
+              data: { eventId: destination.id, tenantId },
+            })
+          : await this.prisma.reservation.create({
+              data: {
+                tenantId,
+                eventId: destination.id,
+                memberId: member.id,
+                status: 'reserved',
+                reservedAt: new Date('2026-09-19T13:38:00.000Z'),
+              },
+            });
+        return {
+          moved: true,
+          restored: !source,
+          reservationId: restored.id,
+          destination,
+        };
+      }
+
+      const reservation = reservations.find(
+        (item) => item.id === body.reservationId,
+      );
+      if (!reservation) {
+        throw new NotFoundException('Maintenance reservation not found');
       }
       await this.prisma.reservation.update({
         where: { id: reservation.id },
