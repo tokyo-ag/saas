@@ -161,14 +161,31 @@ export class EventsService {
 
   // 合同開催（他テナントとのコラボ）をCOMIUに相談する。既存のお問い合わせ
   // （テナント↔COMIUサポート）にそのまま合流させ、新しいチャンネルは作らない。
-  async requestCollab(tenantId: string, eventId: string, note?: string) {
+  // 相手団体は必ず選択させ、あいまいな自由記述だけには頼らない。
+  async requestCollab(
+    tenantId: string,
+    eventId: string,
+    targetTenantId: string,
+    note?: string,
+  ) {
+    if (!targetTenantId) {
+      throw new BadRequestException('コラボしたい団体を選択してください');
+    }
     const event = await this.findOne(tenantId, eventId);
+    const targetTenant = await this.prisma.tenant.findFirst({
+      where: { id: targetTenantId, deletedAt: null, bannedAt: null },
+      select: { name: true, lineDisplayName: true, code: true },
+    });
+    if (!targetTenant) {
+      throw new NotFoundException('指定された団体が見つかりません');
+    }
     const trimmedNote = note?.trim();
     const content = [
       '【コラボイベント申請】',
       `イベント名: ${event.title}`,
       `開催日: ${new Date(event.heldAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}`,
       `イベントID: ${event.id}`,
+      `相手団体: ${targetTenant.lineDisplayName ?? targetTenant.name}（コード: ${targetTenant.code ?? '未設定'}）`,
       trimmedNote ? `担当者からのメモ: ${trimmedNote}` : null,
       '他団体との合同開催として、参加者名簿を統合した運営用ページの発行を希望します。',
     ]

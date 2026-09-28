@@ -106,9 +106,14 @@ export class EventsController {
   requestCollab(
     @TenantId() tenantId: string,
     @Param('eventId') eventId: string,
-    @Body() body: { note?: string },
+    @Body() body: { targetTenantId: string; note?: string },
   ) {
-    return this.eventsService.requestCollab(tenantId, eventId, body?.note);
+    return this.eventsService.requestCollab(
+      tenantId,
+      eventId,
+      body.targetTenantId,
+      body?.note,
+    );
   }
 
   @Get(':eventId/export')

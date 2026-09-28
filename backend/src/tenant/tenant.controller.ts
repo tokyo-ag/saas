@@ -6,6 +6,7 @@ import {
   Patch,
   Delete,
   Param,
+  Query,
   Body,
   BadRequestException,
   UseGuards,
@@ -86,6 +87,13 @@ export class TenantController {
     @Body('content') content: string,
   ) {
     return this.tenantService.sendSupportMessage(tenantId, content);
+  }
+
+  // コラボイベント申請時に相手団体を選ぶための最小限の検索。名前・団体コードのみ返す
+  // （予約データ等は一切含めない。団体名・コードは各団体の公開ページで既に公開情報）。
+  @Get('collab-search')
+  searchTenantsForCollab(@TenantId() tenantId: string, @Query('q') q: string) {
+    return this.tenantService.searchTenantsForCollab(tenantId, q ?? '');
   }
 
   @Post('billing/checkout')

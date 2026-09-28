@@ -670,6 +670,26 @@ export class TenantService {
     });
   }
 
+  async searchTenantsForCollab(excludeTenantId: string, query: string) {
+    const trimmed = query.trim();
+    if (!trimmed) return [];
+    const tenants = await this.prisma.tenant.findMany({
+      where: {
+        id: { not: excludeTenantId },
+        deletedAt: null,
+        bannedAt: null,
+        OR: [
+          { name: { contains: trimmed, mode: 'insensitive' } },
+          { lineDisplayName: { contains: trimmed, mode: 'insensitive' } },
+          { code: { contains: trimmed, mode: 'insensitive' } },
+        ],
+      },
+      select: { id: true, name: true, lineDisplayName: true, code: true },
+      take: 10,
+    });
+    return tenants;
+  }
+
   async createBillingCheckout(tenantId: string, plan: 'standard' | 'pro') {
     const secretKey = process.env.STRIPE_BILLING_SECRET_KEY;
     if (!secretKey)

@@ -125,10 +125,10 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify({ enabled }),
       }),
-    requestCollab: (id: string, note?: string) =>
+    requestCollab: (id: string, targetTenantId: string, note?: string) =>
       request<{ id: string }>(`/admin/events/${id}/collab-request`, {
         method: 'POST',
-        body: JSON.stringify({ note }),
+        body: JSON.stringify({ targetTenantId, note }),
       }),
   },
   members: {
@@ -369,6 +369,10 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ content }),
       }),
+    searchForCollab: (q: string) =>
+      request<{ id: string; name: string; lineDisplayName: string | null; code: string | null }[]>(
+        `/admin/tenant/collab-search?q=${encodeURIComponent(q)}`,
+      ),
     reviews: () => request<AdminTenantReview[]>('/admin/tenant/reviews'),
     updateReview: (reviewId: string, data: { isPublished?: boolean; content?: string }) =>
       request<AdminTenantReview>(`/admin/tenant/reviews/${reviewId}`, {

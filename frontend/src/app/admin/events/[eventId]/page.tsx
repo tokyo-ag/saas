@@ -49,6 +49,9 @@ export default function EventDetailPage() {
   const [collabNote, setCollabNote] = useState('');
   const [sendingCollab, setSendingCollab] = useState(false);
   const [collabRequested, setCollabRequested] = useState(false);
+  const [collabQuery, setCollabQuery] = useState('');
+  const [collabResults, setCollabResults] = useState<{ id: string; name: string; lineDisplayName: string | null; code: string | null }[]>([]);
+  const [collabSelected, setCollabSelected] = useState<{ id: string; name: string; lineDisplayName: string | null } | null>(null);
 
   const load = useCallback(async () => {
     const [eventData, reservationList] = await Promise.all([
@@ -63,6 +66,17 @@ export default function EventDetailPage() {
     load().catch(console.error).finally(() => setLoading(false));
     api.tenant.get().then((t) => setCustomQuestions(t.customProfileQuestions ?? [])).catch(() => {});
   }, [load]);
+
+  useEffect(() => {
+    if (collabSelected || !collabQuery.trim()) {
+      setCollabResults([]);
+      return;
+    }
+    const id = setTimeout(() => {
+      api.tenant.searchForCollab(collabQuery.trim()).then(setCollabResults).catch(() => setCollabResults([]));
+    }, 300);
+    return () => clearTimeout(id);
+  }, [collabQuery, collabSelected]);
 
   async function updateStatus(reservationId: string, status: string) {
     try {
@@ -103,12 +117,13 @@ export default function EventDetailPage() {
   }
 
   async function submitCollabRequest() {
+    if (!collabSelected) return;
     setSendingCollab(true);
     try {
-      await api.events.requestCollab(eventId, collabNote);
+      await api.events.requestCollab(eventId, collabSelected.id, collabNote);
       setCollabRequested(true);
-    } catch {
-      alert('送信に失敗しました');
+    } catch (e: any) {
+      alert(e.message ?? '送信に失敗しました');
     } finally {
       setSendingCollab(false);
     }
@@ -361,6 +376,48 @@ export default function EventDetailPage() {
             <p className="text-xs leading-relaxed text-gray-400">
               他団体との合同開催の場合、参加者名簿を統合した運営専用ページを発行できます。参加者には合同開催であることは表示されません。
             </p>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-500">コラボしたい団体</label>
+              {collabSelected ? (
+                <div className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm">
+                  <span className="truncate font-medium text-gray-800">{collabSelected.lineDisplayName ?? collabSelected.name}</span>
+                  <button
+                    onClick={() => setCollabSelected(null)}
+                    className="shrink-0 text-xs text-gray-400 hover:text-gray-600"
+                  >
+                    変更
+                  </button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <input
+                    value={collabQuery}
+                    onChange={(e) => setCollabQuery(e.target.value)}
+                    placeholder="団体名で検索"
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                  />
+                  {collabResults.length > 0 && (
+                    <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-sm">
+                      {collabResults.map((t) => (
+                        <button
+                          key={t.id}
+                          onClick={() => {
+                            setCollabSelected(t);
+                            setCollabQuery('');
+                            setCollabResults([]);
+                          }}
+                          className="block w-full truncate px-3 py-2 text-left text-sm hover:bg-gray-50"
+                        >
+                          {t.lineDisplayName ?? t.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             <textarea
               value={collabNote}
               onChange={(e) => setCollabNote(e.target.value)}
@@ -370,7 +427,7 @@ export default function EventDetailPage() {
             />
             <button
               onClick={submitCollabRequest}
-              disabled={sendingCollab}
+              disabled={sendingCollab || !collabSelected}
               className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
             >
               {sendingCollab ? '送信中...' : 'コラボ開催をCOMIUに相談する'}
