@@ -371,6 +371,14 @@ export const api = {
       }),
     listForCollab: () =>
       request<{ id: string; name: string }[]>('/admin/tenant/collab-tenants'),
+    respondToCollabRequest: (
+      messageId: string,
+      status: 'approved' | 'rejected',
+    ) =>
+      request<SupportMessage>(`/admin/tenant/collab-requests/${messageId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      }),
     reviews: () => request<AdminTenantReview[]>('/admin/tenant/reviews'),
     updateReview: (reviewId: string, data: { isPublished?: boolean; content?: string }) =>
       request<AdminTenantReview>(`/admin/tenant/reviews/${reviewId}`, {

@@ -139,3 +139,107 @@ describe('TenantService collaboration tenant list', () => {
     });
   });
 });
+
+describe('TenantService collaboration request response', () => {
+  const pendingMessage = {
+    id: 'message-1',
+    tenantId: 'tenant-target',
+    lineUserId: 'tenant:tenant-target',
+    fromUser: false,
+    read: true,
+    createdAt: new Date('2026-09-28T08:25:00.000Z'),
+    content: [
+      '【コラボ申請】',
+      'Source Clubからコラボ申請が届きました。',
+      'イベント名: 交流会',
+      '開催日: 2026/11/18 17:00:00',
+      '参加予定団体: Source Club、Target Club',
+      '参加可否や確認事項は、このチャットへ返信してください。',
+    ].join('\n'),
+  };
+
+  function createService() {
+    const prisma = {
+      $transaction: jest
+        .fn()
+        .mockImplementation((operations: Promise<unknown>[]) =>
+          Promise.all(operations),
+        ),
+      tenant: {
+        findUnique: jest.fn().mockResolvedValue({ name: 'Target Club' }),
+        findFirst: jest
+          .fn()
+          .mockResolvedValue({ id: 'tenant-source', name: 'Source Club' }),
+      },
+      supportMessage: {
+        findFirst: jest.fn().mockResolvedValue(pendingMessage),
+        update: jest.fn().mockImplementation(({ data }) =>
+          Promise.resolve({
+            ...pendingMessage,
+            ...data,
+          }),
+        ),
+        create: jest.fn().mockResolvedValue({ id: 'notification-1' }),
+      },
+    };
+    return {
+      prisma,
+      service: new TenantService(prisma as never, {} as never),
+    };
+  }
+
+  it('approves a pending request and notifies its source tenant', async () => {
+    const { prisma, service } = createService();
+
+    const result = await service.respondToCollabRequest(
+      'tenant-target',
+      'message-1',
+      'approved',
+    );
+
+    expect(prisma.supportMessage.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: 'message-1',
+        tenantId: 'tenant-target',
+        lineUserId: 'tenant:tenant-target',
+        fromUser: false,
+      },
+    });
+    expect(prisma.supportMessage.update).toHaveBeenCalledWith({
+      where: { id: 'message-1' },
+      data: {
+        content: expect.stringContaining('【コラボ申請（承認済み）】'),
+        read: true,
+      },
+    });
+    const updatedContent = prisma.supportMessage.update.mock.calls[0][0].data
+      .content as string;
+    expect(updatedContent).not.toContain('参加予定団体:');
+    expect(updatedContent).toContain('このコラボ申請を承認しました。');
+    expect(prisma.supportMessage.create).toHaveBeenCalledWith({
+      data: {
+        tenantId: 'tenant-source',
+        lineUserId: 'tenant:tenant-source',
+        content: expect.stringContaining(
+          'Target Clubがコラボ申請を承認しました。',
+        ),
+        fromUser: false,
+      },
+    });
+    expect(result.content).toContain('【コラボ申請（承認済み）】');
+  });
+
+  it('does not allow another tenant to answer the request', async () => {
+    const { prisma, service } = createService();
+    prisma.supportMessage.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.respondToCollabRequest(
+        'different-tenant',
+        'message-1',
+        'approved',
+      ),
+    ).rejects.toThrow('コラボ申請が見つかりません');
+    expect(prisma.supportMessage.update).not.toHaveBeenCalled();
+  });
+});

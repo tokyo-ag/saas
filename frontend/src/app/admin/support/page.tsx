@@ -3,7 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, SupportMessage } from '@/lib/api';
 import { ChatBubble, ChatInput } from '@/components/ui/ChatBubble';
-import { formatSupportMessageContent } from '@/lib/supportMessage';
+import {
+  formatSupportMessageContent,
+  isPendingCollabRequest,
+} from '@/lib/supportMessage';
 
 function formatTime(dateStr: string) {
   return new Date(dateStr).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
@@ -14,6 +17,7 @@ export default function AdminSupportPage() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [respondingMessageId, setRespondingMessageId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,6 +46,28 @@ export default function AdminSupportPage() {
       await load();
     } finally {
       setSending(false);
+    }
+  }
+
+  async function respondToCollabRequest(
+    messageId: string,
+    status: 'approved' | 'rejected',
+  ) {
+    if (status === 'rejected' && !window.confirm('このコラボ申請を辞退しますか？')) {
+      return;
+    }
+    setRespondingMessageId(messageId);
+    try {
+      const updated = await api.tenant.respondToCollabRequest(messageId, status);
+      setMessages((current) =>
+        current.map((message) =>
+          message.id === updated.id ? updated : message,
+        ),
+      );
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '回答の保存に失敗しました');
+    } finally {
+      setRespondingMessageId(null);
     }
   }
 
@@ -77,15 +103,40 @@ export default function AdminSupportPage() {
               </p>
             </div>
           ) : (
-            messages.map((msg) => (
-              <ChatBubble
-                key={msg.id}
-                content={formatSupportMessageContent(msg.content)}
-                time={formatTime(msg.createdAt)}
-                isMine={msg.fromUser}
-                avatar={comiuAvatar}
-              />
-            ))
+            messages.map((msg) => {
+              const showCollabActions =
+                !msg.fromUser && isPendingCollabRequest(msg.content);
+              return (
+                <div key={msg.id} className="space-y-2">
+                  <ChatBubble
+                    content={formatSupportMessageContent(msg.content)}
+                    time={formatTime(msg.createdAt)}
+                    isMine={msg.fromUser}
+                    avatar={comiuAvatar}
+                  />
+                  {showCollabActions && (
+                    <div className="ml-10 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => respondToCollabRequest(msg.id, 'approved')}
+                        disabled={respondingMessageId === msg.id}
+                        className="rounded-lg bg-[#06C755] px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+                      >
+                        承認
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => respondToCollabRequest(msg.id, 'rejected')}
+                        disabled={respondingMessageId === msg.id}
+                        className="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-bold text-red-500 disabled:opacity-50"
+                      >
+                        辞退
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
           <div ref={bottomRef} />
         </div>

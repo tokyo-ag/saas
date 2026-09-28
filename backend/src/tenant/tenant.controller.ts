@@ -95,6 +95,22 @@ export class TenantController {
     return this.tenantService.listTenantsForCollab(tenantId);
   }
 
+  @Patch('collab-requests/:messageId')
+  respondToCollabRequest(
+    @TenantId() tenantId: string,
+    @Param('messageId') messageId: string,
+    @Body('status') status: 'approved' | 'rejected',
+  ) {
+    if (status !== 'approved' && status !== 'rejected') {
+      throw new BadRequestException('status must be approved or rejected');
+    }
+    return this.tenantService.respondToCollabRequest(
+      tenantId,
+      messageId,
+      status,
+    );
+  }
+
   @Post('billing/checkout')
   billingCheckout(@TenantId() tenantId: string, @Body('plan') plan: string) {
     if (plan !== 'standard' && plan !== 'pro') {

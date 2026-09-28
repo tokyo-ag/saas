@@ -229,7 +229,9 @@ export class EventsService {
     const targetContent = [
       '【コラボ申請（承認待ち）】',
       `申請元団体: ${sourceTenantName}`,
+      `申請元団体ID: ${tenantId}`,
       `イベント名: ${event.title}`,
+      `イベントID: ${event.id}`,
       `開催日: ${heldAt}`,
       'この時点では合同開催は確定していません。',
       '承認・辞退や確認事項は、このチャットへ返信してください。',

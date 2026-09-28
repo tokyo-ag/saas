@@ -11,14 +11,36 @@ import { JwtService } from '@nestjs/jwt';
 import Stripe from 'stripe';
 import { randomBytes } from 'crypto';
 import { Prisma } from '@prisma/client';
-import { IsArray, IsBoolean, IsObject, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsObject,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 import { normalizeEventSocialProofSettings } from '../event-social-proof/event-social-proof.service';
 
-const TENANT_TYPE_TAGS = ['インカレサークル', '学生団体', 'イベント団体', '社会人サークル'];
-const TENANT_ACTIVITY_TAGS = ['交流会', 'バドミントン', 'フットサル', 'バスケ', 'バレー', '卓球'];
+const TENANT_TYPE_TAGS = [
+  'インカレサークル',
+  '学生団体',
+  'イベント団体',
+  '社会人サークル',
+];
+const TENANT_ACTIVITY_TAGS = [
+  '交流会',
+  'バドミントン',
+  'フットサル',
+  'バスケ',
+  'バレー',
+  '卓球',
+];
 
-function normalizeAllowedTags(tags: string[] | undefined, allowedTags: string[], limit: number) {
+function normalizeAllowedTags(
+  tags: string[] | undefined,
+  allowedTags: string[],
+  limit: number,
+) {
   if (!tags) return [];
   return tags
     .map((tag) => tag.trim())
@@ -28,11 +50,23 @@ function normalizeAllowedTags(tags: string[] | undefined, allowedTags: string[],
 
 const MAX_CUSTOM_PROFILE_QUESTIONS = 10;
 const MAX_CUSTOM_PROFILE_QUESTION_OPTIONS = 8;
-const CUSTOM_PROFILE_QUESTION_TYPES: CustomProfileQuestionType[] = ['text', 'radio', 'checkbox', 'select'];
+const CUSTOM_PROFILE_QUESTION_TYPES: CustomProfileQuestionType[] = [
+  'text',
+  'radio',
+  'checkbox',
+  'select',
+];
 
 function sanitizeCustomProfileQuestions(
   questions: CustomProfileQuestionInput[] | undefined,
-): { id: string; label: string; type: CustomProfileQuestionType; placeholder?: string; options?: string[]; required: boolean }[] {
+): {
+  id: string;
+  label: string;
+  type: CustomProfileQuestionType;
+  placeholder?: string;
+  options?: string[];
+  required: boolean;
+}[] {
   if (!Array.isArray(questions)) return [];
   return questions
     .map((q, i) => {
@@ -44,7 +78,11 @@ function sanitizeCustomProfileQuestions(
         : [];
       // 選択肢が2つ未満の選択式は成立しないので自由記述にフォールバックする。
       const type: CustomProfileQuestionType =
-        CUSTOM_PROFILE_QUESTION_TYPES.includes(q.type as CustomProfileQuestionType) && q.type !== 'text' && options.length >= 2
+        CUSTOM_PROFILE_QUESTION_TYPES.includes(
+          q.type as CustomProfileQuestionType,
+        ) &&
+        q.type !== 'text' &&
+        options.length >= 2
           ? (q.type as CustomProfileQuestionType)
           : 'text';
       return {
@@ -52,7 +90,10 @@ function sanitizeCustomProfileQuestions(
         label: (q.label ?? '').trim().slice(0, 100),
         type,
         required: !!q.required,
-        ...(type === 'text' && q.placeholder?.trim() && { placeholder: q.placeholder.trim().slice(0, 100) }),
+        ...(type === 'text' &&
+          q.placeholder?.trim() && {
+            placeholder: q.placeholder.trim().slice(0, 100),
+          }),
         ...(type !== 'text' && { options }),
       };
     })
@@ -87,13 +128,19 @@ export class UpdateTenantDto {
   @IsOptional() @IsBoolean() requireGender?: boolean;
   @IsOptional() @IsBoolean() showLevel?: boolean;
   @IsOptional() @IsBoolean() showComment?: boolean;
-  @IsOptional() @IsArray() customProfileQuestions?: CustomProfileQuestionInput[];
+  @IsOptional()
+  @IsArray()
+  customProfileQuestions?: CustomProfileQuestionInput[];
   @IsOptional() @IsString() themeColor?: string;
   @IsOptional() @IsString() iconUrl?: string;
   @IsOptional() @IsString() code?: string;
 }
 
-export type CustomProfileQuestionType = 'text' | 'radio' | 'checkbox' | 'select';
+export type CustomProfileQuestionType =
+  | 'text'
+  | 'radio'
+  | 'checkbox'
+  | 'select';
 
 export interface CustomProfileQuestionInput {
   id?: string;
@@ -288,7 +335,12 @@ export class TenantService {
           tenantId,
           OR: [
             { maleDelayMinutes: { not: null } },
-            { AND: [{ priceMale: { not: null } }, { priceFemale: { not: null } }] },
+            {
+              AND: [
+                { priceMale: { not: null } },
+                { priceFemale: { not: null } },
+              ],
+            },
           ],
         },
       });
@@ -323,7 +375,9 @@ export class TenantService {
         ? normalizeAllowedTags(dto.activityTags, TENANT_ACTIVITY_TAGS, 20)
         : undefined;
     const legacyTags =
-      dto.tags !== undefined ? normalizeAllowedTags(dto.tags, TENANT_ACTIVITY_TAGS, 20) : undefined;
+      dto.tags !== undefined
+        ? normalizeAllowedTags(dto.tags, TENANT_ACTIVITY_TAGS, 20)
+        : undefined;
 
     const updated = await this.prisma.tenant.update({
       where: { id: tenantId },
@@ -384,8 +438,12 @@ export class TenantService {
           ) as unknown as Prisma.InputJsonValue,
         }),
         ...(dto.requireName !== undefined && { requireName: dto.requireName }),
-        ...(dto.requireGrade !== undefined && { requireGrade: dto.requireGrade }),
-        ...(dto.requireGender !== undefined && { requireGender: dto.requireGender }),
+        ...(dto.requireGrade !== undefined && {
+          requireGrade: dto.requireGrade,
+        }),
+        ...(dto.requireGender !== undefined && {
+          requireGender: dto.requireGender,
+        }),
         ...(dto.showLevel !== undefined && { showLevel: dto.showLevel }),
         ...(dto.showComment !== undefined && { showComment: dto.showComment }),
         ...(customProfileQuestions !== undefined && {
@@ -431,7 +489,9 @@ export class TenantService {
     return this.prisma.tenantReview.update({
       where: { id: reviewId },
       data: {
-        ...(data.isPublished !== undefined && { isPublished: data.isPublished }),
+        ...(data.isPublished !== undefined && {
+          isPublished: data.isPublished,
+        }),
         ...(content !== undefined && { content }),
       },
     });
@@ -548,7 +608,11 @@ export class TenantService {
     const jstOffset = 9 * 60 * 60 * 1000;
     const nowJst = new Date(now.getTime() + jstOffset);
     const todayStart = new Date(
-      Date.UTC(nowJst.getUTCFullYear(), nowJst.getUTCMonth(), nowJst.getUTCDate()) - jstOffset,
+      Date.UTC(
+        nowJst.getUTCFullYear(),
+        nowJst.getUTCMonth(),
+        nowJst.getUTCDate(),
+      ) - jstOffset,
     );
     const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
 
@@ -676,6 +740,140 @@ export class TenantService {
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
     });
+  }
+
+  async respondToCollabRequest(
+    tenantId: string,
+    messageId: string,
+    status: 'approved' | 'rejected',
+  ) {
+    const message = await this.prisma.supportMessage.findFirst({
+      where: {
+        id: messageId,
+        tenantId,
+        lineUserId: this.supportThreadId(tenantId),
+        fromUser: false,
+      },
+    });
+    if (!message || !message.content.startsWith('【コラボ申請')) {
+      throw new NotFoundException('コラボ申請が見つかりません');
+    }
+    if (
+      message.content.startsWith('【コラボ申請（承認済み）】') ||
+      message.content.startsWith('【コラボ申請（辞退済み）】')
+    ) {
+      throw new BadRequestException('このコラボ申請には回答済みです');
+    }
+
+    const sourceTenantId =
+      message.content.match(/^申請元団体ID: (.+)$/m)?.[1]?.trim() ?? null;
+    const sourceTenantName =
+      message.content.match(/^申請元団体: (.+)$/m)?.[1]?.trim() ??
+      message.content
+        .match(/^(.+)からコラボ申請が届きました。$/m)?.[1]
+        ?.trim() ??
+      null;
+    const eventTitle =
+      message.content.match(/^イベント名: (.+)$/m)?.[1]?.trim() ?? 'イベント';
+    const [targetTenant, sourceTenant] = await Promise.all([
+      this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { name: true },
+      }),
+      sourceTenantId
+        ? this.prisma.tenant.findFirst({
+            where: { id: sourceTenantId, deletedAt: null, bannedAt: null },
+            select: { id: true, name: true },
+          })
+        : sourceTenantName
+          ? this.prisma.tenant.findFirst({
+              where: {
+                id: { not: tenantId },
+                name: sourceTenantName,
+                deletedAt: null,
+                bannedAt: null,
+              },
+              select: { id: true, name: true },
+            })
+          : null,
+    ]);
+    if (!targetTenant || !sourceTenant) {
+      throw new NotFoundException('申請元または申請先の団体が見つかりません');
+    }
+
+    const responseLabel = status === 'approved' ? '承認' : '辞退';
+    const responseState = status === 'approved' ? '承認済み' : '辞退済み';
+    const responseContent = this.formatCollabResponseContent(
+      message.content,
+      responseState,
+    );
+    const sourceNotification = [
+      '【コラボ申請の回答】',
+      `${targetTenant.name}がコラボ申請を${responseLabel}しました。`,
+      `イベント名: ${eventTitle}`,
+      status === 'approved'
+        ? 'COMIUが合同開催の設定を進めます。'
+        : 'この団体との合同開催は行われません。',
+    ].join('\n');
+
+    const [updatedMessage] = await this.prisma.$transaction([
+      this.prisma.supportMessage.update({
+        where: { id: message.id },
+        data: { content: responseContent, read: true },
+      }),
+      this.prisma.supportMessage.create({
+        data: {
+          tenantId: sourceTenant.id,
+          lineUserId: this.supportThreadId(sourceTenant.id),
+          content: sourceNotification,
+          fromUser: false,
+        },
+      }),
+    ]);
+    return updatedMessage;
+  }
+
+  private formatCollabResponseContent(
+    content: string,
+    state: '承認済み' | '辞退済み',
+  ) {
+    const lines = content
+      .split('\n')
+      .filter((line) => !line.startsWith('参加予定団体:'));
+    lines[0] = `【コラボ申請（${state}）】`;
+
+    const legacySourceLineIndex = lines.findIndex((line) =>
+      line.endsWith('からコラボ申請が届きました。'),
+    );
+    if (legacySourceLineIndex >= 0) {
+      lines[legacySourceLineIndex] = `申請元団体: ${lines[
+        legacySourceLineIndex
+      ].replace('からコラボ申請が届きました。', '')}`;
+    }
+
+    const pendingLineIndex = lines.findIndex((line) =>
+      line.includes('合同開催は確定していません'),
+    );
+    const stateLine =
+      state === '承認済み'
+        ? 'このコラボ申請を承認しました。'
+        : 'このコラボ申請を辞退しました。';
+    if (pendingLineIndex >= 0) {
+      lines[pendingLineIndex] = stateLine;
+    } else {
+      lines.push(stateLine);
+    }
+
+    const replyLineIndex = lines.findIndex((line) =>
+      line.includes('このチャットへ返信してください'),
+    );
+    if (replyLineIndex >= 0) {
+      lines[replyLineIndex] =
+        state === '承認済み'
+          ? 'COMIUが合同開催の設定を進めます。'
+          : 'この団体との合同開催は行われません。';
+    }
+    return lines.join('\n');
   }
 
   async createBillingCheckout(tenantId: string, plan: 'standard' | 'pro') {
