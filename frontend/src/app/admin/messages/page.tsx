@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { api, SupportMessage } from '@/lib/api';
+import { formatSupportMessageContent } from '@/lib/supportMessage';
 
 type ThreadRow = {
   kind: 'comiu';
@@ -46,7 +47,9 @@ export default function AdminMessagesPage() {
       title: 'COMIU サポートチャット',
       subtitle: 'COMIUへの相談・不具合報告',
       avatar: 'C',
-      lastContent: latestSupport?.content ?? '運用で困ったことをCOMIUに相談できます',
+      lastContent: latestSupport
+        ? formatSupportMessageContent(latestSupport.content)
+        : '運用で困ったことをCOMIUに相談できます',
       lastAt: latestSupport?.createdAt,
       unreadCount: supportUnread,
       prefix: latestSupport ? (latestSupport.fromUser ? 'あなた: ' : 'COMIU: ') : '',

@@ -57,6 +57,7 @@ export default function EventDetailPage() {
   const [collabTenantsLoading, setCollabTenantsLoading] = useState(true);
   const [collabTenantsError, setCollabTenantsError] = useState(false);
   const [collabTargetIds, setCollabTargetIds] = useState<string[]>([]);
+  const [currentTenantId, setCurrentTenantId] = useState('');
 
   const load = useCallback(async () => {
     const [eventData, reservationList] = await Promise.all([
@@ -69,7 +70,15 @@ export default function EventDetailPage() {
 
   useEffect(() => {
     load().catch(console.error).finally(() => setLoading(false));
-    api.tenant.get().then((t) => setCustomQuestions(t.customProfileQuestions ?? [])).catch(() => {});
+    api.tenant.get()
+      .then((tenant) => {
+        setCustomQuestions(tenant.customProfileQuestions ?? []);
+        setCurrentTenantId(tenant.id);
+        setCollabTargetIds((current) =>
+          current.filter((id) => id !== tenant.id),
+        );
+      })
+      .catch(() => {});
     api.tenant.listForCollab()
       .then(setCollabTenants)
       .catch(() => setCollabTenantsError(true))
@@ -115,10 +124,13 @@ export default function EventDetailPage() {
   }
 
   async function submitCollabRequest() {
-    if (collabTargetIds.length === 0) return;
+    const targetTenantIds = collabTargetIds.filter(
+      (tenantId) => tenantId !== currentTenantId,
+    );
+    if (targetTenantIds.length === 0) return;
     setSendingCollab(true);
     try {
-      await api.events.requestCollab(eventId, collabTargetIds);
+      await api.events.requestCollab(eventId, targetTenantIds);
       setCollabRequested(true);
     } catch (e: any) {
       alert(e.message ?? '送信に失敗しました');
@@ -141,7 +153,8 @@ export default function EventDetailPage() {
   }
 
   const availableCollabTenants = collabTenants.filter(
-    (tenant) => !collabTargetIds.includes(tenant.id),
+    (tenant) =>
+      tenant.id !== currentTenantId && !collabTargetIds.includes(tenant.id),
   );
   let collabTenantSelectLabel = '団体を選択（最大4つ）';
   if (collabTenantsLoading) {

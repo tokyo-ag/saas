@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, SupportMessage } from '@/lib/api';
 import { ChatBubble, ChatInput } from '@/components/ui/ChatBubble';
+import { formatSupportMessageContent } from '@/lib/supportMessage';
 
 function formatTime(dateStr: string) {
   return new Date(dateStr).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
@@ -79,7 +80,7 @@ export default function AdminSupportPage() {
             messages.map((msg) => (
               <ChatBubble
                 key={msg.id}
-                content={msg.content}
+                content={formatSupportMessageContent(msg.content)}
                 time={formatTime(msg.createdAt)}
                 isMine={msg.fromUser}
                 avatar={comiuAvatar}

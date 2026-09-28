@@ -253,7 +253,7 @@ describe('EventsService date validation', () => {
         tenantId: 'tenant-2',
         lineUserId: 'tenant:tenant-2',
         content: expect.stringContaining(
-          'Source Clubからコラボ申請が届きました。',
+          '【コラボ申請（承認待ち）】\n申請元団体: Source Club',
         ),
         fromUser: false,
       },
@@ -263,7 +263,7 @@ describe('EventsService date validation', () => {
         tenantId: 'tenant-5',
         lineUserId: 'tenant:tenant-5',
         content: expect.stringContaining(
-          '参加予定団体: Source Club、Club Two、Club Three、Club Four、Club Five',
+          'この時点では合同開催は確定していません。',
         ),
         fromUser: false,
       },

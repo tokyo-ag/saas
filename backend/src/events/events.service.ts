@@ -226,20 +226,13 @@ export class EventsService {
       '他団体との合同開催として、参加者名簿を統合した運営用ページの発行を希望します。',
     ].join('\n');
 
-    const participatingTenantNames = [
-      sourceTenantName,
-      ...uniqueTargetTenantIds.map((id) => {
-        const tenant = targetTenantById.get(id)!;
-        return tenant.name;
-      }),
-    ];
     const targetContent = [
-      '【コラボ申請】',
-      `${sourceTenantName}からコラボ申請が届きました。`,
+      '【コラボ申請（承認待ち）】',
+      `申請元団体: ${sourceTenantName}`,
       `イベント名: ${event.title}`,
       `開催日: ${heldAt}`,
-      `参加予定団体: ${participatingTenantNames.join('、')}`,
-      '参加可否や確認事項は、このチャットへ返信してください。',
+      'この時点では合同開催は確定していません。',
+      '承認・辞退や確認事項は、このチャットへ返信してください。',
     ].join('\n');
 
     const createMessages = [
