@@ -49,6 +49,14 @@ export class EventsService {
     private lineMessaging: LineMessagingService,
   ) {}
 
+  private assertEventEditable(event: { collabReadOnly?: boolean }) {
+    if (event.collabReadOnly) {
+      throw new ForbiddenException(
+        'コラボ先から共有されたイベントは閲覧専用です',
+      );
+    }
+  }
+
   async findAll(tenantId: string) {
     const events = await this.prisma.event.findMany({
       where: { tenantId },
@@ -115,6 +123,7 @@ export class EventsService {
         remindedAt: e.remindedAt,
         imageUrl: e.imageUrl,
         iconUrl: e.iconUrl,
+        collabReadOnly: e.collabReadOnly,
         category: e.category,
         categories: e.categories,
         tags: e.tags,
@@ -185,6 +194,7 @@ export class EventsService {
     }
 
     const event = await this.findOne(tenantId, eventId);
+    this.assertEventEditable(event);
     const [sourceTenant, targetTenants] = await Promise.all([
       this.prisma.tenant.findUnique({
         where: { id: tenantId },
@@ -333,6 +343,7 @@ export class EventsService {
 
   async update(tenantId: string, id: string, dto: Partial<CreateEventDto>) {
     const current = await this.findOne(tenantId, id);
+    this.assertEventEditable(current);
     const categories =
       dto.category !== undefined || dto.categories !== undefined
         ? normalizeEventCategories(dto.category, dto.categories)
@@ -448,6 +459,7 @@ export class EventsService {
 
   async toggleRosterShare(tenantId: string, eventId: string, enabled: boolean) {
     const current = await this.findOne(tenantId, eventId);
+    this.assertEventEditable(current);
     const rosterShareToken =
       enabled && !current.rosterShareToken
         ? this.generateRosterShareToken()
@@ -462,7 +474,8 @@ export class EventsService {
   }
 
   async remove(tenantId: string, id: string) {
-    await this.findOne(tenantId, id);
+    const event = await this.findOne(tenantId, id);
+    this.assertEventEditable(event);
     await this.prisma.reservation.deleteMany({ where: { eventId: id } });
     return this.prisma.event.delete({ where: { id } });
   }

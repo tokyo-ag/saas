@@ -833,6 +833,10 @@ export class TenantService {
         (link) => link.event.tenantId === targetTenantId,
       )?.event;
       if (existingTargetEvent) {
+        await tx.event.update({
+          where: { id: existingTargetEvent.id },
+          data: { collabReadOnly: true },
+        });
         if (!sourceLink.collabGroup.active) {
           await tx.collabGroup.update({
             where: { id: sourceLink.collabGroupId },
@@ -864,6 +868,7 @@ export class TenantService {
           tenantId: targetTenantId,
           rosterShareEnabled: false,
           rosterShareToken: null,
+          collabReadOnly: true,
           remindedAt: null,
           viewCount: 0,
         },

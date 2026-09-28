@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { CreateEventDto, EventStatusDto } from './dto/create-event.dto';
 
@@ -75,6 +75,7 @@ describe('EventsService date validation', () => {
       heldAt: new Date('2026-06-12T11:00:00.000Z'),
       endAt: new Date('2026-06-12T13:00:00.000Z'),
       remindAt: null,
+      collabReadOnly: false,
     });
     prisma.reservation.count.mockResolvedValue(0);
     prisma.collabEventLink.findUnique.mockResolvedValue(null);
@@ -184,6 +185,23 @@ describe('EventsService date validation', () => {
         }),
       }),
     );
+  });
+
+  it('rejects edits to an event shared with a collaboration recipient', async () => {
+    prisma.event.findFirst.mockResolvedValue({
+      id: 'event-1',
+      tenantId: 'tenant-1',
+      title: '合同交流会',
+      heldAt: new Date('2026-06-12T11:00:00.000Z'),
+      endAt: new Date('2026-06-12T13:00:00.000Z'),
+      remindAt: null,
+      collabReadOnly: true,
+    });
+
+    await expect(
+      service.update('tenant-1', 'event-1', { title: '変更後の名前' }),
+    ).rejects.toThrow(ForbiddenException);
+    expect(prisma.event.update).not.toHaveBeenCalled();
   });
 
   it('includes up to four selected organizations in a collaboration request', async () => {

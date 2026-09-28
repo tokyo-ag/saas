@@ -204,14 +204,20 @@ export default function EventDetailPage() {
           </div>
         </div>
 
-        <div>
-          <Link
-            href={`/admin/events/${eventId}/edit`}
-            className="flex min-h-11 w-full items-center justify-center rounded-lg bg-[#06C755] px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-[#05a847] sm:w-auto sm:px-6"
-          >
-            編集
-          </Link>
-        </div>
+        {event.collabReadOnly ? (
+          <p className="rounded-lg bg-gray-50 px-3 py-2 text-xs font-medium text-gray-500">
+            コラボ先から共有された閲覧専用イベントです
+          </p>
+        ) : (
+          <div>
+            <Link
+              href={`/admin/events/${eventId}/edit`}
+              className="flex min-h-11 w-full items-center justify-center rounded-lg bg-[#06C755] px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-[#05a847] sm:w-auto sm:px-6"
+            >
+              編集
+            </Link>
+          </div>
+        )}
       </div>
 
       <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -348,7 +354,7 @@ export default function EventDetailPage() {
         )}
       </section>
 
-      <section className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
+      {!event.collabReadOnly && <section className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold text-gray-800">参加者名簿の共有</h2>
@@ -381,7 +387,7 @@ export default function EventDetailPage() {
             </button>
           </div>
         )}
-      </section>
+      </section>}
 
       <section className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
         <h2 className="text-sm font-semibold text-gray-800">コラボ申請</h2>

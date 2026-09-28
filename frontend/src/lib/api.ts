@@ -542,6 +542,7 @@ export interface Event {
   waitlistedCount?: number;
   imageUrl?: string | null;
   iconUrl?: string | null;
+  collabReadOnly?: boolean;
   category?: string | null;
   categories?: string[];
   tags?: string[];
