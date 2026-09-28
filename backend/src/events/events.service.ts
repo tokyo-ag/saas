@@ -165,32 +165,54 @@ export class EventsService {
   async requestCollab(
     tenantId: string,
     eventId: string,
-    targetTenantId: string,
-    note?: string,
+    targetTenantIds: string[],
   ) {
-    if (!targetTenantId) {
+    const uniqueTargetTenantIds = Array.from(
+      new Set(
+        (targetTenantIds ?? [])
+          .filter((id): id is string => typeof id === 'string')
+          .map((id) => id.trim())
+          .filter(Boolean),
+      ),
+    );
+    if (uniqueTargetTenantIds.length === 0) {
       throw new BadRequestException('コラボしたい団体を選択してください');
     }
-    const event = await this.findOne(tenantId, eventId);
-    const targetTenant = await this.prisma.tenant.findFirst({
-      where: { id: targetTenantId, deletedAt: null, bannedAt: null },
-      select: { name: true, lineDisplayName: true, code: true },
-    });
-    if (!targetTenant) {
-      throw new NotFoundException('指定された団体が見つかりません');
+    if (uniqueTargetTenantIds.length > 4) {
+      throw new BadRequestException('コラボしたい団体は4団体まで選択できます');
     }
-    const trimmedNote = note?.trim();
+    if (uniqueTargetTenantIds.includes(tenantId)) {
+      throw new BadRequestException('自分の団体は選択できません');
+    }
+
+    const event = await this.findOne(tenantId, eventId);
+    const targetTenants = await this.prisma.tenant.findMany({
+      where: {
+        id: { in: uniqueTargetTenantIds },
+        deletedAt: null,
+        bannedAt: null,
+      },
+      select: { id: true, name: true, lineDisplayName: true, code: true },
+    });
+    if (targetTenants.length !== uniqueTargetTenantIds.length) {
+      throw new NotFoundException('指定された団体の一部が見つかりません');
+    }
+
+    const targetTenantById = new Map(
+      targetTenants.map((tenant) => [tenant.id, tenant]),
+    );
+    const targetTenantLines = uniqueTargetTenantIds.map((id, index) => {
+      const tenant = targetTenantById.get(id)!;
+      return `${index + 1}. ${tenant.lineDisplayName ?? tenant.name}（コード: ${tenant.code ?? '未設定'}）`;
+    });
     const content = [
       '【コラボイベント申請】',
       `イベント名: ${event.title}`,
       `開催日: ${new Date(event.heldAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}`,
       `イベントID: ${event.id}`,
-      `相手団体: ${targetTenant.lineDisplayName ?? targetTenant.name}（コード: ${targetTenant.code ?? '未設定'}）`,
-      trimmedNote ? `担当者からのメモ: ${trimmedNote}` : null,
+      `相手団体:\n${targetTenantLines.join('\n')}`,
       '他団体との合同開催として、参加者名簿を統合した運営用ページの発行を希望します。',
-    ]
-      .filter(Boolean)
-      .join('\n');
+    ].join('\n');
 
     return this.prisma.supportMessage.create({
       data: {
@@ -554,7 +576,9 @@ export class EventsService {
       }),
     ]);
     const customQuestions =
-      (tenant?.customProfileQuestions as { id: string; label: string }[] | null) ?? [];
+      (tenant?.customProfileQuestions as
+        | { id: string; label: string }[]
+        | null) ?? [];
 
     const csvCell = (value: string | number | null | undefined) => {
       const text = String(value ?? '');
@@ -589,10 +613,11 @@ export class EventsService {
         timeZone: 'Asia/Tokyo',
       });
       const customAnswers =
-        (r.member.customAnswers as Record<string, string | string[]> | null) ?? {};
+        (r.member.customAnswers as Record<string, string | string[]> | null) ??
+        {};
       const customCells = customQuestions.map((q) => {
         const value = customAnswers[q.id];
-        return Array.isArray(value) ? value.join('、') : value ?? '';
+        return Array.isArray(value) ? value.join('、') : (value ?? '');
       });
       return [
         r.member.name,

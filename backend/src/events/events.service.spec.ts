@@ -34,6 +34,7 @@ describe('EventsService date validation', () => {
   const prisma = {
     tenant: {
       findUnique: jest.fn().mockResolvedValue({ id: 'tenant-1', plan: 'pro' }),
+      findMany: jest.fn().mockResolvedValue([]),
     },
     event: {
       count: jest.fn().mockResolvedValue(0),
@@ -47,6 +48,9 @@ describe('EventsService date validation', () => {
     },
     collabEventLink: {
       findUnique: jest.fn().mockResolvedValue(null),
+    },
+    supportMessage: {
+      create: jest.fn().mockResolvedValue({ id: 'support-message-1' }),
     },
   };
   const lineMessaging = {
@@ -69,6 +73,10 @@ describe('EventsService date validation', () => {
     });
     prisma.reservation.count.mockResolvedValue(0);
     prisma.collabEventLink.findUnique.mockResolvedValue(null);
+    prisma.tenant.findMany.mockResolvedValue([]);
+    prisma.supportMessage.create.mockResolvedValue({
+      id: 'support-message-1',
+    });
   });
 
   it('rejects an event whose end time is not after its start time', async () => {
@@ -171,6 +179,83 @@ describe('EventsService date validation', () => {
         }),
       }),
     );
+  });
+
+  it('includes up to four selected organizations in a collaboration request', async () => {
+    prisma.tenant.findMany.mockResolvedValue([
+      {
+        id: 'tenant-2',
+        name: 'Club Two',
+        lineDisplayName: null,
+        code: 'club-two',
+      },
+      {
+        id: 'tenant-3',
+        name: 'Club Three',
+        lineDisplayName: 'クラブ3公式',
+        code: 'club-three',
+      },
+      {
+        id: 'tenant-4',
+        name: 'Club Four',
+        lineDisplayName: null,
+        code: 'club-four',
+      },
+      {
+        id: 'tenant-5',
+        name: 'Club Five',
+        lineDisplayName: null,
+        code: 'club-five',
+      },
+    ]);
+
+    await service.requestCollab('tenant-1', 'event-1', [
+      'tenant-2',
+      'tenant-3',
+      'tenant-4',
+      'tenant-5',
+    ]);
+
+    expect(prisma.tenant.findMany).toHaveBeenCalledWith({
+      where: {
+        id: { in: ['tenant-2', 'tenant-3', 'tenant-4', 'tenant-5'] },
+        deletedAt: null,
+        bannedAt: null,
+      },
+      select: {
+        id: true,
+        name: true,
+        lineDisplayName: true,
+        code: true,
+      },
+    });
+    expect(prisma.supportMessage.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        content: expect.stringContaining('1. Club Two（コード: club-two）'),
+      }),
+    });
+    expect(prisma.supportMessage.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        content: expect.stringContaining(
+          '2. クラブ3公式（コード: club-three）',
+        ),
+      }),
+    });
+  });
+
+  it('rejects collaboration requests for more than four organizations', async () => {
+    await expect(
+      service.requestCollab('tenant-1', 'event-1', [
+        'tenant-2',
+        'tenant-3',
+        'tenant-4',
+        'tenant-5',
+        'tenant-6',
+      ]),
+    ).rejects.toThrow('コラボしたい団体は4団体まで選択できます');
+
+    expect(prisma.tenant.findMany).not.toHaveBeenCalled();
+    expect(prisma.supportMessage.create).not.toHaveBeenCalled();
   });
 
   it('uses the event reminder template when sending a reminder manually', async () => {

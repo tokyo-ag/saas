@@ -106,14 +106,15 @@ export class EventsController {
   requestCollab(
     @TenantId() tenantId: string,
     @Param('eventId') eventId: string,
-    @Body() body: { targetTenantId: string; note?: string },
+    @Body()
+    body: { targetTenantIds?: string[]; targetTenantId?: string },
   ) {
-    return this.eventsService.requestCollab(
-      tenantId,
-      eventId,
-      body.targetTenantId,
-      body?.note,
-    );
+    const targetTenantIds = Array.isArray(body.targetTenantIds)
+      ? body.targetTenantIds
+      : body.targetTenantId
+        ? [body.targetTenantId]
+        : [];
+    return this.eventsService.requestCollab(tenantId, eventId, targetTenantIds);
   }
 
   @Get(':eventId/export')

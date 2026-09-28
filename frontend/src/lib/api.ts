@@ -125,10 +125,10 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify({ enabled }),
       }),
-    requestCollab: (id: string, targetTenantId: string, note?: string) =>
+    requestCollab: (id: string, targetTenantIds: string[]) =>
       request<{ id: string }>(`/admin/events/${id}/collab-request`, {
         method: 'POST',
-        body: JSON.stringify({ targetTenantId, note }),
+        body: JSON.stringify({ targetTenantIds }),
       }),
   },
   members: {

@@ -51,13 +51,12 @@ export default function EventDetailPage() {
   const [rosterCopied, setRosterCopied] = useState(false);
   const [savingRosterShare, setSavingRosterShare] = useState(false);
   const [collabCopied, setCollabCopied] = useState(false);
-  const [collabNote, setCollabNote] = useState('');
   const [sendingCollab, setSendingCollab] = useState(false);
   const [collabRequested, setCollabRequested] = useState(false);
   const [collabTenants, setCollabTenants] = useState<CollabTenantOption[]>([]);
   const [collabTenantsLoading, setCollabTenantsLoading] = useState(true);
   const [collabTenantsError, setCollabTenantsError] = useState(false);
-  const [collabTargetId, setCollabTargetId] = useState('');
+  const [collabTargetIds, setCollabTargetIds] = useState<string[]>([]);
 
   const load = useCallback(async () => {
     const [eventData, reservationList] = await Promise.all([
@@ -116,10 +115,10 @@ export default function EventDetailPage() {
   }
 
   async function submitCollabRequest() {
-    if (!collabTargetId) return;
+    if (collabTargetIds.length === 0) return;
     setSendingCollab(true);
     try {
-      await api.events.requestCollab(eventId, collabTargetId, collabNote);
+      await api.events.requestCollab(eventId, collabTargetIds);
       setCollabRequested(true);
     } catch (e: any) {
       alert(e.message ?? '送信に失敗しました');
@@ -128,13 +127,33 @@ export default function EventDetailPage() {
     }
   }
 
-  let collabTenantSelectLabel = '団体を選択';
+  function addCollabTenant(tenantId: string) {
+    if (!tenantId) return;
+    setCollabTargetIds((current) =>
+      current.length >= 4 || current.includes(tenantId)
+        ? current
+        : [...current, tenantId],
+    );
+  }
+
+  function removeCollabTenant(tenantId: string) {
+    setCollabTargetIds((current) => current.filter((id) => id !== tenantId));
+  }
+
+  const availableCollabTenants = collabTenants.filter(
+    (tenant) => !collabTargetIds.includes(tenant.id),
+  );
+  let collabTenantSelectLabel = '団体を選択（最大4つ）';
   if (collabTenantsLoading) {
     collabTenantSelectLabel = '団体を読み込み中...';
   } else if (collabTenantsError) {
     collabTenantSelectLabel = '団体一覧を取得できませんでした';
   } else if (collabTenants.length === 0) {
     collabTenantSelectLabel = '選択できる団体がありません';
+  } else if (collabTargetIds.length >= 4) {
+    collabTenantSelectLabel = '4団体を選択済み';
+  } else if (availableCollabTenants.length === 0) {
+    collabTenantSelectLabel = '選択できる団体はありません';
   }
 
   if (loading) return <div className="px-4 py-12 text-center text-sm text-gray-400">読み込み中...</div>;
@@ -352,7 +371,7 @@ export default function EventDetailPage() {
       </section>
 
       <section className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
-        <h2 className="text-sm font-semibold text-gray-800">コラボ開催（合同イベント）</h2>
+        <h2 className="text-sm font-semibold text-gray-800">コラボ申請</h2>
         {event.collab ? (
           <div className="mt-2 space-y-2">
             <p className="text-xs leading-relaxed text-gray-400">
@@ -374,45 +393,50 @@ export default function EventDetailPage() {
             </div>
           </div>
         ) : collabRequested ? (
-          <p className="mt-2 text-xs leading-relaxed text-gray-500">
-            COMIUサポートに申請を送信しました。担当者からのご連絡をお待ちください。内容は
-            <Link href="/admin/support" className="text-[#06C755] hover:underline">サポート</Link>
-            からもご確認いただけます。
-          </p>
+          <p className="mt-2 text-xs text-gray-500">申請しました</p>
         ) : (
           <div className="mt-2 space-y-2">
-            <p className="text-xs leading-relaxed text-gray-400">
-              他団体との合同開催の場合、参加者名簿を統合した運営専用ページを発行できます。参加者には合同開催であることは表示されません。
-            </p>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-500">コラボしたい団体</label>
-              <select
-                value={collabTargetId}
-                onChange={(e) => setCollabTargetId(e.target.value)}
-                disabled={collabTenantsLoading || collabTenantsError || collabTenants.length === 0}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-              >
-                <option value="">{collabTenantSelectLabel}</option>
-                {collabTenants.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <textarea
-              value={collabNote}
-              onChange={(e) => setCollabNote(e.target.value)}
-              placeholder="担当者への一言（任意）"
-              rows={2}
+            <select
+              value=""
+              onChange={(e) => addCollabTenant(e.target.value)}
+              disabled={
+                collabTenantsLoading ||
+                collabTenantsError ||
+                availableCollabTenants.length === 0 ||
+                collabTargetIds.length >= 4
+              }
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-            />
+            >
+              <option value="">{collabTenantSelectLabel}</option>
+              {availableCollabTenants.map((tenant) => (
+                <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
+              ))}
+            </select>
+            {collabTargetIds.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {collabTargetIds.map((tenantId) => {
+                  const tenant = collabTenants.find((item) => item.id === tenantId);
+                  if (!tenant) return null;
+                  return (
+                    <button
+                      key={tenant.id}
+                      type="button"
+                      onClick={() => removeCollabTenant(tenant.id)}
+                      className="rounded-full bg-gray-100 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-200"
+                      aria-label={`${tenant.name}を選択から外す`}
+                    >
+                      {tenant.name} ×
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <button
               onClick={submitCollabRequest}
-              disabled={sendingCollab || !collabTargetId}
+              disabled={sendingCollab || collabTargetIds.length === 0}
               className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
             >
-              {sendingCollab ? '送信中...' : 'コラボ開催をCOMIUに相談する'}
+              {sendingCollab ? '送信中...' : 'コラボ申請'}
             </button>
           </div>
         )}
