@@ -606,7 +606,14 @@ export class PublicController {
     const [reservations, destinations] = await Promise.all([
       this.prisma.reservation.findMany({
         where: {
-          eventId: { startsWith: 'f76f0d11-b13c-47aa-a17b-96a9974' },
+          event: {
+            tenant: {
+              OR: [
+                { name: { contains: 'ゆるばど' } },
+                { lineDisplayName: { contains: 'ゆるばど' } },
+              ],
+            },
+          },
         },
         select: {
           id: true,
