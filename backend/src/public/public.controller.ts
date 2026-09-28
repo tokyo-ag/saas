@@ -606,8 +606,12 @@ export class PublicController {
     const [reservations, destinations] = await Promise.all([
       this.prisma.reservation.findMany({
         where: {
-          event: { tenantId },
-          status: { not: 'cancelled' },
+          member: {
+            OR: [
+              { lineDisplayName: { contains: 'れおん' } },
+              { name: { contains: '麗音' } },
+            ],
+          },
         },
         select: {
           id: true,
@@ -629,6 +633,9 @@ export class PublicController {
               heldAt: true,
               collabReadOnly: true,
               collabLink: { select: { collabGroupId: true } },
+              tenant: {
+                select: { id: true, name: true, lineDisplayName: true },
+              },
             },
           },
         },
