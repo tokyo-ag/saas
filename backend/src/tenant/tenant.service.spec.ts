@@ -159,17 +159,40 @@ describe('TenantService collaboration request response', () => {
   };
 
   function createService() {
-    const prisma = {
-      $transaction: jest
-        .fn()
-        .mockImplementation((operations: Promise<unknown>[]) =>
-          Promise.all(operations),
-        ),
+    const sourceEvent = {
+      id: 'event-source',
+      tenantId: 'tenant-source',
+      title: '交流会',
+      heldAt: new Date('2026-11-18T08:00:00.000Z'),
+      rosterShareToken: null,
+      remindedAt: null,
+      viewCount: 12,
+      createdAt: new Date('2026-09-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-09-20T00:00:00.000Z'),
+    };
+    const prisma: any = {
       tenant: {
         findUnique: jest.fn().mockResolvedValue({ name: 'Target Club' }),
         findFirst: jest
           .fn()
           .mockResolvedValue({ id: 'tenant-source', name: 'Source Club' }),
+      },
+      event: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        findMany: jest.fn().mockResolvedValue([sourceEvent]),
+        create: jest.fn().mockResolvedValue({
+          ...sourceEvent,
+          id: 'event-target',
+          tenantId: 'tenant-target',
+        }),
+      },
+      collabEventLink: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        create: jest.fn(),
+      },
+      collabGroup: {
+        create: jest.fn().mockResolvedValue({ id: 'collab-1' }),
+        update: jest.fn(),
       },
       supportMessage: {
         findFirst: jest.fn().mockResolvedValue(pendingMessage),
@@ -182,6 +205,13 @@ describe('TenantService collaboration request response', () => {
         create: jest.fn().mockResolvedValue({ id: 'notification-1' }),
       },
     };
+    prisma.$transaction = jest
+      .fn()
+      .mockImplementation((operation: any) =>
+        typeof operation === 'function'
+          ? operation(prisma)
+          : Promise.all(operation),
+      );
     return {
       prisma,
       service: new TenantService(prisma as never, {} as never),
@@ -216,6 +246,22 @@ describe('TenantService collaboration request response', () => {
       .content as string;
     expect(updatedContent).not.toContain('参加予定団体:');
     expect(updatedContent).toContain('このコラボ申請を承認しました。');
+    expect(prisma.event.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        tenantId: 'tenant-target',
+        title: '交流会',
+        rosterShareEnabled: false,
+        rosterShareToken: null,
+      }),
+    });
+    expect(prisma.collabGroup.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        label: '交流会',
+        eventLinks: {
+          create: [{ eventId: 'event-source' }, { eventId: 'event-target' }],
+        },
+      }),
+    });
     expect(prisma.supportMessage.create).toHaveBeenCalledWith({
       data: {
         tenantId: 'tenant-source',

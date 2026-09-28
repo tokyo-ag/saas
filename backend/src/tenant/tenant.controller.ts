@@ -111,6 +111,11 @@ export class TenantController {
     );
   }
 
+  @Post('collab-requests/sync')
+  syncApprovedCollabRequests(@TenantId() tenantId: string) {
+    return this.tenantService.syncApprovedCollabRequests(tenantId);
+  }
+
   @Post('billing/checkout')
   billingCheckout(@TenantId() tenantId: string, @Body('plan') plan: string) {
     if (plan !== 'standard' && plan !== 'pro') {

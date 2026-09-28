@@ -742,6 +742,205 @@ export class TenantService {
     });
   }
 
+  private parseCollabRequest(content: string) {
+    return {
+      sourceTenantId:
+        content.match(/^申請元団体ID: (.+)$/m)?.[1]?.trim() ?? null,
+      sourceTenantName:
+        content.match(/^申請元団体: (.+)$/m)?.[1]?.trim() ??
+        content.match(/^(.+)からコラボ申請が届きました。$/m)?.[1]?.trim() ??
+        null,
+      eventId: content.match(/^イベントID: (.+)$/m)?.[1]?.trim() ?? null,
+      eventTitle:
+        content.match(/^イベント名: (.+)$/m)?.[1]?.trim() ?? 'イベント',
+      heldAtLabel: content.match(/^開催日: (.+)$/m)?.[1]?.trim() ?? null,
+    };
+  }
+
+  private async resolveCollabSourceTenant(
+    targetTenantId: string,
+    details: ReturnType<TenantService['parseCollabRequest']>,
+  ) {
+    if (details.sourceTenantId) {
+      if (details.sourceTenantId === targetTenantId) return null;
+      return this.prisma.tenant.findFirst({
+        where: {
+          id: details.sourceTenantId,
+          deletedAt: null,
+          bannedAt: null,
+        },
+        select: { id: true, name: true },
+      });
+    }
+    if (!details.sourceTenantName) return null;
+    return this.prisma.tenant.findFirst({
+      where: {
+        id: { not: targetTenantId },
+        name: details.sourceTenantName,
+        deletedAt: null,
+        bannedAt: null,
+      },
+      select: { id: true, name: true },
+    });
+  }
+
+  private async ensureCollabEventForApproval(
+    targetTenantId: string,
+    sourceTenantId: string,
+    details: ReturnType<TenantService['parseCollabRequest']>,
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      let sourceEvent = details.eventId
+        ? await tx.event.findFirst({
+            where: { id: details.eventId, tenantId: sourceTenantId },
+          })
+        : null;
+
+      // 初期版の申請メッセージにはイベントIDがなかったため、タイトルと開催日時で補完する。
+      if (!sourceEvent) {
+        const candidates = await tx.event.findMany({
+          where: { tenantId: sourceTenantId, title: details.eventTitle },
+          orderBy: { updatedAt: 'desc' },
+        });
+        sourceEvent =
+          candidates.find(
+            (event) =>
+              details.heldAtLabel &&
+              new Date(event.heldAt).toLocaleString('ja-JP', {
+                timeZone: 'Asia/Tokyo',
+              }) === details.heldAtLabel,
+          ) ??
+          candidates[0] ??
+          null;
+      }
+      if (!sourceEvent) {
+        throw new NotFoundException('申請元のイベントが見つかりません');
+      }
+
+      const sourceLink = await tx.collabEventLink.findUnique({
+        where: { eventId: sourceEvent.id },
+        include: {
+          collabGroup: {
+            include: {
+              eventLinks: {
+                include: { event: { select: { id: true, tenantId: true } } },
+              },
+            },
+          },
+        },
+      });
+      const existingTargetEvent = sourceLink?.collabGroup.eventLinks.find(
+        (link) => link.event.tenantId === targetTenantId,
+      )?.event;
+      if (existingTargetEvent) {
+        if (!sourceLink.collabGroup.active) {
+          await tx.collabGroup.update({
+            where: { id: sourceLink.collabGroupId },
+            data: { active: true },
+          });
+        }
+        return { eventId: existingTargetEvent.id, created: false };
+      }
+      // 申請元1団体 + 選択可能な相手4団体。
+      if (sourceLink && sourceLink.collabGroup.eventLinks.length >= 5) {
+        throw new BadRequestException(
+          'このコラボイベントにはすでに4団体が参加しています',
+        );
+      }
+
+      const {
+        id: _sourceEventId,
+        tenantId: _sourceEventTenantId,
+        rosterShareToken: _sourceRosterShareToken,
+        remindedAt: _sourceRemindedAt,
+        viewCount: _sourceViewCount,
+        createdAt: _sourceCreatedAt,
+        updatedAt: _sourceUpdatedAt,
+        ...eventData
+      } = sourceEvent;
+      const targetEvent = await tx.event.create({
+        data: {
+          ...eventData,
+          tenantId: targetTenantId,
+          rosterShareEnabled: false,
+          rosterShareToken: null,
+          remindedAt: null,
+          viewCount: 0,
+        },
+      });
+
+      if (sourceLink) {
+        await tx.collabEventLink.create({
+          data: {
+            collabGroupId: sourceLink.collabGroupId,
+            eventId: targetEvent.id,
+          },
+        });
+        if (!sourceLink.collabGroup.active) {
+          await tx.collabGroup.update({
+            where: { id: sourceLink.collabGroupId },
+            data: { active: true },
+          });
+        }
+      } else {
+        await tx.collabGroup.create({
+          data: {
+            label: sourceEvent.title,
+            viewToken: randomBytes(24).toString('base64url'),
+            eventLinks: {
+              create: [
+                { eventId: sourceEvent.id },
+                { eventId: targetEvent.id },
+              ],
+            },
+          },
+        });
+      }
+      return { eventId: targetEvent.id, created: true };
+    });
+  }
+
+  async syncApprovedCollabRequests(tenantId: string) {
+    await this.findOne(tenantId);
+    const messages = await this.prisma.supportMessage.findMany({
+      where: {
+        tenantId,
+        lineUserId: this.supportThreadId(tenantId),
+        fromUser: false,
+        content: { startsWith: '【コラボ申請（承認済み）】' },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    let created = 0;
+    let linked = 0;
+    const errors: string[] = [];
+    for (const message of messages) {
+      try {
+        const details = this.parseCollabRequest(message.content);
+        const sourceTenant = await this.resolveCollabSourceTenant(
+          tenantId,
+          details,
+        );
+        if (!sourceTenant) {
+          errors.push(`${message.id}: 申請元団体が見つかりません`);
+          continue;
+        }
+        const result = await this.ensureCollabEventForApproval(
+          tenantId,
+          sourceTenant.id,
+          details,
+        );
+        if (result.created) created += 1;
+        linked += 1;
+      } catch (error) {
+        errors.push(
+          `${message.id}: ${error instanceof Error ? error.message : '反映に失敗しました'}`,
+        );
+      }
+    }
+    return { checked: messages.length, linked, created, errors };
+  }
+
   async respondToCollabRequest(
     tenantId: string,
     messageId: string,
@@ -765,37 +964,13 @@ export class TenantService {
       throw new BadRequestException('このコラボ申請には回答済みです');
     }
 
-    const sourceTenantId =
-      message.content.match(/^申請元団体ID: (.+)$/m)?.[1]?.trim() ?? null;
-    const sourceTenantName =
-      message.content.match(/^申請元団体: (.+)$/m)?.[1]?.trim() ??
-      message.content
-        .match(/^(.+)からコラボ申請が届きました。$/m)?.[1]
-        ?.trim() ??
-      null;
-    const eventTitle =
-      message.content.match(/^イベント名: (.+)$/m)?.[1]?.trim() ?? 'イベント';
+    const details = this.parseCollabRequest(message.content);
     const [targetTenant, sourceTenant] = await Promise.all([
       this.prisma.tenant.findUnique({
         where: { id: tenantId },
         select: { name: true },
       }),
-      sourceTenantId
-        ? this.prisma.tenant.findFirst({
-            where: { id: sourceTenantId, deletedAt: null, bannedAt: null },
-            select: { id: true, name: true },
-          })
-        : sourceTenantName
-          ? this.prisma.tenant.findFirst({
-              where: {
-                id: { not: tenantId },
-                name: sourceTenantName,
-                deletedAt: null,
-                bannedAt: null,
-              },
-              select: { id: true, name: true },
-            })
-          : null,
+      this.resolveCollabSourceTenant(tenantId, details),
     ]);
     if (!targetTenant || !sourceTenant) {
       throw new NotFoundException('申請元または申請先の団体が見つかりません');
@@ -807,12 +982,19 @@ export class TenantService {
       message.content,
       responseState,
     );
+    if (status === 'approved') {
+      await this.ensureCollabEventForApproval(
+        tenantId,
+        sourceTenant.id,
+        details,
+      );
+    }
     const sourceNotification = [
       '【コラボ申請の回答】',
       `${targetTenant.name}がコラボ申請を${responseLabel}しました。`,
-      `イベント名: ${eventTitle}`,
+      `イベント名: ${details.eventTitle}`,
       status === 'approved'
-        ? 'COMIUが合同開催の設定を進めます。'
+        ? '合同開催として反映しました。参加者名簿は統合表示されます。'
         : 'この団体との合同開催は行われません。',
     ].join('\n');
 
@@ -870,7 +1052,7 @@ export class TenantService {
     if (replyLineIndex >= 0) {
       lines[replyLineIndex] =
         state === '承認済み'
-          ? 'COMIUが合同開催の設定を進めます。'
+          ? '合同開催として反映しました。参加者名簿は統合表示されます。'
           : 'この団体との合同開催は行われません。';
     }
     return lines.join('\n');

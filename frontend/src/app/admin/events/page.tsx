@@ -112,9 +112,17 @@ export default function EventsPage() {
   const [savingStaffView, setSavingStaffView] = useState(false);
   const [staffViewCopied, setStaffViewCopied] = useState(false);
 
-  const load = useCallback(() => {
+  const load = useCallback(async () => {
     setLoading(true);
-    api.events.list().then(setEvents).catch(console.error).finally(() => setLoading(false));
+    try {
+      // 承認済みの旧申請も、一覧表示前に実イベントと合同名簿へ反映する。
+      await api.tenant.syncApprovedCollabRequests().catch(() => null);
+      setEvents(await api.events.list());
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {

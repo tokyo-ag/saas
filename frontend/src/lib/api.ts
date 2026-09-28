@@ -379,6 +379,13 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify({ status }),
       }),
+    syncApprovedCollabRequests: () =>
+      request<{
+        checked: number;
+        linked: number;
+        created: number;
+        errors: string[];
+      }>('/admin/tenant/collab-requests/sync', { method: 'POST' }),
     reviews: () => request<AdminTenantReview[]>('/admin/tenant/reviews'),
     updateReview: (reviewId: string, data: { isPublished?: boolean; content?: string }) =>
       request<AdminTenantReview>(`/admin/tenant/reviews/${reviewId}`, {
