@@ -173,7 +173,7 @@ function handleLiffLinkClick(tenantCode: string | undefined, eventId: string) {
   return (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (isInLineInAppBrowser()) {
       e.preventDefault();
-      window.location.href = `${SITE_URL}${eventReserveLiffPath(tenantCode, eventId)}`;
+      window.location.replace(`${SITE_URL}${eventReserveLiffPath(tenantCode, eventId)}`);
     }
   };
 }

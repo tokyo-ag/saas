@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { buildLiffUrl } from '@/lib/config';
+import { liffNavigationUrl } from '@/lib/config';
 import { api } from '@/lib/api';
 
 function PublicReserveRedirectInner() {
@@ -15,10 +15,10 @@ function PublicReserveRedirectInner() {
     api.public.tenant(tenantCode)
       .then((tenant) => {
         window.location.replace(
-          buildLiffUrl(liffReservePath, {
+          liffNavigationUrl(liffReservePath, {
             liffId: tenant.liffId,
             endpointPath: '/',
-          }) ?? liffReservePath,
+          }),
         );
       })
       .catch(() => window.location.replace(liffReservePath));

@@ -62,7 +62,25 @@ export function buildLiffUrl(
 // 積み重なって見える）。既にLINEアプリ内なら直接パスへ遷移させて回避する。
 export function isInLineInAppBrowser(): boolean {
   if (typeof navigator === 'undefined') return false;
-  return /\bLine\//.test(navigator.userAgent);
+  return /\bLine\//i.test(navigator.userAgent);
+}
+
+export function directSiteUrl(path: string): string {
+  return new URL(path, `${SITE_URL}/`).toString();
+}
+
+// LINE内で表示済みのページからLIFF URLをもう一度開くと、現在の画面の上に
+// 別のLIFFブラウザが重なって見える。LINE内では同じWebViewを直接遷移させ、
+// LINE外から入る時だけLIFF URLを使う。
+export function liffNavigationUrl(
+  path: string,
+  options?: {
+    liffId?: string | null;
+    endpointPath?: string;
+  },
+): string {
+  if (isInLineInAppBrowser()) return directSiteUrl(path);
+  return buildLiffUrl(path, options) ?? directSiteUrl(path);
 }
 
 export const DISCOVERY_LOCKED =

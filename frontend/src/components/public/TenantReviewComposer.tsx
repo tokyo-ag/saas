@@ -12,7 +12,7 @@ import {
   syncLiffApiToken,
 } from "@/lib/liff";
 import { isLightHexColor, readableTextColor } from "@/lib/color";
-import { buildLiffUrl } from "@/lib/config";
+import { liffNavigationUrl } from "@/lib/config";
 
 type Stage = "start" | "loading" | "ready" | "submitted";
 
@@ -51,8 +51,9 @@ export function TenantReviewComposer({
 
   function openLiffReviewPage() {
     const path = `/liff/${encodeURIComponent(tenantId)}/reviews`;
-    window.location.href =
-      buildLiffUrl(path, { liffId, endpointPath: "/" }) ?? path;
+    window.location.replace(
+      liffNavigationUrl(path, { liffId, endpointPath: "/" }),
+    );
   }
 
   function restartLineLogin() {

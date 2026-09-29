@@ -22,7 +22,7 @@ export function SmartLiffButton({
   function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
     if (isInLineInAppBrowser()) {
       e.preventDefault();
-      window.location.href = directHref;
+      window.location.replace(directHref);
     }
   }
   return (
