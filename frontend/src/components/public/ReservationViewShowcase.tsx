@@ -131,7 +131,7 @@ function eventTime(event: ReservationShowcaseEvent) {
   });
 }
 
-// 日程表示は他のLIFFページ等と揃えて「10/30(金)18:00~21:00」の形に統一する。
+// 日程表示は他のLIFFページ等と揃えて「10/30(金)18:00～21:00」の形に統一する。
 function eventFullDateTime(event: ReservationShowcaseEvent) {
   return formatEventSchedule(event.heldAt, event.endAt);
 }

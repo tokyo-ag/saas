@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { api, API_URL, formatDateShort, formatEventSchedule, LiffEvent, LiffTenant, PublicTenant } from '@/lib/api';
+import { api, API_URL, formatEventSchedule, LiffEvent, LiffTenant, PublicTenant } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { getDefaultEventImage } from '@/lib/defaultImages';
 import { useCalendarMonth } from '@/lib/useCalendarMonth';
@@ -88,7 +88,7 @@ function EventCard({ event, tenantId, accentColor, cardBg, myStatus }: { event: 
 
       {/* info */}
       <div className="px-2.5 pt-2 pb-2.5 space-y-1" style={{ color: readableTextColor(cardBg) }}>
-        <p className="text-[10px] opacity-60">{formatDateShort(event.heldAt)}</p>
+        <p className="text-[10px] opacity-60">{formatEventSchedule(event.heldAt, event.endAt)}</p>
         <AvatarRow count={event.reservedCount} />
         <div>
           <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">{displayLocation(event, myStatus)}</span>
@@ -238,7 +238,7 @@ function eventTimeRange(event: LiffEvent) {
   const start = new Date(event.heldAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
   if (!event.endAt) return start;
   const end = new Date(event.endAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
-  return `${start}~${end}`;
+  return `${start}～${end}`;
 }
 
 function eventDateLabel(event: LiffEvent) {
@@ -330,7 +330,6 @@ function LiffCalendarView({ events, tenantId, accentColor, cardBg }: { events: L
                   </span>
                   <div className="space-y-1">
                     {dayEvents.map((ev) => {
-                      const startTime = new Date(ev.heldAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
                       return (
                         <Link
                           key={ev.id}
@@ -339,7 +338,7 @@ function LiffCalendarView({ events, tenantId, accentColor, cardBg }: { events: L
                           style={{ backgroundColor: accentColor }}
                         >
                           <p className="text-[8px] font-bold text-white truncate leading-tight">{ev.title}</p>
-                          <p className="text-[8px] text-white/80 leading-none mt-0.5">{startTime}</p>
+                          <p className="text-[8px] text-white/80 leading-none mt-0.5">{eventTimeRange(ev)}</p>
                         </Link>
                       );
                     })}

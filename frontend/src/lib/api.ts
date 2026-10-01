@@ -1072,7 +1072,7 @@ export function formatDateOnly(dateStr: string): string {
   });
 }
 
-// イベントの日程表示を「10/30(金)18:00~21:00」で統一するための共通フォーマッタ。
+// イベントの日程表示を「10/30(金)18:00～21:00」で統一するための共通フォーマッタ。
 // 終了時刻が無い/開始時刻以前の不正な値の場合は開始時刻のみ返す。
 export function formatEventSchedule(heldAt: string, endAt?: string | null): string {
   const start = new Date(heldAt);
@@ -1089,7 +1089,7 @@ export function formatEventSchedule(heldAt: string, endAt?: string | null): stri
   const endTime = end.toLocaleTimeString('ja-JP', {
     hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo',
   });
-  return `${datePart}${startTime}~${endTime}`;
+  return `${datePart}${startTime}～${endTime}`;
 }
 
 export interface PublicTenant {
