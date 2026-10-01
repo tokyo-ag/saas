@@ -285,6 +285,7 @@ function TenantModal({
   const [name, setName] = useState(initial?.name ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [plan, setPlan] = useState<'free' | 'standard' | 'pro'>((initial?.plan ?? 'free') as 'free' | 'standard' | 'pro');
+  const [createAccount, setCreateAccount] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [saving, setSaving] = useState(false);
@@ -298,7 +299,12 @@ function TenantModal({
       if (initial) {
         await api.superadmin.update(initial.id, { name, description, plan });
       } else {
-        await api.superadmin.create({ name, description, plan, email, password });
+        await api.superadmin.create({
+          name,
+          description,
+          plan,
+          ...(createAccount && { email, password }),
+        });
       }
       onSaved();
     } catch (err: any) {
@@ -340,24 +346,43 @@ function TenantModal({
             </div>
           )}
           {!initial && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">メールアドレス <span className="text-red-500">*</span></label>
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+              <label className="flex cursor-pointer items-start gap-2.5">
                 <input
-                  required type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-                  placeholder="admin@example.com"
+                  type="checkbox"
+                  checked={createAccount}
+                  onChange={(e) => setCreateAccount(e.target.checked)}
+                  className="mt-0.5 accent-[#06C755]"
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">パスワード <span className="text-red-500">*</span></label>
-                <input
-                  required type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-                  placeholder="8文字以上"
-                />
-              </div>
-            </>
+                <span>
+                  <span className="block text-sm font-medium text-gray-700">管理者アカウントも設定する</span>
+                  <span className="mt-0.5 block text-xs leading-relaxed text-gray-500">
+                    未選択なら団体だけ作成します。譲渡時に管理画面からメールアドレスとパスワードを登録できます。
+                  </span>
+                </span>
+              </label>
+
+              {createAccount && (
+                <div className="mt-3 space-y-3 border-t border-gray-200 pt-3">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">メールアドレス <span className="text-red-500">*</span></label>
+                    <input
+                      required type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                      placeholder="admin@example.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">パスワード <span className="text-red-500">*</span></label>
+                    <input
+                      required type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                      placeholder="8文字以上"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">プラン</label>

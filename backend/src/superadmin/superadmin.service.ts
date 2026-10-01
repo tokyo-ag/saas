@@ -51,8 +51,8 @@ export class CreateTenantDto {
     | 'free'
     | 'standard'
     | 'pro';
-  @IsEmail() email: string;
-  @IsString() @MinLength(8) password: string;
+  @IsOptional() @IsEmail() email?: string;
+  @IsOptional() @IsString() @MinLength(8) password?: string;
 }
 
 export class UpdateTenantDto {
@@ -239,15 +239,25 @@ export class SuperadminService implements OnApplicationBootstrap {
   }
 
   async createTenant(dto: CreateTenantDto) {
-    const normalizedEmail = dto.email.trim().toLowerCase();
-    const existing = await this.prisma.organizerAccount.findFirst({
-      where: { email: { equals: normalizedEmail, mode: 'insensitive' } },
-      select: { id: true },
-    });
-    if (existing) {
-      throw new ConflictException('このメールアドレスは既に使用されています');
+    const normalizedEmail = dto.email?.trim().toLowerCase() || null;
+    const password = dto.password || null;
+    if (Boolean(normalizedEmail) !== Boolean(password)) {
+      throw new BadRequestException(
+        '管理者アカウントを設定する場合は、メールアドレスとパスワードを両方入力してください',
+      );
     }
-    const passwordHash = await bcrypt.hash(dto.password, 10);
+
+    if (normalizedEmail) {
+      const existing = await this.prisma.organizerAccount.findFirst({
+        where: { email: { equals: normalizedEmail, mode: 'insensitive' } },
+        select: { id: true },
+      });
+      if (existing) {
+        throw new ConflictException('このメールアドレスは既に使用されています');
+      }
+    }
+
+    const passwordHash = password ? await bcrypt.hash(password, 10) : null;
     const id = `tenant-${Date.now()}`;
     const code = await this.generateUniqueCode();
     const tenant = await this.prisma.tenant.create({
@@ -258,11 +268,17 @@ export class SuperadminService implements OnApplicationBootstrap {
         description: dto.description,
         plan: dto.plan ?? 'free',
         organizerAccounts: {
-          create: {
-            email: normalizedEmail,
-            passwordHash,
-            emailVerifiedAt: new Date(),
-          },
+          // スーパーアドミン作成では、管理者を後から決められるよう空の
+          // アカウントを必ず用意する。これにより代理ログインは可能だが、
+          // 通常のメールログインは認証情報を設定するまで利用できない。
+          create: normalizedEmail
+            ? {
+                email: normalizedEmail,
+                passwordHash,
+                // スーパーアドミンが明示的に設定した認証情報だけは例外扱い。
+                emailVerifiedAt: new Date(),
+              }
+            : {},
         },
       },
       select: { id: true, name: true, code: true, plan: true, createdAt: true },
