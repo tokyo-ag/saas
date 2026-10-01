@@ -339,8 +339,7 @@ function CardMini({
   if (events) {
     if (events.length === 0) return <EmptyEvents accentColor={accentColor} />;
     return (
-      <div className="-mx-1 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex snap-x snap-mandatory gap-3">
+      <div className="grid grid-cols-2 gap-3">
           {events.map((event) => {
             const image = imgUrl(event.imageUrl, API_URL);
             const status = eventStatus(event);
@@ -352,7 +351,7 @@ function CardMini({
             ].filter(Boolean).join(' / ');
             const cardBody = (
               <>
-                <div className="relative aspect-[3/2] bg-gray-100">
+                <div className="relative aspect-[3/2] shrink-0 bg-gray-100">
                   {image ? (
                     <img src={image} alt={event.title} className="h-full w-full object-cover" />
                   ) : (
@@ -365,7 +364,7 @@ function CardMini({
                     {status}
                   </span>
                 </div>
-                <div className="space-y-1 p-3">
+                <div className="min-h-0 flex-1 space-y-1 overflow-hidden p-3">
                   <p className="line-clamp-2 text-sm font-bold leading-snug" style={{ color: eventTitleColor || cardText }}>{event.title}</p>
                   <p className="text-xs font-medium" style={{ color: eventDateColor || cardText, opacity: eventDateColor ? 1 : 0.7 }}>{eventFullDateTime(event)}</p>
                   {showLocation && event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{event.locationHint || event.location}</p>}
@@ -387,8 +386,8 @@ function CardMini({
               return (
                 <div
                   key={event.id}
-                  className="relative block shrink-0 snap-start overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
-                  style={{ backgroundColor: cardBg || '#ffffff', width: 'calc(50% - 6px)' }}
+                  className="relative block aspect-[4/5] overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
+                  style={{ backgroundColor: cardBg || '#ffffff' }}
                 >
                   <Link
                     href={eventReserveHref(tenantCode, event.id, liffId)}
@@ -396,7 +395,7 @@ function CardMini({
                     className="absolute inset-0 z-0"
                     aria-label={event.title}
                   />
-                  <div className="relative">{cardBody}</div>
+                  <div className="relative flex h-full flex-col">{cardBody}</div>
                 </div>
               );
             }
@@ -404,24 +403,23 @@ function CardMini({
               <Link
                 key={event.id}
                 href={eventDetailHref(tenantCode, event.id, fallbackHref, linkToEventList)}
-                className="block shrink-0 snap-start overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
-                style={{ backgroundColor: cardBg || '#ffffff', width: 'calc(50% - 6px)' }}
+                className="flex aspect-[4/5] flex-col overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
+                style={{ backgroundColor: cardBg || '#ffffff' }}
               >
                 {cardBody}
               </Link>
             );
           })}
-        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex gap-3 overflow-hidden">
+    <div className="grid grid-cols-2 gap-3">
       {[0, 1].map((i) => (
-        <div key={i} className="shrink-0 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm" style={{ width: 'calc(50% - 6px)' }}>
-          <div className="aspect-[3/2]" style={{ background: `linear-gradient(135deg, ${visible.accent}, #111827)` }} />
-          <div className="space-y-1.5 p-3">
+        <div key={i} className="flex aspect-[4/5] flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+          <div className="aspect-[3/2] shrink-0" style={{ background: `linear-gradient(135deg, ${visible.accent}, #111827)` }} />
+          <div className="min-h-0 flex-1 space-y-1.5 overflow-hidden p-3">
             <div className="h-2 w-5/6 rounded-full bg-gray-200" />
             <div className="h-1.5 w-2/3 rounded-full bg-gray-100" />
           </div>
