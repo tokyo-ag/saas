@@ -159,29 +159,19 @@ export const api = {
       request<LiffEvent>(`/liff/${tenantId}/events/${eventId}`),
     activity: (tenantId: string) =>
       request<{ id: string; type: 'login' | 'reservation'; at: string; name: string; pictureUrl: string | null }[]>(`/liff/${tenantId}/activity`),
-    myReservation: (
-      tenantId: string,
-      eventId: string,
-      lineUserId: string,
-    ) => {
-      void lineUserId;
-      return request<LiffReservation | null>(
+    myReservation: (tenantId: string, eventId: string) =>
+      request<LiffReservation | null>(
         `/liff/${tenantId}/events/${eventId}/my-reservation`,
-      );
-    },
+      ),
     reservationPreview: (tenantId: string, eventId: string) =>
       request<{ text: string }>(`/liff/${tenantId}/events/${eventId}/reservation-preview`),
-    myTenantReview: (tenantId: string, lineUserId: string) => {
-      void lineUserId;
-      return request<LiffTenantReview | null>(`/liff/${tenantId}/review`);
-    },
-    submitTenantReview: (tenantId: string, lineUserId: string, content: string) => {
-      void lineUserId;
-      return request<LiffTenantReview>(`/liff/${tenantId}/review`, {
+    myTenantReview: (tenantId: string) =>
+      request<LiffTenantReview | null>(`/liff/${tenantId}/review`),
+    submitTenantReview: (tenantId: string, content: string) =>
+      request<LiffTenantReview>(`/liff/${tenantId}/review`, {
         method: 'POST',
         body: JSON.stringify({ content }),
-      });
-    },
+      }),
     tenantReviews: (tenantId: string) =>
       request<TenantReview[]>(`/liff/${tenantId}/reviews`),
     reserve: (tenantId: string, data: ReserveInput) =>
@@ -193,33 +183,27 @@ export const api = {
       request<void>(`/liff/${tenantId}/reservations/${reservationId}`, { method: 'DELETE' }),
     join: (tenantId: string, data: { lineDisplayName?: string; linePictureUrl?: string }) =>
       request<LiffProfile>(`/liff/${tenantId}/join`, { method: 'POST', body: JSON.stringify(data) }),
-    profile: (tenantId: string, lineUserId: string) => {
-      void lineUserId;
-      return request<LiffProfile>(`/liff/${tenantId}/profile`);
-    },
-    updateProfile: (tenantId: string, _lineUserId: string, data: { name?: string; grade?: string; gender?: string; level?: string; comment?: string; customAnswers?: Record<string, CustomAnswerValue> }) =>
+    profile: (tenantId: string) =>
+      request<LiffProfile>(`/liff/${tenantId}/profile`),
+    updateProfile: (tenantId: string, data: { name?: string; grade?: string; gender?: string; level?: string; comment?: string; customAnswers?: Record<string, CustomAnswerValue> }) =>
       request<LiffProfile>(
         `/liff/${tenantId}/profile`,
         { method: 'PATCH', body: JSON.stringify(data) },
       ),
     myReservations: (tenantId: string) =>
       request<LiffMyReservation[]>(`/liff/${tenantId}/my-reservations`),
-    syncLineProfile: (tenantId: string, _lineUserId: string, data: { lineDisplayName?: string; linePictureUrl?: string }) =>
+    syncLineProfile: (tenantId: string, data: { lineDisplayName?: string; linePictureUrl?: string }) =>
       request<void>(
         `/liff/${tenantId}/profile/line`,
         { method: 'PATCH', body: JSON.stringify(data) },
       ),
-    supportMessages: (tenantId: string, lineUserId: string) => {
-      void lineUserId;
-      return request<SupportMessage[]>(`/liff/${tenantId}/support`);
-    },
-    sendSupport: (tenantId: string, lineUserId: string, content: string) => {
-      void lineUserId;
-      return request<SupportMessage>(`/liff/${tenantId}/support`, {
+    supportMessages: (tenantId: string) =>
+      request<SupportMessage[]>(`/liff/${tenantId}/support`),
+    sendSupport: (tenantId: string, content: string) =>
+      request<SupportMessage>(`/liff/${tenantId}/support`, {
         method: 'POST',
         body: JSON.stringify({ content }),
-      });
-    },
+      }),
   },
   public: {
     events: (category?: string, tag?: string, typeTags?: string[]) => {
@@ -864,7 +848,6 @@ export interface AdminTenantReview {
 
 export interface ReserveInput {
   eventId: string;
-  lineUserId: string;
   name?: string;
   grade?: string;
   gender?: string;

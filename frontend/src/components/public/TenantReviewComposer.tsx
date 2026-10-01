@@ -40,11 +40,11 @@ export function TenantReviewComposer({
     : accentColor;
   const buttonTextColor = readableTextColor(solidAccentColor);
   const autoStarted = useRef(false);
+  const submitInFlight = useRef(false);
 
   const [stage, setStage] = useState<Stage>(
     mode === "liff" ? "loading" : "start",
   );
-  const [lineUserId, setLineUserId] = useState("");
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -105,11 +105,10 @@ export function TenantReviewComposer({
       return;
     }
 
-    setLineUserId(uid);
     syncLiffApiToken();
 
     try {
-      const existing = await api.liff.myTenantReview(tenantId, uid);
+      const existing = await api.liff.myTenantReview(tenantId);
       setStage(existing ? "submitted" : "ready");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "";
@@ -135,6 +134,7 @@ export function TenantReviewComposer({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (submitInFlight.current) return;
     const trimmed = content.trim();
     if (trimmed.length < 5 || trimmed.length > 300) {
       setError("口コミは5文字以上300文字以内で入力してください。");
@@ -142,10 +142,11 @@ export function TenantReviewComposer({
     }
 
     setError("");
+    submitInFlight.current = true;
     setSaving(true);
     try {
       syncLiffApiToken();
-      await api.liff.submitTenantReview(tenantId, lineUserId, trimmed);
+      await api.liff.submitTenantReview(tenantId, trimmed);
       setContent("");
       setStage("submitted");
     } catch (err: unknown) {
@@ -163,6 +164,7 @@ export function TenantReviewComposer({
       }
       setError(message);
     } finally {
+      submitInFlight.current = false;
       setSaving(false);
     }
   }

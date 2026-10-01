@@ -69,6 +69,7 @@ function ReservePageInner() {
   const isWaitlist = searchParams.get('waitlist') === '1';
   const isAutoReserve = searchParams.get('auto') === '1';
   const autoSubmitTriggeredRef = useRef(false);
+  const submitInFlightRef = useRef(false);
 
   const [authStatus, setAuthStatus] = useState<AuthStatus>('loading');
   const [authError, setAuthError] = useState('');
@@ -239,8 +240,8 @@ function ReservePageInner() {
       // ── Step 4: データ取得 ──
       const [ev, prof, myRes] = await Promise.allSettled([
         api.liff.event(tenantId, eventId),
-        api.liff.profile(tenantId, uid),
-        api.liff.myReservation(tenantId, eventId, uid).catch(() => null),
+        api.liff.profile(tenantId),
+        api.liff.myReservation(tenantId, eventId).catch(() => null),
       ]);
       if (cancelled) return;
       if (ev.status === 'fulfilled') setEvent(ev.value);
@@ -252,7 +253,7 @@ function ReservePageInner() {
           // トークンが一時的に古い可能性があるので、取り直して一度だけ再試行する。
           // それでも失敗する場合のみ再認証（ログイン画面）に進む＝二重ログイン要求を避ける。
           syncLiffApiToken();
-          const retryProf = await api.liff.profile(tenantId, uid).catch(() => null);
+          const retryProf = await api.liff.profile(tenantId).catch(() => null);
           if (cancelled) return;
           if (retryProf) {
             setProfile(retryProf);
@@ -325,7 +326,8 @@ function ReservePageInner() {
   }
 
   async function submit() {
-    if (!lineUserId || !hasProfile) return;
+    if (!lineUserId || !hasProfile || submitInFlightRef.current) return;
+    submitInFlightRef.current = true;
     setError('');
     setSubmitting(true);
     try {
@@ -340,7 +342,7 @@ function ReservePageInner() {
         ...(liffProfile?.displayName && { lineDisplayName: liffProfile.displayName }),
         ...(liffProfile?.pictureUrl && { linePictureUrl: liffProfile.pictureUrl }),
       };
-      const result = await api.liff.reserve(tenantId, body as any);
+      const result = await api.liff.reserve(tenantId, body);
       // 予約成功時はリダイレクトループ防止のためlocalStorageを必ずクリア
       localStorage.removeItem('liff-pending-redirect');
       localStorage.removeItem('liff-login-tried');
@@ -367,13 +369,19 @@ function ReservePageInner() {
       }
       const isDuplicate = msg.includes('予約済み');
       if (isDuplicate) {
-        alert('既に予約済みです');
-        window.location.href = `/liff/${tenantId}/profile`;
+        const existing = await api.liff.myReservation(tenantId, eventId).catch(() => null);
+        if (existing) {
+          setMyReservation(existing);
+          setError('');
+          return;
+        }
+        setError('このイベントはすでに予約済みです');
         return;
       }
       setError(msg);
       alert(`予約エラー: ${msg}`);
     } finally {
+      submitInFlightRef.current = false;
       setSubmitting(false);
     }
   }

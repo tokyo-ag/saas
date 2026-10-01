@@ -139,7 +139,11 @@ export class StripeWebhookController {
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (reservationId && uuidRe.test(reservationId)) {
         await this.prisma.reservation.updateMany({
-          where: { id: reservationId, tenantId },
+          where: {
+            id: reservationId,
+            tenantId,
+            status: ReservationStatus.waiting_payment,
+          },
           data: {
             status: ReservationStatus.reserved,
             paidAt: new Date(),

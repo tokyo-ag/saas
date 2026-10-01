@@ -1,5 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { ReservationStatus } from '@prisma/client';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Prisma, ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LineMessagingService } from '../line-messaging/line-messaging.service';
 
@@ -17,11 +21,23 @@ export class ReservationsService {
     });
     if (!reservation) throw new NotFoundException('Reservation not found');
 
-    const updated = await this.prisma.reservation.update({
-      where: { id },
-      data: { status },
-      include: { member: true, event: true },
-    });
+    const updated = await this.prisma.reservation
+      .update({
+        where: { id },
+        data: { status },
+        include: { member: true, event: true },
+      })
+      .catch((error: unknown) => {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002'
+        ) {
+          throw new ConflictException(
+            'この参加者には同じイベントの有効な予約がすでにあります',
+          );
+        }
+        throw error;
+      });
 
     if (status === ReservationStatus.cancelled) {
       await this.promoteWaitlist(tenantId, reservation.eventId);

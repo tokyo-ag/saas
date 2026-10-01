@@ -444,6 +444,9 @@ model Reservation {
 
   collabDuplicateOverride CollabDuplicateOverride?
 
+  // A partial unique index on (event_id, member_id) for non-cancelled rows is
+  // managed in SQL migration 20261002000000_prevent_duplicate_active_reservations.
+  // Prisma schema syntax cannot currently represent partial indexes.
   @@map("reservations")
 }
 

@@ -20,8 +20,8 @@ export default function SupportPage() {
   const [loginRequired, setLoginRequired] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const load = useCallback((uid: string) => {
-    api.liff.supportMessages(tenantId, uid)
+  const load = useCallback(() => {
+    api.liff.supportMessages(tenantId)
       .then((data) => {
         setMessages(data);
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
@@ -46,7 +46,7 @@ export default function SupportPage() {
         return;
       }
       setLineUserId(uid);
-      load(uid);
+      load();
     }
     init();
   }, [tenantId, load]);
@@ -65,7 +65,7 @@ export default function SupportPage() {
 
   useEffect(() => {
     if (!lineUserId) return;
-    const id = setInterval(() => load(lineUserId), 5000);
+    const id = setInterval(() => load(), 5000);
     return () => clearInterval(id);
   }, [lineUserId, load]);
 
@@ -76,8 +76,8 @@ export default function SupportPage() {
     setInput('');
     setSending(true);
     try {
-      await api.liff.sendSupport(tenantId, lineUserId, content);
-      load(lineUserId);
+      await api.liff.sendSupport(tenantId, content);
+      load();
     } finally {
       setSending(false);
     }

@@ -79,8 +79,6 @@ export default function ProfilePage() {
   const solidAccentColor = isLightHexColor(accentColor) ? '#111827' : accentColor;
   const returnTo = searchParams.get('returnTo');
 
-  const [lineUserId, setLineUserId] = useState('');
-  const [profile, setProfile] = useState<LiffProfile | null>(null);
   const [reservations, setReservations] = useState<LiffMyReservation[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -157,11 +155,10 @@ export default function ProfilePage() {
         setTimeout(() => setShowLoginToast(false), 2000);
       }
       localStorage.removeItem('liff-login-tried');
-      setLineUserId(uid);
       syncLiffApiToken();
 
       const [profResult, myReservations] = await Promise.all([
-        api.liff.profile(tenantId, uid).then((v) => ({ ok: true as const, v })).catch((e) => ({ ok: false as const, e })),
+        api.liff.profile(tenantId).then((v) => ({ ok: true as const, v })).catch((e) => ({ ok: false as const, e })),
         api.liff.myReservations(tenantId).catch(() => []),
       ]);
       let resolvedProf: LiffProfile | null = profResult.ok ? profResult.v : null;
@@ -171,7 +168,7 @@ export default function ProfilePage() {
           // トークンが一時的に古い可能性があるので、取り直して一度だけ再試行する。
           // それでも失敗する場合のみ再認証（ログイン画面）に進む＝二重ログイン要求を避ける。
           syncLiffApiToken();
-          resolvedProf = await api.liff.profile(tenantId, uid).catch(() => null);
+          resolvedProf = await api.liff.profile(tenantId).catch(() => null);
           if (!resolvedProf) {
             restartLineAuth();
             return;
@@ -180,7 +177,6 @@ export default function ProfilePage() {
         // それ以外（本当に初回でプロフィールが無い＝404）は空フォームのまま進める。
       }
       if (resolvedProf) {
-        setProfile(resolvedProf);
         setName(resolvedProf.name ?? '');
         setGrade(resolvedProf.grade ?? '');
         setGender(resolvedProf.gender ?? '');
@@ -239,7 +235,7 @@ export default function ProfilePage() {
     setSaving(true);
     try {
       syncLiffApiToken();
-      const updated = await api.liff.updateProfile(tenantId, lineUserId, {
+      await api.liff.updateProfile(tenantId, {
         ...(formConfig.requireName && { name }),
         ...(formConfig.requireGrade && { grade }),
         ...(formConfig.requireGender && { gender }),
@@ -247,7 +243,6 @@ export default function ProfilePage() {
         ...(formConfig.showComment && { comment }),
         ...(formConfig.customProfileQuestions.length > 0 && { customAnswers }),
       });
-      setProfile(updated);
       if (returnTo) {
         router.push(returnTo);
         return;

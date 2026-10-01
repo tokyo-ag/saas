@@ -541,7 +541,18 @@ export class EventsService {
 
   async checkin(tenantId: string, eventId: string, memberId: string) {
     const reservation = await this.prisma.reservation.findFirst({
-      where: { tenantId, eventId, memberId },
+      where: {
+        tenantId,
+        eventId,
+        memberId,
+        status: {
+          in: [
+            ReservationStatus.reserved,
+            ReservationStatus.waiting_payment,
+            ReservationStatus.attended,
+          ],
+        },
+      },
       include: { member: true },
     });
     if (!reservation) throw new NotFoundException('予約が見つかりません');

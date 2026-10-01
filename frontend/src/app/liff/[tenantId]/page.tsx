@@ -566,7 +566,7 @@ export default function LiffTopPage() {
         const requireGrade = t?.requireGrade !== false;
         const requireGender = t?.requireGender !== false;
         if (requireName || requireGrade || requireGender) {
-          const prof = await api.liff.profile(tenantId, lineProfile.userId).catch(() => null);
+          const prof = await api.liff.profile(tenantId).catch(() => null);
           const hasProfile = !!(
             (!requireName || prof?.name) &&
             (!requireGrade || prof?.grade) &&
@@ -583,7 +583,7 @@ export default function LiffTopPage() {
         setMyStatusByEvent(
           Object.fromEntries(myReservations.map((r) => [r.event.id, r.status])),
         );
-        api.liff.syncLineProfile(tenantId, lineProfile.userId, {
+        api.liff.syncLineProfile(tenantId, {
           lineDisplayName: lineProfile.displayName,
           linePictureUrl: lineProfile.pictureUrl,
         }).catch(() => {});

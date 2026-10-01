@@ -76,7 +76,11 @@ export class LiffController {
     @Param('eventId') eventId: string,
     @LiffUser() lineUserId: string,
   ) {
-    return this.liffService.getReservationPreview(tenantId, eventId, lineUserId);
+    return this.liffService.getReservationPreview(
+      tenantId,
+      eventId,
+      lineUserId,
+    );
   }
 
   // 旧フロントが残っている間も、予約時メッセージを正しく返す。
@@ -87,7 +91,11 @@ export class LiffController {
     @Param('eventId') eventId: string,
     @LiffUser() lineUserId: string,
   ) {
-    return this.liffService.getReservationPreview(tenantId, eventId, lineUserId);
+    return this.liffService.getReservationPreview(
+      tenantId,
+      eventId,
+      lineUserId,
+    );
   }
 
   @UseGuards(LiffGuard)
@@ -115,8 +123,7 @@ export class LiffController {
     @LiffUser() lineUserId: string,
     @Body() dto: SubmitReviewDto,
   ) {
-    dto.lineUserId = lineUserId;
-    return this.liffService.submitTenantReview(tenantId, dto);
+    return this.liffService.submitTenantReview(tenantId, lineUserId, dto);
   }
 
   @UseGuards(LiffGuard)
@@ -126,8 +133,7 @@ export class LiffController {
     @LiffUser() lineUserId: string,
     @Body() dto: CreateReservationDto,
   ) {
-    dto.lineUserId = lineUserId;
-    return this.liffService.createReservation(tenantId, dto);
+    return this.liffService.createReservation(tenantId, lineUserId, dto);
   }
 
   @UseGuards(LiffGuard)
@@ -173,7 +179,15 @@ export class LiffController {
   updateProfile(
     @Param('tenantId') tenantId: string,
     @LiffUser() lineUserId: string,
-    @Body() body: { name?: string; grade?: string; gender?: string; level?: string; comment?: string; customAnswers?: Record<string, string | string[]> },
+    @Body()
+    body: {
+      name?: string;
+      grade?: string;
+      gender?: string;
+      level?: string;
+      comment?: string;
+      customAnswers?: Record<string, string | string[]>;
+    },
   ) {
     return this.liffService.updateProfile(tenantId, lineUserId, body);
   }

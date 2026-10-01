@@ -7,7 +7,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
-import { ReservationStatus } from '@prisma/client';
+import { Prisma, ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LineMessagingService } from '../line-messaging/line-messaging.service';
 import { StripeService } from '../stripe/stripe.service';
@@ -15,7 +15,6 @@ import { PLAN_LIMITS } from '../config/plan-limits';
 import { EventSocialProofService } from '../event-social-proof/event-social-proof.service';
 export class CreateReservationDto {
   @IsString() eventId!: string;
-  @IsOptional() @IsString() lineUserId?: string;
   @IsOptional() @IsString() name?: string;
   @IsOptional() @IsString() grade?: string;
   @IsOptional() @IsString() gender?: string;
@@ -32,7 +31,6 @@ function hasCustomAnswer(value: string | string[] | undefined): boolean {
 }
 
 export class SubmitReviewDto {
-  @IsOptional() @IsString() lineUserId?: string;
   @IsString() @MaxLength(2000) content!: string;
 }
 
@@ -111,7 +109,9 @@ export class LiffService {
 
   private parseReserveSettings(footerText?: string | null) {
     try {
-      const parsed = JSON.parse(footerText ?? '{}');
+      const raw = JSON.parse(footerText ?? '{}') as unknown;
+      const parsed: Record<string, unknown> =
+        raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
       const reserveLineUrl =
         typeof parsed.reserveLineUrl === 'string' &&
         parsed.reserveLineUrl.trim()
@@ -170,11 +170,12 @@ export class LiffService {
       where: { id: tenantId },
       select: { eventSocialProofSettings: true },
     });
-    const socialProofByEvent = await this.eventSocialProofService.buildForEvents(
-      tenantId,
-      tenant?.eventSocialProofSettings,
-      events,
-    );
+    const socialProofByEvent =
+      await this.eventSocialProofService.buildForEvents(
+        tenantId,
+        tenant?.eventSocialProofSettings,
+        events,
+      );
 
     return events.map((e) => ({
       id: e.id,
@@ -204,7 +205,9 @@ export class LiffService {
 
   // 同じ性別の実績が連続で固まって見えないよう、各性別グループ内の新しい順を保ったまま
   // グループ間で均等に散らして並べ替える（水増しはせず、実際にある件数分しか出さない）。
-  private fairInterleaveByGender<T extends { gender: string | null }>(items: T[]): T[] {
+  private fairInterleaveByGender<T extends { gender: string | null }>(
+    items: T[],
+  ): T[] {
     const groups = new Map<string, T[]>();
     for (const item of items) {
       const key = item.gender ?? 'unknown';
@@ -229,20 +232,38 @@ export class LiffService {
     const genderFilter = { gender };
     const [reservations, newMembers] = await Promise.all([
       this.prisma.reservation.findMany({
-        where: { tenantId, status: { in: ['reserved', 'attended'] }, member: genderFilter },
+        where: {
+          tenantId,
+          status: { in: ['reserved', 'attended'] },
+          member: genderFilter,
+        },
         orderBy: { reservedAt: 'desc' },
         take,
         select: {
           id: true,
           reservedAt: true,
-          member: { select: { name: true, lineDisplayName: true, linePictureUrl: true, gender: true } },
+          member: {
+            select: {
+              name: true,
+              lineDisplayName: true,
+              linePictureUrl: true,
+              gender: true,
+            },
+          },
         },
       }),
       this.prisma.member.findMany({
         where: { tenantId, ...genderFilter },
         orderBy: { createdAt: 'desc' },
         take,
-        select: { id: true, createdAt: true, name: true, lineDisplayName: true, linePictureUrl: true, gender: true },
+        select: {
+          id: true,
+          createdAt: true,
+          name: true,
+          lineDisplayName: true,
+          linePictureUrl: true,
+          gender: true,
+        },
       }),
     ]);
 
@@ -276,9 +297,11 @@ export class LiffService {
       this.fetchRecentActivityByGender(tenantId, null, PER_GENDER),
     ]);
 
-    return this.fairInterleaveByGender([...maleItems, ...femaleItems, ...unsetItems]).map(
-      ({ gender: _gender, ...rest }) => rest,
-    );
+    return this.fairInterleaveByGender([
+      ...maleItems,
+      ...femaleItems,
+      ...unsetItems,
+    ]).map(({ gender: _gender, ...rest }) => rest);
   }
 
   // イベント詳細1件
@@ -319,7 +342,11 @@ export class LiffService {
     tenantId = await this.resolveTenantId(tenantId);
     const reviews = await this.prisma.tenantReview.findMany({
       where: { tenantId, isPublished: true },
-      include: { member: { select: { name: true, lineDisplayName: true, linePictureUrl: true } } },
+      include: {
+        member: {
+          select: { name: true, lineDisplayName: true, linePictureUrl: true },
+        },
+      },
       orderBy: { createdAt: 'desc' },
       take: 30,
     });
@@ -328,14 +355,19 @@ export class LiffService {
       id: review.id,
       content: review.content,
       createdAt: review.createdAt,
-      authorName: review.member.name ?? review.member.lineDisplayName ?? '参加者',
+      authorName:
+        review.member.name ?? review.member.lineDisplayName ?? '参加者',
       authorIconUrl: review.member.linePictureUrl,
     }));
   }
 
-  async submitTenantReview(tenantId: string, dto: SubmitReviewDto) {
+  async submitTenantReview(
+    tenantId: string,
+    lineUserId: string,
+    dto: SubmitReviewDto,
+  ) {
     tenantId = await this.resolveTenantId(tenantId);
-    if (!dto.lineUserId) {
+    if (!lineUserId) {
       throw new UnauthorizedException('LIFF認証が必要です');
     }
     const content = dto.content.trim();
@@ -348,18 +380,19 @@ export class LiffService {
     // 予約・参加の有無を問わず投稿できる仕様のため、まだメンバー登録が無い
     // （プロフィール未入力・未予約）LINEユーザーの場合は、ここで最小限の
     // メンバーを作成する（エラーにしない）。
-    let member = await this.findMember(tenantId, dto.lineUserId);
+    let member = await this.findMember(tenantId, lineUserId);
     if (!member) {
       const tenant = await this.prisma.tenant.findUnique({
         where: { id: tenantId },
       });
       const lineProfile = await this.lineMessaging
-        .getLineProfile(tenant?.lineChannelAccessToken ?? '', dto.lineUserId)
+        .getLineProfile(tenant?.lineChannelAccessToken ?? '', lineUserId)
         .catch(() => null);
-      member = await this.prisma.member.create({
-        data: {
+      member = await this.prisma.member.upsert({
+        where: { tenantId_lineUserId: { tenantId, lineUserId } },
+        create: {
           tenantId,
-          lineUserId: dto.lineUserId,
+          lineUserId,
           ...(lineProfile?.displayName && {
             lineDisplayName: lineProfile.displayName,
           }),
@@ -367,6 +400,7 @@ export class LiffService {
             linePictureUrl: lineProfile.pictureUrl,
           }),
         },
+        update: {},
       });
     }
 
@@ -374,23 +408,42 @@ export class LiffService {
       where: { tenantId_memberId: { tenantId, memberId: member.id } },
     });
     if (existing) {
-      throw new ConflictException('すでに感想を投稿済みです。投稿内容は変更できません。');
+      throw new ConflictException(
+        'すでに感想を投稿済みです。投稿内容は変更できません。',
+      );
     }
 
-    return this.prisma.tenantReview.create({
-      data: {
-        tenantId,
-        memberId: member.id,
-        content,
-        isPublished: false,
-      },
-    });
+    try {
+      return await this.prisma.tenantReview.create({
+        data: {
+          tenantId,
+          memberId: member.id,
+          content,
+          isPublished: false,
+        },
+      });
+    } catch (error) {
+      // 画面の二重タップなどで同時送信されても、DBの一意制約を最後の砦にする。
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'すでに感想を投稿済みです。投稿内容は変更できません。',
+        );
+      }
+      throw error;
+    }
   }
 
   // 予約登録（重複チェック・キャンセル待ち・LINE通知込み）
-  async createReservation(tenantId: string, dto: CreateReservationDto) {
+  async createReservation(
+    tenantId: string,
+    lineUserId: string,
+    dto: CreateReservationDto,
+  ) {
     tenantId = await this.resolveTenantId(tenantId);
-    if (!dto.lineUserId) {
+    if (!lineUserId) {
       throw new UnauthorizedException('LIFF認証が必要です');
     }
     const event = await this.prisma.event.findFirst({
@@ -406,16 +459,21 @@ export class LiffService {
 
     // グローバルBAN チェック
     const globalBan = await this.prisma.bannedLineUser.findUnique({
-      where: { lineUserId: dto.lineUserId },
+      where: { lineUserId },
     });
     if (globalBan)
       throw new ForbiddenException('このアカウントは利用できません');
 
-    // フリープラン：参加者50人上限チェック
+    // 本人はLINEユーザーIDだけで特定する。プロフィールの名前・性別等は
+    // 変更可能な属性であり、Memberを作り直す判定には絶対に使用しない。
+    let member = await this.findMember(tenantId, lineUserId);
+
+    // フリープランの上限は新規メンバー作成時だけ適用する。既存メンバーが
+    // プロフィール編集後に予約できなくなることはない。
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
     });
-    if (tenant?.plan === 'free') {
+    if (!member && tenant?.plan === 'free') {
       const memberCount = await this.prisma.member.count({
         where: { tenantId },
       });
@@ -426,12 +484,9 @@ export class LiffService {
       }
     }
 
-    // 参加者を登録 or 情報更新（LINEユーザーIDで一意に管理）
-    let member = await this.findMember(tenantId, dto.lineUserId);
-
     const lineProfile = await this.lineMessaging.getLineProfile(
       tenant?.lineChannelAccessToken ?? '',
-      dto.lineUserId,
+      lineUserId,
     );
 
     // DTO values (from LIFF SDK) take priority over Messaging API profile
@@ -444,44 +499,45 @@ export class LiffService {
       const requiresLevel = event.levelEnabled;
       // 団体ごとの設定で必須にしていない項目は、未入力でも予約できる。
       const missingFields: string[] = [];
-      if (tenant?.requireName !== false && !dto.name) missingFields.push('お名前');
-      if (tenant?.requireGrade !== false && !dto.grade) missingFields.push('年齢');
-      if (tenant?.requireGender !== false && !dto.gender) missingFields.push('性別');
+      if (tenant?.requireName !== false && !dto.name)
+        missingFields.push('お名前');
+      if (tenant?.requireGrade !== false && !dto.grade)
+        missingFields.push('年齢');
+      if (tenant?.requireGender !== false && !dto.gender)
+        missingFields.push('性別');
       if (requiresLevel && !dto.level) missingFields.push('レベル');
       if (missingFields.length > 0) {
         throw new BadRequestException(
           `初回予約時は${missingFields.join('・')}を入力してください`,
         );
       }
-      member = await this.prisma.member.create({
-        data: {
-          tenantId,
-          lineUserId: dto.lineUserId,
-          ...(dto.name && { name: dto.name }),
-          ...(dto.grade && { grade: dto.grade }),
-          ...(dto.gender && { gender: dto.gender }),
-          ...(dto.level && { level: dto.level }),
-          ...(dto.comment !== undefined && { comment: dto.comment }),
-          ...(dto.customAnswers && { customAnswers: dto.customAnswers }),
-          ...(resolvedDisplayName && { lineDisplayName: resolvedDisplayName }),
-          ...(resolvedPictureUrl && { linePictureUrl: resolvedPictureUrl }),
-        },
-      });
-    } else {
-      member = await this.prisma.member.update({
-        where: { id: member.id },
-        data: {
-          ...(dto.name && { name: dto.name }),
-          ...(dto.grade && { grade: dto.grade }),
-          ...(dto.gender && { gender: dto.gender }),
-          ...(dto.level && { level: dto.level }),
-          ...(dto.comment !== undefined && { comment: dto.comment }),
-          ...(dto.customAnswers && { customAnswers: dto.customAnswers }),
-          ...(resolvedDisplayName && { lineDisplayName: resolvedDisplayName }),
-          ...(resolvedPictureUrl && { linePictureUrl: resolvedPictureUrl }),
-        },
-      });
     }
+
+    member = await this.prisma.member.upsert({
+      where: { tenantId_lineUserId: { tenantId, lineUserId } },
+      create: {
+        tenantId,
+        lineUserId,
+        ...(dto.name && { name: dto.name }),
+        ...(dto.grade && { grade: dto.grade }),
+        ...(dto.gender && { gender: dto.gender }),
+        ...(dto.level && { level: dto.level }),
+        ...(dto.comment !== undefined && { comment: dto.comment }),
+        ...(dto.customAnswers && { customAnswers: dto.customAnswers }),
+        ...(resolvedDisplayName && { lineDisplayName: resolvedDisplayName }),
+        ...(resolvedPictureUrl && { linePictureUrl: resolvedPictureUrl }),
+      },
+      update: {
+        ...(dto.name && { name: dto.name }),
+        ...(dto.grade && { grade: dto.grade }),
+        ...(dto.gender && { gender: dto.gender }),
+        ...(dto.level && { level: dto.level }),
+        ...(dto.comment !== undefined && { comment: dto.comment }),
+        ...(dto.customAnswers && { customAnswers: dto.customAnswers }),
+        ...(resolvedDisplayName && { lineDisplayName: resolvedDisplayName }),
+        ...(resolvedPictureUrl && { linePictureUrl: resolvedPictureUrl }),
+      },
+    });
 
     // テナントブロックチェック
     if (member.blockedAt)
@@ -542,15 +598,28 @@ export class LiffService {
       waitlistOrder = (maxOrder._max.waitlistOrder ?? 0) + 1;
     }
 
-    const reservation = await this.prisma.reservation.create({
-      data: {
-        tenantId,
-        eventId: dto.eventId,
-        memberId: member.id,
-        status,
-        waitlistOrder,
-      },
-    });
+    let reservation;
+    try {
+      reservation = await this.prisma.reservation.create({
+        data: {
+          tenantId,
+          eventId: dto.eventId,
+          memberId: member.id,
+          status,
+          waitlistOrder,
+        },
+      });
+    } catch (error) {
+      // アプリ側の事前確認を同時に通過しても、DBの部分一意インデックスが
+      // 同じ本人・同じイベントの有効予約を必ず1件に制限する。
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('このイベントはすでに予約済みです');
+      }
+      throw error;
+    }
 
     // Stripe 決済セッション作成
     let stripeCheckoutUrl: string | undefined;
@@ -593,13 +662,14 @@ export class LiffService {
       if (status === 'reserved') {
         await this.lineMessaging.sendReservationConfirm(
           token,
-          dto.lineUserId,
+          lineUserId,
           event.title,
           event.heldAt,
           event.location,
           event.price,
           event.description,
-          event.reservationMessageTemplate ?? tenant?.reservationMessageTemplate,
+          event.reservationMessageTemplate ??
+            tenant?.reservationMessageTemplate,
           {
             endAt: event.endAt,
             locationUrl: event.locationUrl,
@@ -614,7 +684,7 @@ export class LiffService {
       } else {
         await this.lineMessaging.sendWaitlistRegistered(
           token,
-          dto.lineUserId,
+          lineUserId,
           event.title,
           waitlistOrder!,
         );
@@ -639,7 +709,9 @@ export class LiffService {
         tenantId,
         eventId,
         memberId: member.id,
-        status: { in: ['reserved', 'waitlisted', 'waiting_payment'] },
+        status: {
+          in: ['reserved', 'waitlisted', 'waiting_payment', 'attended'],
+        },
       },
       orderBy: { reservedAt: 'desc' },
     });
@@ -647,7 +719,11 @@ export class LiffService {
   }
 
   // 予約直後の画面に、実際の予約時LINE通知と同じ文面を表示するためのプレビュー。
-  async getReservationPreview(tenantId: string, eventId: string, lineUserId: string) {
+  async getReservationPreview(
+    tenantId: string,
+    eventId: string,
+    lineUserId: string,
+  ) {
     tenantId = await this.resolveTenantId(tenantId);
     const [event, tenant, member] = await Promise.all([
       this.prisma.event.findFirst({ where: { id: eventId, tenantId } }),
@@ -801,10 +877,16 @@ export class LiffService {
       select: { customProfileQuestions: true },
     });
     const questions =
-      (tenant?.customProfileQuestions as { id: string; label: string; required?: boolean }[] | null) ?? [];
-    const missingQuestions = questions.filter((q) => q.required && !hasCustomAnswer(data.customAnswers?.[q.id]));
+      (tenant?.customProfileQuestions as
+        | { id: string; label: string; required?: boolean }[]
+        | null) ?? [];
+    const missingQuestions = questions.filter(
+      (q) => q.required && !hasCustomAnswer(data.customAnswers?.[q.id]),
+    );
     if (missingQuestions.length > 0) {
-      throw new BadRequestException(`${missingQuestions.map((q) => q.label).join('・')}を入力してください`);
+      throw new BadRequestException(
+        `${missingQuestions.map((q) => q.label).join('・')}を入力してください`,
+      );
     }
 
     const updated = await this.prisma.member.upsert({
