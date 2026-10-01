@@ -1783,12 +1783,45 @@ export default function AdminPublicPage() {
             <p className="mt-1 text-[11px] text-gray-400">イベントとブログは、公開中の内容があると自動で表示されます。</p>
           </div>
           <div className="divide-y divide-gray-100 rounded-xl border border-gray-200">
-            <div className="flex items-center justify-between gap-3 px-3 py-3">
-              <div>
-                <p className="text-xs font-bold text-gray-700">予約ページ</p>
-                <p className="mt-0.5 text-[11px] text-gray-400">{hasReserveSection ? (reserveActionStyle === 'line' && reserveEvents.length === 0 ? 'LINE予約を表示します' : `公開中のイベント ${reserveEvents.length}件`) : '公開中のイベントがないため表示されません'}</p>
+            <div className="space-y-3 px-3 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold text-gray-700">予約ページ</p>
+                  <p className="mt-0.5 text-[11px] text-gray-400">{hasReserveSection ? (reserveActionStyle === 'line' && reserveEvents.length === 0 ? 'LINE予約を表示します' : `公開中のイベント ${reserveEvents.length}件`) : '公開中のイベントがないため表示されません'}</p>
+                </div>
+                <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${hasReserveSection ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{hasReserveSection ? '表示' : '自動で非表示'}</span>
               </div>
-              <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${hasReserveSection ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{hasReserveSection ? '表示' : '自動で非表示'}</span>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { value: 'comiu' as const, label: 'COMIUで予約', description: '参加者をCOMIUで管理' },
+                  { value: 'line' as const, label: 'LINEで予約', description: '公式LINEへ案内' },
+                ]).map((option) => {
+                  const active = reserveActionStyle === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setForm((prev) => ({ ...prev, reserveActionStyle: option.value }))}
+                      className={`rounded-xl border px-3 py-2.5 text-left transition ${active ? 'border-[#06C755] bg-green-50 text-green-700 ring-1 ring-[#06C755]/20' : 'border-gray-200 bg-white text-gray-600 hover:border-green-300'}`}
+                    >
+                      <span className="block text-xs font-bold">{option.label}</span>
+                      <span className="mt-0.5 block text-[10px] text-gray-400">{option.description}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {reserveActionStyle === 'line' && (
+                <label className="block space-y-1">
+                  <span className="text-[11px] font-bold text-gray-500">公式LINE URL</span>
+                  <input
+                    type="url"
+                    value={form.reserveLineUrl ?? ''}
+                    onChange={(e) => setForm((prev) => ({ ...prev, reserveLineUrl: e.target.value }))}
+                    placeholder="https://lin.ee/..."
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                  />
+                </label>
+              )}
             </div>
             <div className="flex items-center justify-between gap-3 px-3 py-3">
               <div>
