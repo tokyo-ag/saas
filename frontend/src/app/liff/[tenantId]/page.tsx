@@ -90,12 +90,14 @@ function EventCard({ event, tenantId, accentColor, cardBg, myStatus }: { event: 
       <div className="px-2.5 pt-2 pb-2.5 space-y-1" style={{ color: readableTextColor(cardBg) }}>
         <p className="text-[10px] opacity-60">{formatDateShort(event.heldAt)}</p>
         <AvatarRow count={event.reservedCount} />
-        <div className="flex items-center gap-1 flex-wrap">
+        <div>
           <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">{displayLocation(event, myStatus)}</span>
+        </div>
+        <div className="flex items-center gap-1 flex-wrap">
           {event.priceMale != null && event.priceFemale != null ? (
             <>
-              <span className="text-[9px] text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded-full">男¥{event.priceMale.toLocaleString()}</span>
-              <span className="text-[9px] text-pink-500 bg-pink-50 px-1.5 py-0.5 rounded-full">女¥{event.priceFemale.toLocaleString()}</span>
+              <span className="text-[9px] text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded-full">男性 ¥{event.priceMale.toLocaleString()}</span>
+              <span className="text-[9px] text-pink-500 bg-pink-50 px-1.5 py-0.5 rounded-full">女性 ¥{event.priceFemale.toLocaleString()}</span>
             </>
           ) : event.price === 0 ? (
             <span className="text-[9px] bg-green-50 px-1.5 py-0.5 rounded-full font-medium" style={{ color: accentColor }}>無料</span>
@@ -122,9 +124,9 @@ function threadMonthLabel(dateStr: string) {
 
 function threadPriceLabel(event: LiffEvent) {
   if (event.priceMale != null && event.priceFemale != null) {
-    return `男性 ${event.priceMale.toLocaleString()}円 / 女性 ${event.priceFemale.toLocaleString()}円`;
+    return `男性 ¥${event.priceMale.toLocaleString()}　女性 ¥${event.priceFemale.toLocaleString()}`;
   }
-  return event.price === 0 ? '無料' : `${event.price.toLocaleString()}円`;
+  return event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
 }
 
 function threadStatusLabel(event: LiffEvent) {
@@ -250,11 +252,9 @@ function eventDateLabel(event: LiffEvent) {
 
 function eventPriceLabel(event: LiffEvent) {
   if (event.priceMale != null && event.priceFemale != null) {
-    return event.priceMale === event.priceFemale
-      ? `${event.priceMale.toLocaleString()}円`
-      : `男${event.priceMale.toLocaleString()}円 / 女${event.priceFemale.toLocaleString()}円`;
+    return `男性 ¥${event.priceMale.toLocaleString()}　女性 ¥${event.priceFemale.toLocaleString()}`;
   }
-  return event.price === 0 ? '無料' : `${event.price.toLocaleString()}円`;
+  return event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
 }
 
 function isLightHexColor(color: string) {

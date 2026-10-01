@@ -146,10 +146,10 @@ function eventStatus(event: ReservationShowcaseEvent) {
 
 function eventPrice(event: ReservationShowcaseEvent) {
   if (event.priceMale != null && event.priceFemale != null) {
-    return `参加費：男性${event.priceMale.toLocaleString()}円／女性${event.priceFemale.toLocaleString()}円`;
+    return `男性 ¥${event.priceMale.toLocaleString()}　女性 ¥${event.priceFemale.toLocaleString()}`;
   }
   if (event.price == null) return '';
-  return event.price === 0 ? '無料' : `参加費：${event.price.toLocaleString()}円`;
+  return event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
 }
 
 function eventDetailHref(tenantCode: string | undefined, eventId: string, fallbackHref?: string, linkToEventList?: boolean) {
@@ -345,10 +345,9 @@ function CardMini({
             const status = eventStatus(event);
             const full = status === '満席';
             const price = eventPrice(event);
-            const metaLine = [
-              showCapacity && event.capacity ? `${event.reservedCount ?? 0}/${event.capacity}人` : null,
-              showPrice && price,
-            ].filter(Boolean).join(' / ');
+            const capacityLine = showCapacity && event.capacity
+              ? `${event.reservedCount ?? 0}/${event.capacity}人`
+              : '';
             const cardBody = (
               <>
                 <div className="relative aspect-[3/2] shrink-0 bg-gray-100">
@@ -368,7 +367,8 @@ function CardMini({
                   <p className="line-clamp-2 text-sm font-bold leading-snug" style={{ color: eventTitleColor || cardText }}>{event.title}</p>
                   <p className="text-xs font-medium" style={{ color: eventDateColor || cardText, opacity: eventDateColor ? 1 : 0.7 }}>{eventFullDateTime(event)}</p>
                   {showLocation && event.location && <p className="truncate text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{event.locationHint || event.location}</p>}
-                  {metaLine && <p className="text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{metaLine}</p>}
+                  {showPrice && price && <p className="text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{price}</p>}
+                  {capacityLine && <p className="text-xs" style={{ color: eventMetaColor || cardText, opacity: eventMetaColor ? 1 : 0.6 }}>{capacityLine}</p>}
                   {event.socialProof?.text && (
                     <p className="text-[11px] font-bold" style={{ color: eventMetaColor || accentColor, opacity: eventMetaColor ? 1 : 0.9 }}>
                       {event.socialProof.text.replace('\n', ' ・ ')}
