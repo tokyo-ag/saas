@@ -967,6 +967,7 @@ export class PublicController {
       eventCount: tenant._count.events,
       accessCount: tenant._count.liffAccesses,
       liffId: tenant.liffId,
+      liffEventView: tenant.liffEventView,
       pages: tenant.publicPages,
     };
 

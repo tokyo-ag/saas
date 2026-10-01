@@ -320,7 +320,7 @@ function CardMini({
   accentColor, events, fallbackHref, tenantCode,
   eventTitleColor, eventDateColor, eventMetaColor, cardBg,
   showLocation = true, showPrice = true, showCapacity = true,
-  linkToLiff, liffId, linkToEventList,
+  linkToLiff, liffId, linkToEventList, horizontalCards,
 }: {
   accentColor: string;
   events?: ReservationShowcaseEvent[];
@@ -333,13 +333,17 @@ function CardMini({
   linkToLiff?: boolean;
   liffId?: string | null;
   linkToEventList?: boolean;
+  horizontalCards?: boolean;
 } & FieldFlags) {
   const visible = readableAccent(accentColor);
   const cardText = readableAccent(cardBg || '#ffffff').text;
+  const horizontalCardClass = horizontalCards ? 'w-[calc((100%-0.75rem)/2)] shrink-0 snap-start' : '';
   if (events) {
     if (events.length === 0) return <EmptyEvents accentColor={accentColor} />;
     return (
-      <div className="grid grid-cols-2 gap-3">
+      <div className={horizontalCards
+        ? 'flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+        : 'grid grid-cols-2 gap-3'}>
           {events.map((event) => {
             const image = imgUrl(event.imageUrl, API_URL);
             const status = eventStatus(event);
@@ -386,7 +390,7 @@ function CardMini({
               return (
                 <div
                   key={event.id}
-                  className="relative block aspect-[4/5] overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
+                  className={`relative block aspect-[4/5] overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md ${horizontalCardClass}`}
                   style={{ backgroundColor: cardBg || '#ffffff' }}
                 >
                   <Link
@@ -403,7 +407,7 @@ function CardMini({
               <Link
                 key={event.id}
                 href={eventDetailHref(tenantCode, event.id, fallbackHref, linkToEventList)}
-                className="flex aspect-[4/5] flex-col overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md"
+                className={`flex aspect-[4/5] flex-col overflow-hidden rounded-2xl shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-0.5 hover:shadow-md ${horizontalCardClass}`}
                 style={{ backgroundColor: cardBg || '#ffffff' }}
               >
                 {cardBody}
@@ -415,9 +419,11 @@ function CardMini({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className={horizontalCards
+      ? 'flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+      : 'grid grid-cols-2 gap-3'}>
       {[0, 1].map((i) => (
-        <div key={i} className="flex aspect-[4/5] flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+        <div key={i} className={`flex aspect-[4/5] flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm ${horizontalCardClass}`}>
           <div className="aspect-[3/2] shrink-0" style={{ background: `linear-gradient(135deg, ${visible.accent}, #111827)` }} />
           <div className="min-h-0 flex-1 space-y-1.5 overflow-hidden p-3">
             <div className="h-2 w-5/6 rounded-full bg-gray-200" />
@@ -580,7 +586,10 @@ export function ReservationViewShowcase({
   liffId,
   linkToEventList,
 }: ReservationViewShowcaseProps) {
-  const selectedView = viewStyle === 'card' || viewStyle === 'thread' ? viewStyle : 'calendar';
+  const horizontalCards = viewStyle === 'slider';
+  const selectedView = viewStyle === 'card' || viewStyle === 'slider' || viewStyle === 'thread'
+    ? (viewStyle === 'slider' ? 'card' : viewStyle)
+    : 'calendar';
   const fieldProps = { showLocation, showPrice, showCapacity, showDescription };
 
   return (
@@ -589,7 +598,7 @@ export function ReservationViewShowcase({
         <CalendarPreview accentColor={accentColor} events={events} fallbackHref={href} tenantCode={tenantCode} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} cardBg={eventCardBg} linkToLiff={linkToLiff} liffId={liffId} linkToEventList={linkToEventList} />
       ) : (
         <div className="rounded-xl">
-          {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} fallbackHref={href} tenantCode={tenantCode} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} linkToLiff={linkToLiff} liffId={liffId} linkToEventList={linkToEventList} {...fieldProps} />}
+          {selectedView === 'card' && <CardMini accentColor={accentColor} events={events} fallbackHref={href} tenantCode={tenantCode} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} linkToLiff={linkToLiff} liffId={liffId} linkToEventList={linkToEventList} horizontalCards={horizontalCards} {...fieldProps} />}
           {selectedView === 'thread' && <ThreadMini accentColor={accentColor} events={events} fallbackHref={href} tenantCode={tenantCode} eventTitleColor={eventTitleColor} eventDateColor={eventDateColor} eventMetaColor={eventMetaColor} cardBg={eventCardBg} linkToLiff={linkToLiff} liffId={liffId} linkToEventList={linkToEventList} {...fieldProps} />}
         </div>
       )}

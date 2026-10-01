@@ -19,6 +19,7 @@ type TenantEventsData = {
   lineDisplayName?: string | null;
   linePictureUrl?: string | null;
   liffId?: string | null;
+  liffEventView?: string | null;
   pages?: Array<{ slug: string }>;
   events: ReservationShowcaseEvent[];
 };
@@ -53,7 +54,6 @@ type TenantPageStyle = {
   accentColor?: string | null;
   backgroundColor?: string | null;
   textColor?: string | null;
-  reserveViewStyle?: string | null;
 };
 
 async function fetchTenant(tenantCode: string): Promise<TenantEventsData | null> {
@@ -227,7 +227,7 @@ export default async function TenantEventsPage({
           <ReservationViewShowcase
             accentColor={accentColor}
             buttonLabel="予約する"
-            viewStyle={page?.reserveViewStyle}
+            viewStyle={tenant.liffEventView}
             events={events}
             tenantCode={tenantCode}
             showButton={false}

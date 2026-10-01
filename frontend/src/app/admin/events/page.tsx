@@ -61,13 +61,11 @@ function parseDisplayFields(settings: Record<string, any>): DisplayFields {
 function withFooterSettings(
   page: import('@/lib/api').PublicPage,
   actionStyle: ReservationActionStyle,
-  reserveViewStyle: string,
   displayFields: DisplayFields,
   reserveLineUrl: string,
 ) {
   return {
     ...page,
-    reserveViewStyle,
     footerText: JSON.stringify({
       ...parseFooterSettings(page.footerText),
       reserveActionStyle: actionStyle,
@@ -95,7 +93,7 @@ export default function EventsPage() {
   const [copiedPublic, setCopiedPublic] = useState(false);
   const [publicPageId, setPublicPageId] = useState<string | null>(null);
   const [publicPageData, setPublicPageData] = useState<import('@/lib/api').PublicPage | null>(null);
-  const [reserveViewStyle, setReserveViewStyle] = useState<string>('calendar');
+  const [reserveViewStyle, setReserveViewStyle] = useState<string>('card');
   const [reservationActionStyle, setReservationActionStyle] = useState<ReservationActionStyle>('comiu');
   const [reservationLineUrl, setReservationLineUrl] = useState('');
   const [displayFields, setDisplayFields] = useState<DisplayFields>(DEFAULT_DISPLAY_FIELDS);
@@ -129,6 +127,11 @@ export default function EventsPage() {
     load();
     api.tenant.get().then((t) => {
       setTenantId(t.code ?? t.id);
+      setReserveViewStyle(
+        ['calendar', 'card', 'thread'].includes(t.liffEventView ?? '')
+          ? t.liffEventView!
+          : 'card',
+      );
       setActivityTickerEnabled(t.activityTickerEnabled !== false);
       setSocialProofSettings(normalizeEventSocialProofSettings(t.eventSocialProofSettings));
       setEventsSeoDescription(t.eventsSeoDescription ?? '');
@@ -140,7 +143,6 @@ export default function EventsPage() {
       if (first) {
         setPublicPageId(first.id);
         setPublicPageData(first);
-        setReserveViewStyle(first.reserveViewStyle ?? 'calendar');
         const footerSettings = parseFooterSettings(first.footerText);
         setReservationActionStyle(footerSettings.reserveActionStyle === 'line' ? 'line' : 'comiu');
         setReservationLineUrl((footerSettings.reserveLineUrl ?? footerSettings.line ?? '').trim());
@@ -154,10 +156,7 @@ export default function EventsPage() {
     setSavingStyle(true);
     try {
       await api.tenant.update({ liffEventView: style });
-      if (publicPageId && publicPageData) {
-        const updated = await api.publicPages.update(publicPageId, withFooterSettings(publicPageData, reservationActionStyle, style, displayFields, reservationLineUrl) as any);
-        setPublicPageData(updated);
-      }
+      await revalidate(tenantId, publicPageData?.slug);
     } catch { /* silent */ } finally {
       setSavingStyle(false);
       setIframeKey((k) => k + 1);
@@ -169,7 +168,7 @@ export default function EventsPage() {
     if (!publicPageId || !publicPageData) return;
     setSavingStyle(true);
     try {
-      const updated = await api.publicPages.update(publicPageId, withFooterSettings(publicPageData, style, reserveViewStyle, displayFields, reservationLineUrl) as any);
+      const updated = await api.publicPages.update(publicPageId, withFooterSettings(publicPageData, style, displayFields, reservationLineUrl) as any);
       setPublicPageData(updated);
       await revalidate(tenantId, updated.slug || publicPageData.slug);
     } catch { /* silent */ } finally {
@@ -191,7 +190,7 @@ export default function EventsPage() {
     setDisplayFields(next);
     if (!publicPageId || !publicPageData) return;
     try {
-      const updated = await api.publicPages.update(publicPageId, withFooterSettings(publicPageData, reservationActionStyle, reserveViewStyle, next, reservationLineUrl) as any);
+      const updated = await api.publicPages.update(publicPageId, withFooterSettings(publicPageData, reservationActionStyle, next, reservationLineUrl) as any);
       setPublicPageData(updated);
     } catch { /* silent */ }
   }
@@ -243,7 +242,7 @@ export default function EventsPage() {
     try {
       const [, updated] = await Promise.all([
         api.tenant.update({ liffEventView: reserveViewStyle }),
-        api.publicPages.update(publicPageId, withFooterSettings(publicPageData, reservationActionStyle, reserveViewStyle, displayFields, reservationLineUrl) as any),
+        api.publicPages.update(publicPageId, withFooterSettings(publicPageData, reservationActionStyle, displayFields, reservationLineUrl) as any),
       ]);
       setPublicPageData(updated);
       await revalidate(tenantId, updated.slug || publicPageData.slug);
@@ -801,7 +800,7 @@ export default function EventsPage() {
           {/* 表示スタイル */}
           <div className="rounded-xl border border-gray-200 bg-white">
             <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-              <span className="text-xs font-bold text-gray-500">公開サイトの表示スタイル</span>
+              <span className="text-xs font-bold text-gray-500">予約ページの表示形式</span>
               <div className="flex gap-1 rounded-lg border border-gray-200 p-0.5">
                 {reserveViewOptions.map((opt) => (
                   <button
