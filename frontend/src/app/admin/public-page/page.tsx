@@ -327,6 +327,26 @@ const TONE_COLORS = [
   { label: 'ピンク', value: '#BE185D' },
 ];
 
+type SimpleSiteTemplate = 'photo' | 'events' | 'about';
+
+const SIMPLE_SITE_TEMPLATES: Array<{
+  key: SimpleSiteTemplate;
+  label: string;
+  description: string;
+}> = [
+  { key: 'photo', label: '写真を主役にする', description: '活動写真を大きく見せて、雰囲気を伝えます。' },
+  { key: 'events', label: '予約を増やす', description: '開催予定のイベントを先に見せます。' },
+  { key: 'about', label: '団体を詳しく紹介', description: '紹介文と口コミを先に見せて、安心感を伝えます。' },
+];
+
+const SIMPLE_COLOR_THEMES = [
+  { key: 'green', label: 'グリーン', accent: '#06C755', background: '#F7FAF8', surface: '#EAF8EF', border: '#B9E8C9', text: '#17201B' },
+  { key: 'blue', label: 'ブルー', accent: '#2563EB', background: '#F6F8FC', surface: '#EAF1FF', border: '#C8D8FA', text: '#172033' },
+  { key: 'pink', label: 'ピンク', accent: '#DB2777', background: '#FFF7FA', surface: '#FDE8F1', border: '#F5C2D8', text: '#2B1720' },
+  { key: 'yellow', label: 'イエロー', accent: '#A67C00', background: '#FFFBEB', surface: '#FFF1B8', border: '#E8CF78', text: '#2B2412' },
+  { key: 'mono', label: 'モノトーン', accent: '#374151', background: '#F8FAFC', surface: '#FFFFFF', border: '#D1D5DB', text: '#111827' },
+] as const;
+
 async function removeBgAndTrim(imageUrl: string): Promise<{ blob: Blob; msg: string }> {
   const res = await fetch(imageUrl);
   if (!res.ok) throw new Error(`画像の取得に失敗しました (${res.status})`);
@@ -577,6 +597,8 @@ export default function AdminPublicPage() {
   const heroFocalDragRef = useRef<{ startX: number; startY: number; startFocal: { x: number; y: number } } | null>(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [selectedSimpleTemplate, setSelectedSimpleTemplate] = useState<SimpleSiteTemplate | null>(null);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     global: true, seo: false, header: true, structure: true, reserve: false, blog: false, reviews: false, footer: false,
     headerLogo: false, headerTitle: false, headerSubtitle: false, headerPhoto: false, headerLayout: false, headerButton: false, headerNavLabel: false,
@@ -803,6 +825,89 @@ export default function AdminPublicPage() {
   const dragRef = useRef<{ startY: number; startSize: number } | null>(null);
   const subtitleDragRef = useRef<{ startX: number; startY: number; startSX: number; startSY: number } | null>(null);
   const imageDragIndexRef = useRef<number | null>(null);
+  const simpleImageUploadRef = useRef<HTMLInputElement | null>(null);
+
+  const simpleContentBlock = blocks.find((block) => block.type === 'text')
+    ?? blocks.find((block) => block.type !== 'faq' && block.type !== 'sns');
+  const simpleIntro = simpleContentBlock?.content ?? form.body ?? '';
+  const canEditSimpleIntro = Boolean(simpleContentBlock) || blocks.length < 4;
+  const simpleChecklist = [
+    { label: '団体名', done: Boolean(siteTitle.trim()) },
+    { label: 'メイン画像', done: imageUrls.length > 0 },
+    { label: '団体紹介', done: Boolean(simpleIntro.trim()) },
+    { label: 'お問い合わせ導線', done: true },
+  ];
+  const completedSimpleChecks = simpleChecklist.filter((item) => item.done).length;
+
+  function updateSimpleIntro(content: string) {
+    setForm((prev) => ({ ...prev, body: content }));
+    setBlocks((prev) => {
+      const textIndex = prev.findIndex((block) => block.type === 'text');
+      const index = textIndex >= 0 ? textIndex : prev.findIndex((block) => block.type !== 'faq' && block.type !== 'sns');
+      if (index >= 0) {
+        return prev.map((block, blockIndex) => blockIndex === index ? { ...block, content } : block);
+      }
+      if (prev.length >= 4) return prev;
+      return [{ id: genId(), type: 'text', content }, ...prev];
+    });
+  }
+
+  function applySimpleTemplate(template: SimpleSiteTemplate) {
+    const contentBlockKeys = blocks.map((_, index) => `block-${index}`);
+    const blockOrderByTemplate: Record<SimpleSiteTemplate, string[]> = {
+      photo: [...contentBlockKeys, 'reserve', 'blog', 'reviews'],
+      events: ['reserve', ...contentBlockKeys, 'blog', 'reviews'],
+      about: [...contentBlockKeys, 'reviews', 'reserve', 'blog'],
+    };
+    const contentOrderByTemplate: Record<SimpleSiteTemplate, string[]> = {
+      photo: ['about', 'reserve', 'blog', 'reviews'],
+      events: ['reserve', 'about', 'blog', 'reviews'],
+      about: ['about', 'reviews', 'reserve', 'blog'],
+    };
+
+    setSelectedSimpleTemplate(template);
+    setForm((prev) => ({
+      ...prev,
+      heroImageMode: template === 'photo' ? 'slider' : 'fixed',
+      heroNavPosition: 'below',
+      heroOutsideKeys: ['name', 'logo', 'subtitle', 'nav'],
+      sectionOrder: ['name', 'logo', 'subtitle', 'image', 'nav'],
+      contentOrder: contentOrderByTemplate[template],
+      blockOrder: blockOrderByTemplate[template],
+      buttonStyle: 'rounded',
+      buttonLayout: 'grid2x2',
+      buttonRadius: 12,
+      buttonSize: 42,
+      layoutVariant: 'static',
+    }));
+  }
+
+  function applySimpleColorTheme(theme: (typeof SIMPLE_COLOR_THEMES)[number]) {
+    setForm((prev) => ({
+      ...prev,
+      accentColor: theme.accent,
+      backgroundColor: theme.background,
+      backgroundOpacity: 100,
+      navColor: theme.surface,
+      navOpacity: 100,
+      textColor: theme.text,
+      bodyTextColor: theme.text,
+      navButtonTextColor: theme.text,
+      globalBorderColor: theme.border,
+      globalBorderWidth: 1,
+      globalRadius: 14,
+      buttonBgColor: theme.surface,
+      buttonBgOpacity: 100,
+      buttonTextOpacity: 100,
+      reserveEventCardBg: '#FFFFFF',
+      blogPostCardBg: '#FFFFFF',
+      reserveButtonBgColor: theme.accent,
+      reserveButtonTextColor: '#FFFFFF',
+      footerContactColor: theme.surface,
+      footerContactTextColor: theme.text,
+      contactMessageColor: theme.text,
+    }));
+  }
 
   const renderCopyInput = (
     label: string,
@@ -1471,6 +1576,287 @@ export default function AdminPublicPage() {
       <div className="flex flex-1 min-h-0 gap-5 px-4 pb-4 lg:grid lg:max-w-[1420px] lg:grid-cols-[minmax(0,1fr)_minmax(360px,430px)] xl:grid-cols-[minmax(0,1fr)_minmax(400px,460px)] [&>*]:min-h-0 [&>*]:h-full">
       {/* Settings panel */}
       <section className="flex-1 space-y-3 overflow-y-auto py-4 pr-1">
+
+        <div className="rounded-2xl border border-[#06C755]/25 bg-gradient-to-br from-green-50 to-white p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-base font-bold text-gray-900">かんたん作成</p>
+              <p className="mt-1 text-xs leading-relaxed text-gray-500">
+                内容を入れてデザインを選ぶだけで、スマートフォンに合うサイトを作れます。
+              </p>
+            </div>
+            <div className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-green-700 ring-1 ring-green-200">
+              準備 {completedSimpleChecks}/{simpleChecklist.length}
+            </div>
+          </div>
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-green-100">
+            <div
+              className="h-full rounded-full bg-[#06C755] transition-all"
+              style={{ width: `${(completedSimpleChecks / simpleChecklist.length) * 100}%` }}
+            />
+          </div>
+          {selectedId && (
+            <p className="mt-3 text-[11px] leading-relaxed text-gray-500">
+              現在の公開内容を読み込んでいます。この画面で変更しても「保存する」を押すまでは公開ページに反映されません。
+            </p>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="mb-3">
+            <p className="text-sm font-bold text-gray-800"><span className="mr-2 text-[#06C755]">1</span>サイトの見せ方を選ぶ</p>
+            <p className="mt-1 text-[11px] text-gray-400">選ぶと、写真・ボタン・各内容の順番が自動で整います。</p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {SIMPLE_SITE_TEMPLATES.map((template) => {
+              const active = selectedSimpleTemplate === template.key;
+              return (
+                <button
+                  key={template.key}
+                  type="button"
+                  onClick={() => applySimpleTemplate(template.key)}
+                  className={`rounded-xl border p-3 text-left transition ${active ? 'border-[#06C755] bg-green-50 ring-1 ring-[#06C755]/20' : 'border-gray-200 bg-white hover:border-green-300 hover:bg-green-50/40'}`}
+                >
+                  <span className={`block text-sm font-bold ${active ? 'text-green-700' : 'text-gray-700'}`}>{template.label}</span>
+                  <span className="mt-1 block text-[11px] leading-relaxed text-gray-500">{template.description}</span>
+                  {active && <span className="mt-2 inline-block text-[10px] font-bold text-green-700">選択中</span>}
+                </button>
+              );
+            })}
+          </div>
+          {!selectedSimpleTemplate && (
+            <p className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-[11px] text-gray-500">
+              現在のデザインを維持しています。上のいずれかを選ぶまではレイアウトを変更しません。
+            </p>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="mb-4">
+            <p className="text-sm font-bold text-gray-800"><span className="mr-2 text-[#06C755]">2</span>団体の情報を入れる</p>
+            <p className="mt-1 text-[11px] text-gray-400">入力した内容は右側のプレビューですぐ確認できます。</p>
+          </div>
+          <div className="space-y-4">
+            <label className="block space-y-1.5">
+              <span className="text-xs font-bold text-gray-600">団体名</span>
+              <input
+                value={form.title ?? ''}
+                onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+                placeholder={displayName}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+              />
+            </label>
+            <label className="block space-y-1.5">
+              <span className="text-xs font-bold text-gray-600">一言紹介 <span className="font-normal text-gray-400">（任意）</span></span>
+              <input
+                value={form.subtitle ?? ''}
+                onChange={(e) => setForm((prev) => ({ ...prev, subtitle: e.target.value.slice(0, 1000) }))}
+                placeholder="例：初心者・一人参加歓迎のバドミントンサークル"
+                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+              />
+            </label>
+
+            <div className="space-y-2">
+              <div className="flex items-end justify-between gap-2">
+                <div>
+                  <p className="text-xs font-bold text-gray-600">活動写真</p>
+                  <p className="mt-0.5 text-[11px] text-gray-400">最大3枚。1枚目がメイン画像になります。</p>
+                </div>
+                {imageUrls.length < 3 && (
+                  <button
+                    type="button"
+                    disabled={uploading}
+                    onClick={() => simpleImageUploadRef.current?.click()}
+                    className="shrink-0 rounded-lg border border-[#06C755] px-3 py-1.5 text-xs font-bold text-[#06C755] hover:bg-green-50 disabled:opacity-50"
+                  >
+                    {uploading ? '追加中...' : '写真を追加'}
+                  </button>
+                )}
+              </div>
+              <input
+                ref={simpleImageUploadRef}
+                type="file"
+                accept="image/*"
+                disabled={uploading}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void handleImageFile(file);
+                  e.currentTarget.value = '';
+                }}
+              />
+              {imageUrls.length > 0 ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {imageUrls.map((url, index) => (
+                    <div key={`${url}-${index}`} className="relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                      <img src={url} alt="" className="aspect-[4/3] w-full object-cover" />
+                      {index === 0 && <span className="absolute left-1.5 top-1.5 rounded-full bg-black/65 px-2 py-0.5 text-[9px] font-bold text-white">メイン</span>}
+                      <button
+                        type="button"
+                        aria-label={`${index + 1}枚目の写真を削除`}
+                        onClick={() => setForm((prev) => {
+                          const next = (prev.imageUrls ?? []).filter((_, imageIndex) => imageIndex !== index);
+                          const captions = (prev.imageCaptions ?? []).filter((_, imageIndex) => imageIndex !== index).slice(0, next.length);
+                          return { ...prev, imageUrls: next, imageCaptions: captions, coverImageUrl: next[0] ?? '' };
+                        })}
+                        className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-gray-600 shadow hover:bg-red-50 hover:text-red-500"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={uploading}
+                  onClick={() => simpleImageUploadRef.current?.click()}
+                  className="flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 py-8 text-gray-400 transition hover:border-green-300 hover:bg-green-50/40 hover:text-green-700 disabled:opacity-50"
+                >
+                  <span className="text-sm font-bold">活動写真を選ぶ</span>
+                  <span className="mt-1 text-[11px]">横長の写真がおすすめです</span>
+                </button>
+              )}
+            </div>
+
+            <label className="block space-y-1.5">
+              <span className="flex items-center justify-between text-xs font-bold text-gray-600">
+                <span>団体紹介</span>
+                <span className="font-normal text-gray-400">{simpleIntro.length}文字</span>
+              </span>
+              <textarea
+                value={simpleIntro}
+                disabled={!canEditSimpleIntro}
+                onChange={(e) => updateSimpleIntro(e.target.value)}
+                rows={6}
+                placeholder="活動内容、参加しやすさ、どんな人が参加しているかを書いてください。"
+                className="w-full resize-y rounded-xl border border-gray-200 px-3 py-2.5 text-sm leading-7 focus:outline-none focus:ring-2 focus:ring-[#06C755] disabled:bg-gray-50 disabled:text-gray-400"
+              />
+              {!canEditSimpleIntro && (
+                <span className="block text-[11px] text-amber-700">このページは複数の専用ブロックで作られています。下の「運営用カスタム設定」から編集してください。</span>
+              )}
+            </label>
+
+            <label className="block space-y-1.5">
+              <span className="text-xs font-bold text-gray-600">お問い合わせ先 <span className="font-normal text-gray-400">（任意）</span></span>
+              <input
+                value={form.footerContact ?? ''}
+                onChange={(e) => setForm((prev) => ({ ...prev, footerContact: e.target.value }))}
+                placeholder="LINE URL・メールアドレス・電話番号。空欄ならCOMIU内のメッセージにつながります。"
+                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="mb-3">
+            <p className="text-sm font-bold text-gray-800"><span className="mr-2 text-[#06C755]">3</span>サイトの雰囲気を選ぶ</p>
+            <p className="mt-1 text-[11px] text-gray-400">文字が読みやすい組み合わせだけを用意しています。</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+            {SIMPLE_COLOR_THEMES.map((theme) => {
+              const active = accentColor.toUpperCase() === theme.accent.toUpperCase()
+                && backgroundColor.toUpperCase() === theme.background.toUpperCase();
+              return (
+                <button
+                  key={theme.key}
+                  type="button"
+                  onClick={() => applySimpleColorTheme(theme)}
+                  className={`rounded-xl border p-2 text-left transition ${active ? 'border-gray-500 ring-2 ring-gray-200' : 'border-gray-200 hover:border-gray-400'}`}
+                >
+                  <span className="mb-2 flex gap-1">
+                    <span className="h-6 flex-1 rounded" style={{ backgroundColor: theme.background }} />
+                    <span className="h-6 flex-1 rounded" style={{ backgroundColor: theme.surface }} />
+                    <span className="h-6 w-6 rounded" style={{ backgroundColor: theme.accent }} />
+                  </span>
+                  <span className="block truncate text-[11px] font-bold text-gray-600">{theme.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="mb-3">
+            <p className="text-sm font-bold text-gray-800"><span className="mr-2 text-[#06C755]">4</span>公開する内容を確認</p>
+            <p className="mt-1 text-[11px] text-gray-400">イベントとブログは、公開中の内容があると自動で表示されます。</p>
+          </div>
+          <div className="divide-y divide-gray-100 rounded-xl border border-gray-200">
+            <div className="flex items-center justify-between gap-3 px-3 py-3">
+              <div>
+                <p className="text-xs font-bold text-gray-700">予約ページ</p>
+                <p className="mt-0.5 text-[11px] text-gray-400">{hasReserveSection ? (reserveActionStyle === 'line' && reserveEvents.length === 0 ? 'LINE予約を表示します' : `公開中のイベント ${reserveEvents.length}件`) : '公開中のイベントがないため表示されません'}</p>
+              </div>
+              <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${hasReserveSection ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{hasReserveSection ? '表示' : '自動で非表示'}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3 px-3 py-3">
+              <div>
+                <p className="text-xs font-bold text-gray-700">活動ブログ</p>
+                <p className="mt-0.5 text-[11px] text-gray-400">{hasBlogSection ? `公開中の記事 ${blogPosts.length}件` : '公開中の記事がないため表示されません'}</p>
+              </div>
+              <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${hasBlogSection ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{hasBlogSection ? '表示' : '自動で非表示'}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3 px-3 py-3">
+              <div>
+                <p className="text-xs font-bold text-gray-700">口コミ</p>
+                <p className="mt-0.5 text-[11px] text-gray-400">公開口コミ {reviews.length}件</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setForm((prev) => ({ ...prev, reviewsEnabled: !reviewsEnabled }))}
+                className={`relative h-7 w-12 shrink-0 rounded-full transition ${reviewsEnabled ? 'bg-[#06C755]' : 'bg-gray-300'}`}
+                aria-label={`口コミを${reviewsEnabled ? '非表示' : '表示'}にする`}
+              >
+                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition ${reviewsEnabled ? 'left-6' : 'left-1'}`} />
+              </button>
+            </div>
+            <div className="flex items-center justify-between gap-3 px-3 py-3">
+              <div>
+                <p className="text-xs font-bold text-gray-700">お問い合わせ</p>
+                <p className="mt-0.5 text-[11px] text-gray-400">{form.footerContact?.trim() ? '設定した連絡先につながります' : 'COMIU内のメッセージにつながります'}</p>
+              </div>
+              <span className="rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-bold text-green-700">表示</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-gray-800"><span className="mr-2 text-[#06C755]">5</span>公開前チェック</p>
+              <p className="mt-1 text-[11px] text-gray-400">不足している内容だけ確認すれば公開できます。</p>
+            </div>
+            <span className={`rounded-full px-3 py-1 text-[10px] font-bold ${completedSimpleChecks === simpleChecklist.length ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
+              {completedSimpleChecks === simpleChecklist.length ? '公開準備OK' : `あと ${simpleChecklist.length - completedSimpleChecks}項目`}
+            </span>
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {simpleChecklist.map((item) => (
+              <div key={item.label} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold ${item.done ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
+                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${item.done ? 'bg-[#06C755] text-white' : 'bg-gray-200 text-gray-500'}`}>{item.done ? '✓' : '−'}</span>
+                {item.label}
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-[11px] leading-relaxed text-gray-400">SEOタイトルと説明文は、団体名・紹介文などから自動で作られます。</p>
+        </div>
+
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <button
+            type="button"
+            onClick={() => setShowAdvancedSettings((open) => !open)}
+            className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-gray-50"
+          >
+            <div>
+              <p className="text-xs font-bold text-gray-700">運営用カスタム設定</p>
+              <p className="mt-0.5 text-[10px] text-gray-400">文字・余白・ボタン・各ブロックを細かく調整します</p>
+            </div>
+            <svg className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${showAdvancedSettings ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          </button>
+        </div>
+
+        {showAdvancedSettings && <>
 
         {/* 全体の設定 */}
         <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
@@ -2814,6 +3200,8 @@ export default function AdminPublicPage() {
             </div>
           )}
         </div>
+
+        </>}
 
       </section>
 
