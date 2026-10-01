@@ -160,7 +160,7 @@ const emptyForm: PublicPageInput = {
   bodySize: 'base',
   layoutVariant: 'static',
   buttonStyle: 'rounded',
-  buttonLayout: 'grid2x2',
+  buttonLayout: 'row3',
   buttonOpacity: 100,
   buttonRadius: 8,
   buttonSize: 40,
@@ -228,7 +228,7 @@ const emptyForm: PublicPageInput = {
   subtitleHeroX: 5,
   subtitleHeroY: null as unknown as number,
   sectionOrder: [...DEFAULT_SECTION_ORDER] as string[],
-  navOrder: [...DEFAULT_NAV_ORDER] as string[],
+  navOrder: ['reserve', 'blog', 'reviews', 'about', 'contact'] as string[],
   customNavButtons: [] as CustomNavButton[],
   contentOrder: [...DEFAULT_CONTENT_ORDER] as string[],
   blockOrder: [] as string[],
@@ -598,6 +598,7 @@ export default function AdminPublicPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [selectedSimpleTemplate, setSelectedSimpleTemplate] = useState<SimpleSiteTemplate | null>(null);
+  const [hiddenNavKeys, setHiddenNavKeys] = useState<string[]>(['about', 'contact']);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     global: true, seo: false, header: true, structure: true, reserve: false, blog: false, reviews: false, footer: false,
     headerLogo: false, headerTitle: false, headerSubtitle: false, headerPhoto: false, headerLayout: false, headerButton: false, headerNavLabel: false,
@@ -766,9 +767,10 @@ export default function AdminPublicPage() {
     navItemsByKey[`custom:${b.id}`] = { key: `custom:${b.id}`, label: b.label.trim() };
   });
   const customNavKeys = customNavButtons.map((b) => `custom:${b.id}`);
+  const hiddenNavKeySet = new Set(hiddenNavKeys);
   const visibleNavItems = normalizeNavOrder(form.navOrder ?? [...DEFAULT_NAV_ORDER], customNavKeys)
     .map((key) => navItemsByKey[key])
-    .filter((item): item is { key: string; label: string } => item !== undefined);
+    .filter((item): item is { key: string; label: string } => item !== undefined && !hiddenNavKeySet.has(item.key));
   const contentOrder = normalizeContentOrder(form.contentOrder ?? [...DEFAULT_CONTENT_ORDER])
     .filter((key) => key === 'about' || (key === 'reserve' && hasReserveSection) || (key === 'blog' && hasBlogSection) || (key === 'reviews' && hasReviewsSection));
   const reserveSectionTitle = form.reserveTitle?.trim() || '';
@@ -866,16 +868,18 @@ export default function AdminPublicPage() {
     };
 
     setSelectedSimpleTemplate(template);
+    setHiddenNavKeys(['about', 'contact']);
     setForm((prev) => ({
       ...prev,
       heroImageMode: template === 'photo' ? 'slider' : 'fixed',
       heroNavPosition: 'below',
       heroOutsideKeys: ['name', 'logo', 'subtitle', 'nav'],
       sectionOrder: ['name', 'logo', 'subtitle', 'image', 'nav'],
+      navOrder: ['reserve', 'blog', 'reviews', 'about', 'contact'],
       contentOrder: contentOrderByTemplate[template],
       blockOrder: blockOrderByTemplate[template],
       buttonStyle: 'rounded',
-      buttonLayout: 'grid2x2',
+      buttonLayout: 'row3',
       buttonRadius: 12,
       buttonSize: 42,
       layoutVariant: 'static',
@@ -973,6 +977,15 @@ export default function AdminPublicPage() {
         if (first) {
           setSelectedId(first.id);
           setSavedSlug(first.slug || null);
+          try {
+            const footerSettings = JSON.parse((first as any).footerText ?? '{}');
+            setHiddenNavKeys(Array.isArray(footerSettings.navHiddenKeys)
+              ? footerSettings.navHiddenKeys.filter((key: unknown): key is string => typeof key === 'string')
+              : []);
+          } catch {
+            // Existing pages without this setting keep their current navigation unchanged.
+            setHiddenNavKeys([]);
+          }
           const variant = first.layoutVariant;
           setForm({
             title: first.title?.trim() || tenantName, slug: first.slug || tenantSlug,
@@ -1484,6 +1497,7 @@ export default function AdminPublicPage() {
         subtitleHeroY: form.subtitleHeroY ?? null,
         sectionOrder: form.sectionOrder ?? [...DEFAULT_SECTION_ORDER],
         navOrder: form.navOrder ?? [...DEFAULT_NAV_ORDER],
+        navHiddenKeys: hiddenNavKeys,
         customNavButtons: form.customNavButtons ?? [],
         contentOrder: form.contentOrder ?? [...DEFAULT_CONTENT_ORDER],
         blockOrder: form.blockOrder ?? [],

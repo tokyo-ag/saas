@@ -475,6 +475,7 @@ export default async function ClubCmsPage({
         blogUrl?: string;
         contactUrl?: string;
         navOrder?: string[];
+        navHiddenKeys?: string[];
         customNavButtons?: Array<{ id: string; label: string; url: string }>;
         contentOrder?: string[];
         blockOrder?: string[];
@@ -594,6 +595,11 @@ export default async function ClubCmsPage({
   // 直前に追加する。
   const customNavButtons = (Array.isArray(sectionCopy.customNavButtons) ? sectionCopy.customNavButtons : [])
     .filter((b) => b?.id && b.label?.trim() && b.url?.trim());
+  const hiddenNavKeys = new Set(
+    Array.isArray(sectionCopy.navHiddenKeys)
+      ? sectionCopy.navHiddenKeys.filter((key): key is string => typeof key === 'string')
+      : [],
+  );
   const customNavKeys = customNavButtons.map((b) => `custom:${b.id}`);
   const DEFAULT_NAV_ORDER = ['about', 'blog', 'reserve', 'reviews', 'contact'];
   const allNavKeys = [...DEFAULT_NAV_ORDER, ...customNavKeys];
@@ -614,7 +620,7 @@ export default async function ClubCmsPage({
   });
   const visibleNavItems = navOrder
     .map((key) => navItemsByKey[key])
-    .filter((item): item is { key: string; label: string; href: string } => item !== undefined);
+    .filter((item): item is { key: string; label: string; href: string } => item !== undefined && !hiddenNavKeys.has(item.key));
   // 構成（団体詳細）/予約ページ/活動ブログ/口コミの表示順も団体側で自由に入れ替えられる。
   // 未設定（既存の団体）の場合はこれまでと全く同じ「構成→予約ページ→活動ブログ」の順のまま、
   // 口コミは末尾に追加される。
