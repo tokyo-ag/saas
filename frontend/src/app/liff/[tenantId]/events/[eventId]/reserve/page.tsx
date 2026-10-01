@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { api, API_URL, LiffEvent, LiffProfile, LiffReservation, LiffTenant, setLiffToken, formatEventSchedule } from '@/lib/api';
+import { api, API_URL, LiffEvent, LiffProfile, LiffReservation, LiffTenant, setLiffToken, formatEventSchedule, genderCapacityStatus } from '@/lib/api';
 import { SITE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { getDefaultEventImage } from '@/lib/defaultImages';
@@ -547,6 +547,25 @@ function ReservePageInner() {
             )}
             <div className="p-4 space-y-3">
               <p className="font-bold text-gray-900 text-base leading-snug">{event.title}</p>
+              {!myReservation && !isClosed && (event.capacityMale != null || event.capacityFemale != null) && (
+                <div className="space-y-0.5">
+                  {([
+                    ['男性', event.capacityMale, event.reservedCountMale],
+                    ['女性', event.capacityFemale, event.reservedCountFemale],
+                  ] as const).map(([label, capacity, reservedCountForGender]) => {
+                    const status = genderCapacityStatus(label, capacity, reservedCountForGender);
+                    if (!status) return null;
+                    return (
+                      <p
+                        key={label}
+                        className={`text-sm font-medium ${status.full ? 'text-red-500' : 'text-amber-500'}`}
+                      >
+                        {status.label}
+                      </p>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         )}

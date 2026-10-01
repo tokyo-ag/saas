@@ -29,11 +29,40 @@ class SetCollabDuplicateDto {
 // mixes location tags together with other tag groups (search tags etc.) in one flat array.
 const LOCATION_TAG_SET = new Set([
   '東京',
-  '千代田区', '中央区', '港区', '新宿区', '文京区', '台東区', '墨田区', '江東区',
-  '品川区', '目黒区', '大田区', '世田谷区', '渋谷区', '中野区', '杉並区', '豊島区', '千川',
-  '北区', '荒川区', '板橋区', '練馬区', '足立区', '葛飾区', '江戸川区',
-  '武蔵野市', '三鷹市', '立川市', '八王子市', '町田市', '調布市', '吉祥寺',
-  '埼玉', '千葉', '神奈川',
+  '千代田区',
+  '中央区',
+  '港区',
+  '新宿区',
+  '文京区',
+  '台東区',
+  '墨田区',
+  '江東区',
+  '品川区',
+  '目黒区',
+  '大田区',
+  '世田谷区',
+  '渋谷区',
+  '中野区',
+  '杉並区',
+  '豊島区',
+  '千川',
+  '北区',
+  '荒川区',
+  '板橋区',
+  '練馬区',
+  '足立区',
+  '葛飾区',
+  '江戸川区',
+  '武蔵野市',
+  '三鷹市',
+  '立川市',
+  '八王子市',
+  '町田市',
+  '調布市',
+  '吉祥寺',
+  '埼玉',
+  '千葉',
+  '神奈川',
 ]);
 
 type OfficialSiteRow = {
@@ -106,9 +135,7 @@ export class PublicController {
         continue;
       }
       collected.push(
-        line
-          .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-          .replace(/[*_~`>|\\]/g, ''),
+        line.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[*_~`>|\\]/g, ''),
       );
     }
     return collected.join(' ').replace(/\s+/g, ' ').trim().slice(0, 120);
@@ -126,10 +153,15 @@ export class PublicController {
     const answers = raw ?? {};
     return customQuestions
       .map((q) => ({ label: q.label, value: answers[q.id] }))
-      .filter((a): a is { label: string; value: string | string[] } => !!a.value && a.value.length > 0);
+      .filter(
+        (a): a is { label: string; value: string | string[] } =>
+          !!a.value && a.value.length > 0,
+      );
   }
 
-  private genderSummary(reservations: { status: string; member: { gender: string | null } }[]) {
+  private genderSummary(
+    reservations: { status: string; member: { gender: string | null } }[],
+  ) {
     const active = reservations.filter((r) => r.status !== 'waitlisted');
     return {
       total: active.length,
@@ -153,7 +185,16 @@ export class PublicController {
     const reservations = await this.prisma.reservation.findMany({
       where: { eventId: event.id, status: { not: 'cancelled' } },
       include: {
-        member: { select: { name: true, grade: true, gender: true, level: true, comment: true, linePictureUrl: true } },
+        member: {
+          select: {
+            name: true,
+            grade: true,
+            gender: true,
+            level: true,
+            comment: true,
+            linePictureUrl: true,
+          },
+        },
       },
       orderBy: [{ status: 'asc' }, { reservedAt: 'asc' }],
     });
@@ -204,12 +245,20 @@ export class PublicController {
     const updated = await this.prisma.reservation.update({
       where: { id: reservationId },
       data: {
-        ...(dto.referrer !== undefined && { referrer: dto.referrer.trim() || null }),
-        ...(dto.staffNote !== undefined && { staffNote: dto.staffNote.trim() || null }),
+        ...(dto.referrer !== undefined && {
+          referrer: dto.referrer.trim() || null,
+        }),
+        ...(dto.staffNote !== undefined && {
+          staffNote: dto.staffNote.trim() || null,
+        }),
       },
     });
 
-    return { id: updated.id, referrer: updated.referrer, staffNote: updated.staffNote };
+    return {
+      id: updated.id,
+      referrer: updated.referrer,
+      staffNote: updated.staffNote,
+    };
   }
 
   // 合同開催（コラボイベント）の統合名簿。複数テナントのイベントをまたぐため、
@@ -225,7 +274,11 @@ export class PublicController {
     @Param('reservationId') reservationId: string,
     @Body() dto: SetCollabDuplicateDto,
   ) {
-    return this.collabService.setDuplicateOverride(token, reservationId, dto.isDuplicate);
+    return this.collabService.setDuplicateOverride(
+      token,
+      reservationId,
+      dto.isDuplicate,
+    );
   }
 
   @Delete('collab-roster/:token/reservations/:reservationId/duplicate')
@@ -249,10 +302,7 @@ export class PublicController {
       where: {
         tenantId: tenant.id,
         status: { not: 'draft' },
-        OR: [
-          { endAt: { gte: now } },
-          { endAt: null, heldAt: { gte: now } },
-        ],
+        OR: [{ endAt: { gte: now } }, { endAt: null, heldAt: { gte: now } }],
       },
       include: {
         reservations: {
@@ -295,10 +345,7 @@ export class PublicController {
         id: eventId,
         tenantId: tenant.id,
         status: { not: 'draft' },
-        OR: [
-          { endAt: { gte: now } },
-          { endAt: null, heldAt: { gte: now } },
-        ],
+        OR: [{ endAt: { gte: now } }, { endAt: null, heldAt: { gte: now } }],
       },
     });
     if (!event) throw new NotFoundException('イベントが見つかりません');
@@ -321,7 +368,9 @@ export class PublicController {
       orderBy: [{ status: 'asc' }, { reservedAt: 'asc' }],
     });
     const customQuestions =
-      (tenant.customProfileQuestions as { id: string; label: string }[] | null) ?? [];
+      (tenant.customProfileQuestions as
+        | { id: string; label: string }[]
+        | null) ?? [];
 
     return {
       event: {
@@ -427,10 +476,20 @@ export class PublicController {
     // typeTags (団体種別) broadens the query to every activity category for tenants matching any
     // of the given team-type tags, instead of being restricted to one category - so when present
     // it takes over from `category` entirely rather than being combined with it.
-    const typeTags = typeTagsParam ? typeTagsParam.split(',').map((t) => t.trim()).filter(Boolean) : [];
+    const typeTags = typeTagsParam
+      ? typeTagsParam
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : [];
     // tag can be a comma-separated list (複数選択) - an event must match every selected tag (AND),
     // unlike typeTags above which broadens with OR semantics.
-    const tags = tagParam ? tagParam.split(',').map((t) => t.trim()).filter(Boolean) : [];
+    const tags = tagParam
+      ? tagParam
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : [];
 
     const events = await this.prisma.event.findMany({
       where: {
@@ -444,10 +503,7 @@ export class PublicController {
         },
         ...(typeTags.length === 0 && category
           ? {
-              OR: [
-                { category },
-                { categories: { has: category } },
-              ],
+              OR: [{ category }, { categories: { has: category } }],
             }
           : {}),
         ...(tags.length > 0 ? { tags: { hasEvery: tags } } : {}),
@@ -749,12 +805,18 @@ export class PublicController {
           where: {
             status: { in: ['reserved', 'attended', 'waiting_payment'] },
           },
-          select: { id: true },
+          select: { id: true, member: { select: { gender: true } } },
         },
       },
     });
     if (!event) throw new NotFoundException('Event not found');
     const isEnded = event.status !== 'open' || event.heldAt < new Date();
+    const reservedCountMale = event.reservations.filter(
+      (r) => r.member.gender === '男性',
+    ).length;
+    const reservedCountFemale = event.reservations.filter(
+      (r) => r.member.gender === '女性',
+    ).length;
     return {
       id: event.id,
       title: event.title,
@@ -770,7 +832,11 @@ export class PublicController {
       priceMale: event.priceMale,
       priceFemale: event.priceFemale,
       capacity: event.capacity,
+      capacityMale: event.capacityMale,
+      capacityFemale: event.capacityFemale,
       reservedCount: event.reservations.length,
+      reservedCountMale,
+      reservedCountFemale,
       imageUrl: event.imageUrl,
       iconUrl: event.iconUrl,
       category: event.category,
@@ -795,19 +861,37 @@ export class PublicController {
   ) {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const requestedLimit = parseInt(limitParam ?? '10', 10);
-    const limit = Math.min(Math.max(Number.isFinite(requestedLimit) ? requestedLimit : 10, 1), 50);
+    const limit = Math.min(
+      Math.max(Number.isFinite(requestedLimit) ? requestedLimit : 10, 1),
+      50,
+    );
     // typeTags (団体種別: インカレサークル/学生団体/...) is an alternate filter to activityTag -
     // when given, it takes over entirely (OR-matched across every activity category) instead of
     // being combined with activityTag, since callers use it specifically to broaden beyond one category.
-    const typeTags = typeTagsParam ? typeTagsParam.split(',').map((t) => t.trim()).filter(Boolean) : [];
+    const typeTags = typeTagsParam
+      ? typeTagsParam
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : [];
 
     const tenants = await this.prisma.tenant.findMany({
       where: {
         deletedAt: null,
         bannedAt: null,
         code: { not: null },
-        ...(typeTags.length > 0 ? { typeTags: { hasSome: typeTags } } : activityTag ? { activityTags: { has: activityTag } } : {}),
-        ...(area ? { events: { some: { tags: { has: area }, status: { not: 'draft' } } } } : {}),
+        ...(typeTags.length > 0
+          ? { typeTags: { hasSome: typeTags } }
+          : activityTag
+            ? { activityTags: { has: activityTag } }
+            : {}),
+        ...(area
+          ? {
+              events: {
+                some: { tags: { has: area }, status: { not: 'draft' } },
+              },
+            }
+          : {}),
       },
       include: {
         _count: {
@@ -944,11 +1028,14 @@ export class PublicController {
 
     if (!tenant) throw new NotFoundException('Tenant not found');
 
-    const socialProofByEvent = await this.eventSocialProofService.buildForEvents(
-      tenant.id,
-      tenant.eventSocialProofSettings,
-      tenant.events,
-    );
+    const socialProofInputs =
+      await this.eventSocialProofService.expandForCollab(tenant.events);
+    const socialProofByEvent =
+      await this.eventSocialProofService.buildForEvents(
+        tenant.id,
+        tenant.eventSocialProofSettings,
+        socialProofInputs,
+      );
 
     const tenantName = tenant.lineDisplayName ?? tenant.name;
     const publicTenant = {
@@ -1115,7 +1202,11 @@ export class PublicController {
         isPublished: true,
         tenant: { code: tenantCode, deletedAt: null, bannedAt: null },
       },
-      include: { member: { select: { name: true, lineDisplayName: true, linePictureUrl: true } } },
+      include: {
+        member: {
+          select: { name: true, lineDisplayName: true, linePictureUrl: true },
+        },
+      },
       orderBy: { createdAt: 'desc' },
       take: 30,
     });
@@ -1124,7 +1215,8 @@ export class PublicController {
       id: review.id,
       content: review.content,
       createdAt: review.createdAt,
-      authorName: review.member.name ?? review.member.lineDisplayName ?? '参加者',
+      authorName:
+        review.member.name ?? review.member.lineDisplayName ?? '参加者',
       authorIconUrl: review.member.linePictureUrl,
     }));
   }

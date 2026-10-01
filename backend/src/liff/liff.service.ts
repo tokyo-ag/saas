@@ -170,11 +170,13 @@ export class LiffService {
       where: { id: tenantId },
       select: { eventSocialProofSettings: true },
     });
+    const socialProofInputs =
+      await this.eventSocialProofService.expandForCollab(events);
     const socialProofByEvent =
       await this.eventSocialProofService.buildForEvents(
         tenantId,
         tenant?.eventSocialProofSettings,
-        events,
+        socialProofInputs,
       );
 
     return events.map((e) => ({
@@ -318,11 +320,27 @@ export class LiffService {
         status: { in: ['reserved', 'attended', 'waiting_payment'] },
       },
     });
+    const reservedCountMale = await this.prisma.reservation.count({
+      where: {
+        eventId,
+        status: { in: ['reserved', 'attended', 'waiting_payment'] },
+        member: { gender: '男性' },
+      },
+    });
+    const reservedCountFemale = await this.prisma.reservation.count({
+      where: {
+        eventId,
+        status: { in: ['reserved', 'attended', 'waiting_payment'] },
+        member: { gender: '女性' },
+      },
+    });
 
     return {
       ...event,
       endAt: this.publicEndAt(event.heldAt, event.endAt),
       reservedCount,
+      reservedCountMale,
+      reservedCountFemale,
     };
   }
 
@@ -555,14 +573,37 @@ export class LiffService {
       throw new ConflictException('このイベントはすでに予約済みです');
     }
 
-    // 定員チェック
+    // 定員チェック（男女別定員が設定されている場合はそちらを優先する）
     const reservedCount = await this.prisma.reservation.count({
       where: {
         eventId: dto.eventId,
         status: { in: ['reserved', 'attended', 'waiting_payment'] },
       },
     });
-    const isFull = event.capacity !== null && reservedCount >= event.capacity;
+    const hasGenderCapacity =
+      event.capacityMale !== null || event.capacityFemale !== null;
+    let isFull: boolean;
+    if (
+      hasGenderCapacity &&
+      (member.gender === '男性' || member.gender === '女性')
+    ) {
+      const genderCap =
+        member.gender === '男性' ? event.capacityMale : event.capacityFemale;
+      const genderReservedCount = await this.prisma.reservation.count({
+        where: {
+          eventId: dto.eventId,
+          status: { in: ['reserved', 'attended', 'waiting_payment'] },
+          member: { gender: member.gender },
+        },
+      });
+      isFull = genderCap !== null && genderReservedCount >= genderCap;
+    } else if (hasGenderCapacity) {
+      // 性別未登録の参加者は、男女別定員の合計を目安に判定する（安全側）
+      const totalCap = (event.capacityMale ?? 0) + (event.capacityFemale ?? 0);
+      isFull = totalCap > 0 && reservedCount >= totalCap;
+    } else {
+      isFull = event.capacity !== null && reservedCount >= event.capacity;
+    }
 
     // 前払い必須のイベントは満席なら予約不可
     if (isFull && event.paymentRequired) {
@@ -970,8 +1011,64 @@ export class LiffService {
       data: { status: ReservationStatus.cancelled },
     });
 
-    // 定員がある場合のみ繰り上げ処理
-    if (reservation.event.capacity !== null) {
+    // 定員がある場合のみ繰り上げ処理（男女別定員の場合は、空いた性別の
+    // キャンセル待ちだけを対象にする。合計枠だけでは異性を繰り上げてしまうため）
+    const hasGenderCapacity =
+      reservation.event.capacityMale !== null ||
+      reservation.event.capacityFemale !== null;
+    if (hasGenderCapacity) {
+      const cancelledGender = reservation.member.gender;
+      if (cancelledGender === '男性' || cancelledGender === '女性') {
+        const genderCap =
+          cancelledGender === '男性'
+            ? reservation.event.capacityMale
+            : reservation.event.capacityFemale;
+        if (genderCap !== null) {
+          const activeGenderCount = await this.prisma.reservation.count({
+            where: {
+              eventId: reservation.eventId,
+              status: { in: ['reserved', 'attended', 'waiting_payment'] },
+              member: { gender: cancelledGender },
+            },
+          });
+
+          if (activeGenderCount < genderCap) {
+            const next = await this.prisma.reservation.findFirst({
+              where: {
+                eventId: reservation.eventId,
+                status: 'waitlisted',
+                member: { gender: cancelledGender },
+              },
+              orderBy: { waitlistOrder: 'asc' },
+              include: { member: true },
+            });
+
+            if (next) {
+              await this.prisma.reservation.update({
+                where: { id: next.id },
+                data: {
+                  status: ReservationStatus.reserved,
+                  waitlistOrder: null,
+                },
+              });
+
+              const tenant = await this.prisma.tenant.findUnique({
+                where: { id: tenantId },
+              });
+              if (tenant?.lineChannelAccessToken) {
+                await this.lineMessaging.sendWaitlistPromoted(
+                  tenant.lineChannelAccessToken,
+                  next.member.lineUserId,
+                  reservation.event.title,
+                  reservation.event.heldAt,
+                  reservation.event.location,
+                );
+              }
+            }
+          }
+        }
+      }
+    } else if (reservation.event.capacity !== null) {
       const activeCount = await this.prisma.reservation.count({
         where: {
           eventId: reservation.eventId,

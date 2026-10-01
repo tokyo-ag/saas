@@ -760,12 +760,16 @@ export interface LiffEvent {
   locationUrl?: string | null;
   locationHint?: string | null;
   capacity?: number;
+  capacityMale?: number | null;
+  capacityFemale?: number | null;
   status: EventStatus;
   price: number;
   priceMale?: number | null;
   priceFemale?: number | null;
   paymentRequired: boolean;
   reservedCount: number;
+  reservedCountMale?: number;
+  reservedCountFemale?: number;
   imageUrl?: string;
   iconUrl?: string;
   levelEnabled?: boolean;
@@ -1073,6 +1077,26 @@ export function formatEventSchedule(heldAt: string, endAt?: string | null): stri
     hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo',
   });
   return `${datePart}${startTime}～${endTime}`;
+}
+
+// 男女別定員の残り枠表示。参加者には「残り15人」を切るまでは見せず、
+// 0以下になったら満員メッセージに切り替える。
+const GENDER_CAPACITY_REVEAL_THRESHOLD = 15;
+
+export function genderCapacityStatus(
+  genderLabel: '男性' | '女性',
+  capacity: number | null | undefined,
+  reservedCount: number | null | undefined,
+): { label: string; full: boolean } | null {
+  if (capacity == null || reservedCount == null) return null;
+  const remaining = capacity - reservedCount;
+  if (remaining <= 0) {
+    return { label: `${genderLabel}枠満員になりました！`, full: true };
+  }
+  if (remaining <= GENDER_CAPACITY_REVEAL_THRESHOLD) {
+    return { label: `${genderLabel}枠残り${remaining}人`, full: false };
+  }
+  return null;
 }
 
 export interface PublicTenant {

@@ -22,7 +22,7 @@ export interface EventSocialProofRule {
 }
 
 export interface EventSocialProofSizeTier extends EventSocialProofRule {
-  min: 40 | 50 | 60 | 100;
+  min: 40 | 50 | 60 | 70 | 80 | 90 | 100 | 110 | 120;
 }
 
 export interface EventSocialProofSettings {
@@ -73,9 +73,34 @@ export const DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS: EventSocialProofSettings = {
   ratio32MaxMalePercent: 65,
   sizeTiers: [
     {
+      min: 120,
+      enabled: true,
+      label: '120人以上参加予定',
+    },
+    {
+      min: 110,
+      enabled: true,
+      label: '110人以上参加予定',
+    },
+    {
       min: 100,
       enabled: true,
       label: '100人以上参加予定',
+    },
+    {
+      min: 90,
+      enabled: true,
+      label: '90人以上参加予定',
+    },
+    {
+      min: 80,
+      enabled: true,
+      label: '80人以上参加予定',
+    },
+    {
+      min: 70,
+      enabled: true,
+      label: '70人以上参加予定',
     },
     {
       min: 60,
@@ -465,6 +490,66 @@ export function buildEventSocialProof(
 @Injectable()
 export class EventSocialProofService {
   constructor(private readonly prisma: PrismaService) {}
+
+  // 合同開催（コラボイベント）の場合、規模間バッジはグループ内の全イベントを
+  // 合算した人数で判定する。既存のEvent/Reservationは一切書き換えない。
+  async expandForCollab(
+    events: EventSocialProofInput[],
+  ): Promise<EventSocialProofInput[]> {
+    const eventIds = events.map((e) => e.id);
+    const links = await this.prisma.collabEventLink.findMany({
+      where: { eventId: { in: eventIds } },
+      select: { eventId: true, collabGroupId: true },
+    });
+    if (links.length === 0) return events;
+
+    const groupIdByEventId = new Map(
+      links.map((l) => [l.eventId, l.collabGroupId]),
+    );
+    const groupIds = [...new Set(links.map((l) => l.collabGroupId))];
+    const allLinksInGroups = await this.prisma.collabEventLink.findMany({
+      where: { collabGroupId: { in: groupIds } },
+      select: { eventId: true, collabGroupId: true },
+    });
+    const eventIdsByGroup = new Map<string, string[]>();
+    for (const l of allLinksInGroups) {
+      const list = eventIdsByGroup.get(l.collabGroupId) ?? [];
+      list.push(l.eventId);
+      eventIdsByGroup.set(l.collabGroupId, list);
+    }
+
+    const reservationsByEventId = new Map<
+      string,
+      Array<{ member: { gender: string | null } }>
+    >(events.map((e) => [e.id, e.reservations]));
+    const missingEventIds = [
+      ...new Set(allLinksInGroups.map((l) => l.eventId)),
+    ].filter((id) => !reservationsByEventId.has(id));
+    if (missingEventIds.length > 0) {
+      const siblingReservations = await this.prisma.reservation.findMany({
+        where: {
+          eventId: { in: missingEventIds },
+          status: { in: ['reserved', 'attended', 'waiting_payment'] },
+        },
+        select: { eventId: true, member: { select: { gender: true } } },
+      });
+      for (const r of siblingReservations) {
+        const list = reservationsByEventId.get(r.eventId) ?? [];
+        list.push({ member: r.member });
+        reservationsByEventId.set(r.eventId, list);
+      }
+    }
+
+    return events.map((event) => {
+      const groupId = groupIdByEventId.get(event.id);
+      if (!groupId) return event;
+      const memberEventIds = eventIdsByGroup.get(groupId) ?? [event.id];
+      const combinedReservations = memberEventIds.flatMap(
+        (id) => reservationsByEventId.get(id) ?? [],
+      );
+      return { ...event, reservations: combinedReservations };
+    });
+  }
 
   async buildForEvents(
     tenantId: string,

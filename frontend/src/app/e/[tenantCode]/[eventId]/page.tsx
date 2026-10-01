@@ -7,7 +7,7 @@ import PublicFooter from '@/components/public/PublicFooter';
 import { SmartLiffButton } from '@/components/public/SmartLiffButton';
 import { SITE_URL, API_URL, IMAGE_BASE_URL, buildLiffUrl } from '@/lib/config';
 import { isLightHexColor, readableTextColor } from '@/lib/color';
-import { formatEventSchedule } from '@/lib/api';
+import { formatEventSchedule, genderCapacityStatus } from '@/lib/api';
 
 type EventDetail = {
   id: string;
@@ -24,7 +24,11 @@ type EventDetail = {
   priceMale?: number | null;
   priceFemale?: number | null;
   capacity?: number | null;
+  capacityMale?: number | null;
+  capacityFemale?: number | null;
   reservedCount: number;
+  reservedCountMale?: number;
+  reservedCountFemale?: number;
   imageUrl?: string;
   iconUrl?: string;
   category?: string | null;
@@ -497,6 +501,29 @@ export default async function PublicEventPage({
                         </span>
                       )}
                     </p>
+                  </div>
+                </div>
+              )}
+
+              {!isEnded && (event.capacityMale != null || event.capacityFemale != null) && (
+                <div className="flex items-start gap-2">
+                  <span className="mt-0.5 text-gray-400">人</span>
+                  <div className="space-y-0.5">
+                    {([
+                      ['男性', event.capacityMale, event.reservedCountMale],
+                      ['女性', event.capacityFemale, event.reservedCountFemale],
+                    ] as const).map(([label, capacity, reservedCountForGender]) => {
+                      const status = genderCapacityStatus(label, capacity, reservedCountForGender);
+                      if (!status) return null;
+                      return (
+                        <p
+                          key={label}
+                          className={`text-sm font-medium ${status.full ? 'text-red-500' : 'text-amber-500'}`}
+                        >
+                          {status.label}
+                        </p>
+                      );
+                    })}
                   </div>
                 </div>
               )}
