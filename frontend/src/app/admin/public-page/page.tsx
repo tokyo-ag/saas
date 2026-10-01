@@ -597,13 +597,13 @@ export default function AdminPublicPage() {
   const heroFocalDragRef = useRef<{ startX: number; startY: number; startFocal: { x: number; y: number } } | null>(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
-  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [selectedSimpleTemplate, setSelectedSimpleTemplate] = useState<SimpleSiteTemplate | null>(null);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     global: true, seo: false, header: true, structure: true, reserve: false, blog: false, reviews: false, footer: false,
     headerLogo: false, headerTitle: false, headerSubtitle: false, headerPhoto: false, headerLayout: false, headerButton: false, headerNavLabel: false,
   });
   const toggleSection = (key: string) => setOpenSections(p => ({ ...p, [key]: !p[key] }));
+  const showLegacyCustomizer = false;
 
   const tenantCode = tenant?.code ?? tenant?.id ?? '';
   const displayName = tenant?.name ?? tenant?.lineDisplayName ?? '公開サイト';
@@ -1390,6 +1390,9 @@ export default function AdminPublicPage() {
     // 初回作成時（savedSlugがまだ無い）だけは自由に編集できるようにし、
     // 既存ページの保存（値を変えていない場合も含む）からは常にロックする。
     const nextSlugLocked = form.slugLocked === true || savedSlug !== null;
+    const selectedReserveViewStyle = ['calendar', 'card', 'thread'].includes(form.reserveViewStyle ?? '')
+      ? form.reserveViewStyle!
+      : 'calendar';
     const payload: PublicPageInput = {
       ...form,
       title: siteTitle, slug: nextSlug,
@@ -1400,6 +1403,7 @@ export default function AdminPublicPage() {
       dividerText: '',
       textColor, accentColor, backgroundColor, backgroundOpacity: clampPercent(form.backgroundOpacity ?? 100), navColor, navOpacity,
       imageLayout: form.imageLayout || 'slider',
+      reserveViewStyle: selectedReserveViewStyle,
       heroImageMode,
       heroNavPosition: form.heroNavPosition,
       heroOverlayOpacity,
@@ -1500,9 +1504,14 @@ export default function AdminPublicPage() {
       orgLogoWordmarkSize: form.orgLogoWordmarkSize ?? 60,
     };
     try {
-      const page = selectedId
-        ? await api.publicPages.update(selectedId, payload)
-        : await api.publicPages.create(payload);
+      const pageRequest = selectedId
+        ? api.publicPages.update(selectedId, payload)
+        : api.publicPages.create(payload);
+      const tenantRequest = tenant?.liffEventView === selectedReserveViewStyle
+        ? Promise.resolve(null)
+        : api.tenant.update({ liffEventView: selectedReserveViewStyle });
+      const [page, updatedTenant] = await Promise.all([pageRequest, tenantRequest]);
+      if (updatedTenant) setTenant(updatedTenant);
       setSelectedId(page.id);
       setSavedSlug(page.slug || null);
       setForm((p) => ({ ...p, slug: page.slug || p.slug, slugLocked: nextSlugLocked }));
@@ -1791,6 +1800,30 @@ export default function AdminPublicPage() {
                 </div>
                 <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${hasReserveSection ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{hasReserveSection ? '表示' : '自動で非表示'}</span>
               </div>
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-bold text-gray-500">イベントの表示形式</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { value: 'calendar', label: 'カレンダー' },
+                    { value: 'card', label: 'カード' },
+                    { value: 'thread', label: 'スレッド' },
+                  ] as const).map((option) => {
+                    const active = (form.reserveViewStyle || 'calendar') === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, reserveViewStyle: option.value }))}
+                        className={`rounded-lg border px-2 py-2 text-xs font-bold transition ${active ? 'border-[#06C755] bg-green-50 text-green-700 ring-1 ring-[#06C755]/20' : 'border-gray-200 bg-white text-gray-500 hover:border-green-300'}`}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-bold text-gray-500">予約方法</p>
               <div className="grid grid-cols-2 gap-2">
                 {([
                   { value: 'comiu' as const, label: 'COMIUで予約', description: '参加者をCOMIUで管理' },
@@ -1822,6 +1855,7 @@ export default function AdminPublicPage() {
                   />
                 </label>
               )}
+              </div>
             </div>
             <div className="flex items-center justify-between gap-3 px-3 py-3">
               <div>
@@ -1875,21 +1909,7 @@ export default function AdminPublicPage() {
           <p className="mt-3 text-[11px] leading-relaxed text-gray-400">SEOタイトルと説明文は、団体名・紹介文などから自動で作られます。</p>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          <button
-            type="button"
-            onClick={() => setShowAdvancedSettings((open) => !open)}
-            className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-gray-50"
-          >
-            <div>
-              <p className="text-xs font-bold text-gray-700">運営用カスタム設定</p>
-              <p className="mt-0.5 text-[10px] text-gray-400">文字・余白・ボタン・各ブロックを細かく調整します</p>
-            </div>
-            <svg className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${showAdvancedSettings ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-          </button>
-        </div>
-
-        {showAdvancedSettings && <>
+        {showLegacyCustomizer && <>
 
         {/* 全体の設定 */}
         <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
