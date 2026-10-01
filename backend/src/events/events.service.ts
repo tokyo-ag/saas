@@ -373,7 +373,23 @@ export class EventsService {
       (remindAt?.getTime() ?? null) !== (current.remindAt?.getTime() ?? null);
     const shouldResetReminder =
       willReminderBeActive && (remindAtChanged || !wasReminderActive);
-    return this.prisma.event.update({
+    const reminderSyncData = {
+      ...(dto.notifyOnReserve !== undefined && {
+        notifyOnReserve: dto.notifyOnReserve,
+      }),
+      ...(dto.reservationMessageTemplate !== undefined && {
+        reservationMessageTemplate: dto.reservationMessageTemplate || null,
+      }),
+      ...(dto.remindEnabled !== undefined && {
+        remindEnabled: dto.remindEnabled,
+      }),
+      ...(dto.remindAt !== undefined && { remindAt }),
+      ...(shouldResetReminder && { remindedAt: null }),
+      ...(dto.reminderMessageTemplate !== undefined && {
+        reminderMessageTemplate: dto.reminderMessageTemplate || null,
+      }),
+    };
+    const updateEvent = this.prisma.event.update({
       where: { id },
       data: {
         ...(dto.title !== undefined && { title: dto.title }),
@@ -455,6 +471,25 @@ export class EventsService {
         }),
       },
     });
+
+    if (!current.collab || Object.keys(reminderSyncData).length === 0) {
+      return updateEvent;
+    }
+
+    // コラボ申請元を正本とし、承諾側の閲覧専用イベントへリマインド設定を同期する。
+    // collabReadOnlyで絞ることで、申請元やスーパー管理者が手動で紐付けた編集可能な
+    // イベントを上書きしない。
+    const [updatedEvent] = await this.prisma.$transaction([
+      updateEvent,
+      this.prisma.event.updateMany({
+        where: {
+          collabReadOnly: true,
+          collabLink: { collabGroupId: current.collab.groupId },
+        },
+        data: reminderSyncData,
+      }),
+    ]);
+    return updatedEvent;
   }
 
   async toggleRosterShare(tenantId: string, eventId: string, enabled: boolean) {

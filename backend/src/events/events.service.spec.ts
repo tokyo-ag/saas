@@ -46,6 +46,7 @@ describe('EventsService date validation', () => {
       create: jest.fn().mockImplementation(({ data }) => Promise.resolve(data)),
       findFirst: jest.fn(),
       update: jest.fn().mockImplementation(({ data }) => Promise.resolve(data)),
+      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
     reservation: {
       count: jest.fn().mockResolvedValue(0),
@@ -79,6 +80,7 @@ describe('EventsService date validation', () => {
     });
     prisma.reservation.count.mockResolvedValue(0);
     prisma.collabEventLink.findUnique.mockResolvedValue(null);
+    prisma.event.updateMany.mockResolvedValue({ count: 0 });
     prisma.tenant.findMany.mockResolvedValue([]);
     prisma.supportMessage.create.mockResolvedValue({
       id: 'support-message-1',
@@ -202,6 +204,41 @@ describe('EventsService date validation', () => {
       service.update('tenant-1', 'event-1', { title: '変更後の名前' }),
     ).rejects.toThrow(ForbiddenException);
     expect(prisma.event.update).not.toHaveBeenCalled();
+  });
+
+  it('syncs reminder settings from the collaboration applicant to every read-only recipient event', async () => {
+    prisma.collabEventLink.findUnique.mockResolvedValue({
+      collabGroupId: 'collab-group-1',
+      collabGroup: {
+        id: 'collab-group-1',
+        viewToken: 'view-token',
+        label: '合同交流会',
+        active: true,
+      },
+    });
+
+    await service.update('tenant-1', 'event-1', {
+      notifyOnReserve: false,
+      reservationMessageTemplate: '予約時の変更後文面',
+      remindEnabled: true,
+      remindAt: '2026-06-11T09:00:00.000Z',
+      reminderMessageTemplate: '前日・当日の変更後文面',
+    });
+
+    expect(prisma.event.updateMany).toHaveBeenCalledWith({
+      where: {
+        collabReadOnly: true,
+        collabLink: { collabGroupId: 'collab-group-1' },
+      },
+      data: {
+        notifyOnReserve: false,
+        reservationMessageTemplate: '予約時の変更後文面',
+        remindEnabled: true,
+        remindAt: new Date('2026-06-11T09:00:00.000Z'),
+        remindedAt: null,
+        reminderMessageTemplate: '前日・当日の変更後文面',
+      },
+    });
   });
 
   it('includes up to four selected organizations in a collaboration request', async () => {
