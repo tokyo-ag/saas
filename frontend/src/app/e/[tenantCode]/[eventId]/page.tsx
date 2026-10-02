@@ -161,8 +161,29 @@ function buildJsonLd(event: EventDetail) {
     imgSrc(event.tenantIconUrl) ??
     `${SITE_URL}/opengraph-image`;
   const endAt = validEndAt(event);
-  const inventoryLevel =
-    event.capacity != null
+  const hasGenderCapacity =
+    event.capacityMale != null || event.capacityFemale != null;
+  const isMaleFull =
+    event.capacityMale != null &&
+    (event.reservedCountMale ?? 0) >= event.capacityMale;
+  const isFemaleFull =
+    event.capacityFemale != null &&
+    (event.reservedCountFemale ?? 0) >= event.capacityFemale;
+  const isSoldOut = hasGenderCapacity
+    ? (event.capacityMale == null || isMaleFull) &&
+      (event.capacityFemale == null || isFemaleFull)
+    : event.capacity != null && event.reservedCount >= event.capacity;
+  const inventoryLevel = hasGenderCapacity
+    ? Math.max(
+        (event.capacityMale != null
+          ? event.capacityMale - (event.reservedCountMale ?? 0)
+          : 0) +
+          (event.capacityFemale != null
+            ? event.capacityFemale - (event.reservedCountFemale ?? 0)
+            : 0),
+        0,
+      )
+    : event.capacity != null
       ? Math.max(event.capacity - event.reservedCount, 0)
       : undefined;
   const ld: Record<string, unknown> = {
@@ -199,7 +220,7 @@ function buildJsonLd(event: EventDetail) {
           priceSpecification: priceSpec,
           availability: event.isEnded
             ? 'https://schema.org/SoldOut'
-            : event.capacity != null && event.reservedCount >= event.capacity
+            : isSoldOut
               ? 'https://schema.org/SoldOut'
               : 'https://schema.org/InStock',
           ...(inventoryLevel !== undefined
@@ -331,10 +352,22 @@ export default async function PublicEventPage({
         liffId: event.liffId,
         endpointPath: '/',
       }) ?? loginPath;
-  const isFull =
-    event.capacity != null && event.reservedCount >= event.capacity;
+  const hasGenderCapacity =
+    event.capacityMale != null || event.capacityFemale != null;
+  const isMaleFull =
+    event.capacityMale != null &&
+    (event.reservedCountMale ?? 0) >= event.capacityMale;
+  const isFemaleFull =
+    event.capacityFemale != null &&
+    (event.reservedCountFemale ?? 0) >= event.capacityFemale;
+  const isFull = hasGenderCapacity
+    ? (event.capacityMale == null || isMaleFull) &&
+      (event.capacityFemale == null || isFemaleFull)
+    : event.capacity != null && event.reservedCount >= event.capacity;
   const spotsLeft =
-    event.capacity != null ? event.capacity - event.reservedCount : null;
+    !hasGenderCapacity && event.capacity != null
+      ? event.capacity - event.reservedCount
+      : null;
   const isEnded = event.isEnded ?? false;
   const endAt = validEndAt(event);
 
@@ -478,7 +511,7 @@ export default async function PublicEventPage({
                 </div>
               </div>
 
-              {event.capacity != null && (
+              {event.capacity != null && event.capacityMale == null && event.capacityFemale == null && (
                 <div className="flex items-start gap-2">
                   <span className="mt-0.5 text-gray-400">人</span>
                   <div>
