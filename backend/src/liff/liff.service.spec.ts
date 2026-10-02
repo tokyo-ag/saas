@@ -1,6 +1,6 @@
 import { LiffService } from './liff.service';
-import { ConflictException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { BadRequestException, ConflictException } from '@nestjs/common';
+import { Prisma, ReservationStatus } from '@prisma/client';
 
 describe('LiffService reservation message preview', () => {
   it('uses the reservation template instead of the scheduled reminder template', async () => {
@@ -133,6 +133,8 @@ describe('LiffService identity invariants', () => {
           location: '池袋',
           locationUrl: null,
           capacity: 100,
+          capacityMale: null,
+          capacityFemale: null,
           paymentRequired: false,
           price: 1_000,
           priceMale: null,
@@ -149,10 +151,17 @@ describe('LiffService identity invariants', () => {
         upsert: jest.fn().mockResolvedValue(member),
       },
       reservation: {
+        findFirst: jest.fn().mockResolvedValue(null),
         count: jest.fn().mockResolvedValue(0),
         create: jest.fn().mockRejectedValue(duplicateError()),
       },
+      $queryRaw: jest.fn().mockResolvedValue([]),
     };
+    Object.assign(prisma, {
+      $transaction: jest.fn((callback: (tx: typeof prisma) => unknown) =>
+        callback(prisma),
+      ),
+    });
     const lineMessaging = {
       getLineProfile: jest.fn().mockResolvedValue(null),
     };
@@ -182,5 +191,174 @@ describe('LiffService identity invariants', () => {
         update: expect.objectContaining({ name: '変更後の名前' }),
       }),
     );
+  });
+
+  it('rejects a male reservation when the male capacity is full without creating a waitlist entry', async () => {
+    const member = {
+      id: 'member-id',
+      blockedAt: null,
+      gender: '男性',
+    };
+    const prisma = {
+      tenant: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'tenant-id' }),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'tenant-id',
+          plan: 'standard',
+          lineChannelAccessToken: 'token',
+          requireName: true,
+          requireGrade: true,
+          requireGender: true,
+        }),
+      },
+      event: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'event-id',
+          title: '交流会',
+          status: 'open',
+          heldAt: new Date(Date.now() + 60_000),
+          capacity: 100,
+          capacityMale: 1,
+          capacityFemale: 99,
+          paymentRequired: false,
+          price: 1_000,
+          priceMale: null,
+          priceFemale: null,
+          levelEnabled: false,
+          notifyOnReserve: true,
+        }),
+      },
+      bannedLineUser: { findUnique: jest.fn().mockResolvedValue(null) },
+      member: {
+        findUnique: jest.fn().mockResolvedValue(member),
+        upsert: jest.fn().mockResolvedValue(member),
+      },
+      reservation: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        count: jest.fn().mockResolvedValueOnce(1).mockResolvedValueOnce(1),
+        create: jest.fn(),
+        update: jest.fn(),
+      },
+      $queryRaw: jest.fn().mockResolvedValue([]),
+    };
+    Object.assign(prisma, {
+      $transaction: jest.fn((callback: (tx: typeof prisma) => unknown) =>
+        callback(prisma),
+      ),
+    });
+    const lineMessaging = {
+      getLineProfile: jest.fn().mockResolvedValue(null),
+      sendReservationConfirm: jest.fn(),
+      sendWaitlistRegistered: jest.fn(),
+    };
+    const service = new LiffService(
+      prisma as never,
+      lineMessaging as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      service.createReservation('tenant-code', 'line-user-id', {
+        eventId: 'event-id',
+        name: '田中',
+        grade: '大学2年',
+        gender: '男性',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.reservation.create).not.toHaveBeenCalled();
+    expect(lineMessaging.sendReservationConfirm).not.toHaveBeenCalled();
+    expect(lineMessaging.sendWaitlistRegistered).not.toHaveBeenCalled();
+  });
+
+  it('lets an existing legacy waitlisted user claim a newly opened slot', async () => {
+    const member = {
+      id: 'member-id',
+      blockedAt: null,
+      gender: '男性',
+    };
+    const updatedReservation = {
+      id: 'waitlisted-reservation',
+      status: ReservationStatus.reserved,
+      waitlistOrder: null,
+    };
+    const prisma = {
+      tenant: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'tenant-id' }),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'tenant-id',
+          plan: 'standard',
+          lineChannelAccessToken: 'token',
+          requireName: true,
+          requireGrade: true,
+          requireGender: true,
+        }),
+      },
+      event: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'event-id',
+          title: '交流会',
+          status: 'open',
+          heldAt: new Date(Date.now() + 60_000),
+          capacity: 100,
+          capacityMale: 1,
+          capacityFemale: 99,
+          paymentRequired: false,
+          price: 1_000,
+          priceMale: null,
+          priceFemale: null,
+          levelEnabled: false,
+          notifyOnReserve: false,
+        }),
+      },
+      bannedLineUser: { findUnique: jest.fn().mockResolvedValue(null) },
+      member: {
+        findUnique: jest.fn().mockResolvedValue(member),
+        upsert: jest.fn().mockResolvedValue(member),
+      },
+      reservation: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'waitlisted-reservation',
+          status: ReservationStatus.waitlisted,
+        }),
+        count: jest.fn().mockResolvedValue(0),
+        create: jest.fn(),
+        update: jest.fn().mockResolvedValue(updatedReservation),
+      },
+      $queryRaw: jest.fn().mockResolvedValue([]),
+    };
+    Object.assign(prisma, {
+      $transaction: jest.fn((callback: (tx: typeof prisma) => unknown) =>
+        callback(prisma),
+      ),
+    });
+    const service = new LiffService(
+      prisma as never,
+      { getLineProfile: jest.fn().mockResolvedValue(null) } as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      service.createReservation('tenant-code', 'line-user-id', {
+        eventId: 'event-id',
+        name: '田中',
+        grade: '大学2年',
+        gender: '男性',
+      }),
+    ).resolves.toEqual({
+      id: 'waitlisted-reservation',
+      status: ReservationStatus.reserved,
+      waitlistOrder: null,
+      stripeCheckoutUrl: undefined,
+    });
+    expect(prisma.reservation.update).toHaveBeenCalledWith({
+      where: { id: 'waitlisted-reservation' },
+      data: expect.objectContaining({
+        status: ReservationStatus.reserved,
+        waitlistOrder: null,
+      }),
+    });
+    expect(prisma.reservation.create).not.toHaveBeenCalled();
   });
 });

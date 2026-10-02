@@ -14,7 +14,7 @@ const LEVELS = ['初心者', '中級', '上級'];
 
 const STATUS_LABEL: Record<string, string> = {
   reserved: '予約済み',
-  waitlisted: 'キャンセル待ち',
+  waitlisted: '満席（未確定）',
   waiting_payment: '支払待ち',
   attended: '参加済み',
 };
@@ -560,7 +560,6 @@ export default function ProfilePage() {
                                   style={{ color: readableTextColor(solidAccentColor), backgroundColor: solidAccentColor }}
                                 >
                                   {STATUS_LABEL[r.status] ?? r.status}
-                                  {r.status === 'waitlisted' && r.waitlistOrder ? `（${r.waitlistOrder}番目）` : ''}
                                 </span>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9" /></svg>
                               </div>

@@ -469,7 +469,7 @@ export class LiffService {
     }
   }
 
-  // 予約登録（重複チェック・キャンセル待ち・LINE通知込み）
+  // 予約登録（重複チェック・先着定員判定・LINE通知込み）
   async createReservation(
     tenantId: string,
     lineUserId: string,
@@ -576,55 +576,6 @@ export class LiffService {
     if (member.blockedAt)
       throw new ForbiddenException('この団体から利用制限されています');
 
-    // 同じイベントへの重複予約チェック
-    const existingCount = await this.prisma.reservation.count({
-      where: {
-        memberId: member.id,
-        eventId: dto.eventId,
-        status: { not: 'cancelled' },
-      },
-    });
-    if (existingCount >= 1) {
-      throw new ConflictException('このイベントはすでに予約済みです');
-    }
-
-    // 定員チェック（男女別定員が設定されている場合はそちらを優先する）
-    const reservedCount = await this.prisma.reservation.count({
-      where: {
-        eventId: dto.eventId,
-        status: { in: ['reserved', 'attended', 'waiting_payment'] },
-      },
-    });
-    const hasGenderCapacity =
-      event.capacityMale !== null || event.capacityFemale !== null;
-    let isFull: boolean;
-    if (
-      hasGenderCapacity &&
-      (member.gender === '男性' || member.gender === '女性')
-    ) {
-      const genderCap =
-        member.gender === '男性' ? event.capacityMale : event.capacityFemale;
-      const genderReservedCount = await this.prisma.reservation.count({
-        where: {
-          eventId: dto.eventId,
-          status: { in: ['reserved', 'attended', 'waiting_payment'] },
-          member: { gender: member.gender },
-        },
-      });
-      isFull = genderCap !== null && genderReservedCount >= genderCap;
-    } else if (hasGenderCapacity) {
-      // 性別未登録の参加者は、男女別定員の合計を目安に判定する（安全側）
-      const totalCap = (event.capacityMale ?? 0) + (event.capacityFemale ?? 0);
-      isFull = totalCap > 0 && reservedCount >= totalCap;
-    } else {
-      isFull = event.capacity !== null && reservedCount >= event.capacity;
-    }
-
-    // 前払い必須のイベントは満席なら予約不可
-    if (isFull && event.paymentRequired) {
-      throw new BadRequestException('満席のため予約できません');
-    }
-
     const effectivePrice =
       event.priceMale != null && event.priceFemale != null
         ? member.gender === '男性'
@@ -634,48 +585,108 @@ export class LiffService {
             : Math.max(event.priceMale, event.priceFemale)
         : event.price;
 
-    const needsPayment = event.paymentRequired && effectivePrice > 0 && !isFull;
-    const status: ReservationStatus = isFull
-      ? 'waitlisted'
-      : needsPayment
-        ? 'waiting_payment'
-        : 'reserved';
-    let waitlistOrder: number | null = null;
+    // イベント単位で定員判定と保存を直列化し、空いた枠は予約操作の先着順で確定する。
+    const slotReservation = await this.prisma
+      .$transaction(async (tx) => {
+        await tx.$queryRaw(
+          Prisma.sql`SELECT pg_advisory_xact_lock(hashtext(${dto.eventId})::bigint)`,
+        );
 
-    if (status === 'waiting_payment' && !tenant?.stripeSecretKey) {
-      throw new BadRequestException('Stripe payment is not configured');
-    }
+        const existing = await tx.reservation.findFirst({
+          where: {
+            memberId: member.id,
+            eventId: dto.eventId,
+            status: { not: 'cancelled' },
+          },
+        });
+        if (existing && existing.status !== ReservationStatus.waitlisted) {
+          throw new ConflictException('このイベントはすでに予約済みです');
+        }
 
-    if (status === 'waitlisted') {
-      const maxOrder = await this.prisma.reservation.aggregate({
-        where: { eventId: dto.eventId, status: 'waitlisted' },
-        _max: { waitlistOrder: true },
+        const reservedCount = await tx.reservation.count({
+          where: {
+            eventId: dto.eventId,
+            status: { in: ['reserved', 'attended', 'waiting_payment'] },
+          },
+        });
+        const hasGenderCapacity =
+          event.capacityMale !== null || event.capacityFemale !== null;
+        let isFull: boolean;
+        if (
+          hasGenderCapacity &&
+          (member.gender === '男性' || member.gender === '女性')
+        ) {
+          const genderCap =
+            member.gender === '男性'
+              ? event.capacityMale
+              : event.capacityFemale;
+          const genderReservedCount = await tx.reservation.count({
+            where: {
+              eventId: dto.eventId,
+              status: { in: ['reserved', 'attended', 'waiting_payment'] },
+              member: { gender: member.gender },
+            },
+          });
+          isFull = genderCap !== null && genderReservedCount >= genderCap;
+        } else if (hasGenderCapacity) {
+          const totalCap =
+            (event.capacityMale ?? 0) + (event.capacityFemale ?? 0);
+          isFull = totalCap > 0 && reservedCount >= totalCap;
+        } else {
+          isFull =
+            event.capacity !== null && reservedCount >= event.capacity;
+        }
+
+        if (isFull) {
+          throw new BadRequestException(
+            '現在は満席です。空きが出た後、先着順で予約できます。',
+          );
+        }
+
+        const status: ReservationStatus =
+          event.paymentRequired && effectivePrice > 0
+            ? ReservationStatus.waiting_payment
+            : ReservationStatus.reserved;
+        if (
+          status === ReservationStatus.waiting_payment &&
+          !tenant?.stripeSecretKey
+        ) {
+          throw new BadRequestException('Stripe payment is not configured');
+        }
+
+        const reservation = existing
+          ? await tx.reservation.update({
+              where: { id: existing.id },
+              data: {
+                status,
+                waitlistOrder: null,
+                reservedAt: new Date(),
+                stripePaymentIntentId: null,
+                paidAt: null,
+              },
+            })
+          : await tx.reservation.create({
+              data: {
+                tenantId,
+                eventId: dto.eventId,
+                memberId: member.id,
+                status,
+                waitlistOrder: null,
+              },
+            });
+
+        return { reservation, status };
+      })
+      .catch((error: unknown) => {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002'
+        ) {
+          throw new ConflictException('このイベントはすでに予約済みです');
+        }
+        throw error;
       });
-      waitlistOrder = (maxOrder._max.waitlistOrder ?? 0) + 1;
-    }
-
-    let reservation;
-    try {
-      reservation = await this.prisma.reservation.create({
-        data: {
-          tenantId,
-          eventId: dto.eventId,
-          memberId: member.id,
-          status,
-          waitlistOrder,
-        },
-      });
-    } catch (error) {
-      // アプリ側の事前確認を同時に通過しても、DBの部分一意インデックスが
-      // 同じ本人・同じイベントの有効予約を必ず1件に制限する。
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        throw new ConflictException('このイベントはすでに予約済みです');
-      }
-      throw error;
-    }
+    const { reservation, status } = slotReservation;
 
     // Stripe 決済セッション作成
     let stripeCheckoutUrl: string | undefined;
@@ -713,41 +724,36 @@ export class LiffService {
     }
 
     // LINE通知
-    if (event.notifyOnReserve && status !== 'waiting_payment') {
+    if (event.notifyOnReserve && status === ReservationStatus.reserved) {
       const token = tenant?.lineChannelAccessToken ?? '';
-      if (status === 'reserved') {
-        await this.lineMessaging.sendReservationConfirm(
-          token,
-          lineUserId,
-          event.title,
-          event.heldAt,
-          event.location,
-          event.price,
-          event.description,
-          event.reservationMessageTemplate ??
-            tenant?.reservationMessageTemplate,
-          {
-            endAt: event.endAt,
-            locationUrl: event.locationUrl,
-            priceMale: event.priceMale,
-            priceFemale: event.priceFemale,
-            descriptionMale: event.descriptionMale,
-            descriptionFemale: event.descriptionFemale,
-            maleDelayMinutes: event.maleDelayMinutes,
-            gender: member.gender,
-          },
-        );
-      } else {
-        await this.lineMessaging.sendWaitlistRegistered(
-          token,
-          lineUserId,
-          event.title,
-          waitlistOrder!,
-        );
-      }
+      await this.lineMessaging.sendReservationConfirm(
+        token,
+        lineUserId,
+        event.title,
+        event.heldAt,
+        event.location,
+        event.price,
+        event.description,
+        event.reservationMessageTemplate ?? tenant?.reservationMessageTemplate,
+        {
+          endAt: event.endAt,
+          locationUrl: event.locationUrl,
+          priceMale: event.priceMale,
+          priceFemale: event.priceFemale,
+          descriptionMale: event.descriptionMale,
+          descriptionFemale: event.descriptionFemale,
+          maleDelayMinutes: event.maleDelayMinutes,
+          gender: member.gender,
+        },
+      );
     }
 
-    return { id: reservation.id, status, waitlistOrder, stripeCheckoutUrl };
+    return {
+      id: reservation.id,
+      status,
+      waitlistOrder: null,
+      stripeCheckoutUrl,
+    };
   }
 
   // 自分の予約を確認（lineUserId で検索）
@@ -995,7 +1001,7 @@ export class LiffService {
     });
   }
 
-  // キャンセル（キャンセル待ちの自動繰り上げ込み）
+  // キャンセル（空いた枠は次に予約操作した人が先着で取得する）
   async cancelReservation(
     tenantId: string,
     reservationId: string,
@@ -1026,99 +1032,7 @@ export class LiffService {
       data: { status: ReservationStatus.cancelled },
     });
 
-    // 定員がある場合のみ繰り上げ処理（男女別定員の場合は、空いた性別の
-    // キャンセル待ちだけを対象にする。合計枠だけでは異性を繰り上げてしまうため）
-    const hasGenderCapacity =
-      reservation.event.capacityMale !== null ||
-      reservation.event.capacityFemale !== null;
-    if (hasGenderCapacity) {
-      const cancelledGender = reservation.member.gender;
-      if (cancelledGender === '男性' || cancelledGender === '女性') {
-        const genderCap =
-          cancelledGender === '男性'
-            ? reservation.event.capacityMale
-            : reservation.event.capacityFemale;
-        if (genderCap !== null) {
-          const activeGenderCount = await this.prisma.reservation.count({
-            where: {
-              eventId: reservation.eventId,
-              status: { in: ['reserved', 'attended', 'waiting_payment'] },
-              member: { gender: cancelledGender },
-            },
-          });
-
-          if (activeGenderCount < genderCap) {
-            const next = await this.prisma.reservation.findFirst({
-              where: {
-                eventId: reservation.eventId,
-                status: 'waitlisted',
-                member: { gender: cancelledGender },
-              },
-              orderBy: { waitlistOrder: 'asc' },
-              include: { member: true },
-            });
-
-            if (next) {
-              await this.prisma.reservation.update({
-                where: { id: next.id },
-                data: {
-                  status: ReservationStatus.reserved,
-                  waitlistOrder: null,
-                },
-              });
-
-              const tenant = await this.prisma.tenant.findUnique({
-                where: { id: tenantId },
-              });
-              if (tenant?.lineChannelAccessToken) {
-                await this.lineMessaging.sendWaitlistPromoted(
-                  tenant.lineChannelAccessToken,
-                  next.member.lineUserId,
-                  reservation.event.title,
-                  reservation.event.heldAt,
-                  reservation.event.location,
-                );
-              }
-            }
-          }
-        }
-      }
-    } else if (reservation.event.capacity !== null) {
-      const activeCount = await this.prisma.reservation.count({
-        where: {
-          eventId: reservation.eventId,
-          status: { in: ['reserved', 'attended', 'waiting_payment'] },
-        },
-      });
-
-      if (activeCount < reservation.event.capacity) {
-        const next = await this.prisma.reservation.findFirst({
-          where: { eventId: reservation.eventId, status: 'waitlisted' },
-          orderBy: { waitlistOrder: 'asc' },
-          include: { member: true },
-        });
-
-        if (next) {
-          await this.prisma.reservation.update({
-            where: { id: next.id },
-            data: { status: ReservationStatus.reserved, waitlistOrder: null },
-          });
-
-          const tenant = await this.prisma.tenant.findUnique({
-            where: { id: tenantId },
-          });
-          if (tenant?.lineChannelAccessToken) {
-            await this.lineMessaging.sendWaitlistPromoted(
-              tenant.lineChannelAccessToken,
-              next.member.lineUserId,
-              reservation.event.title,
-              reservation.event.heldAt,
-              reservation.event.location,
-            );
-          }
-        }
-      }
-    }
+    // 空いた枠は自動で繰り上げず、次の予約操作を先着で受け付ける。
 
     // 主催者へのキャンセル通知
     const tenant = await this.prisma.tenant.findUnique({

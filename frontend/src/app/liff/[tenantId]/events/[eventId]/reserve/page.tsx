@@ -28,7 +28,7 @@ import { LiffToast } from '@/components/liff/LiffToast';
 const STATUS_LABEL: Record<string, string> = {
   reserved: '予約済み',
   attended: '参加済み',
-  waitlisted: 'キャンセル待ち',
+  waitlisted: '満席（未確定）',
   waiting_payment: '支払待ち',
 };
 
@@ -66,7 +66,6 @@ function ReservePageInner() {
   // カード背景が白いため、テナントのアクセントカラーが白系だと塗りつぶしボタンが
   // 背景に同化して見えなくなる。その場合は濃色にフォールバックする。
   const solidAccentColor = isLightHexColor(accentColor) ? '#111827' : accentColor;
-  const isWaitlist = searchParams.get('waitlist') === '1';
   const isAutoReserve = searchParams.get('auto') === '1';
   const autoSubmitTriggeredRef = useRef(false);
   const submitInFlightRef = useRef(false);
@@ -529,11 +528,6 @@ function ReservePageInner() {
       </div>
 
       <div className="px-4 py-5 space-y-4">
-        {isWaitlist && (
-          <div className="rounded-xl px-4 py-2.5 text-sm font-bold text-center" style={{ backgroundColor: hexToRgba(accentColor, 10), color: solidAccentColor }}>
-            キャンセル待ち登録
-          </div>
-        )}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>
         )}
@@ -591,29 +585,48 @@ function ReservePageInner() {
         )}
 
         {myReservation ? (
-          <>
-            {reservationMessageText && (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                <p className="mb-2 text-xs font-bold text-gray-400">予約完了時のご案内</p>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">{linkifyText(reservationMessageText)}</p>
+          myReservation.status === 'waitlisted' ? (
+            <>
+              <div className="w-full rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-center">
+                <p className="font-bold text-amber-700">現在は満席です</p>
+                <p className="mt-1 text-sm leading-relaxed text-amber-700">
+                  空きが出た後、先に予約を完了した方が確定になります。
+                </p>
               </div>
-            )}
-            <button
-              type="button"
-              onClick={copyInviteLink}
-              className="w-full rounded-2xl border py-3.5 text-sm font-bold transition-colors active:opacity-80"
-              style={{ borderColor: solidAccentColor, color: solidAccentColor }}
-            >
-              {inviteCopied ? 'コピーしました' : '友達に紹介する（リンクをコピー）'}
-            </button>
-            <div className="w-full rounded-2xl py-4 text-center shadow-sm" style={{ backgroundColor: '#10b981' }}>
-              <p className="font-bold text-base text-white">
-                {myReservation.status === 'reserved' ? '予約しました！' : STATUS_LABEL[myReservation.status] ?? myReservation.status}
-                {myReservation.status === 'waitlisted' && myReservation.waitlistOrder ? `（${myReservation.waitlistOrder}番目）` : ''}
-              </p>
-              <p className="mt-1 text-xs text-white/80">キャンセルはマイページから</p>
-            </div>
-          </>
+              <button
+                type="button"
+                onClick={() => submit()}
+                disabled={submitting}
+                className="w-full rounded-2xl py-4 text-base font-bold shadow-sm transition-colors active:opacity-90 disabled:opacity-50"
+                style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
+              >
+                {submitting ? '確認中...' : '空きを確認して予約する'}
+              </button>
+            </>
+          ) : (
+            <>
+              {reservationMessageText && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                  <p className="mb-2 text-xs font-bold text-gray-400">予約完了時のご案内</p>
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">{linkifyText(reservationMessageText)}</p>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={copyInviteLink}
+                className="w-full rounded-2xl border py-3.5 text-sm font-bold transition-colors active:opacity-80"
+                style={{ borderColor: solidAccentColor, color: solidAccentColor }}
+              >
+                {inviteCopied ? 'コピーしました' : '友達に紹介する（リンクをコピー）'}
+              </button>
+              <div className="w-full rounded-2xl py-4 text-center shadow-sm" style={{ backgroundColor: '#10b981' }}>
+                <p className="font-bold text-base text-white">
+                  {myReservation.status === 'reserved' ? '予約しました！' : STATUS_LABEL[myReservation.status] ?? myReservation.status}
+                </p>
+                <p className="mt-1 text-xs text-white/80">キャンセルはマイページから</p>
+              </div>
+            </>
+          )
         ) : isLineMode ? (
           <a
             href={tenant?.reserveLineUrl ?? ''}
@@ -629,7 +642,7 @@ function ReservePageInner() {
             className="w-full py-4 rounded-2xl font-bold text-base disabled:opacity-50 active:opacity-90 transition-colors shadow-sm"
             style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
           >
-            {submitting ? '送信中...' : isWaitlist ? 'キャンセル待ちに登録する' : '予約する'}
+            {submitting ? '送信中...' : '予約する'}
           </button>
         )}
       </div>

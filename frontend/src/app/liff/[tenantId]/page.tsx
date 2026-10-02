@@ -48,7 +48,7 @@ function ReservedBadge({ status, accentColor, className = '', style, compact = f
   if (!status) return null;
   const isWaitlisted = status === 'waitlisted';
   const bg = isWaitlisted ? '#fbbf24' : accentColor;
-  const label = compact ? (isWaitlisted ? 'キャン待ち' : '予約済') : (isWaitlisted ? 'キャンセル待ち' : '予約済み');
+  const label = compact ? (isWaitlisted ? '未確定' : '予約済') : (isWaitlisted ? '満席（未確定）' : '予約済み');
   return (
     <span
       className={`inline-flex items-center justify-center font-bold rounded-full whitespace-nowrap ${className}`}
@@ -158,7 +158,7 @@ function LiffThreadView({ events, tenantId, accentColor, cardBg, myStatusByEvent
               const isFull = status === '満席';
               const myStatus = myStatusByEvent?.[event.id];
               const badgeLabel = myStatus === 'reserved' ? '予約済み'
-                : myStatus === 'waitlisted' ? 'キャンセル待ち'
+                : myStatus === 'waitlisted' ? '満席（未確定）'
                 : status;
               const badgeColorClass = myStatus === 'waitlisted' ? 'bg-yellow-100 text-yellow-700'
                 : isFull && !myStatus ? 'bg-gray-100 text-gray-400'

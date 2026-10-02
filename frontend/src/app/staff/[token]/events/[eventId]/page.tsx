@@ -76,7 +76,7 @@ export default function StaffViewEventPage() {
             <p className="mt-0.5 text-lg font-bold text-pink-500">{summary.female}{event.capacityFemale != null ? <span className="text-xs font-normal text-gray-400">/{event.capacityFemale}</span> : null}</p>
           </div>
           <div className="rounded-xl border border-gray-200 bg-white p-3 text-center">
-            <p className="text-[11px] text-gray-400">キャン待</p>
+            <p className="text-[11px] text-gray-400">未確定</p>
             <p className="mt-0.5 text-lg font-bold text-amber-600">{summary.waitlisted}</p>
           </div>
         </div>
@@ -163,7 +163,6 @@ export default function StaffViewEventPage() {
                         <td className="px-6 py-4 text-xs text-gray-500">{formatDate(r.reservedAt)}</td>
                         <td className="px-6 py-4">
                           <ReservationBadge status={r.status} />
-                          {r.waitlistOrder && <span className="ml-1 text-xs text-gray-500">({r.waitlistOrder}番目)</span>}
                         </td>
                       </tr>
                     ))}

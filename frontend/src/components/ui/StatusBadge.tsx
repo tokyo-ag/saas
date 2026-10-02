@@ -10,7 +10,7 @@ const reservationColors: Record<ReservationStatus, string> = {
 
 const reservationLabels: Record<ReservationStatus, string> = {
   reserved: '予約確定',
-  waitlisted: 'キャンセル待ち',
+  waitlisted: '満席（未確定）',
   attended: '参加済',
   cancelled: 'キャンセル',
   waiting_payment: '支払待ち',

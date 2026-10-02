@@ -42,7 +42,7 @@ function SummaryBar({ stats }: { stats: ReturnType<typeof summarize> }) {
         <p className="text-base font-bold text-pink-500">{stats.female}</p>
       </div>
       <div className="rounded-lg bg-gray-50 p-2 text-center">
-        <p className="text-[10px] text-gray-400">キャン待</p>
+        <p className="text-[10px] text-gray-400">未確定</p>
         <p className="text-base font-bold text-amber-600">{stats.waitlisted}</p>
       </div>
     </div>
@@ -210,7 +210,7 @@ export default function CollabRosterPage() {
                         <span className="text-xs font-bold text-gray-700">{group.tenantName}</span>
                         <span className="text-[11px] text-gray-500">
                           {groupStats.total}人（男{groupStats.male}・女{groupStats.female}）
-                          {groupStats.waitlisted > 0 && ` ・キャン待${groupStats.waitlisted}`}
+                          {groupStats.waitlisted > 0 && ` ・未確定${groupStats.waitlisted}`}
                         </span>
                       </div>
                       <div className="divide-y divide-gray-100">
@@ -266,7 +266,7 @@ export default function CollabRosterPage() {
                               <span className="text-xs font-bold text-gray-700">{group.tenantName}</span>
                               <span className="text-[11px] text-gray-500">
                                 {groupStats.total}人（男{groupStats.male}・女{groupStats.female}）
-                                {groupStats.waitlisted > 0 && ` ・キャン待${groupStats.waitlisted}`}
+                                {groupStats.waitlisted > 0 && ` ・未確定${groupStats.waitlisted}`}
                               </span>
                             </div>
                           </td>
@@ -287,7 +287,6 @@ export default function CollabRosterPage() {
                             <td className="px-6 py-4 text-gray-600">{p.gender ?? '-'}</td>
                             <td className="px-6 py-4">
                               <ReservationBadge status={p.status} />
-                              {p.waitlistOrder && <span className="ml-1 text-xs text-gray-500">({p.waitlistOrder}番目)</span>}
                             </td>
                             <td className="px-6 py-4">
                               <DuplicateBadge participant={p} token={token} onChanged={reload} />

@@ -78,7 +78,7 @@ export default function StaffViewListPage() {
                   <div className="shrink-0 text-right text-xs text-gray-500">
                     <p className="font-bold text-gray-800">{event.total}人{event.capacity != null ? ` / ${event.capacity}` : ''}</p>
                     <p className="mt-0.5">男{event.male}・女{event.female}</p>
-                    {event.waitlisted > 0 && <p className="mt-0.5 text-amber-600">キャン待{event.waitlisted}</p>}
+                    {event.waitlisted > 0 && <p className="mt-0.5 text-amber-600">未確定{event.waitlisted}</p>}
                   </div>
                 </div>
               </Link>

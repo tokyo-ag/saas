@@ -574,7 +574,7 @@ export class TenantService {
       } else if (r.status === 'waitlisted') {
         activities.push({
           type: 'waitlist',
-          text: `${name}さんが「${title}」のキャンセル待ちに登録しました`,
+          text: `${name}さんの「${title}」の予約は満席のため未確定です`,
           at: r.reservedAt,
         });
       } else {

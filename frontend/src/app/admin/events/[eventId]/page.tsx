@@ -199,7 +199,7 @@ export default function EventDetailPage() {
             <p className="mt-1 text-sm leading-relaxed text-gray-500">{formatDate(event.heldAt)} ・ {event.location}</p>
             <p className="mt-1 text-sm text-gray-600">
               予約: {event.reservedCount}{event.capacity ? ` / ${event.capacity}` : ''}人
-              {(event.waitlistedCount ?? 0) > 0 && ` ・ キャンセル待ち ${event.waitlistedCount}人`}
+              {(event.waitlistedCount ?? 0) > 0 && ` ・ 未確定 ${event.waitlistedCount}人`}
             </p>
           </div>
         </div>
@@ -257,7 +257,6 @@ export default function EventDetailPage() {
                     </div>
                     <div className="shrink-0 text-right">
                       <ReservationBadge status={reservation.status} />
-                      {reservation.waitlistOrder && <p className="mt-1 text-xs text-gray-500">{reservation.waitlistOrder}番目</p>}
                     </div>
                   </div>
                   <p className="mt-3 text-xs text-gray-500">予約日時: {formatDate(reservation.reservedAt)}</p>
@@ -333,7 +332,6 @@ export default function EventDetailPage() {
                       <td className="px-6 py-4 text-gray-500">{formatDate(reservation.reservedAt)}</td>
                       <td className="px-6 py-4">
                         <ReservationBadge status={reservation.status} />
-                        {reservation.waitlistOrder && <span className="ml-1 text-xs text-gray-500">({reservation.waitlistOrder}番目)</span>}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex gap-2">

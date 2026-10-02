@@ -40,8 +40,6 @@ export class ReservationsService {
       });
 
     if (status === ReservationStatus.cancelled) {
-      await this.promoteWaitlist(tenantId, reservation.eventId);
-
       const tenant = await this.prisma.tenant.findUnique({
         where: { id: tenantId },
       });
@@ -56,49 +54,5 @@ export class ReservationsService {
     }
 
     return updated;
-  }
-
-  async promoteWaitlist(tenantId: string, eventId: string) {
-    const event = await this.prisma.event.findUnique({
-      where: { id: eventId },
-    });
-    if (!event) return;
-
-    if (event.capacity === null) return;
-
-    const activeCount = await this.prisma.reservation.count({
-      where: {
-        eventId,
-        status: { in: ['reserved', 'attended', 'waiting_payment'] },
-      },
-    });
-
-    if (activeCount >= event.capacity) return;
-
-    const nextWaitlisted = await this.prisma.reservation.findFirst({
-      where: { eventId, status: 'waitlisted' },
-      orderBy: { waitlistOrder: 'asc' },
-      include: { member: true },
-    });
-
-    if (!nextWaitlisted) return;
-
-    await this.prisma.reservation.update({
-      where: { id: nextWaitlisted.id },
-      data: { status: ReservationStatus.reserved, waitlistOrder: null },
-    });
-
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-    });
-    if (tenant?.lineChannelAccessToken && nextWaitlisted.member.lineUserId) {
-      await this.lineMessaging.sendWaitlistPromoted(
-        tenant.lineChannelAccessToken,
-        nextWaitlisted.member.lineUserId,
-        event.title,
-        event.heldAt,
-        event.location,
-      );
-    }
   }
 }

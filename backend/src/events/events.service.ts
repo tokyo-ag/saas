@@ -699,7 +699,7 @@ export class EventsService {
     const isFreeEvent =
       event.price === 0 && event.priceMale == null && event.priceFemale == null;
     const rows = reservations.map((r) => {
-      const statusLabel = this.statusLabel(r.status, r.waitlistOrder);
+      const statusLabel = this.statusLabel(r.status);
       const paymentLabel = r.paidAt
         ? '支払済'
         : isFreeEvent
@@ -733,13 +733,13 @@ export class EventsService {
     return [header, ...rows].join('\n');
   }
 
-  private statusLabel(status: string, waitlistOrder: number | null): string {
+  private statusLabel(status: string): string {
     const map: Record<string, string> = {
       reserved: '参加確定',
       attended: '参加済',
       cancelled: 'キャンセル',
       waiting_payment: '支払待ち',
-      waitlisted: `キャンセル待ち${waitlistOrder ?? ''}番`,
+      waitlisted: '満席（未確定）',
     };
     return map[status] ?? status;
   }

@@ -1,15 +1,13 @@
 'use client';
 
 import { Suspense, useEffect } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { liffNavigationUrl } from '@/lib/config';
 import { api } from '@/lib/api';
 
 function PublicReserveRedirectInner() {
   const { tenantCode, eventId } = useParams<{ tenantCode: string; eventId: string }>();
-  const searchParams = useSearchParams();
-  const isWaitlist = searchParams.get('waitlist') === '1';
-  const liffReservePath = `/liff/${tenantCode}/events/${eventId}/reserve${isWaitlist ? '?waitlist=1' : ''}`;
+  const liffReservePath = `/liff/${tenantCode}/events/${eventId}/reserve`;
 
   useEffect(() => {
     api.public.tenant(tenantCode)
