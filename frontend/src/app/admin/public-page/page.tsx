@@ -339,6 +339,36 @@ const SIMPLE_SITE_TEMPLATES: Array<{
   { key: 'about', label: '団体を詳しく紹介', description: '紹介文と口コミを先に見せて、安心感を伝えます。' },
 ];
 
+const SIMPLE_TEMPLATE_CONTENT_ORDER: Record<SimpleSiteTemplate, string[]> = {
+  photo: ['about', 'reserve', 'blog', 'reviews'],
+  events: ['reserve', 'about', 'blog', 'reviews'],
+  about: ['about', 'reviews', 'reserve', 'blog'],
+};
+
+function simpleTemplateValues(template: SimpleSiteTemplate, contentBlockCount: number): Partial<PublicPageInput> {
+  const contentBlockKeys = Array.from({ length: contentBlockCount }, (_, index) => `block-${index}`);
+  const blockOrderByTemplate: Record<SimpleSiteTemplate, string[]> = {
+    photo: [...contentBlockKeys, 'reserve', 'blog', 'reviews'],
+    events: ['reserve', ...contentBlockKeys, 'blog', 'reviews'],
+    about: [...contentBlockKeys, 'reviews', 'reserve', 'blog'],
+  };
+
+  return {
+    heroImageMode: template === 'photo' ? 'slider' : 'fixed',
+    heroNavPosition: 'below',
+    heroOutsideKeys: ['name', 'logo', 'subtitle', 'nav'],
+    sectionOrder: ['name', 'logo', 'subtitle', 'image', 'nav'],
+    navOrder: ['reserve', 'blog', 'reviews', 'about', 'contact'],
+    contentOrder: SIMPLE_TEMPLATE_CONTENT_ORDER[template],
+    blockOrder: blockOrderByTemplate[template],
+    buttonStyle: 'rounded',
+    buttonLayout: 'row3',
+    buttonRadius: 12,
+    buttonSize: 42,
+    layoutVariant: 'static',
+  };
+}
+
 const SIMPLE_COLOR_THEMES = [
   { key: 'green', label: 'グリーン', accent: '#06C755', background: '#F7FAF8', surface: '#EAF8EF', border: '#B9E8C9', text: '#17201B' },
   { key: 'blue', label: 'ブルー', accent: '#2563EB', background: '#F6F8FC', surface: '#EAF1FF', border: '#C8D8FA', text: '#172033' },
@@ -755,13 +785,13 @@ export default function AdminPublicPage() {
   const hasReserveSection = reserveActionStyle === 'line' || reserveEvents.length > 0;
   const hasBlogSection = blogPosts.length > 0;
   const reviewsEnabled = form.reviewsEnabled !== false;
-  const hasReviewsSection = reviewsEnabled;
+  const hasReviewsSection = reviewsEnabled && reviews.length > 0;
   const customNavButtons = (form.customNavButtons ?? []).filter((b) => b.label.trim() && b.url.trim());
   const navItemsByKey: Record<string, { key: string; label: string } | undefined> = {
     about: { key: 'about', label: navLabels.about },
     blog: hasBlogSection ? { key: 'blog', label: navLabels.blog } : undefined,
     reserve: hasReserveSection ? { key: 'reserve', label: navLabels.reserve } : undefined,
-    reviews: hasReviewsSection ? { key: 'reviews', label: navLabels.reviews } : undefined,
+    reviews: reviewsEnabled ? { key: 'reviews', label: navLabels.reviews } : undefined,
     contact: { key: 'contact', label: navLabels.contact },
   };
   customNavButtons.forEach((b) => {
@@ -822,7 +852,12 @@ export default function AdminPublicPage() {
   const previewButtonGridStyle = buttonLayout === 'row3' ? {} : {
     gridTemplateColumns: `repeat(${buttonLayout === 'row1x4' ? visibleNavItems.length : Math.min(2, visibleNavItems.length)}, minmax(0, 1fr))`,
   };
-  const row3ItemStyle = buttonLayout === 'row3' ? { flex: '0 0 calc((100% - 16px) / 3)', maxWidth: 'calc((100% - 16px) / 3)' } as CSSProperties : undefined;
+  const previewRowColumns = Math.min(3, Math.max(1, visibleNavItems.length));
+  const previewRowGap = (previewRowColumns - 1) * 8;
+  const row3ItemWidth = `calc((100% - ${previewRowGap}px) / ${previewRowColumns})`;
+  const row3ItemStyle = buttonLayout === 'row3'
+    ? { flex: `0 0 ${row3ItemWidth}`, maxWidth: row3ItemWidth } as CSSProperties
+    : undefined;
   const btnSize = form.buttonSize ?? 40;
   const btnIsPill = buttonStyle === 'pill';
   const dragRef = useRef<{ startY: number; startSize: number } | null>(null);
@@ -836,9 +871,13 @@ export default function AdminPublicPage() {
   const canEditSimpleIntro = Boolean(simpleContentBlock) || blocks.length < 4;
   const simpleChecklist = [
     { label: '団体名', done: Boolean(siteTitle.trim()) },
-    { label: 'メイン画像', done: imageUrls.length > 0 },
     { label: '団体紹介', done: Boolean(simpleIntro.trim()) },
-    { label: 'お問い合わせ導線', done: true },
+    ...(selectedSimpleTemplate === 'photo'
+      ? [{ label: 'メイン画像', done: imageUrls.length > 0 }]
+      : []),
+    ...(selectedSimpleTemplate === 'events'
+      ? [{ label: '公開中のイベント', done: hasReserveSection }]
+      : []),
   ];
   const completedSimpleChecks = simpleChecklist.filter((item) => item.done).length;
 
@@ -856,34 +895,11 @@ export default function AdminPublicPage() {
   }
 
   function applySimpleTemplate(template: SimpleSiteTemplate) {
-    const contentBlockKeys = blocks.map((_, index) => `block-${index}`);
-    const blockOrderByTemplate: Record<SimpleSiteTemplate, string[]> = {
-      photo: [...contentBlockKeys, 'reserve', 'blog', 'reviews'],
-      events: ['reserve', ...contentBlockKeys, 'blog', 'reviews'],
-      about: [...contentBlockKeys, 'reviews', 'reserve', 'blog'],
-    };
-    const contentOrderByTemplate: Record<SimpleSiteTemplate, string[]> = {
-      photo: ['about', 'reserve', 'blog', 'reviews'],
-      events: ['reserve', 'about', 'blog', 'reviews'],
-      about: ['about', 'reviews', 'reserve', 'blog'],
-    };
-
     setSelectedSimpleTemplate(template);
     setHiddenNavKeys(['about', 'contact']);
     setForm((prev) => ({
       ...prev,
-      heroImageMode: template === 'photo' ? 'slider' : 'fixed',
-      heroNavPosition: 'below',
-      heroOutsideKeys: ['name', 'logo', 'subtitle', 'nav'],
-      sectionOrder: ['name', 'logo', 'subtitle', 'image', 'nav'],
-      navOrder: ['reserve', 'blog', 'reviews', 'about', 'contact'],
-      contentOrder: contentOrderByTemplate[template],
-      blockOrder: blockOrderByTemplate[template],
-      buttonStyle: 'rounded',
-      buttonLayout: 'row3',
-      buttonRadius: 12,
-      buttonSize: 42,
-      layoutVariant: 'static',
+      ...simpleTemplateValues(template, blocks.length),
     }));
   }
 
@@ -1181,8 +1197,17 @@ export default function AdminPublicPage() {
           }
         } else {
           const desc = tenantData.description ?? '';
-          setForm({ ...emptyForm, title: tenantName, slug: tenantSlug, body: desc });
-          if (desc) setBlocks([{ id: genId(), type: 'text', content: desc }]);
+          const initialBlocks: Block[] = desc ? [{ id: genId(), type: 'text', content: desc }] : [];
+          setSelectedSimpleTemplate('about');
+          setHiddenNavKeys(['about', 'contact']);
+          setForm({
+            ...emptyForm,
+            title: tenantName,
+            slug: tenantSlug,
+            body: desc,
+            ...simpleTemplateValues('about', initialBlocks.length),
+          });
+          setBlocks(initialBlocks);
         }
       })
       .catch((err: any) => setError(err?.message ?? '読み込みに失敗しました'))
@@ -1769,15 +1794,6 @@ export default function AdminPublicPage() {
               )}
             </label>
 
-            <label className="block space-y-1.5">
-              <span className="text-xs font-bold text-gray-600">お問い合わせ先 <span className="font-normal text-gray-400">（任意）</span></span>
-              <input
-                value={form.footerContact ?? ''}
-                onChange={(e) => setForm((prev) => ({ ...prev, footerContact: e.target.value }))}
-                placeholder="LINE URL・メールアドレス・電話番号。空欄ならCOMIU内のメッセージにつながります。"
-                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-              />
-            </label>
           </div>
         </div>
 
@@ -1925,13 +1941,6 @@ export default function AdminPublicPage() {
               >
                 <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition ${reviewsEnabled ? 'left-6' : 'left-1'}`} />
               </button>
-            </div>
-            <div className="flex items-center justify-between gap-3 px-3 py-3">
-              <div>
-                <p className="text-xs font-bold text-gray-700">お問い合わせ</p>
-                <p className="mt-0.5 text-[11px] text-gray-400">{form.footerContact?.trim() ? '設定した連絡先につながります' : 'COMIU内のメッセージにつながります'}</p>
-              </div>
-              <span className="rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-bold text-green-700">表示</span>
             </div>
           </div>
         </div>
@@ -3618,7 +3627,7 @@ export default function AdminPublicPage() {
                   const contentSectionsByKey: Record<string, ReactNode> = { about: aboutSection, reserve: reserveSection, blog: blogSection, reviews: reviewsSection };
                   return contentOrder.map((key) => contentSectionsByKey[key] ?? null);
                 })()}
-                <div>
+                {!hiddenNavKeySet.has('contact') && <div>
                   <div className="flex w-full items-center justify-center rounded-xl border py-4 text-base font-bold shadow-sm"
                     style={{ backgroundColor: form.footerContactColor?.trim() || form.buttonBgColor?.trim() || accentColor, color: form.footerContactTextColor?.trim() || '#111827', borderColor: globalBorderColor }}>
                     {navLabels.contact}
@@ -3631,7 +3640,12 @@ export default function AdminPublicPage() {
                   <p className="mt-3 text-center text-[10px]" style={{ color: form.footerTextColor?.trim() || '#111827' }}>
                     Powered by <span className="font-bold">COMIU</span>
                   </p>
-                </div>
+                </div>}
+                {hiddenNavKeySet.has('contact') && (
+                  <p className="text-center text-[10px]" style={{ color: form.footerTextColor?.trim() || '#111827' }}>
+                    Powered by <span className="font-bold">COMIU</span>
+                  </p>
+                )}
               </div>
             </>
         </div>

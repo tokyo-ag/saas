@@ -495,9 +495,6 @@ export default async function ClubCmsPage({
   const rawButtonLayout = page.buttonLayout ?? 'grid2x2';
   const buttonLayout = rawButtonLayout === 'row1x4' ? 'row1x4' : rawButtonLayout === 'row3' ? 'row3' : 'grid2x2';
   const buttonLayoutClass = buttonLayout === 'row1x4' ? 'grid gap-2' : buttonLayout === 'row3' ? 'flex flex-wrap justify-center gap-3' : 'grid gap-3';
-  const row3ItemStyle: CSSProperties | undefined = buttonLayout === 'row3'
-    ? { flex: '0 0 calc((100% - 24px) / 3)', maxWidth: 'calc((100% - 24px) / 3)' }
-    : undefined;
   const buttonOpacity = clampPercent(page.buttonOpacity ?? 100);
   const buttonOpacityStyle = { opacity: buttonOpacity / 100 };
   const rawHeroImageMode = page.heroImageMode || 'fixed';
@@ -588,7 +585,7 @@ export default async function ClubCmsPage({
   const hasReserveSection = reserveActionStyle === 'line' || reserveEvents.length > 0;
   const hasBlogSection = blogPosts.length > 0;
   const reviewsEnabled = sectionCopy.reviewsEnabled !== false;
-  const hasReviewsSection = reviewsEnabled;
+  const hasReviewsSection = reviewsEnabled && reviews.length > 0;
   // ナビボタンの並び順は団体側で自由に入れ替えられる。未設定（既存の団体）の場合は
   // これまでと全く同じ「団体詳細→活動ブログ→予約する→お問い合わせ」の順になる。
   // 「口コミ」は後から追加した項目なので、既存の並び順設定を壊さないようお問い合わせの
@@ -612,7 +609,7 @@ export default async function ClubCmsPage({
     about: { key: 'about', label: navLabels.about, href: navAboutUrl },
     blog: hasBlogSection ? { key: 'blog', label: navLabels.blog, href: navBlogUrl } : undefined,
     reserve: hasReserveSection ? { key: 'reserve', label: navLabels.reserve, href: navReserveUrl } : undefined,
-    reviews: hasReviewsSection ? { key: 'reviews', label: navLabels.reviews, href: navReviewsUrl } : undefined,
+    reviews: reviewsEnabled ? { key: 'reviews', label: navLabels.reviews, href: navReviewsUrl } : undefined,
     contact: { key: 'contact', label: navLabels.contact, href: navContactUrl },
   };
   customNavButtons.forEach((b) => {
@@ -621,6 +618,12 @@ export default async function ClubCmsPage({
   const visibleNavItems = navOrder
     .map((key) => navItemsByKey[key])
     .filter((item): item is { key: string; label: string; href: string } => item !== undefined && !hiddenNavKeys.has(item.key));
+  const row3Columns = Math.min(3, Math.max(1, visibleNavItems.length));
+  const row3Gap = (row3Columns - 1) * 12;
+  const row3ItemWidth = `calc((100% - ${row3Gap}px) / ${row3Columns})`;
+  const row3ItemStyle: CSSProperties | undefined = buttonLayout === 'row3'
+    ? { flex: `0 0 ${row3ItemWidth}`, maxWidth: row3ItemWidth }
+    : undefined;
   // 構成（団体詳細）/予約ページ/活動ブログ/口コミの表示順も団体側で自由に入れ替えられる。
   // 未設定（既存の団体）の場合はこれまでと全く同じ「構成→予約ページ→活動ブログ」の順のまま、
   // 口コミは末尾に追加される。
@@ -1083,7 +1086,7 @@ export default async function ClubCmsPage({
         return contentOrder.map((key) => contentSectionsByKey[key] ?? null);
       })()}
 
-        <div id="contact" className="mt-6 scroll-mt-6">
+        {!hiddenNavKeys.has('contact') && <div id="contact" className="mt-6 scroll-mt-6">
           {(() => {
             const contactLink = sectionCopy.contact
               ? sectionCopy.contact.includes('@')
@@ -1111,7 +1114,7 @@ export default async function ClubCmsPage({
               </>
             );
           })()}
-        </div>
+        </div>}
       </article>
 
       {/* Footer */}
