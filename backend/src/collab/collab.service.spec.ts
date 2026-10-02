@@ -77,6 +77,7 @@ describe('CollabService', () => {
           comment: null,
           linePictureUrl: null,
           lineUserId: 'U123',
+          lineDisplayName: 'たろう',
         },
       },
       {
@@ -92,6 +93,7 @@ describe('CollabService', () => {
           comment: null,
           linePictureUrl: null,
           lineUserId: 'U123',
+          lineDisplayName: 'たろう',
         },
       },
       {
@@ -107,6 +109,7 @@ describe('CollabService', () => {
           comment: null,
           linePictureUrl: null,
           lineUserId: 'U999',
+          lineDisplayName: 'はなこ',
         },
       },
     ]);
@@ -117,6 +120,129 @@ describe('CollabService', () => {
     expect(byId.get('r2')?.isDuplicate).toBe(true);
     expect(byId.get('r3')?.isDuplicate).toBe(false);
     expect(result.tenants).toHaveLength(2);
+  });
+
+  it('flags the same LINE profile picture across providers as an automatic duplicate', async () => {
+    prisma.collabGroup.findFirst.mockResolvedValue(group());
+    prisma.reservation.findMany.mockResolvedValue([
+      {
+        id: 'r1',
+        eventId: 'event-a',
+        status: 'reserved',
+        waitlistOrder: null,
+        member: {
+          name: '太郎',
+          grade: null,
+          gender: '男性',
+          level: null,
+          comment: null,
+          linePictureUrl: 'https://profile.line-scdn.net/same-picture',
+          lineUserId: 'provider-a-user',
+          lineDisplayName: 'たろう',
+        },
+      },
+      {
+        id: 'r2',
+        eventId: 'event-b',
+        status: 'reserved',
+        waitlistOrder: null,
+        member: {
+          name: 'Taro',
+          grade: null,
+          gender: '男性',
+          level: null,
+          comment: null,
+          linePictureUrl: 'https://profile.line-scdn.net/same-picture',
+          lineUserId: 'provider-b-user',
+          lineDisplayName: 'TARO',
+        },
+      },
+    ]);
+
+    const result = await service.getCombinedRoster('token');
+    expect(result.participants.every((p) => p.isDuplicateAuto)).toBe(true);
+  });
+
+  it('uses normalized LINE display name, participant name, and gender as a safe fallback', async () => {
+    prisma.collabGroup.findFirst.mockResolvedValue(group());
+    prisma.reservation.findMany.mockResolvedValue([
+      {
+        id: 'r1',
+        eventId: 'event-a',
+        status: 'reserved',
+        waitlistOrder: null,
+        member: {
+          name: '山田 太郎',
+          grade: null,
+          gender: '男性',
+          level: null,
+          comment: null,
+          linePictureUrl: null,
+          lineUserId: 'provider-a-user',
+          lineDisplayName: 'ＴＡＲＯ',
+        },
+      },
+      {
+        id: 'r2',
+        eventId: 'event-b',
+        status: 'reserved',
+        waitlistOrder: null,
+        member: {
+          name: '山田太郎',
+          grade: null,
+          gender: '男性',
+          level: null,
+          comment: null,
+          linePictureUrl: null,
+          lineUserId: 'provider-b-user',
+          lineDisplayName: 'taro',
+        },
+      },
+    ]);
+
+    const result = await service.getCombinedRoster('token');
+    expect(result.participants.every((p) => p.isDuplicateAuto)).toBe(true);
+  });
+
+  it('does not flag matching participant names when LINE display names differ', async () => {
+    prisma.collabGroup.findFirst.mockResolvedValue(group());
+    prisma.reservation.findMany.mockResolvedValue([
+      {
+        id: 'r1',
+        eventId: 'event-a',
+        status: 'reserved',
+        waitlistOrder: null,
+        member: {
+          name: '太郎',
+          grade: null,
+          gender: '男性',
+          level: null,
+          comment: null,
+          linePictureUrl: null,
+          lineUserId: 'provider-a-user',
+          lineDisplayName: 'taro-a',
+        },
+      },
+      {
+        id: 'r2',
+        eventId: 'event-b',
+        status: 'reserved',
+        waitlistOrder: null,
+        member: {
+          name: '太郎',
+          grade: null,
+          gender: '男性',
+          level: null,
+          comment: null,
+          linePictureUrl: null,
+          lineUserId: 'provider-b-user',
+          lineDisplayName: 'taro-b',
+        },
+      },
+    ]);
+
+    const result = await service.getCombinedRoster('token');
+    expect(result.participants.some((p) => p.isDuplicateAuto)).toBe(false);
   });
 
   it('lets a manual override win over the automatic duplicate detection', async () => {
@@ -139,6 +265,7 @@ describe('CollabService', () => {
           comment: null,
           linePictureUrl: null,
           lineUserId: 'U123',
+          lineDisplayName: 'たろう',
         },
       },
       {
@@ -154,6 +281,7 @@ describe('CollabService', () => {
           comment: null,
           linePictureUrl: null,
           lineUserId: 'U123',
+          lineDisplayName: 'たろう',
         },
       },
     ]);

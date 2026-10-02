@@ -5,6 +5,37 @@ import { PrismaService } from '../prisma/prisma.service';
 export class CollabService {
   constructor(private prisma: PrismaService) {}
 
+  private normalizeIdentityPart(value?: string | null) {
+    return (value ?? '')
+      .normalize('NFKC')
+      .replace(/[\s　]+/g, '')
+      .toLowerCase();
+  }
+
+  private duplicateIdentityKeys(member: {
+    lineUserId: string;
+    lineDisplayName?: string | null;
+    linePictureUrl?: string | null;
+    name?: string | null;
+    gender?: string | null;
+  }) {
+    const keys: string[] = [];
+    if (member.lineUserId) keys.push(`line:${member.lineUserId}`);
+    if (member.linePictureUrl) keys.push(`picture:${member.linePictureUrl}`);
+
+    const lineDisplayName = this.normalizeIdentityPart(member.lineDisplayName);
+    const name = this.normalizeIdentityPart(member.name);
+    const gender = this.normalizeIdentityPart(member.gender);
+    // LINEのユーザーIDはプロバイダーが異なると同一人物でも変わる。
+    // 名前だけでは別人を巻き込むため、LINE表示名・申込名・性別がすべて
+    // 入っていて一致する場合に限り、プロフィール由来の同一人物候補とする。
+    if (lineDisplayName && name && gender) {
+      keys.push(`profile:${lineDisplayName}:${name}:${gender}`);
+    }
+
+    return keys;
+  }
+
   // 合同開催の統合名簿。既存のEvent/Reservation/Memberは一切書き換えず、
   // グループに紐づく全イベントの予約を突き合わせて返す。
   async getCombinedRoster(token: string) {
@@ -44,22 +75,25 @@ export class CollabService {
             comment: true,
             linePictureUrl: true,
             lineUserId: true,
+            lineDisplayName: true,
           },
         },
       },
       orderBy: [{ status: 'asc' }, { reservedAt: 'asc' }],
     });
 
-    // 自動判定：グループ内で同じMember.lineUserIdを持つ予約が2件以上あれば重複クラスタとみなす
-    const byLineUserId = new Map<string, typeof reservations>();
+    // 自動判定：LINE IDを最優先にしつつ、団体ごとにLINEプロバイダーが
+    // 異なる場合でも同一人物を拾えるよう、強いプロフィール一致も併用する。
+    const byIdentityKey = new Map<string, typeof reservations>();
     for (const r of reservations) {
-      if (!r.member.lineUserId) continue;
-      const list = byLineUserId.get(r.member.lineUserId) ?? [];
-      list.push(r);
-      byLineUserId.set(r.member.lineUserId, list);
+      for (const key of this.duplicateIdentityKeys(r.member)) {
+        const list = byIdentityKey.get(key) ?? [];
+        list.push(r);
+        byIdentityKey.set(key, list);
+      }
     }
     const autoDuplicateIds = new Set<string>();
-    for (const list of byLineUserId.values()) {
+    for (const list of byIdentityKey.values()) {
       if (list.length > 1) list.forEach((r) => autoDuplicateIds.add(r.id));
     }
 
