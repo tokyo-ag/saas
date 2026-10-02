@@ -193,6 +193,94 @@ describe('LiffService identity invariants', () => {
     );
   });
 
+  it('treats a concurrent double-submit of the same reservation as a success, not an error', async () => {
+    const member = {
+      id: 'member-id',
+      blockedAt: null,
+      gender: '女性',
+    };
+    const winningReservation = {
+      id: 'reservation-id',
+      status: ReservationStatus.reserved,
+    };
+    const prisma = {
+      tenant: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'tenant-id' }),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'tenant-id',
+          plan: 'standard',
+          lineChannelAccessToken: 'token',
+          requireName: true,
+          requireGrade: true,
+          requireGender: true,
+        }),
+      },
+      event: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'event-id',
+          title: '交流会',
+          status: 'open',
+          heldAt: new Date(Date.now() + 60_000),
+          endAt: null,
+          location: '池袋',
+          locationUrl: null,
+          capacity: 100,
+          capacityMale: null,
+          capacityFemale: null,
+          paymentRequired: false,
+          price: 1_000,
+          priceMale: null,
+          priceFemale: null,
+          levelEnabled: false,
+          notifyOnReserve: false,
+        }),
+      },
+      bannedLineUser: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
+      member: {
+        findUnique: jest.fn().mockResolvedValue(member),
+        upsert: jest.fn().mockResolvedValue(member),
+      },
+      reservation: {
+        // 1回目（トランザクション内の事前チェック）はnull、2回目（P2002後の再取得）は
+        // もう片方のリクエストが先に作った予約を返す、という競合シナリオを再現する。
+        findFirst: jest
+          .fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(winningReservation),
+        count: jest.fn().mockResolvedValue(0),
+        create: jest.fn().mockRejectedValue(duplicateError()),
+      },
+      $queryRaw: jest.fn().mockResolvedValue([]),
+    };
+    Object.assign(prisma, {
+      $transaction: jest.fn((callback: (tx: typeof prisma) => unknown) =>
+        callback(prisma),
+      ),
+    });
+    const lineMessaging = {
+      getLineProfile: jest.fn().mockResolvedValue(null),
+    };
+    const service = new LiffService(
+      prisma as never,
+      lineMessaging as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      service.createReservation('tenant-code', 'line-user-id', {
+        eventId: 'event-id',
+        name: '名前',
+        grade: '大学2年',
+        gender: '女性',
+      }),
+    ).resolves.toEqual(
+      expect.objectContaining({ id: 'reservation-id', status: 'reserved' }),
+    );
+  });
+
   it('rejects a male reservation when the male capacity is full without creating a waitlist entry', async () => {
     const member = {
       id: 'member-id',
