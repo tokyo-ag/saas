@@ -12,7 +12,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LineMessagingService } from '../line-messaging/line-messaging.service';
 import { StripeService } from '../stripe/stripe.service';
 import { PLAN_LIMITS } from '../config/plan-limits';
-import { EventSocialProofService } from '../event-social-proof/event-social-proof.service';
+import {
+  EventSocialProofService,
+  normalizeEventSocialProofSettings,
+} from '../event-social-proof/event-social-proof.service';
 export class CreateReservationDto {
   @IsString() eventId!: string;
   @IsOptional() @IsString() name?: string;
@@ -172,12 +175,11 @@ export class LiffService {
     });
     const socialProofInputs =
       await this.eventSocialProofService.expandForCollab(events);
-    const socialProofByEvent =
-      await this.eventSocialProofService.buildForEvents(
-        tenantId,
-        tenant?.eventSocialProofSettings,
-        socialProofInputs,
-      );
+    const socialProofByEvent = this.eventSocialProofService.buildForEvents(
+      tenantId,
+      tenant?.eventSocialProofSettings,
+      socialProofInputs,
+    );
 
     return events.map((e) => ({
       id: e.id,
@@ -342,12 +344,11 @@ export class LiffService {
           reservations,
         },
       ]);
-    const socialProofByEvent =
-      await this.eventSocialProofService.buildForEvents(
-        tenantId,
-        tenant?.eventSocialProofSettings,
-        socialProofInputs,
-      );
+    const socialProofByEvent = this.eventSocialProofService.buildForEvents(
+      tenantId,
+      tenant?.eventSocialProofSettings,
+      socialProofInputs,
+    );
 
     return {
       ...event,
@@ -356,6 +357,9 @@ export class LiffService {
       reservedCountMale,
       reservedCountFemale,
       socialProof: socialProofByEvent.get(event.id) ?? null,
+      genderCapacityRevealThreshold: normalizeEventSocialProofSettings(
+        tenant?.eventSocialProofSettings,
+      ).genderCapacityRevealThreshold,
     };
   }
 

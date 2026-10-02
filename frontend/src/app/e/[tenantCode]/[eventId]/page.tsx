@@ -30,6 +30,7 @@ type EventDetail = {
   reservedCountMale?: number;
   reservedCountFemale?: number;
   socialProof?: EventSocialProof | null;
+  genderCapacityRevealThreshold?: number;
   imageUrl?: string;
   iconUrl?: string;
   category?: string | null;
@@ -547,7 +548,7 @@ export default async function PublicEventPage({
                       ['男性', event.capacityMale, event.reservedCountMale],
                       ['女性', event.capacityFemale, event.reservedCountFemale],
                     ] as const).map(([label, capacity, reservedCountForGender]) => {
-                      const status = genderCapacityStatus(label, capacity, reservedCountForGender);
+                      const status = genderCapacityStatus(label, capacity, reservedCountForGender, event.genderCapacityRevealThreshold);
                       if (!status) return null;
                       return (
                         <p

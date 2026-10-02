@@ -779,17 +779,10 @@ export interface LiffEvent {
   category?: string | null;
   categories?: string[];
   socialProof?: EventSocialProof | null;
+  genderCapacityRevealThreshold?: number;
 }
 
-export type EventSocialProofKind =
-  | 'balanced'
-  | 'female_high'
-  | 'female_above_average'
-  | 'ratio_3_2'
-  | 'both_genders'
-  | 'size'
-  | 'above_average'
-  | 'combined';
+export type EventSocialProofKind = 'balanced' | 'ratio_3_2' | 'size' | 'combined';
 
 export interface EventSocialProof {
   kind: EventSocialProofKind;
@@ -801,38 +794,11 @@ export interface EventSocialProofRule {
   label: string;
 }
 
-export interface EventSocialProofSizeTier extends EventSocialProofRule {
-  min:
-    | 40
-    | 50
-    | 60
-    | 70
-    | 80
-    | 90
-    | 100
-    | 110
-    | 120
-    | 130
-    | 140
-    | 150
-    | 160
-    | 170
-    | 180
-    | 190
-    | 200;
-}
-
 export interface EventSocialProofSettings {
   enabled: boolean;
   minGenderSample: number;
   balanced: EventSocialProofRule;
-  femaleHigh: EventSocialProofRule;
-  femaleAboveAverage: EventSocialProofRule & {
-    historyCount: number;
-    minimumIncreasePercentagePoints: number;
-  };
   ratio32: EventSocialProofRule;
-  bothGenders: EventSocialProofRule;
   balanceDifference4To9: number;
   balanceDifference10To39: number;
   balanceDifference40To69: number;
@@ -840,12 +806,8 @@ export interface EventSocialProofSettings {
   balanceDifference100PlusPercent: number;
   ratio32MinMalePercent: number;
   ratio32MaxMalePercent: number;
-  sizeTiers: EventSocialProofSizeTier[];
-  aboveAverage: EventSocialProofRule & {
-    historyCount: number;
-    minimumIncreaseCount: number;
-    minimumIncreasePercent: number;
-  };
+  minParticipantsForVolume: number;
+  genderCapacityRevealThreshold: number;
 }
 
 export interface LiffTenantReview {
@@ -1096,26 +1058,26 @@ export function formatEventSchedule(heldAt: string, endAt?: string | null): stri
   return `${datePart}${startTime}～${endTime}`;
 }
 
-// 男女別定員の残り枠表示。参加者には「残り15人」を切るまでは具体的な人数を見せず、
-// それより余裕がある間は「空きあり」とだけ伝える。0以下になったら満員メッセージに切り替える。
-const GENDER_CAPACITY_REVEAL_THRESHOLD = 15;
-
+// 男女別定員の残り枠表示。しきい値（revealThreshold、既定20）を切るまでは
+// 「募集中」とだけ伝え、具体的な残数は出さない。0以下になったら満員メッセージに切り替える。
+// しきい値は社会的証明CMS設定（genderCapacityRevealThreshold）で管理者が調整できる。
 export type GenderCapacityState = 'full' | 'low' | 'available';
 
 export function genderCapacityStatus(
   genderLabel: '男性' | '女性',
   capacity: number | null | undefined,
   reservedCount: number | null | undefined,
+  revealThreshold = 20,
 ): { label: string; state: GenderCapacityState } | null {
   if (capacity == null || reservedCount == null) return null;
   const remaining = capacity - reservedCount;
   if (remaining <= 0) {
     return { label: `${genderLabel}枠満員になりました！`, state: 'full' };
   }
-  if (remaining <= GENDER_CAPACITY_REVEAL_THRESHOLD) {
-    return { label: `${genderLabel}枠残り${remaining}人`, state: 'low' };
+  if (remaining <= revealThreshold) {
+    return { label: `${genderLabel}残り枠${remaining}名`, state: 'low' };
   }
-  return { label: `${genderLabel}枠空きあり○`, state: 'available' };
+  return { label: `${genderLabel}募集中`, state: 'available' };
 }
 
 export interface PublicTenant {

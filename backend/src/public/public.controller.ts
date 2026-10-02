@@ -13,7 +13,10 @@ import { IsOptional, IsString, IsBoolean, MaxLength } from 'class-validator';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BlogService } from '../blog/blog.service';
-import { EventSocialProofService } from '../event-social-proof/event-social-proof.service';
+import {
+  EventSocialProofService,
+  normalizeEventSocialProofSettings,
+} from '../event-social-proof/event-social-proof.service';
 import { CollabService } from '../collab/collab.service';
 
 class UpdateRosterReservationDto {
@@ -827,12 +830,11 @@ export class PublicController {
           reservations: event.reservations,
         },
       ]);
-    const socialProofByEvent =
-      await this.eventSocialProofService.buildForEvents(
-        event.tenantId,
-        event.tenant.eventSocialProofSettings,
-        socialProofInputs,
-      );
+    const socialProofByEvent = this.eventSocialProofService.buildForEvents(
+      event.tenantId,
+      event.tenant.eventSocialProofSettings,
+      socialProofInputs,
+    );
     return {
       id: event.id,
       title: event.title,
@@ -854,6 +856,9 @@ export class PublicController {
       reservedCountMale,
       reservedCountFemale,
       socialProof: socialProofByEvent.get(event.id) ?? null,
+      genderCapacityRevealThreshold: normalizeEventSocialProofSettings(
+        event.tenant.eventSocialProofSettings,
+      ).genderCapacityRevealThreshold,
       imageUrl: event.imageUrl,
       iconUrl: event.iconUrl,
       category: event.category,
@@ -1047,12 +1052,11 @@ export class PublicController {
 
     const socialProofInputs =
       await this.eventSocialProofService.expandForCollab(tenant.events);
-    const socialProofByEvent =
-      await this.eventSocialProofService.buildForEvents(
-        tenant.id,
-        tenant.eventSocialProofSettings,
-        socialProofInputs,
-      );
+    const socialProofByEvent = this.eventSocialProofService.buildForEvents(
+      tenant.id,
+      tenant.eventSocialProofSettings,
+      socialProofInputs,
+    );
 
     const tenantName = tenant.lineDisplayName ?? tenant.name;
     const publicTenant = {

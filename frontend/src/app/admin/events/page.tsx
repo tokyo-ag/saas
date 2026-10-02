@@ -22,7 +22,7 @@ const reserveViewOptions = [
 
 type ReservationActionStyle = 'comiu' | 'line';
 type DisplayFields = { location: boolean; price: boolean; capacity: boolean; description: boolean };
-type SocialProofRuleKey = 'balanced' | 'femaleHigh' | 'ratio32' | 'bothGenders';
+type SocialProofRuleKey = 'balanced' | 'ratio32';
 
 const DEFAULT_DISPLAY_FIELDS: DisplayFields = { location: true, price: true, capacity: false, description: true };
 
@@ -209,13 +209,6 @@ export default function EventsPage() {
     setSocialProofSettings((current) => ({
       ...current,
       [key]: { ...current[key], ...patch },
-    }));
-  }
-
-  function updateSocialProofTier(min: EventSocialProofSettings['sizeTiers'][number]['min'], patch: Partial<EventSocialProofSettings['sizeTiers'][number]>) {
-    setSocialProofSettings((current) => ({
-      ...current,
-      sizeTiers: current.sizeTiers.map((tier) => tier.min === min ? { ...tier, ...patch } : tier),
     }));
   }
 
@@ -509,7 +502,8 @@ export default function EventsPage() {
               <div>
                 <p className="text-xs font-bold text-gray-700">イベントカードの注目表示</p>
                 <p className="mt-0.5 text-[11px] leading-relaxed text-gray-400">
-                  予約ページや公開ページで男女比・参加規模を表示します（定員の表示がある場合はそちらが優先されます）。該当情報がないイベントには表示しません。
+                  定員を設定しているイベントは「男性／女性募集中」→残りわずかで具体的な残数、満員で満員表示に切り替わります。
+                  定員がないイベントは、はっきり判定できる男女比（半々・約3:2）と、現在の参加予定人数を表示します。
                 </p>
               </div>
               <button
@@ -526,13 +520,11 @@ export default function EventsPage() {
             {socialProofSettings.enabled && (
               <div className="mt-4 space-y-4 border-t border-gray-100 pt-4">
                 <div>
-                  <p className="mb-2 text-[11px] font-bold text-gray-500">表示する判定</p>
+                  <p className="mb-2 text-[11px] font-bold text-gray-500">男女比の表示（定員がないイベントのみ）</p>
                   <div className="flex flex-wrap gap-2">
                     {([
                       ['balanced', '男女比半々'],
-                      ['femaleHigh', '女性参加率高め'],
                       ['ratio32', '男女比約3:2'],
-                      ['bothGenders', '男女とも参加予定'],
                     ] as const).map(([key, label]) => {
                       const enabled = socialProofSettings[key].enabled;
                       return (
@@ -546,43 +538,41 @@ export default function EventsPage() {
                         </button>
                       );
                     })}
-                    <button
-                      type="button"
-                      onClick={() => setSocialProofSettings((current) => ({
-                        ...current,
-                        aboveAverage: { ...current.aboveAverage, enabled: !current.aboveAverage.enabled },
-                      }))}
-                      className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${socialProofSettings.aboveAverage.enabled ? 'border-[#06C755] bg-[#06C755]/8 text-[#06C755]' : 'border-gray-200 bg-gray-50 text-gray-400 line-through'}`}
-                    >
-                      いつもより参加者多め！
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSocialProofSettings((current) => ({
-                        ...current,
-                        femaleAboveAverage: { ...current.femaleAboveAverage, enabled: !current.femaleAboveAverage.enabled },
-                      }))}
-                      className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${socialProofSettings.femaleAboveAverage.enabled ? 'border-[#06C755] bg-[#06C755]/8 text-[#06C755]' : 'border-gray-200 bg-gray-50 text-gray-400 line-through'}`}
-                    >
-                      いつもより女性参加率高めです！
-                    </button>
                   </div>
+                  <p className="mt-2 text-[10px] leading-relaxed text-gray-400">
+                    上記のどちらにも当てはまらないくらい偏っている場合は、何も表示しません。
+                  </p>
                 </div>
 
-                <div>
-                  <p className="mb-2 text-[11px] font-bold text-gray-500">参加規模</p>
-                  <div className="flex flex-wrap gap-2">
-                    {[...socialProofSettings.sizeTiers].sort((a, b) => a.min - b.min).map((tier) => (
-                      <button
-                        key={tier.min}
-                        type="button"
-                        onClick={() => updateSocialProofTier(tier.min, { enabled: !tier.enabled })}
-                        className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${tier.enabled ? 'border-[#06C755] bg-[#06C755]/8 text-[#06C755]' : 'border-gray-200 bg-gray-50 text-gray-400 line-through'}`}
-                      >
-                        {tier.min}人以上
-                      </button>
-                    ))}
-                  </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="text-[11px] font-medium text-gray-500">
+                    「現在◯人参加予定！」を出す最低人数
+                    <input
+                      type="number"
+                      min={1}
+                      max={1000}
+                      value={socialProofSettings.minParticipantsForVolume}
+                      onChange={(event) => setSocialProofSettings((current) => ({
+                        ...current,
+                        minParticipantsForVolume: Number(event.target.value),
+                      }))}
+                      className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
+                    />
+                  </label>
+                  <label className="text-[11px] font-medium text-gray-500">
+                    定員設定時、残り枠の人数を出し始める残数
+                    <input
+                      type="number"
+                      min={0}
+                      max={1000}
+                      value={socialProofSettings.genderCapacityRevealThreshold}
+                      onChange={(event) => setSocialProofSettings((current) => ({
+                        ...current,
+                        genderCapacityRevealThreshold: Number(event.target.value),
+                      }))}
+                      className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
+                    />
+                  </label>
                 </div>
 
                 <details className="rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2">
@@ -590,9 +580,7 @@ export default function EventsPage() {
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     {([
                       ['balanced', '男女比が半々'],
-                      ['femaleHigh', '女性が多い'],
                       ['ratio32', '男女比が約3:2'],
-                      ['bothGenders', '男女とも参加'],
                     ] as const).map(([key, label]) => (
                       <label key={key} className="text-[11px] font-medium text-gray-500">
                         {label}
@@ -604,49 +592,6 @@ export default function EventsPage() {
                           className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
                         />
                       </label>
-                    ))}
-                    <label className="text-[11px] font-medium text-gray-500">
-                      平均より多い
-                      <input
-                        type="text"
-                        maxLength={40}
-                        value={socialProofSettings.aboveAverage.label}
-                        onChange={(event) => setSocialProofSettings((current) => ({
-                          ...current,
-                          aboveAverage: { ...current.aboveAverage, label: event.target.value },
-                        }))}
-                        className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
-                      />
-                    </label>
-                    <label className="text-[11px] font-medium text-gray-500">
-                      女性参加率が平均より高い
-                      <input
-                        type="text"
-                        maxLength={40}
-                        value={socialProofSettings.femaleAboveAverage.label}
-                        onChange={(event) => setSocialProofSettings((current) => ({
-                          ...current,
-                          femaleAboveAverage: { ...current.femaleAboveAverage, label: event.target.value },
-                        }))}
-                        className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
-                      />
-                    </label>
-                  </div>
-                  <div className="mt-3 space-y-2">
-                    {[...socialProofSettings.sizeTiers].sort((a, b) => a.min - b.min).map((tier) => (
-                      <div key={tier.min} className="grid gap-2 sm:grid-cols-[70px_1fr] sm:items-end">
-                        <span className="pb-2 text-[11px] font-bold text-gray-500">{tier.min}人～</span>
-                        <label className="text-[10px] text-gray-400">
-                          単独表示
-                          <input
-                            type="text"
-                            maxLength={40}
-                            value={tier.label}
-                            onChange={(event) => updateSocialProofTier(tier.min, { label: event.target.value })}
-                            className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
-                          />
-                        </label>
-                      </div>
                     ))}
                   </div>
                 </details>
@@ -683,63 +628,6 @@ export default function EventsPage() {
                       </label>
                     ))}
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    <label className="text-[10px] font-medium text-gray-500">
-                      比較する過去イベント数
-                      <input
-                        type="number"
-                        min={3}
-                        max={30}
-                        value={socialProofSettings.aboveAverage.historyCount}
-                        onChange={(event) => setSocialProofSettings((current) => ({ ...current, aboveAverage: { ...current.aboveAverage, historyCount: Number(event.target.value) } }))}
-                        className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
-                      />
-                    </label>
-                    <label className="text-[10px] font-medium text-gray-500">
-                      平均より多い最低人数
-                      <input
-                        type="number"
-                        min={1}
-                        max={100}
-                        value={socialProofSettings.aboveAverage.minimumIncreaseCount}
-                        onChange={(event) => setSocialProofSettings((current) => ({ ...current, aboveAverage: { ...current.aboveAverage, minimumIncreaseCount: Number(event.target.value) } }))}
-                        className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
-                      />
-                    </label>
-                    <label className="text-[10px] font-medium text-gray-500">
-                      平均より多い最低率（%）
-                      <input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={socialProofSettings.aboveAverage.minimumIncreasePercent}
-                        onChange={(event) => setSocialProofSettings((current) => ({ ...current, aboveAverage: { ...current.aboveAverage, minimumIncreasePercent: Number(event.target.value) } }))}
-                        className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
-                      />
-                    </label>
-                    <label className="text-[10px] font-medium text-gray-500">
-                      女性比率の比較イベント数
-                      <input
-                        type="number"
-                        min={3}
-                        max={30}
-                        value={socialProofSettings.femaleAboveAverage.historyCount}
-                        onChange={(event) => setSocialProofSettings((current) => ({ ...current, femaleAboveAverage: { ...current.femaleAboveAverage, historyCount: Number(event.target.value) } }))}
-                        className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
-                      />
-                    </label>
-                    <label className="text-[10px] font-medium text-gray-500">
-                      女性比率の最低上昇幅（ポイント）
-                      <input
-                        type="number"
-                        min={1}
-                        max={50}
-                        value={socialProofSettings.femaleAboveAverage.minimumIncreasePercentagePoints}
-                        onChange={(event) => setSocialProofSettings((current) => ({ ...current, femaleAboveAverage: { ...current.femaleAboveAverage, minimumIncreasePercentagePoints: Number(event.target.value) } }))}
-                        className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
-                      />
-                    </label>
-                  </div>
                 </details>
 
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#06C755]/20 bg-[#06C755]/5 px-3 py-2">
@@ -747,7 +635,10 @@ export default function EventsPage() {
                     <p className="text-[10px] font-bold text-gray-400">表示例</p>
                     <p className="text-xs font-bold text-[#06C755]">{socialProofSettings.balanced.label}</p>
                     <p className="text-xs font-bold text-[#06C755]">
-                      {socialProofSettings.sizeTiers.find((tier) => tier.min === 50)?.label ?? '50人以上参加予定'}
+                      現在{socialProofSettings.minParticipantsForVolume}人参加予定！
+                    </p>
+                    <p className="text-xs font-bold text-[#06C755]">
+                      男性残り枠{socialProofSettings.genderCapacityRevealThreshold}名（定員設定時）
                     </p>
                   </div>
                   <button

@@ -22,115 +22,66 @@ function event(
 }
 
 describe('event social proof', () => {
-  it('treats a 60:40 split at 100 known attendees as balanced', () => {
+  it('treats a 60:40 split at 100 known attendees as balanced, combined with the current headcount', () => {
     expect(
-      buildEventSocialProof(
-        event(60, 40),
-        [],
-        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
-      )?.text,
-    ).toBe('男女比半々\n100人以上参加予定');
+      buildEventSocialProof(event(60, 40), DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS)
+        ?.text,
+    ).toBe('男女比半々\n現在100人参加予定！');
   });
 
-  it('uses the 3:2 label below 100 when the configured balance difference is exceeded', () => {
+  it('uses the 3:2 label when the configured balance difference is exceeded', () => {
     expect(
-      buildEventSocialProof(
-        event(30, 20),
-        [],
-        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
-      )?.text,
-    ).toBe('男女比約3:2\n50人以上参加予定');
+      buildEventSocialProof(event(30, 20), DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS)
+        ?.text,
+    ).toBe('男女比約3:2\n現在50人参加予定！');
   });
 
-  it('shows the female-high label only outside the balanced tolerance', () => {
+  it('hides the gender line when the skew does not match balanced or 3:2 (female-leaning)', () => {
     expect(
-      buildEventSocialProof(
-        event(10, 20),
-        [],
-        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
-      )?.text,
-    ).toBe('女性参加率高め！');
+      buildEventSocialProof(event(10, 20), DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS)
+        ?.text,
+    ).toBe('現在30人参加予定！');
   });
 
-  it('combines the female-high and size labels without awkward punctuation', () => {
+  it('hides the gender line when male-leaning but outside the 3:2 range', () => {
     expect(
-      buildEventSocialProof(
-        event(15, 35),
-        [],
-        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
-      )?.text,
-    ).toBe('女性参加率高め！\n50人以上参加予定');
+      buildEventSocialProof(event(27, 3), DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS)
+        ?.text,
+    ).toBe('現在30人参加予定！');
   });
 
-  it('returns no label when attendance has no useful signal', () => {
+  it('shows nothing when attendance is below both thresholds', () => {
     expect(
-      buildEventSocialProof(
-        event(0, 1),
-        [],
-        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
-      ),
+      buildEventSocialProof(event(0, 1), DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS),
     ).toBeNull();
   });
 
-  it('uses the above-average label below the size tiers', () => {
-    const history = Array.from({ length: 10 }, () => ({
-      category: 'バドミントン',
-      categories: ['バドミントン'],
-      reservedCount: 10,
-    }));
+  it('shows only the gender line when below the volume threshold', () => {
     expect(
-      buildEventSocialProof(
-        event(10, 8),
-        history,
-        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
-      )?.text,
-    ).toBe('男女比半々\nいつもより参加者多め！');
+      buildEventSocialProof(event(5, 5), DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS)
+        ?.text,
+    ).toBe('男女比半々');
   });
 
-  it('shows when the female participation rate is above the historical average', () => {
-    const history = Array.from({ length: 5 }, () => ({
-      category: 'バドミントン',
-      categories: ['バドミントン'],
-      reservedCount: 10,
-      maleCount: 7,
-      femaleCount: 3,
-    }));
+  it('shows only the current headcount once the volume threshold is reached without a clear gender signal', () => {
     expect(
-      buildEventSocialProof(
-        event(5, 5),
-        history,
-        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
-      )?.text,
-    ).toBe('いつもより女性参加率高めです！');
+      buildEventSocialProof(event(14, 6), DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS)
+        ?.text,
+    ).toBe('現在20人参加予定！');
   });
 
-  it('shows both historical comparison labels when both averages are exceeded', () => {
-    const history = Array.from({ length: 5 }, () => ({
-      category: 'バドミントン',
-      categories: ['バドミントン'],
-      reservedCount: 10,
-      maleCount: 7,
-      femaleCount: 3,
-    }));
+  it('does not show the headcount line one person below the configured minimum', () => {
     expect(
-      buildEventSocialProof(
-        event(6, 12),
-        history,
-        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
-      )?.text,
-    ).toBe('いつもより女性参加率高めです！\nいつもより参加者多め！');
+      buildEventSocialProof(event(0, 19), DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS),
+    ).toBeNull();
   });
 
   it('returns no label when the feature is disabled or nobody has reserved', () => {
     expect(
-      buildEventSocialProof(
-        event(0, 0),
-        [],
-        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
-      ),
+      buildEventSocialProof(event(0, 0), DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS),
     ).toBeNull();
     expect(
-      buildEventSocialProof(event(2, 2), [], {
+      buildEventSocialProof(event(20, 20), {
         ...DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
         enabled: false,
       }),
