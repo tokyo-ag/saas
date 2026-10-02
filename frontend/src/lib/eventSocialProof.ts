@@ -25,14 +25,27 @@ export const DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS: EventSocialProofSettings = {
   ratio32MinMalePercent: 55,
   ratio32MaxMalePercent: 65,
   sizeTiers: [
+    { min: 200, enabled: true, label: '200人以上参加予定' },
+    { min: 190, enabled: true, label: '190人以上参加予定' },
+    { min: 180, enabled: true, label: '180人以上参加予定' },
+    { min: 170, enabled: true, label: '170人以上参加予定' },
+    { min: 160, enabled: true, label: '160人以上参加予定' },
+    { min: 150, enabled: true, label: '150人以上参加予定' },
+    { min: 140, enabled: true, label: '140人以上参加予定' },
+    { min: 130, enabled: true, label: '130人以上参加予定' },
+    { min: 120, enabled: true, label: '120人以上参加予定' },
+    { min: 110, enabled: true, label: '110人以上参加予定' },
     { min: 100, enabled: true, label: '100人以上参加予定' },
+    { min: 90, enabled: true, label: '90人以上参加予定' },
+    { min: 80, enabled: true, label: '80人以上参加予定' },
+    { min: 70, enabled: true, label: '70人以上参加予定' },
     { min: 60, enabled: true, label: '60人以上参加予定' },
     { min: 50, enabled: true, label: '50人以上参加予定' },
     { min: 40, enabled: true, label: '40人以上参加予定' },
   ],
   aboveAverage: {
     enabled: true,
-    label: 'いつもより参加者多めです！',
+    label: 'いつもより参加者多め！',
     historyCount: 10,
     minimumIncreaseCount: 3,
     minimumIncreasePercent: 10,
@@ -83,7 +96,12 @@ export function normalizeEventSocialProofSettings(
       ...value?.aboveAverage,
       ...(() => {
         const rule = normalizeRule(value?.aboveAverage, defaults.aboveAverage);
-        return rule.label === 'いつもより参加多め'
+        const legacyLabels = [
+          'いつもより参加多め',
+          'いつもより参加者多めです！',
+          'いつもより参加者多めです。',
+        ];
+        return legacyLabels.includes(rule.label)
           ? { ...rule, label: defaults.aboveAverage.label }
           : rule;
       })(),

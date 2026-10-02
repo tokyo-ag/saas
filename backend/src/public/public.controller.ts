@@ -795,6 +795,7 @@ export class PublicController {
             linePictureUrl: true,
             iconUrl: true,
             liffId: true,
+            eventSocialProofSettings: true,
             publicPages: {
               take: 1,
               select: { footerText: true },
@@ -817,6 +818,21 @@ export class PublicController {
     const reservedCountFemale = event.reservations.filter(
       (r) => r.member.gender === '女性',
     ).length;
+    const socialProofInputs =
+      await this.eventSocialProofService.expandForCollab([
+        {
+          id: event.id,
+          category: event.category,
+          categories: event.categories,
+          reservations: event.reservations,
+        },
+      ]);
+    const socialProofByEvent =
+      await this.eventSocialProofService.buildForEvents(
+        event.tenantId,
+        event.tenant.eventSocialProofSettings,
+        socialProofInputs,
+      );
     return {
       id: event.id,
       title: event.title,
@@ -837,6 +853,7 @@ export class PublicController {
       reservedCount: event.reservations.length,
       reservedCountMale,
       reservedCountFemale,
+      socialProof: socialProofByEvent.get(event.id) ?? null,
       imageUrl: event.imageUrl,
       iconUrl: event.iconUrl,
       category: event.category,

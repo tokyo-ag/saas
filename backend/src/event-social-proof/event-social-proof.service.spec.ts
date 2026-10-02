@@ -84,7 +84,7 @@ describe('event social proof', () => {
         history,
         DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
       )?.text,
-    ).toBe('男女比半々\nいつもより参加者多めです！');
+    ).toBe('男女比半々\nいつもより参加者多め！');
   });
 
   it('shows when the female participation rate is above the historical average', () => {
@@ -118,7 +118,7 @@ describe('event social proof', () => {
         history,
         DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
       )?.text,
-    ).toBe('いつもより女性参加率高めです！\nいつもより参加者多めです！');
+    ).toBe('いつもより女性参加率高めです！\nいつもより参加者多め！');
   });
 
   it('returns no label when the feature is disabled or nobody has reserved', () => {

@@ -558,7 +558,13 @@ function ReservePageInner() {
                     return (
                       <p
                         key={label}
-                        className={`text-sm font-medium ${status.full ? 'text-red-500' : 'text-amber-500'}`}
+                        className={`text-sm font-medium ${
+                          status.state === 'full'
+                            ? 'text-red-500'
+                            : status.state === 'low'
+                              ? 'text-amber-500'
+                              : 'text-gray-500'
+                        }`}
                       >
                         {status.label}
                       </p>
@@ -566,6 +572,20 @@ function ReservePageInner() {
                   })}
                 </div>
               )}
+              {!myReservation &&
+                !isClosed &&
+                event.capacity == null &&
+                event.capacityMale == null &&
+                event.capacityFemale == null &&
+                event.socialProof?.text && (
+                  <div className="space-y-0.5">
+                    {event.socialProof.text.split('\n').map((line) => (
+                      <p key={line} className="text-sm font-medium text-amber-500">
+                        {line}
+                      </p>
+                    ))}
+                  </div>
+                )}
             </div>
           </div>
         )}

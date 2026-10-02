@@ -22,7 +22,24 @@ export interface EventSocialProofRule {
 }
 
 export interface EventSocialProofSizeTier extends EventSocialProofRule {
-  min: 40 | 50 | 60 | 70 | 80 | 90 | 100 | 110 | 120;
+  min:
+    | 40
+    | 50
+    | 60
+    | 70
+    | 80
+    | 90
+    | 100
+    | 110
+    | 120
+    | 130
+    | 140
+    | 150
+    | 160
+    | 170
+    | 180
+    | 190
+    | 200;
 }
 
 export interface EventSocialProofSettings {
@@ -73,6 +90,46 @@ export const DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS: EventSocialProofSettings = {
   ratio32MaxMalePercent: 65,
   sizeTiers: [
     {
+      min: 200,
+      enabled: true,
+      label: '200人以上参加予定',
+    },
+    {
+      min: 190,
+      enabled: true,
+      label: '190人以上参加予定',
+    },
+    {
+      min: 180,
+      enabled: true,
+      label: '180人以上参加予定',
+    },
+    {
+      min: 170,
+      enabled: true,
+      label: '170人以上参加予定',
+    },
+    {
+      min: 160,
+      enabled: true,
+      label: '160人以上参加予定',
+    },
+    {
+      min: 150,
+      enabled: true,
+      label: '150人以上参加予定',
+    },
+    {
+      min: 140,
+      enabled: true,
+      label: '140人以上参加予定',
+    },
+    {
+      min: 130,
+      enabled: true,
+      label: '130人以上参加予定',
+    },
+    {
       min: 120,
       enabled: true,
       label: '120人以上参加予定',
@@ -120,7 +177,7 @@ export const DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS: EventSocialProofSettings = {
   ],
   aboveAverage: {
     enabled: true,
-    label: 'いつもより参加者多めです！',
+    label: 'いつもより参加者多め！',
     historyCount: 10,
     minimumIncreaseCount: 3,
     minimumIncreasePercent: 10,
@@ -287,7 +344,12 @@ export function normalizeEventSocialProofSettings(
           aboveAverage,
           DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.aboveAverage,
         );
-        return rule.label === 'いつもより参加多め'
+        const legacyLabels = [
+          'いつもより参加多め',
+          'いつもより参加者多めです！',
+          'いつもより参加者多めです。',
+        ];
+        return legacyLabels.includes(rule.label)
           ? { ...rule, label: DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS.aboveAverage.label }
           : rule;
       })(),

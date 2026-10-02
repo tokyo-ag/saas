@@ -314,26 +314,40 @@ export class LiffService {
     });
     if (!event) throw new NotFoundException('Event not found');
 
-    const reservedCount = await this.prisma.reservation.count({
+    const reservations = await this.prisma.reservation.findMany({
       where: {
         eventId,
         status: { in: ['reserved', 'attended', 'waiting_payment'] },
       },
+      select: { member: { select: { gender: true } } },
     });
-    const reservedCountMale = await this.prisma.reservation.count({
-      where: {
-        eventId,
-        status: { in: ['reserved', 'attended', 'waiting_payment'] },
-        member: { gender: '男性' },
-      },
+    const reservedCount = reservations.length;
+    const reservedCountMale = reservations.filter(
+      (r) => r.member.gender === '男性',
+    ).length;
+    const reservedCountFemale = reservations.filter(
+      (r) => r.member.gender === '女性',
+    ).length;
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { eventSocialProofSettings: true },
     });
-    const reservedCountFemale = await this.prisma.reservation.count({
-      where: {
-        eventId,
-        status: { in: ['reserved', 'attended', 'waiting_payment'] },
-        member: { gender: '女性' },
-      },
-    });
+    const socialProofInputs =
+      await this.eventSocialProofService.expandForCollab([
+        {
+          id: event.id,
+          category: event.category,
+          categories: event.categories,
+          reservations,
+        },
+      ]);
+    const socialProofByEvent =
+      await this.eventSocialProofService.buildForEvents(
+        tenantId,
+        tenant?.eventSocialProofSettings,
+        socialProofInputs,
+      );
 
     return {
       ...event,
@@ -341,6 +355,7 @@ export class LiffService {
       reservedCount,
       reservedCountMale,
       reservedCountFemale,
+      socialProof: socialProofByEvent.get(event.id) ?? null,
     };
   }
 

@@ -7,7 +7,7 @@ import PublicFooter from '@/components/public/PublicFooter';
 import { SmartLiffButton } from '@/components/public/SmartLiffButton';
 import { SITE_URL, API_URL, IMAGE_BASE_URL, buildLiffUrl } from '@/lib/config';
 import { isLightHexColor, readableTextColor } from '@/lib/color';
-import { formatEventSchedule, genderCapacityStatus } from '@/lib/api';
+import { formatEventSchedule, genderCapacityStatus, EventSocialProof } from '@/lib/api';
 
 type EventDetail = {
   id: string;
@@ -29,6 +29,7 @@ type EventDetail = {
   reservedCount: number;
   reservedCountMale?: number;
   reservedCountFemale?: number;
+  socialProof?: EventSocialProof | null;
   imageUrl?: string;
   iconUrl?: string;
   category?: string | null;
@@ -551,7 +552,13 @@ export default async function PublicEventPage({
                       return (
                         <p
                           key={label}
-                          className={`text-sm font-medium ${status.full ? 'text-red-500' : 'text-amber-500'}`}
+                          className={`text-sm font-medium ${
+                            status.state === 'full'
+                              ? 'text-red-500'
+                              : status.state === 'low'
+                                ? 'text-amber-500'
+                                : 'text-gray-500'
+                          }`}
                         >
                           {status.label}
                         </p>
@@ -560,6 +567,23 @@ export default async function PublicEventPage({
                   </div>
                 </div>
               )}
+
+              {!isEnded &&
+                event.capacity == null &&
+                event.capacityMale == null &&
+                event.capacityFemale == null &&
+                event.socialProof?.text && (
+                  <div className="flex items-start gap-2">
+                    <span className="mt-0.5 text-gray-400">人</span>
+                    <div className="space-y-0.5">
+                      {event.socialProof.text.split('\n').map((line) => (
+                        <p key={line} className="text-sm font-medium text-amber-500">
+                          {line}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
             </div>
 
             {(event.description || event.descriptionMale || event.descriptionFemale) && (

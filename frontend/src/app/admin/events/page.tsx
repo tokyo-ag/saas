@@ -212,7 +212,7 @@ export default function EventsPage() {
     }));
   }
 
-  function updateSocialProofTier(min: 40 | 50 | 60 | 100, patch: Partial<EventSocialProofSettings['sizeTiers'][number]>) {
+  function updateSocialProofTier(min: EventSocialProofSettings['sizeTiers'][number]['min'], patch: Partial<EventSocialProofSettings['sizeTiers'][number]>) {
     setSocialProofSettings((current) => ({
       ...current,
       sizeTiers: current.sizeTiers.map((tier) => tier.min === min ? { ...tier, ...patch } : tier),
@@ -509,7 +509,7 @@ export default function EventsPage() {
               <div>
                 <p className="text-xs font-bold text-gray-700">イベントカードの注目表示</p>
                 <p className="mt-0.5 text-[11px] leading-relaxed text-gray-400">
-                  LINEログイン後の予約ページで、スレッド右下に男女比・参加規模を表示します。公開SEOページや、該当情報がないイベントには表示しません。
+                  予約ページや公開ページで男女比・参加規模を表示します（定員の表示がある場合はそちらが優先されます）。該当情報がないイベントには表示しません。
                 </p>
               </div>
               <button
@@ -554,7 +554,7 @@ export default function EventsPage() {
                       }))}
                       className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${socialProofSettings.aboveAverage.enabled ? 'border-[#06C755] bg-[#06C755]/8 text-[#06C755]' : 'border-gray-200 bg-gray-50 text-gray-400 line-through'}`}
                     >
-                      いつもより参加者多めです！
+                      いつもより参加者多め！
                     </button>
                     <button
                       type="button"
