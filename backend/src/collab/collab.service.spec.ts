@@ -9,6 +9,7 @@ describe('CollabService', () => {
     reservation: {
       findMany: jest.fn(),
       findFirst: jest.fn(),
+      update: jest.fn(),
     },
     collabDuplicateOverride: {
       upsert: jest.fn(),
@@ -322,5 +323,48 @@ describe('CollabService', () => {
         update: { isDuplicate: true },
       }),
     );
+  });
+
+  it('updates the referrer and comment for a reservation in the group', async () => {
+    prisma.collabGroup.findFirst.mockResolvedValue(group());
+    prisma.reservation.findFirst.mockResolvedValue({
+      id: 'r1',
+      eventId: 'event-a',
+    });
+    prisma.reservation.update.mockResolvedValue({
+      id: 'r1',
+      referrer: '田中',
+      staffNote: '受付で会費を確認',
+    });
+
+    await expect(
+      service.updateReservationDetails('token', 'r1', {
+        referrer: ' 田中 ',
+        staffNote: ' 受付で会費を確認 ',
+      }),
+    ).resolves.toEqual({
+      id: 'r1',
+      referrer: '田中',
+      staffNote: '受付で会費を確認',
+    });
+    expect(prisma.reservation.update).toHaveBeenCalledWith({
+      where: { id: 'r1' },
+      data: {
+        referrer: '田中',
+        staffNote: '受付で会費を確認',
+      },
+    });
+  });
+
+  it('rejects a referrer or comment update outside the group', async () => {
+    prisma.collabGroup.findFirst.mockResolvedValue(group());
+    prisma.reservation.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.updateReservationDetails('token', 'not-in-group', {
+        staffNote: '更新不可',
+      }),
+    ).rejects.toThrow(NotFoundException);
+    expect(prisma.reservation.update).not.toHaveBeenCalled();
   });
 });

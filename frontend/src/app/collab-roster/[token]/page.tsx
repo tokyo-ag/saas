@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { api, CollabRoster, CollabRosterParticipant } from '@/lib/api';
 import { ReservationBadge } from '@/components/ui/StatusBadge';
 
 const POLL_INTERVAL_MS = 15000;
+type EditableField = 'referrer' | 'staffNote';
 
 function summarize(participants: CollabRosterParticipant[]) {
   const active = participants.filter((p) => p.status !== 'waitlisted');
@@ -109,6 +110,13 @@ export default function CollabRosterPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [tab, setTab] = useState<string>('all');
+  const [edits, setEdits] = useState<Record<string, Partial<Record<EditableField, string>>>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const editsRef = useRef(edits);
+
+  useEffect(() => {
+    editsRef.current = edits;
+  }, [edits]);
 
   useEffect(() => {
     let cancelled = false;
@@ -133,8 +141,65 @@ export default function CollabRosterPage() {
     };
   }, [token]);
 
+  useEffect(() => {
+    function flushPendingEdits() {
+      Object.entries(editsRef.current).forEach(([id, fields]) => {
+        Object.entries(fields).forEach(([field, value]) => {
+          if (value === undefined) return;
+          api.public
+            .updateCollabRosterReservation(token, id, { [field]: value }, { keepalive: true })
+            .catch(() => {});
+        });
+      });
+    }
+    window.addEventListener('pagehide', flushPendingEdits);
+    window.addEventListener('beforeunload', flushPendingEdits);
+    return () => {
+      window.removeEventListener('pagehide', flushPendingEdits);
+      window.removeEventListener('beforeunload', flushPendingEdits);
+    };
+  }, [token]);
+
   function reload() {
     api.public.collabRoster(token).then(setRoster).catch(() => {});
+  }
+
+  function fieldValue(participant: CollabRosterParticipant, field: EditableField) {
+    return edits[participant.id]?.[field] ?? participant[field] ?? '';
+  }
+
+  function handleFieldChange(id: string, field: EditableField, value: string) {
+    setEdits((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+  }
+
+  async function handleFieldBlur(id: string, field: EditableField) {
+    const value = edits[id]?.[field];
+    if (value === undefined) return;
+    setSavingId(id);
+    try {
+      await api.public.updateCollabRosterReservation(token, id, { [field]: value });
+      setRoster((prev) => prev ? {
+        ...prev,
+        participants: prev.participants.map((participant) =>
+          participant.id === id
+            ? { ...participant, [field]: value.trim() || null }
+            : participant,
+        ),
+      } : prev);
+      setEdits((prev) => {
+        const next = { ...prev };
+        if (next[id]) {
+          const { [field]: _removed, ...rest } = next[id]!;
+          if (Object.keys(rest).length === 0) delete next[id];
+          else next[id] = rest;
+        }
+        return next;
+      });
+    } catch {
+      alert('保存に失敗しました');
+    } finally {
+      setSavingId(null);
+    }
   }
 
   if (loading) {
@@ -236,6 +301,33 @@ export default function CollabRosterPage() {
                             <div className="mt-2 pl-8">
                               <DuplicateBadge participant={p} token={token} onChanged={reload} />
                             </div>
+                            <div className="mt-3 grid gap-2 pl-8">
+                              <label className="block">
+                                <span className="text-[10px] font-semibold text-gray-400">紹介者</span>
+                                <input
+                                  value={fieldValue(p, 'referrer')}
+                                  onChange={(e) => handleFieldChange(p.id, 'referrer', e.target.value)}
+                                  onBlur={() => handleFieldBlur(p.id, 'referrer')}
+                                  disabled={savingId === p.id}
+                                  maxLength={100}
+                                  placeholder="例：〇〇の紹介"
+                                  className="mt-0.5 w-full rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755] disabled:bg-gray-50"
+                                />
+                              </label>
+                              <label className="block">
+                                <span className="text-[10px] font-semibold text-gray-400">コメント</span>
+                                <textarea
+                                  value={fieldValue(p, 'staffNote')}
+                                  onChange={(e) => handleFieldChange(p.id, 'staffNote', e.target.value)}
+                                  onBlur={() => handleFieldBlur(p.id, 'staffNote')}
+                                  disabled={savingId === p.id}
+                                  maxLength={1000}
+                                  rows={2}
+                                  placeholder="運営用のコメントを自由に入力"
+                                  className="mt-0.5 w-full resize-y rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755] disabled:bg-gray-50"
+                                />
+                              </label>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -253,6 +345,8 @@ export default function CollabRosterPage() {
                       <th className="px-6 py-3 text-left">年齢</th>
                       <th className="px-6 py-3 text-left">性別</th>
                       <th className="px-6 py-3 text-left">ステータス</th>
+                      <th className="px-6 py-3 text-left">紹介者</th>
+                      <th className="px-6 py-3 text-left">コメント</th>
                       <th className="px-6 py-3 text-left">重複</th>
                     </tr>
                   </thead>
@@ -261,7 +355,7 @@ export default function CollabRosterPage() {
                     return (
                       <tbody key={tenantId} className="divide-y divide-gray-100">
                         <tr className="bg-gray-50">
-                          <td colSpan={5} className="px-6 py-2">
+                          <td colSpan={7} className="px-6 py-2">
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-xs font-bold text-gray-700">{group.tenantName}</span>
                               <span className="text-[11px] text-gray-500">
@@ -287,6 +381,29 @@ export default function CollabRosterPage() {
                             <td className="px-6 py-4 text-gray-600">{p.gender ?? '-'}</td>
                             <td className="px-6 py-4">
                               <ReservationBadge status={p.status} />
+                            </td>
+                            <td className="px-6 py-4 align-top">
+                              <input
+                                value={fieldValue(p, 'referrer')}
+                                onChange={(e) => handleFieldChange(p.id, 'referrer', e.target.value)}
+                                onBlur={() => handleFieldBlur(p.id, 'referrer')}
+                                disabled={savingId === p.id}
+                                maxLength={100}
+                                placeholder="例：〇〇の紹介"
+                                className="w-36 rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755] disabled:bg-gray-50"
+                              />
+                            </td>
+                            <td className="px-6 py-4 align-top">
+                              <textarea
+                                value={fieldValue(p, 'staffNote')}
+                                onChange={(e) => handleFieldChange(p.id, 'staffNote', e.target.value)}
+                                onBlur={() => handleFieldBlur(p.id, 'staffNote')}
+                                disabled={savingId === p.id}
+                                maxLength={1000}
+                                rows={2}
+                                placeholder="運営用コメント"
+                                className="w-52 resize-y rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755] disabled:bg-gray-50"
+                              />
                             </td>
                             <td className="px-6 py-4">
                               <DuplicateBadge participant={p} token={token} onChanged={reload} />

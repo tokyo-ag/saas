@@ -271,6 +271,19 @@ export class PublicController {
     return this.collabService.getCombinedRoster(token);
   }
 
+  @Patch('collab-roster/:token/reservations/:reservationId')
+  updateCollabRosterReservation(
+    @Param('token') token: string,
+    @Param('reservationId') reservationId: string,
+    @Body() dto: UpdateRosterReservationDto,
+  ) {
+    return this.collabService.updateReservationDetails(
+      token,
+      reservationId,
+      dto,
+    );
+  }
+
   @Patch('collab-roster/:token/reservations/:reservationId/duplicate')
   setCollabDuplicate(
     @Param('token') token: string,

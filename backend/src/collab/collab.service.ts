@@ -146,6 +146,8 @@ export class CollabService {
           linePictureUrl: r.member.linePictureUrl,
           status: r.status,
           waitlistOrder: r.waitlistOrder,
+          referrer: r.referrer,
+          staffNote: r.staffNote,
           isDuplicateAuto: autoDuplicateIds.has(r.id),
           isDuplicateOverride: override,
           isDuplicate: override ?? autoDuplicateIds.has(r.id),
@@ -182,6 +184,31 @@ export class CollabService {
       update: { isDuplicate },
     });
     return { reservationId, isDuplicateOverride: isDuplicate };
+  }
+
+  async updateReservationDetails(
+    token: string,
+    reservationId: string,
+    data: { referrer?: string; staffNote?: string },
+  ) {
+    await this.findGroupForReservation(token, reservationId);
+    const updated = await this.prisma.reservation.update({
+      where: { id: reservationId },
+      data: {
+        ...(data.referrer !== undefined && {
+          referrer: data.referrer.trim() || null,
+        }),
+        ...(data.staffNote !== undefined && {
+          staffNote: data.staffNote.trim() || null,
+        }),
+      },
+    });
+
+    return {
+      id: updated.id,
+      referrer: updated.referrer,
+      staffNote: updated.staffNote,
+    };
   }
 
   async clearDuplicateOverride(token: string, reservationId: string) {

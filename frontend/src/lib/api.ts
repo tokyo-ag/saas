@@ -254,6 +254,16 @@ export const api = {
     staffViewEvent: (token: string, eventId: string) =>
       request<StaffViewEventDetail>(`/public/staff-view/${token}/events/${eventId}`),
     collabRoster: (token: string) => request<CollabRoster>(`/public/collab-roster/${token}`),
+    updateCollabRosterReservation: (
+      token: string,
+      reservationId: string,
+      data: { referrer?: string; staffNote?: string },
+      options?: { keepalive?: boolean },
+    ) =>
+      request<{ id: string; referrer: string | null; staffNote: string | null }>(
+        `/public/collab-roster/${token}/reservations/${reservationId}`,
+        { method: 'PATCH', body: JSON.stringify(data), keepalive: options?.keepalive },
+      ),
     setCollabDuplicate: (token: string, reservationId: string, isDuplicate: boolean) =>
       request<{ reservationId: string; isDuplicateOverride: boolean | null }>(
         `/public/collab-roster/${token}/reservations/${reservationId}/duplicate`,
@@ -1469,7 +1479,7 @@ export interface PublicRoster {
 }
 
 // 合同開催（コラボイベント）の統合名簿。複数テナントの予約をまたいで表示するが、
-// 参加者側には一切見せない運営専用ページでのみ使う。編集できるのは重複フラグだけ。
+// 参加者側には一切見せない運営専用ページでのみ使う。
 export interface CollabRosterParticipant {
   id: string;
   tenantId: string;
@@ -1483,6 +1493,8 @@ export interface CollabRosterParticipant {
   linePictureUrl: string | null;
   status: ReservationStatus;
   waitlistOrder: number | null;
+  referrer: string | null;
+  staffNote: string | null;
   isDuplicateAuto: boolean;
   isDuplicateOverride: boolean | null;
   isDuplicate: boolean;
