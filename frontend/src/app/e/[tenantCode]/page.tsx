@@ -227,7 +227,7 @@ export default async function TenantEventsPage({
           <ReservationViewShowcase
             accentColor={accentColor}
             buttonLabel="予約する"
-            viewStyle="card"
+            viewStyle={tenant.liffEventView}
             events={events}
             tenantCode={tenantCode}
             showButton={false}

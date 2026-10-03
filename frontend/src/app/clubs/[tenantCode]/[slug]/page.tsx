@@ -946,7 +946,7 @@ export default async function ClubCmsPage({
                 buttonLabel={reserveActionStyle === 'line' ? 'LINEで友達追加して予約する' : navLabels.reserve}
                 href={reserveActionStyle === 'line' ? lineReserveUrl : navReserveUrl}
                 tenantCode={page.tenant.code ?? tenantCode}
-                viewStyle="slider"
+                viewStyle={page.reserveViewStyle === 'card' ? 'slider' : page.reserveViewStyle}
                 events={reserveEvents}
                 lineMode={reserveActionStyle === 'line'}
                 showLocation={showLocation}
