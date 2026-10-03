@@ -147,7 +147,7 @@ const emptyForm: PublicPageInput = {
   heroTextWidth: 85,
   heroOverlayOpacity: 0,
   heroOverlayColor: '#000000',
-  reserveViewStyle: 'calendar',
+  reserveViewStyle: 'slider',
   fontFamily: 'mincho',
   titleFont: '',
   titleColor: '',
@@ -611,7 +611,6 @@ function HeaderImagePreview({
 
 export default function AdminPublicPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [reservationPageViewStyle, setReservationPageViewStyle] = useState('card');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [savedSlug, setSavedSlug] = useState<string | null>(null);
   const [form, setForm] = useState<PublicPageInput>(emptyForm);
@@ -981,11 +980,6 @@ export default function AdminPublicPage() {
     Promise.all([api.tenant.get(), api.publicPages.list()])
       .then(([tenantData, pageData]) => {
         setTenant(tenantData);
-        setReservationPageViewStyle(
-          ['calendar', 'card', 'thread'].includes(tenantData.liffEventView ?? '')
-            ? tenantData.liffEventView!
-            : 'card',
-        );
         void api.liff.events(tenantData.code ?? tenantData.id)
           .then(setReserveEvents)
           .catch(() => setReserveEvents([]));
@@ -1033,7 +1027,7 @@ export default function AdminPublicPage() {
             heroTextWidth: first.heroTextWidth ?? 85,
             heroOverlayOpacity: first.heroOverlayOpacity ?? 0,
             heroOverlayColor: first.heroOverlayColor ?? '#000000',
-            reserveViewStyle: first.reserveViewStyle ?? 'calendar',
+            reserveViewStyle: 'slider',
             fontFamily: first.fontFamily ?? 'mincho',
             titleFont: first.titleFont ?? '',
             titleColor: first.titleColor ?? '',
@@ -1434,12 +1428,7 @@ export default function AdminPublicPage() {
     // 初回作成時（savedSlugがまだ無い）だけは自由に編集できるようにし、
     // 既存ページの保存（値を変えていない場合も含む）からは常にロックする。
     const nextSlugLocked = form.slugLocked === true || savedSlug !== null;
-    const selectedReserveViewStyle = ['calendar', 'card', 'slider', 'thread'].includes(form.reserveViewStyle ?? '')
-      ? form.reserveViewStyle!
-      : 'calendar';
-    const selectedReservationPageViewStyle = ['calendar', 'card', 'thread'].includes(reservationPageViewStyle)
-      ? reservationPageViewStyle
-      : 'card';
+    const selectedReserveViewStyle = 'slider';
     const payload: PublicPageInput = {
       ...form,
       title: siteTitle, slug: nextSlug,
@@ -1555,11 +1544,7 @@ export default function AdminPublicPage() {
       const pageRequest = selectedId
         ? api.publicPages.update(selectedId, payload)
         : api.publicPages.create(payload);
-      const tenantRequest = tenant?.liffEventView === selectedReservationPageViewStyle
-        ? Promise.resolve(null)
-        : api.tenant.update({ liffEventView: selectedReservationPageViewStyle });
-      const [page, updatedTenant] = await Promise.all([pageRequest, tenantRequest]);
-      if (updatedTenant) setTenant(updatedTenant);
+      const page = await pageRequest;
       setSelectedId(page.id);
       setSavedSlug(page.slug || null);
       setForm((p) => ({ ...p, slug: page.slug || p.slug, slugLocked: nextSlugLocked }));
@@ -1839,51 +1824,14 @@ export default function AdminPublicPage() {
                 </div>
                 <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${hasReserveSection ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{hasReserveSection ? '表示' : '自動で非表示'}</span>
               </div>
-              <div className="space-y-1.5">
-                <p className="text-[11px] font-bold text-gray-500">WEBサイト内の表示</p>
-                <p className="text-[10px] text-gray-400">団体WEBページに埋め込むイベント一覧の見せ方です。</p>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {([
-                    { value: 'calendar', label: 'カレンダー' },
-                    { value: 'card', label: '2列カード' },
-                    { value: 'slider', label: '横スライド' },
-                    { value: 'thread', label: 'スレッド' },
-                  ] as const).map((option) => {
-                    const active = (form.reserveViewStyle || 'calendar') === option.value;
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => setForm((prev) => ({ ...prev, reserveViewStyle: option.value }))}
-                        className={`rounded-lg border px-2 py-2 text-xs font-bold transition ${active ? 'border-[#06C755] bg-green-50 text-green-700 ring-1 ring-[#06C755]/20' : 'border-gray-200 bg-white text-gray-500 hover:border-green-300'}`}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
+                  <p className="text-[11px] font-bold text-gray-500">WEBサイト内の表示</p>
+                  <p className="mt-1 text-xs font-bold text-gray-700">横スライド（1行）</p>
                 </div>
-              </div>
-              <div className="space-y-1.5">
-                <p className="text-[11px] font-bold text-gray-500">予約ページを開いた後の表示</p>
-                <p className="text-[10px] text-gray-400">「予約スケジュール一覧を見る」から開くページと、LINEログイン後の画面に反映されます。</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {([
-                    { value: 'calendar', label: 'カレンダー' },
-                    { value: 'card', label: '2列カード' },
-                    { value: 'thread', label: 'スレッド' },
-                  ] as const).map((option) => {
-                    const active = reservationPageViewStyle === option.value;
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => setReservationPageViewStyle(option.value)}
-                        className={`rounded-lg border px-2 py-2 text-xs font-bold transition ${active ? 'border-[#06C755] bg-green-50 text-green-700 ring-1 ring-[#06C755]/20' : 'border-gray-200 bg-white text-gray-500 hover:border-green-300'}`}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
+                  <p className="text-[11px] font-bold text-gray-500">予約ページSEOの表示</p>
+                  <p className="mt-1 text-xs font-bold text-gray-700">2列カード</p>
                 </div>
               </div>
               <div className="space-y-1.5">
@@ -3528,7 +3476,7 @@ export default function AdminPublicPage() {
                         <ReservationViewShowcase
                           accentColor={accentColor}
                           buttonLabel={reserveActionStyle === 'line' ? 'LINEで友達追加して予約する' : navLabels.reserve}
-                          viewStyle={form.reserveViewStyle}
+                          viewStyle="slider"
                           events={reserveEvents}
                           href={reserveActionStyle === 'line' ? (form.reserveLineUrl?.trim() || form.navContactUrl?.trim() || '#') : undefined}
                           lineMode={reserveActionStyle === 'line'}

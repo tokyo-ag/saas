@@ -691,7 +691,7 @@ export default function EventsPage() {
           {/* 表示スタイル */}
           <div className="rounded-xl border border-gray-200 bg-white">
             <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-              <span className="text-xs font-bold text-gray-500">予約ページの表示形式</span>
+              <span className="text-xs font-bold text-gray-500">LINEログイン後の表示形式</span>
               <div className="flex gap-1 rounded-lg border border-gray-200 p-0.5">
                 {reserveViewOptions.map((opt) => (
                   <button
