@@ -24,6 +24,17 @@ function groupByTenant(participants: CollabRosterParticipant[]) {
     if (!groups.has(p.tenantId)) groups.set(p.tenantId, { tenantName: p.tenantName, participants: [] });
     groups.get(p.tenantId)!.participants.push(p);
   }
+  for (const group of groups.values()) {
+    group.participants.sort((a, b) => {
+      const aReferrer = a.referrer?.trim() ?? '';
+      const bReferrer = b.referrer?.trim() ?? '';
+      if (aReferrer && !bReferrer) return -1;
+      if (!aReferrer && bReferrer) return 1;
+      const byReferrer = aReferrer.localeCompare(bReferrer, 'ja');
+      if (byReferrer !== 0) return byReferrer;
+      return (a.name ?? '').localeCompare(b.name ?? '', 'ja');
+    });
+  }
   return Array.from(groups.entries()).sort(([, a], [, b]) => a.tenantName.localeCompare(b.tenantName, 'ja'));
 }
 
@@ -50,15 +61,7 @@ function SummaryBar({ stats }: { stats: ReturnType<typeof summarize> }) {
   );
 }
 
-function DuplicateBadge({
-  participant,
-  token,
-  onChanged,
-}: {
-  participant: CollabRosterParticipant;
-  token: string;
-  onChanged: () => void;
-}) {
+function DuplicateBadge({ participant, token, onChanged }: { participant: CollabRosterParticipant; token: string; onChanged: () => void }) {
   const [saving, setSaving] = useState(false);
 
   async function cycle() {
@@ -77,14 +80,7 @@ function DuplicateBadge({
     }
   }
 
-  const label =
-    participant.isDuplicateOverride === true
-      ? '重複（手動）'
-      : participant.isDuplicateOverride === false
-        ? '重複なし（手動）'
-        : participant.isDuplicateAuto
-          ? '重複（自動）'
-          : null;
+  const label = participant.isDuplicateOverride === true ? '重複（手動）' : participant.isDuplicateOverride === false ? '重複なし（手動）' : participant.isDuplicateAuto ? '重複（自動）' : null;
 
   if (!label) {
     return (
@@ -94,13 +90,51 @@ function DuplicateBadge({
     );
   }
   return (
-    <button
-      onClick={cycle}
-      disabled={saving}
-      className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 disabled:opacity-50"
-    >
+    <button onClick={cycle} disabled={saving} className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 disabled:opacity-50">
       {label}
     </button>
+  );
+}
+
+function DuplicateAssignment({ participant, tenants, token, onChanged }: { participant: CollabRosterParticipant; tenants: CollabRoster['tenants']; token: string; onChanged: () => Promise<void> }) {
+  const [tenantId, setTenantId] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  async function assign() {
+    if (!tenantId) return;
+    setSaving(true);
+    try {
+      await api.public.assignCollabRosterTenant(token, participant.id, tenantId);
+      await onChanged();
+    } catch {
+      alert('団体への振り分けに失敗しました');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <DuplicateBadge participant={participant} token={token} onChanged={onChanged} />
+      <div className="flex min-w-48 items-center gap-1.5">
+        <select
+          value={tenantId}
+          onChange={(event) => setTenantId(event.target.value)}
+          disabled={saving}
+          className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755] disabled:bg-gray-50"
+        >
+          <option value="">団体を選択</option>
+          {tenants.map((tenant) => (
+            <option key={tenant.tenantId} value={tenant.tenantId}>
+              {tenant.tenantName}
+            </option>
+          ))}
+        </select>
+        <button type="button" onClick={assign} disabled={!tenantId || saving} className="shrink-0 rounded-lg bg-[#06C755] px-2.5 py-1.5 text-xs font-bold text-white disabled:opacity-40">
+          振り分け
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -111,7 +145,7 @@ export default function CollabRosterPage() {
   const [notFound, setNotFound] = useState(false);
   const [tab, setTab] = useState<string>('all');
   const [edits, setEdits] = useState<Record<string, Partial<Record<EditableField, string>>>>({});
-  const [savingId, setSavingId] = useState<string | null>(null);
+  const [savingAll, setSavingAll] = useState(false);
   const editsRef = useRef(edits);
 
   useEffect(() => {
@@ -146,9 +180,7 @@ export default function CollabRosterPage() {
       Object.entries(editsRef.current).forEach(([id, fields]) => {
         Object.entries(fields).forEach(([field, value]) => {
           if (value === undefined) return;
-          api.public
-            .updateCollabRosterReservation(token, id, { [field]: value }, { keepalive: true })
-            .catch(() => {});
+          api.public.updateCollabRosterReservation(token, id, { [field]: value }, { keepalive: true }).catch(() => {});
         });
       });
     }
@@ -160,8 +192,12 @@ export default function CollabRosterPage() {
     };
   }, [token]);
 
-  function reload() {
-    api.public.collabRoster(token).then(setRoster).catch(() => {});
+  async function reload() {
+    try {
+      setRoster(await api.public.collabRoster(token));
+    } catch {
+      // Keep the currently displayed roster when a background refresh fails.
+    }
   }
 
   function fieldValue(participant: CollabRosterParticipant, field: EditableField) {
@@ -172,34 +208,49 @@ export default function CollabRosterPage() {
     setEdits((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
   }
 
-  async function handleFieldBlur(id: string, field: EditableField) {
-    const value = edits[id]?.[field];
-    if (value === undefined) return;
-    setSavingId(id);
-    try {
-      await api.public.updateCollabRosterReservation(token, id, { [field]: value });
-      setRoster((prev) => prev ? {
-        ...prev,
-        participants: prev.participants.map((participant) =>
-          participant.id === id
-            ? { ...participant, [field]: value.trim() || null }
-            : participant,
-        ),
-      } : prev);
+  async function saveAll() {
+    const pending = Object.entries(edits).filter(([, fields]) => Object.keys(fields).length > 0);
+    if (pending.length === 0 || savingAll) return;
+
+    setSavingAll(true);
+    const results = await Promise.allSettled(pending.map(([id, fields]) => api.public.updateCollabRosterReservation(token, id, fields)));
+    const succeeded = new Map<string, Partial<Record<EditableField, string>>>();
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') succeeded.set(pending[index][0], pending[index][1]);
+    });
+
+    if (succeeded.size > 0) {
+      setRoster((prev) =>
+        prev
+          ? {
+              ...prev,
+              participants: prev.participants.map((participant) => {
+                const fields = succeeded.get(participant.id);
+                if (!fields) return participant;
+                return {
+                  ...participant,
+                  ...(fields.referrer !== undefined && {
+                    referrer: fields.referrer.trim() || null,
+                  }),
+                  ...(fields.staffNote !== undefined && {
+                    staffNote: fields.staffNote.trim() || null,
+                  }),
+                };
+              }),
+            }
+          : prev,
+      );
       setEdits((prev) => {
         const next = { ...prev };
-        if (next[id]) {
-          const { [field]: _removed, ...rest } = next[id]!;
-          if (Object.keys(rest).length === 0) delete next[id];
-          else next[id] = rest;
-        }
+        succeeded.forEach((_, id) => delete next[id]);
         return next;
       });
-    } catch {
-      alert('保存に失敗しました');
-    } finally {
-      setSavingId(null);
     }
+
+    if (succeeded.size !== pending.length) {
+      alert('一部の保存に失敗しました。未保存の内容は画面に残しています。');
+    }
+    setSavingAll(false);
   }
 
   if (loading) {
@@ -220,22 +271,22 @@ export default function CollabRosterPage() {
   }
 
   const { tenants, participants } = roster;
-  const filtered =
-    tab === 'all' ? participants : tab === 'dup' ? participants.filter((p) => p.isDuplicate) : participants.filter((p) => p.tenantId === tab);
+  const filtered = tab === 'all' ? participants : tab === 'dup' ? participants.filter((p) => p.isDuplicate) : participants.filter((p) => p.tenantId === tab);
   const overallStats = summarize(filtered);
   const tenantGroups = groupByTenant(filtered);
 
-  const tabs = [
-    { key: 'all', label: '全体' },
-    ...tenants.map((t) => ({ key: t.tenantId, label: t.tenantName })),
-    { key: 'dup', label: '重複' },
-  ];
+  const tabs = [{ key: 'all', label: '全体' }, ...tenants.map((t) => ({ key: t.tenantId, label: t.tenantName })), { key: 'dup', label: '重複' }];
 
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
-      <div className="bg-[#06C755] text-white px-4 py-5">
-        <p className="text-xs opacity-80">合同開催 参加者名簿</p>
-        <h1 className="text-base font-bold mt-1">{roster.group.label || tenants.map((t) => t.tenantName).join(' × ')}</h1>
+      <div className="flex items-center justify-between gap-4 bg-[#06C755] px-4 py-5 text-white">
+        <div className="min-w-0">
+          <p className="text-xs opacity-80">合同開催 参加者名簿</p>
+          <h1 className="mt-1 truncate text-base font-bold">{roster.group.label || tenants.map((t) => t.tenantName).join(' × ')}</h1>
+        </div>
+        <button type="button" onClick={saveAll} disabled={Object.keys(edits).length === 0 || savingAll} className="shrink-0 rounded-lg bg-white px-4 py-2 text-xs font-bold text-[#06C755] disabled:opacity-50">
+          {savingAll ? '保存中...' : '保存'}
+        </button>
       </div>
 
       <div className="px-4 pt-4">
@@ -244,9 +295,7 @@ export default function CollabRosterPage() {
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                tab === t.key ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 border border-gray-200'
-              }`}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${tab === t.key ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 border border-gray-200'}`}
             >
               {t.label}
             </button>
@@ -274,8 +323,8 @@ export default function CollabRosterPage() {
                       <div className="flex items-center justify-between gap-2 bg-gray-50 px-4 py-2">
                         <span className="text-xs font-bold text-gray-700">{group.tenantName}</span>
                         <span className="text-[11px] text-gray-500">
-                          {groupStats.total}人（男{groupStats.male}・女{groupStats.female}）
-                          {groupStats.waitlisted > 0 && ` ・未確定${groupStats.waitlisted}`}
+                          {groupStats.total}人（男{groupStats.male}・女
+                          {groupStats.female}）{groupStats.waitlisted > 0 && ` ・未確定${groupStats.waitlisted}`}
                         </span>
                       </div>
                       <div className="divide-y divide-gray-100">
@@ -283,11 +332,7 @@ export default function CollabRosterPage() {
                           <div key={p.id} className="p-4">
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex items-start gap-2">
-                                {p.linePictureUrl ? (
-                                  <img src={p.linePictureUrl} alt="" className="mt-0.5 h-6 w-6 shrink-0 rounded-full object-cover" />
-                                ) : (
-                                  <span className="mt-0.5 h-6 w-6 shrink-0 rounded-full bg-gray-200" />
-                                )}
+                                {p.linePictureUrl ? <img src={p.linePictureUrl} alt="" className="mt-0.5 h-6 w-6 shrink-0 rounded-full object-cover" /> : <span className="mt-0.5 h-6 w-6 shrink-0 rounded-full bg-gray-200" />}
                                 <div>
                                   <p className="text-sm font-bold text-gray-900">{p.name ?? '未入力'}</p>
                                   <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
@@ -298,17 +343,14 @@ export default function CollabRosterPage() {
                               </div>
                               <ReservationBadge status={p.status} />
                             </div>
-                            <div className="mt-2 pl-8">
-                              <DuplicateBadge participant={p} token={token} onChanged={reload} />
-                            </div>
+                            <div className="mt-2 pl-8">{tab === 'dup' ? <DuplicateAssignment participant={p} tenants={tenants} token={token} onChanged={reload} /> : <DuplicateBadge participant={p} token={token} onChanged={reload} />}</div>
                             <div className="mt-3 grid gap-2 pl-8">
                               <label className="block">
                                 <span className="text-[10px] font-semibold text-gray-400">紹介者</span>
                                 <input
                                   value={fieldValue(p, 'referrer')}
                                   onChange={(e) => handleFieldChange(p.id, 'referrer', e.target.value)}
-                                  onBlur={() => handleFieldBlur(p.id, 'referrer')}
-                                  disabled={savingId === p.id}
+                                  disabled={savingAll}
                                   maxLength={100}
                                   placeholder="例：〇〇の紹介"
                                   className="mt-0.5 w-full rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755] disabled:bg-gray-50"
@@ -319,8 +361,7 @@ export default function CollabRosterPage() {
                                 <textarea
                                   value={fieldValue(p, 'staffNote')}
                                   onChange={(e) => handleFieldChange(p.id, 'staffNote', e.target.value)}
-                                  onBlur={() => handleFieldBlur(p.id, 'staffNote')}
-                                  disabled={savingId === p.id}
+                                  disabled={savingAll}
                                   maxLength={1000}
                                   rows={2}
                                   placeholder="運営用のコメントを自由に入力"
@@ -359,8 +400,8 @@ export default function CollabRosterPage() {
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-xs font-bold text-gray-700">{group.tenantName}</span>
                               <span className="text-[11px] text-gray-500">
-                                {groupStats.total}人（男{groupStats.male}・女{groupStats.female}）
-                                {groupStats.waitlisted > 0 && ` ・未確定${groupStats.waitlisted}`}
+                                {groupStats.total}人（男{groupStats.male}・女
+                                {groupStats.female}）{groupStats.waitlisted > 0 && ` ・未確定${groupStats.waitlisted}`}
                               </span>
                             </div>
                           </td>
@@ -369,11 +410,7 @@ export default function CollabRosterPage() {
                           <tr key={p.id}>
                             <td className="px-6 py-4 font-medium text-gray-900">
                               <div className="flex items-center gap-2">
-                                {p.linePictureUrl ? (
-                                  <img src={p.linePictureUrl} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
-                                ) : (
-                                  <span className="h-6 w-6 shrink-0 rounded-full bg-gray-200" />
-                                )}
+                                {p.linePictureUrl ? <img src={p.linePictureUrl} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" /> : <span className="h-6 w-6 shrink-0 rounded-full bg-gray-200" />}
                                 {p.name ?? '未入力'}
                               </div>
                             </td>
@@ -386,8 +423,7 @@ export default function CollabRosterPage() {
                               <input
                                 value={fieldValue(p, 'referrer')}
                                 onChange={(e) => handleFieldChange(p.id, 'referrer', e.target.value)}
-                                onBlur={() => handleFieldBlur(p.id, 'referrer')}
-                                disabled={savingId === p.id}
+                                disabled={savingAll}
                                 maxLength={100}
                                 placeholder="例：〇〇の紹介"
                                 className="w-36 rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755] disabled:bg-gray-50"
@@ -397,17 +433,14 @@ export default function CollabRosterPage() {
                               <textarea
                                 value={fieldValue(p, 'staffNote')}
                                 onChange={(e) => handleFieldChange(p.id, 'staffNote', e.target.value)}
-                                onBlur={() => handleFieldBlur(p.id, 'staffNote')}
-                                disabled={savingId === p.id}
+                                disabled={savingAll}
                                 maxLength={1000}
                                 rows={2}
                                 placeholder="運営用コメント"
                                 className="w-52 resize-y rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755] disabled:bg-gray-50"
                               />
                             </td>
-                            <td className="px-6 py-4">
-                              <DuplicateBadge participant={p} token={token} onChanged={reload} />
-                            </td>
+                            <td className="px-6 py-4">{tab === 'dup' ? <DuplicateAssignment participant={p} tenants={tenants} token={token} onChanged={reload} /> : <DuplicateBadge participant={p} token={token} onChanged={reload} />}</td>
                           </tr>
                         ))}
                       </tbody>

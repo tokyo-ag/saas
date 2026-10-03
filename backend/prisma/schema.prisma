@@ -28,129 +28,129 @@ enum Plan {
 }
 
 model Tenant {
-  id                     String    @id @default(uuid())
-  name                   String    @db.VarChar(100)
-  description            String?   @db.Text
-  reviewsSeoDescription  String?   @map("reviews_seo_description") @db.VarChar(300)
-  eventsSeoDescription   String?   @map("events_seo_description") @db.VarChar(300)
-  requireName            Boolean   @default(true) @map("require_name")
-  requireGrade           Boolean   @default(false) @map("require_grade")
-  requireGender          Boolean   @default(true) @map("require_gender")
-  showLevel              Boolean   @default(true) @map("show_level")
-  showComment            Boolean   @default(true) @map("show_comment")
-  customProfileQuestions Json?     @map("custom_profile_questions")
-  lineChannelId          String?   @map("line_channel_id") @db.VarChar(100)
-  lineChannelSecret      String?   @map("line_channel_secret") @db.VarChar(100)
-  lineChannelAccessToken String?   @map("line_channel_access_token") @db.Text
-  liffId                 String?   @map("liff_id") @db.VarChar(100)
-  organizerLineUserId    String?   @map("organizer_line_user_id") @db.VarChar(100)
-  lineDisplayName        String?   @map("line_display_name") @db.VarChar(100)
-  linePictureUrl         String?   @map("line_picture_url") @db.Text
-  stripeAccountId        String?   @map("stripe_account_id") @db.VarChar(100)
-  stripeSecretKey        String?   @map("stripe_secret_key") @db.Text
-  stripePublishableKey   String?   @map("stripe_publishable_key") @db.VarChar(200)
-  stripeWebhookSecret    String?   @map("stripe_webhook_secret") @db.Text
-  plan                   Plan      @default(free)
-  planStartedAt          DateTime? @map("plan_started_at")
-  stripeCustomerId       String?   @map("stripe_customer_id") @db.VarChar(100)
-  stripeSubscriptionId   String?   @map("stripe_subscription_id") @db.VarChar(100)
-  liffEventView          String    @default("card") @map("liff_event_view") @db.VarChar(20)
-  mobileManageToken      String?   @unique @map("mobile_manage_token") @db.VarChar(64)
-  mobileManageHideLevel  Boolean   @default(true) @map("mobile_manage_hide_level")
-  mobileManageHideLineNotify Boolean @default(true) @map("mobile_manage_hide_line_notify")
-  staffViewEnabled       Boolean   @default(false) @map("staff_view_enabled")
-  staffViewToken         String?   @unique @map("staff_view_token") @db.VarChar(64)
-  reservationMessageTemplate String? @map("reservation_message_template") @db.Text
-  reminderMessageTemplate    String? @map("reminder_message_template") @db.Text
-  activityTickerEnabled  Boolean   @default(true) @map("activity_ticker_enabled")
-  eventSocialProofSettings Json?     @map("event_social_proof_settings")
-  themeColor             String    @default("green") @map("theme_color") @db.VarChar(20)
-  iconUrl                String?   @map("icon_url") @db.Text
-  publicBlogUrl          String?   @map("public_blog_url") @db.VarChar(500)
-  tags                   String[]  @default([])
-  typeTags               String[]  @default([]) @map("type_tags")
-  activityTags           String[]  @default([]) @map("activity_tags")
-  code                   String?   @unique @db.VarChar(32)
-  createdAt              DateTime  @default(now()) @map("created_at")
-  updatedAt              DateTime  @updatedAt @map("updated_at")
-  deletedAt              DateTime? @map("deleted_at")
-  bannedAt               DateTime? @map("banned_at")
+  id                         String    @id @default(uuid())
+  name                       String    @db.VarChar(100)
+  description                String?   @db.Text
+  reviewsSeoDescription      String?   @map("reviews_seo_description") @db.VarChar(300)
+  eventsSeoDescription       String?   @map("events_seo_description") @db.VarChar(300)
+  requireName                Boolean   @default(true) @map("require_name")
+  requireGrade               Boolean   @default(false) @map("require_grade")
+  requireGender              Boolean   @default(true) @map("require_gender")
+  showLevel                  Boolean   @default(true) @map("show_level")
+  showComment                Boolean   @default(true) @map("show_comment")
+  customProfileQuestions     Json?     @map("custom_profile_questions")
+  lineChannelId              String?   @map("line_channel_id") @db.VarChar(100)
+  lineChannelSecret          String?   @map("line_channel_secret") @db.VarChar(100)
+  lineChannelAccessToken     String?   @map("line_channel_access_token") @db.Text
+  liffId                     String?   @map("liff_id") @db.VarChar(100)
+  organizerLineUserId        String?   @map("organizer_line_user_id") @db.VarChar(100)
+  lineDisplayName            String?   @map("line_display_name") @db.VarChar(100)
+  linePictureUrl             String?   @map("line_picture_url") @db.Text
+  stripeAccountId            String?   @map("stripe_account_id") @db.VarChar(100)
+  stripeSecretKey            String?   @map("stripe_secret_key") @db.Text
+  stripePublishableKey       String?   @map("stripe_publishable_key") @db.VarChar(200)
+  stripeWebhookSecret        String?   @map("stripe_webhook_secret") @db.Text
+  plan                       Plan      @default(free)
+  planStartedAt              DateTime? @map("plan_started_at")
+  stripeCustomerId           String?   @map("stripe_customer_id") @db.VarChar(100)
+  stripeSubscriptionId       String?   @map("stripe_subscription_id") @db.VarChar(100)
+  liffEventView              String    @default("card") @map("liff_event_view") @db.VarChar(20)
+  mobileManageToken          String?   @unique @map("mobile_manage_token") @db.VarChar(64)
+  mobileManageHideLevel      Boolean   @default(true) @map("mobile_manage_hide_level")
+  mobileManageHideLineNotify Boolean   @default(true) @map("mobile_manage_hide_line_notify")
+  staffViewEnabled           Boolean   @default(false) @map("staff_view_enabled")
+  staffViewToken             String?   @unique @map("staff_view_token") @db.VarChar(64)
+  reservationMessageTemplate String?   @map("reservation_message_template") @db.Text
+  reminderMessageTemplate    String?   @map("reminder_message_template") @db.Text
+  activityTickerEnabled      Boolean   @default(true) @map("activity_ticker_enabled")
+  eventSocialProofSettings   Json?     @map("event_social_proof_settings")
+  themeColor                 String    @default("green") @map("theme_color") @db.VarChar(20)
+  iconUrl                    String?   @map("icon_url") @db.Text
+  publicBlogUrl              String?   @map("public_blog_url") @db.VarChar(500)
+  tags                       String[]  @default([])
+  typeTags                   String[]  @default([]) @map("type_tags")
+  activityTags               String[]  @default([]) @map("activity_tags")
+  code                       String?   @unique @db.VarChar(32)
+  createdAt                  DateTime  @default(now()) @map("created_at")
+  updatedAt                  DateTime  @updatedAt @map("updated_at")
+  deletedAt                  DateTime? @map("deleted_at")
+  bannedAt                   DateTime? @map("banned_at")
 
-  events             Event[]
-  members            Member[]
-  organizerAccounts  OrganizerAccount[]
-  liffAccesses       TenantLiffAccess[]
-  publicPages        PublicPage[]
-  blogPosts          BlogPost[]
-  tenantReviews      TenantReview[]
+  events            Event[]
+  members           Member[]
+  organizerAccounts OrganizerAccount[]
+  liffAccesses      TenantLiffAccess[]
+  publicPages       PublicPage[]
+  blogPosts         BlogPost[]
+  tenantReviews     TenantReview[]
 
   @@map("tenants")
 }
 
 model PublicPage {
-  id             String    @id @default(uuid())
-  tenantId       String    @map("tenant_id")
-  title          String    @db.VarChar(120)
-  slug           String    @db.VarChar(80)
-  subtitle       String?   @db.Text
-  body           String    @db.Text
-  coverImageUrl  String?   @map("cover_image_url") @db.Text
-  imageUrls      String[]  @default([]) @map("image_urls")
-  imageCaptions  String[]  @default([]) @map("image_captions")
-  dividerText    String?   @map("divider_text") @db.VarChar(80)
-  textColor      String?   @map("text_color") @db.VarChar(20)
-  accentColor    String?   @map("accent_color") @db.VarChar(20)
-  backgroundColor String?  @map("background_color") @db.VarChar(20)
-  navColor          String?  @map("nav_color") @db.VarChar(20)
-  navOpacity        Int?     @map("nav_opacity")
-  backgroundOpacity Int?     @map("background_opacity")
-  imageLayout    String?   @map("image_layout") @db.VarChar(20)
-  heroImageMode  String?   @map("hero_image_mode") @db.VarChar(20)
-  heroNavPosition String?  @map("hero_nav_position") @db.VarChar(20)
-  heroImagePosition String? @map("hero_image_position") @db.VarChar(30)
-  heroTextPosition String?  @map("hero_text_position") @db.VarChar(20)
-  heroTextX        Int?     @map("hero_text_x")
-  heroTextY        Int?     @map("hero_text_y")
-  heroTextWidth    Int?     @map("hero_text_width")
-  buttonBgColor  String?   @map("button_bg_color") @db.VarChar(20)
-  buttonBgOpacity Int?     @map("button_bg_opacity")
-  buttonTextOpacity Int?   @map("button_text_opacity")
-  blocks         Json?     @map("blocks")
-  heroOverlayOpacity Int?  @map("hero_overlay_opacity")
-  heroOverlayColor String? @map("hero_overlay_color") @db.VarChar(20)
-  reserveViewStyle String? @map("reserve_view_style") @db.VarChar(20)
-  fontFamily     String?   @map("font_family") @db.VarChar(40)
-  titleFont      String?   @map("title_font") @db.VarChar(40)
-  titleColor     String?   @map("title_color") @db.VarChar(20)
-  titleSize      String?   @map("title_size") @db.VarChar(20)
-  titleAlign     String?   @map("title_align") @db.VarChar(20)
-  subtitleFont   String?   @map("subtitle_font") @db.VarChar(40)
-  subtitleSize   String?   @map("subtitle_size") @db.VarChar(20)
-  subtitleColor  String?   @map("subtitle_color") @db.VarChar(20)
-  subtitleMarginTop Int?   @map("subtitle_margin_top")
-  buttonRadius     Int?     @map("button_radius")
-  buttonSize       Int?     @map("button_size")
-  bodySize       String?   @map("body_size") @db.VarChar(20)
-  layoutVariant  String?   @map("layout_variant") @db.VarChar(40)
-  aboutLabel     String?   @map("about_label") @db.VarChar(40)
-  reserveLabel   String?   @map("reserve_label") @db.VarChar(40)
-  blogLabel      String?   @map("blog_label") @db.VarChar(40)
-  contactLabel   String?   @map("contact_label") @db.VarChar(40)
-  buttonStyle    String?   @map("button_style") @db.VarChar(20)
-  buttonLayout   String?   @map("button_layout") @db.VarChar(20)
-  buttonOpacity  Int?      @map("button_opacity")
-  headerText     String?   @map("header_text") @db.Text
-  footerText     String?   @map("footer_text") @db.Text
-  seoTitle       String?   @map("seo_title") @db.VarChar(160)
-  seoDescription String?   @map("seo_description") @db.VarChar(300)
-  orgNameDisplayType  String  @default("text") @map("org_name_display_type") @db.VarChar(20)
-  orgLogoWordmarkUrl  String? @map("org_logo_wordmark_url") @db.Text
-  orgLogoWordmarkAlt  String? @map("org_logo_wordmark_alt") @db.VarChar(200)
-  orgLogoWordmarkSize Int?    @map("org_logo_wordmark_size")
-  status         String    @default("published") @db.VarChar(20)
-  publishedAt    DateTime? @map("published_at")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
+  id                  String    @id @default(uuid())
+  tenantId            String    @map("tenant_id")
+  title               String    @db.VarChar(120)
+  slug                String    @db.VarChar(80)
+  subtitle            String?   @db.Text
+  body                String    @db.Text
+  coverImageUrl       String?   @map("cover_image_url") @db.Text
+  imageUrls           String[]  @default([]) @map("image_urls")
+  imageCaptions       String[]  @default([]) @map("image_captions")
+  dividerText         String?   @map("divider_text") @db.VarChar(80)
+  textColor           String?   @map("text_color") @db.VarChar(20)
+  accentColor         String?   @map("accent_color") @db.VarChar(20)
+  backgroundColor     String?   @map("background_color") @db.VarChar(20)
+  navColor            String?   @map("nav_color") @db.VarChar(20)
+  navOpacity          Int?      @map("nav_opacity")
+  backgroundOpacity   Int?      @map("background_opacity")
+  imageLayout         String?   @map("image_layout") @db.VarChar(20)
+  heroImageMode       String?   @map("hero_image_mode") @db.VarChar(20)
+  heroNavPosition     String?   @map("hero_nav_position") @db.VarChar(20)
+  heroImagePosition   String?   @map("hero_image_position") @db.VarChar(30)
+  heroTextPosition    String?   @map("hero_text_position") @db.VarChar(20)
+  heroTextX           Int?      @map("hero_text_x")
+  heroTextY           Int?      @map("hero_text_y")
+  heroTextWidth       Int?      @map("hero_text_width")
+  buttonBgColor       String?   @map("button_bg_color") @db.VarChar(20)
+  buttonBgOpacity     Int?      @map("button_bg_opacity")
+  buttonTextOpacity   Int?      @map("button_text_opacity")
+  blocks              Json?     @map("blocks")
+  heroOverlayOpacity  Int?      @map("hero_overlay_opacity")
+  heroOverlayColor    String?   @map("hero_overlay_color") @db.VarChar(20)
+  reserveViewStyle    String?   @map("reserve_view_style") @db.VarChar(20)
+  fontFamily          String?   @map("font_family") @db.VarChar(40)
+  titleFont           String?   @map("title_font") @db.VarChar(40)
+  titleColor          String?   @map("title_color") @db.VarChar(20)
+  titleSize           String?   @map("title_size") @db.VarChar(20)
+  titleAlign          String?   @map("title_align") @db.VarChar(20)
+  subtitleFont        String?   @map("subtitle_font") @db.VarChar(40)
+  subtitleSize        String?   @map("subtitle_size") @db.VarChar(20)
+  subtitleColor       String?   @map("subtitle_color") @db.VarChar(20)
+  subtitleMarginTop   Int?      @map("subtitle_margin_top")
+  buttonRadius        Int?      @map("button_radius")
+  buttonSize          Int?      @map("button_size")
+  bodySize            String?   @map("body_size") @db.VarChar(20)
+  layoutVariant       String?   @map("layout_variant") @db.VarChar(40)
+  aboutLabel          String?   @map("about_label") @db.VarChar(40)
+  reserveLabel        String?   @map("reserve_label") @db.VarChar(40)
+  blogLabel           String?   @map("blog_label") @db.VarChar(40)
+  contactLabel        String?   @map("contact_label") @db.VarChar(40)
+  buttonStyle         String?   @map("button_style") @db.VarChar(20)
+  buttonLayout        String?   @map("button_layout") @db.VarChar(20)
+  buttonOpacity       Int?      @map("button_opacity")
+  headerText          String?   @map("header_text") @db.Text
+  footerText          String?   @map("footer_text") @db.Text
+  seoTitle            String?   @map("seo_title") @db.VarChar(160)
+  seoDescription      String?   @map("seo_description") @db.VarChar(300)
+  orgNameDisplayType  String    @default("text") @map("org_name_display_type") @db.VarChar(20)
+  orgLogoWordmarkUrl  String?   @map("org_logo_wordmark_url") @db.Text
+  orgLogoWordmarkAlt  String?   @map("org_logo_wordmark_alt") @db.VarChar(200)
+  orgLogoWordmarkSize Int?      @map("org_logo_wordmark_size")
+  status              String    @default("published") @db.VarChar(20)
+  publishedAt         DateTime? @map("published_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -196,25 +196,25 @@ model OfficialSiteSetting {
 }
 
 model OfficialArticle {
-  id            String    @id @default(uuid())
-  title         String    @db.VarChar(160)
-  slug          String    @unique @db.VarChar(120)
-  excerpt       String?   @db.VarChar(300)
-  body          String    @db.Text
-  category      String?   @db.VarChar(60)
-  areaTags      String[]  @default([]) @map("area_tags")
-  isPillar      Boolean   @default(false) @map("is_pillar")
-  pillarSlug    String?   @map("pillar_slug") @db.VarChar(120)
-  targetKeyword String?   @map("target_keyword") @db.VarChar(120)
-  ctaTitle      String?   @map("cta_title") @db.VarChar(160)
-  ctaDescription String?  @map("cta_description") @db.VarChar(300)
-  ctaLabel      String?   @map("cta_label") @db.VarChar(80)
-  ctaHref       String?   @map("cta_href") @db.VarChar(500)
-  ogImageUrl    String?   @map("og_image_url") @db.Text
-  status        String    @default("draft") @db.VarChar(20)
-  publishedAt   DateTime? @map("published_at")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  id             String    @id @default(uuid())
+  title          String    @db.VarChar(160)
+  slug           String    @unique @db.VarChar(120)
+  excerpt        String?   @db.VarChar(300)
+  body           String    @db.Text
+  category       String?   @db.VarChar(60)
+  areaTags       String[]  @default([]) @map("area_tags")
+  isPillar       Boolean   @default(false) @map("is_pillar")
+  pillarSlug     String?   @map("pillar_slug") @db.VarChar(120)
+  targetKeyword  String?   @map("target_keyword") @db.VarChar(120)
+  ctaTitle       String?   @map("cta_title") @db.VarChar(160)
+  ctaDescription String?   @map("cta_description") @db.VarChar(300)
+  ctaLabel       String?   @map("cta_label") @db.VarChar(80)
+  ctaHref        String?   @map("cta_href") @db.VarChar(500)
+  ogImageUrl     String?   @map("og_image_url") @db.Text
+  status         String    @default("draft") @db.VarChar(20)
+  publishedAt    DateTime? @map("published_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
   @@index([status, publishedAt(sort: Desc)])
   @@index([category])
@@ -277,48 +277,48 @@ model OrganizerAccount {
 }
 
 model Event {
-  id              String      @id @default(uuid())
-  tenantId        String      @map("tenant_id")
-  title           String      @db.VarChar(100)
-  description     String?     @db.Text
-  descriptionMale   String?   @map("description_male") @db.Text
-  descriptionFemale String?   @map("description_female") @db.Text
-  heldAt          DateTime    @map("held_at")
-  maleDelayMinutes Int?       @map("male_delay_minutes")
-  endAt           DateTime?   @map("end_at")
-  location        String      @db.VarChar(200)
-  locationUrl     String?     @map("location_url") @db.VarChar(500)
-  locationHint    String?     @map("location_hint") @db.VarChar(200)
-  capacity        Int?
-  capacityMale    Int?        @map("capacity_male")
-  capacityFemale  Int?        @map("capacity_female")
-  status          EventStatus @default(draft)
-  price           Int         @default(0)
-  priceMale       Int?        @map("price_male")
-  priceFemale     Int?        @map("price_female")
-  paymentRequired Boolean     @default(false) @map("payment_required")
-  paymentTiming   String      @default("onsite") @map("payment_timing")
-  notifyOnReserve    Boolean     @default(true) @map("notify_on_reserve")
-  reservationMessageTemplate String? @map("reservation_message_template") @db.Text
-  remindEnabled      Boolean     @default(false) @map("remind_enabled")
-  remindAt        DateTime?   @map("remind_at")
-  remindedAt      DateTime?   @map("reminded_at")
-  reminderMessageTemplate    String? @map("reminder_message_template") @db.Text
-  levelEnabled    Boolean     @default(false) @map("level_enabled")
-  reserveActionStyle String? @map("reserve_action_style") @db.VarChar(20)
-  rosterShareEnabled Boolean  @default(false) @map("roster_share_enabled")
-  rosterShareToken String?    @unique @map("roster_share_token") @db.VarChar(64)
-  category        String?     @db.VarChar(50)
-  categories      String[]    @default([])
-  tags            String[]    @default([])
-  imageUrl        String?     @map("image_url") @db.Text
-  iconUrl         String?     @map("icon_url") @db.Text
-  collabReadOnly  Boolean     @default(false) @map("collab_read_only")
-  viewCount       Int         @default(0) @map("view_count")
-  createdAt       DateTime    @default(now()) @map("created_at")
-  updatedAt       DateTime    @updatedAt @map("updated_at")
+  id                         String      @id @default(uuid())
+  tenantId                   String      @map("tenant_id")
+  title                      String      @db.VarChar(100)
+  description                String?     @db.Text
+  descriptionMale            String?     @map("description_male") @db.Text
+  descriptionFemale          String?     @map("description_female") @db.Text
+  heldAt                     DateTime    @map("held_at")
+  maleDelayMinutes           Int?        @map("male_delay_minutes")
+  endAt                      DateTime?   @map("end_at")
+  location                   String      @db.VarChar(200)
+  locationUrl                String?     @map("location_url") @db.VarChar(500)
+  locationHint               String?     @map("location_hint") @db.VarChar(200)
+  capacity                   Int?
+  capacityMale               Int?        @map("capacity_male")
+  capacityFemale             Int?        @map("capacity_female")
+  status                     EventStatus @default(draft)
+  price                      Int         @default(0)
+  priceMale                  Int?        @map("price_male")
+  priceFemale                Int?        @map("price_female")
+  paymentRequired            Boolean     @default(false) @map("payment_required")
+  paymentTiming              String      @default("onsite") @map("payment_timing")
+  notifyOnReserve            Boolean     @default(true) @map("notify_on_reserve")
+  reservationMessageTemplate String?     @map("reservation_message_template") @db.Text
+  remindEnabled              Boolean     @default(false) @map("remind_enabled")
+  remindAt                   DateTime?   @map("remind_at")
+  remindedAt                 DateTime?   @map("reminded_at")
+  reminderMessageTemplate    String?     @map("reminder_message_template") @db.Text
+  levelEnabled               Boolean     @default(false) @map("level_enabled")
+  reserveActionStyle         String?     @map("reserve_action_style") @db.VarChar(20)
+  rosterShareEnabled         Boolean     @default(false) @map("roster_share_enabled")
+  rosterShareToken           String?     @unique @map("roster_share_token") @db.VarChar(64)
+  category                   String?     @db.VarChar(50)
+  categories                 String[]    @default([])
+  tags                       String[]    @default([])
+  imageUrl                   String?     @map("image_url") @db.Text
+  iconUrl                    String?     @map("icon_url") @db.Text
+  collabReadOnly             Boolean     @default(false) @map("collab_read_only")
+  viewCount                  Int         @default(0) @map("view_count")
+  createdAt                  DateTime    @default(now()) @map("created_at")
+  updatedAt                  DateTime    @updatedAt @map("updated_at")
 
-  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+  tenant       Tenant           @relation(fields: [tenantId], references: [id])
   reservations Reservation[]
   likes        EventLike[]
   collabLink   CollabEventLink?
@@ -327,23 +327,23 @@ model Event {
 }
 
 model Member {
-  id         String   @id @default(uuid())
-  tenantId   String   @map("tenant_id")
-  lineUserId          String    @map("line_user_id") @db.VarChar(100)
-  lineDisplayName     String?   @map("line_display_name") @db.VarChar(200)
-  linePictureUrl      String?   @map("line_picture_url") @db.VarChar(500)
-  name                String?   @db.VarChar(100)
-  grade               String?   @db.VarChar(50)
-  gender              String?   @db.VarChar(20)
-  level               String?   @db.VarChar(20)
-  comment             String?   @db.VarChar(200)
-  customAnswers       Json?     @map("custom_answers")
-  blockedAt           DateTime? @map("blocked_at")
-  createdAt           DateTime  @default(now()) @map("created_at")
+  id              String    @id @default(uuid())
+  tenantId        String    @map("tenant_id")
+  lineUserId      String    @map("line_user_id") @db.VarChar(100)
+  lineDisplayName String?   @map("line_display_name") @db.VarChar(200)
+  linePictureUrl  String?   @map("line_picture_url") @db.VarChar(500)
+  name            String?   @db.VarChar(100)
+  grade           String?   @db.VarChar(50)
+  gender          String?   @db.VarChar(20)
+  level           String?   @db.VarChar(20)
+  comment         String?   @db.VarChar(200)
+  customAnswers   Json?     @map("custom_answers")
+  blockedAt       DateTime? @map("blocked_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
 
   tenant        Tenant         @relation(fields: [tenantId], references: [id])
   reservations  Reservation[]
-  tenantReviews    TenantReview[]
+  tenantReviews TenantReview[]
 
   @@unique([tenantId, lineUserId])
   @@map("members")
@@ -481,20 +481,21 @@ model CollabEventLink {
 
 // 自動判定（Member.lineUserId一致）を手動で上書きするための最小限のフラグ。1予約につき最大1件。
 model CollabDuplicateOverride {
-  id            String   @id @default(uuid())
-  collabGroupId String   @map("collab_group_id")
-  reservationId String   @unique @map("reservation_id")
-  isDuplicate   Boolean  @map("is_duplicate")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id               String   @id @default(uuid())
+  collabGroupId    String   @map("collab_group_id")
+  reservationId    String   @unique @map("reservation_id")
+  isDuplicate      Boolean  @map("is_duplicate")
+  assignedTenantId String?  @map("assigned_tenant_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   collabGroup CollabGroup @relation(fields: [collabGroupId], references: [id], onDelete: Cascade)
   reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
 
   @@index([collabGroupId])
+  @@index([assignedTenantId])
   @@map("collab_duplicate_overrides")
 }
-
 
 model ErrorLog {
   id        String   @id @default(uuid())

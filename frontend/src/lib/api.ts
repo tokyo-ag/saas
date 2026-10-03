@@ -23,14 +23,12 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const isMobileManageSession = path.startsWith('/mobile-manage/') && path !== '/mobile-manage/verify';
   const isLiff = path.startsWith('/liff/');
   const method = (options?.method ?? 'GET').toString().toUpperCase();
-  const isLiffPublicEndpoint =
-    isLiff &&
-    ((method === 'GET' &&
-      /^\/liff\/[^/]+(\/(events(|\/[^/]+(|\/reviews))|members\/[^/]+|activity)?)?$/.test(path)) ||
-      (method === 'POST' && /^\/liff\/[^/]+\/access$/.test(path)));
+  const isLiffPublicEndpoint = isLiff && ((method === 'GET' && /^\/liff\/[^/]+(\/(events(|\/[^/]+(|\/reviews))|members\/[^/]+|activity)?)?$/.test(path)) || (method === 'POST' && /^\/liff\/[^/]+\/access$/.test(path)));
   const needsAuth = isSuperadmin || isAdmin || isMobileManageSession || path === '/auth/reconfirm' || path === '/auth/me' || path === '/auth/set-email-password' || path === '/auth/resend-verification';
   const token = (isAdmin || isMobileManageSession) && _mobileManageToken ? _mobileManageToken : needsAuth ? getToken() : null;
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
   if (token) headers['Authorization'] = `Bearer ${token}`;
   if (isLiff) {
     if (_liffToken) {
@@ -53,7 +51,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const { headers: optionHeaders, ...restOptions } = options ?? {};
   const res = await fetch(`${BASE}${path}`, {
     ...restOptions,
-    headers: { ...headers, ...(optionHeaders as Record<string, string> | undefined) },
+    headers: {
+      ...headers,
+      ...(optionHeaders as Record<string, string> | undefined),
+    },
   });
 
   if (!res.ok) {
@@ -65,7 +66,9 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
       return Promise.reject(new Error('Unauthorized'));
     }
     const err = await res.json().catch(() => ({ message: res.statusText }));
-    const error = new Error(err.message ?? 'Request failed') as Error & { status?: number };
+    const error = new Error(err.message ?? 'Request failed') as Error & {
+      status?: number;
+    };
     error.status = res.status;
     throw error;
   }
@@ -77,10 +80,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 export async function downloadWithAuth(url: string, filename: string): Promise<void> {
   const token = _mobileManageToken ?? getToken();
-  const requestUrl =
-    typeof window === 'undefined'
-      ? url
-      : url.replace(`${API_URL}/api`, CLIENT_API_BASE);
+  const requestUrl = typeof window === 'undefined' ? url : url.replace(`${API_URL}/api`, CLIENT_API_BASE);
   const res = await fetch(requestUrl, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
@@ -100,25 +100,23 @@ export const api = {
     list: () => request<Event[]>('/admin/events'),
     get: (id: string) => request<Event>(`/admin/events/${id}`),
     create: (data: EventInput) =>
-      request<Event>('/admin/events', { method: 'POST', body: JSON.stringify(data) }),
+      request<Event>('/admin/events', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
     update: (id: string, data: EventInput) =>
-      request<Event>(`/admin/events/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    delete: (id: string) =>
-      request<void>(`/admin/events/${id}`, { method: 'DELETE' }),
-    reservations: (id: string) =>
-      request<Reservation[]>(`/admin/events/${id}/reservations`),
+      request<Event>(`/admin/events/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    delete: (id: string) => request<void>(`/admin/events/${id}`, { method: 'DELETE' }),
+    reservations: (id: string) => request<Reservation[]>(`/admin/events/${id}/reservations`),
     remind: (id: string) =>
-      request<{ sentCount: number }>(`/admin/events/${id}/remind`, { method: 'POST' }),
-    checkin: (id: string, memberId: string) =>
-      request<{ memberName: string; alreadyCheckedIn: boolean }>(
-        `/admin/events/${id}/checkin`,
-        { method: 'POST', body: JSON.stringify({ memberId }) },
-      ),
-    sendMessage: (id: string, data: { content: string; sendLine: boolean }) =>
-      request<{ lineSentCount: number; total: number }>(
-        `/admin/events/${id}/message`,
-        { method: 'POST', body: JSON.stringify(data) },
-      ),
+      request<{ sentCount: number }>(`/admin/events/${id}/remind`, {
+        method: 'POST',
+      }),
+    checkin: (id: string, memberId: string) => request<{ memberName: string; alreadyCheckedIn: boolean }>(`/admin/events/${id}/checkin`, { method: 'POST', body: JSON.stringify({ memberId }) }),
+    sendMessage: (id: string, data: { content: string; sendLine: boolean }) => request<{ lineSentCount: number; total: number }>(`/admin/events/${id}/message`, { method: 'POST', body: JSON.stringify(data) }),
     exportUrl: (id: string) => `${BASE}/admin/events/${id}/export`,
     toggleRosterShare: (id: string, enabled: boolean) =>
       request<Event>(`/admin/events/${id}/roster-share`, {
@@ -138,10 +136,16 @@ export const api = {
       return request<Member[]>(`/admin/members${q ? `?${q}` : ''}`);
     },
     get: (id: string) => request<MemberDetail>(`/admin/members/${id}`),
-    syncLineProfiles: () => request<{ updated: number }>('/admin/members/sync-line-profiles', { method: 'POST' }),
+    syncLineProfiles: () =>
+      request<{ updated: number }>('/admin/members/sync-line-profiles', {
+        method: 'POST',
+      }),
     block: (id: string) => request<Member>(`/admin/members/${id}/block`, { method: 'PATCH' }),
     unblock: (id: string) => request<Member>(`/admin/members/${id}/unblock`, { method: 'PATCH' }),
-    remove: (id: string) => request<{ success: boolean }>(`/admin/members/${id}`, { method: 'DELETE' }),
+    remove: (id: string) =>
+      request<{ success: boolean }>(`/admin/members/${id}`, {
+        method: 'DELETE',
+      }),
   },
   reservations: {
     updateStatus: (id: string, status: string) =>
@@ -153,52 +157,64 @@ export const api = {
   liff: {
     recordAccess: (tenantId: string) => request<{ ok: boolean }>(`/liff/${tenantId}/access`, { method: 'POST' }),
     tenant: (tenantId: string) => request<LiffTenant>(`/liff/${tenantId}`),
-    events: (tenantId: string) =>
-      request<LiffEvent[]>(`/liff/${tenantId}/events`),
-    event: (tenantId: string, eventId: string) =>
-      request<LiffEvent>(`/liff/${tenantId}/events/${eventId}`),
+    events: (tenantId: string) => request<LiffEvent[]>(`/liff/${tenantId}/events`),
+    event: (tenantId: string, eventId: string) => request<LiffEvent>(`/liff/${tenantId}/events/${eventId}`),
     activity: (tenantId: string) =>
-      request<{ id: string; type: 'login' | 'reservation'; at: string; name: string; pictureUrl: string | null }[]>(`/liff/${tenantId}/activity`),
-    myReservation: (tenantId: string, eventId: string) =>
-      request<LiffReservation | null>(
-        `/liff/${tenantId}/events/${eventId}/my-reservation`,
-      ),
-    reservationPreview: (tenantId: string, eventId: string) =>
-      request<{ text: string }>(`/liff/${tenantId}/events/${eventId}/reservation-preview`),
-    myTenantReview: (tenantId: string) =>
-      request<LiffTenantReview | null>(`/liff/${tenantId}/review`),
+      request<
+        {
+          id: string;
+          type: 'login' | 'reservation';
+          at: string;
+          name: string;
+          pictureUrl: string | null;
+        }[]
+      >(`/liff/${tenantId}/activity`),
+    myReservation: (tenantId: string, eventId: string) => request<LiffReservation | null>(`/liff/${tenantId}/events/${eventId}/my-reservation`),
+    reservationPreview: (tenantId: string, eventId: string) => request<{ text: string }>(`/liff/${tenantId}/events/${eventId}/reservation-preview`),
+    myTenantReview: (tenantId: string) => request<LiffTenantReview | null>(`/liff/${tenantId}/review`),
     submitTenantReview: (tenantId: string, content: string) =>
       request<LiffTenantReview>(`/liff/${tenantId}/review`, {
         method: 'POST',
         body: JSON.stringify({ content }),
       }),
-    tenantReviews: (tenantId: string) =>
-      request<TenantReview[]>(`/liff/${tenantId}/reviews`),
+    tenantReviews: (tenantId: string) => request<TenantReview[]>(`/liff/${tenantId}/reviews`),
     reserve: (tenantId: string, data: ReserveInput) =>
       request<ReserveResult>(`/liff/${tenantId}/reservations`, {
         method: 'POST',
         body: JSON.stringify(data),
       }),
     cancel: (tenantId: string, reservationId: string) =>
-      request<void>(`/liff/${tenantId}/reservations/${reservationId}`, { method: 'DELETE' }),
+      request<void>(`/liff/${tenantId}/reservations/${reservationId}`, {
+        method: 'DELETE',
+      }),
     join: (tenantId: string, data: { lineDisplayName?: string; linePictureUrl?: string }) =>
-      request<LiffProfile>(`/liff/${tenantId}/join`, { method: 'POST', body: JSON.stringify(data) }),
-    profile: (tenantId: string) =>
-      request<LiffProfile>(`/liff/${tenantId}/profile`),
-    updateProfile: (tenantId: string, data: { name?: string; grade?: string; gender?: string; level?: string; comment?: string; customAnswers?: Record<string, CustomAnswerValue> }) =>
-      request<LiffProfile>(
-        `/liff/${tenantId}/profile`,
-        { method: 'PATCH', body: JSON.stringify(data) },
-      ),
-    myReservations: (tenantId: string) =>
-      request<LiffMyReservation[]>(`/liff/${tenantId}/my-reservations`),
+      request<LiffProfile>(`/liff/${tenantId}/join`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    profile: (tenantId: string) => request<LiffProfile>(`/liff/${tenantId}/profile`),
+    updateProfile: (
+      tenantId: string,
+      data: {
+        name?: string;
+        grade?: string;
+        gender?: string;
+        level?: string;
+        comment?: string;
+        customAnswers?: Record<string, CustomAnswerValue>;
+      },
+    ) =>
+      request<LiffProfile>(`/liff/${tenantId}/profile`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    myReservations: (tenantId: string) => request<LiffMyReservation[]>(`/liff/${tenantId}/my-reservations`),
     syncLineProfile: (tenantId: string, data: { lineDisplayName?: string; linePictureUrl?: string }) =>
-      request<void>(
-        `/liff/${tenantId}/profile/line`,
-        { method: 'PATCH', body: JSON.stringify(data) },
-      ),
-    supportMessages: (tenantId: string) =>
-      request<SupportMessage[]>(`/liff/${tenantId}/support`),
+      request<void>(`/liff/${tenantId}/profile/line`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    supportMessages: (tenantId: string) => request<SupportMessage[]>(`/liff/${tenantId}/support`),
     sendSupport: (tenantId: string, content: string) =>
       request<SupportMessage>(`/liff/${tenantId}/support`, {
         method: 'POST',
@@ -226,88 +242,95 @@ export const api = {
       request<PublicSitemapPage[]>(`/public/sitemap-pages?t=${Date.now()}`, {
         cache: 'no-store',
       }),
-    tenantPage: (tenantCode: string, slug: string) =>
-      request<PublicCmsPage>(`/public/tenants/${tenantCode}/pages/${slug}`),
+    tenantPage: (tenantCode: string, slug: string) => request<PublicCmsPage>(`/public/tenants/${tenantCode}/pages/${slug}`),
     recordView: (eventId: string) =>
-      request<{ ok: boolean }>(`/public/events/${eventId}/view`, { method: 'POST' }),
-    blogPosts: (tenantCode: string) =>
-      request<BlogPostSummary[]>(`/public/tenants/${tenantCode}/blog`),
-    blogPost: (tenantCode: string, slug: string) =>
-      request<BlogPost>(`/public/tenants/${tenantCode}/blog/${slug}`),
-    blogByTags: (tags: string[], limit = 10) =>
-      request<PortalBlogPost[]>(`/public/blog?tags=${encodeURIComponent(tags.join(','))}&limit=${limit}`),
-    reviews: (tenantCode: string) =>
-      request<TenantReview[]>(`/public/tenants/${tenantCode}/reviews`),
+      request<{ ok: boolean }>(`/public/events/${eventId}/view`, {
+        method: 'POST',
+      }),
+    blogPosts: (tenantCode: string) => request<BlogPostSummary[]>(`/public/tenants/${tenantCode}/blog`),
+    blogPost: (tenantCode: string, slug: string) => request<BlogPost>(`/public/tenants/${tenantCode}/blog/${slug}`),
+    blogByTags: (tags: string[], limit = 10) => request<PortalBlogPost[]>(`/public/blog?tags=${encodeURIComponent(tags.join(','))}&limit=${limit}`),
+    reviews: (tenantCode: string) => request<TenantReview[]>(`/public/tenants/${tenantCode}/reviews`),
     roster: (token: string) => request<PublicRoster>(`/public/roster/${token}`),
-    updateRosterReservation: (
-      token: string,
-      reservationId: string,
-      data: { referrer?: string; staffNote?: string },
-      options?: { keepalive?: boolean },
-    ) =>
-      request<{ id: string; referrer: string | null; staffNote: string | null }>(
-        `/public/roster/${token}/reservations/${reservationId}`,
-        { method: 'PATCH', body: JSON.stringify(data), keepalive: options?.keepalive },
-      ),
-    staffViewEvents: (token: string) =>
-      request<StaffViewEventList>(`/public/staff-view/${token}/events`),
-    staffViewEvent: (token: string, eventId: string) =>
-      request<StaffViewEventDetail>(`/public/staff-view/${token}/events/${eventId}`),
+    updateRosterReservation: (token: string, reservationId: string, data: { referrer?: string; staffNote?: string }, options?: { keepalive?: boolean }) =>
+      request<{
+        id: string;
+        referrer: string | null;
+        staffNote: string | null;
+      }>(`/public/roster/${token}/reservations/${reservationId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+        keepalive: options?.keepalive,
+      }),
+    staffViewEvents: (token: string) => request<StaffViewEventList>(`/public/staff-view/${token}/events`),
+    staffViewEvent: (token: string, eventId: string) => request<StaffViewEventDetail>(`/public/staff-view/${token}/events/${eventId}`),
     collabRoster: (token: string) => request<CollabRoster>(`/public/collab-roster/${token}`),
-    updateCollabRosterReservation: (
-      token: string,
-      reservationId: string,
-      data: { referrer?: string; staffNote?: string },
-      options?: { keepalive?: boolean },
-    ) =>
-      request<{ id: string; referrer: string | null; staffNote: string | null }>(
-        `/public/collab-roster/${token}/reservations/${reservationId}`,
-        { method: 'PATCH', body: JSON.stringify(data), keepalive: options?.keepalive },
-      ),
+    updateCollabRosterReservation: (token: string, reservationId: string, data: { referrer?: string; staffNote?: string }, options?: { keepalive?: boolean }) =>
+      request<{
+        id: string;
+        referrer: string | null;
+        staffNote: string | null;
+      }>(`/public/collab-roster/${token}/reservations/${reservationId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+        keepalive: options?.keepalive,
+      }),
     setCollabDuplicate: (token: string, reservationId: string, isDuplicate: boolean) =>
-      request<{ reservationId: string; isDuplicateOverride: boolean | null }>(
-        `/public/collab-roster/${token}/reservations/${reservationId}/duplicate`,
-        { method: 'PATCH', body: JSON.stringify({ isDuplicate }) },
-      ),
-    clearCollabDuplicate: (token: string, reservationId: string) =>
-      request<{ reservationId: string; isDuplicateOverride: boolean | null }>(
-        `/public/collab-roster/${token}/reservations/${reservationId}/duplicate`,
-        { method: 'DELETE' },
-      ),
+      request<{ reservationId: string; isDuplicateOverride: boolean | null }>(`/public/collab-roster/${token}/reservations/${reservationId}/duplicate`, { method: 'PATCH', body: JSON.stringify({ isDuplicate }) }),
+    clearCollabDuplicate: (token: string, reservationId: string) => request<{ reservationId: string; isDuplicateOverride: boolean | null }>(`/public/collab-roster/${token}/reservations/${reservationId}/duplicate`, { method: 'DELETE' }),
+    assignCollabRosterTenant: (token: string, reservationId: string, tenantId: string) =>
+      request<{
+        reservationId: string;
+        tenantId: string;
+        isDuplicateOverride: false;
+      }>(`/public/collab-roster/${token}/reservations/${reservationId}/tenant`, { method: 'PATCH', body: JSON.stringify({ tenantId }) }),
   },
   blog: {
     list: () => request<BlogPost[]>('/admin/blog'),
     get: (id: string) => request<BlogPost>(`/admin/blog/${id}`),
     create: (data: BlogPostInput) =>
-      request<BlogPost>('/admin/blog', { method: 'POST', body: JSON.stringify(data) }),
+      request<BlogPost>('/admin/blog', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
     update: (id: string, data: BlogPostInput) =>
-      request<BlogPost>(`/admin/blog/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    delete: (id: string) =>
-      request<void>(`/admin/blog/${id}`, { method: 'DELETE' }),
-    regenerateSlug: (id: string) =>
-      request<BlogPost>(`/admin/blog/${id}/regenerate-slug`, { method: 'PUT' }),
-    regenerateLongSlugs: () =>
-      request<{ updated: { id: string; slug: string }[] }>('/admin/blog/regenerate-long-slugs', { method: 'PUT' }),
-    regenerateKeywordExcerpts: () =>
-      request<{ updated: { id: string; excerpt: string }[] }>('/admin/blog/regenerate-keyword-excerpts', { method: 'PUT' }),
+      request<BlogPost>(`/admin/blog/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    delete: (id: string) => request<void>(`/admin/blog/${id}`, { method: 'DELETE' }),
+    regenerateSlug: (id: string) => request<BlogPost>(`/admin/blog/${id}/regenerate-slug`, { method: 'PUT' }),
+    regenerateLongSlugs: () => request<{ updated: { id: string; slug: string }[] }>('/admin/blog/regenerate-long-slugs', { method: 'PUT' }),
+    regenerateKeywordExcerpts: () => request<{ updated: { id: string; excerpt: string }[] }>('/admin/blog/regenerate-keyword-excerpts', { method: 'PUT' }),
   },
   publicPages: {
     list: () => request<PublicPage[]>('/admin/public-pages'),
     get: (id: string) => request<PublicPage>(`/admin/public-pages/${id}`),
     create: (data: PublicPageInput) =>
-      request<PublicPage>('/admin/public-pages', { method: 'POST', body: JSON.stringify(data) }),
+      request<PublicPage>('/admin/public-pages', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
     update: (id: string, data: PublicPageInput) =>
-      request<PublicPage>(`/admin/public-pages/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+      request<PublicPage>(`/admin/public-pages/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
     delete: (id: string) =>
-      request<{ ok: boolean }>(`/admin/public-pages/${id}`, { method: 'DELETE' }),
+      request<{ ok: boolean }>(`/admin/public-pages/${id}`, {
+        method: 'DELETE',
+      }),
   },
   mobileManage: {
-    getSettings: () =>
-      request<MobileManageSettings>('/admin/mobile-manage/settings'),
+    getSettings: () => request<MobileManageSettings>('/admin/mobile-manage/settings'),
     issueLink: () =>
-      request<{ linkUrl: string }>('/admin/mobile-manage/link', { method: 'POST' }),
+      request<{ linkUrl: string }>('/admin/mobile-manage/link', {
+        method: 'POST',
+      }),
     revokeLink: () =>
-      request<{ linkUrl: null }>('/admin/mobile-manage/link', { method: 'DELETE' }),
+      request<{ linkUrl: null }>('/admin/mobile-manage/link', {
+        method: 'DELETE',
+      }),
     updateSettings: (data: Partial<Omit<MobileManageSettings, 'linkUrl'>>) =>
       request<MobileManageSettings>('/admin/mobile-manage/settings', {
         method: 'PATCH',
@@ -323,9 +346,11 @@ export const api = {
         liffId: string | null;
         hideLevel: boolean;
         hideLineNotify: boolean;
-      }>('/mobile-manage/verify', { method: 'POST', body: JSON.stringify({ token }) }),
-    getDisplayFields: () =>
-      request<MobileManageDisplayFields>('/mobile-manage/display-fields'),
+      }>('/mobile-manage/verify', {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+      }),
+    getDisplayFields: () => request<MobileManageDisplayFields>('/mobile-manage/display-fields'),
     updateDisplayFields: (data: Partial<MobileManageDisplayFields>) =>
       request<MobileManageDisplayFields>('/mobile-manage/display-fields', {
         method: 'PATCH',
@@ -340,15 +365,16 @@ export const api = {
         headers: reauthToken ? { 'X-Reauth-Token': reauthToken } : undefined,
         body: JSON.stringify(data),
       }),
-    stats: () => request<{
-      memberCount: number;
-      thisMonthEventCount: number;
-      totalReservationCount: number;
-      thisMonthReservationCount: number;
-      totalRevenue: number;
-      todayAccessCount: number;
-      todayReservationCount: number;
-    }>('/admin/tenant/stats'),
+    stats: () =>
+      request<{
+        memberCount: number;
+        thisMonthEventCount: number;
+        totalReservationCount: number;
+        thisMonthReservationCount: number;
+        totalRevenue: number;
+        todayAccessCount: number;
+        todayReservationCount: number;
+      }>('/admin/tenant/stats'),
     syncLineProfile: () => request<Tenant>('/admin/tenant/sync-line-profile', { method: 'POST' }),
     billingCheckout: (plan: 'standard' | 'pro') =>
       request<{ url: string }>('/admin/tenant/billing/checkout', {
@@ -363,12 +389,8 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ content }),
       }),
-    listForCollab: () =>
-      request<{ id: string; name: string }[]>('/admin/tenant/collab-tenants'),
-    respondToCollabRequest: (
-      messageId: string,
-      status: 'approved' | 'rejected',
-    ) =>
+    listForCollab: () => request<{ id: string; name: string }[]>('/admin/tenant/collab-tenants'),
+    respondToCollabRequest: (messageId: string, status: 'approved' | 'rejected') =>
       request<SupportMessage>(`/admin/tenant/collab-requests/${messageId}`, {
         method: 'PATCH',
         body: JSON.stringify({ status }),
@@ -396,7 +418,9 @@ export const api = {
         body: JSON.stringify({ enabled }),
       }),
     regenerateStaffView: () =>
-      request<Tenant>('/admin/tenant/staff-view/regenerate', { method: 'POST' }),
+      request<Tenant>('/admin/tenant/staff-view/regenerate', {
+        method: 'POST',
+      }),
   },
   auth: {
     reconfirm: (email: string, password: string) =>
@@ -405,7 +429,14 @@ export const api = {
         body: JSON.stringify({ email, password }),
       }),
     getMe: () =>
-      request<{ tenantId: string; accountId: string; email: string | null; emailVerified: boolean; hasPassword: boolean; lineUserId: string | null }>('/auth/me'),
+      request<{
+        tenantId: string;
+        accountId: string;
+        email: string | null;
+        emailVerified: boolean;
+        hasPassword: boolean;
+        lineUserId: string | null;
+      }>('/auth/me'),
     setEmailPassword: (email: string, password: string) =>
       request<{ message: string }>('/auth/set-email-password', {
         method: 'POST',
@@ -415,24 +446,38 @@ export const api = {
   superadmin: {
     list: () => request<TenantWithStats[]>('/superadmin/tenants'),
     create: (data: { name: string; description?: string; plan?: 'free' | 'standard' | 'pro'; email?: string; password?: string }) =>
-      request<Tenant>('/superadmin/tenants', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: string, data: { name?: string; description?: string; plan?: 'free' | 'standard' | 'pro'; code?: string }) =>
-      request<Tenant>(`/superadmin/tenants/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+      request<Tenant>('/superadmin/tenants', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    update: (
+      id: string,
+      data: {
+        name?: string;
+        description?: string;
+        plan?: 'free' | 'standard' | 'pro';
+        code?: string;
+      },
+    ) =>
+      request<Tenant>(`/superadmin/tenants/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
     deactivate: (id: string) =>
-      request<Tenant>(`/superadmin/tenants/${id}/deactivate`, { method: 'PATCH' }),
-    restore: (id: string) =>
-      request<Tenant>(`/superadmin/tenants/${id}/restore`, { method: 'PATCH' }),
-    ban: (id: string) =>
-      request<Tenant>(`/superadmin/tenants/${id}/ban`, { method: 'PATCH' }),
-    purge: (id: string) =>
-      request<void>(`/superadmin/tenants/${id}`, { method: 'DELETE' }),
-    impersonate: (id: string) =>
-      request<{ token: string }>(`/superadmin/tenants/${id}/impersonate`),
+      request<Tenant>(`/superadmin/tenants/${id}/deactivate`, {
+        method: 'PATCH',
+      }),
+    restore: (id: string) => request<Tenant>(`/superadmin/tenants/${id}/restore`, { method: 'PATCH' }),
+    ban: (id: string) => request<Tenant>(`/superadmin/tenants/${id}/ban`, { method: 'PATCH' }),
+    purge: (id: string) => request<void>(`/superadmin/tenants/${id}`, { method: 'DELETE' }),
+    impersonate: (id: string) => request<{ token: string }>(`/superadmin/tenants/${id}/impersonate`),
     listBannedUsers: () => request<BannedUser[]>('/superadmin/banned-users'),
     banUser: (lineUserId: string, reason?: string) =>
-      request<BannedUser>('/superadmin/banned-users', { method: 'POST', body: JSON.stringify({ lineUserId, reason }) }),
-    unbanUser: (lineUserId: string) =>
-      request<void>(`/superadmin/banned-users/${encodeURIComponent(lineUserId)}`, { method: 'DELETE' }),
+      request<BannedUser>('/superadmin/banned-users', {
+        method: 'POST',
+        body: JSON.stringify({ lineUserId, reason }),
+      }),
+    unbanUser: (lineUserId: string) => request<void>(`/superadmin/banned-users/${encodeURIComponent(lineUserId)}`, { method: 'DELETE' }),
     supportThreads: () => request<SupportThread[]>('/superadmin/support'),
     supportMessages: (lineUserId: string) => request<SupportMessage[]>(`/superadmin/support/${encodeURIComponent(lineUserId)}`),
     replySupport: (lineUserId: string, content: string) =>
@@ -440,10 +485,7 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ content }),
       }),
-    listTenantEventsForCollab: (tenantId: string) =>
-      request<{ id: string; title: string; heldAt: string; status: EventStatus }[]>(
-        `/superadmin/tenants/${tenantId}/events`,
-      ),
+    listTenantEventsForCollab: (tenantId: string) => request<{ id: string; title: string; heldAt: string; status: EventStatus }[]>(`/superadmin/tenants/${tenantId}/events`),
     collabGroups: () => request<CollabGroupAdmin[]>('/superadmin/collab-groups'),
     createCollabGroup: (data: { eventIds: string[]; label?: string }) =>
       request<CollabGroupAdmin>('/superadmin/collab-groups', {
@@ -461,13 +503,13 @@ export const api = {
         body: JSON.stringify({ eventId }),
       }),
     removeCollabGroupEvent: (id: string, eventId: string) =>
-      request<void>(`/superadmin/collab-groups/${id}/events/${eventId}`, { method: 'DELETE' }),
-    deleteCollabGroup: (id: string) =>
-      request<void>(`/superadmin/collab-groups/${id}`, { method: 'DELETE' }),
+      request<void>(`/superadmin/collab-groups/${id}/events/${eventId}`, {
+        method: 'DELETE',
+      }),
+    deleteCollabGroup: (id: string) => request<void>(`/superadmin/collab-groups/${id}`, { method: 'DELETE' }),
     errorLogs: () => request<ErrorLog[]>('/superadmin/errors'),
     clearErrorLogs: () => request<void>('/superadmin/errors', { method: 'DELETE' }),
-    backfillPublicPageCardColors: () =>
-      request<{ total: number; updated: number }>('/superadmin/public-pages/backfill-card-colors', { method: 'PUT' }),
+    backfillPublicPageCardColors: () => request<{ total: number; updated: number }>('/superadmin/public-pages/backfill-card-colors', { method: 'PUT' }),
     officialSite: () => request<OfficialSiteSettings>('/superadmin/official-site'),
     updateOfficialSite: (data: OfficialSiteInput) =>
       request<OfficialSiteSettings>('/superadmin/official-site', {
@@ -486,11 +528,11 @@ export const api = {
         body: JSON.stringify(data),
       }),
     deleteOfficialArticle: (id: string) =>
-      request<{ ok: boolean }>(`/superadmin/official-articles/${id}`, { method: 'DELETE' }),
-    areaHubSummary: () =>
-      request<AreaHubSummaryRow[]>('/superadmin/area-hub-summary'),
-    getAreaHubSetting: (category: string, area: string) =>
-      request<AreaHubSetting | null>(`/superadmin/area-hub-settings?category=${encodeURIComponent(category)}&area=${encodeURIComponent(area)}`),
+      request<{ ok: boolean }>(`/superadmin/official-articles/${id}`, {
+        method: 'DELETE',
+      }),
+    areaHubSummary: () => request<AreaHubSummaryRow[]>('/superadmin/area-hub-summary'),
+    getAreaHubSetting: (category: string, area: string) => request<AreaHubSetting | null>(`/superadmin/area-hub-settings?category=${encodeURIComponent(category)}&area=${encodeURIComponent(area)}`),
     updateAreaHubSetting: (category: string, area: string, data: AreaHubSettingInput) =>
       request<AreaHubSetting>(`/superadmin/area-hub-settings?category=${encodeURIComponent(category)}&area=${encodeURIComponent(area)}`, {
         method: 'PUT',
@@ -544,7 +586,12 @@ export interface Event {
   rosterShareEnabled?: boolean;
   rosterShareToken?: string | null;
   reserveActionStyle?: string | null;
-  collab?: { groupId: string; viewToken: string; label: string | null; active: boolean } | null;
+  collab?: {
+    groupId: string;
+    viewToken: string;
+    label: string | null;
+    active: boolean;
+  } | null;
 }
 
 export interface EventInput {
@@ -1039,14 +1086,21 @@ export interface ReserveResult {
 // ---- ヘルパー関数 ----
 export function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleString('ja-JP', {
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Tokyo',
   });
 }
 
 export function formatDateOnly(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('ja-JP', {
-    year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: 'Asia/Tokyo',
   });
 }
 
@@ -1055,17 +1109,24 @@ export function formatDateOnly(dateStr: string): string {
 export function formatEventSchedule(heldAt: string, endAt?: string | null): string {
   const start = new Date(heldAt);
   const datePart = start.toLocaleDateString('ja-JP', {
-    month: 'numeric', day: 'numeric', weekday: 'short', timeZone: 'Asia/Tokyo',
+    month: 'numeric',
+    day: 'numeric',
+    weekday: 'short',
+    timeZone: 'Asia/Tokyo',
   });
   const startTime = start.toLocaleTimeString('ja-JP', {
-    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Tokyo',
   });
   const end = endAt ? new Date(endAt) : null;
   if (!end || end.getTime() <= start.getTime()) {
     return `${datePart}${startTime}`;
   }
   const endTime = end.toLocaleTimeString('ja-JP', {
-    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Tokyo',
   });
   return `${datePart}${startTime}～${endTime}`;
 }
@@ -1075,12 +1136,7 @@ export function formatEventSchedule(heldAt: string, endAt?: string | null): stri
 // しきい値は社会的証明CMS設定（genderCapacityRevealThreshold）で管理者が調整できる。
 export type GenderCapacityState = 'full' | 'low' | 'available';
 
-export function genderCapacityStatus(
-  genderLabel: '男性' | '女性',
-  capacity: number | null | undefined,
-  reservedCount: number | null | undefined,
-  revealThreshold = 20,
-): { label: string; state: GenderCapacityState } | null {
+export function genderCapacityStatus(genderLabel: '男性' | '女性', capacity: number | null | undefined, reservedCount: number | null | undefined, revealThreshold = 20): { label: string; state: GenderCapacityState } | null {
   if (capacity == null || reservedCount == null) return null;
   const remaining = capacity - reservedCount;
   if (remaining <= 0) {
@@ -1320,7 +1376,12 @@ export interface PublicPageInput {
   customNavButtons?: Array<{ id: string; label: string; url: string }>;
   contentOrder?: string[];
   blockOrder?: string[];
-  displayFields?: { location?: boolean; price?: boolean; capacity?: boolean; description?: boolean };
+  displayFields?: {
+    location?: boolean;
+    price?: boolean;
+    capacity?: boolean;
+    description?: boolean;
+  };
   slugLocked?: boolean;
   status?: 'draft' | 'published';
 }
@@ -1616,8 +1677,11 @@ export interface PublicEvent {
 
 export function formatDateShort(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('ja-JP', {
-    month: 'numeric', day: 'numeric',
-    weekday: 'short', hour: '2-digit', minute: '2-digit',
+    month: 'numeric',
+    day: 'numeric',
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
     timeZone: 'Asia/Tokyo',
   });
 }

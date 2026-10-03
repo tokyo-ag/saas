@@ -294,6 +294,49 @@ describe('CollabService', () => {
     expect(byId.get('r2')?.isDuplicate).toBe(true);
   });
 
+  it('shows an assigned duplicate under the selected tenant', async () => {
+    prisma.collabGroup.findFirst.mockResolvedValue(
+      group({
+        duplicateOverrides: [
+          {
+            reservationId: 'r1',
+            isDuplicate: false,
+            assignedTenantId: 'tenant-b',
+          },
+        ],
+      }),
+    );
+    prisma.reservation.findMany.mockResolvedValue([
+      {
+        id: 'r1',
+        eventId: 'event-a',
+        status: 'reserved',
+        waitlistOrder: null,
+        referrer: null,
+        staffNote: null,
+        member: {
+          name: '参加者',
+          grade: null,
+          gender: '女性',
+          level: null,
+          comment: null,
+          linePictureUrl: null,
+          lineUserId: 'U123',
+          lineDisplayName: '参加者',
+        },
+      },
+    ]);
+
+    const result = await service.getCombinedRoster('token');
+    expect(result.participants[0]).toMatchObject({
+      id: 'r1',
+      tenantId: 'tenant-b',
+      tenantName: 'B',
+      isDuplicateOverride: false,
+      isDuplicate: false,
+    });
+  });
+
   it('rejects a duplicate-override update for a reservation outside the group', async () => {
     prisma.collabGroup.findFirst.mockResolvedValue(group());
     prisma.reservation.findFirst.mockResolvedValue(null);
@@ -320,9 +363,48 @@ describe('CollabService', () => {
           reservationId: 'r1',
           isDuplicate: true,
         },
-        update: { isDuplicate: true },
+        update: { isDuplicate: true, assignedTenantId: null },
       }),
     );
+  });
+
+  it('assigns a duplicate reservation to a tenant in the collaboration', async () => {
+    prisma.collabGroup.findFirst.mockResolvedValue(group());
+    prisma.reservation.findFirst.mockResolvedValue({
+      id: 'r1',
+      eventId: 'event-a',
+    });
+
+    await expect(
+      service.assignReservationToTenant('token', 'r1', 'tenant-b'),
+    ).resolves.toEqual({
+      reservationId: 'r1',
+      tenantId: 'tenant-b',
+      isDuplicateOverride: false,
+    });
+    expect(prisma.collabDuplicateOverride.upsert).toHaveBeenCalledWith({
+      where: { reservationId: 'r1' },
+      create: {
+        collabGroupId: 'group-1',
+        reservationId: 'r1',
+        isDuplicate: false,
+        assignedTenantId: 'tenant-b',
+      },
+      update: { isDuplicate: false, assignedTenantId: 'tenant-b' },
+    });
+  });
+
+  it('rejects assignment to a tenant outside the collaboration', async () => {
+    prisma.collabGroup.findFirst.mockResolvedValue(group());
+    prisma.reservation.findFirst.mockResolvedValue({
+      id: 'r1',
+      eventId: 'event-a',
+    });
+
+    await expect(
+      service.assignReservationToTenant('token', 'r1', 'tenant-outside'),
+    ).rejects.toThrow(NotFoundException);
+    expect(prisma.collabDuplicateOverride.upsert).not.toHaveBeenCalled();
   });
 
   it('updates the referrer and comment for a reservation in the group', async () => {

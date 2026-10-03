@@ -100,7 +100,7 @@ export class CollabService {
     }
 
     const overrideById = new Map(
-      group.duplicateOverrides.map((o) => [o.reservationId, o.isDuplicate]),
+      group.duplicateOverrides.map((o) => [o.reservationId, o]),
     );
     const eventById = new Map(
       group.eventLinks.map((l) => [l.eventId, l.event]),
@@ -135,10 +135,16 @@ export class CollabService {
       participants: reservations.map((r) => {
         const event = eventById.get(r.eventId)!;
         const override = overrideById.get(r.id) ?? null;
+        const assignedTenant = override?.assignedTenantId
+          ? tenantsSeen.get(override.assignedTenantId)
+          : null;
         return {
           id: r.id,
-          tenantId: event.tenantId,
-          tenantName: event.tenant.lineDisplayName ?? event.tenant.name,
+          tenantId: assignedTenant?.tenantId ?? event.tenantId,
+          tenantName:
+            assignedTenant?.tenantName ??
+            event.tenant.lineDisplayName ??
+            event.tenant.name,
           eventId: r.eventId,
           name: r.member.name,
           grade: r.member.grade,
@@ -151,8 +157,8 @@ export class CollabService {
           referrer: r.referrer,
           staffNote: r.staffNote,
           isDuplicateAuto: autoDuplicateIds.has(r.id),
-          isDuplicateOverride: override,
-          isDuplicate: override ?? autoDuplicateIds.has(r.id),
+          isDuplicateOverride: override?.isDuplicate ?? null,
+          isDuplicate: override?.isDuplicate ?? autoDuplicateIds.has(r.id),
         };
       }),
     };
@@ -161,7 +167,11 @@ export class CollabService {
   private async findGroupForReservation(token: string, reservationId: string) {
     const group = await this.prisma.collabGroup.findFirst({
       where: { viewToken: token },
-      include: { eventLinks: true },
+      include: {
+        eventLinks: {
+          include: { event: { select: { tenantId: true } } },
+        },
+      },
     });
     if (!group) throw new NotFoundException('名簿が見つかりません');
 
@@ -183,7 +193,10 @@ export class CollabService {
     await this.prisma.collabDuplicateOverride.upsert({
       where: { reservationId },
       create: { collabGroupId: group.id, reservationId, isDuplicate },
-      update: { isDuplicate },
+      update: {
+        isDuplicate,
+        ...(isDuplicate && { assignedTenantId: null }),
+      },
     });
     return { reservationId, isDuplicateOverride: isDuplicate };
   }
@@ -219,5 +232,36 @@ export class CollabService {
       where: { reservationId },
     });
     return { reservationId, isDuplicateOverride: null };
+  }
+
+  async assignReservationToTenant(
+    token: string,
+    reservationId: string,
+    tenantId: string,
+  ) {
+    const group = await this.findGroupForReservation(token, reservationId);
+    const belongsToGroup = group.eventLinks.some(
+      (link) => link.event.tenantId === tenantId,
+    );
+    if (!belongsToGroup) {
+      throw new NotFoundException('振り分け先の団体が見つかりません');
+    }
+
+    await this.prisma.collabDuplicateOverride.upsert({
+      where: { reservationId },
+      create: {
+        collabGroupId: group.id,
+        reservationId,
+        isDuplicate: false,
+        assignedTenantId: tenantId,
+      },
+      update: { isDuplicate: false, assignedTenantId: tenantId },
+    });
+
+    return {
+      reservationId,
+      tenantId,
+      isDuplicateOverride: false,
+    };
   }
 }

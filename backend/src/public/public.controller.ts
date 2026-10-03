@@ -28,6 +28,10 @@ class SetCollabDuplicateDto {
   @IsBoolean() isDuplicate: boolean;
 }
 
+class AssignCollabTenantDto {
+  @IsString() tenantId: string;
+}
+
 // Mirrors frontend/src/lib/lpTags.ts LOCATION_TAGS - kept in sync manually since Event.tags
 // mixes location tags together with other tag groups (search tags etc.) in one flat array.
 const LOCATION_TAG_SET = new Set([
@@ -303,6 +307,19 @@ export class PublicController {
     @Param('reservationId') reservationId: string,
   ) {
     return this.collabService.clearDuplicateOverride(token, reservationId);
+  }
+
+  @Patch('collab-roster/:token/reservations/:reservationId/tenant')
+  assignCollabRosterTenant(
+    @Param('token') token: string,
+    @Param('reservationId') reservationId: string,
+    @Body() dto: AssignCollabTenantDto,
+  ) {
+    return this.collabService.assignReservationToTenant(
+      token,
+      reservationId,
+      dto.tenantId,
+    );
   }
 
   @Get('staff-view/:token/events')
