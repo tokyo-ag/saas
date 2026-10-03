@@ -155,7 +155,13 @@ export default function EventsPage() {
     setReserveViewStyle(style);
     setSavingStyle(true);
     try {
-      await api.tenant.update({ liffEventView: style });
+      const [, updatedPage] = await Promise.all([
+        api.tenant.update({ liffEventView: style }),
+        publicPageId && publicPageData
+          ? api.publicPages.update(publicPageId, { ...publicPageData, reserveViewStyle: style } as any)
+          : Promise.resolve(null),
+      ]);
+      if (updatedPage) setPublicPageData(updatedPage);
       await revalidate(tenantId, publicPageData?.slug);
     } catch { /* silent */ } finally {
       setSavingStyle(false);
@@ -235,7 +241,10 @@ export default function EventsPage() {
     try {
       const [, updated] = await Promise.all([
         api.tenant.update({ liffEventView: reserveViewStyle }),
-        api.publicPages.update(publicPageId, withFooterSettings(publicPageData, reservationActionStyle, displayFields, reservationLineUrl) as any),
+        api.publicPages.update(publicPageId, {
+          ...withFooterSettings(publicPageData, reservationActionStyle, displayFields, reservationLineUrl),
+          reserveViewStyle,
+        } as any),
       ]);
       setPublicPageData(updated);
       await revalidate(tenantId, updated.slug || publicPageData.slug);
@@ -691,7 +700,7 @@ export default function EventsPage() {
           {/* 表示スタイル */}
           <div className="rounded-xl border border-gray-200 bg-white">
             <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-              <span className="text-xs font-bold text-gray-500">LINEログイン後の表示形式</span>
+              <span className="text-xs font-bold text-gray-500">予約ページの表示形式</span>
               <div className="flex gap-1 rounded-lg border border-gray-200 p-0.5">
                 {reserveViewOptions.map((opt) => (
                   <button
