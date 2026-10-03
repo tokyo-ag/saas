@@ -764,7 +764,11 @@ export class LiffService {
             where: { id: reservation.id },
             data: { status: ReservationStatus.cancelled },
           });
-          throw err;
+          // Stripe側の通信エラー等、意図しない例外は生のまま見せず変換する。
+          if (err instanceof HttpException) throw err;
+          throw new BadRequestException(
+            '決済の準備に失敗しました。少し時間をおいてもう一度お試しください。',
+          );
         }
       }
     }

@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  HttpException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -36,7 +37,8 @@ export class ReservationsService {
             'この参加者には同じイベントの有効な予約がすでにあります',
           );
         }
-        throw error;
+        if (error instanceof HttpException) throw error;
+        throw new ConflictException('予約の更新に失敗しました');
       });
 
     if (status === ReservationStatus.cancelled) {
