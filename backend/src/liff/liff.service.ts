@@ -795,7 +795,8 @@ export class LiffService {
           event.location,
           event.price,
           event.description,
-          event.reservationMessageTemplate ?? tenant?.reservationMessageTemplate,
+          event.reservationMessageTemplate ??
+            tenant?.reservationMessageTemplate,
           {
             endAt: event.endAt,
             locationUrl: event.locationUrl,

@@ -8,7 +8,7 @@ export class CollabService {
   private normalizeIdentityPart(value?: string | null) {
     return (value ?? '')
       .normalize('NFKC')
-      .replace(/[\s　]+/g, '')
+      .replace(/[\s\u3000]+/g, '')
       .toLowerCase();
   }
 

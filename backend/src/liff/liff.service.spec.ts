@@ -615,7 +615,9 @@ describe('LiffService identity invariants', () => {
     });
     const lineMessaging = {
       getLineProfile: jest.fn().mockResolvedValue(null),
-      sendReservationConfirm: jest.fn().mockRejectedValue(new Error('LINE API unavailable')),
+      sendReservationConfirm: jest
+        .fn()
+        .mockRejectedValue(new Error('LINE API unavailable')),
     };
     const service = new LiffService(
       prisma as never,
@@ -639,7 +641,9 @@ describe('LiffService identity invariants', () => {
       alreadyReserved: false,
     });
 
-    const lockQuery = prisma.$queryRaw.mock.calls[0][0] as { strings: string[] };
+    const lockQuery = prisma.$queryRaw.mock.calls[0][0] as {
+      strings: string[];
+    };
     const lockSql = lockQuery.strings.join('?');
     expect(lockSql).toContain('FROM "events"');
     expect(lockSql).toContain('FOR UPDATE');
