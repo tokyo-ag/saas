@@ -983,6 +983,7 @@ export interface LiffReservation {
   status: ReservationStatus;
   waitlistOrder?: number;
   reservedAt: string;
+  alreadyReserved?: boolean;
 }
 
 export interface LiffProfile {
@@ -1022,6 +1023,7 @@ export interface ReserveResult {
   status: 'reserved' | 'waitlisted' | 'waiting_payment';
   waitlistOrder?: number;
   stripeCheckoutUrl?: string;
+  alreadyReserved?: boolean;
 }
 
 // ---- ヘルパー関数 ----

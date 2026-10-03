@@ -277,8 +277,104 @@ describe('LiffService identity invariants', () => {
         gender: '女性',
       }),
     ).resolves.toEqual(
-      expect.objectContaining({ id: 'reservation-id', status: 'reserved' }),
+      expect.objectContaining({
+        id: 'reservation-id',
+        status: 'reserved',
+        alreadyReserved: true,
+      }),
     );
+  });
+
+  it('returns the existing reservation details instead of an error on a plain repeat submission', async () => {
+    const member = {
+      id: 'member-id',
+      blockedAt: null,
+      gender: '女性',
+    };
+    const existingReservation = {
+      id: 'existing-reservation-id',
+      status: ReservationStatus.reserved,
+    };
+    const prisma = {
+      tenant: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'tenant-id' }),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'tenant-id',
+          plan: 'standard',
+          lineChannelAccessToken: 'token',
+          requireName: true,
+          requireGrade: true,
+          requireGender: true,
+        }),
+      },
+      event: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'event-id',
+          title: '交流会',
+          status: 'open',
+          heldAt: new Date(Date.now() + 60_000),
+          endAt: null,
+          location: '池袋',
+          locationUrl: null,
+          capacity: 100,
+          capacityMale: null,
+          capacityFemale: null,
+          paymentRequired: false,
+          price: 1_000,
+          priceMale: null,
+          priceFemale: null,
+          levelEnabled: false,
+          notifyOnReserve: true,
+        }),
+      },
+      bannedLineUser: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
+      member: {
+        findUnique: jest.fn().mockResolvedValue(member),
+        upsert: jest.fn().mockResolvedValue(member),
+      },
+      reservation: {
+        findFirst: jest.fn().mockResolvedValue(existingReservation),
+        count: jest.fn().mockResolvedValue(1),
+        create: jest.fn(),
+        update: jest.fn(),
+      },
+      $queryRaw: jest.fn().mockResolvedValue([]),
+    };
+    Object.assign(prisma, {
+      $transaction: jest.fn((callback: (tx: typeof prisma) => unknown) =>
+        callback(prisma),
+      ),
+    });
+    const lineMessaging = {
+      getLineProfile: jest.fn().mockResolvedValue(null),
+      sendReservationConfirm: jest.fn(),
+    };
+    const service = new LiffService(
+      prisma as never,
+      lineMessaging as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      service.createReservation('tenant-code', 'line-user-id', {
+        eventId: 'event-id',
+        name: '名前',
+        grade: '大学2年',
+        gender: '女性',
+      }),
+    ).resolves.toEqual({
+      id: 'existing-reservation-id',
+      status: ReservationStatus.reserved,
+      waitlistOrder: null,
+      alreadyReserved: true,
+    });
+    // 既に申し込み済みの場合は、新規予約の通知も予約の作成・更新も行わない。
+    expect(prisma.reservation.create).not.toHaveBeenCalled();
+    expect(prisma.reservation.update).not.toHaveBeenCalled();
+    expect(lineMessaging.sendReservationConfirm).not.toHaveBeenCalled();
   });
 
   it('rejects a male reservation when the male capacity is full without creating a waitlist entry', async () => {
@@ -439,6 +535,7 @@ describe('LiffService identity invariants', () => {
       status: ReservationStatus.reserved,
       waitlistOrder: null,
       stripeCheckoutUrl: undefined,
+      alreadyReserved: false,
     });
     expect(prisma.reservation.update).toHaveBeenCalledWith({
       where: { id: 'waitlisted-reservation' },

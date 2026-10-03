@@ -605,8 +605,14 @@ export class LiffService {
               status: { not: 'cancelled' },
             },
           });
+          // すでに有効な予約がある場合は、エラーで弾くのではなく、その予約を
+          // そのまま返す（参加者には「すでに申し込まれています」として詳細を見せる）。
           if (existing && existing.status !== ReservationStatus.waitlisted) {
-            throw new ConflictException('このイベントはすでに予約済みです');
+            return {
+              reservation: existing,
+              status: existing.status,
+              alreadyReserved: true,
+            };
           }
 
           const reservedCount = await tx.reservation.count({
@@ -680,7 +686,7 @@ export class LiffService {
                 },
               });
 
-          return { reservation, status };
+          return { reservation, status, alreadyReserved: false };
         },
         { timeout: 10000 },
       )
@@ -699,7 +705,11 @@ export class LiffService {
             },
           });
           if (existing) {
-            return { reservation: existing, status: existing.status };
+            return {
+              reservation: existing,
+              status: existing.status,
+              alreadyReserved: true,
+            };
           }
           throw new ConflictException('このイベントはすでに予約済みです');
         }
@@ -711,7 +721,18 @@ export class LiffService {
           '予約処理が混み合っています。少し時間をおいてもう一度お試しください。',
         );
       });
-    const { reservation, status } = slotReservation;
+    const { reservation, status, alreadyReserved } = slotReservation;
+
+    // すでに申し込み済みの場合は、決済セッションも通知も発生させず、
+    // そのまま既存の予約内容を返す（参加者にはエラーではなく詳細を見せる）。
+    if (alreadyReserved) {
+      return {
+        id: reservation.id,
+        status,
+        waitlistOrder: null,
+        alreadyReserved: true,
+      };
+    }
 
     // Stripe 決済セッション作成
     let stripeCheckoutUrl: string | undefined;
@@ -778,6 +799,7 @@ export class LiffService {
       status,
       waitlistOrder: null,
       stripeCheckoutUrl,
+      alreadyReserved: false,
     };
   }
 

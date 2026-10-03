@@ -358,6 +358,7 @@ function ReservePageInner() {
         status: result.status,
         waitlistOrder: result.waitlistOrder,
         reservedAt: new Date().toISOString(),
+        alreadyReserved: result.alreadyReserved,
       });
       return;
     } catch (err: unknown) {
@@ -370,7 +371,7 @@ function ReservePageInner() {
       if (isDuplicate) {
         const existing = await api.liff.myReservation(tenantId, eventId).catch(() => null);
         if (existing) {
-          setMyReservation(existing);
+          setMyReservation({ ...existing, alreadyReserved: true });
           setError('');
           return;
         }
@@ -621,7 +622,11 @@ function ReservePageInner() {
               </button>
               <div className="w-full rounded-2xl py-4 text-center shadow-sm" style={{ backgroundColor: '#10b981' }}>
                 <p className="font-bold text-base text-white">
-                  {myReservation.status === 'reserved' ? '予約しました！' : STATUS_LABEL[myReservation.status] ?? myReservation.status}
+                  {myReservation.alreadyReserved
+                    ? 'すでに申し込まれています'
+                    : myReservation.status === 'reserved'
+                      ? '予約しました！'
+                      : STATUS_LABEL[myReservation.status] ?? myReservation.status}
                 </p>
                 <p className="mt-1 text-xs text-white/80">キャンセルはマイページから</p>
               </div>
