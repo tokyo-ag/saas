@@ -6,6 +6,7 @@ import {
   ForbiddenException,
   UnauthorizedException,
   HttpException,
+  Logger,
 } from '@nestjs/common';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { Prisma, ReservationStatus } from '@prisma/client';
@@ -44,6 +45,8 @@ export class SendMessageDto {
 
 @Injectable()
 export class LiffService {
+  private readonly logger = new Logger(LiffService.name);
+
   constructor(
     private prisma: PrismaService,
     private lineMessaging: LineMessagingService,
@@ -594,8 +597,11 @@ export class LiffService {
     const slotReservation = await this.prisma
       .$transaction(
         async (tx) => {
-          await tx.$queryRaw(
-            Prisma.sql`SELECT pg_advisory_xact_lock(hashtext(${dto.eventId})::bigint)`,
+          // イベント行をロックして、定員確認から予約作成までをイベント単位で直列化する。
+          // pg_advisory_xact_lock() は戻り値がPostgreSQLのvoid型で、Prismaの
+          // $queryRawが結果をデシリアライズできず全予約が失敗するため使用しない。
+          await tx.$queryRaw<Array<{ id: string }>>(
+            Prisma.sql`SELECT "id" FROM "events" WHERE "id" = ${dto.eventId} FOR UPDATE`,
           );
 
           const existing = await tx.reservation.findFirst({
@@ -715,6 +721,10 @@ export class LiffService {
         }
         // 満席・入力不備など、意図して投げた例外はそのままユーザーに伝える。
         if (error instanceof HttpException) throw error;
+        this.logger.error(
+          `予約トランザクション失敗 eventId=${dto.eventId} memberId=${member.id}`,
+          error instanceof Error ? error.stack : String(error),
+        );
         // それ以外の想定外のエラー（ロック待ちタイムアウト等）は、原因不明のまま
         // 「Internal server error」を見せず、再試行を促す文言に変換する。
         throw new BadRequestException(
