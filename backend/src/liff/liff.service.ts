@@ -786,26 +786,35 @@ export class LiffService {
     // LINE通知
     if (event.notifyOnReserve && status === ReservationStatus.reserved) {
       const token = tenant?.lineChannelAccessToken ?? '';
-      await this.lineMessaging.sendReservationConfirm(
-        token,
-        lineUserId,
-        event.title,
-        event.heldAt,
-        event.location,
-        event.price,
-        event.description,
-        event.reservationMessageTemplate ?? tenant?.reservationMessageTemplate,
-        {
-          endAt: event.endAt,
-          locationUrl: event.locationUrl,
-          priceMale: event.priceMale,
-          priceFemale: event.priceFemale,
-          descriptionMale: event.descriptionMale,
-          descriptionFemale: event.descriptionFemale,
-          maleDelayMinutes: event.maleDelayMinutes,
-          gender: member.gender,
-        },
-      );
+      try {
+        await this.lineMessaging.sendReservationConfirm(
+          token,
+          lineUserId,
+          event.title,
+          event.heldAt,
+          event.location,
+          event.price,
+          event.description,
+          event.reservationMessageTemplate ?? tenant?.reservationMessageTemplate,
+          {
+            endAt: event.endAt,
+            locationUrl: event.locationUrl,
+            priceMale: event.priceMale,
+            priceFemale: event.priceFemale,
+            descriptionMale: event.descriptionMale,
+            descriptionFemale: event.descriptionFemale,
+            maleDelayMinutes: event.maleDelayMinutes,
+            gender: member.gender,
+          },
+        );
+      } catch (error) {
+        // 予約はすでにDBへ確定済み。LINE通知の失敗で参加者に予約失敗と
+        // 誤認させたり、再送による二重操作を誘発したりしない。
+        this.logger.error(
+          `予約完了通知失敗 reservationId=${reservation.id}`,
+          error instanceof Error ? error.stack : String(error),
+        );
+      }
     }
 
     return {

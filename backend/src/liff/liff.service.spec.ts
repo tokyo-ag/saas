@@ -546,4 +546,105 @@ describe('LiffService identity invariants', () => {
     });
     expect(prisma.reservation.create).not.toHaveBeenCalled();
   });
+
+  it('creates a reservation with an event row lock and keeps it successful when the LINE notification fails', async () => {
+    const member = {
+      id: 'member-id',
+      blockedAt: null,
+      gender: '女性',
+    };
+    const createdReservation = {
+      id: 'reservation-id',
+      status: ReservationStatus.reserved,
+      waitlistOrder: null,
+    };
+    const prisma = {
+      tenant: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'tenant-id' }),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'tenant-id',
+          plan: 'standard',
+          lineChannelAccessToken: 'token',
+          requireName: true,
+          requireGrade: true,
+          requireGender: true,
+        }),
+      },
+      event: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'event-id',
+          title: '交流会',
+          status: 'open',
+          heldAt: new Date(Date.now() + 60_000),
+          endAt: null,
+          location: '池袋',
+          locationUrl: null,
+          capacity: 100,
+          capacityMale: null,
+          capacityFemale: null,
+          paymentRequired: false,
+          price: 1_000,
+          priceMale: null,
+          priceFemale: null,
+          description: null,
+          descriptionMale: null,
+          descriptionFemale: null,
+          maleDelayMinutes: null,
+          reservationMessageTemplate: null,
+          levelEnabled: false,
+          notifyOnReserve: true,
+        }),
+      },
+      bannedLineUser: { findUnique: jest.fn().mockResolvedValue(null) },
+      member: {
+        findUnique: jest.fn().mockResolvedValue(member),
+        upsert: jest.fn().mockResolvedValue(member),
+      },
+      reservation: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        count: jest.fn().mockResolvedValue(0),
+        create: jest.fn().mockResolvedValue(createdReservation),
+        update: jest.fn(),
+      },
+      $queryRaw: jest.fn().mockResolvedValue([{ id: 'event-id' }]),
+    };
+    Object.assign(prisma, {
+      $transaction: jest.fn((callback: (tx: typeof prisma) => unknown) =>
+        callback(prisma),
+      ),
+    });
+    const lineMessaging = {
+      getLineProfile: jest.fn().mockResolvedValue(null),
+      sendReservationConfirm: jest.fn().mockRejectedValue(new Error('LINE API unavailable')),
+    };
+    const service = new LiffService(
+      prisma as never,
+      lineMessaging as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      service.createReservation('tenant-code', 'line-user-id', {
+        eventId: 'event-id',
+        name: '田中',
+        grade: '大学2年',
+        gender: '女性',
+      }),
+    ).resolves.toEqual({
+      id: 'reservation-id',
+      status: ReservationStatus.reserved,
+      waitlistOrder: null,
+      stripeCheckoutUrl: undefined,
+      alreadyReserved: false,
+    });
+
+    const lockQuery = prisma.$queryRaw.mock.calls[0][0] as { strings: string[] };
+    const lockSql = lockQuery.strings.join('?');
+    expect(lockSql).toContain('FROM "events"');
+    expect(lockSql).toContain('FOR UPDATE');
+    expect(lockSql).not.toContain('pg_advisory_xact_lock');
+    expect(prisma.reservation.create).toHaveBeenCalledTimes(1);
+    expect(lineMessaging.sendReservationConfirm).toHaveBeenCalledTimes(1);
+  });
 });
