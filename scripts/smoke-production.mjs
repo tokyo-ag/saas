@@ -12,48 +12,37 @@ const selectedSuite = parseSuiteArg();
 const suites = {
   saas: [
     {
-      name: 'register page links to production LINE auth',
+      name: 'organizer register page exposes email signup',
       run: async () => {
         const res = await fetchWithTimeout(`${frontendUrl}/register`);
         assertStatus(res, 200, 399);
         const html = await res.text();
         assertIncludes(
           html,
-          `${apiUrl}/api/auth/line`,
-          'register page does not link to the production LINE auth endpoint',
+          '主催者登録',
+          'register page is missing the organizer signup form',
+        );
+        assertIncludes(html, 'type="email"', 'register page is missing the email field');
+        assertIncludes(html, 'type="password"', 'register page is missing the password field');
+        assertExcludes(
+          html,
+          'LINEで登録する',
+          'register page still exposes the removed organizer LINE signup flow',
         );
       },
     },
     {
-      name: 'LINE Login endpoint redirects to LINE',
+      name: 'organizer registration API validates input without creating data',
       run: async () => {
-        const res = await fetchWithTimeout(`${apiUrl}/api/auth/line`, {
-          redirect: 'manual',
+        const res = await fetchWithTimeout(`${apiUrl}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ email: 'invalid', password: 'short', orgName: '' }),
         });
-        if (![301, 302, 303, 307, 308].includes(res.status)) {
+        if (res.status !== 400) {
           const body = await res.text().catch(() => '');
           throw new Error(
-            `expected redirect to LINE, got ${res.status}${body ? `: ${body.slice(0, 200)}` : ''}`,
-          );
-        }
-
-        const location = res.headers.get('location');
-        if (!location) {
-          throw new Error('LINE auth endpoint did not return a Location header');
-        }
-
-        const url = new URL(location);
-        if (url.hostname !== 'access.line.me') {
-          throw new Error(`LINE auth endpoint redirected to unexpected host: ${url.hostname}`);
-        }
-        if (!url.searchParams.get('client_id')) {
-          throw new Error('LINE auth redirect has an empty client_id');
-        }
-
-        const redirectUri = url.searchParams.get('redirect_uri');
-        if (redirectUri !== `${apiUrl}/api/auth/line/callback`) {
-          throw new Error(
-            `LINE auth redirect_uri mismatch: expected ${apiUrl}/api/auth/line/callback, got ${redirectUri}`,
+            `expected validation error 400, got ${res.status}${body ? `: ${body.slice(0, 200)}` : ''}`,
           );
         }
       },
@@ -142,14 +131,20 @@ const suites = {
       },
     },
     {
-      name: 'locked portal home points tenants to LIFF and keeps SaaS CTAs',
+      name: 'home exposes participant discovery and organizer CTAs',
       run: async () => {
         const res = await fetchWithTimeout(frontendUrl);
         assertStatus(res, 200, 399);
         const html = await res.text();
-        assertIncludes(html, '/liff/', 'locked portal home does not link tenants to LIFF');
-        assertIncludes(html, '/register', 'locked portal home is missing organizer registration CTA');
-        assertIncludes(html, '/login', 'locked portal home is missing organizer login CTA');
+        const hasParticipantRoute =
+          html.includes('/liff/') ||
+          html.includes('/clubs/') ||
+          html.includes('/events/');
+        if (!hasParticipantRoute) {
+          throw new Error('home does not link to any participant discovery route');
+        }
+        assertIncludes(html, '/register', 'home is missing organizer registration CTA');
+        assertIncludes(html, '/login', 'home is missing organizer login CTA');
       },
     },
     {

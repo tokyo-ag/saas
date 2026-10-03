@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/require-await, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-argument */
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { JwtService } from '@nestjs/jwt';
 import request from 'supertest';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
@@ -14,7 +13,7 @@ import { StripeService } from '../src/stripe/stripe.service';
 type MockPrisma = ReturnType<typeof createPrismaMock>;
 
 const now = new Date('2026-06-01T10:00:00.000Z');
-const futureDate = new Date('2026-07-01T10:00:00.000Z');
+const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
 function createIdToken(aud = '2000000000') {
   const encode = (value: unknown) =>
@@ -53,6 +52,9 @@ function createPrismaMock() {
       emailVerifiedAt: now,
       passwordHash: '',
       lineUserId: 'line-existing',
+      twoFactorCodeHash: null as string | null,
+      twoFactorCodeExpiresAt: null as Date | null,
+      twoFactorAttempts: 0,
     },
     member: {
       id: 'member-1',
@@ -70,6 +72,11 @@ function createPrismaMock() {
     createdTenant: null as null | Record<string, unknown>,
     upsertedMemberLineUserId: null as null | string,
   };
+  const transactionClient: { current: unknown } = { current: undefined };
+  const runTransaction = jest.fn(
+    async (callback: (tx: unknown) => Promise<unknown>) =>
+      callback(transactionClient.current),
+  );
 
   const prisma = {
     __state: state,
@@ -136,7 +143,22 @@ function createPrismaMock() {
         if (args?.where?.id === state.account.id) return state.account;
         return null;
       }),
-      update: jest.fn(async () => state.account),
+      update: jest.fn(
+        async (args: {
+          data: Partial<typeof state.account> & {
+            twoFactorAttempts?: number | { increment: number };
+          };
+        }) => {
+          const { twoFactorAttempts, ...data } = args.data;
+          Object.assign(state.account, data);
+          if (typeof twoFactorAttempts === 'number') {
+            state.account.twoFactorAttempts = twoFactorAttempts;
+          } else if (twoFactorAttempts?.increment) {
+            state.account.twoFactorAttempts += twoFactorAttempts.increment;
+          }
+          return state.account;
+        },
+      ),
     },
     pendingRegistration: {
       findUnique: jest.fn(async () => null),
@@ -144,6 +166,10 @@ function createPrismaMock() {
       create: jest.fn(),
       delete: jest.fn(),
       deleteMany: jest.fn(),
+    },
+    publicPage: {
+      findMany: jest.fn(async () => []),
+      update: jest.fn(),
     },
     event: {
       findMany: jest.fn(async () => [
@@ -292,7 +318,10 @@ function createPrismaMock() {
     errorLog: {
       create: jest.fn(),
     },
+    $queryRaw: jest.fn(async () => []),
+    $transaction: runTransaction,
   };
+  transactionClient.current = prisma;
 
   return prisma;
 }
@@ -300,8 +329,12 @@ function createPrismaMock() {
 describe('Core feature flows (e2e)', () => {
   let app: INestApplication;
   let prisma: MockPrisma;
-  let jwtService: JwtService;
   let fetchMock: jest.Mock;
+  let emailServiceMock: {
+    sendVerificationEmail: jest.Mock;
+    sendPasswordResetEmail: jest.Mock;
+    sendTwoFactorCodeEmail: jest.Mock;
+  };
   let stripeServiceMock: {
     createCheckoutSession: jest.Mock;
     constructEvent: jest.Mock;
@@ -325,6 +358,11 @@ describe('Core feature flows (e2e)', () => {
       createCheckoutSession: jest.fn(),
       constructEvent: jest.fn(),
     };
+    emailServiceMock = {
+      sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
+      sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined),
+      sendTwoFactorCodeEmail: jest.fn().mockResolvedValue(undefined),
+    };
     global.fetch = fetchMock as unknown as typeof fetch;
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -333,10 +371,7 @@ describe('Core feature flows (e2e)', () => {
       .overrideProvider(PrismaService)
       .useValue(prisma)
       .overrideProvider(EmailService)
-      .useValue({
-        sendVerificationEmail: jest.fn(),
-        sendPasswordResetEmail: jest.fn(),
-      })
+      .useValue(emailServiceMock)
       .overrideProvider(LineMessagingService)
       .useValue({
         getLineProfile: jest.fn(async () => null),
@@ -357,7 +392,6 @@ describe('Core feature flows (e2e)', () => {
       new ValidationPipe({ whitelist: true, transform: true }),
     );
     await app.init();
-    jwtService = app.get(JwtService);
   });
 
   afterEach(async () => {
@@ -372,15 +406,29 @@ describe('Core feature flows (e2e)', () => {
       .send({ email: 'ADMIN@example.com', password: 'Password123' })
       .expect(201);
 
-    expect(login.body).toMatchObject({
+    expect(login.body.pendingToken).toEqual(expect.any(String));
+    expect(login.body.maskedDestination).toBe('a****@example.com');
+    expect(emailServiceMock.sendTwoFactorCodeEmail).toHaveBeenCalledWith(
+      'admin@example.com',
+      expect.stringMatching(/^\d{6}$/),
+    );
+    const twoFactorCode =
+      emailServiceMock.sendTwoFactorCodeEmail.mock.calls[0][1];
+
+    const verified = await request(app.getHttpServer())
+      .post('/api/auth/verify-2fa')
+      .send({ pendingToken: login.body.pendingToken, code: twoFactorCode })
+      .expect(201);
+
+    expect(verified.body).toMatchObject({
       tenantId: 'tenant-1',
       emailVerified: true,
     });
-    expect(login.body.token).toEqual(expect.any(String));
+    expect(verified.body.token).toEqual(expect.any(String));
 
     const me = await request(app.getHttpServer())
       .get('/api/auth/me')
-      .set('Authorization', `Bearer ${login.body.token}`)
+      .set('Authorization', `Bearer ${verified.body.token}`)
       .expect(200);
 
     expect(me.body).toMatchObject({
@@ -392,81 +440,44 @@ describe('Core feature flows (e2e)', () => {
     });
   });
 
-  it('keeps LINE Login redirect and existing-account callback working', async () => {
-    const start = await request(app.getHttpServer())
-      .get('/api/auth/line')
-      .expect(302);
-    const lineUrl = new URL(start.headers.location);
-    const state = lineUrl.searchParams.get('state');
+  it('keeps organizer registration behind email verification', async () => {
+    prisma.organizerAccount.findFirst.mockResolvedValueOnce(null);
 
-    expect(lineUrl.origin).toBe('https://access.line.me');
-    expect(lineUrl.searchParams.get('client_id')).toBe('1000000000');
-    expect(lineUrl.searchParams.get('redirect_uri')).toBe(
-      'http://backend.test/api/auth/line/callback',
-    );
-    expect(state).toEqual(expect.any(String));
-
-    fetchMock
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ access_token: 'line-access-token' }),
+    const response = await request(app.getHttpServer())
+      .post('/api/auth/register')
+      .send({
+        email: 'NEW@example.com',
+        password: 'Password123',
+        orgName: 'New Organization',
       })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          userId: 'line-existing',
-          displayName: 'Existing LINE User',
-        }),
-      });
-
-    const callback = await request(app.getHttpServer())
-      .get(`/api/auth/line/callback?code=valid-code&state=${state}`)
-      .expect(302);
-    const redirectUrl = new URL(callback.headers.location);
-
-    expect(redirectUrl.origin).toBe('http://frontend.test');
-    expect(redirectUrl.pathname).toBe('/auth/callback');
-    expect(redirectUrl.searchParams.get('token')).toEqual(expect.any(String));
-  });
-
-  it('keeps LINE new-account registration completion working', async () => {
-    const state = jwtService.sign({ ts: Date.now() }, { expiresIn: '10m' });
-    fetchMock
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ access_token: 'line-access-token' }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ userId: 'line-new', displayName: 'New User' }),
-      });
-
-    const callback = await request(app.getHttpServer())
-      .get(`/api/auth/line/callback?code=valid-code&state=${state}`)
-      .expect(302);
-    const redirectUrl = new URL(callback.headers.location);
-
-    expect(redirectUrl.pathname).toBe('/register/line');
-    const lineToken = redirectUrl.searchParams.get('lineToken');
-    expect(lineToken).toEqual(expect.any(String));
-
-    const completed = await request(app.getHttpServer())
-      .post('/api/auth/line/complete')
-      .send({ lineToken, orgName: 'New Organization' })
       .expect(201);
 
-    expect(completed.body).toMatchObject({ tenantId: 'tenant-created' });
-    expect(completed.body.token).toEqual(expect.any(String));
-    expect(prisma.tenant.create).toHaveBeenCalledWith(
+    expect(response.body.message).toEqual(expect.any(String));
+    expect(prisma.pendingRegistration.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          name: 'New Organization',
-          organizerAccounts: {
-            create: { lineUserId: 'line-new' },
-          },
+          email: 'new@example.com',
+          orgName: 'New Organization',
+          token: expect.any(String),
+          passwordHash: expect.any(String),
+          expiresAt: expect.any(Date),
         }),
       }),
     );
+    const token = prisma.pendingRegistration.create.mock.calls[0][0].data.token;
+    expect(emailServiceMock.sendVerificationEmail).toHaveBeenCalledWith(
+      'new@example.com',
+      token,
+    );
+    expect(prisma.tenant.create).not.toHaveBeenCalled();
+  });
+
+  it('does not expose the removed organizer LINE OAuth routes', async () => {
+    await request(app.getHttpServer()).get('/api/auth/line').expect(404);
+    await request(app.getHttpServer())
+      .post('/api/auth/line/complete')
+      .send({ lineToken: 'old-token', orgName: 'Old Flow' })
+      .expect(404);
   });
 
   it('keeps public SEO event listing mapped to safe public fields', async () => {
@@ -533,7 +544,6 @@ describe('Core feature flows (e2e)', () => {
     expect(response.body).toMatchObject({
       id: 'member-1',
       name: 'Existing Member',
-      showEventsToConnections: true,
     });
   });
 
@@ -555,8 +565,13 @@ describe('Core feature flows (e2e)', () => {
         name: 'Reserved User',
         grade: '3',
         gender: 'other',
-      })
-      .expect(201);
+      });
+
+    if (response.status !== 201) {
+      throw new Error(
+        `reservation returned ${response.status}: ${JSON.stringify(response.body)}`,
+      );
+    }
 
     expect(response.body).toMatchObject({
       id: 'reservation-created',
@@ -566,12 +581,12 @@ describe('Core feature flows (e2e)', () => {
     expect(prisma.__state.createdReservation?.data).toMatchObject({
       tenantId: 'tenant-1',
       eventId: 'event-1',
-      memberId: 'member-created',
+      memberId: 'member-1',
       status: 'reserved',
     });
-    expect(prisma.member.create).toHaveBeenCalledWith(
+    expect(prisma.member.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ lineUserId: 'line-from-token' }),
+        create: expect.objectContaining({ lineUserId: 'line-from-token' }),
       }),
     );
   });
@@ -655,7 +670,11 @@ describe('Core feature flows (e2e)', () => {
       'valid-signature',
     );
     expect(prisma.reservation.updateMany).toHaveBeenCalledWith({
-      where: { id: reservationId, tenantId: 'tenant-1' },
+      where: {
+        id: reservationId,
+        tenantId: 'tenant-1',
+        status: 'waiting_payment',
+      },
       data: {
         status: 'reserved',
         paidAt: expect.any(Date),
