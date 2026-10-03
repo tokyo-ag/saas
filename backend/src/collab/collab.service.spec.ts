@@ -55,7 +55,7 @@ describe('CollabService', () => {
     };
   }
 
-  it('throws NotFoundException for an invalid or inactive token', async () => {
+  it('throws NotFoundException for an invalid token', async () => {
     prisma.collabGroup.findFirst.mockResolvedValue(null);
     await expect(service.getCombinedRoster('bad-token')).rejects.toThrow(
       NotFoundException,

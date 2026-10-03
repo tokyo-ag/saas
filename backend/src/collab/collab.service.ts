@@ -40,7 +40,9 @@ export class CollabService {
   // グループに紐づく全イベントの予約を突き合わせて返す。
   async getCombinedRoster(token: string) {
     const group = await this.prisma.collabGroup.findFirst({
-      where: { viewToken: token, active: true },
+      // 発行済みの運営リンクは、表示設定の変更や一時停止操作で無効にしない。
+      // 明示的にグループ自体を削除した場合だけ見つからなくなる。
+      where: { viewToken: token },
       include: {
         eventLinks: {
           include: {
@@ -158,7 +160,7 @@ export class CollabService {
 
   private async findGroupForReservation(token: string, reservationId: string) {
     const group = await this.prisma.collabGroup.findFirst({
-      where: { viewToken: token, active: true },
+      where: { viewToken: token },
       include: { eventLinks: true },
     });
     if (!group) throw new NotFoundException('名簿が見つかりません');
