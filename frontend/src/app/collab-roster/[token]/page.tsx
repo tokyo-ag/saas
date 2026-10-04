@@ -114,9 +114,9 @@ function DuplicateAssignment({ participant, tenants, token, onChanged }: { parti
   }
 
   return (
-    <div className="space-y-2">
+    <div className="flex min-w-[310px] items-center gap-2 whitespace-nowrap">
       <DuplicateBadge participant={participant} token={token} onChanged={onChanged} />
-      <div className="flex min-w-48 items-center gap-1.5">
+      <div className="flex min-w-52 items-center gap-1.5">
         <select
           value={tenantId}
           onChange={(event) => setTenantId(event.target.value)}
@@ -314,81 +314,18 @@ export default function CollabRosterPage() {
             <div className="p-8 text-center text-sm text-gray-400">該当する参加者はいません</div>
           ) : (
             <>
-              {/* モバイル：団体グループごとに見出し＋カード */}
-              <div className="md:hidden">
-                {tenantGroups.map(([tenantId, group]) => {
-                  const groupStats = summarize(group.participants);
-                  return (
-                    <div key={tenantId} className="border-t border-gray-100">
-                      <div className="flex items-center justify-between gap-2 bg-gray-50 px-4 py-2">
-                        <span className="text-xs font-bold text-gray-700">{group.tenantName}</span>
-                        <span className="text-[11px] text-gray-500">
-                          {groupStats.total}人（男{groupStats.male}・女
-                          {groupStats.female}）{groupStats.waitlisted > 0 && ` ・未確定${groupStats.waitlisted}`}
-                        </span>
-                      </div>
-                      <div className="divide-y divide-gray-100">
-                        {group.participants.map((p) => (
-                          <div key={p.id} className="p-4">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex items-start gap-2">
-                                {p.linePictureUrl ? <img src={p.linePictureUrl} alt="" className="mt-0.5 h-6 w-6 shrink-0 rounded-full object-cover" /> : <span className="mt-0.5 h-6 w-6 shrink-0 rounded-full bg-gray-200" />}
-                                <div>
-                                  <p className="text-sm font-bold text-gray-900">{p.name ?? '未入力'}</p>
-                                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
-                                    <span>{p.grade ?? '-'}</span>
-                                    <span>{p.gender ?? '-'}</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <ReservationBadge status={p.status} />
-                            </div>
-                            <div className="mt-2 pl-8">{tab === 'dup' ? <DuplicateAssignment participant={p} tenants={tenants} token={token} onChanged={reload} /> : <DuplicateBadge participant={p} token={token} onChanged={reload} />}</div>
-                            <div className="mt-3 grid gap-2 pl-8">
-                              <label className="block">
-                                <span className="text-[10px] font-semibold text-gray-400">紹介者</span>
-                                <input
-                                  value={fieldValue(p, 'referrer')}
-                                  onChange={(e) => handleFieldChange(p.id, 'referrer', e.target.value)}
-                                  disabled={savingAll}
-                                  maxLength={100}
-                                  placeholder="例：〇〇の紹介"
-                                  className="mt-0.5 w-full rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755] disabled:bg-gray-50"
-                                />
-                              </label>
-                              <label className="block">
-                                <span className="text-[10px] font-semibold text-gray-400">コメント</span>
-                                <textarea
-                                  value={fieldValue(p, 'staffNote')}
-                                  onChange={(e) => handleFieldChange(p.id, 'staffNote', e.target.value)}
-                                  disabled={savingAll}
-                                  maxLength={1000}
-                                  rows={2}
-                                  placeholder="運営用のコメントを自由に入力"
-                                  className="mt-0.5 w-full resize-y rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755] disabled:bg-gray-50"
-                                />
-                              </label>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* デスクトップ：1つの表の中で団体グループごとにtbodyを分ける */}
-              <div className="hidden overflow-x-auto md:block">
-                <table className="w-full text-sm">
+              {/* スマホでも参加者1人を1行にまとめ、横方向に確認・編集できる表 */}
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[1040px] text-sm">
                   <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
                     <tr>
-                      <th className="px-6 py-3 text-left">名前</th>
-                      <th className="px-6 py-3 text-left">年齢</th>
-                      <th className="px-6 py-3 text-left">性別</th>
-                      <th className="px-6 py-3 text-left">ステータス</th>
-                      <th className="px-6 py-3 text-left">紹介者</th>
-                      <th className="px-6 py-3 text-left">コメント</th>
-                      <th className="px-6 py-3 text-left">重複</th>
+                      <th className="whitespace-nowrap px-4 py-3 text-left">名前</th>
+                      <th className="whitespace-nowrap px-4 py-3 text-left">年齢</th>
+                      <th className="whitespace-nowrap px-4 py-3 text-left">性別</th>
+                      <th className="whitespace-nowrap px-4 py-3 text-left">ステータス</th>
+                      <th className="whitespace-nowrap px-4 py-3 text-left">紹介者</th>
+                      <th className="whitespace-nowrap px-4 py-3 text-left">コメント</th>
+                      <th className="whitespace-nowrap px-4 py-3 text-left">重複</th>
                     </tr>
                   </thead>
                   {tenantGroups.map(([tenantId, group]) => {
@@ -396,8 +333,8 @@ export default function CollabRosterPage() {
                     return (
                       <tbody key={tenantId} className="divide-y divide-gray-100">
                         <tr className="bg-gray-50">
-                          <td colSpan={7} className="px-6 py-2">
-                            <div className="flex items-center justify-between gap-2">
+                          <td colSpan={7} className="px-4 py-2">
+                            <div className="flex items-center justify-between gap-4 whitespace-nowrap">
                               <span className="text-xs font-bold text-gray-700">{group.tenantName}</span>
                               <span className="text-[11px] text-gray-500">
                                 {groupStats.total}人（男{groupStats.male}・女
@@ -408,39 +345,39 @@ export default function CollabRosterPage() {
                         </tr>
                         {group.participants.map((p) => (
                           <tr key={p.id}>
-                            <td className="px-6 py-4 font-medium text-gray-900">
-                              <div className="flex items-center gap-2">
+                            <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-900">
+                              <div className="flex items-center gap-2 whitespace-nowrap">
                                 {p.linePictureUrl ? <img src={p.linePictureUrl} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" /> : <span className="h-6 w-6 shrink-0 rounded-full bg-gray-200" />}
                                 {p.name ?? '未入力'}
                               </div>
                             </td>
-                            <td className="px-6 py-4 text-gray-600">{p.grade ?? '-'}</td>
-                            <td className="px-6 py-4 text-gray-600">{p.gender ?? '-'}</td>
-                            <td className="px-6 py-4">
+                            <td className="whitespace-nowrap px-4 py-3 text-gray-600">{p.grade ?? '-'}</td>
+                            <td className="whitespace-nowrap px-4 py-3 text-gray-600">{p.gender ?? '-'}</td>
+                            <td className="whitespace-nowrap px-4 py-3">
                               <ReservationBadge status={p.status} />
                             </td>
-                            <td className="px-6 py-4 align-top">
+                            <td className="whitespace-nowrap px-4 py-3">
                               <input
                                 value={fieldValue(p, 'referrer')}
                                 onChange={(e) => handleFieldChange(p.id, 'referrer', e.target.value)}
                                 disabled={savingAll}
                                 maxLength={100}
                                 placeholder="例：〇〇の紹介"
-                                className="w-36 rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755] disabled:bg-gray-50"
+                                className="h-8 w-36 rounded-lg border border-gray-200 px-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755] disabled:bg-gray-50"
                               />
                             </td>
-                            <td className="px-6 py-4 align-top">
+                            <td className="whitespace-nowrap px-4 py-3">
                               <textarea
                                 value={fieldValue(p, 'staffNote')}
                                 onChange={(e) => handleFieldChange(p.id, 'staffNote', e.target.value)}
                                 disabled={savingAll}
                                 maxLength={1000}
-                                rows={2}
+                                rows={1}
                                 placeholder="運営用コメント"
-                                className="w-52 resize-y rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755] disabled:bg-gray-50"
+                                className="h-8 w-52 resize-none rounded-lg border border-gray-200 px-2 py-1.5 text-xs leading-4 focus:outline-none focus:ring-1 focus:ring-[#06C755] disabled:bg-gray-50"
                               />
                             </td>
-                            <td className="px-6 py-4">{tab === 'dup' ? <DuplicateAssignment participant={p} tenants={tenants} token={token} onChanged={reload} /> : <DuplicateBadge participant={p} token={token} onChanged={reload} />}</td>
+                            <td className="whitespace-nowrap px-4 py-3">{tab === 'dup' ? <DuplicateAssignment participant={p} tenants={tenants} token={token} onChanged={reload} /> : <DuplicateBadge participant={p} token={token} onChanged={reload} />}</td>
                           </tr>
                         ))}
                       </tbody>

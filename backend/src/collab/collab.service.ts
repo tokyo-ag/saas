@@ -65,8 +65,8 @@ export class CollabService {
     if (!group) throw new NotFoundException('名簿が見つかりません');
 
     const eventIds = group.eventLinks.map((l) => l.eventId);
-    const reservations = await this.prisma.reservation.findMany({
-      where: { eventId: { in: eventIds }, status: { not: 'cancelled' } },
+    const reservationHistory = await this.prisma.reservation.findMany({
+      where: { eventId: { in: eventIds } },
       include: {
         member: {
           select: {
@@ -86,8 +86,16 @@ export class CollabService {
 
     // 自動判定：LINE IDを最優先にしつつ、団体ごとにLINEプロバイダーが
     // 異なる場合でも同一人物を拾えるよう、強いプロフィール一致も併用する。
-    const byIdentityKey = new Map<string, typeof reservations>();
-    for (const r of reservations) {
+    // 名簿の人数にはキャンセル済みを含めないが、同じ人がキャンセル後に
+    // 再予約したケースも重複候補として拾うため、判定には予約履歴全体を使う。
+    const reservations = reservationHistory.filter(
+      (reservation) => reservation.status !== 'cancelled',
+    );
+    const activeReservationIds = new Set(
+      reservations.map((reservation) => reservation.id),
+    );
+    const byIdentityKey = new Map<string, typeof reservationHistory>();
+    for (const r of reservationHistory) {
       for (const key of this.duplicateIdentityKeys(r.member)) {
         const list = byIdentityKey.get(key) ?? [];
         list.push(r);
@@ -96,7 +104,11 @@ export class CollabService {
     }
     const autoDuplicateIds = new Set<string>();
     for (const list of byIdentityKey.values()) {
-      if (list.length > 1) list.forEach((r) => autoDuplicateIds.add(r.id));
+      if (list.length > 1) {
+        list.forEach((r) => {
+          if (activeReservationIds.has(r.id)) autoDuplicateIds.add(r.id);
+        });
+      }
     }
 
     const overrideById = new Map(

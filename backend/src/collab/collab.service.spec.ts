@@ -123,6 +123,63 @@ describe('CollabService', () => {
     expect(result.tenants).toHaveLength(2);
   });
 
+  it('uses cancelled reservation history for duplicate detection without showing cancelled rows', async () => {
+    prisma.collabGroup.findFirst.mockResolvedValue(group());
+    prisma.reservation.findMany.mockResolvedValue([
+      {
+        id: 'active-r1',
+        eventId: 'event-a',
+        status: 'reserved',
+        waitlistOrder: null,
+        referrer: null,
+        staffNote: null,
+        member: {
+          name: '北',
+          grade: '大学生（18～22歳）',
+          gender: '男性',
+          level: null,
+          comment: null,
+          linePictureUrl: null,
+          lineUserId: 'same-line-user',
+          lineDisplayName: '北',
+        },
+      },
+      {
+        id: 'cancelled-r1',
+        eventId: 'event-a',
+        status: 'cancelled',
+        waitlistOrder: null,
+        referrer: null,
+        staffNote: null,
+        member: {
+          name: '北',
+          grade: '大学生（18～22歳）',
+          gender: '男性',
+          level: null,
+          comment: null,
+          linePictureUrl: null,
+          lineUserId: 'same-line-user',
+          lineDisplayName: '北',
+        },
+      },
+    ]);
+
+    const result = await service.getCombinedRoster('token');
+
+    expect(result.participants).toHaveLength(1);
+    expect(result.participants[0]).toMatchObject({
+      id: 'active-r1',
+      name: '北',
+      isDuplicateAuto: true,
+      isDuplicate: true,
+    });
+    expect(prisma.reservation.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { eventId: { in: ['event-a', 'event-b'] } },
+      }),
+    );
+  });
+
   it('flags the same LINE profile picture across providers as an automatic duplicate', async () => {
     prisma.collabGroup.findFirst.mockResolvedValue(group());
     prisma.reservation.findMany.mockResolvedValue([
