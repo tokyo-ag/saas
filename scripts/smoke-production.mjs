@@ -54,6 +54,9 @@ const suites = {
         if (!tenant?.id || !tenant?.name) {
           throw new Error('LIFF tenant response is missing id/name');
         }
+        if (tenant?.code !== tenantCode) {
+          throw new Error('LIFF tenant response is missing the canonical tenant code');
+        }
         if (!tenant?.lineChannelId) {
           throw new Error('LIFF tenant response is missing lineChannelId');
         }
@@ -63,40 +66,31 @@ const suites = {
       },
     },
     {
-      name: 'LIFF schedule page responds and is noindex',
+      name: 'legacy LIFF schedule redirects to the canonical public schedule',
       run: async () => {
-        const res = await fetchWithTimeout(`${frontendUrl}/liff/${tenantCode}`);
-        assertStatus(res, 200, 399);
-        const html = await res.text();
-        assertIncludes(html, 'noindex', 'LIFF schedule page is missing noindex robots metadata');
+        const res = await fetchWithTimeout(`${frontendUrl}/liff/${tenantCode}`, {
+          redirect: 'manual',
+        });
+        if (res.status !== 307 && res.status !== 308) {
+          throw new Error(`expected permanent schedule redirect, got ${res.status}`);
+        }
+        const location = res.headers.get('location');
+        if (location !== `/e/${tenantCode}` && location !== `${frontendUrl}/e/${tenantCode}`) {
+          throw new Error(`unexpected schedule redirect target: ${location ?? 'missing'}`);
+        }
       },
     },
     {
-      name: 'frontend bundle supports tenant LIFF initialization',
+      name: 'canonical public schedule is indexable and exposes reservation details',
       run: async () => {
-        const html = await fetchWithTimeout(`${frontendUrl}/liff/${tenantCode}`).then((res) => {
-          assertStatus(res, 200, 399);
+        const html = await fetchWithTimeout(`${frontendUrl}/e/${tenantCode}`).then((res) => {
+          assertStatus(res, 200, 299);
           return res.text();
         });
-        const scripts = getScriptSrcs(html)
-          .filter((src) => src.startsWith('/_next/') && src.endsWith('.js'))
-          .slice(0, 40);
-        if (scripts.length === 0) {
-          throw new Error('LIFF page did not include any Next.js script chunks');
-        }
-
-        const bundleText = (
-          await Promise.all(
-            scripts.map((src) =>
-              fetchWithTimeout(`${frontendUrl}${src}`).then((res) => {
-                assertStatus(res, 200, 299);
-                return res.text();
-              }),
-            ),
-          )
-        ).join('\n');
-
-        assertIncludes(bundleText, 'liffId', 'frontend bundle does not load the tenant LIFF ID');
+        assertExcludes(html, 'noindex', 'canonical public schedule should be indexable');
+        assertIncludes(html, 'rel="canonical"', 'canonical public schedule is missing canonical metadata');
+        assertIncludes(html, 'マイページ', 'canonical public schedule is missing the account entry point');
+        assertIncludes(html, `/e/${tenantCode}/`, 'canonical public schedule is missing event detail links');
       },
     },
     {
@@ -137,6 +131,7 @@ const suites = {
         assertStatus(res, 200, 399);
         const html = await res.text();
         const hasParticipantRoute =
+          html.includes('/e/') ||
           html.includes('/liff/') ||
           html.includes('/clubs/') ||
           html.includes('/events/');
@@ -332,10 +327,6 @@ function assertExcludes(value, unexpected, message) {
 
 function getSitemapLocs(xml) {
   return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
-}
-
-function getScriptSrcs(html) {
-  return [...html.matchAll(/<script[^>]+src="([^"]+)"/g)].map((match) => match[1]);
 }
 
 function assertNoDuplicates(values, message) {
