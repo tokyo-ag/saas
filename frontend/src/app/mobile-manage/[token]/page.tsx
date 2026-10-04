@@ -13,7 +13,7 @@ import {
   Reservation,
   MobileManageDisplayFields,
 } from '@/lib/api';
-import { buildLiffUrl, SITE_URL } from '@/lib/config';
+import { SITE_URL } from '@/lib/config';
 import { EventStatusBadge, ReservationBadge } from '@/components/ui/StatusBadge';
 import EventForm from '@/components/admin/EventForm';
 
@@ -238,11 +238,8 @@ function EventListScreen({
     }
   }
 
-  const schedulePath = `/liff/${session.tenantCode}`;
-  const scheduleUrl = buildLiffUrl(schedulePath, {
-    liffId: session.liffId,
-    endpointPath: '/',
-  }) ?? `${SITE_URL}${schedulePath}`;
+  const schedulePath = `/e/${session.tenantCode}`;
+  const scheduleUrl = `${SITE_URL}${schedulePath}`;
 
   function copyScheduleUrl() {
     navigator.clipboard.writeText(scheduleUrl).then(() => {

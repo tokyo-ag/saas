@@ -7,7 +7,7 @@ export default function DonePage() {
   const { tenantId } = useParams<{ tenantId: string; eventId: string }>();
 
   useEffect(() => {
-    window.location.replace(`/liff/${tenantId}`);
+    window.location.replace(`/e/${tenantId}`);
   }, [tenantId]);
 
   return null;

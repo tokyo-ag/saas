@@ -399,7 +399,7 @@ function ReservePageInner() {
           </p>
         </div>
         <button
-          onClick={() => router.push(`/liff/${tenantId}`)}
+          onClick={() => router.push(`/e/${tenantId}`)}
           className="font-bold px-8 py-3.5 rounded-2xl text-sm active:opacity-90"
           style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
         >
@@ -502,7 +502,7 @@ function ReservePageInner() {
       <div className="sticky top-0 z-10 border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
         <div className="flex items-center justify-between gap-2 px-4 py-3">
           <Link
-            href={`/liff/${tenantId}`}
+            href={`/e/${tenantId}`}
             className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-sm font-bold shadow-sm active:opacity-90"
             style={{ backgroundColor: solidAccentColor, color: readableTextColor(solidAccentColor) }}
           >

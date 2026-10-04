@@ -339,7 +339,7 @@ export default function ProfilePage() {
       <div className="mx-auto w-full max-w-[480px] sm:my-8 sm:overflow-hidden sm:rounded-3xl sm:shadow-2xl" style={{ backgroundColor: theme.backgroundColor, minHeight: '100dvh' }}>
       <div className="border-b border-gray-100" style={{ backgroundColor: theme.navBg }}>
         <div className="px-4 py-4 flex items-center gap-3">
-          <button onClick={() => router.push(`/liff/${tenantId}`)} aria-label="戻る" className="-m-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-2xl leading-none text-gray-900 active:bg-black/5">‹</button>
+          <button onClick={() => router.push(`/e/${tenantId}`)} aria-label="戻る" className="-m-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-2xl leading-none text-gray-900 active:bg-black/5">‹</button>
           <div className="min-w-0">
             <h1 className="text-base font-bold leading-tight text-gray-900">マイページ</h1>
             <p className="text-[11px] leading-tight text-gray-500">プロフィールの編集と参加予定のイベントを確認</p>

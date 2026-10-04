@@ -1,10 +1,14 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 
-import { ReservationViewShowcase, ReservationShowcaseEvent } from '@/components/public/ReservationViewShowcase';
 import { ActivityTicker } from '@/components/liff/ActivityTicker';
 import { BellSchoolBreakdownSections } from '@/components/public/BellSchoolBreakdownSections';
+import {
+  UnifiedReservationSchedule,
+  UnifiedScheduleEvent,
+} from '@/components/public/UnifiedReservationSchedule';
 import { SITE_URL, API_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 
@@ -21,7 +25,7 @@ type TenantEventsData = {
   liffId?: string | null;
   liffEventView?: string | null;
   pages?: Array<{ slug: string }>;
-  events: ReservationShowcaseEvent[];
+  events: UnifiedScheduleEvent[];
 };
 
 // ページ上の表示用：改行はそのまま残し、行内の余分な空白だけ整える。
@@ -53,8 +57,42 @@ function eventsMetaDescriptionSource(tenant: TenantEventsData): string {
 type TenantPageStyle = {
   accentColor?: string | null;
   backgroundColor?: string | null;
+  backgroundOpacity?: number | null;
+  navColor?: string | null;
+  navOpacity?: number | null;
   textColor?: string | null;
+  footerText?: string | null;
 };
+
+function hexToRgba(hex: string, opacityPercent: number) {
+  const value = hex.trim().replace('#', '');
+  if (!/^[0-9a-f]{6}$/i.test(value)) return hex;
+  const red = parseInt(value.slice(0, 2), 16);
+  const green = parseInt(value.slice(2, 4), 16);
+  const blue = parseInt(value.slice(4, 6), 16);
+  return `rgba(${red},${green},${blue},${opacityPercent / 100})`;
+}
+
+function parseReservationColors(page: TenantPageStyle | null) {
+  let eventCardBg = '#ffffff';
+  let reserveButtonColor: string | null = null;
+  let reserveActionStyle: string | null = null;
+  try {
+    const settings = JSON.parse(page?.footerText ?? '{}') as Record<string, unknown>;
+    if (typeof settings.reserveEventCardBg === 'string' && settings.reserveEventCardBg.trim()) {
+      eventCardBg = settings.reserveEventCardBg.trim();
+    }
+    if (typeof settings.reserveButtonBgColor === 'string' && settings.reserveButtonBgColor.trim()) {
+      reserveButtonColor = settings.reserveButtonBgColor.trim();
+    }
+    if (typeof settings.reserveActionStyle === 'string') {
+      reserveActionStyle = settings.reserveActionStyle;
+    }
+  } catch {
+    // Older pages may contain plain footer text rather than JSON settings.
+  }
+  return { eventCardBg, reserveButtonColor, reserveActionStyle };
+}
 
 async function fetchTenant(tenantCode: string): Promise<TenantEventsData | null> {
   try {
@@ -118,7 +156,7 @@ export async function generateMetadata({
   };
 }
 
-function eventJsonLd(event: ReservationShowcaseEvent, tenantCode: string, tenantName: string, tenantIcon: string | null | undefined) {
+function eventJsonLd(event: UnifiedScheduleEvent, tenantCode: string, tenantName: string, tenantIcon: string | null | undefined) {
   const isFull = event.capacity != null && (event.reservedCount ?? 0) >= event.capacity;
   const url = `${SITE_URL}/e/${tenantCode}/${event.id}`;
   const offers =
@@ -175,8 +213,12 @@ export default async function TenantEventsPage({
   const slug = tenant.pages?.[0]?.slug;
   const page = slug ? await fetchPageStyle(tenantCode, slug) : null;
 
-  const accentColor = page?.accentColor || '#06C755';
-  const backgroundColor = page?.backgroundColor || '#F7F8FA';
+  const reservationColors = parseReservationColors(page);
+  const accentColor = reservationColors.reserveButtonColor || page?.accentColor || '#06C755';
+  const backgroundBase = page?.backgroundColor || '#F7F8FA';
+  const backgroundColor = hexToRgba(backgroundBase, page?.backgroundOpacity ?? 100);
+  const navBase = page?.navColor || '#ffffff';
+  const navBg = hexToRgba(navBase, page?.navOpacity ?? 100);
   const textColor = page?.textColor || '#111827';
   const name = tenant.lineDisplayName || tenant.name;
   const icon = tenant.linePictureUrl;
@@ -185,54 +227,69 @@ export default async function TenantEventsPage({
   const jsonLd = [breadcrumbJsonLd(tenantCode, name), ...eventsJsonLd];
 
   return (
-    <div style={{ backgroundColor, minHeight: '100vh' }}>
+    <div className="min-h-screen w-full min-w-0 max-w-[100vw] overflow-x-hidden sm:bg-gray-200" style={{ backgroundColor }}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
-      <div className="mx-auto max-w-lg px-4 py-8">
-        <div className="mb-6 flex items-center gap-3">
-          {icon && (
-            <Link href={`/clubs/${tenantCode}`} className="shrink-0">
-              <img src={icon} alt="" className="h-12 w-12 rounded-full object-cover" />
+      <div
+        className="mx-auto min-h-[100dvh] w-full min-w-0 max-w-[min(480px,100vw)] sm:my-8 sm:overflow-hidden sm:rounded-3xl sm:shadow-2xl"
+        style={{ backgroundColor }}
+      >
+        <header className="sticky top-0 z-10 border-b border-gray-100" style={{ backgroundColor: navBg }}>
+          <div className="flex items-center justify-between gap-2 px-4 pb-3 pt-12 sm:pt-4">
+            <Link href={`/clubs/${tenantCode}`} className="-m-2 flex min-w-0 items-center gap-2.5 rounded-xl p-2 active:bg-black/5">
+              {icon ? (
+                <Image
+                  src={imgUrl(icon, API_URL)!}
+                  width={36}
+                  height={36}
+                  className="h-9 w-9 shrink-0 rounded-full object-cover"
+                  alt=""
+                  unoptimized
+                />
+              ) : (
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base" style={{ backgroundColor: `${accentColor}30` }} aria-hidden="true">🎉</span>
+              )}
+              <span className="min-w-0">
+                <span className="block truncate text-[18px] font-bold leading-tight tracking-tight" style={{ color: textColor }}>{name}</span>
+                <span className="block text-[10px] leading-tight" style={{ color: textColor }}>団体説明</span>
+              </span>
             </Link>
-          )}
-          <div className="min-w-0">
-            <Link href={`/clubs/${tenantCode}`} className="block truncate text-lg font-bold" style={{ color: textColor }}>
-              {name}
-            </Link>
-            {slug && (
-              <Link href={`/clubs/${tenantCode}/${slug}`} className="block text-xs underline" style={{ color: accentColor }}>
-                団体ページを見る
+            {reservationColors.reserveActionStyle !== 'line' && (
+              <Link
+                href={`/liff/${tenantCode}/profile`}
+                className="-m-2 flex shrink-0 items-center gap-1.5 rounded-xl p-2 active:bg-black/5"
+                aria-label="マイページ"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </span>
+                <span className="text-right" style={{ color: textColor }}>
+                  <span className="block text-[15px] font-bold leading-tight">マイページ</span>
+                  <span className="block text-[10px] leading-tight">ログインする</span>
+                </span>
               </Link>
             )}
           </div>
-        </div>
+        </header>
 
-        <div className="-mx-4 mb-4">
+        <div>
           <ActivityTicker tenantId={tenantCode} accentColor={accentColor} />
         </div>
 
-        <h1 className="mb-2 text-sm font-bold" style={{ color: textColor }}>{name}の予約スケジュール</h1>
+        <h1 className="sr-only">{name}の予約スケジュール</h1>
+        {eventsIntroText(tenant) && <p className="sr-only">{eventsIntroText(tenant)}</p>}
 
-        {eventsIntroText(tenant) && (
-          <p className="mb-4 whitespace-pre-wrap text-xs leading-relaxed" style={{ color: textColor, opacity: 0.7 }}>
-            {eventsIntroText(tenant)}
-          </p>
-        )}
-
-        {events.length === 0 ? (
-          <p className="text-sm text-gray-400">現在受付中のイベントはありません。</p>
-        ) : (
-          <ReservationViewShowcase
+        <div className="p-2">
+          <UnifiedReservationSchedule
             accentColor={accentColor}
-            buttonLabel="予約する"
+            cardBg={reservationColors.eventCardBg}
             viewStyle={tenant.liffEventView}
             events={events}
             tenantCode={tenantCode}
-            showButton={false}
           />
-        )}
+        </div>
 
         {tenantCode === BELL_TENANT_CODE && <BellSchoolBreakdownSections />}
       </div>

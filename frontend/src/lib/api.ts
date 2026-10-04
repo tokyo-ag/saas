@@ -1011,6 +1011,7 @@ export interface TenantInput {
 
 export interface LiffTenant {
   id: string;
+  code?: string;
   name: string;
   description?: string;
   tags?: string[];

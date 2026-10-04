@@ -91,6 +91,7 @@ export class LiffService {
     );
     return {
       id: tenant.id,
+      code: tenant.code,
       name: tenant.name,
       description: tenant.description,
       tags: tenant.tags,
