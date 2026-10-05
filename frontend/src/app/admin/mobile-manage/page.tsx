@@ -51,21 +51,6 @@ export default function AdminMobileManagePage() {
     setTimeout(() => setCopied(false), 1600);
   }
 
-  async function updateSetting(patch: Partial<Omit<MobileManageSettings, 'linkUrl'>>) {
-    if (!settings) return;
-    setSettings({ ...settings, ...patch });
-    setBusy(true);
-    setError('');
-    try {
-      const updated = await api.mobileManage.updateSettings(patch);
-      setSettings(updated);
-    } catch (err: any) {
-      setError(err?.message ?? '更新に失敗しました');
-    } finally {
-      setBusy(false);
-    }
-  }
-
   if (loading) {
     return <div className="p-6 text-sm text-gray-400">読み込み中...</div>;
   }
@@ -128,61 +113,6 @@ export default function AdminMobileManagePage() {
             </button>
           </>
         )}
-      </section>
-
-      <section className="space-y-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-        <h2 className="text-sm font-bold text-gray-800">超簡単モバイル管理での表示設定</h2>
-
-        <div>
-          <p className="mb-1.5 text-xs font-bold text-gray-500">予約の管理方法</p>
-          <div className="flex gap-1.5">
-            {([
-              { value: 'comiu' as const, label: '名簿管理' },
-              { value: 'line' as const, label: 'LINEで管理' },
-            ]).map(({ value, label }) => (
-              <button
-                key={value}
-                type="button"
-                disabled={busy}
-                onClick={() => updateSetting({ reserveActionStyle: value })}
-                className={`rounded-full px-4 py-1.5 text-xs font-bold transition disabled:opacity-50 ${
-                  settings?.reserveActionStyle === value ? 'bg-[#06C755] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <p className="mt-1.5 text-xs text-gray-400">公開サイトの予約形式と共通の設定です。名簿管理はCOMIU上で予約を受け付け、LINEで管理はLINE上でのやり取りを基本にします。</p>
-        </div>
-
-        <label className="flex items-start gap-2 text-sm text-gray-700">
-          <input
-            type="checkbox"
-            checked={!settings?.hideLevel}
-            disabled={busy}
-            onChange={(e) => updateSetting({ hideLevel: !e.target.checked })}
-            className="mt-0.5 accent-[#06C755]"
-          />
-          <span>
-            イベント作成時に「予約時のレベルを確認する」項目を表示する
-            <span className="block text-xs text-gray-400">超簡単モバイル管理経由でのイベント作成のみに適用されます。</span>
-          </span>
-        </label>
-
-        <label className="flex items-start gap-2 text-sm text-gray-700">
-          <input
-            type="checkbox"
-            checked={!settings?.hideLineNotify}
-            disabled={busy}
-            onChange={(e) => updateSetting({ hideLineNotify: !e.target.checked })}
-            className="mt-0.5 accent-[#06C755]"
-          />
-          <span>
-            イベント作成時に「LINE通知」項目を表示する
-            <span className="block text-xs text-gray-400">超簡単モバイル管理経由でのイベント作成のみに適用されます。</span>
-          </span>
-        </label>
       </section>
     </div>
   );
