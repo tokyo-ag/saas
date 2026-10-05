@@ -56,8 +56,8 @@ function VerifyEmailInner() {
             </div>
             <h1 className="text-xl font-bold text-gray-900">確認完了</h1>
             <p className="text-sm text-gray-500">{message}</p>
-            <Link href="/admin" className="inline-block bg-[#06C755] text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-[#05a847] transition-colors">
-              管理画面へ
+            <Link href="/login" className="inline-block bg-[#06C755] text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-[#05a847] transition-colors">
+              ログインする
             </Link>
           </div>
         )}
@@ -71,8 +71,8 @@ function VerifyEmailInner() {
             </div>
             <h1 className="text-xl font-bold text-gray-900">確認できませんでした</h1>
             <p className="text-sm text-gray-500">{message}</p>
-            <Link href="/admin" className="inline-block text-[#06C755] text-sm hover:underline">
-              管理画面へ戻る
+            <Link href="/login" className="inline-block text-[#06C755] text-sm hover:underline">
+              ログイン画面へ戻る
             </Link>
           </div>
         )}

@@ -147,13 +147,16 @@ export class AuthService {
       data: { token, email: normalizedEmail, passwordHash, orgName, expiresAt },
     });
 
-    await this.email
-      .sendVerificationEmail(normalizedEmail, token)
-      .catch((err) => {
-        this.logger.error(
-          `Failed to send verification email to ${normalizedEmail}: ${err?.message ?? err}`,
-        );
-      });
+    try {
+      await this.email.sendVerificationEmail(normalizedEmail, token);
+    } catch (err: any) {
+      this.logger.error(
+        `Failed to send verification email to ${normalizedEmail}: ${err?.message ?? err}`,
+      );
+      throw new BadRequestException(
+        '確認メールの送信に失敗しました。しばらくしてから再度お試しください。',
+      );
+    }
 
     return {
       message:
@@ -357,10 +360,29 @@ export class AuthService {
     if (!account)
       throw new BadRequestException('無効または期限切れのリンクです');
     if (account.emailVerifiedAt) return { message: '既に確認済みです' };
+    if (
+      account.emailVerificationTokenExpiresAt &&
+      account.emailVerificationTokenExpiresAt < new Date()
+    ) {
+      await this.prisma.organizerAccount.update({
+        where: { id: account.id },
+        data: {
+          emailVerificationToken: null,
+          emailVerificationTokenExpiresAt: null,
+        },
+      });
+      throw new BadRequestException(
+        'リンクの有効期限が切れています。再送してもう一度お試しください。',
+      );
+    }
 
     await this.prisma.organizerAccount.update({
       where: { id: account.id },
-      data: { emailVerifiedAt: new Date(), emailVerificationToken: null },
+      data: {
+        emailVerifiedAt: new Date(),
+        emailVerificationToken: null,
+        emailVerificationTokenExpiresAt: null,
+      },
     });
     return { message: 'メールアドレスを確認しました' };
   }
@@ -459,11 +481,21 @@ export class AuthService {
         email: trimmedEmail,
         passwordHash,
         emailVerificationToken: verificationToken,
+        emailVerificationTokenExpiresAt: new Date(
+          Date.now() + 24 * 60 * 60 * 1000,
+        ),
       },
     });
-    await this.email
-      .sendVerificationEmail(trimmedEmail, verificationToken)
-      .catch(() => null);
+    try {
+      await this.email.sendVerificationEmail(trimmedEmail, verificationToken);
+    } catch (err: any) {
+      this.logger.error(
+        `Failed to send verification email to ${trimmedEmail}: ${err?.message ?? err}`,
+      );
+      throw new BadRequestException(
+        '確認メールの送信に失敗しました。しばらくしてから再度お試しください。',
+      );
+    }
     return { message: 'メールアドレスとパスワードを設定しました' };
   }
 
@@ -481,15 +513,23 @@ export class AuthService {
     const token = this.generateToken();
     await this.prisma.organizerAccount.update({
       where: { id: accountId },
-      data: { emailVerificationToken: token },
+      data: {
+        emailVerificationToken: token,
+        emailVerificationTokenExpiresAt: new Date(
+          Date.now() + 24 * 60 * 60 * 1000,
+        ),
+      },
     });
-    await this.email
-      .sendVerificationEmail(account.email, token)
-      .catch((err) => {
-        this.logger.error(
-          `Failed to resend verification email to ${account.email}: ${err?.message ?? err}`,
-        );
-      });
+    try {
+      await this.email.sendVerificationEmail(account.email, token);
+    } catch (err: any) {
+      this.logger.error(
+        `Failed to resend verification email to ${account.email}: ${err?.message ?? err}`,
+      );
+      throw new BadRequestException(
+        '確認メールの送信に失敗しました。しばらくしてから再度お試しください。',
+      );
+    }
     return { message: '確認メールを再送しました' };
   }
 
@@ -537,7 +577,12 @@ export class AuthService {
     const token = this.generateToken();
     await this.prisma.organizerAccount.update({
       where: { id: account.id },
-      data: { emailVerificationToken: token },
+      data: {
+        emailVerificationToken: token,
+        emailVerificationTokenExpiresAt: new Date(
+          Date.now() + 24 * 60 * 60 * 1000,
+        ),
+      },
     });
     await this.email
       .sendVerificationEmail(account.email, token)
