@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api, SupportMessage } from '@/lib/api';
-import { initLiff, getLiffUserId, loginIfNeeded, loginWithRedirect, liff } from '@/lib/liff';
+import { initLiff, getLiffUserId, loginIfNeeded, loginWithRedirect, liff, clearLiffSdkState } from '@/lib/liff';
 import { ChatBubble, ChatInput } from '@/components/ui/ChatBubble';
 
 function formatTime(dateStr: string) {
@@ -52,6 +52,7 @@ export default function SupportPage() {
   }, [tenantId, load]);
 
   function handleLoginRetry() {
+    clearLiffSdkState();
     if (liff.isInClient()) {
       window.location.reload();
       return;

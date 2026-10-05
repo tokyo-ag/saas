@@ -21,6 +21,7 @@ import {
   hasRecentLoginAttempt,
   isLiffLoggedIn,
   syncLiffApiToken,
+  clearLiffSdkState,
 } from '@/lib/liff';
 import { useLiffTheme, hexToRgba, readableTextColor, isLightHexColor } from '@/components/liff/LiffThemeProvider';
 import { LiffToast } from '@/components/liff/LiffToast';
@@ -111,6 +112,9 @@ function ReservePageInner() {
       JSON.stringify({ url: currentRedirectUri(), expires: Date.now() + 10 * 60 * 1000 }),
     );
     setLiffToken(null);
+    // 古いLIFFセッション状態が残っていると、同じ初期化失敗を繰り返すため
+    // 再試行のたびに必ずクリアする。
+    clearLiffSdkState();
 
     if (liff.isInClient()) {
       window.location.reload();

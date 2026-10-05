@@ -53,6 +53,37 @@ export function getInitInfo() {
   return initInfo;
 }
 
+function clearStaleSdkStorage(storage: Storage): void {
+  const staleKeys: string[] = [];
+  for (let i = 0; i < storage.length; i++) {
+    const key = storage.key(i);
+    // LIFF SDKが内部的に保存するセッション状態（LIFF_STORE:... 等）のみを対象にする。
+    // 当アプリ独自のキー（liff-login-tried等、小文字始まり）は巻き込まない。
+    if (key && /^LIFF[_:]/.test(key)) staleKeys.push(key);
+  }
+  staleKeys.forEach((key) => storage.removeItem(key));
+}
+
+// 端末に古いLIFFセッション状態が残っていると、実際にはLIFFブラウザでは
+// ない状況でもSDKが「LIFFブラウザ内にいる」と誤認し、ネイティブアプリ側
+// からの応答を待ち続けてliff.init()がタイムアウトし続けることがある。
+// 単純な再読み込みではこの状態は消えず、同じ失敗を繰り返す。
+export function clearLiffSdkState(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    clearStaleSdkStorage(window.localStorage);
+  } catch {
+    // ignore
+  }
+  try {
+    clearStaleSdkStorage(window.sessionStorage);
+  } catch {
+    // ignore
+  }
+  initialized = false;
+  initializedLiffId = null;
+}
+
 // liff.init()が未実行/失敗の状態でliff.isLoggedIn()を呼ぶとSDKが例外を投げるため、
 // 常にこちらを経由して呼び出す（呼び出し側でのtry/catchの重複を避ける）。
 export function isLiffLoggedIn(): boolean {
@@ -139,6 +170,9 @@ export async function initLiff(liffIdOverride?: string): Promise<boolean> {
     initInfo = { ok: false, hasId: Boolean(id), loggedIn: false };
     exposeDebugValue('__LIFF_INIT_ERROR', lastError);
     exposeDebugValue('__LIFF_INIT_INFO', initInfo);
+    // 古いLIFFセッション状態による誤認が原因の可能性があるため、次の初期化
+    // （再試行）が同じ失敗を繰り返さないよう、ここで必ずクリアしておく。
+    clearLiffSdkState();
     return false;
   }
 }

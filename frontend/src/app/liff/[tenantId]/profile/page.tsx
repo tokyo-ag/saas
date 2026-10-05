@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { api, CustomProfileQuestion, LiffMyReservation, LiffProfile, setLiffToken } from '@/lib/api';
-import { initLiff, getLiffUserId, loginIfNeeded, loginWithRedirect, currentRedirectUri, liff, redirectToLiffApp, isLiffLoggedIn, syncLiffApiToken } from '@/lib/liff';
+import { initLiff, getLiffUserId, loginIfNeeded, loginWithRedirect, currentRedirectUri, liff, redirectToLiffApp, isLiffLoggedIn, syncLiffApiToken, clearLiffSdkState } from '@/lib/liff';
 import { useLiffTheme, readableTextColor, isLightHexColor } from '@/components/liff/LiffThemeProvider';
 import { ConfirmDialog } from '@/components/liff/ConfirmDialog';
 import { LiffToast } from '@/components/liff/LiffToast';
@@ -200,6 +200,9 @@ export default function ProfilePage() {
       JSON.stringify({ url: currentRedirectUri(), expires: Date.now() + 10 * 60 * 1000 }),
     );
     setLiffToken(null);
+    // 古いLIFFセッション状態が残っていると、同じ初期化失敗を繰り返すため
+    // 再試行のたびに必ずクリアする。
+    clearLiffSdkState();
 
     if (liff.isInClient()) {
       window.location.reload();
