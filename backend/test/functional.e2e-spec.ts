@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/require-await, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-argument */
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { JwtService } from '@nestjs/jwt';
 import request from 'supertest';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
@@ -438,6 +439,63 @@ describe('Core feature flows (e2e)', () => {
       emailVerified: true,
       hasPassword: true,
     });
+  });
+
+  it('lets the configured superadmin log in without an email confirmation code', async () => {
+    const previousSuperadminEmail = process.env.SUPERADMIN_EMAIL;
+    process.env.SUPERADMIN_EMAIL = 'admin@example.com';
+
+    try {
+      const login = await request(app.getHttpServer())
+        .post('/api/auth/superadmin-login')
+        .send({ email: 'ADMIN@example.com', password: 'Password123' })
+        .expect(201);
+
+      expect(login.body).toMatchObject({
+        tenantId: 'tenant-1',
+        emailVerified: true,
+        token: expect.any(String),
+      });
+      expect(login.body.pendingToken).toBeUndefined();
+      expect(emailServiceMock.sendTwoFactorCodeEmail).not.toHaveBeenCalled();
+
+      const payload = app.get(JwtService).verify(login.body.token) as {
+        tenantId?: string;
+        accountId?: string;
+        isSuperadmin?: boolean;
+      };
+      expect(payload).toMatchObject({
+        tenantId: 'tenant-1',
+        accountId: 'account-1',
+        isSuperadmin: true,
+      });
+    } finally {
+      if (previousSuperadminEmail === undefined) {
+        delete process.env.SUPERADMIN_EMAIL;
+      } else {
+        process.env.SUPERADMIN_EMAIL = previousSuperadminEmail;
+      }
+    }
+  });
+
+  it('does not let a normal organizer bypass confirmation through the superadmin login', async () => {
+    const previousSuperadminEmail = process.env.SUPERADMIN_EMAIL;
+    process.env.SUPERADMIN_EMAIL = 'someone-else@example.com';
+
+    try {
+      await request(app.getHttpServer())
+        .post('/api/auth/superadmin-login')
+        .send({ email: 'admin@example.com', password: 'Password123' })
+        .expect(401);
+
+      expect(emailServiceMock.sendTwoFactorCodeEmail).not.toHaveBeenCalled();
+    } finally {
+      if (previousSuperadminEmail === undefined) {
+        delete process.env.SUPERADMIN_EMAIL;
+      } else {
+        process.env.SUPERADMIN_EMAIL = previousSuperadminEmail;
+      }
+    }
   });
 
   it('keeps organizer registration behind email verification', async () => {

@@ -79,6 +79,12 @@ export class AuthController {
   }
 
   @Throttle({ default: { ttl: 60000, limit: 10 } })
+  @Post('superadmin-login')
+  superadminLogin(@Body() dto: LoginDto) {
+    return this.authService.superadminLogin(dto.email, dto.password);
+  }
+
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   @Post('verify-2fa')
   verifyTwoFactor(@Body() dto: VerifyTwoFactorDto) {
     return this.authService.verifyTwoFactor(dto.pendingToken, dto.code);

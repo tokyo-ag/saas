@@ -63,9 +63,8 @@ export class AuthService {
     return !!superadminEmail && email === superadminEmail;
   }
 
-  // ログインの第1段階（パスワード確認）を通過したアカウントへ確認コードを
-  // メールで送り、本人確認が済むまでは実際のセッションを発行しない。
-  // スーパーアドミンも含め、主催者は全員メールでコードを受け取る。
+  // 通常の主催者は、パスワード確認後にメールの確認コードを必須とする。
+  // スーパーアドミンは専用ログインから直接セッションを発行する。
   private async issuePendingTwoFactor(account: {
     id: string;
     tenantId: string;
@@ -162,7 +161,7 @@ export class AuthService {
     };
   }
 
-  async login(email: string, password: string) {
+  private async validateEmailPassword(email: string, password: string) {
     const trimmedEmail = email.trim().toLowerCase();
     const account = await this.prisma.organizerAccount.findFirst({
       where: { email: { equals: trimmedEmail, mode: 'insensitive' } },
@@ -181,7 +180,26 @@ export class AuthService {
     if (!account.emailVerifiedAt)
       throw new UnauthorizedException('EMAIL_NOT_VERIFIED');
 
+    return account;
+  }
+
+  async login(email: string, password: string) {
+    const account = await this.validateEmailPassword(email, password);
+
     return this.issuePendingTwoFactor(account);
+  }
+
+  async superadminLogin(email: string, password: string) {
+    const account = await this.validateEmailPassword(email, password);
+    if (!this.isSuperadminAccount(account.email)) {
+      throw new UnauthorizedException('スーパー管理者権限がありません');
+    }
+
+    return {
+      token: this.issueToken(account.tenantId, account.id, true),
+      tenantId: account.tenantId,
+      emailVerified: true,
+    };
   }
 
   async verifyTwoFactor(pendingToken: string, code: string) {
