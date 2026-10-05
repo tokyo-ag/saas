@@ -153,6 +153,29 @@ export class StripeWebhookController {
       }
     }
 
+    // 決済画面を開いたまま離脱し、Stripeのチェックアウトセッション自体が
+    // 期限切れになった場合は、確保していた枠を解放する。
+    // completed/expiredはStripe側で排他なので、支払済みの予約を誤って
+    // キャンセルしてしまう競合は起きない。
+    if (event.type === 'checkout.session.expired') {
+      const session = event.data.object as {
+        metadata?: Record<string, string> | null;
+      };
+      const reservationId = session.metadata?.reservationId;
+      const uuidRe =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (reservationId && uuidRe.test(reservationId)) {
+        await this.prisma.reservation.updateMany({
+          where: {
+            id: reservationId,
+            tenantId,
+            status: ReservationStatus.waiting_payment,
+          },
+          data: { status: ReservationStatus.cancelled },
+        });
+      }
+    }
+
     return { received: true };
   }
 }

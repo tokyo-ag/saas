@@ -1,7 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LineMessagingService } from '../line-messaging/line-messaging.service';
+
+// Stripeのチェックアウトセッションは既定で24時間後に失効する。
+// checkout.session.expired Webhookで即時解放するのが基本だが、各団体が
+// 自分のStripeダッシュボードで設定するWebhookがこのイベント種別を
+// 購読していない場合に備え、Stripe側の失効より確実に後になるしきい値で
+// 保険として解放する（支払済みの予約を誤ってキャンセルする競合は起きない）。
+const ABANDONED_PAYMENT_HOURS = 25;
 
 @Injectable()
 export class SchedulerService {
@@ -11,6 +19,26 @@ export class SchedulerService {
     private prisma: PrismaService,
     private lineMessaging: LineMessagingService,
   ) {}
+
+  // 1時間おきに実行：決済未完了のまま放置された予約を解放し、枠を空ける。
+  @Cron(CronExpression.EVERY_HOUR)
+  async releaseAbandonedPayments() {
+    const cutoff = new Date(
+      Date.now() - ABANDONED_PAYMENT_HOURS * 60 * 60 * 1000,
+    );
+    const result = await this.prisma.reservation.updateMany({
+      where: {
+        status: ReservationStatus.waiting_payment,
+        reservedAt: { lt: cutoff },
+      },
+      data: { status: ReservationStatus.cancelled },
+    });
+    if (result.count > 0) {
+      this.logger.log(
+        `Released ${result.count} abandoned waiting_payment reservation(s)`,
+      );
+    }
+  }
 
   // 毎分実行：リマインド送信が必要なイベントを探して送信
   @Cron(CronExpression.EVERY_MINUTE)
@@ -69,7 +97,8 @@ export class SchedulerService {
               descriptionFemale: event.descriptionFemale,
               maleDelayMinutes: event.maleDelayMinutes,
               gender: r.member.gender,
-              includeDescriptionByDefault: !event.reminderMessageTemplate?.trim(),
+              includeDescriptionByDefault:
+                !event.reminderMessageTemplate?.trim(),
             },
           );
         }
