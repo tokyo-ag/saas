@@ -427,6 +427,26 @@ export default function EventForm({
     tags: normalizeEventTags(initial?.tags ?? []),
   });
 
+  // 既存イベントが定員・通知・参加者情報などを個別設定済みの場合は、
+  // その内容を見失わないよう詳細設定を開いた状態にする。新規作成時や
+  // すでにデフォルトのままのイベントでは閉じておき、画面をシンプルに保つ。
+  const hasAdvancedData = Boolean(
+    initial && (
+      initial.capacity != null ||
+      initial.capacityMale != null ||
+      initial.capacityFemale != null ||
+      (initial.paymentTiming && initial.paymentTiming !== 'onsite') ||
+      initial.levelEnabled ||
+      initial.rosterShareEnabled ||
+      initial.reserveActionStyle ||
+      initial.notifyOnReserve === false ||
+      initial.remindEnabled ||
+      initial.reservationMessageTemplate?.trim() ||
+      initial.reminderMessageTemplate?.trim()
+    ),
+  );
+  const [advancedOpen, setAdvancedOpen] = useState(hasAdvancedData);
+
   useEffect(() => {
     // 超簡単モバイル管理のセッションには/admin/tenantへのアクセス権がなく、
     // simplifiedモードではLINE通知・Stripe関連UIも表示しないため、そもそも不要。
@@ -1118,40 +1138,6 @@ export default function EventForm({
         </Field>
       </Section>
 
-      <Section title="定員">
-        <RadioGroup
-          value={form.capacityMode}
-          onChange={(value) => set('capacityMode', value)}
-          options={[
-            ['none', '制限なし'],
-            ['total', '合計で設定'],
-            ['gender', '男女別'],
-          ]}
-        />
-        {form.capacityMode === 'total' && (
-          <div className="flex max-w-44 items-center gap-2">
-            <input type="number" min={5} max={300} step={5} value={form.capacity} onChange={(e) => set('capacity', e.target.value)} placeholder="30" className={inputClass} />
-            <span className="text-sm text-gray-500">人</span>
-          </div>
-        )}
-        {form.capacityMode === 'gender' && (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="男性">
-              <div className="flex items-center gap-2">
-                <input type="number" min={0} max={300} step={5} value={form.capacityMale} onChange={(e) => set('capacityMale', e.target.value)} className={inputClass} />
-                <span className="text-sm text-gray-500">人</span>
-              </div>
-            </Field>
-            <Field label="女性">
-              <div className="flex items-center gap-2">
-                <input type="number" min={0} max={300} step={5} value={form.capacityFemale} onChange={(e) => set('capacityFemale', e.target.value)} className={inputClass} />
-                <span className="text-sm text-gray-500">人</span>
-              </div>
-            </Field>
-          </div>
-        )}
-      </Section>
-
       <Section title="参加費">
         <RadioGroup
           value={form.priceMode}
@@ -1182,7 +1168,7 @@ export default function EventForm({
             </Field>
           </div>
         )}
-        {!simplified && (
+        {!simplified && advancedOpen && (
           <div>
             <p className="mb-2 text-xs text-gray-500">支払いタイミング</p>
             <div className="flex flex-wrap gap-3">
@@ -1202,6 +1188,56 @@ export default function EventForm({
                 <Link href="/admin/settings/stripe" className="ml-1 underline">Stripe設定へ</Link>
               </p>
             )}
+          </div>
+        )}
+      </Section>
+
+      {!simplified && (
+        <button
+          type="button"
+          onClick={() => setAdvancedOpen((v) => !v)}
+          className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-left hover:bg-gray-100"
+        >
+          <span>
+            <span className="text-sm font-bold text-gray-700">詳細設定</span>
+            <span className="ml-2 text-xs text-gray-400">定員・参加者情報・通知（通常は変更不要です）</span>
+          </span>
+          <span className="shrink-0 text-xs font-medium text-gray-500">{advancedOpen ? '閉じる ▲' : '開く ▼'}</span>
+        </button>
+      )}
+
+      {(simplified || advancedOpen) && (
+      <>
+      <Section title="定員">
+        <RadioGroup
+          value={form.capacityMode}
+          onChange={(value) => set('capacityMode', value)}
+          options={[
+            ['none', '制限なし'],
+            ['total', '合計で設定'],
+            ['gender', '男女別'],
+          ]}
+        />
+        {form.capacityMode === 'total' && (
+          <div className="flex max-w-44 items-center gap-2">
+            <input type="number" min={5} max={300} step={5} value={form.capacity} onChange={(e) => set('capacity', e.target.value)} placeholder="30" className={inputClass} />
+            <span className="text-sm text-gray-500">人</span>
+          </div>
+        )}
+        {form.capacityMode === 'gender' && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="男性">
+              <div className="flex items-center gap-2">
+                <input type="number" min={0} max={300} step={5} value={form.capacityMale} onChange={(e) => set('capacityMale', e.target.value)} className={inputClass} />
+                <span className="text-sm text-gray-500">人</span>
+              </div>
+            </Field>
+            <Field label="女性">
+              <div className="flex items-center gap-2">
+                <input type="number" min={0} max={300} step={5} value={form.capacityFemale} onChange={(e) => set('capacityFemale', e.target.value)} className={inputClass} />
+                <span className="text-sm text-gray-500">人</span>
+              </div>
+            </Field>
           </div>
         )}
       </Section>
@@ -1297,6 +1333,8 @@ export default function EventForm({
         </div>
       </Section>
       )}
+      </>
+      )}
 
       <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center">
         <button type="submit" disabled={submitting} className="rounded-lg bg-[#06C755] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#05a847] disabled:opacity-50">
@@ -1313,7 +1351,7 @@ export default function EventForm({
       </div>
       </div>
 
-      {!hideLineNotify && (form.notifyOnReserve || form.remindEnabled) && (
+      {!hideLineNotify && (simplified || advancedOpen) && (form.notifyOnReserve || form.remindEnabled) && (
         <aside className="space-y-5 xl:sticky xl:top-6">
           {form.notifyOnReserve && (
             <LineMessageEditor
