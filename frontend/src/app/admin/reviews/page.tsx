@@ -9,61 +9,23 @@ function TenantReviewSection({
   rows,
   loading,
   error,
-  onToggle,
-  onSaveEdit,
   onDelete,
 }: {
   rows: AdminTenantReview[];
   loading: boolean;
   error: string;
-  onToggle: (row: AdminTenantReview) => void;
-  onSaveEdit: (row: AdminTenantReview, content: string) => Promise<void>;
   onDelete: (row: AdminTenantReview) => void;
 }) {
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState('');
-
-  function startEdit(row: AdminTenantReview) {
-    setEditingId(row.id);
-    setEditContent(row.content);
-    setSaveError('');
-  }
-
-  function cancelEdit() {
-    setEditingId(null);
-    setEditContent('');
-  }
-
-  async function saveEdit(row: AdminTenantReview) {
-    const content = editContent.trim();
-    if (content.length < 5 || content.length > 300) {
-      setSaveError('感想は5文字以上300文字以内で入力してください');
-      return;
-    }
-    setSaving(true);
-    try {
-      await onSaveEdit(row, content);
-      setSaveError('');
-      setEditingId(null);
-    } catch {
-      setSaveError('口コミの更新に失敗しました');
-    } finally {
-      setSaving(false);
-    }
-  }
-
   return (
     <div className="mb-8">
       <div className="mb-3">
         <h2 className="text-sm font-bold text-gray-800">サイト全体の口コミ</h2>
-        <p className="mt-1 text-xs text-gray-400">公開サイトの「口コミ」セクションに表示されます。LINE連携済みのメンバーなら、予約の有無に関わらず投稿できます。</p>
+        <p className="mt-1 text-xs text-gray-400">LINE連携済みのメンバーが投稿すると、自動で公開サイトの「口コミ」セクションに表示されます。不適切な投稿は削除してください。</p>
       </div>
 
-      {(error || saveError) && (
+      {error && (
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error || saveError}
+          {error}
         </div>
       )}
 
@@ -79,27 +41,7 @@ function TenantReviewSection({
             {rows.map((row) => (
               <article key={row.id} className="flex flex-col gap-4 p-4 md:flex-row md:items-start md:justify-between md:p-6">
                 <div className="min-w-0 flex-1">
-                  <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                      row.isPublished ? 'bg-green-50 text-[#06C755]' : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {row.isPublished ? '公開中' : '非公開'}
-                    </span>
-                  </div>
-                  {editingId === row.id ? (
-                    <div className="space-y-2">
-                      <textarea
-                        value={editContent}
-                        onChange={(e) => setEditContent(e.target.value)}
-                        rows={3}
-                        maxLength={300}
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-[#06C755] focus:outline-none"
-                      />
-                      <p className="text-right text-[11px] text-gray-400">{editContent.length}/300</p>
-                    </div>
-                  ) : (
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{row.content}</p>
-                  )}
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{row.content}</p>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-400">
                     <span>{row.member.name ?? '未入力'}</span>
                     {row.member.grade && <span>{row.member.grade}</span>}
@@ -107,54 +49,13 @@ function TenantReviewSection({
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-2">
-                  {editingId === row.id ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={cancelEdit}
-                        disabled={saving}
-                        className="rounded-lg border border-gray-200 px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-50"
-                      >
-                        キャンセル
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void saveEdit(row)}
-                        disabled={saving}
-                        className="rounded-lg bg-[#06C755] px-4 py-2 text-xs font-bold text-white hover:bg-[#05a847]"
-                      >
-                        {saving ? '保存中...' : '保存する'}
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => startEdit(row)}
-                        className="rounded-lg border border-gray-200 px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-50"
-                      >
-                        編集
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onToggle(row)}
-                        className={`rounded-lg px-4 py-2 text-xs font-bold ${
-                          row.isPublished
-                            ? 'border border-gray-200 text-gray-600 hover:bg-gray-50'
-                            : 'bg-[#06C755] text-white hover:bg-[#05a847]'
-                        }`}
-                      >
-                        {row.isPublished ? '非公開にする' : '公開する'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onDelete(row)}
-                        className="rounded-lg border border-gray-200 px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50"
-                      >
-                        削除
-                      </button>
-                    </>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => onDelete(row)}
+                    className="rounded-lg border border-gray-200 px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50"
+                  >
+                    削除
+                  </button>
                 </div>
               </article>
             ))}
@@ -239,22 +140,6 @@ export default function AdminReviewsPage() {
     });
   }
 
-  async function handleToggle(row: AdminTenantReview) {
-    const nextPublished = !row.isPublished;
-    setRows((prev) => prev.map((item) => (item.id === row.id ? { ...item, isPublished: nextPublished } : item)));
-    try {
-      await api.tenant.updateReview(row.id, { isPublished: nextPublished });
-    } catch {
-      setRows((prev) => prev.map((item) => (item.id === row.id ? { ...item, isPublished: row.isPublished } : item)));
-      setError('公開設定の更新に失敗しました');
-    }
-  }
-
-  async function handleSaveEdit(row: AdminTenantReview, content: string) {
-    await api.tenant.updateReview(row.id, { content });
-    setRows((prev) => prev.map((item) => (item.id === row.id ? { ...item, content } : item)));
-  }
-
   async function handleDelete(row: AdminTenantReview) {
     if (!confirm('この口コミを削除しますか？元に戻せません。')) return;
     try {
@@ -309,8 +194,6 @@ export default function AdminReviewsPage() {
             rows={rows}
             loading={loading}
             error={error}
-            onToggle={handleToggle}
-            onSaveEdit={handleSaveEdit}
             onDelete={handleDelete}
           />
         </div>

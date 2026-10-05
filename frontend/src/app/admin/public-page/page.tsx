@@ -3562,7 +3562,7 @@ export default function AdminPublicPage() {
                       )}
                       {reviews.length === 0 ? (
                         <p className="mt-3 text-xs leading-5" style={{ color: bodyTextColor }}>
-                          まだ公開中の口コミはありません。口コミは運営の確認後に表示されます。
+                          まだ口コミはありません。
                         </p>
                       ) : (
                         <div className="mt-3 max-h-[380px] space-y-3 overflow-y-auto pr-1">

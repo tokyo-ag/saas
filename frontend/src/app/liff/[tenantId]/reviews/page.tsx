@@ -97,7 +97,7 @@ export default function LiffReviewsPage() {
             <p className="mt-3 text-sm text-gray-600">読み込み中…</p>
           ) : reviews.length === 0 ? (
             <p className="mt-3 text-sm leading-6 text-gray-600">
-              まだ公開中の口コミはありません。投稿内容は運営の確認後に表示されます。
+              まだ公開中の口コミはありません。
             </p>
           ) : (
             <div className="mt-3 space-y-3">

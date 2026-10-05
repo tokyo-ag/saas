@@ -1041,7 +1041,7 @@ export default async function ClubCmsPage({
             )}
             {reviews.length === 0 ? (
               <p className="mt-4 text-sm leading-6" style={{ color: bodyTextColor }}>
-                まだ公開中の口コミはありません。口コミは運営の確認後に表示されます。
+                まだ口コミはありません。
               </p>
             ) : (
               <div className="mt-4 space-y-3">

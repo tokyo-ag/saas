@@ -209,7 +209,7 @@ export default async function ReviewsListPage({
         {reviews.length === 0 ? (
           <div className="rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
             <p className="text-sm leading-6 text-gray-700">
-              まだ公開中の口コミはありません。投稿内容は運営の確認後に表示されます。
+              まだ口コミはありません。
             </p>
           </div>
         ) : (

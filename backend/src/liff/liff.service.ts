@@ -461,7 +461,7 @@ export class LiffService {
           tenantId,
           memberId: member.id,
           content,
-          isPublished: false,
+          isPublished: true,
         },
       });
     } catch (error) {

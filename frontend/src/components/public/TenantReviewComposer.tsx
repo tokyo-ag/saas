@@ -176,7 +176,7 @@ export function TenantReviewComposer({
           口コミは送信済みです
         </p>
         <p className="mt-1 text-xs leading-5 text-emerald-700">
-          運営の確認後に公開されます。ありがとうございます。
+          公開されました。ありがとうございます。
         </p>
       </div>
     );
@@ -219,7 +219,7 @@ export function TenantReviewComposer({
         <div>
           <p className="text-sm font-bold text-gray-800">口コミを投稿</p>
           <p className="mt-1 text-xs leading-5 text-gray-500">
-            団体への感想を送信できます。内容は運営の確認後に公開されます。送信後の編集はできません。
+            団体への感想を送信できます。送信するとすぐに公開されます。送信後の編集はできません。
           </p>
         </div>
         <textarea
