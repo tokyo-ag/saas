@@ -582,10 +582,12 @@ export default async function ClubCmsPage({
   const navBlogUrl = sectionCopy.blogUrl?.trim() || '#blog';
   const navReviewsUrl = `/clubs/${page.tenant.code ?? tenantCode}/reviews`;
   const navContactUrl = sectionCopy.contactUrl?.trim() || '#contact';
-  const hasReserveSection = reserveActionStyle === 'line' || reserveEvents.length > 0;
-  const hasBlogSection = blogPosts.length > 0;
+  // 予約・ブログ・口コミは、コンテンツが0件でも「準備中」の案内を出して必ず表示する
+  // （新規団体が初めて公開した直後に、機能自体が無いように見えてしまうのを防ぐため）。
+  const hasReserveSection = true;
+  const hasBlogSection = true;
   const reviewsEnabled = sectionCopy.reviewsEnabled !== false;
-  const hasReviewsSection = reviewsEnabled && reviews.length > 0;
+  const hasReviewsSection = reviewsEnabled;
   // ナビボタンの並び順は団体側で自由に入れ替えられる。未設定（既存の団体）の場合は
   // これまでと全く同じ「団体詳細→活動ブログ→予約する→お問い合わせ」の順になる。
   // 「口コミ」は後から追加した項目なので、既存の並び順設定を壊さないようお問い合わせの
@@ -994,7 +996,7 @@ export default async function ClubCmsPage({
             {blogSectionLead && (
               <p className="mt-2 text-sm leading-7" style={{ color: blogLeadColor }}>{blogSectionLead}</p>
             )}
-            {blogPosts.length > 0 && (
+            {blogPosts.length > 0 ? (
               <div className="mt-4 space-y-3">
                 <div className="max-h-[420px] space-y-3 overflow-y-auto pr-1">
                 {blogPosts.map((post) => {
@@ -1018,6 +1020,10 @@ export default async function ClubCmsPage({
                   ブログ一覧を見る
                 </Link>
               </div>
+            ) : (
+              <p className="mt-4 text-sm leading-6" style={{ color: bodyTextColor }}>
+                まだブログ記事はありません。公開されるとここに表示されます。
+              </p>
             )}
           </div>
         </section>

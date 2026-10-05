@@ -781,10 +781,11 @@ export default function AdminPublicPage() {
     contact: form.contactLabel?.trim() || 'お問い合わせ',
   };
   const reserveActionStyle = form.reserveActionStyle === 'line' ? 'line' : 'comiu';
-  const hasReserveSection = reserveActionStyle === 'line' || reserveEvents.length > 0;
-  const hasBlogSection = blogPosts.length > 0;
+  // 予約・ブログ・口コミは内容が0件でも「準備中」の案内を出して必ず表示する（公開ページ側と統一）。
+  const hasReserveSection = true;
+  const hasBlogSection = true;
   const reviewsEnabled = form.reviewsEnabled !== false;
-  const hasReviewsSection = reviewsEnabled && reviews.length > 0;
+  const hasReviewsSection = reviewsEnabled;
   const customNavButtons = (form.customNavButtons ?? []).filter((b) => b.label.trim() && b.url.trim());
   const navItemsByKey: Record<string, { key: string; label: string } | undefined> = {
     about: { key: 'about', label: navLabels.about },
@@ -875,7 +876,7 @@ export default function AdminPublicPage() {
       ? [{ label: 'メイン画像', done: imageUrls.length > 0 }]
       : []),
     ...(selectedSimpleTemplate === 'events'
-      ? [{ label: '公開中のイベント', done: hasReserveSection }]
+      ? [{ label: '公開中のイベント', done: reserveEvents.length > 0 }]
       : []),
   ];
   const completedSimpleChecks = simpleChecklist.filter((item) => item.done).length;
@@ -1821,16 +1822,16 @@ export default function AdminPublicPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-4">
           <div className="mb-3">
             <p className="text-sm font-bold text-gray-800"><span className="mr-2 text-[#06C755]">4</span>公開する内容を確認</p>
-            <p className="mt-1 text-[11px] text-gray-400">イベントとブログは、公開中の内容があると自動で表示されます。</p>
+            <p className="mt-1 text-[11px] text-gray-400">イベント・ブログ・口コミは常に表示され、公開中の内容が無い間は「準備中」の案内が出ます。</p>
           </div>
           <div className="divide-y divide-gray-100 rounded-xl border border-gray-200">
             <div className="space-y-3 px-3 py-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-bold text-gray-700">イベント・予約</p>
-                  <p className="mt-0.5 text-[11px] text-gray-400">{hasReserveSection ? (reserveActionStyle === 'line' && reserveEvents.length === 0 ? 'LINE予約を表示します' : `公開中のイベント ${reserveEvents.length}件`) : '公開中のイベントがないため表示されません'}</p>
+                  <p className="mt-0.5 text-[11px] text-gray-400">{reserveActionStyle === 'line' && reserveEvents.length === 0 ? 'LINE予約を表示します' : reserveEvents.length > 0 ? `公開中のイベント ${reserveEvents.length}件` : 'イベントが無い間は「準備中」の案内を表示します'}</p>
                 </div>
-                <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${hasReserveSection ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{hasReserveSection ? '表示' : '自動で非表示'}</span>
+                <span className="rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-bold text-green-700">表示</span>
               </div>
               <div className="space-y-1.5">
                 <p className="text-[11px] font-bold text-gray-500">イベントの表示形式</p>
@@ -1893,9 +1894,9 @@ export default function AdminPublicPage() {
             <div className="flex items-center justify-between gap-3 px-3 py-3">
               <div>
                 <p className="text-xs font-bold text-gray-700">活動ブログ</p>
-                <p className="mt-0.5 text-[11px] text-gray-400">{hasBlogSection ? `公開中の記事 ${blogPosts.length}件` : '公開中の記事がないため表示されません'}</p>
+                <p className="mt-0.5 text-[11px] text-gray-400">{blogPosts.length > 0 ? `公開中の記事 ${blogPosts.length}件` : '記事が無い間は「準備中」の案内を表示します'}</p>
               </div>
-              <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${hasBlogSection ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{hasBlogSection ? '表示' : '自動で非表示'}</span>
+              <span className="rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-bold text-green-700">表示</span>
             </div>
             <div className="flex items-center justify-between gap-3 px-3 py-3">
               <div>
@@ -2613,7 +2614,7 @@ export default function AdminPublicPage() {
                     </div>
                   ))}
                 </div>
-                <p className="mt-1 text-[10px] text-gray-400">「活動ブログ」「予約する」は記事・予約設定が無い団体では表示されません</p>
+                <p className="mt-1 text-[10px] text-gray-400">「活動ブログ」「予約する」は常に表示され、記事・予約設定が無い間は「準備中」の案内が出ます</p>
               </div>
               {[
                 { labelField: 'aboutLabel' as const, urlField: 'navAboutUrl' as const, placeholder: '団体詳細', defaultUrl: '#about' },
@@ -2708,7 +2709,7 @@ export default function AdminPublicPage() {
                 </div>
               ))}
             </div>
-            <p className="mt-1 text-[10px] text-gray-400">構成のブロックを予約ページ・活動ブログ・口コミと自由に入れ替えられます（「予約ページ」「活動ブログ」は記事・予約設定が無い団体では表示されません。「口コミ」はON/OFF設定に従い、口コミが無い場合は「まだ口コミはありません」と表示されます）。単独で配置したブロックは予約ページ・活動ブログ・口コミと同じカードデザインになります</p>
+            <p className="mt-1 text-[10px] text-gray-400">構成のブロックを予約ページ・活動ブログ・口コミと自由に入れ替えられます（「予約ページ」「活動ブログ」「口コミ」はいずれも常に表示され、内容や承認済み口コミが無い間は「準備中」の案内が出ます。「口コミ」はON/OFF設定でも表示を切り替えられます）。単独で配置したブロックは予約ページ・活動ブログ・口コミと同じカードデザインになります</p>
           </div>
           {/* 予約表示スタイルは予約ページで設定 */}
           <div>
@@ -3529,20 +3530,26 @@ export default function AdminPublicPage() {
                       {blogSectionLead && (
                         <p className="mt-1 text-xs leading-5" style={{ color: blogLeadColor }}>{blogSectionLead}</p>
                       )}
-                      <div className="mt-3 max-h-[380px] space-y-2 overflow-y-auto pr-1">
-                        {blogPosts.map((post) => {
-                          const image = imgUrl(post.coverImageUrl ?? firstBlogImage(post.body), API_URL);
-                          return (
-                            <div key={post.id} className="flex gap-2 p-2" style={{ backgroundColor: blogPostCardBg, ...cardBorderStyle }}>
-                              {image && <img src={image} alt="" className="h-12 w-16 shrink-0 rounded-md object-cover" />}
-                              <div className="min-w-0">
-                                <p className="truncate text-xs font-bold" style={{ color: blogPostTitleColor }}>{post.title}</p>
-                                {post.excerpt && <p className="mt-0.5 line-clamp-2 text-[10px] leading-4" style={{ color: blogLeadColor }}>{post.excerpt}</p>}
+                      {blogPosts.length > 0 ? (
+                        <div className="mt-3 max-h-[380px] space-y-2 overflow-y-auto pr-1">
+                          {blogPosts.map((post) => {
+                            const image = imgUrl(post.coverImageUrl ?? firstBlogImage(post.body), API_URL);
+                            return (
+                              <div key={post.id} className="flex gap-2 p-2" style={{ backgroundColor: blogPostCardBg, ...cardBorderStyle }}>
+                                {image && <img src={image} alt="" className="h-12 w-16 shrink-0 rounded-md object-cover" />}
+                                <div className="min-w-0">
+                                  <p className="truncate text-xs font-bold" style={{ color: blogPostTitleColor }}>{post.title}</p>
+                                  {post.excerpt && <p className="mt-0.5 line-clamp-2 text-[10px] leading-4" style={{ color: blogLeadColor }}>{post.excerpt}</p>}
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="mt-3 text-xs leading-5" style={{ color: bodyTextColor }}>
+                          まだブログ記事はありません。公開されるとここに表示されます。
+                        </p>
+                      )}
                     </section>
                   ) : null;
                   const reviewsSection = hasReviewsSection ? (
