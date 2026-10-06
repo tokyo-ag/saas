@@ -14,6 +14,7 @@ import { Throttle } from '@nestjs/throttler';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AdminGuard } from './admin.guard';
+import { AdminOrMobileManageGuard } from './admin-or-mobile-manage.guard';
 
 class RegisterDto {
   @IsEmail() email: string;
@@ -209,5 +210,13 @@ export class AuthController {
     @Req() req: Request & { user: { tenantId: string; accountId: string } },
   ) {
     return this.authService.getMe(req.user.tenantId, req.user.accountId);
+  }
+
+  // 通常のフル管理者と超簡単モバイル管理の両方のトークンを受け付ける、
+  // 画像アップロードAPI（/api/upload）向けの軽量な有効性チェック用エンドポイント。
+  @Get('session')
+  @UseGuards(AdminOrMobileManageGuard)
+  getSession() {
+    return { ok: true };
   }
 }

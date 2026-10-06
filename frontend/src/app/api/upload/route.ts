@@ -7,7 +7,9 @@ const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 async function verifyAdminToken(token: string | undefined): Promise<boolean> {
   if (!token) return false;
   try {
-    const res = await fetch(`${API_URL}/api/auth/me`, {
+    // /auth/me ではなく、超簡単モバイル管理のトークンも受け付ける
+    // /auth/session を使う（通常ログインの管理者はどちらでも通る）。
+    const res = await fetch(`${API_URL}/api/auth/session`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
     });

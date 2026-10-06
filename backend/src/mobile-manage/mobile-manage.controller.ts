@@ -5,12 +5,14 @@ import {
   Patch,
   Delete,
   Body,
+  Param,
   UseGuards,
 } from '@nestjs/common';
 import { AdminGuard } from '../auth/admin.guard';
 import { MobileManageGuard } from '../auth/mobile-manage.guard';
 import { TenantId } from '../auth/tenant-id.decorator';
 import { MobileManageService } from './mobile-manage.service';
+import { TenantService } from '../tenant/tenant.service';
 
 @UseGuards(AdminGuard)
 @Controller('admin/mobile-manage')
@@ -55,7 +57,10 @@ export class MobileManagePublicController {
 @UseGuards(MobileManageGuard)
 @Controller('mobile-manage')
 export class MobileManageSessionController {
-  constructor(private readonly service: MobileManageService) {}
+  constructor(
+    private readonly service: MobileManageService,
+    private readonly tenantService: TenantService,
+  ) {}
 
   @Get('display-fields')
   getDisplayFields(@TenantId() tenantId: string) {
@@ -68,5 +73,18 @@ export class MobileManageSessionController {
     @Body() dto: { location?: boolean; price?: boolean; capacity?: boolean; description?: boolean },
   ) {
     return this.service.updateDisplayFields(tenantId, dto);
+  }
+
+  @Get('reviews')
+  listReviews(@TenantId() tenantId: string) {
+    return this.tenantService.listTenantReviews(tenantId);
+  }
+
+  @Delete('reviews/:reviewId')
+  deleteReview(
+    @TenantId() tenantId: string,
+    @Param('reviewId') reviewId: string,
+  ) {
+    return this.tenantService.deleteTenantReview(tenantId, reviewId);
   }
 }

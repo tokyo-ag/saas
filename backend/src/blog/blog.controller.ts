@@ -9,10 +9,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { TenantId } from '../auth/tenant-id.decorator';
-import { AdminGuard } from '../auth/admin.guard';
+import { AdminOrMobileManageGuard } from '../auth/admin-or-mobile-manage.guard';
 import { BlogService, UpsertBlogPostDto } from './blog.service';
 
-@UseGuards(AdminGuard)
+@UseGuards(AdminOrMobileManageGuard)
 @Controller('admin/blog')
 export class BlogController {
   constructor(private readonly blogService: BlogService) {}

@@ -5,6 +5,7 @@ import { api, BlogPost, BlogPostInput } from '@/lib/api';
 import { API_URL, SITE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { getToken } from '@/lib/auth';
+import { buildBlogBody, firstBlogImage, parseBlogBody } from '@/lib/blogBody';
 
 type Mode = 'list' | 'edit';
 
@@ -34,43 +35,6 @@ async function uploadImage(file: File): Promise<string> {
   if (!res.ok) throw new Error('アップロード失敗');
   const data = await res.json();
   return data.url as string;
-}
-
-const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
-const ANY_IMAGE_RE = /!\[[^\]]*]\(([^)]+)\)/;
-
-function firstBlogImage(body: string | null | undefined) {
-  return body?.match(ANY_IMAGE_RE)?.[1] ?? null;
-}
-
-// 記事は「画像1枚（任意）＋文章1本」だけの構成。旧仕様で複数画像が入っていた記事を開いた場合、
-// 1枚目だけを画像欄に出し、2枚目以降は文章欄を汚さないようextraImagesとして裏で保持する
-// （保存時にそのまま末尾へ書き戻すので、編集し直しても画像が消えることはない）
-function parseBody(body: string): { imageUrl: string | null; extraImages: string[]; text: string } {
-  const lines = body.split('\n');
-  const images: string[] = [];
-  const textLines: string[] = [];
-  for (const line of lines) {
-    const m = IMAGE_RE.exec(line.trim());
-    if (m) {
-      images.push(m[2]);
-    } else {
-      textLines.push(line);
-    }
-  }
-  const text = textLines
-    .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/^\n+|\n+$/g, '');
-  return { imageUrl: images[0] ?? null, extraImages: images.slice(1), text };
-}
-
-function buildBody(imageUrl: string | null, text: string, extraImages: string[] = []): string {
-  const parts: string[] = [];
-  if (imageUrl) parts.push(`![](${imageUrl})`, '');
-  parts.push(text);
-  for (const url of extraImages) parts.push('', `![](${url})`);
-  return parts.join('\n');
 }
 
 // ChatGPT/Claude等に記事の下書きを書かせる際、最初に貼り付けてもらう指示文。
@@ -368,7 +332,7 @@ export default function AdminBlogPage() {
   function openEdit(post: BlogPost) {
     setEditing(post);
     setForm({ title: post.title, body: post.body, excerpt: post.excerpt ?? '', tags: post.tags ?? [], status: post.status });
-    const parsed = parseBody(post.body);
+    const parsed = parseBlogBody(post.body);
     setBodyText(parsed.text);
     setImageUrl(parsed.imageUrl);
     setExtraImages(parsed.extraImages);
@@ -386,14 +350,14 @@ export default function AdminBlogPage() {
     if (!title && !body) return;
     e.preventDefault();
     setForm((p) => ({ ...p, title: title || p.title, excerpt: excerpt || p.excerpt }));
-    const parsed = parseBody(body);
+    const parsed = parseBlogBody(body);
     setBodyText(parsed.text);
     if (parsed.imageUrl && !imageUrl) setImageUrl(parsed.imageUrl);
     if (parsed.extraImages.length > 0) setExtraImages((prev) => [...prev, ...parsed.extraImages]);
   }
 
   async function handleSave(publish: boolean) {
-    const body = buildBody(imageUrl, bodyText, extraImages);
+    const body = buildBlogBody(imageUrl, bodyText, extraImages);
     if (!form.title.trim() || !bodyText.trim()) {
       setError('タイトルと本文は必須です'); return;
     }

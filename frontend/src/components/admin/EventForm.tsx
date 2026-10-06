@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import NextImage from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { api, API_URL, Event, Tenant } from '@/lib/api';
+import { api, API_URL, Event, Tenant, getActiveAdminToken } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { getEventTagGroups, LOCATION_TAGS, TOKYO_WARDS, TOKYO_CITIES, OTHER_PREFECTURE_TAGS, WARD_SUBAREAS, SEARCH_TAGS, MEETUP_SEARCH_TAGS } from '@/lib/lpTags';
 import { Section, Field, RadioGroup, Check, UploadButton } from './EventFormPrimitives';
@@ -128,8 +128,10 @@ async function uploadFile(file: File): Promise<string> {
   const compressed = await compressImage(file);
   const ext = file.name.split('.').pop() ?? 'jpg';
   const filename = `${Date.now()}.${ext}`;
+  const token = getActiveAdminToken();
   const res = await fetch(`/api/upload?filename=${encodeURIComponent(filename)}`, {
     method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     body: compressed,
   });
   const data = await res.json();

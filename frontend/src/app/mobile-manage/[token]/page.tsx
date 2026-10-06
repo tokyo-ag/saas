@@ -9,11 +9,16 @@ import {
   downloadWithAuth,
   API_URL,
   setMobileManageToken,
+  getActiveAdminToken,
   Event,
   Reservation,
+  BlogPost,
+  BlogPostInput,
+  AdminTenantReview,
   MobileManageDisplayFields,
 } from '@/lib/api';
-import { SITE_URL } from '@/lib/config';
+import { imgUrl } from '@/lib/imgUrl';
+import { buildBlogBody, firstBlogImage, parseBlogBody } from '@/lib/blogBody';
 import { EventStatusBadge, ReservationBadge } from '@/components/ui/StatusBadge';
 import EventForm from '@/components/admin/EventForm';
 
@@ -57,14 +62,23 @@ type Session = {
   hideLevel: boolean;
   hideLineNotify: boolean;
   liffId: string | null;
+  tenantTags: string[];
 };
 
 type Screen = { name: 'list' } | { name: 'create' } | { name: 'edit'; id: string } | { name: 'detail'; id: string };
+
+type Section = 'events' | 'blog' | 'reviews';
+const sectionTabs: { key: Section; label: string }[] = [
+  { key: 'events', label: '予約ページ' },
+  { key: 'blog', label: 'ブログ' },
+  { key: 'reviews', label: '口コミ' },
+];
 
 export default function MobileManagePage() {
   const { token } = useParams<{ token: string }>();
   const [session, setSession] = useState<Session | null>(null);
   const [verifyError, setVerifyError] = useState('');
+  const [section, setSection] = useState<Section>('events');
   const [screen, setScreen] = useState<Screen>({ name: 'list' });
 
   useEffect(() => {
@@ -79,6 +93,7 @@ export default function MobileManagePage() {
           hideLevel: res.hideLevel,
           hideLineNotify: res.hideLineNotify,
           liffId: res.liffId,
+          tenantTags: res.tenantTags,
         });
       })
       .catch(() => setVerifyError('リンクが無効です。主催者に再発行を依頼してください。'));
@@ -108,27 +123,47 @@ export default function MobileManagePage() {
         </div>
       </header>
 
+      <nav className="flex gap-1 overflow-x-auto border-b border-gray-200 bg-white px-2">
+        {sectionTabs.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => setSection(item.key)}
+            className={`shrink-0 border-b-2 -mb-px px-4 py-2.5 text-sm font-medium transition-colors ${
+              section === item.key ? 'border-[#06C755] text-[#06C755]' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </nav>
+
       <main className="mx-auto max-w-xl px-4 py-4">
-        {screen.name === 'list' && (
-          <EventListScreen
-            session={session}
-            onCreate={() => setScreen({ name: 'create' })}
-            onOpen={(id) => setScreen({ name: 'detail', id })}
-            onEdit={(id) => setScreen({ name: 'edit', id })}
-          />
+        {section === 'events' && (
+          <>
+            {screen.name === 'list' && (
+              <EventListScreen
+                onCreate={() => setScreen({ name: 'create' })}
+                onOpen={(id) => setScreen({ name: 'detail', id })}
+                onEdit={(id) => setScreen({ name: 'edit', id })}
+              />
+            )}
+            {screen.name === 'create' && (
+              <div>
+                <ScreenHeader title="新規作成" onBack={() => setScreen({ name: 'list' })} />
+                <EventForm simplified hideLevel={session.hideLevel} hideLineNotify={session.hideLineNotify} onSaved={() => setScreen({ name: 'list' })} />
+              </div>
+            )}
+            {screen.name === 'edit' && (
+              <EditScreen eventId={screen.id} session={session} onDone={() => setScreen({ name: 'list' })} />
+            )}
+            {screen.name === 'detail' && (
+              <DetailScreen eventId={screen.id} onBack={() => setScreen({ name: 'list' })} onEdit={() => setScreen({ name: 'edit', id: screen.id })} />
+            )}
+          </>
         )}
-        {screen.name === 'create' && (
-          <div>
-            <ScreenHeader title="新規作成" onBack={() => setScreen({ name: 'list' })} />
-            <EventForm simplified hideLevel={session.hideLevel} hideLineNotify={session.hideLineNotify} onSaved={() => setScreen({ name: 'list' })} />
-          </div>
-        )}
-        {screen.name === 'edit' && (
-          <EditScreen eventId={screen.id} session={session} onDone={() => setScreen({ name: 'list' })} />
-        )}
-        {screen.name === 'detail' && (
-          <DetailScreen eventId={screen.id} onBack={() => setScreen({ name: 'list' })} onEdit={() => setScreen({ name: 'edit', id: screen.id })} />
-        )}
+        {section === 'blog' && <BlogSection session={session} />}
+        {section === 'reviews' && <ReviewsSection />}
       </main>
     </div>
   );
@@ -159,12 +194,10 @@ function EditScreen({ eventId, session, onDone }: { eventId: string; session: Se
 }
 
 function EventListScreen({
-  session,
   onCreate,
   onOpen,
   onEdit,
 }: {
-  session: Session;
   onCreate: () => void;
   onOpen: (id: string) => void;
   onEdit: (id: string) => void;
@@ -173,7 +206,6 @@ function EventListScreen({
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('upcoming');
   const [displayFields, setDisplayFields] = useState<MobileManageDisplayFields | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -236,16 +268,6 @@ function EventListScreen({
     } catch {
       alert('削除に失敗しました');
     }
-  }
-
-  const schedulePath = `/e/${session.tenantCode}`;
-  const scheduleUrl = `${SITE_URL}${schedulePath}`;
-
-  function copyScheduleUrl() {
-    navigator.clipboard.writeText(scheduleUrl).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
   }
 
   const now = new Date();
@@ -333,18 +355,6 @@ function EventListScreen({
               );
             })}
           </div>
-        </div>
-
-        <div className="rounded-xl border border-[#06C755]/30 bg-[#06C755]/5 p-4">
-          <p className="mb-1 text-sm font-bold text-[#06C755]">☆ COMIUの運営ポイント</p>
-          <p className="mb-3 text-xs font-medium text-gray-700">イベントスケジュールのURL</p>
-          <div className="mb-2 flex items-center gap-2">
-            <span className="flex-1 truncate rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-mono text-gray-600">{scheduleUrl}</span>
-            <button type="button" onClick={copyScheduleUrl} className="shrink-0 rounded-lg bg-[#06C755] px-4 py-2 text-xs font-bold text-white hover:bg-[#05a847]">
-              {copied ? 'コピー済み ✓' : 'コピー'}
-            </button>
-          </div>
-          <p className="text-xs leading-relaxed text-gray-500">このURLリンクを共有または公式LINEのチャットに貼ると、団体の活動スケジュールを直接共有できます！</p>
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-4">
@@ -457,6 +467,273 @@ function DetailScreen({ eventId, onBack, onEdit }: { eventId: string; onBack: ()
           CSVダウンロード
         </button>
       </section>
+    </div>
+  );
+}
+
+async function uploadMobileBlogImage(file: File): Promise<string> {
+  const ext = file.name.split('.').pop() ?? 'jpg';
+  const token = getActiveAdminToken();
+  const res = await fetch(`/api/upload?filename=blog-${Date.now()}.${ext}`, {
+    method: 'POST',
+    headers: {
+      'content-type': file.type,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: file,
+  });
+  if (!res.ok) throw new Error('アップロードに失敗しました');
+  const data = await res.json();
+  return data.url as string;
+}
+
+type BlogScreen = { name: 'list' } | { name: 'edit'; post: BlogPost | null };
+
+function BlogSection({ session }: { session: Session }) {
+  const [screen, setScreen] = useState<BlogScreen>({ name: 'list' });
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    api.blog.list().then(setPosts).catch(() => {}).finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function handleDelete(id: string) {
+    if (!confirm('この記事を削除しますか？')) return;
+    try {
+      await api.blog.delete(id);
+      load();
+    } catch {
+      alert('削除に失敗しました');
+    }
+  }
+
+  if (screen.name === 'edit') {
+    return (
+      <BlogEditScreen
+        session={session}
+        post={screen.post}
+        onDone={() => { setScreen({ name: 'list' }); load(); }}
+      />
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h1 className="text-lg font-bold text-gray-900">ブログ</h1>
+        <button type="button" onClick={() => setScreen({ name: 'edit', post: null })} className="rounded-lg bg-[#06C755] px-4 py-2 text-sm font-bold text-white hover:bg-[#05a847]">
+          新規作成
+        </button>
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-gray-500">読み込み中...</p>
+      ) : posts.length === 0 ? (
+        <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-400">まだ記事がありません</div>
+      ) : (
+        <div className="space-y-2">
+          {posts.map((post) => {
+            const image = imgUrl(post.coverImageUrl ?? firstBlogImage(post.body), API_URL);
+            return (
+              <div key={post.id} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+                {image ? (
+                  <img src={image} alt="" className="h-12 w-16 shrink-0 rounded-lg object-cover" />
+                ) : (
+                  <div className="flex h-12 w-16 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-[9px] font-bold text-gray-300">
+                    NO IMAGE
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <span className={`mb-0.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                    post.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {post.status === 'published' ? '公開中' : '下書き'}
+                  </span>
+                  <p className="truncate text-sm font-bold text-gray-900">{post.title}</p>
+                </div>
+                <div className="flex shrink-0 gap-1.5">
+                  <button type="button" onClick={() => setScreen({ name: 'edit', post })} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-bold text-gray-600">編集</button>
+                  <button type="button" onClick={() => handleDelete(post.id)} className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-bold text-red-500">削除</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BlogEditScreen({ session, post, onDone }: { session: Session; post: BlogPost | null; onDone: () => void }) {
+  const parsedInitial = post ? parseBlogBody(post.body) : null;
+  const [title, setTitle] = useState(post?.title ?? '');
+  const [bodyText, setBodyText] = useState(parsedInitial?.text ?? '');
+  const [imageUrl, setImageUrl] = useState<string | null>(parsedInitial?.imageUrl ?? null);
+  const [extraImages] = useState<string[]>(parsedInitial?.extraImages ?? []);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  async function handleImageFile(file: File) {
+    setUploading(true);
+    try {
+      setImageUrl(await uploadMobileBlogImage(file));
+    } catch {
+      alert('画像のアップロードに失敗しました');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleSave(publish: boolean) {
+    if (!title.trim() || !bodyText.trim()) {
+      setError('タイトルと文章は必須です');
+      return;
+    }
+    if (session.tenantTags.length === 0) {
+      setError('団体設定で団体種別・活動タグを設定してください');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      const payload: BlogPostInput = {
+        title,
+        body: buildBlogBody(imageUrl, bodyText, extraImages),
+        excerpt: post?.excerpt ?? '',
+        tags: session.tenantTags,
+        status: publish ? 'published' : 'draft',
+      };
+      if (post) {
+        await api.blog.update(post.id, payload);
+      } else {
+        await api.blog.create(payload);
+      }
+      onDone();
+    } catch (err: any) {
+      setError(err.message ?? '保存に失敗しました');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div>
+      <ScreenHeader title={post ? '記事を編集' : '新しい記事'} onBack={onDone} />
+      {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+      <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4">
+        <div>
+          <span className="mb-1 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-500">タイトル</span>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="記事のタイトル"
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+          />
+        </div>
+        <div>
+          <span className="mb-1 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-500">画像</span>
+          {imageUrl ? (
+            <div className="relative overflow-hidden rounded-lg border border-gray-200">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={imageUrl} alt="" className="max-h-60 w-full rounded-lg bg-gray-50 object-contain" />
+              <button
+                type="button"
+                onClick={() => setImageUrl(null)}
+                className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-xs font-bold text-white"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <label className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-gray-300 py-8 text-sm font-bold text-gray-400 ${uploading ? 'pointer-events-none opacity-50' : ''}`}>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={uploading}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImageFile(f); e.currentTarget.value = ''; }}
+              />
+              {uploading ? 'アップロード中...' : '画像を追加'}
+            </label>
+          )}
+        </div>
+        <div>
+          <span className="mb-1 inline-block rounded-full bg-[#06C755]/10 px-2 py-0.5 text-[10px] font-bold text-[#06C755]">文章</span>
+          <textarea
+            value={bodyText}
+            onChange={(e) => setBodyText(e.target.value)}
+            placeholder="活動の様子やお知らせを書いてください"
+            rows={10}
+            className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm leading-7 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+          />
+        </div>
+        <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
+          <button type="button" onClick={() => void handleSave(false)} disabled={saving} className="rounded-lg border border-gray-200 px-5 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50">
+            下書き保存
+          </button>
+          <button type="button" onClick={() => void handleSave(true)} disabled={saving} className="rounded-lg bg-[#06C755] px-5 py-2 text-sm font-bold text-white hover:bg-[#05a847] disabled:opacity-50">
+            {saving ? '保存中...' : '公開する'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReviewsSection() {
+  const [rows, setRows] = useState<AdminTenantReview[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    api.mobileManage.reviews()
+      .then(setRows)
+      .catch((err: any) => setError(err?.message ?? '読み込みに失敗しました'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleDelete(row: AdminTenantReview) {
+    if (!confirm('この口コミを削除しますか？元に戻せません。')) return;
+    try {
+      await api.mobileManage.deleteReview(row.id);
+      setRows((prev) => prev.filter((item) => item.id !== row.id));
+    } catch {
+      setError('削除に失敗しました');
+    }
+  }
+
+  return (
+    <div>
+      <h1 className="mb-4 text-lg font-bold text-gray-900">口コミ</h1>
+      {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+      {loading ? (
+        <p className="text-sm text-gray-500">読み込み中...</p>
+      ) : rows.length === 0 ? (
+        <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-400">まだ口コミはありません</div>
+      ) : (
+        <div className="space-y-2">
+          {rows.map((row) => (
+            <div key={row.id} className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{row.content}</p>
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <div className="flex flex-wrap gap-2 text-xs text-gray-400">
+                  <span>{row.member.name ?? '未入力'}</span>
+                  {row.member.grade && <span>{row.member.grade}</span>}
+                  <span>{formatDate(row.createdAt)}</span>
+                </div>
+                <button type="button" onClick={() => handleDelete(row)} className="shrink-0 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-red-500 hover:bg-red-50">
+                  削除
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

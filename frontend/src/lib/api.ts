@@ -17,6 +17,13 @@ export function setMobileManageToken(token: string | null) {
   _mobileManageToken = token;
 }
 
+// /admin/* 向けの直接fetch（画像アップロードAPIなど、request()を介さない
+// 呼び出し）で、現在有効な認証トークン（超簡単モバイル管理 or 通常ログイン）
+// を明示的にヘッダへ積みたい場合に使う。
+export function getActiveAdminToken(): string | null {
+  return _mobileManageToken ?? getToken();
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const isSuperadmin = path.startsWith('/superadmin');
   const isAdmin = path.startsWith('/admin');
@@ -346,6 +353,7 @@ export const api = {
         liffId: string | null;
         hideLevel: boolean;
         hideLineNotify: boolean;
+        tenantTags: string[];
       }>('/mobile-manage/verify', {
         method: 'POST',
         body: JSON.stringify({ token }),
@@ -355,6 +363,11 @@ export const api = {
       request<MobileManageDisplayFields>('/mobile-manage/display-fields', {
         method: 'PATCH',
         body: JSON.stringify(data),
+      }),
+    reviews: () => request<AdminTenantReview[]>('/mobile-manage/reviews'),
+    deleteReview: (reviewId: string) =>
+      request<{ success: boolean }>(`/mobile-manage/reviews/${reviewId}`, {
+        method: 'DELETE',
       }),
   },
   tenant: {

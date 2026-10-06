@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
+import { TenantModule } from '../tenant/tenant.module';
 import {
   MobileManageController,
   MobileManagePublicController,
@@ -8,7 +9,7 @@ import {
 import { MobileManageService } from './mobile-manage.service';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, TenantModule],
   controllers: [MobileManageController, MobileManagePublicController, MobileManageSessionController],
   providers: [MobileManageService],
 })

@@ -157,6 +157,8 @@ export class MobileManageService {
         liffId: true,
         mobileManageHideLevel: true,
         mobileManageHideLineNotify: true,
+        typeTags: true,
+        activityTags: true,
         deletedAt: true,
         bannedAt: true,
       },
@@ -177,6 +179,9 @@ export class MobileManageService {
       liffId: tenant.liffId,
       hideLevel: tenant.mobileManageHideLevel,
       hideLineNotify: tenant.mobileManageHideLineNotify,
+      // ブログ投稿の保存にはタグが必須のため、団体種別・活動タグを
+      // ここでまとめて渡しておき、モバイル版の記事作成で自動的に使う。
+      tenantTags: [...new Set([...tenant.typeTags, ...tenant.activityTags])],
     };
   }
 }
