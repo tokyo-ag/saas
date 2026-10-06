@@ -116,6 +116,38 @@ export default function RosterSharePage() {
     setEdits((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
   }
 
+  async function handleReferrerChange(id: string, value: string) {
+    setEdits((prev) => ({ ...prev, [id]: { ...prev[id], referrer: value } }));
+    setSavingId(id);
+    try {
+      await api.public.updateRosterReservation(token, id, { referrer: value });
+      setRoster((prev) =>
+        prev
+          ? {
+              ...prev,
+              reservations: prev.reservations.map((r) =>
+                r.id === id ? { ...r, referrer: value.trim() || null } : r,
+              ),
+            }
+          : prev,
+      );
+      setEdits((prev) => {
+        const next = { ...prev };
+        if (next[id]) {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { referrer: _r, ...rest } = next[id]!;
+          if (Object.keys(rest).length === 0) delete next[id];
+          else next[id] = rest;
+        }
+        return next;
+      });
+    } catch {
+      alert('保存に失敗しました');
+    } finally {
+      setSavingId(null);
+    }
+  }
+
   async function handleFieldBlur(id: string, field: EditableField) {
     const value = edits[id]?.[field];
     if (value === undefined) return;
@@ -129,6 +161,7 @@ export default function RosterSharePage() {
       setEdits((prev) => {
         const next = { ...prev };
         if (next[id]) {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { [field]: _removed, ...rest } = next[id]!;
           if (Object.keys(rest).length === 0) delete next[id];
           else next[id] = rest;
@@ -219,13 +252,20 @@ export default function RosterSharePage() {
                             <div className="mt-2 grid grid-cols-2 gap-2 pl-8">
                               <label className="block">
                                 <span className="text-[10px] font-semibold text-gray-400">紹介者</span>
-                                <input
+                                <select
                                   value={fieldValue(r, 'referrer')}
-                                  onChange={(e) => handleFieldChange(r.id, 'referrer', e.target.value)}
-                                  onBlur={() => handleFieldBlur(r.id, 'referrer')}
+                                  onChange={(e) => handleReferrerChange(r.id, e.target.value)}
                                   disabled={savingId === r.id}
-                                  className="mt-0.5 w-full rounded-lg border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755]"
-                                />
+                                  className="mt-0.5 w-full rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755]"
+                                >
+                                  <option value="">紹介者なし</option>
+                                  {(() => {
+                                    const current = fieldValue(r, 'referrer');
+                                    const options = event.referrerOptions ?? [];
+                                    const extra = current && !options.includes(current) ? current : null;
+                                    return (<>{extra && <option value={extra}>{extra}</option>}{options.map((o) => <option key={o} value={o}>{o}</option>)}</>);
+                                  })()}
+                                </select>
                               </label>
                               <label className="block">
                                 <span className="text-[10px] font-semibold text-gray-400">備考</span>
@@ -295,14 +335,20 @@ export default function RosterSharePage() {
                               <ReservationBadge status={r.status} />
                             </td>
                             <td className="px-6 py-4">
-                              <input
+                              <select
                                 value={fieldValue(r, 'referrer')}
-                                onChange={(e) => handleFieldChange(r.id, 'referrer', e.target.value)}
-                                onBlur={() => handleFieldBlur(r.id, 'referrer')}
+                                onChange={(e) => handleReferrerChange(r.id, e.target.value)}
                                 disabled={savingId === r.id}
-                                placeholder="例：〇〇の紹介"
-                                className="w-32 rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755]"
-                              />
+                                className="w-32 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755]"
+                              >
+                                <option value="">紹介者なし</option>
+                                {(() => {
+                                  const current = fieldValue(r, 'referrer');
+                                  const options = event.referrerOptions ?? [];
+                                  const extra = current && !options.includes(current) ? current : null;
+                                  return (<>{extra && <option value={extra}>{extra}</option>}{options.map((o) => <option key={o} value={o}>{o}</option>)}</>);
+                                })()}
+                              </select>
                             </td>
                             <td className="px-6 py-4">
                               <input

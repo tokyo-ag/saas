@@ -282,14 +282,10 @@ export const api = {
         body: JSON.stringify(data),
         keepalive: options?.keepalive,
       }),
-    setCollabDuplicate: (token: string, reservationId: string, isDuplicate: boolean) =>
-      request<{ reservationId: string; isDuplicateOverride: boolean | null }>(`/public/collab-roster/${token}/reservations/${reservationId}/duplicate`, { method: 'PATCH', body: JSON.stringify({ isDuplicate }) }),
-    clearCollabDuplicate: (token: string, reservationId: string) => request<{ reservationId: string; isDuplicateOverride: boolean | null }>(`/public/collab-roster/${token}/reservations/${reservationId}/duplicate`, { method: 'DELETE' }),
     assignCollabRosterTenant: (token: string, reservationId: string, tenantId: string) =>
       request<{
         reservationId: string;
         tenantId: string;
-        isDuplicateOverride: false;
       }>(`/public/collab-roster/${token}/reservations/${reservationId}/tenant`, { method: 'PATCH', body: JSON.stringify({ tenantId }) }),
   },
   blog: {
@@ -961,6 +957,7 @@ export interface Tenant {
   showLevel?: boolean;
   showComment?: boolean;
   customProfileQuestions?: CustomProfileQuestion[] | null;
+  referrerOptions?: string[];
   themeColor?: string;
   iconUrl?: string | null;
   staffViewEnabled?: boolean;
@@ -1004,6 +1001,7 @@ export interface TenantInput {
   showLevel?: boolean;
   showComment?: boolean;
   customProfileQuestions?: CustomProfileQuestion[];
+  referrerOptions?: string[];
   themeColor?: string;
   iconUrl?: string;
   code?: string;
@@ -1524,6 +1522,7 @@ export interface PublicRoster {
     location: string;
     locationHint?: string | null;
     levelEnabled: boolean;
+    referrerOptions: string[];
   };
   reservations: {
     id: string;
@@ -1545,6 +1544,7 @@ export interface PublicRoster {
 export interface CollabRosterParticipant {
   id: string;
   tenantId: string;
+  // tenantId は assignedTenantId 優先で上書き済みの値
   tenantName: string;
   eventId: string;
   name: string | null;
@@ -1557,8 +1557,6 @@ export interface CollabRosterParticipant {
   waitlistOrder: number | null;
   referrer: string | null;
   staffNote: string | null;
-  isDuplicateAuto: boolean;
-  isDuplicateOverride: boolean | null;
   isDuplicate: boolean;
 }
 
@@ -1570,6 +1568,7 @@ export interface CollabRoster {
     eventId: string;
     eventTitle: string;
     heldAt: string;
+    referrerOptions: string[];
   }[];
   participants: CollabRosterParticipant[];
 }

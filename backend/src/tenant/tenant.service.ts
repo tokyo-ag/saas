@@ -134,6 +134,7 @@ export class UpdateTenantDto {
   @IsOptional() @IsString() themeColor?: string;
   @IsOptional() @IsString() iconUrl?: string;
   @IsOptional() @IsString() code?: string;
+  @IsOptional() @IsArray() @IsString({ each: true }) referrerOptions?: string[];
 }
 
 export type CustomProfileQuestionType =
@@ -452,6 +453,9 @@ export class TenantService {
         ...(dto.themeColor !== undefined && { themeColor: dto.themeColor }),
         ...(dto.iconUrl !== undefined && { iconUrl: dto.iconUrl || null }),
         ...(dto.code !== undefined && { code: dto.code || null }),
+        ...(dto.referrerOptions !== undefined && {
+          referrerOptions: [...new Set(dto.referrerOptions.map((s) => s.trim()).filter(Boolean))].slice(0, 50),
+        }),
       },
     });
     return this.toSafeTenant(updated);

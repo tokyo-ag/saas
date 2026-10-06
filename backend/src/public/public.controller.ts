@@ -3,13 +3,12 @@ import {
   Get,
   Post,
   Patch,
-  Delete,
   Param,
   Query,
   Body,
   NotFoundException,
 } from '@nestjs/common';
-import { IsOptional, IsString, IsBoolean, MaxLength } from 'class-validator';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BlogService } from '../blog/blog.service';
@@ -24,9 +23,6 @@ class UpdateRosterReservationDto {
   @IsOptional() @IsString() @MaxLength(1000) staffNote?: string;
 }
 
-class SetCollabDuplicateDto {
-  @IsBoolean() isDuplicate: boolean;
-}
 
 class AssignCollabTenantDto {
   @IsString() tenantId: string;
@@ -186,6 +182,7 @@ export class PublicController {
   async getRoster(@Param('token') token: string) {
     const event = await this.prisma.event.findFirst({
       where: { rosterShareToken: token, rosterShareEnabled: true },
+      include: { tenant: { select: { referrerOptions: true } } },
     });
     if (!event) throw new NotFoundException('名簿が見つかりません');
 
@@ -213,6 +210,7 @@ export class PublicController {
         location: event.location,
         locationHint: event.locationHint,
         levelEnabled: event.levelEnabled,
+        referrerOptions: event.tenant.referrerOptions,
       },
       reservations: reservations.map((r) => ({
         id: r.id,
@@ -286,27 +284,6 @@ export class PublicController {
       reservationId,
       dto,
     );
-  }
-
-  @Patch('collab-roster/:token/reservations/:reservationId/duplicate')
-  setCollabDuplicate(
-    @Param('token') token: string,
-    @Param('reservationId') reservationId: string,
-    @Body() dto: SetCollabDuplicateDto,
-  ) {
-    return this.collabService.setDuplicateOverride(
-      token,
-      reservationId,
-      dto.isDuplicate,
-    );
-  }
-
-  @Delete('collab-roster/:token/reservations/:reservationId/duplicate')
-  clearCollabDuplicate(
-    @Param('token') token: string,
-    @Param('reservationId') reservationId: string,
-  ) {
-    return this.collabService.clearDuplicateOverride(token, reservationId);
   }
 
   @Patch('collab-roster/:token/reservations/:reservationId/tenant')

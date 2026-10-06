@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": ["Bash", "Write", "Edit", "Read", "Glob", "Grep", "PowerShell"]
+  },
+  "sandbox": {
+    "enabled": false
+  }
+}

@@ -53,7 +53,7 @@ export class CollabService {
                 heldAt: true,
                 tenantId: true,
                 tenant: {
-                  select: { id: true, name: true, lineDisplayName: true },
+                  select: { id: true, name: true, lineDisplayName: true, referrerOptions: true },
                 },
               },
             },
@@ -126,6 +126,7 @@ export class CollabService {
         eventId: string;
         eventTitle: string;
         heldAt: Date;
+        referrerOptions: string[];
       }
     >();
     for (const link of group.eventLinks) {
@@ -137,6 +138,7 @@ export class CollabService {
           eventId: link.eventId,
           eventTitle: link.event.title,
           heldAt: link.event.heldAt,
+          referrerOptions: link.event.tenant.referrerOptions,
         });
       }
     }
@@ -168,8 +170,6 @@ export class CollabService {
           waitlistOrder: r.waitlistOrder,
           referrer: r.referrer,
           staffNote: r.staffNote,
-          isDuplicateAuto: autoDuplicateIds.has(r.id),
-          isDuplicateOverride: override?.isDuplicate ?? null,
           isDuplicate: override?.isDuplicate ?? autoDuplicateIds.has(r.id),
         };
       }),
@@ -196,23 +196,6 @@ export class CollabService {
     return group;
   }
 
-  async setDuplicateOverride(
-    token: string,
-    reservationId: string,
-    isDuplicate: boolean,
-  ) {
-    const group = await this.findGroupForReservation(token, reservationId);
-    await this.prisma.collabDuplicateOverride.upsert({
-      where: { reservationId },
-      create: { collabGroupId: group.id, reservationId, isDuplicate },
-      update: {
-        isDuplicate,
-        ...(isDuplicate && { assignedTenantId: null }),
-      },
-    });
-    return { reservationId, isDuplicateOverride: isDuplicate };
-  }
-
   async updateReservationDetails(
     token: string,
     reservationId: string,
@@ -236,14 +219,6 @@ export class CollabService {
       referrer: updated.referrer,
       staffNote: updated.staffNote,
     };
-  }
-
-  async clearDuplicateOverride(token: string, reservationId: string) {
-    await this.findGroupForReservation(token, reservationId);
-    await this.prisma.collabDuplicateOverride.deleteMany({
-      where: { reservationId },
-    });
-    return { reservationId, isDuplicateOverride: null };
   }
 
   async assignReservationToTenant(

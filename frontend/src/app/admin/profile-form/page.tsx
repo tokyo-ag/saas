@@ -76,6 +76,8 @@ export default function ProfileFormPage() {
   const [error, setError] = useState('');
   const [tenantId, setTenantId] = useState('');
   const [iframeKey, setIframeKey] = useState(0);
+  const [referrerDraft, setReferrerDraft] = useState<string[]>([]);
+  const [savingReferrer, setSavingReferrer] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftLabel, setDraftLabel] = useState('');
   const [draftType, setDraftType] = useState<CustomProfileQuestionType>('text');
@@ -94,6 +96,8 @@ export default function ProfileFormPage() {
         showComment: t.showComment !== false,
       });
       setQuestions(t.customProfileQuestions ?? []);
+      const opts = t.referrerOptions ?? [];
+      setReferrerDraft(opts.length > 0 ? opts : ['']);
     }).catch(() => {});
   }, []);
 
@@ -194,6 +198,20 @@ export default function ProfileFormPage() {
   function removeQuestion(id: string) {
     if (editingId === id) setEditingId(null);
     saveQuestions(questions.filter((q) => q.id !== id));
+  }
+
+  async function saveReferrerOptions() {
+    const opts = referrerDraft.map((s) => s.trim()).filter(Boolean);
+    setSavingReferrer(true);
+    setError('');
+    try {
+      await api.tenant.update({ referrerOptions: opts });
+      setReferrerDraft(opts.length > 0 ? opts : ['']);
+    } catch (err: any) {
+      setError(err?.message ?? '紹介者マスターの更新に失敗しました');
+    } finally {
+      setSavingReferrer(false);
+    }
   }
 
   function moveQuestion(id: string, direction: -1 | 1) {
@@ -438,6 +456,50 @@ export default function ProfileFormPage() {
                   )}
                 </div>
               )}
+            </div>
+            <div className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-6">
+              <p className="mb-1 text-sm font-medium text-gray-700">紹介者マスター</p>
+              <p className="mb-4 text-xs leading-relaxed text-gray-500">
+                名簿の「紹介者」欄をプルダウンで選択できるよう、選択肢を登録します。1行1名で入力してください。空の行は保存時に除去されます。
+              </p>
+              <div className="space-y-1.5">
+                {referrerDraft.map((opt, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input
+                      value={opt}
+                      onChange={(e) => setReferrerDraft((prev) => prev.map((o, j) => (j === i ? e.target.value : o)))}
+                      maxLength={50}
+                      placeholder={`紹介者${i + 1}`}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#06C755] focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setReferrerDraft((prev) => prev.filter((_, j) => j !== i))}
+                      disabled={referrerDraft.length <= 1}
+                      className="shrink-0 text-xs font-bold text-red-500 disabled:opacity-30"
+                    >
+                      削除
+                    </button>
+                  </div>
+                ))}
+                {referrerDraft.length < 50 && (
+                  <button
+                    type="button"
+                    onClick={() => setReferrerDraft((prev) => [...prev, ''])}
+                    className="text-xs font-bold text-[#06C755]"
+                  >
+                    + 追加
+                  </button>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={saveReferrerOptions}
+                disabled={savingReferrer}
+                className="mt-4 rounded-lg bg-[#06C755] px-4 py-2 text-sm font-bold text-white hover:bg-[#05a847] disabled:opacity-50"
+              >
+                {savingReferrer ? '保存中...' : '紹介者を保存'}
+              </button>
             </div>
           </>
         )}

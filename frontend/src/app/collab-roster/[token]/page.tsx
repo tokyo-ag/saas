@@ -61,38 +61,12 @@ function SummaryBar({ stats }: { stats: ReturnType<typeof summarize> }) {
   );
 }
 
-function DuplicateBadge({ participant, token, onChanged }: { participant: CollabRosterParticipant; token: string; onChanged: () => void }) {
-  const [saving, setSaving] = useState(false);
-
-  async function cycle() {
-    setSaving(true);
-    try {
-      if (participant.isDuplicateOverride === null) {
-        // 自動判定中 → 手動で反転させる
-        await api.public.setCollabDuplicate(token, participant.id, !participant.isDuplicateAuto);
-      } else {
-        // 手動設定済み → 自動判定に戻す
-        await api.public.clearCollabDuplicate(token, participant.id);
-      }
-      onChanged();
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  const label = participant.isDuplicateOverride === true ? '重複（手動）' : participant.isDuplicateOverride === false ? '重複なし（手動）' : participant.isDuplicateAuto ? '重複（自動）' : null;
-
-  if (!label) {
-    return (
-      <button onClick={cycle} disabled={saving} className="text-[10px] text-gray-300 underline disabled:opacity-50">
-        重複なし
-      </button>
-    );
-  }
+function DuplicateBadge({ isDuplicate }: { isDuplicate: boolean }) {
+  if (!isDuplicate) return null;
   return (
-    <button onClick={cycle} disabled={saving} className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 disabled:opacity-50">
-      {label}
-    </button>
+    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+      重複
+    </span>
   );
 }
 
@@ -114,8 +88,8 @@ function DuplicateAssignment({ participant, tenants, token, onChanged }: { parti
   }
 
   return (
-    <div className="flex min-w-[310px] items-center gap-2 whitespace-nowrap">
-      <DuplicateBadge participant={participant} token={token} onChanged={onChanged} />
+    <div className="flex min-w-[280px] items-center gap-2 whitespace-nowrap">
+      <DuplicateBadge isDuplicate={participant.isDuplicate} />
       <div className="flex min-w-52 items-center gap-1.5">
         <select
           value={tenantId}
@@ -135,6 +109,35 @@ function DuplicateAssignment({ participant, tenants, token, onChanged }: { parti
         </button>
       </div>
     </div>
+  );
+}
+
+function ReferrerSelect({
+  value,
+  options,
+  disabled,
+  onChange,
+}: {
+  value: string;
+  options: string[];
+  disabled: boolean;
+  onChange: (v: string) => void;
+}) {
+  // 保存済みの値がマスターに無い場合でも選択肢に表示する
+  const extraOption = value && !options.includes(value) ? value : null;
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+      className="h-8 w-36 rounded-lg border border-gray-200 bg-white px-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755] disabled:bg-gray-50"
+    >
+      <option value="">紹介者なし</option>
+      {extraOption && <option value={extraOption}>{extraOption}</option>}
+      {options.map((o) => (
+        <option key={o} value={o}>{o}</option>
+      ))}
+    </select>
   );
 }
 
@@ -271,6 +274,7 @@ export default function CollabRosterPage() {
   }
 
   const { tenants, participants } = roster;
+  const tenantReferrerMap = new Map(tenants.map((t) => [t.tenantId, t.referrerOptions]));
   const filtered = tab === 'all' ? participants : tab === 'dup' ? participants.filter((p) => p.isDuplicate) : participants.filter((p) => p.tenantId === tab);
   const overallStats = summarize(filtered);
   const tenantGroups = groupByTenant(filtered);
@@ -357,13 +361,11 @@ export default function CollabRosterPage() {
                               <ReservationBadge status={p.status} />
                             </td>
                             <td className="whitespace-nowrap px-4 py-3">
-                              <input
+                              <ReferrerSelect
                                 value={fieldValue(p, 'referrer')}
-                                onChange={(e) => handleFieldChange(p.id, 'referrer', e.target.value)}
+                                options={tenantReferrerMap.get(p.tenantId) ?? []}
                                 disabled={savingAll}
-                                maxLength={100}
-                                placeholder="例：〇〇の紹介"
-                                className="h-8 w-36 rounded-lg border border-gray-200 px-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755] disabled:bg-gray-50"
+                                onChange={(v) => handleFieldChange(p.id, 'referrer', v)}
                               />
                             </td>
                             <td className="whitespace-nowrap px-4 py-3">
@@ -377,7 +379,7 @@ export default function CollabRosterPage() {
                                 className="h-8 w-52 resize-none rounded-lg border border-gray-200 px-2 py-1.5 text-xs leading-4 focus:outline-none focus:ring-1 focus:ring-[#06C755] disabled:bg-gray-50"
                               />
                             </td>
-                            <td className="whitespace-nowrap px-4 py-3">{tab === 'dup' ? <DuplicateAssignment participant={p} tenants={tenants} token={token} onChanged={reload} /> : <DuplicateBadge participant={p} token={token} onChanged={reload} />}</td>
+                            <td className="whitespace-nowrap px-4 py-3">{tab === 'dup' ? <DuplicateAssignment participant={p} tenants={tenants} token={token} onChanged={reload} /> : <DuplicateBadge isDuplicate={p.isDuplicate} />}</td>
                           </tr>
                         ))}
                       </tbody>

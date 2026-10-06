@@ -23,8 +23,8 @@ describe('CollabService', () => {
     jest.clearAllMocks();
   });
 
-  const tenantA = { id: 'tenant-a', name: 'A', lineDisplayName: null };
-  const tenantB = { id: 'tenant-b', name: 'B', lineDisplayName: null };
+  const tenantA = { id: 'tenant-a', name: 'A', lineDisplayName: null, referrerOptions: [] };
+  const tenantB = { id: 'tenant-b', name: 'B', lineDisplayName: null, referrerOptions: [] };
   const eventA = {
     id: 'event-a',
     title: 'A回',
@@ -170,7 +170,6 @@ describe('CollabService', () => {
     expect(result.participants[0]).toMatchObject({
       id: 'active-r1',
       name: '北',
-      isDuplicateAuto: true,
       isDuplicate: true,
     });
     expect(prisma.reservation.findMany).toHaveBeenCalledWith(
@@ -218,7 +217,7 @@ describe('CollabService', () => {
     ]);
 
     const result = await service.getCombinedRoster('token');
-    expect(result.participants.every((p) => p.isDuplicateAuto)).toBe(true);
+    expect(result.participants.every((p) => p.isDuplicate)).toBe(true);
   });
 
   it('uses normalized LINE display name, participant name, and gender as a safe fallback', async () => {
@@ -259,7 +258,7 @@ describe('CollabService', () => {
     ]);
 
     const result = await service.getCombinedRoster('token');
-    expect(result.participants.every((p) => p.isDuplicateAuto)).toBe(true);
+    expect(result.participants.every((p) => p.isDuplicate)).toBe(true);
   });
 
   it('does not flag matching participant names when LINE display names differ', async () => {
@@ -300,7 +299,7 @@ describe('CollabService', () => {
     ]);
 
     const result = await service.getCombinedRoster('token');
-    expect(result.participants.some((p) => p.isDuplicateAuto)).toBe(false);
+    expect(result.participants.some((p) => p.isDuplicate)).toBe(false);
   });
 
   it('lets a manual override win over the automatic duplicate detection', async () => {
@@ -346,7 +345,6 @@ describe('CollabService', () => {
 
     const result = await service.getCombinedRoster('token');
     const byId = new Map(result.participants.map((p) => [p.id, p]));
-    expect(byId.get('r1')?.isDuplicateAuto).toBe(true);
     expect(byId.get('r1')?.isDuplicate).toBe(false);
     expect(byId.get('r2')?.isDuplicate).toBe(true);
   });
@@ -389,40 +387,8 @@ describe('CollabService', () => {
       id: 'r1',
       tenantId: 'tenant-b',
       tenantName: 'B',
-      isDuplicateOverride: false,
       isDuplicate: false,
     });
-  });
-
-  it('rejects a duplicate-override update for a reservation outside the group', async () => {
-    prisma.collabGroup.findFirst.mockResolvedValue(group());
-    prisma.reservation.findFirst.mockResolvedValue(null);
-
-    await expect(
-      service.setDuplicateOverride('token', 'not-in-group', true),
-    ).rejects.toThrow(NotFoundException);
-    expect(prisma.collabDuplicateOverride.upsert).not.toHaveBeenCalled();
-  });
-
-  it('upserts a duplicate override for a reservation that belongs to the group', async () => {
-    prisma.collabGroup.findFirst.mockResolvedValue(group());
-    prisma.reservation.findFirst.mockResolvedValue({
-      id: 'r1',
-      eventId: 'event-a',
-    });
-
-    await service.setDuplicateOverride('token', 'r1', true);
-    expect(prisma.collabDuplicateOverride.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { reservationId: 'r1' },
-        create: {
-          collabGroupId: 'group-1',
-          reservationId: 'r1',
-          isDuplicate: true,
-        },
-        update: { isDuplicate: true, assignedTenantId: null },
-      }),
-    );
   });
 
   it('assigns a duplicate reservation to a tenant in the collaboration', async () => {
