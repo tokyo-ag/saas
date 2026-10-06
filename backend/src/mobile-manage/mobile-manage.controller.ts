@@ -57,23 +57,7 @@ export class MobileManagePublicController {
 @UseGuards(MobileManageGuard)
 @Controller('mobile-manage')
 export class MobileManageSessionController {
-  constructor(
-    private readonly service: MobileManageService,
-    private readonly tenantService: TenantService,
-  ) {}
-
-  @Get('display-fields')
-  getDisplayFields(@TenantId() tenantId: string) {
-    return this.service.getDisplayFields(tenantId);
-  }
-
-  @Patch('display-fields')
-  updateDisplayFields(
-    @TenantId() tenantId: string,
-    @Body() dto: { location?: boolean; price?: boolean; capacity?: boolean; description?: boolean },
-  ) {
-    return this.service.updateDisplayFields(tenantId, dto);
-  }
+  constructor(private readonly tenantService: TenantService) {}
 
   @Get('reviews')
   listReviews(@TenantId() tenantId: string) {

@@ -358,12 +358,6 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ token }),
       }),
-    getDisplayFields: () => request<MobileManageDisplayFields>('/mobile-manage/display-fields'),
-    updateDisplayFields: (data: Partial<MobileManageDisplayFields>) =>
-      request<MobileManageDisplayFields>('/mobile-manage/display-fields', {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      }),
     reviews: () => request<AdminTenantReview[]>('/mobile-manage/reviews'),
     deleteReview: (reviewId: string) =>
       request<{ success: boolean }>(`/mobile-manage/reviews/${reviewId}`, {
@@ -907,13 +901,6 @@ export interface ReserveInput {
   level?: string;
   comment?: string;
   customAnswers?: Record<string, CustomAnswerValue>;
-}
-
-export interface MobileManageDisplayFields {
-  location: boolean;
-  price: boolean;
-  capacity: boolean;
-  description: boolean;
 }
 
 export interface MobileManageSettings {

@@ -63,30 +63,6 @@ export class MobileManageService {
     await this.patchFooterSettings(tenantId, { reserveActionStyle: style });
   }
 
-  private normalizeDisplayFields(raw: any) {
-    return {
-      location: raw?.location !== false,
-      price: raw?.price !== false,
-      capacity: raw?.capacity === true,
-      description: raw?.description !== false,
-    };
-  }
-
-  async getDisplayFields(tenantId: string) {
-    const parsed = await this.parseFooterSettings(tenantId);
-    return this.normalizeDisplayFields(parsed.displayFields);
-  }
-
-  async updateDisplayFields(
-    tenantId: string,
-    dto: { location?: boolean; price?: boolean; capacity?: boolean; description?: boolean },
-  ) {
-    const current = await this.getDisplayFields(tenantId);
-    const next = { ...current, ...dto };
-    await this.patchFooterSettings(tenantId, { displayFields: next });
-    return next;
-  }
-
   async getSettings(tenantId: string) {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },

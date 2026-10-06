@@ -15,7 +15,6 @@ import {
   BlogPost,
   BlogPostInput,
   AdminTenantReview,
-  MobileManageDisplayFields,
 } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
 import { buildBlogBody, firstBlogImage, parseBlogBody } from '@/lib/blogBody';
@@ -31,13 +30,6 @@ const tabs: { key: Tab; label: string }[] = [
   { key: 'upcoming', label: '予定' },
   { key: 'past', label: '過去' },
   { key: 'draft', label: '下書き' },
-];
-
-const displayFieldOptions: { key: keyof MobileManageDisplayFields; label: string; icon: string }[] = [
-  { key: 'location', label: '場所', icon: '📍' },
-  { key: 'price', label: '参加費', icon: '💴' },
-  { key: 'capacity', label: '定員・残席', icon: '👥' },
-  { key: 'description', label: '説明文', icon: '📄' },
 ];
 
 type Session = {
@@ -190,27 +182,13 @@ function EventListScreen({
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('upcoming');
-  const [displayFields, setDisplayFields] = useState<MobileManageDisplayFields | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
     api.events.list().then(setEvents).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    load();
-    api.mobileManage.getDisplayFields().then(setDisplayFields).catch(() => {});
-  }, [load]);
-
-  async function toggleDisplayField(key: keyof MobileManageDisplayFields) {
-    if (!displayFields) return;
-    const next = { ...displayFields, [key]: !displayFields[key] };
-    setDisplayFields(next);
-    try {
-      const updated = await api.mobileManage.updateDisplayFields({ [key]: next[key] });
-      setDisplayFields(updated);
-    } catch { /* silent */ }
-  }
+  useEffect(() => { load(); }, [load]);
 
   async function handleDuplicate(id: string) {
     try {
@@ -318,30 +296,6 @@ function EventListScreen({
           ))}
         </div>
       )}
-
-      <div className="mt-6 space-y-3">
-        <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
-          <p className="mb-2.5 text-xs font-bold text-gray-500">公開サイトに表示する項目</p>
-          <div className="flex flex-wrap gap-2">
-            {displayFieldOptions.map(({ key, label, icon }) => {
-              const on = displayFields?.[key] ?? false;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => toggleDisplayField(key)}
-                  className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
-                    on ? 'border-[#06C755] bg-[#06C755]/8 text-[#06C755]' : 'border-gray-200 bg-gray-50 text-gray-400 line-through'
-                  }`}
-                >
-                  <span>{icon}</span>
-                  <span>{label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
