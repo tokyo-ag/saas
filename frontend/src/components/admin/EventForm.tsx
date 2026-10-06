@@ -1120,16 +1120,18 @@ export default function EventForm({
             </div>
           </Field>
         </div>
-        <div>
-          <Check
-            label="男性の集合時間を15分遅らせて案内する"
-            checked={form.maleDelayMinutes > 0}
-            onChange={(checked) => set('maleDelayMinutes', checked ? 15 : 0)}
-          />
-          <p className="text-xs leading-5 text-gray-500">
-            ONにすると、開始日時（女性向け）より15分後の時刻を男性向けの集合時間として案内します（{'{date}'}に反映されます）。
-          </p>
-        </div>
+        {!simplified && (
+          <div>
+            <Check
+              label="男性の集合時間を15分遅らせて案内する"
+              checked={form.maleDelayMinutes > 0}
+              onChange={(checked) => set('maleDelayMinutes', checked ? 15 : 0)}
+            />
+            <p className="text-xs leading-5 text-gray-500">
+              ONにすると、開始日時（女性向け）より15分後の時刻を男性向けの集合時間として案内します（{'{date}'}に反映されます）。
+            </p>
+          </div>
+        )}
         <Field label="場所名" required>
           <input required maxLength={200} value={form.location} onChange={(e) => set('location', e.target.value)} placeholder="例: 渋谷区スポーツセンター" className={inputClass} />
         </Field>
@@ -1250,21 +1252,20 @@ export default function EventForm({
         )}
       </Section>
 
+      {!simplified && (
       <Section title="参加者情報">
-        {!simplified && (
-          <div className="mb-3">
-            <p className="mb-2 text-xs text-gray-500">予約スタイル</p>
-            <RadioGroup
-              value={form.reserveActionStyle}
-              onChange={(value) => set('reserveActionStyle', value)}
-              options={[
-                ['', `団体の設定に従う（現在：${tenantReserveActionStyle === 'line' ? 'LINEで予約する' : 'COMIUで予約する'}）`],
-                ['comiu', 'COMIUで予約する'],
-                ['line', 'LINEで予約する'],
-              ]}
-            />
-          </div>
-        )}
+        <div className="mb-3">
+          <p className="mb-2 text-xs text-gray-500">予約スタイル</p>
+          <RadioGroup
+            value={form.reserveActionStyle}
+            onChange={(value) => set('reserveActionStyle', value)}
+            options={[
+              ['', `団体の設定に従う（現在：${tenantReserveActionStyle === 'line' ? 'LINEで予約する' : 'COMIUで予約する'}）`],
+              ['comiu', 'COMIUで予約する'],
+              ['line', 'LINEで予約する'],
+            ]}
+          />
+        </div>
         {!hideLevel && (
           <Check
             label="予約時にレベル（初心者・中級・上級）を確認する"
@@ -1278,6 +1279,7 @@ export default function EventForm({
           onChange={(checked) => set('rosterShareEnabled', checked)}
         />
       </Section>
+      )}
 
       {!hideLineNotify && (
       <Section title="通知">
