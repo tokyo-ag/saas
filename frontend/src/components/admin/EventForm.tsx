@@ -817,7 +817,7 @@ export default function EventForm({
     : renderLineMessage(reminderTemplate, form);
 
   return (
-    <form onSubmit={handleSubmit} className="grid max-w-6xl items-start gap-6 xl:grid-cols-[minmax(0,672px)_minmax(360px,1fr)]">
+    <form onSubmit={handleSubmit} className={`grid max-w-6xl grid-cols-1 items-start gap-6 ${simplified ? '' : 'xl:grid-cols-[minmax(0,672px)_minmax(360px,1fr)]'}`}>
       <div className="space-y-7 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-6">
       {upgradeRequired && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
