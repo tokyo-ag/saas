@@ -418,7 +418,11 @@ export default function EventForm({
     reminderMessageTemplate: initial?.reminderMessageTemplate ?? '',
     levelEnabled: initial?.levelEnabled ?? false,
     rosterShareEnabled: initial?.rosterShareEnabled ?? false,
-    reserveActionStyle: (initial?.reserveActionStyle === 'line' ? 'line' : initial?.reserveActionStyle === 'comiu' ? 'comiu' : '') as '' | 'comiu' | 'line',
+    // 超簡単モバイル管理からの新規作成では予約スタイルを選ばせず、常にCOMIU予約で固定する。
+    // 既存イベントの編集時は（simplifiedでも）元の設定を変えずにそのまま保持する。
+    reserveActionStyle: (initial
+      ? (initial.reserveActionStyle === 'line' ? 'line' : initial.reserveActionStyle === 'comiu' ? 'comiu' : '')
+      : simplified ? 'comiu' : '') as '' | 'comiu' | 'line',
     imageUrl: initial?.imageUrl ?? '',
     iconUrl: initial?.iconUrl ?? '',
     categories: initial?.categories?.length
@@ -1132,12 +1136,14 @@ export default function EventForm({
         <Field label="地図URL">
           <input type="url" value={form.locationUrl} onChange={(e) => set('locationUrl', e.target.value)} placeholder="https://maps.google.com/..." className={inputClass} />
         </Field>
-        <Field label="場所の目安表示（駅からの距離など）">
-          <input maxLength={200} value={form.locationHint} onChange={(e) => set('locationHint', e.target.value)} placeholder="例: 渋谷駅から徒歩5分" className={inputClass} />
-          <p className="text-xs leading-5 text-gray-500">
-            予約前の方や検索エンジンには、場所名の代わりにこの目安が表示されます。未入力の場合は場所名がそのまま表示されます。予約済みの方には常に正式な場所名が表示されます。
-          </p>
-        </Field>
+        {!simplified && (
+          <Field label="場所の目安表示（駅からの距離など）">
+            <input maxLength={200} value={form.locationHint} onChange={(e) => set('locationHint', e.target.value)} placeholder="例: 渋谷駅から徒歩5分" className={inputClass} />
+            <p className="text-xs leading-5 text-gray-500">
+              予約前の方や検索エンジンには、場所名の代わりにこの目安が表示されます。未入力の場合は場所名がそのまま表示されます。予約済みの方には常に正式な場所名が表示されます。
+            </p>
+          </Field>
+        )}
       </Section>
 
       <Section title="参加費">
@@ -1245,18 +1251,20 @@ export default function EventForm({
       </Section>
 
       <Section title="参加者情報">
-        <div className="mb-3">
-          <p className="mb-2 text-xs text-gray-500">予約スタイル</p>
-          <RadioGroup
-            value={form.reserveActionStyle}
-            onChange={(value) => set('reserveActionStyle', value)}
-            options={[
-              ['', `団体の設定に従う（現在：${tenantReserveActionStyle === 'line' ? 'LINEで予約する' : 'COMIUで予約する'}）`],
-              ['comiu', 'COMIUで予約する'],
-              ['line', 'LINEで予約する'],
-            ]}
-          />
-        </div>
+        {!simplified && (
+          <div className="mb-3">
+            <p className="mb-2 text-xs text-gray-500">予約スタイル</p>
+            <RadioGroup
+              value={form.reserveActionStyle}
+              onChange={(value) => set('reserveActionStyle', value)}
+              options={[
+                ['', `団体の設定に従う（現在：${tenantReserveActionStyle === 'line' ? 'LINEで予約する' : 'COMIUで予約する'}）`],
+                ['comiu', 'COMIUで予約する'],
+                ['line', 'LINEで予約する'],
+              ]}
+            />
+          </div>
+        )}
         {!hideLevel && (
           <Check
             label="予約時にレベル（初心者・中級・上級）を確認する"
