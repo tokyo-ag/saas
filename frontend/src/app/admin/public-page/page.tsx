@@ -1765,93 +1765,145 @@ export default function AdminPublicPage() {
             <p className="mt-1 text-[11px] text-gray-400">イベント・ブログ・口コミは常に表示され、公開中の内容が無い間は「準備中」の案内が出ます。</p>
           </div>
           <div className="divide-y divide-gray-100 rounded-xl border border-gray-200">
-            <div className="space-y-3 px-3 py-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-bold text-gray-700">イベント・予約</p>
-                  <p className="mt-0.5 text-[11px] text-gray-400">{reserveActionStyle === 'line' && reserveEvents.length === 0 ? 'LINE予約を表示します' : reserveEvents.length > 0 ? `公開中のイベント ${reserveEvents.length}件` : 'イベントが無い間は「準備中」の案内を表示します'}</p>
-                </div>
-                <span className="rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-bold text-green-700">表示</span>
-              </div>
-              <div className="space-y-1.5">
-                <p className="text-[11px] font-bold text-gray-500">イベントの表示形式</p>
-                <p className="text-[10px] text-gray-400">団体ごとに1つ選びます。カードはWEBサイト内では横1行、予約ページでは2列で表示します。</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {([
-                    { value: 'calendar', label: 'カレンダー' },
-                    { value: 'card', label: 'カード' },
-                    { value: 'thread', label: 'スレッド' },
-                  ] as const).map((option) => {
-                    const active = (form.reserveViewStyle || 'calendar') === option.value;
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => setForm((prev) => ({ ...prev, reserveViewStyle: option.value }))}
-                        className={`rounded-lg border px-2 py-2 text-xs font-bold transition ${active ? 'border-[#06C755] bg-green-50 text-green-700 ring-1 ring-[#06C755]/20' : 'border-gray-200 bg-white text-gray-500 hover:border-green-300'}`}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <p className="text-[11px] font-bold text-gray-500">予約方法</p>
-              <div className="grid grid-cols-2 gap-2">
-                {([
-                  { value: 'comiu' as const, label: 'COMIUで予約', description: '参加者をCOMIUで管理' },
-                  { value: 'line' as const, label: 'LINEで予約', description: '公式LINEへ案内' },
-                ]).map((option) => {
-                  const active = reserveActionStyle === option.value;
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setForm((prev) => ({ ...prev, reserveActionStyle: option.value }))}
-                      className={`rounded-xl border px-3 py-2.5 text-left transition ${active ? 'border-[#06C755] bg-green-50 text-green-700 ring-1 ring-[#06C755]/20' : 'border-gray-200 bg-white text-gray-600 hover:border-green-300'}`}
-                    >
-                      <span className="block text-xs font-bold">{option.label}</span>
-                      <span className="mt-0.5 block text-[10px] text-gray-400">{option.description}</span>
+            {(() => {
+              const SECONDARY = ['reserve', 'blog', 'reviews'] as const;
+              const currentFull = form.contentOrder ?? [...DEFAULT_CONTENT_ORDER];
+              const secondaryOrder = [
+                ...currentFull.filter(k => (SECONDARY as readonly string[]).includes(k)),
+                ...SECONDARY.filter(k => !currentFull.includes(k)),
+              ];
+              function moveSection(key: string, dir: 'up' | 'down') {
+                setForm(prev => {
+                  const full = [...(prev.contentOrder ?? [...DEFAULT_CONTENT_ORDER])];
+                  const sec = full.filter(k => (SECONDARY as readonly string[]).includes(k));
+                  const idx = sec.indexOf(key);
+                  const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
+                  if (swapIdx < 0 || swapIdx >= sec.length) return prev;
+                  [sec[idx], sec[swapIdx]] = [sec[swapIdx], sec[idx]];
+                  let si = 0;
+                  return { ...prev, contentOrder: full.map(k => (SECONDARY as readonly string[]).includes(k) ? sec[si++] : k) };
+                });
+              }
+              return secondaryOrder.map((key, i) => {
+                const isFirst = i === 0;
+                const isLast = i === secondaryOrder.length - 1;
+                const arrows = (
+                  <div className="flex flex-col gap-0.5">
+                    <button type="button" disabled={isFirst} onClick={() => moveSection(key, 'up')}
+                      className="flex h-5 w-5 items-center justify-center rounded text-gray-400 hover:enabled:text-gray-600 disabled:opacity-20">
+                      <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                     </button>
-                  );
-                })}
-              </div>
-              {reserveActionStyle === 'line' && (
-                <label className="block space-y-1">
-                  <span className="text-[11px] font-bold text-gray-500">公式LINE URL</span>
-                  <input
-                    type="url"
-                    value={form.reserveLineUrl ?? ''}
-                    onChange={(e) => setForm((prev) => ({ ...prev, reserveLineUrl: e.target.value }))}
-                    placeholder="https://lin.ee/..."
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-                  />
-                </label>
-              )}
-              </div>
-            </div>
-            <div className="flex items-center justify-between gap-3 px-3 py-3">
-              <div>
-                <p className="text-xs font-bold text-gray-700">活動ブログ</p>
-                <p className="mt-0.5 text-[11px] text-gray-400">{blogPosts.length > 0 ? `公開中の記事 ${blogPosts.length}件` : '記事が無い間は「準備中」の案内を表示します'}</p>
-              </div>
-              <span className="rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-bold text-green-700">表示</span>
-            </div>
-            <div className="flex items-center justify-between gap-3 px-3 py-3">
-              <div>
-                <p className="text-xs font-bold text-gray-700">口コミ</p>
-                <p className="mt-0.5 text-[11px] text-gray-400">公開口コミ {reviews.length}件</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setForm((prev) => ({ ...prev, reviewsEnabled: !reviewsEnabled }))}
-                className={`relative h-7 w-12 shrink-0 rounded-full transition ${reviewsEnabled ? 'bg-[#06C755]' : 'bg-gray-300'}`}
-                aria-label={`口コミを${reviewsEnabled ? '非表示' : '表示'}にする`}
-              >
-                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition ${reviewsEnabled ? 'left-6' : 'left-1'}`} />
-              </button>
-            </div>
+                    <button type="button" disabled={isLast} onClick={() => moveSection(key, 'down')}
+                      className="flex h-5 w-5 items-center justify-center rounded text-gray-400 hover:enabled:text-gray-600 disabled:opacity-20">
+                      <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                    </button>
+                  </div>
+                );
+                if (key === 'reserve') return (
+                  <div key="reserve" className="space-y-3 px-3 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-bold text-gray-700">イベント・予約</p>
+                        <p className="mt-0.5 text-[11px] text-gray-400">{reserveActionStyle === 'line' && reserveEvents.length === 0 ? 'LINE予約を表示します' : reserveEvents.length > 0 ? `公開中のイベント ${reserveEvents.length}件` : 'イベントが無い間は「準備中」の案内を表示します'}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {arrows}
+                        <span className="rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-bold text-green-700">表示</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-[11px] font-bold text-gray-500">イベントの表示形式</p>
+                      <p className="text-[10px] text-gray-400">団体ごとに1つ選びます。カードはWEBサイト内では横1行、予約ページでは2列で表示します。</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {([
+                          { value: 'calendar', label: 'カレンダー' },
+                          { value: 'card', label: 'カード' },
+                          { value: 'thread', label: 'スレッド' },
+                        ] as const).map((option) => {
+                          const active = (form.reserveViewStyle || 'calendar') === option.value;
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => setForm((prev) => ({ ...prev, reserveViewStyle: option.value }))}
+                              className={`rounded-lg border px-2 py-2 text-xs font-bold transition ${active ? 'border-[#06C755] bg-green-50 text-green-700 ring-1 ring-[#06C755]/20' : 'border-gray-200 bg-white text-gray-500 hover:border-green-300'}`}
+                            >
+                              {option.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-[11px] font-bold text-gray-500">予約方法</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {([
+                          { value: 'comiu' as const, label: 'COMIUで予約', description: '参加者をCOMIUで管理' },
+                          { value: 'line' as const, label: 'LINEで予約', description: '公式LINEへ案内' },
+                        ]).map((option) => {
+                          const active = reserveActionStyle === option.value;
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => setForm((prev) => ({ ...prev, reserveActionStyle: option.value }))}
+                              className={`rounded-xl border px-3 py-2.5 text-left transition ${active ? 'border-[#06C755] bg-green-50 text-green-700 ring-1 ring-[#06C755]/20' : 'border-gray-200 bg-white text-gray-600 hover:border-green-300'}`}
+                            >
+                              <span className="block text-xs font-bold">{option.label}</span>
+                              <span className="mt-0.5 block text-[10px] text-gray-400">{option.description}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {reserveActionStyle === 'line' && (
+                        <label className="block space-y-1">
+                          <span className="text-[11px] font-bold text-gray-500">公式LINE URL</span>
+                          <input
+                            type="url"
+                            value={form.reserveLineUrl ?? ''}
+                            onChange={(e) => setForm((prev) => ({ ...prev, reserveLineUrl: e.target.value }))}
+                            placeholder="https://lin.ee/..."
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                );
+                if (key === 'blog') return (
+                  <div key="blog" className="flex items-center justify-between gap-3 px-3 py-3">
+                    <div>
+                      <p className="text-xs font-bold text-gray-700">活動ブログ</p>
+                      <p className="mt-0.5 text-[11px] text-gray-400">{blogPosts.length > 0 ? `公開中の記事 ${blogPosts.length}件` : '記事が無い間は「準備中」の案内を表示します'}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {arrows}
+                      <span className="rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-bold text-green-700">表示</span>
+                    </div>
+                  </div>
+                );
+                if (key === 'reviews') return (
+                  <div key="reviews" className="flex items-center justify-between gap-3 px-3 py-3">
+                    <div>
+                      <p className="text-xs font-bold text-gray-700">口コミ</p>
+                      <p className="mt-0.5 text-[11px] text-gray-400">公開口コミ {reviews.length}件</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {arrows}
+                      <button
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, reviewsEnabled: !reviewsEnabled }))}
+                        className={`relative h-7 w-12 shrink-0 rounded-full transition ${reviewsEnabled ? 'bg-[#06C755]' : 'bg-gray-300'}`}
+                        aria-label={`口コミを${reviewsEnabled ? '非表示' : '表示'}にする`}
+                      >
+                        <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition ${reviewsEnabled ? 'left-6' : 'left-1'}`} />
+                      </button>
+                    </div>
+                  </div>
+                );
+                return null;
+              });
+            })()}
           </div>
         </div>
 
