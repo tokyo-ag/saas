@@ -687,9 +687,9 @@ export default async function ClubCmsPage({
       const mediaTextPx = MEDIA_TEXT_IMAGE_SIZE_PX[(block.imageSize as 'small' | 'medium' | 'large') ?? 'medium'];
       return (
         <div className={`flex items-start gap-3 ${!isLeft ? 'flex-row-reverse' : ''}`}>
-          {block.imageUrl && (
+          {block.imageUrl && imgUrl(block.imageUrl, IMAGE_BASE_URL) && (
             <div className="relative shrink-0 overflow-hidden rounded-xl" style={{ height: mediaTextPx, width: mediaTextPx }}>
-              <Image src={block.imageUrl} alt="" fill className="object-cover" sizes={`${mediaTextPx}px`} style={{ objectPosition: block.imageFocal ?? 'center center' }} />
+              <Image src={imgUrl(block.imageUrl, IMAGE_BASE_URL)!} alt="" fill className="object-cover" sizes={`${mediaTextPx}px`} style={{ objectPosition: block.imageFocal ?? 'center center' }} />
             </div>
           )}
           <div className={`min-w-0 flex-1 space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>
@@ -701,9 +701,9 @@ export default async function ClubCmsPage({
     if (block.type === 'profile') {
       return (
         <div className="flex gap-4">
-          {block.imageUrl && (
+          {block.imageUrl && imgUrl(block.imageUrl, IMAGE_BASE_URL) && (
             <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full">
-              <Image src={block.imageUrl} alt="" fill className="object-cover" sizes="80px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
+              <Image src={imgUrl(block.imageUrl, IMAGE_BASE_URL)!} alt="" fill className="object-cover" sizes="80px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
             </div>
           )}
           <div className={`min-w-0 space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>
@@ -715,9 +715,9 @@ export default async function ClubCmsPage({
     if (block.type === 'feature') {
       return (
         <div className="space-y-3">
-          {block.imageUrl && (
+          {block.imageUrl && imgUrl(block.imageUrl, IMAGE_BASE_URL) && (
             <div className="relative h-56 w-full overflow-hidden rounded-xl">
-              <Image src={block.imageUrl} alt="" fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
+              <Image src={imgUrl(block.imageUrl, IMAGE_BASE_URL)!} alt="" fill className="object-cover" sizes="(max-width: 640px) 100vw, 640px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
             </div>
           )}
           <div className={`space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>

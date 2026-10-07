@@ -110,7 +110,7 @@ export async function generateMetadata({
   const tenantName = post.tenant?.name ?? post.tenant?.lineDisplayName ?? tenantCode;
   const description = post.excerpt ?? cleanDescription(post.body);
   const image =
-    firstImageFromBody(post.body) ??
+    imgUrl(firstImageFromBody(post.body), IMAGE_BASE_URL) ??
     imgUrl(post.tenant?.linePictureUrl ?? post.tenant?.iconUrl, IMAGE_BASE_URL) ??
     `${SITE_URL}/opengraph-image`;
   return {
@@ -816,7 +816,7 @@ export default async function BlogPostPage({
   const tenantIconUrl = imgUrl(post.tenant?.linePictureUrl ?? post.tenant?.iconUrl, IMAGE_BASE_URL);
   const description = post.excerpt ?? cleanDescription(post.body);
   const eyecatchImage =
-    firstImageFromBody(post.body) ??
+    imgUrl(firstImageFromBody(post.body), IMAGE_BASE_URL) ??
     tenantIconUrl ??
     DEFAULT_EVENT_IMAGE;
   const eyecatchCaption = firstImageAltFromBody(post.body);
@@ -833,7 +833,7 @@ export default async function BlogPostPage({
     id: p.id,
     title: p.title,
     excerpt: p.excerpt,
-    imageUrl: p.coverImageUrl ?? null,
+    imageUrl: imgUrl(p.coverImageUrl, IMAGE_BASE_URL),
     href: `/clubs/${tenantCode}/blog/${p.slug}`,
     matchesBoth: false,
     publishedAt: p.publishedAt ?? null,
