@@ -320,15 +320,14 @@ export default function CollabRosterPage() {
             <>
               {/* スマホでも参加者1人を1行にまとめ、横方向に確認・編集できる表 */}
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[1040px] text-sm">
+                <table className="w-full min-w-[900px] text-sm">
                   <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
                     <tr>
                       <th className="whitespace-nowrap px-4 py-3 text-left">名前</th>
-                      <th className="whitespace-nowrap px-4 py-3 text-left">年齢</th>
-                      <th className="whitespace-nowrap px-4 py-3 text-left">性別</th>
-                      <th className="whitespace-nowrap px-4 py-3 text-left">ステータス</th>
                       <th className="whitespace-nowrap px-4 py-3 text-left">紹介者</th>
                       <th className="whitespace-nowrap px-4 py-3 text-left">コメント</th>
+                      <th className="whitespace-nowrap px-4 py-3 text-left">性別</th>
+                      <th className="whitespace-nowrap px-4 py-3 text-left">年齢</th>
                       <th className="whitespace-nowrap px-4 py-3 text-left">重複</th>
                     </tr>
                   </thead>
@@ -337,7 +336,7 @@ export default function CollabRosterPage() {
                     return (
                       <tbody key={tenantId} className="divide-y divide-gray-100">
                         <tr className="bg-gray-50">
-                          <td colSpan={7} className="px-4 py-2">
+                          <td colSpan={6} className="px-4 py-2">
                             <div className="flex items-center justify-between gap-4 whitespace-nowrap">
                               <span className="text-xs font-bold text-gray-700">{group.tenantName}</span>
                               <span className="text-[11px] text-gray-500">
@@ -352,13 +351,9 @@ export default function CollabRosterPage() {
                             <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-900">
                               <div className="flex items-center gap-2 whitespace-nowrap">
                                 {p.linePictureUrl ? <img src={p.linePictureUrl} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" /> : <span className="h-6 w-6 shrink-0 rounded-full bg-gray-200" />}
-                                {p.name ?? '未入力'}
+                                <span>{p.name ?? '未入力'}</span>
+                                <ReservationBadge status={p.status} />
                               </div>
-                            </td>
-                            <td className="whitespace-nowrap px-4 py-3 text-gray-600">{p.grade ?? '-'}</td>
-                            <td className="whitespace-nowrap px-4 py-3 text-gray-600">{p.gender ?? '-'}</td>
-                            <td className="whitespace-nowrap px-4 py-3">
-                              <ReservationBadge status={p.status} />
                             </td>
                             <td className="whitespace-nowrap px-4 py-3">
                               <ReferrerSelect
@@ -379,6 +374,8 @@ export default function CollabRosterPage() {
                                 className="h-8 w-52 resize-none rounded-lg border border-gray-200 px-2 py-1.5 text-xs leading-4 focus:outline-none focus:ring-1 focus:ring-[#06C755] disabled:bg-gray-50"
                               />
                             </td>
+                            <td className="whitespace-nowrap px-4 py-3 text-gray-600">{p.gender ?? '-'}</td>
+                            <td className="whitespace-nowrap px-4 py-3 text-gray-600">{p.grade ?? '-'}</td>
                             <td className="whitespace-nowrap px-4 py-3">{tab === 'dup' ? <DuplicateAssignment participant={p} tenants={tenants} token={token} onChanged={reload} /> : <DuplicateBadge isDuplicate={p.isDuplicate} />}</td>
                           </tr>
                         ))}
