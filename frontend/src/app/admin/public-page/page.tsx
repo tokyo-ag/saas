@@ -863,6 +863,7 @@ export default function AdminPublicPage() {
   const dragRef = useRef<{ startY: number; startSize: number } | null>(null);
   const subtitleDragRef = useRef<{ startX: number; startY: number; startSX: number; startSY: number } | null>(null);
   const imageDragIndexRef = useRef<number | null>(null);
+  const simpleImageUploadRef = useRef<HTMLInputElement | null>(null);
   const simpleContentBlock = blocks.find((block) => block.type === 'text')
     ?? blocks.find((block) => block.type !== 'faq' && block.type !== 'sns');
   const simpleIntro = simpleContentBlock?.content ?? form.body ?? '';
@@ -1676,6 +1677,44 @@ export default function AdminPublicPage() {
                 onChange={(e) => setForm((p) => ({ ...p, bodySize: e.target.value }))}
                 className="flex-1 accent-[#06C755]" />
               <span className="w-10 shrink-0 text-right text-xs text-gray-400">{bodyFontSize}px</span>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-gray-600">メイン画像</p>
+              {imageUrls[0] ? (
+                <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                  <img src={imageUrls[0]} alt="" className="aspect-video w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, imageUrls: [], imageCaptions: [], coverImageUrl: '' }))}
+                    className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-gray-600 shadow hover:bg-red-50 hover:text-red-500"
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={uploading}
+                  onClick={() => simpleImageUploadRef.current?.click()}
+                  className="flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 py-6 text-gray-400 transition hover:border-green-300 hover:bg-green-50/40 hover:text-green-700 disabled:opacity-50"
+                >
+                  <span className="text-sm font-bold">{uploading ? 'アップロード中...' : '画像を選ぶ'}</span>
+                  <span className="mt-1 text-[11px]">横長の写真がおすすめ</span>
+                </button>
+              )}
+              <input
+                ref={simpleImageUploadRef}
+                type="file"
+                accept="image/*"
+                disabled={uploading}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void handleImageFile(file);
+                  e.currentTarget.value = '';
+                }}
+              />
             </div>
 
           </div>
