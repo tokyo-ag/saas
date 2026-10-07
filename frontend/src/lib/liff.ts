@@ -17,8 +17,9 @@ const LIFF_ID_MISMATCH_RELOAD_KEY = 'liff-id-mismatch-reload';
 
 async function getLiffId(liffIdOverride?: string): Promise<string> {
   if (liffIdOverride) {
+    // overrideは常にテナントAPIから取得したIDなのでusingTenantLiff=true
     resolvedLiffId = liffIdOverride;
-    usingTenantLiff = false;
+    usingTenantLiff = true;
     return resolvedLiffId;
   }
   if (resolvedLiffId) return resolvedLiffId;
@@ -27,7 +28,11 @@ async function getLiffId(liffIdOverride?: string): Promise<string> {
     if (match) {
       try {
         const tenantId = decodeURIComponent(match[1]);
-        const res = await fetch(`/api/backend/liff/${encodeURIComponent(tenantId)}`);
+        // 5秒タイムアウト付きで取得（ハング防止）
+        const controller = new AbortController();
+        const tid = window.setTimeout(() => controller.abort(), 5000);
+        const res = await fetch(`/api/backend/liff/${encodeURIComponent(tenantId)}`, { signal: controller.signal })
+          .finally(() => window.clearTimeout(tid));
         if (res.ok) {
           const tenant = (await res.json()) as { liffId?: string | null };
           if (tenant.liffId?.trim()) {

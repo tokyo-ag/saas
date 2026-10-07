@@ -73,6 +73,7 @@ function ReservePageInner() {
 
   const [authStatus, setAuthStatus] = useState<AuthStatus>('loading');
   const [authError, setAuthError] = useState('');
+  const [loadingTooLong, setLoadingTooLong] = useState(false);
   const [event, setEvent] = useState<LiffEvent | null>(null);
   const [tenant, setTenant] = useState<LiffTenant | null>(null);
   const [lineUserId, setLineUserId] = useState('');
@@ -144,11 +145,25 @@ function ReservePageInner() {
     let cancelled = false;
     setAuthStatus('loading');
     setAuthError('');
+    setLoadingTooLong(false);
     setEvent(null);
     setMyReservation(null);
     setReservationMessageText('');
     setError('');
     setIsFriend(null);
+
+    // 8秒後にロード長引きメッセージを表示
+    const slowTimer = window.setTimeout(() => {
+      if (!cancelled) setLoadingTooLong(true);
+    }, 8000);
+
+    // 30秒後にタイムアウトエラー
+    const hardTimer = window.setTimeout(() => {
+      if (!cancelled) {
+        setAuthError('読み込みがタイムアウトしました。通信環境を確認してもう一度お試しください。');
+        setAuthStatus('error');
+      }
+    }, 30000);
 
     async function init() {
       // このページは/e/{tenantCode}のSEO一覧からLINE認証込みで直接開かれる入口にもなるため、
@@ -171,7 +186,8 @@ function ReservePageInner() {
       }
 
       // ── Step 1: LIFF初期化 ──
-      const initOk = await initLiff();
+      // tenantInfoのliffIdを渡すことでgetLiffId()の二重fetchを避ける
+      const initOk = await initLiff(tenantInfo?.liffId ?? undefined);
       if (cancelled) return;
 
       if (!initOk) {
@@ -284,8 +300,15 @@ function ReservePageInner() {
 
       setAuthStatus('ok');
     }
-    init();
-    return () => { cancelled = true; };
+    init().finally(() => {
+      window.clearTimeout(slowTimer);
+      window.clearTimeout(hardTimer);
+    });
+    return () => {
+      cancelled = true;
+      window.clearTimeout(slowTimer);
+      window.clearTimeout(hardTimer);
+    };
   }, [tenantId, eventId]);
 
   // 予約確定後（または既に予約済みで再訪した場合）、予約完了時と同じ案内をその場で見せる。
@@ -416,8 +439,22 @@ function ReservePageInner() {
   // ── ローディング / プロフィール未入力でのマイページ誘導中 ──
   if (authStatus === 'loading' || (authStatus === 'ok' && isFriend === true && !hasProfile && !isLineMode)) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-sm" style={{ color: accentColor }}>読み込み中...</div>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 px-6 text-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-[#06C755]" />
+        <div className="text-sm text-gray-500">読み込み中...</div>
+        {loadingTooLong && (
+          <div className="mt-2 space-y-3">
+            <p className="text-xs text-gray-400">時間がかかっています。通信環境を確認してください。</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="rounded-xl px-5 py-2.5 text-sm font-bold text-white"
+              style={{ backgroundColor: accentColor }}
+            >
+              再読み込み
+            </button>
+          </div>
+        )}
       </div>
     );
   }

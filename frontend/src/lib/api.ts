@@ -55,14 +55,23 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     }
   }
 
-  const { headers: optionHeaders, ...restOptions } = options ?? {};
-  const res = await fetch(`${BASE}${path}`, {
-    ...restOptions,
-    headers: {
-      ...headers,
-      ...(optionHeaders as Record<string, string> | undefined),
-    },
-  });
+  const { headers: optionHeaders, signal: callerSignal, ...restOptions } = options ?? {};
+  const timeoutController = new AbortController();
+  const timeoutId = setTimeout(() => timeoutController.abort(), 15000);
+  const signal = callerSignal ?? timeoutController.signal;
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      ...restOptions,
+      headers: {
+        ...headers,
+        ...(optionHeaders as Record<string, string> | undefined),
+      },
+      signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!res.ok) {
     // 超簡単モバイル管理セッション中は、通常ログインへの強制遷移を行わない
