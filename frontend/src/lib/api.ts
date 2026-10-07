@@ -58,7 +58,12 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const { headers: optionHeaders, signal: callerSignal, ...restOptions } = options ?? {};
   const timeoutController = new AbortController();
   const timeoutId = setTimeout(() => timeoutController.abort(), 15000);
-  const signal = callerSignal ?? timeoutController.signal;
+  // callerSignalとタイムアウト両方が有効になるよう合成する
+  const signal = callerSignal
+    ? (typeof AbortSignal.any === 'function'
+        ? AbortSignal.any([timeoutController.signal, callerSignal])
+        : timeoutController.signal)
+    : timeoutController.signal;
   let res: Response;
   try {
     res = await fetch(`${BASE}${path}`, {

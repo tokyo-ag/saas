@@ -82,7 +82,7 @@ function ReservePageInner() {
   const [isFriend, setIsFriend] = useState<boolean | null>(null);
   const [loginRequired, setLoginRequired] = useState(false);
   const [showLoginToast, setShowLoginToast] = useState(false);
-  const isPastEvent = event ? new Date(event.heldAt).getTime() < Date.now() : false;
+  const isPastEvent = event ? new Date(event.endAt ?? event.heldAt).getTime() < Date.now() : false;
   const isClosed = event ? event.status === 'closed' || isPastEvent : false;
 
   const [submitting, setSubmitting] = useState(false);
@@ -261,7 +261,7 @@ function ReservePageInner() {
 
       // ── Step 4: データ取得 ──
       const [ev, prof, myRes] = await Promise.allSettled([
-        api.liff.event(tenantId, eventId),
+        preloadedEvent ? Promise.resolve(preloadedEvent) : api.liff.event(tenantId, eventId),
         api.liff.profile(tenantId),
         api.liff.myReservation(tenantId, eventId).catch(() => null),
       ]);
@@ -284,8 +284,17 @@ function ReservePageInner() {
             return;
           }
         } else {
-          // 本当に初回でプロフィールが無い場合（404）はnullのまま進める。
-          setProfile(null);
+          const isNotFound = (prof.reason as Error & { status?: number })?.status === 404;
+          if (isNotFound) {
+            // 本当に初回でプロフィールが無い場合（404）はnullのまま進める。
+            setProfile(null);
+          } else {
+            // 500等のサーバーエラーをプロフィール未入力と誤判定してプロフィールページへ
+            // 誘導しないよう、認証エラーに準じてエラー画面に切り替える。
+            setAuthError('プロフィールの取得に失敗しました。もう一度お試しください。');
+            setAuthStatus('error');
+            return;
+          }
         }
       }
       if (myRes.status === 'fulfilled') setMyReservation(myRes.value);
@@ -342,7 +351,8 @@ function ReservePageInner() {
     if (myReservation || submitting) return;
     autoSubmitTriggeredRef.current = true;
     submit();
-  }, [isAutoReserve, authStatus, isFriend, hasProfile, isLineMode, isClosed, myReservation, submitting]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAutoReserve, authStatus, isFriend, hasProfile, isLineMode, isClosed, myReservation, submitting, submit]);
 
   function copyInviteLink() {
     if (!event) return;
@@ -399,6 +409,7 @@ function ReservePageInner() {
       }
       const isDuplicate = msg.includes('予約済み');
       if (isDuplicate) {
+        syncLiffApiToken();
         const existing = await api.liff.myReservation(tenantId, eventId).catch(() => null);
         if (existing) {
           setMyReservation({ ...existing, alreadyReserved: true });
@@ -409,7 +420,6 @@ function ReservePageInner() {
         return;
       }
       setError(msg);
-      alert(`予約エラー: ${msg}`);
     } finally {
       submitInFlightRef.current = false;
       setSubmitting(false);
