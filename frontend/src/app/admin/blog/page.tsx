@@ -32,8 +32,8 @@ async function uploadImage(file: File): Promise<string> {
     body: file,
     headers: { 'content-type': file.type },
   });
-  if (!res.ok) throw new Error('アップロード失敗');
-  const data = await res.json();
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error ?? 'アップロード失敗');
   return data.url as string;
 }
 

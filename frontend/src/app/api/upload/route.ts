@@ -14,7 +14,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const buffer = await request.arrayBuffer();
 
-    const blob = await put(`uploads/${filename}`, buffer, {
+    const blob = await put(`events/${filename}`, buffer, {
       access: 'public',
       contentType,
       token,
