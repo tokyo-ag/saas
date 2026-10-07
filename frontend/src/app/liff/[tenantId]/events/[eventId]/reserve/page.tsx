@@ -211,11 +211,14 @@ function ReservePageInner() {
           const loggedIn = await loginIfNeeded();
           if (cancelled) return;
           if (!loggedIn) {
+            if (!alreadyTried) {
+              // loginWithRedirect()を呼んでリダイレクト中 → ページ遷移まで
+              // authStatus='loading'を維持し、一瞬エラー画面が見えるのを防ぐ
+              return;
+            }
             setLoginRequired(true);
             setAuthError(
-              alreadyTried
-                ? 'LINEログインが完了できませんでした。Safariなどのブラウザで直接開いている場合、LINEアプリ内でこのリンクを開き直してください。'
-                : 'LINEへのログインが必要です。ログインを完了すると予約を続行できます。'
+              'LINEログインが完了できませんでした。Safariなどのブラウザで直接開いている場合、LINEアプリ内でこのリンクを開き直してください。'
             );
             setAuthStatus('error');
             return;
