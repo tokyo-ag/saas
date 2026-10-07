@@ -329,6 +329,7 @@ const TONE_COLORS = [
 
 type SimpleSiteTemplate = 'photo' | 'events' | 'about';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const SIMPLE_SITE_TEMPLATES: Array<{
   key: SimpleSiteTemplate;
   label: string;
@@ -627,7 +628,6 @@ export default function AdminPublicPage() {
   const heroFocalDragRef = useRef<{ startX: number; startY: number; startFocal: { x: number; y: number } } | null>(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
-  const [selectedSimpleTemplate, setSelectedSimpleTemplate] = useState<SimpleSiteTemplate | null>(null);
   const [hiddenNavKeys, setHiddenNavKeys] = useState<string[]>(['about', 'contact']);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     global: true, seo: false, header: true, structure: true, reserve: false, blog: false, reviews: false, footer: false,
@@ -863,23 +863,10 @@ export default function AdminPublicPage() {
   const dragRef = useRef<{ startY: number; startSize: number } | null>(null);
   const subtitleDragRef = useRef<{ startX: number; startY: number; startSX: number; startSY: number } | null>(null);
   const imageDragIndexRef = useRef<number | null>(null);
-  const simpleImageUploadRef = useRef<HTMLInputElement | null>(null);
-
   const simpleContentBlock = blocks.find((block) => block.type === 'text')
     ?? blocks.find((block) => block.type !== 'faq' && block.type !== 'sns');
   const simpleIntro = simpleContentBlock?.content ?? form.body ?? '';
   const canEditSimpleIntro = Boolean(simpleContentBlock) || blocks.length < 4;
-  const simpleChecklist = [
-    { label: '団体名', done: Boolean(siteTitle.trim()) },
-    { label: '団体紹介', done: Boolean(simpleIntro.trim()) },
-    ...(selectedSimpleTemplate === 'photo'
-      ? [{ label: 'メイン画像', done: imageUrls.length > 0 }]
-      : []),
-    ...(selectedSimpleTemplate === 'events'
-      ? [{ label: '公開中のイベント', done: reserveEvents.length > 0 }]
-      : []),
-  ];
-  const completedSimpleChecks = simpleChecklist.filter((item) => item.done).length;
 
   function updateSimpleIntro(content: string) {
     setForm((prev) => ({ ...prev, body: content }));
@@ -892,15 +879,6 @@ export default function AdminPublicPage() {
       if (prev.length >= 4) return prev;
       return [{ id: genId(), type: 'text', content }, ...prev];
     });
-  }
-
-  function applySimpleTemplate(template: SimpleSiteTemplate) {
-    setSelectedSimpleTemplate(template);
-    setHiddenNavKeys(['about', 'contact']);
-    setForm((prev) => ({
-      ...prev,
-      ...simpleTemplateValues(template, blocks.length),
-    }));
   }
 
   function applySimpleColorTheme(theme: (typeof SIMPLE_COLOR_THEMES)[number]) {
@@ -1195,14 +1173,13 @@ export default function AdminPublicPage() {
         } else {
           const desc = tenantData.description ?? '';
           const initialBlocks: Block[] = desc ? [{ id: genId(), type: 'text', content: desc }] : [];
-          setSelectedSimpleTemplate('about');
           setHiddenNavKeys(['about', 'contact']);
           setForm({
             ...emptyForm,
             title: tenantName,
             slug: tenantSlug,
             body: desc,
-            ...simpleTemplateValues('about', initialBlocks.length),
+            ...simpleTemplateValues('photo', initialBlocks.length),
           });
           setBlocks(initialBlocks);
         }
@@ -1636,15 +1613,6 @@ export default function AdminPublicPage() {
                 内容を入れてデザインを選ぶだけで、スマートフォンに合うサイトを作れます。
               </p>
             </div>
-            <div className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-green-700 ring-1 ring-green-200">
-              準備 {completedSimpleChecks}/{simpleChecklist.length}
-            </div>
-          </div>
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-green-100">
-            <div
-              className="h-full rounded-full bg-[#06C755] transition-all"
-              style={{ width: `${(completedSimpleChecks / simpleChecklist.length) * 100}%` }}
-            />
           </div>
           {selectedId && (
             <p className="mt-3 text-[11px] leading-relaxed text-gray-500">
@@ -1654,37 +1622,8 @@ export default function AdminPublicPage() {
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <div className="mb-3">
-            <p className="text-sm font-bold text-gray-800"><span className="mr-2 text-[#06C755]">1</span>サイトの見せ方を選ぶ</p>
-            <p className="mt-1 text-[11px] text-gray-400">選ぶと、写真・ボタン・各内容の順番が自動で整います。</p>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-3">
-            {SIMPLE_SITE_TEMPLATES.map((template) => {
-              const active = selectedSimpleTemplate === template.key;
-              return (
-                <button
-                  key={template.key}
-                  type="button"
-                  onClick={() => applySimpleTemplate(template.key)}
-                  className={`rounded-xl border p-3 text-left transition ${active ? 'border-[#06C755] bg-green-50 ring-1 ring-[#06C755]/20' : 'border-gray-200 bg-white hover:border-green-300 hover:bg-green-50/40'}`}
-                >
-                  <span className={`block text-sm font-bold ${active ? 'text-green-700' : 'text-gray-700'}`}>{template.label}</span>
-                  <span className="mt-1 block text-[11px] leading-relaxed text-gray-500">{template.description}</span>
-                  {active && <span className="mt-2 inline-block text-[10px] font-bold text-green-700">選択中</span>}
-                </button>
-              );
-            })}
-          </div>
-          {!selectedSimpleTemplate && (
-            <p className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-[11px] text-gray-500">
-              現在のデザインを維持しています。上のいずれかを選ぶまではレイアウトを変更しません。
-            </p>
-          )}
-        </div>
-
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
           <div className="mb-4">
-            <p className="text-sm font-bold text-gray-800"><span className="mr-2 text-[#06C755]">2</span>団体の情報を入れる</p>
+            <p className="text-sm font-bold text-gray-800"><span className="mr-2 text-[#06C755]">1</span>団体の情報を入れる</p>
             <p className="mt-1 text-[11px] text-gray-400">入力した内容は右側のプレビューですぐ確認できます。</p>
           </div>
           <div className="space-y-4">
@@ -1706,68 +1645,12 @@ export default function AdminPublicPage() {
                 className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
               />
             </label>
-
-            <div className="space-y-2">
-              <div className="flex items-end justify-between gap-2">
-                <div>
-                  <p className="text-xs font-bold text-gray-600">活動写真</p>
-                  <p className="mt-0.5 text-[11px] text-gray-400">最大3枚。1枚目がメイン画像になります。</p>
-                </div>
-                {imageUrls.length < 3 && (
-                  <button
-                    type="button"
-                    disabled={uploading}
-                    onClick={() => simpleImageUploadRef.current?.click()}
-                    className="shrink-0 rounded-lg border border-[#06C755] px-3 py-1.5 text-xs font-bold text-[#06C755] hover:bg-green-50 disabled:opacity-50"
-                  >
-                    {uploading ? '追加中...' : '写真を追加'}
-                  </button>
-                )}
-              </div>
-              <input
-                ref={simpleImageUploadRef}
-                type="file"
-                accept="image/*"
-                disabled={uploading}
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) void handleImageFile(file);
-                  e.currentTarget.value = '';
-                }}
-              />
-              {imageUrls.length > 0 ? (
-                <div className="grid grid-cols-3 gap-2">
-                  {imageUrls.map((url, index) => (
-                    <div key={`${url}-${index}`} className="relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
-                      <img src={url} alt="" className="aspect-[4/3] w-full object-cover" />
-                      {index === 0 && <span className="absolute left-1.5 top-1.5 rounded-full bg-black/65 px-2 py-0.5 text-[9px] font-bold text-white">メイン</span>}
-                      <button
-                        type="button"
-                        aria-label={`${index + 1}枚目の写真を削除`}
-                        onClick={() => setForm((prev) => {
-                          const next = (prev.imageUrls ?? []).filter((_, imageIndex) => imageIndex !== index);
-                          const captions = (prev.imageCaptions ?? []).filter((_, imageIndex) => imageIndex !== index).slice(0, next.length);
-                          return { ...prev, imageUrls: next, imageCaptions: captions, coverImageUrl: next[0] ?? '' };
-                        })}
-                        className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-gray-600 shadow hover:bg-red-50 hover:text-red-500"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  disabled={uploading}
-                  onClick={() => simpleImageUploadRef.current?.click()}
-                  className="flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 py-8 text-gray-400 transition hover:border-green-300 hover:bg-green-50/40 hover:text-green-700 disabled:opacity-50"
-                >
-                  <span className="text-sm font-bold">活動写真を選ぶ</span>
-                  <span className="mt-1 text-[11px]">横長の写真がおすすめです</span>
-                </button>
-              )}
+            <div className="flex items-center gap-2">
+              <span className="shrink-0 text-xs text-gray-500">団体名サイズ</span>
+              <input type="range" min="18" max="48" step="1" value={titleFontSize}
+                onChange={(e) => setForm((p) => ({ ...p, titleSize: e.target.value }))}
+                className="flex-1 accent-[#06C755]" />
+              <span className="w-10 shrink-0 text-right text-xs text-gray-400">{titleFontSize}px</span>
             </div>
 
             <label className="block space-y-1.5">
@@ -1787,13 +1670,20 @@ export default function AdminPublicPage() {
                 <span className="block text-[11px] text-amber-700">このページは複数の専用ブロックで作られています。下の「運営用カスタム設定」から編集してください。</span>
               )}
             </label>
+            <div className="flex items-center gap-2">
+              <span className="shrink-0 text-xs text-gray-500">紹介文サイズ</span>
+              <input type="range" min="12" max="24" step="1" value={bodyFontSize}
+                onChange={(e) => setForm((p) => ({ ...p, bodySize: e.target.value }))}
+                className="flex-1 accent-[#06C755]" />
+              <span className="w-10 shrink-0 text-right text-xs text-gray-400">{bodyFontSize}px</span>
+            </div>
 
           </div>
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-4">
           <div className="mb-3">
-            <p className="text-sm font-bold text-gray-800"><span className="mr-2 text-[#06C755]">3</span>サイトの雰囲気を選ぶ</p>
+            <p className="text-sm font-bold text-gray-800"><span className="mr-2 text-[#06C755]">2</span>サイトの雰囲気を選ぶ</p>
             <p className="mt-1 text-[11px] text-gray-400">文字が読みやすい組み合わせだけを用意しています。</p>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
@@ -1821,7 +1711,7 @@ export default function AdminPublicPage() {
 
         <div className="rounded-xl border border-gray-200 bg-white p-4">
           <div className="mb-3">
-            <p className="text-sm font-bold text-gray-800"><span className="mr-2 text-[#06C755]">4</span>公開する内容を確認</p>
+            <p className="text-sm font-bold text-gray-800"><span className="mr-2 text-[#06C755]">3</span>公開する内容を確認</p>
             <p className="mt-1 text-[11px] text-gray-400">イベント・ブログ・口コミは常に表示され、公開中の内容が無い間は「準備中」の案内が出ます。</p>
           </div>
           <div className="divide-y divide-gray-100 rounded-xl border border-gray-200">
@@ -1913,27 +1803,6 @@ export default function AdminPublicPage() {
               </button>
             </div>
           </div>
-        </div>
-
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-sm font-bold text-gray-800"><span className="mr-2 text-[#06C755]">5</span>公開前チェック</p>
-              <p className="mt-1 text-[11px] text-gray-400">不足している内容だけ確認すれば公開できます。</p>
-            </div>
-            <span className={`rounded-full px-3 py-1 text-[10px] font-bold ${completedSimpleChecks === simpleChecklist.length ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
-              {completedSimpleChecks === simpleChecklist.length ? '公開準備OK' : `あと ${simpleChecklist.length - completedSimpleChecks}項目`}
-            </span>
-          </div>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            {simpleChecklist.map((item) => (
-              <div key={item.label} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold ${item.done ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
-                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${item.done ? 'bg-[#06C755] text-white' : 'bg-gray-200 text-gray-500'}`}>{item.done ? '✓' : '−'}</span>
-                {item.label}
-              </div>
-            ))}
-          </div>
-          <p className="mt-3 text-[11px] leading-relaxed text-gray-400">SEOタイトルと説明文は、団体名・紹介文などから自動で作られます。</p>
         </div>
 
         {showLegacyCustomizer && <>
