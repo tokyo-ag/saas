@@ -5,6 +5,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import { mkdirSync } from 'fs';
 import { AppModule } from './app.module';
 import { ErrorLogFilter } from './common/error-log.filter';
 import { PrismaService } from './prisma/prisma.service';
@@ -54,7 +55,9 @@ async function bootstrap() {
   app.useGlobalFilters(new ErrorLogFilter(prisma));
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  app.useStaticAssets(join(__dirname, '..', '..', 'public'));
+  const publicDir = join(__dirname, '..', 'public');
+  mkdirSync(join(publicDir, 'uploads'), { recursive: true });
+  app.useStaticAssets(publicDir);
   await app.listen(process.env.PORT ?? 3001);
 }
 void bootstrap();
