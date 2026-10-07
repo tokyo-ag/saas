@@ -1600,7 +1600,7 @@ export default function AdminPublicPage() {
         )}
       </div>
 
-      {error && <div className="px-4 pt-2"><div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div></div>}
+      {error && <div className="px-4 pt-2"><div className="flex items-start justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700"><span>{error}</span><button type="button" onClick={() => setError('')} className="shrink-0 text-red-400 hover:text-red-700">×</button></div></div>}
 
       <div className="flex flex-1 min-h-0 gap-5 px-4 pb-4 lg:grid lg:max-w-[1420px] lg:grid-cols-[minmax(0,1fr)_minmax(360px,430px)] xl:grid-cols-[minmax(0,1fr)_minmax(400px,460px)] [&>*]:min-h-0 [&>*]:h-full">
       {/* Settings panel */}
@@ -1650,15 +1650,37 @@ export default function AdminPublicPage() {
                   >×</button>
                 </div>
               ) : (
-                <button
-                  type="button"
-                  disabled={uploading}
-                  onClick={() => simpleImageUploadRef.current?.click()}
-                  className="flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 py-6 text-gray-400 transition hover:border-green-300 hover:bg-green-50/40 hover:text-green-700 disabled:opacity-50"
-                >
-                  <span className="text-sm font-bold">{uploading ? 'アップロード中...' : '画像を選ぶ'}</span>
-                  <span className="mt-1 text-[11px]">横長の写真がおすすめ</span>
-                </button>
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    disabled={uploading}
+                    onClick={() => simpleImageUploadRef.current?.click()}
+                    className="flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 py-6 text-gray-400 transition hover:border-green-300 hover:bg-green-50/40 hover:text-green-700 disabled:opacity-50"
+                  >
+                    <span className="text-sm font-bold">{uploading ? 'アップロード中...' : '画像を選ぶ'}</span>
+                    <span className="mt-1 text-[11px]">横長の写真がおすすめ</span>
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="url"
+                      placeholder="または画像URLを貼り付け（https://...）"
+                      className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                      onBlur={(e) => {
+                        const url = e.target.value.trim();
+                        if (url.startsWith('http')) {
+                          setForm((prev) => ({ ...prev, imageUrls: [url], imageCaptions: [''], coverImageUrl: url }));
+                          e.target.value = '';
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          (e.target as HTMLInputElement).blur();
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
               )}
               <input ref={simpleImageUploadRef} type="file" accept="image/*" disabled={uploading} className="hidden"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImageFile(f); e.currentTarget.value = ''; }} />
