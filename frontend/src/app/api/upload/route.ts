@@ -1,44 +1,18 @@
-import { put } from '@vercel/blob';
 import { NextRequest, NextResponse } from 'next/server';
 import { API_URL } from '@/lib/config';
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
-
-async function verifyAdminToken(token: string | undefined): Promise<boolean> {
-  if (!token) return false;
-  try {
-    // /auth/me ではなく、超簡単モバイル管理のトークンも受け付ける
-    // /auth/session を使う（通常ログインの管理者はどちらでも通る）。
-    const res = await fetch(`${API_URL}/api/auth/session`, {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: 'no-store',
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const adminToken =
       request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ??
       request.cookies.get('admin_token')?.value;
-    if (!(await verifyAdminToken(adminToken))) {
+    if (!adminToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const token = process.env.BLOB_READ_WRITE_TOKEN;
-    if (!token) {
-      return NextResponse.json({ error: 'BLOB_READ_WRITE_TOKEN not set' }, { status: 500 });
-    }
-
-    const { searchParams } = new URL(request.url);
-    const filename = searchParams.get('filename') ?? `upload-${Date.now()}`;
-    const safeFilename =
-      filename.replace(/[^a-zA-Z0-9._-]/g, '-').slice(0, 120) ||
-      `upload-${Date.now()}`;
-    const contentType = request.headers.get('content-type') ?? 'application/octet-stream';
+    const contentType = request.headers.get('content-type') ?? '';
     if (!contentType.startsWith('image/')) {
       return NextResponse.json({ error: 'Only image uploads are allowed' }, { status: 415 });
     }
@@ -48,13 +22,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'File is too large' }, { status: 413 });
     }
 
-    const blob = await put(`events/${safeFilename}`, buffer, {
-      access: 'public',
-      contentType,
-      token,
+    const { searchParams } = new URL(request.url);
+    const filename = searchParams.get('filename') ?? `upload-${Date.now()}.jpg`;
+    const ext = filename.split('.').pop() ?? 'jpg';
+
+    const formData = new FormData();
+    formData.append('file', new Blob([buffer], { type: contentType }), `upload.${ext}`);
+
+    const res = await fetch(`${API_URL}/api/admin/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: formData,
     });
 
-    return NextResponse.json({ url: blob.url });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      return NextResponse.json({ error: text || 'Upload failed' }, { status: res.status });
+    }
+
+    const data = (await res.json()) as { url: string };
+    const url = data.url.startsWith('http') ? data.url : `${API_URL}${data.url}`;
+    return NextResponse.json({ url });
   } catch {
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }
