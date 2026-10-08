@@ -9,6 +9,7 @@ import { mkdirSync } from 'fs';
 import { AppModule } from './app.module';
 import { ErrorLogFilter } from './common/error-log.filter';
 import { PrismaService } from './prisma/prisma.service';
+import { getPublicDir, getUploadDir } from './upload/upload-path';
 
 const DEFAULT_ALLOWED_ORIGINS = [
   'http://localhost:3000',
@@ -55,8 +56,14 @@ async function bootstrap() {
   app.useGlobalFilters(new ErrorLogFilter(prisma));
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  const publicDir = join(__dirname, '..', 'public');
-  mkdirSync(join(publicDir, 'uploads'), { recursive: true });
+  const publicDir = getPublicDir();
+  const uploadDir = getUploadDir();
+  if (join(publicDir, 'uploads') !== uploadDir) {
+    throw new Error(
+      'UPLOAD_DIR must be the uploads directory directly under PUBLIC_DIR',
+    );
+  }
+  mkdirSync(uploadDir, { recursive: true });
   app.useStaticAssets(publicDir);
   await app.listen(process.env.PORT ?? 3001);
 }
