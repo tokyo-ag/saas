@@ -16,6 +16,8 @@ import { StripeService } from '../stripe/stripe.service';
 import { PLAN_LIMITS } from '../config/plan-limits';
 import {
   EventSocialProofService,
+  BELL_GENDER_RATIO_MIN_PARTICIPANTS,
+  bellGenderRatioReservationBlocked,
   normalizeEventSocialProofSettings,
 } from '../event-social-proof/event-social-proof.service';
 export class CreateReservationDto {
@@ -344,6 +346,7 @@ export class LiffService {
       await this.eventSocialProofService.expandForCollab([
         {
           id: event.id,
+          bellGenderRatioAuto: event.bellGenderRatioAuto,
           category: event.category,
           categories: event.categories,
           reservations,
@@ -630,8 +633,40 @@ export class LiffService {
           });
           const hasGenderCapacity =
             event.capacityMale !== null || event.capacityFemale !== null;
+          let genderRatioBlocked = false;
           let isFull: boolean;
           if (
+            event.bellGenderRatioAuto &&
+            reservedCount + 1 >= BELL_GENDER_RATIO_MIN_PARTICIPANTS
+          ) {
+            if (member.gender !== '男性' && member.gender !== '女性') {
+              throw new BadRequestException(
+                '男女比調整のため、プロフィールで性別を設定してから予約してください。',
+              );
+            }
+            const [maleCount, femaleCount] = await Promise.all([
+              tx.reservation.count({
+                where: {
+                  eventId: dto.eventId,
+                  status: { in: ['reserved', 'attended', 'waiting_payment'] },
+                  member: { gender: '男性' },
+                },
+              }),
+              tx.reservation.count({
+                where: {
+                  eventId: dto.eventId,
+                  status: { in: ['reserved', 'attended', 'waiting_payment'] },
+                  member: { gender: '女性' },
+                },
+              }),
+            ]);
+            genderRatioBlocked = bellGenderRatioReservationBlocked(
+              maleCount,
+              femaleCount,
+              member.gender,
+            );
+            isFull = genderRatioBlocked;
+          } else if (
             hasGenderCapacity &&
             (member.gender === '男性' || member.gender === '女性')
           ) {
@@ -657,7 +692,9 @@ export class LiffService {
 
           if (isFull) {
             throw new BadRequestException(
-              '現在は満席です。空きが出た後、先着順で予約できます。',
+              genderRatioBlocked
+                ? '男女比調整のため、現在この性別の予約受付を一時停止しています。'
+                : '現在は満席です。空きが出た後、先着順で予約できます。',
             );
           }
 

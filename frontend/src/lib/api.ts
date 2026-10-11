@@ -577,6 +577,7 @@ export interface Event {
   capacity?: number;
   capacityMale?: number;
   capacityFemale?: number;
+  bellGenderRatioAuto?: boolean;
   status: EventStatus;
   price: number;
   priceMale?: number;
@@ -625,6 +626,7 @@ export interface EventInput {
   capacity?: number | null;
   capacityMale?: number | null;
   capacityFemale?: number | null;
+  bellGenderRatioAuto?: boolean;
   status: EventStatus;
   price: number;
   priceMale?: number | null;
@@ -856,7 +858,7 @@ export interface LiffEvent {
   genderCapacityRevealThreshold?: number;
 }
 
-export type EventSocialProofKind = 'balanced' | 'ratio_3_2' | 'size' | 'combined';
+export type EventSocialProofKind = 'balanced' | 'ratio_3_2' | 'size' | 'combined' | 'bell_gender_ratio_auto';
 
 export interface EventSocialProof {
   kind: EventSocialProofKind;

@@ -315,6 +315,8 @@ export class EventsService {
         capacity: dto.capacity ?? null,
         capacityMale: dto.capacityMale ?? null,
         capacityFemale: dto.capacityFemale ?? null,
+        bellGenderRatioAuto:
+          tenant?.code === '11221185' && (dto.bellGenderRatioAuto ?? false),
         status: dto.status,
         price: dto.price,
         priceMale: dto.priceMale ?? null,
@@ -344,6 +346,13 @@ export class EventsService {
   async update(tenantId: string, id: string, dto: Partial<CreateEventDto>) {
     const current = await this.findOne(tenantId, id);
     this.assertEventEditable(current);
+    const bellModeTenant =
+      dto.bellGenderRatioAuto !== undefined
+        ? await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { code: true },
+          })
+        : null;
     const categories =
       dto.category !== undefined || dto.categories !== undefined
         ? normalizeEventCategories(dto.category, dto.categories)
@@ -423,6 +432,10 @@ export class EventsService {
         }),
         ...(dto.capacityFemale !== undefined && {
           capacityFemale: dto.capacityFemale ?? null,
+        }),
+        ...(dto.bellGenderRatioAuto !== undefined && {
+          bellGenderRatioAuto:
+            bellModeTenant?.code === '11221185' && dto.bellGenderRatioAuto,
         }),
         ...(dto.priceMale !== undefined && {
           priceMale: dto.priceMale ?? null,

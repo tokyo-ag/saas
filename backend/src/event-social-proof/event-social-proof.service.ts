@@ -5,7 +5,8 @@ export type EventSocialProofKind =
   | 'balanced'
   | 'ratio_3_2'
   | 'size'
-  | 'combined';
+  | 'combined'
+  | 'bell_gender_ratio_auto';
 
 export interface EventSocialProofResult {
   kind: EventSocialProofKind;
@@ -179,9 +180,34 @@ export function normalizeEventSocialProofSettings(
 
 export interface EventSocialProofInput {
   id: string;
+  bellGenderRatioAuto?: boolean;
   category?: string | null;
   categories?: string[];
   reservations: Array<{ member: { gender: string | null } }>;
+}
+
+export const BELL_GENDER_RATIO_MIN_PARTICIPANTS = 20;
+
+export function bellGenderRatioReservationBlocked(
+  male: number,
+  female: number,
+  gender: '男性' | '女性',
+): boolean {
+  if (gender === '女性') return false;
+  return male + 1 > female * 2 + 10;
+}
+
+export function bellGenderRatioStatus(male: number, female: number) {
+  return {
+    maleRemaining: Math.max(0, female * 2 + 10 - male),
+    femaleRemaining: 5 - (female % 5),
+  };
+}
+
+function bellMaleCapacityLabel(remaining: number) {
+  if (remaining === 0) return '男性枠満員！';
+  if (remaining <= 7) return `男性残り${remaining}名！`;
+  return '男性募集中！';
 }
 
 function balanceTolerance(
@@ -202,8 +228,6 @@ export function buildEventSocialProof(
   settingsValue?: unknown,
 ): EventSocialProofResult | null {
   const settings = normalizeEventSocialProofSettings(settingsValue);
-  if (!settings.enabled) return null;
-
   const total = event.reservations.length;
   if (total === 0) return null;
 
@@ -213,6 +237,22 @@ export function buildEventSocialProof(
   const female = event.reservations.filter(
     (reservation) => reservation.member.gender === '女性',
   ).length;
+
+  if (
+    event.bellGenderRatioAuto &&
+    total >= BELL_GENDER_RATIO_MIN_PARTICIPANTS
+  ) {
+    const { maleRemaining, femaleRemaining } = bellGenderRatioStatus(
+      male,
+      female,
+    );
+    return {
+      kind: 'bell_gender_ratio_auto',
+      text: `${bellMaleCapacityLabel(maleRemaining)}\n女性残り${femaleRemaining}名！`,
+    };
+  }
+  if (!settings.enabled) return null;
+
   const knownGenderCount = male + female;
   let gender: { kind: EventSocialProofKind; text: string } | null = null;
 
@@ -320,7 +360,7 @@ export class EventSocialProofService {
     events: EventSocialProofInput[],
   ): Map<string, EventSocialProofResult> {
     const settings = normalizeEventSocialProofSettings(settingsValue);
-    if (!settings.enabled || events.length === 0) return new Map();
+    if (events.length === 0) return new Map();
 
     const result = new Map<string, EventSocialProofResult>();
     for (const event of events) {

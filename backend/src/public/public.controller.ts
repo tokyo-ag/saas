@@ -832,6 +832,7 @@ export class PublicController {
       await this.eventSocialProofService.expandForCollab([
         {
           id: event.id,
+          bellGenderRatioAuto: event.bellGenderRatioAuto,
           category: event.category,
           categories: event.categories,
           reservations: event.reservations,

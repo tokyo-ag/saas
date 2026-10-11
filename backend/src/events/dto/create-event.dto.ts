@@ -90,6 +90,11 @@ export class CreateEventDto {
   )
   capacityFemale?: number | null;
 
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => Boolean(value))
+  bellGenderRatioAuto?: boolean;
+
   @IsEnum(EventStatusDto)
   status: EventStatusDto;
 

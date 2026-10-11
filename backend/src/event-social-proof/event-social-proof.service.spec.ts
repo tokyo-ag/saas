@@ -1,5 +1,6 @@
 import {
   buildEventSocialProof,
+  bellGenderRatioReservationBlocked,
   DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
   EventSocialProofInput,
 } from './event-social-proof.service';
@@ -86,5 +87,61 @@ describe('event social proof', () => {
         enabled: false,
       }),
     ).toBeNull();
+  });
+
+  it('closes the male side at two times the female count plus ten', () => {
+    const bellEvent = { ...event(30, 10), bellGenderRatioAuto: true };
+    expect(
+      buildEventSocialProof(bellEvent, {
+        ...DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
+        enabled: false,
+      }),
+    ).toEqual({
+      kind: 'bell_gender_ratio_auto',
+      text: '男性枠満員！\n女性残り5名！',
+    });
+  });
+
+  it('shows a numeric male remaining count from one through seven', () => {
+    expect(
+      buildEventSocialProof(
+        { ...event(27, 10), bellGenderRatioAuto: true },
+        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
+      )?.text,
+    ).toBe('男性残り3名！\n女性残り5名！');
+  });
+
+  it('widens the male limit by two for each additional female attendee', () => {
+    expect(
+      buildEventSocialProof(
+        { ...event(40, 20), bellGenderRatioAuto: true },
+        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
+      )?.text,
+    ).toBe('男性募集中！\n女性残り5名！');
+  });
+
+  it('does not show the BELL unlimited gender-ratio message below 20 attendees', () => {
+    expect(
+      buildEventSocialProof(
+        { ...event(10, 9), bellGenderRatioAuto: true },
+        { ...DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS, enabled: false },
+      ),
+    ).toBeNull();
+  });
+
+  it('counts women toward the next five-person recruitment milestone', () => {
+    expect(
+      buildEventSocialProof(
+        { ...event(30, 12), bellGenderRatioAuto: true },
+        DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
+      )?.text,
+    ).toBe('男性残り4名！\n女性残り3名！');
+  });
+
+  it('matches BELL operating limits and never blocks female reservations', () => {
+    expect(bellGenderRatioReservationBlocked(30, 10, '男性')).toBe(true);
+    expect(bellGenderRatioReservationBlocked(40, 15, '男性')).toBe(true);
+    expect(bellGenderRatioReservationBlocked(50, 20, '男性')).toBe(true);
+    expect(bellGenderRatioReservationBlocked(50, 20, '女性')).toBe(false);
   });
 });

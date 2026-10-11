@@ -21,7 +21,7 @@ type EventFormData = {
   location: string;
   locationUrl: string;
   locationHint: string;
-  capacityMode: 'none' | 'total' | 'gender';
+  capacityMode: 'none' | 'total' | 'gender' | 'bellAuto';
   capacity: string;
   capacityMale: string;
   capacityFemale: string;
@@ -400,7 +400,7 @@ export default function EventForm({
     location: initial?.location ?? '',
     locationUrl: initial?.locationUrl ?? '',
     locationHint: initial?.locationHint ?? '',
-    capacityMode: initial?.capacityMale != null || initial?.capacityFemale != null ? 'gender' : initial?.capacity != null ? 'total' : 'none',
+    capacityMode: initial?.bellGenderRatioAuto ? 'bellAuto' : initial?.capacityMale != null || initial?.capacityFemale != null ? 'gender' : initial?.capacity != null ? 'total' : 'none',
     capacity: initial?.capacity?.toString() ?? '',
     capacityMale: initial?.capacityMale?.toString() ?? '',
     capacityFemale: initial?.capacityFemale?.toString() ?? '',
@@ -441,6 +441,7 @@ export default function EventForm({
       initial.capacity != null ||
       initial.capacityMale != null ||
       initial.capacityFemale != null ||
+      initial.bellGenderRatioAuto ||
       (initial.paymentTiming && initial.paymentTiming !== 'onsite') ||
       initial.levelEnabled ||
       initial.rosterShareEnabled ||
@@ -744,6 +745,7 @@ export default function EventForm({
       capacity,
       capacityMale,
       capacityFemale,
+      bellGenderRatioAuto: form.capacityMode === 'bellAuto',
       status: form.status,
       price: Number(form.price),
       priceMale: form.priceMode === 'gender' ? numOrNull(form.priceMale) : null,
@@ -1226,8 +1228,16 @@ export default function EventForm({
             ['none', '制限なし'],
             ['total', '合計で設定'],
             ['gender', '男女別'],
+            ...(tenant?.code === '11221185'
+              ? ([['bellAuto', 'BELL専用：人数制限なし男女比オートモード']] as const)
+              : []),
           ]}
         />
+        {form.capacityMode === 'bellAuto' && (
+          <p className="text-xs leading-5 text-gray-500">
+            参加者が20名以上になると、女性人数×2＋10名を男性上限として自動調整します。女性は5名単位の次の目標まで残数を表示し、女性が1名増えると男性枠が2名増えます。
+          </p>
+        )}
         {form.capacityMode === 'total' && (
           <div className="flex max-w-44 items-center gap-2">
             <input type="number" min={5} max={300} step={5} value={form.capacity} onChange={(e) => set('capacity', e.target.value)} placeholder="30" className={inputClass} />
