@@ -10,8 +10,7 @@ or finishing.
 
 ## Status
 
-- Implementation complete and verified locally; deployment requested and in
-  progress from `main`.
+- Implemented, committed as `5998508`, and deployed to production from `main`.
 
 ## Completed changes
 
@@ -55,15 +54,21 @@ or finishing.
 
 ## Next action
 
-- Apply the Prisma migration in the target environment before deployment, then
-  smoke-test BELL event create/edit and reservations around the 20-person
-  threshold and the 10/30, 15/40, and 20/50 female/male boundaries.
+- Have a BELL administrator refresh an event edit page and enable the BELL-only
+  auto mode where desired. Existing reservations are retained. For additional
+  assurance, smoke-test reservations around the 20-person threshold and the
+  10/30, 15/40, and 20/50 female/male boundaries.
 
 ## Blockers and risks
 
 - No automated integration test currently exercises the transactional LIFF
   reservation rejection path; the shared ratio helper is unit tested.
-- Migration has not been applied to a shared or production database.
+- Production backend deployment `gracious-beauty - saas` succeeded at
+  `comiu.up.railway.app`; its configured start command runs
+  `npx prisma migrate deploy` before starting the app.
+- A separate Railway status context, `zucchini-laughter - saas`, failed for the
+  same commit. It is not the service serving `comiu.up.railway.app`; investigate
+  only if that secondary Railway project is still intended to be active.
 
 ## Session log
 
@@ -74,3 +79,6 @@ or finishing.
   bookings are unlimited; male slots expand automatically.
 - 2026-10-12 (Codex): Changed activation to 20 total attendees and added rolling
   five-person female recruitment targets. The option is visibly labeled BELL-only.
+- 2026-10-12 (Codex): Pushed `5998508` to `main`. Vercel production project
+  `comiu` completed successfully, Railway production backend completed
+  successfully, and production frontend/backend returned HTTP 200.
