@@ -11,8 +11,8 @@ or finishing.
 
 ## Status
 
-- Implementation and local verification are complete. The changes are ready to
-  commit, push to `main`, and verify in production.
+- Implemented, committed as `c68d553`, pushed to `main`, and deployed to
+  production.
 
 ## Completed changes
 
@@ -57,8 +57,9 @@ or finishing.
 
 ## Next action
 
-- Commit and push all listed changes to `main`, then verify the Vercel `comiu`
-  and Railway `gracious-beauty - saas` production deployments and HTTP health.
+- In a BELL event, enable `BELL専用：予約を承認制にする`, submit a test
+  application, then confirm approval and rejection from both the admin event
+  page and the issued roster share link.
 
 ## Blockers and risks
 
@@ -70,22 +71,19 @@ or finishing.
 - A separate Railway status context, `zucchini-laughter - saas`, is known to fail
   and is not the service at `comiu.up.railway.app`.
 
-## Relevant uncommitted files
+## Deployment verification
 
-- `backend/prisma/schema.prisma`
-- `backend/prisma/migrations/20261012010000_add_bell_approval_mode/migration.sql`
-- `backend/src/{event-social-proof,events,liff,line-messaging,public,reservations}/`
-- `frontend/src/app/admin/events/[eventId]/page.tsx`
-- `frontend/src/app/liff/[tenantId]/events/[eventId]/reserve/page.tsx`
-- `frontend/src/app/roster/[token]/page.tsx`
-- `frontend/src/components/admin/EventForm.tsx`
-- `frontend/src/components/ui/StatusBadge.tsx`
-- `frontend/src/lib/api.ts`
-- `docs/AI_HANDOFF.md`
+- GitHub status `Vercel – comiu`: success.
+- GitHub status `gracious-beauty - saas`: success; migration deploy completed.
+- `https://comiu.link` returned HTTP 200.
+- `https://comiu.up.railway.app/api/public/events` returned HTTP 200.
+- Worktree was clean after the feature push. This handoff-only follow-up is
+  committed with `[skip ci]` to avoid an unnecessary redeploy.
 
 ## Session log
 
 - 2026-10-12 17:32 JST (Codex): Implemented and locally verified BELL approval
-  mode plus the total-attendance third social-proof line. Awaiting push/deploy.
+  mode plus the total-attendance third social-proof line. Pushed `c68d553`; both
+  production deployments succeeded and production endpoints responded.
 - 2026-10-12 (Codex): Previously deployed BELL gender-ratio auto mode in
   `5998508`; deployment state was recorded in `fe39342`.
