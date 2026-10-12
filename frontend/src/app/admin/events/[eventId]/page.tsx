@@ -269,14 +269,19 @@ export default function EventDetailPage() {
                     </p>
                   )}
                   <div className="mt-3 flex flex-wrap gap-2">
+                    {reservation.status === 'pending_approval' && (
+                      <button onClick={() => updateStatus(reservation.id, 'reserved')} className="rounded-lg bg-purple-600 px-3 py-2 text-xs font-bold text-white">
+                        承認して通知
+                      </button>
+                    )}
                     {reservation.status === 'reserved' && (
                       <button onClick={() => updateStatus(reservation.id, 'attended')} className="rounded-lg bg-green-50 px-3 py-2 text-xs font-medium text-green-700">
                         参加済みにする
                       </button>
                     )}
-                    {['reserved', 'waitlisted', 'attended'].includes(reservation.status) && (
+                    {['pending_approval', 'reserved', 'waitlisted', 'attended'].includes(reservation.status) && (
                       <button onClick={() => updateStatus(reservation.id, 'cancelled')} className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
-                        キャンセル
+                        {reservation.status === 'pending_approval' ? 'キャンセルして通知' : 'キャンセル'}
                       </button>
                     )}
                   </div>
@@ -335,11 +340,14 @@ export default function EventDetailPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex gap-2">
+                          {reservation.status === 'pending_approval' && (
+                            <button onClick={() => updateStatus(reservation.id, 'reserved')} className="text-xs font-bold text-purple-600 hover:underline">承認して通知</button>
+                          )}
                           {reservation.status === 'reserved' && (
                             <button onClick={() => updateStatus(reservation.id, 'attended')} className="text-xs text-green-600 hover:underline">参加済みにする</button>
                           )}
-                          {['reserved', 'waitlisted', 'attended'].includes(reservation.status) && (
-                            <button onClick={() => updateStatus(reservation.id, 'cancelled')} className="text-xs text-red-600 hover:underline">キャンセル</button>
+                          {['pending_approval', 'reserved', 'waitlisted', 'attended'].includes(reservation.status) && (
+                            <button onClick={() => updateStatus(reservation.id, 'cancelled')} className="text-xs text-red-600 hover:underline">{reservation.status === 'pending_approval' ? 'キャンセルして通知' : 'キャンセル'}</button>
                           )}
                         </div>
                       </td>

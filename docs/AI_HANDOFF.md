@@ -6,79 +6,86 @@ or finishing.
 
 ## Current objective
 
-- Add a BELL-only unlimited-capacity gender-ratio auto mode to event settings.
+- Deploy BELL-only approval-based reservations and add total attendance to the
+  BELL gender-ratio social-proof text.
 
 ## Status
 
-- Implemented, committed as `5998508`, and deployed to production from `main`.
+- Implementation and local verification are complete. The changes are ready to
+  commit, push to `main`, and verify in production.
 
 ## Completed changes
 
-- Added `Event.bellGenderRatioAuto` and migration
-  `backend/prisma/migrations/20261012000000_add_bell_gender_ratio_auto/migration.sql`.
-- Added the BELL-only (`tenant.code === '11221185'`) option
-  `人数制限なし男女比オートモード` in
-  `frontend/src/components/admin/EventForm.tsx`.
-- From the 20th active reservation onward, male capacity is calculated using
-  the BELL operating rule `male limit = female count * 2 + 10`. Female
-  reservations remain unlimited and each female reservation adds two male
-  slots. Male over-cap reservations are rejected transactionally.
-- Public event and LIFF views show male `枠満員` at zero remaining,
-  `残りN名` at 1-7, or `募集中` at 8+. Female reservations are unlimited, but
-  the UI presents a rolling five-person recruitment goal: `女性残りN名` until
-  the next multiple of five, then starts the next five-person goal.
-- Added social-proof unit coverage in
-  `backend/src/event-social-proof/event-social-proof.service.spec.ts`.
+- Added `pending_approval` reservation status and
+  `Event.bellApprovalRequired`, with migration
+  `backend/prisma/migrations/20261012010000_add_bell_approval_mode/migration.sql`.
+- Added the BELL-only setting `BELL専用：予約を承認制にする` in
+  `frontend/src/components/admin/EventForm.tsx`. Enabling it selects onsite
+  payment, enables the roster share link, and does not alter existing bookings.
+- New applications become approval-pending. Applicants see the pending state;
+  pending applications are excluded from confirmed attendance/capacity counts.
+- Added approve/cancel actions to the event admin page and shared roster.
+  Approval sends the existing reservation-confirmation LINE message; rejection
+  sends a cancellation LINE message to the applicant.
+- Approval rechecks ordinary gender/total capacity and the BELL auto-ratio rule
+  before confirming. Pending applications may only transition to confirmed or
+  cancelled through the status service.
+- The BELL social-proof display now has a third line from 20 confirmed attendees:
+  `合計N名が参加！`.
+- Added approval notification tests in
+  `backend/src/reservations/reservations.service.spec.ts` and updated social-proof
+  expectations.
 
 ## Decisions and constraints
 
-- The mode has no total capacity limit.
-- Enforcement starts when a candidate reservation would bring active attendance
-  to 20 or more; active means `reserved`, `attended`, or `waiting_payment`.
-- At 20+ attendees, only a male reservation can be blocked, using
-  `nextMale > female * 2 + 10`. Female reservations are never blocked by this
-  mode.
-- The API only persists this mode for BELL; other tenants sending the flag get
-  `false`.
-- Existing uncommitted `AGENTS.md`, `CLAUDE.md`, and this handoff file predate
-  the feature and must be preserved.
+- Approval mode is persisted only for tenant code `11221185` and only supports
+  onsite payment.
+- The automatically issued roster URL is a bearer-style operational link. Anyone
+  possessing it can edit roster notes and approve/cancel pending applications.
+- Existing reservations are retained when approval mode is enabled; only later
+  applications enter `pending_approval`.
+- Confirmed attendance remains `reserved`, `attended`, or `waiting_payment`.
+  `pending_approval` does not consume capacity until approval.
 
 ## Verification
 
 - `cd backend; npx prisma generate` passed.
-- `cd backend; npm test -- --runInBand event-social-proof.service.spec.ts`
-  passed: 15 tests.
+- `cd backend; npm test -- --runInBand` passed: 15 suites, 81 tests.
 - `cd backend; npm run build` passed.
 - `cd frontend; npm run build` passed.
 - `git diff --check` passed.
 
 ## Next action
 
-- Have a BELL administrator refresh an event edit page and enable the BELL-only
-  auto mode where desired. Existing reservations are retained. For additional
-  assurance, smoke-test reservations around the 20-person threshold and the
-  10/30, 15/40, and 20/50 female/male boundaries.
+- Commit and push all listed changes to `main`, then verify the Vercel `comiu`
+  and Railway `gracious-beauty - saas` production deployments and HTTP health.
 
 ## Blockers and risks
 
-- No automated integration test currently exercises the transactional LIFF
-  reservation rejection path; the shared ratio helper is unit tested.
-- Production backend deployment `gracious-beauty - saas` succeeded at
-  `comiu.up.railway.app`; its configured start command runs
-  `npx prisma migrate deploy` before starting the app.
-- A separate Railway status context, `zucchini-laughter - saas`, failed for the
-  same commit. It is not the service serving `comiu.up.railway.app`; investigate
-  only if that secondary Railway project is still intended to be active.
+- Approval capacity is checked immediately before the status update but does not
+  currently acquire the event row lock used by the LIFF reservation transaction;
+  two simultaneous admin approvals near the final slot could race.
+- LINE delivery depends on the tenant access token and the applicant still being
+  reachable by the LINE bot.
+- A separate Railway status context, `zucchini-laughter - saas`, is known to fail
+  and is not the service at `comiu.up.railway.app`.
+
+## Relevant uncommitted files
+
+- `backend/prisma/schema.prisma`
+- `backend/prisma/migrations/20261012010000_add_bell_approval_mode/migration.sql`
+- `backend/src/{event-social-proof,events,liff,line-messaging,public,reservations}/`
+- `frontend/src/app/admin/events/[eventId]/page.tsx`
+- `frontend/src/app/liff/[tenantId]/events/[eventId]/reserve/page.tsx`
+- `frontend/src/app/roster/[token]/page.tsx`
+- `frontend/src/components/admin/EventForm.tsx`
+- `frontend/src/components/ui/StatusBadge.tsx`
+- `frontend/src/lib/api.ts`
+- `docs/AI_HANDOFF.md`
 
 ## Session log
 
-- 2026-10-12 07:10 JST (Codex): Implemented the initial BELL auto-mode
-  foundation; the final rule was refined later in this session.
-- 2026-10-12 (Codex): Replaced the provisional 3:2 rule with BELL's empirical
-  auto-mode rule: women 10/15/20 allow men 30/40/50 respectively. Female
-  bookings are unlimited; male slots expand automatically.
-- 2026-10-12 (Codex): Changed activation to 20 total attendees and added rolling
-  five-person female recruitment targets. The option is visibly labeled BELL-only.
-- 2026-10-12 (Codex): Pushed `5998508` to `main`. Vercel production project
-  `comiu` completed successfully, Railway production backend completed
-  successfully, and production frontend/backend returned HTTP 200.
+- 2026-10-12 17:32 JST (Codex): Implemented and locally verified BELL approval
+  mode plus the total-attendance third social-proof line. Awaiting push/deploy.
+- 2026-10-12 (Codex): Previously deployed BELL gender-ratio auto mode in
+  `5998508`; deployment state was recorded in `fe39342`.

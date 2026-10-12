@@ -248,7 +248,7 @@ export function buildEventSocialProof(
     );
     return {
       kind: 'bell_gender_ratio_auto',
-      text: `${bellMaleCapacityLabel(maleRemaining)}\n女性残り${femaleRemaining}名！`,
+      text: `${bellMaleCapacityLabel(maleRemaining)}\n女性残り${femaleRemaining}名！\n合計${total}名が参加！`,
     };
   }
   if (!settings.enabled) return null;

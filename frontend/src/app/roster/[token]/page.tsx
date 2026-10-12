@@ -13,12 +13,14 @@ type EditableField = 'referrer' | 'staffNote';
 type Reservation = PublicRoster['reservations'][number];
 
 function summarize(reservations: Reservation[]) {
-  const active = reservations.filter((r) => r.status !== 'waitlisted');
+  const activeStatuses = new Set(['reserved', 'attended', 'waiting_payment']);
+  const active = reservations.filter((r) => activeStatuses.has(r.status));
   return {
     total: active.length,
     male: active.filter((r) => r.gender === '男性').length,
     female: active.filter((r) => r.gender === '女性').length,
-    waitlisted: reservations.length - active.length,
+    pending: reservations.filter((r) => r.status === 'pending_approval').length,
+    waitlisted: reservations.filter((r) => r.status === 'waitlisted').length,
   };
 }
 
@@ -37,7 +39,7 @@ function groupByReferrer(reservations: Reservation[]) {
   });
 }
 
-function SummaryBar({ stats }: { stats: ReturnType<typeof summarize> }) {
+function SummaryBar({ stats, approvalMode }: { stats: ReturnType<typeof summarize>; approvalMode: boolean }) {
   return (
     <div className="grid grid-cols-4 gap-2 px-4 py-3">
       <div className="rounded-lg bg-gray-50 p-2 text-center">
@@ -53,8 +55,8 @@ function SummaryBar({ stats }: { stats: ReturnType<typeof summarize> }) {
         <p className="text-base font-bold text-pink-500">{stats.female}</p>
       </div>
       <div className="rounded-lg bg-gray-50 p-2 text-center">
-        <p className="text-[10px] text-gray-400">未確定</p>
-        <p className="text-base font-bold text-amber-600">{stats.waitlisted}</p>
+        <p className="text-[10px] text-gray-400">{approvalMode ? '承認待ち' : '未確定'}</p>
+        <p className="text-base font-bold text-amber-600">{approvalMode ? stats.pending : stats.waitlisted}</p>
       </div>
     </div>
   );
@@ -69,6 +71,7 @@ export default function RosterSharePage() {
   // ここに保持し、サーバーから来た値より優先して表示する。
   const [edits, setEdits] = useState<Record<string, Partial<Record<EditableField, string>>>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [approvalSavingId, setApprovalSavingId] = useState<string | null>(null);
   const editsRef = useRef(edits);
   useEffect(() => {
     editsRef.current = edits;
@@ -175,6 +178,22 @@ export default function RosterSharePage() {
     }
   }
 
+  async function handleApproval(id: string, status: 'reserved' | 'cancelled') {
+    if (status === 'cancelled' && !window.confirm('この申込をキャンセルして参加者へ通知しますか？')) return;
+    setApprovalSavingId(id);
+    try {
+      await api.public.updateRosterApproval(token, id, status);
+      setRoster((prev) => prev ? {
+        ...prev,
+        reservations: prev.reservations.map((r) => r.id === id ? { ...r, status } : r),
+      } : prev);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '処理に失敗しました');
+    } finally {
+      setApprovalSavingId(null);
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -209,7 +228,7 @@ export default function RosterSharePage() {
           <div className="border-b border-gray-200 px-4 py-3">
             <h2 className="text-sm font-semibold text-gray-900">参加者一覧 ({reservations.length}件)</h2>
           </div>
-          {reservations.length > 0 && <SummaryBar stats={overallStats} />}
+          {reservations.length > 0 && <SummaryBar stats={overallStats} approvalMode={!!event.bellApprovalRequired} />}
 
           {reservations.length === 0 ? (
             <div className="p-8 text-center text-sm text-gray-400">まだ参加者はいません</div>
@@ -278,6 +297,24 @@ export default function RosterSharePage() {
                                 />
                               </label>
                             </div>
+                            {event.bellApprovalRequired && r.status === 'pending_approval' && (
+                              <div className="mt-3 flex gap-2 pl-8">
+                                <button
+                                  onClick={() => handleApproval(r.id, 'reserved')}
+                                  disabled={approvalSavingId === r.id}
+                                  className="rounded-lg bg-purple-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
+                                >
+                                  承認して通知
+                                </button>
+                                <button
+                                  onClick={() => handleApproval(r.id, 'cancelled')}
+                                  disabled={approvalSavingId === r.id}
+                                  className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 disabled:opacity-50"
+                                >
+                                  キャンセルして通知
+                                </button>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -298,11 +335,12 @@ export default function RosterSharePage() {
                       <th className="px-6 py-3 text-left">ステータス</th>
                       <th className="px-6 py-3 text-left">紹介者</th>
                       <th className="px-6 py-3 text-left">備考</th>
+                      {event.bellApprovalRequired && <th className="px-6 py-3 text-left">承認操作</th>}
                     </tr>
                   </thead>
                   {referrerGroups.map(([referrerKey, group]) => {
                     const groupStats = summarize(group);
-                    const colCount = event.levelEnabled ? 7 : 6;
+                    const colCount = (event.levelEnabled ? 7 : 6) + (event.bellApprovalRequired ? 1 : 0);
                     return (
                       <tbody key={referrerKey || '__none__'} className="divide-y divide-gray-100">
                         <tr className="bg-gray-50">
@@ -334,6 +372,16 @@ export default function RosterSharePage() {
                             <td className="px-6 py-4">
                               <ReservationBadge status={r.status} />
                             </td>
+                            {event.bellApprovalRequired && (
+                              <td className="whitespace-nowrap px-6 py-4">
+                                {r.status === 'pending_approval' ? (
+                                  <div className="flex gap-2">
+                                    <button onClick={() => handleApproval(r.id, 'reserved')} disabled={approvalSavingId === r.id} className="text-xs font-bold text-purple-600 disabled:opacity-50">承認して通知</button>
+                                    <button onClick={() => handleApproval(r.id, 'cancelled')} disabled={approvalSavingId === r.id} className="text-xs text-red-600 disabled:opacity-50">キャンセルして通知</button>
+                                  </div>
+                                ) : <span className="text-xs text-gray-400">処理済み</span>}
+                              </td>
+                            )}
                             <td className="px-6 py-4">
                               <select
                                 value={fieldValue(r, 'referrer')}

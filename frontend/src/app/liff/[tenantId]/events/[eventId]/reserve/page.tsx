@@ -27,6 +27,7 @@ import { useLiffTheme, hexToRgba, readableTextColor, isLightHexColor } from '@/c
 import { LiffToast } from '@/components/liff/LiffToast';
 
 const STATUS_LABEL: Record<string, string> = {
+  pending_approval: '承認待ち',
   reserved: '予約済み',
   attended: '参加済み',
   waitlisted: '満席（未確定）',
@@ -640,7 +641,16 @@ function ReservePageInner() {
         )}
 
         {myReservation ? (
-          myReservation.status === 'waitlisted' ? (
+          myReservation.status === 'pending_approval' ? (
+            <>
+              <div className="w-full rounded-2xl border border-purple-200 bg-purple-50 px-4 py-4 text-center">
+                <p className="font-bold text-purple-700">承認待ちです</p>
+                <p className="mt-1 text-sm leading-relaxed text-purple-700">
+                  主催者が確認後、予約完了またはキャンセルの通知をLINEでお送りします。
+                </p>
+              </div>
+            </>
+          ) : myReservation.status === 'waitlisted' ? (
             <>
               <div className="w-full rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-center">
                 <p className="font-bold text-amber-700">現在は満席です</p>

@@ -25,6 +25,7 @@ type EventFormData = {
   capacity: string;
   capacityMale: string;
   capacityFemale: string;
+  bellApprovalRequired: boolean;
   status: 'draft' | 'open' | 'closed';
   priceMode: 'same' | 'gender';
   price: string;
@@ -404,6 +405,7 @@ export default function EventForm({
     capacity: initial?.capacity?.toString() ?? '',
     capacityMale: initial?.capacityMale?.toString() ?? '',
     capacityFemale: initial?.capacityFemale?.toString() ?? '',
+    bellApprovalRequired: initial?.bellApprovalRequired ?? false,
     status: (initial?.status ?? 'open') as 'draft' | 'open' | 'closed',
     priceMode: initial?.priceMale != null || initial?.priceFemale != null ? 'gender' : 'same',
     price: initial?.price?.toString() ?? '0',
@@ -442,6 +444,7 @@ export default function EventForm({
       initial.capacityMale != null ||
       initial.capacityFemale != null ||
       initial.bellGenderRatioAuto ||
+      initial.bellApprovalRequired ||
       (initial.paymentTiming && initial.paymentTiming !== 'onsite') ||
       initial.levelEnabled ||
       initial.rosterShareEnabled ||
@@ -746,6 +749,7 @@ export default function EventForm({
       capacityMale,
       capacityFemale,
       bellGenderRatioAuto: form.capacityMode === 'bellAuto',
+      bellApprovalRequired: form.bellApprovalRequired,
       status: form.status,
       price: Number(form.price),
       priceMale: form.priceMode === 'gender' ? numOrNull(form.priceMale) : null,
@@ -1264,6 +1268,21 @@ export default function EventForm({
 
       {!simplified && (
       <Section title="参加者情報">
+        {tenant?.code === '11221185' && (
+          <div className="mb-4 rounded-lg border border-purple-200 bg-purple-50 p-3">
+            <Check
+              label="BELL専用：予約を承認制にする"
+              checked={form.bellApprovalRequired}
+              onChange={(checked) => {
+                set('bellApprovalRequired', checked);
+                if (checked) set('paymentTiming', 'onsite');
+              }}
+            />
+            <p className="mt-1 text-xs leading-5 text-purple-700">
+              申込は承認待ちになり、管理画面または参加者名簿の共有リンクから承認・キャンセルできます。操作時に参加者へLINE通知を送ります（当日払いのみ）。
+            </p>
+          </div>
+        )}
         <div className="mb-3">
           <p className="mb-2 text-xs text-gray-500">予約スタイル</p>
           <RadioGroup

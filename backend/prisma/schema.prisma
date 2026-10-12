@@ -14,6 +14,7 @@ enum EventStatus {
 }
 
 enum ReservationStatus {
+  pending_approval
   waiting_payment
   reserved
   waitlisted
@@ -295,6 +296,7 @@ model Event {
   capacityMale               Int?        @map("capacity_male")
   capacityFemale             Int?        @map("capacity_female")
   bellGenderRatioAuto        Boolean     @default(false) @map("bell_gender_ratio_auto")
+  bellApprovalRequired       Boolean     @default(false) @map("bell_approval_required")
   status                     EventStatus @default(draft)
   price                      Int         @default(0)
   priceMale                  Int?        @map("price_male")

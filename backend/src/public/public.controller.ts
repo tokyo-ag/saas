@@ -8,8 +8,8 @@ import {
   Body,
   NotFoundException,
 } from '@nestjs/common';
-import { IsOptional, IsString, MaxLength } from 'class-validator';
-import { Prisma } from '@prisma/client';
+import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { Prisma, ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BlogService } from '../blog/blog.service';
 import {
@@ -17,10 +17,16 @@ import {
   normalizeEventSocialProofSettings,
 } from '../event-social-proof/event-social-proof.service';
 import { CollabService } from '../collab/collab.service';
+import { ReservationsService } from '../reservations/reservations.service';
 
 class UpdateRosterReservationDto {
   @IsOptional() @IsString() @MaxLength(100) referrer?: string;
   @IsOptional() @IsString() @MaxLength(1000) staffNote?: string;
+}
+
+class UpdateRosterApprovalDto {
+  @IsIn([ReservationStatus.reserved, ReservationStatus.cancelled])
+  status: ReservationStatus;
 }
 
 
@@ -110,6 +116,7 @@ export class PublicController {
     private readonly blogService: BlogService,
     private readonly eventSocialProofService: EventSocialProofService,
     private readonly collabService: CollabService,
+    private readonly reservationsService: ReservationsService,
   ) {}
 
   private firstMarkdownImage(body: string | null | undefined) {
@@ -210,6 +217,7 @@ export class PublicController {
         location: event.location,
         locationHint: event.locationHint,
         levelEnabled: event.levelEnabled,
+        bellApprovalRequired: event.bellApprovalRequired,
         referrerOptions: event.tenant.referrerOptions,
       },
       reservations: reservations.map((r) => ({
@@ -264,6 +272,37 @@ export class PublicController {
       referrer: updated.referrer,
       staffNote: updated.staffNote,
     };
+  }
+
+  @Patch('roster/:token/reservations/:reservationId/approval')
+  async updateRosterApproval(
+    @Param('token') token: string,
+    @Param('reservationId') reservationId: string,
+    @Body() dto: UpdateRosterApprovalDto,
+  ) {
+    const event = await this.prisma.event.findFirst({
+      where: {
+        rosterShareToken: token,
+        rosterShareEnabled: true,
+        bellApprovalRequired: true,
+        tenant: { code: '11221185' },
+      },
+      select: { id: true, tenantId: true },
+    });
+    if (!event) throw new NotFoundException('承認リンクが見つかりません');
+    const reservation = await this.prisma.reservation.findFirst({
+      where: { id: reservationId, eventId: event.id },
+      select: { status: true },
+    });
+    if (!reservation) throw new NotFoundException('申込が見つかりません');
+    if (reservation.status !== ReservationStatus.pending_approval) {
+      throw new NotFoundException('この申込はすでに処理されています');
+    }
+    return this.reservationsService.updateStatus(
+      event.tenantId,
+      reservationId,
+      dto.status,
+    );
   }
 
   // 合同開催（コラボイベント）の統合名簿。複数テナントのイベントをまたぐため、

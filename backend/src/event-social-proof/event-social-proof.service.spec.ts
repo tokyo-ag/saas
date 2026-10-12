@@ -98,7 +98,7 @@ describe('event social proof', () => {
       }),
     ).toEqual({
       kind: 'bell_gender_ratio_auto',
-      text: '男性枠満員！\n女性残り5名！',
+      text: '男性枠満員！\n女性残り5名！\n合計40名が参加！',
     });
   });
 
@@ -108,7 +108,7 @@ describe('event social proof', () => {
         { ...event(27, 10), bellGenderRatioAuto: true },
         DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
       )?.text,
-    ).toBe('男性残り3名！\n女性残り5名！');
+    ).toBe('男性残り3名！\n女性残り5名！\n合計37名が参加！');
   });
 
   it('widens the male limit by two for each additional female attendee', () => {
@@ -117,7 +117,7 @@ describe('event social proof', () => {
         { ...event(40, 20), bellGenderRatioAuto: true },
         DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
       )?.text,
-    ).toBe('男性募集中！\n女性残り5名！');
+    ).toBe('男性募集中！\n女性残り5名！\n合計60名が参加！');
   });
 
   it('does not show the BELL unlimited gender-ratio message below 20 attendees', () => {
@@ -135,7 +135,7 @@ describe('event social proof', () => {
         { ...event(30, 12), bellGenderRatioAuto: true },
         DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
       )?.text,
-    ).toBe('男性残り4名！\n女性残り3名！');
+    ).toBe('男性残り4名！\n女性残り3名！\n合計42名が参加！');
   });
 
   it('matches BELL operating limits and never blocks female reservations', () => {

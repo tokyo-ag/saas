@@ -281,6 +281,14 @@ export class EventsService {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
     });
+    if (
+      dto.bellApprovalRequired &&
+      (dto.paymentTiming ?? 'onsite') !== 'onsite'
+    ) {
+      throw new BadRequestException(
+        'BELL承認制は当日払いのイベントでのみ利用できます。',
+      );
+    }
     if (tenant?.plan === 'free') {
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -298,7 +306,9 @@ export class EventsService {
         );
       }
     }
-    const rosterShareEnabled = dto.rosterShareEnabled ?? false;
+    const rosterShareEnabled =
+      (tenant?.code === '11221185' && dto.bellApprovalRequired) ||
+      (dto.rosterShareEnabled ?? false);
     return this.prisma.event.create({
       data: {
         tenantId,
@@ -317,6 +327,8 @@ export class EventsService {
         capacityFemale: dto.capacityFemale ?? null,
         bellGenderRatioAuto:
           tenant?.code === '11221185' && (dto.bellGenderRatioAuto ?? false),
+        bellApprovalRequired:
+          tenant?.code === '11221185' && (dto.bellApprovalRequired ?? false),
         status: dto.status,
         price: dto.price,
         priceMale: dto.priceMale ?? null,
@@ -347,12 +359,22 @@ export class EventsService {
     const current = await this.findOne(tenantId, id);
     this.assertEventEditable(current);
     const bellModeTenant =
-      dto.bellGenderRatioAuto !== undefined
+      dto.bellGenderRatioAuto !== undefined ||
+      dto.bellApprovalRequired !== undefined
         ? await this.prisma.tenant.findUnique({
             where: { id: tenantId },
             select: { code: true },
           })
         : null;
+    const effectivePaymentTiming =
+      dto.paymentTiming ?? current.paymentTiming ?? 'onsite';
+    const effectiveApprovalRequired =
+      dto.bellApprovalRequired ?? current.bellApprovalRequired;
+    if (effectiveApprovalRequired && effectivePaymentTiming !== 'onsite') {
+      throw new BadRequestException(
+        'BELL承認制は当日払いのイベントでのみ利用できます。',
+      );
+    }
     const categories =
       dto.category !== undefined || dto.categories !== undefined
         ? normalizeEventCategories(dto.category, dto.categories)
@@ -372,8 +394,11 @@ export class EventsService {
         );
       }
     }
+    const approvalWillEnableShare =
+      bellModeTenant?.code === '11221185' && dto.bellApprovalRequired === true;
     const rosterShareToken =
-      dto.rosterShareEnabled && !current.rosterShareToken
+      (dto.rosterShareEnabled || approvalWillEnableShare) &&
+      !current.rosterShareToken
         ? this.generateRosterShareToken()
         : undefined;
     const wasReminderActive = current.remindEnabled;
@@ -437,6 +462,10 @@ export class EventsService {
           bellGenderRatioAuto:
             bellModeTenant?.code === '11221185' && dto.bellGenderRatioAuto,
         }),
+        ...(dto.bellApprovalRequired !== undefined && {
+          bellApprovalRequired:
+            bellModeTenant?.code === '11221185' && dto.bellApprovalRequired,
+        }),
         ...(dto.priceMale !== undefined && {
           priceMale: dto.priceMale ?? null,
         }),
@@ -475,8 +504,13 @@ export class EventsService {
         ...(dto.levelEnabled !== undefined && {
           levelEnabled: dto.levelEnabled,
         }),
-        ...(dto.rosterShareEnabled !== undefined && {
-          rosterShareEnabled: dto.rosterShareEnabled,
+        ...((dto.rosterShareEnabled !== undefined || approvalWillEnableShare) && {
+          rosterShareEnabled:
+            effectiveApprovalRequired || dto.rosterShareEnabled,
+          ...(rosterShareToken && { rosterShareToken }),
+        }),
+        ...(approvalWillEnableShare && {
+          rosterShareEnabled: true,
           ...(rosterShareToken && { rosterShareToken }),
         }),
         ...(dto.reserveActionStyle !== undefined && {
@@ -508,6 +542,11 @@ export class EventsService {
   async toggleRosterShare(tenantId: string, eventId: string, enabled: boolean) {
     const current = await this.findOne(tenantId, eventId);
     this.assertEventEditable(current);
+    if (!enabled && current.bellApprovalRequired) {
+      throw new BadRequestException(
+        '承認制イベントでは参加者名簿の共有リンクを停止できません。',
+      );
+    }
     const rosterShareToken =
       enabled && !current.rosterShareToken
         ? this.generateRosterShareToken()

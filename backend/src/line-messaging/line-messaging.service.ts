@@ -173,6 +173,18 @@ export class LineMessagingService {
     );
   }
 
+  async sendReservationCancelled(
+    accessToken: string,
+    lineUserId: string,
+    eventTitle: string,
+  ): Promise<void> {
+    await this.sendPushMessage(
+      accessToken,
+      lineUserId,
+      `【${eventTitle}】のお申込みはキャンセルとなりました。ご不明点がある場合は主催者へお問い合わせください。`,
+    );
+  }
+
   async sendRemind(
     accessToken: string,
     lineUserId: string,

@@ -34,6 +34,104 @@ describe('ReservationsService identity invariants', () => {
     ).rejects.toThrow(ConflictException);
   });
 
+  it('sends the reservation confirmation when a pending application is approved', async () => {
+    const reservation = {
+      id: 'pending-1',
+      tenantId: 'tenant-1',
+      eventId: 'event-1',
+      status: ReservationStatus.pending_approval,
+      member: { name: '田中', lineUserId: 'line-1', gender: '女性' },
+      event: {
+        title: '交流会',
+        heldAt: new Date('2026-10-20T10:00:00Z'),
+        endAt: null,
+        location: '会場',
+        locationUrl: null,
+        price: 1000,
+        priceMale: null,
+        priceFemale: null,
+        description: null,
+        descriptionMale: null,
+        descriptionFemale: null,
+        maleDelayMinutes: null,
+        reservationMessageTemplate: null,
+        capacity: null,
+        capacityMale: null,
+        capacityFemale: null,
+        bellGenderRatioAuto: false,
+      },
+    };
+    const prisma = {
+      reservation: {
+        findFirst: jest.fn().mockResolvedValue(reservation),
+        update: jest.fn().mockResolvedValue({
+          ...reservation,
+          status: ReservationStatus.reserved,
+        }),
+        count: jest.fn().mockResolvedValue(0),
+      },
+      tenant: {
+        findUnique: jest.fn().mockResolvedValue({
+          lineChannelAccessToken: 'token',
+          reservationMessageTemplate: null,
+        }),
+      },
+    };
+    const lineMessaging = {
+      sendReservationConfirm: jest.fn().mockResolvedValue(undefined),
+    };
+    const service = new ReservationsService(prisma as never, lineMessaging as never);
+
+    await service.updateStatus('tenant-1', 'pending-1', ReservationStatus.reserved);
+
+    expect(lineMessaging.sendReservationConfirm).toHaveBeenCalledWith(
+      'token',
+      'line-1',
+      '交流会',
+      expect.any(Date),
+      '会場',
+      1000,
+      null,
+      null,
+      expect.objectContaining({ gender: '女性' }),
+    );
+  });
+
+  it('sends a cancellation notice to a pending applicant when rejected', async () => {
+    const reservation = {
+      id: 'pending-1',
+      tenantId: 'tenant-1',
+      eventId: 'event-1',
+      status: ReservationStatus.pending_approval,
+      member: { name: '田中', lineUserId: 'line-1', gender: '男性' },
+      event: { id: 'event-1', title: '交流会' },
+    };
+    const prisma = {
+      reservation: {
+        findFirst: jest.fn().mockResolvedValue(reservation),
+        update: jest.fn().mockResolvedValue({
+          ...reservation,
+          status: ReservationStatus.cancelled,
+        }),
+      },
+      tenant: {
+        findUnique: jest.fn().mockResolvedValue({ lineChannelAccessToken: 'token' }),
+      },
+    };
+    const lineMessaging = {
+      sendReservationCancelled: jest.fn().mockResolvedValue(undefined),
+    };
+    const service = new ReservationsService(prisma as never, lineMessaging as never);
+
+    await service.updateStatus('tenant-1', 'pending-1', ReservationStatus.cancelled);
+
+    expect(lineMessaging.sendReservationCancelled).toHaveBeenCalledWith(
+      'token',
+      'line-1',
+      '交流会',
+    );
+  });
+
   it('does not auto-promote a waitlisted reservation after a cancellation', async () => {
     const prisma = {
       reservation: {

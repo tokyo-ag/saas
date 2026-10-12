@@ -1,6 +1,7 @@
 import type { ReservationStatus, EventStatus } from '@/lib/api';
 
 const reservationColors: Record<ReservationStatus, string> = {
+  pending_approval: 'bg-purple-100 text-purple-700',
   reserved: 'bg-[#06C755]/10 text-[#06C755]',
   waitlisted: 'bg-yellow-100 text-yellow-700',
   attended: 'bg-blue-100 text-blue-700',
@@ -9,6 +10,7 @@ const reservationColors: Record<ReservationStatus, string> = {
 };
 
 const reservationLabels: Record<ReservationStatus, string> = {
+  pending_approval: '承認待ち',
   reserved: '予約確定',
   waitlisted: '満席（未確定）',
   attended: '参加済',

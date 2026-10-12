@@ -283,6 +283,18 @@ export const api = {
         body: JSON.stringify(data),
         keepalive: options?.keepalive,
       }),
+    updateRosterApproval: (
+      token: string,
+      reservationId: string,
+      status: 'reserved' | 'cancelled',
+    ) =>
+      request<Reservation>(
+        `/public/roster/${token}/reservations/${reservationId}/approval`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ status }),
+        },
+      ),
     staffViewEvents: (token: string) => request<StaffViewEventList>(`/public/staff-view/${token}/events`),
     staffViewEvent: (token: string, eventId: string) => request<StaffViewEventDetail>(`/public/staff-view/${token}/events/${eventId}`),
     collabRoster: (token: string) => request<CollabRoster>(`/public/collab-roster/${token}`),
@@ -560,7 +572,7 @@ export const api = {
 
 // ---- 型定義 ----
 export type EventStatus = 'draft' | 'open' | 'closed';
-export type ReservationStatus = 'waiting_payment' | 'reserved' | 'waitlisted' | 'attended' | 'cancelled';
+export type ReservationStatus = 'pending_approval' | 'waiting_payment' | 'reserved' | 'waitlisted' | 'attended' | 'cancelled';
 
 export interface Event {
   id: string;
@@ -578,6 +590,7 @@ export interface Event {
   capacityMale?: number;
   capacityFemale?: number;
   bellGenderRatioAuto?: boolean;
+  bellApprovalRequired?: boolean;
   status: EventStatus;
   price: number;
   priceMale?: number;
@@ -627,6 +640,7 @@ export interface EventInput {
   capacityMale?: number | null;
   capacityFemale?: number | null;
   bellGenderRatioAuto?: boolean;
+  bellApprovalRequired?: boolean;
   status: EventStatus;
   price: number;
   priceMale?: number | null;
@@ -1092,7 +1106,7 @@ export interface LiffMyReservation {
 
 export interface ReserveResult {
   id: string;
-  status: 'reserved' | 'waitlisted' | 'waiting_payment';
+  status: 'pending_approval' | 'reserved' | 'waitlisted' | 'waiting_payment';
   waitlistOrder?: number;
   stripeCheckoutUrl?: string;
   alreadyReserved?: boolean;
@@ -1539,6 +1553,7 @@ export interface PublicRoster {
     locationHint?: string | null;
     levelEnabled: boolean;
     referrerOptions: string[];
+    bellApprovalRequired?: boolean;
   };
   reservations: {
     id: string;

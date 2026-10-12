@@ -698,8 +698,9 @@ export class LiffService {
             );
           }
 
-          const status: ReservationStatus =
-            event.paymentRequired && effectivePrice > 0
+          const status: ReservationStatus = event.bellApprovalRequired
+            ? ReservationStatus.pending_approval
+            : event.paymentRequired && effectivePrice > 0
               ? ReservationStatus.waiting_payment
               : ReservationStatus.reserved;
           if (
@@ -881,7 +882,13 @@ export class LiffService {
         eventId,
         memberId: member.id,
         status: {
-          in: ['reserved', 'waitlisted', 'waiting_payment', 'attended'],
+          in: [
+            'pending_approval',
+            'reserved',
+            'waitlisted',
+            'waiting_payment',
+            'attended',
+          ],
         },
       },
       orderBy: { reservedAt: 'desc' },
@@ -1128,6 +1135,7 @@ export class LiffService {
     }
 
     const cancellable: ReservationStatus[] = [
+      ReservationStatus.pending_approval,
       ReservationStatus.reserved,
       ReservationStatus.waitlisted,
       ReservationStatus.waiting_payment,
