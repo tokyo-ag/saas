@@ -633,10 +633,12 @@ export default function AdminPublicPage() {
     global: true, seo: false, header: true, structure: true, reserve: false, blog: false, reviews: false, footer: false,
     headerLogo: false, headerTitle: false, headerSubtitle: false, headerPhoto: false, headerLayout: false, headerButton: false, headerNavLabel: false,
   });
-  const toggleSection = (key: string) => setOpenSections(p => ({ ...p, [key]: !p[key] }));
-  const showLegacyCustomizer = false;
-
   const tenantCode = tenant?.code ?? tenant?.id ?? '';
+  const toggleSection = (key: string) => setOpenSections(p => ({ ...p, [key]: !p[key] }));
+  // GAKUORI keeps the detailed CMS: Q&A editing and per-section font sizing.
+  // Every other tenant continues to use the current simplified CMS unchanged.
+  const showLegacyCustomizer = tenantCode === '18285255';
+
   const displayName = tenant?.name ?? tenant?.lineDisplayName ?? '公開サイト';
   const siteTitle = form.title?.trim() || displayName;
   const tenantIcon = tenant?.iconUrl ?? tenant?.linePictureUrl ?? null;
@@ -1606,6 +1608,8 @@ export default function AdminPublicPage() {
       {/* Settings panel */}
       <section className="flex-1 space-y-3 overflow-y-auto py-4 pr-1">
 
+        {!showLegacyCustomizer && <>
+
         <div className="rounded-2xl border border-[#06C755]/25 bg-gradient-to-br from-green-50 to-white p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -1906,6 +1910,8 @@ export default function AdminPublicPage() {
             })()}
           </div>
         </div>
+
+        </>}
 
         {showLegacyCustomizer && <>
 
