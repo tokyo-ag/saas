@@ -11,7 +11,8 @@ or finishing.
 
 ## Status
 
-- Implemented and locally verified; ready to commit and deploy.
+- Implemented, committed as `f727ea2`, pushed to `main`, and deployed on
+  Vercel production.
 
 ## Completed changes
 
@@ -28,11 +29,13 @@ or finishing.
 - `cd frontend; npm run build` passed.
 - The first build attempt had a transient Windows build-worker exit during
   static generation; an immediate clean rerun completed successfully.
+- GitHub status `Vercel – comiu` succeeded and
+  `https://comiu.link/admin/public-page` returned HTTP 200.
 
 ## Next action
 
-- Commit the GAKUORI CMS file and this handoff, push `main`, and verify the
-  Vercel production deployment.
+- Ask GAKUORI to refresh `/admin/public-page` and verify the detailed CMS,
+  especially Q&A editing and title/subtitle/body font-size controls.
 
 ## Existing unrelated uncommitted work
 
@@ -56,6 +59,6 @@ or finishing.
 ## Session log
 
 - 2026-10-14 (Codex): Enabled the retained detailed CMS only for GAKUORI while
-  preserving the simplified CMS for all other tenants.
+  preserving the simplified CMS for all other tenants. Deployed as `f727ea2`.
 - 2026-10-12 (Codex): Implemented but did not commit staff-view approval,
   cancellation, and bulk-cancellation controls.
