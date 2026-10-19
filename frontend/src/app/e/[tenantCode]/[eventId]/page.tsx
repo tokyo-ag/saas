@@ -65,18 +65,6 @@ async function fetchTenantStyling(tenantCode: string): Promise<{ backgroundColor
   }
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleString('ja-JP', {
-    timeZone: 'Asia/Tokyo',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    weekday: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
 function formatEventSchedule(heldAt: string, endAt?: string | null) {
   const dateFormatter = new Intl.DateTimeFormat('ja-JP', {
     timeZone: 'Asia/Tokyo',
