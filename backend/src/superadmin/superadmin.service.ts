@@ -63,6 +63,10 @@ export class UpdateTenantDto {
     | 'standard'
     | 'pro';
   @IsOptional() @IsString() code?: string;
+  @IsOptional() @IsString() lineChannelId?: string;
+  @IsOptional() @IsString() lineChannelSecret?: string;
+  @IsOptional() @IsString() lineChannelAccessToken?: string;
+  @IsOptional() @IsString() liffId?: string;
 }
 
 export class BanUserDto {
@@ -298,8 +302,12 @@ export class SuperadminService implements OnApplicationBootstrap {
         ...(dto.code !== undefined && {
           code: dto.code.trim().toLowerCase() || null,
         }),
+        ...(dto.lineChannelId !== undefined && { lineChannelId: dto.lineChannelId || null }),
+        ...(dto.lineChannelSecret !== undefined && { lineChannelSecret: dto.lineChannelSecret || null }),
+        ...(dto.lineChannelAccessToken !== undefined && { lineChannelAccessToken: dto.lineChannelAccessToken || null }),
+        ...(dto.liffId !== undefined && { liffId: dto.liffId || null }),
       },
-      select: { id: true, name: true, code: true, plan: true, updatedAt: true },
+      select: { id: true, name: true, code: true, plan: true, updatedAt: true, lineChannelId: true, liffId: true },
     });
   }
 
