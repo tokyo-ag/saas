@@ -301,6 +301,11 @@ export class LiffService {
   // ヘッダー下に流す「最近のログイン・予約」テロップ用
   async getRecentActivity(tenantId: string) {
     tenantId = await this.resolveTenantId(tenantId);
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { activityTickerEnabled: true },
+    });
+    if (tenant?.activityTickerEnabled === false) return [];
     const PER_GENDER = 8;
     const [maleItems, femaleItems, unsetItems] = await Promise.all([
       this.fetchRecentActivityByGender(tenantId, '男性', PER_GENDER),
