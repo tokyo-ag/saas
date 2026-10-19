@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api, Event } from '@/lib/api';
 import EventForm from '@/components/admin/EventForm';
 
 export default function EditEventPage() {
   const { eventId } = useParams<{ eventId: string }>();
+  const router = useRouter();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -32,7 +33,7 @@ export default function EditEventPage() {
   return (
     <div>
       <h2 className="text-2xl font-bold text-gray-900 mb-6">イベントを編集</h2>
-      <EventForm initial={event} />
+      <EventForm initial={event} onSaved={() => router.push(`/admin/events/${eventId}`)} />
     </div>
   );
 }

@@ -188,6 +188,7 @@ export default function EventsPage() {
     setActivityTickerEnabled(next);
     try {
       await api.tenant.update({ activityTickerEnabled: next });
+      setIframeKey((k) => k + 1);
     } catch { /* silent */ }
   }
 

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { api, API_URL, LiffEvent, LiffProfile, LiffReservation, LiffTenant, setLiffToken, formatEventSchedule, genderCapacityStatus } from '@/lib/api';
-import { SITE_URL } from '@/lib/config';
+import { SITE_URL, isInLineInAppBrowser } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 import { getDefaultEventImage } from '@/lib/defaultImages';
 import {
@@ -192,6 +192,16 @@ function ReservePageInner() {
       if (cancelled) return;
 
       if (!initOk) {
+        // LINEアプリ外（Android Chrome Custom Tabs等）でのliff.init()失敗は
+        // liff.line.meで開き直すと解決することが多い。1回だけ自動でリダイレクトを試みる。
+        if (!isInLineInAppBrowser()) {
+          const STEP1_REDIRECT_KEY = 'liff-step1-redirected';
+          if (!sessionStorage.getItem(STEP1_REDIRECT_KEY)) {
+            sessionStorage.setItem(STEP1_REDIRECT_KEY, '1');
+            if (redirectToLiffApp()) return;
+          }
+          sessionStorage.removeItem(STEP1_REDIRECT_KEY);
+        }
         setAuthError(`Step1: ${getInitError() ?? '不明'}`);
         setAuthStatus('error');
         return;

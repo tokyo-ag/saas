@@ -860,7 +860,10 @@ export class PublicController {
       },
     });
     if (!event) throw new NotFoundException('Event not found');
-    const isEnded = event.status !== 'open' || event.heldAt < new Date();
+    const now = new Date();
+    const isEnded =
+      event.status !== 'open' ||
+      (event.endAt ? event.endAt < now : event.heldAt < now);
     const reservedCountMale = event.reservations.filter(
       (r) => r.member.gender === '男性',
     ).length;
