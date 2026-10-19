@@ -11,8 +11,7 @@ or finishing.
 
 ## Status
 
-- Merge conflict resolved locally and verification completed. The merge commit
-  still needs to be created and pushed to `main`.
+- Integrated and pushed to `main` as merge commit `5be3a2c`.
 
 ## Completed changes
 
@@ -28,13 +27,12 @@ or finishing.
 - `cd frontend; npm run test:prod` passed 12 of 13 checks. The deployed legacy
   LIFF schedule currently returns HTTP 200 instead of the expected permanent
   redirect; this is unrelated to the event-date presentation change.
-- GitHub status `Vercel – comiu` succeeded and
-  `https://comiu.link/admin/public-page` returned HTTP 200.
 
 ## Next action
 
-- Commit the resolved merge and this handoff, push `main`, then confirm the
-  Vercel deployment status.
+- Confirm the Vercel deployment for `5be3a2c`; the public homepage responded
+  successfully after the push, but anonymous GitHub status did not expose the
+  deployment check result.
 
 ## Existing unrelated uncommitted work
 
