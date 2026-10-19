@@ -6,36 +6,35 @@ or finishing.
 
 ## Current objective
 
-- Keep the simplified public-site CMS for every tenant except GAKUORI, and show
-  GAKUORI the retained detailed/legacy CMS.
+- Integrate Claude's `improve-event-date-display` branch into the latest
+  `main` without losing the newer public event-page behavior.
 
 ## Status
 
-- Implemented, committed as `f727ea2`, pushed to `main`, and deployed on
-  Vercel production.
+- Merge conflict resolved locally and verification completed. The merge commit
+  still needs to be created and pushed to `main`.
 
 ## Completed changes
 
-- In `frontend/src/app/admin/public-page/page.tsx`, tenant code `18285255`
-  (GAKUORI) now receives the detailed legacy customizer.
-- GAKUORI can edit Q&A blocks and change the font sizes for the title,
-  subtitle, body/description, and individual content blocks.
-- Other tenants continue to receive the current simplified CMS unchanged.
-- The simplified editor is hidden for GAKUORI, rather than showing both CMS
-  versions together.
+- Updated local `main` from `d6ddabb` to `d8280ef` before integration.
+- Resolved the event-page conflict by retaining current gender-capacity and
+  LIFF behavior while applying the branch's split date/time presentation.
+- Removed the obsolete single-string date formatter from this page.
 
 ## Verification
 
+- `cd frontend; npm run lint` passed with 0 errors and 52 existing warnings.
 - `cd frontend; npm run build` passed.
-- The first build attempt had a transient Windows build-worker exit during
-  static generation; an immediate clean rerun completed successfully.
+- `cd frontend; npm run test:prod` passed 12 of 13 checks. The deployed legacy
+  LIFF schedule currently returns HTTP 200 instead of the expected permanent
+  redirect; this is unrelated to the event-date presentation change.
 - GitHub status `Vercel – comiu` succeeded and
   `https://comiu.link/admin/public-page` returned HTTP 200.
 
 ## Next action
 
-- Ask GAKUORI to refresh `/admin/public-page` and verify the detailed CMS,
-  especially Q&A editing and title/subtitle/body font-size controls.
+- Commit the resolved merge and this handoff, push `main`, then confirm the
+  Vercel deployment status.
 
 ## Existing unrelated uncommitted work
 
@@ -52,12 +51,15 @@ or finishing.
 
 ## Prior deployed state
 
+- GAKUORI's retained detailed CMS is deployed in `f727ea2`.
 - BELL approval mode is deployed in `c68d553`; handoff deployment update is
   `f609131`.
 - BELL gender-ratio auto mode is deployed in `5998508`.
 
 ## Session log
 
+- 2026-10-20 (Codex): Integrated the event-date display branch onto current
+  `main`, preserving newer public event-page behavior; lint and build passed.
 - 2026-10-14 (Codex): Enabled the retained detailed CMS only for GAKUORI while
   preserving the simplified CMS for all other tenants. Deployed as `f727ea2`.
 - 2026-10-12 (Codex): Implemented but did not commit staff-view approval,
