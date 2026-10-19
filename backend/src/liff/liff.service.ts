@@ -503,7 +503,8 @@ export class LiffService {
     if (event.status !== 'open') {
       throw new BadRequestException('このイベントは現在予約できません');
     }
-    if (event.heldAt.getTime() < Date.now()) {
+    const effectiveEndAt = event.endAt ?? event.heldAt;
+    if (effectiveEndAt.getTime() < Date.now()) {
       throw new BadRequestException('このイベントの受付は終了しました');
     }
 
