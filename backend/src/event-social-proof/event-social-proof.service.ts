@@ -200,6 +200,7 @@ export function bellGenderRatioReservationBlocked(
 export function bellGenderRatioStatus(male: number, female: number) {
   return {
     maleRemaining: Math.max(0, female * 2 + 10 - male),
+    femaleRemaining: 5 - (female % 5),
   };
 }
 
@@ -241,10 +242,13 @@ export function buildEventSocialProof(
     event.bellGenderRatioAuto &&
     total >= BELL_GENDER_RATIO_MIN_PARTICIPANTS
   ) {
-    const { maleRemaining } = bellGenderRatioStatus(male, female);
+    const { maleRemaining, femaleRemaining } = bellGenderRatioStatus(
+      male,
+      female,
+    );
     return {
       kind: 'bell_gender_ratio_auto',
-      text: `${bellMaleCapacityLabel(maleRemaining)}\n女性募集中！\n合計${total}名が参加！`,
+      text: `${bellMaleCapacityLabel(maleRemaining)}\n女性残り${femaleRemaining}名！\n合計${total}名が参加！`,
     };
   }
   if (!settings.enabled) return null;
