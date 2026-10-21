@@ -207,7 +207,9 @@ export class PublicController {
           },
         },
       },
-      orderBy: [{ status: 'asc' }, { reservedAt: 'asc' }],
+      orderBy: event.rosterGenderSort
+        ? [{ status: 'asc' }, { member: { gender: 'desc' } }, { reservedAt: 'asc' }]
+        : [{ status: 'asc' }, { reservedAt: 'asc' }],
     });
 
     return {

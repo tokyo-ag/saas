@@ -313,6 +313,7 @@ model Event {
   reserveActionStyle         String?     @map("reserve_action_style") @db.VarChar(20)
   rosterShareEnabled         Boolean     @default(false) @map("roster_share_enabled")
   rosterShareToken           String?     @unique @map("roster_share_token") @db.VarChar(64)
+  rosterGenderSort           Boolean     @default(false) @map("roster_gender_sort")
   category                   String?     @db.VarChar(50)
   categories                 String[]    @default([])
   tags                       String[]    @default([])

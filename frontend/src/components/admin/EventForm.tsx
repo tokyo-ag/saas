@@ -420,6 +420,7 @@ export default function EventForm({
     reminderMessageTemplate: initial?.reminderMessageTemplate ?? '',
     levelEnabled: initial?.levelEnabled ?? false,
     rosterShareEnabled: initial?.rosterShareEnabled ?? false,
+    rosterGenderSort: initial?.rosterGenderSort ?? false,
     // 超簡単モバイル管理からの新規作成では予約スタイルを選ばせず、常にCOMIU予約で固定する。
     // 既存イベントの編集時は（simplifiedでも）元の設定を変えずにそのまま保持する。
     reserveActionStyle: (initial
@@ -763,6 +764,7 @@ export default function EventForm({
       reminderMessageTemplate: form.reminderMessageTemplate || null,
       levelEnabled: form.levelEnabled,
       rosterShareEnabled: form.rosterShareEnabled,
+      rosterGenderSort: form.rosterGenderSort,
       reserveActionStyle: form.reserveActionStyle || null,
       // 編集時に画像を削除した場合も、nullを明示して既存URLをDBから消す。
       imageUrl: form.imageUrl || null,
@@ -1307,6 +1309,13 @@ export default function EventForm({
           checked={form.rosterShareEnabled}
           onChange={(checked) => set('rosterShareEnabled', checked)}
         />
+        {form.rosterShareEnabled && (
+          <Check
+            label="名簿を男女別に並べる（同性内は予約順）"
+            checked={form.rosterGenderSort}
+            onChange={(checked) => set('rosterGenderSort', checked)}
+          />
+        )}
       </Section>
       )}
 

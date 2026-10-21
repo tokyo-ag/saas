@@ -615,6 +615,7 @@ export interface Event {
   tags?: string[];
   levelEnabled?: boolean;
   rosterShareEnabled?: boolean;
+  rosterGenderSort?: boolean;
   rosterShareToken?: string | null;
   reserveActionStyle?: string | null;
   collab?: {
@@ -659,6 +660,7 @@ export interface EventInput {
   tags?: string[];
   levelEnabled?: boolean;
   rosterShareEnabled?: boolean;
+  rosterGenderSort?: boolean;
   reserveActionStyle?: string | null;
 }
 
@@ -864,6 +866,7 @@ export interface LiffEvent {
   iconUrl?: string;
   levelEnabled?: boolean;
   rosterShareEnabled?: boolean;
+  rosterGenderSort?: boolean;
   rosterShareToken?: string | null;
   reserveActionStyle?: string | null;
   category?: string | null;

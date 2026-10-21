@@ -350,6 +350,7 @@ export class EventsService {
         rosterShareToken: rosterShareEnabled
           ? this.generateRosterShareToken()
           : null,
+        rosterGenderSort: dto.rosterGenderSort ?? false,
         reserveActionStyle: dto.reserveActionStyle || null,
       },
     });
@@ -503,6 +504,9 @@ export class EventsService {
         }),
         ...(dto.levelEnabled !== undefined && {
           levelEnabled: dto.levelEnabled,
+        }),
+        ...(dto.rosterGenderSort !== undefined && {
+          rosterGenderSort: dto.rosterGenderSort,
         }),
         ...((dto.rosterShareEnabled !== undefined || approvalWillEnableShare) && {
           rosterShareEnabled:

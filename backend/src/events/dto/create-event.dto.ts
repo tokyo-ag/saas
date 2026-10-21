@@ -163,6 +163,11 @@ export class CreateEventDto {
   rosterShareEnabled?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => Boolean(value))
+  rosterGenderSort?: boolean;
+
+  @IsOptional()
   @IsString()
   @MaxLength(20)
   reserveActionStyle?: string | null;
