@@ -200,7 +200,7 @@ export function bellGenderRatioReservationBlocked(
 export function bellGenderRatioStatus(male: number, female: number) {
   return {
     maleRemaining: Math.max(0, female * 2 + 10 - male),
-    femaleRemaining: 5 - (female % 5),
+    femaleRemaining: Math.max(2, 5 - (female % 5)),
   };
 }
 
