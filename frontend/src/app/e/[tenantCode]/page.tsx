@@ -1,3 +1,5 @@
+export const revalidate = 60;
+
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Image from 'next/image';
@@ -293,6 +295,8 @@ export default async function TenantEventsPage({
                   {event.heldAt && `　${new Date(event.heldAt).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}`}
                   {(event.locationHint || event.location) && `　${event.locationHint || event.location}`}
                   {event.category && `　${event.category}`}
+                  {event.price != null && `　参加費${event.price}円`}
+                  {event.priceMale != null && event.priceFemale != null && `　男性${event.priceMale}円・女性${event.priceFemale}円`}
                 </a>
               </li>
             ))}

@@ -953,6 +953,22 @@ export default async function ClubCmsPage({
             {reserveSectionLead && (
               <p className="mt-2 text-sm leading-7" style={{ color: reserveLeadColor }}>{reserveSectionLead}</p>
             )}
+            {reserveEvents.length > 0 && (
+              <ul className="sr-only">
+                {reserveEvents.map((event) => (
+                  <li key={event.id}>
+                    <a href={`/e/${page.tenant.code ?? tenantCode}/${event.id}`}>
+                      {event.title}
+                      {event.heldAt && `　${new Date(event.heldAt).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}`}
+                      {(event.locationHint || event.location) && `　${event.locationHint || event.location}`}
+                      {event.category && `　${event.category}`}
+                      {event.price != null && `　参加費${event.price}円`}
+                      {event.priceMale != null && event.priceFemale != null && `　男性${event.priceMale}円・女性${event.priceFemale}円`}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
             {reserveActionStyle !== 'line' || reserveEvents.length > 0 ? (
               <ReservationViewShowcase
                 accentColor={accentColor}

@@ -1,3 +1,5 @@
+export const revalidate = 60;
+
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Image from 'next/image';
