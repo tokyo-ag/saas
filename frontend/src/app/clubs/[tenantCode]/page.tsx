@@ -9,14 +9,19 @@ type PublicClubRedirectData = {
   pages?: Array<{ slug: string; updatedAt?: string | null }>;
 };
 
-async function fetchPrimaryPage(tenantCode: string): Promise<string | null> {
+async function fetchPrimaryPage(
+  tenantCode: string,
+): Promise<{ code: string; slug: string } | null> {
   try {
     const res = await fetch(`${API_URL}/api/public/tenants/${tenantCode}`, {
       next: { revalidate },
     });
     if (!res.ok) return null;
     const club = (await res.json()) as PublicClubRedirectData;
-    return club.pages?.[0]?.slug ?? null;
+    const slug = club.pages?.[0]?.slug ?? null;
+    const code = club.code ?? null;
+    if (!slug || !code) return null;
+    return { code, slug };
   } catch {
     return null;
   }
@@ -32,6 +37,7 @@ export default async function ClubRedirectPage({
   params: Promise<{ tenantCode: string }>;
 }) {
   const { tenantCode } = await params;
-  const slug = await fetchPrimaryPage(tenantCode);
-  permanentRedirect(slug ? `/clubs/${tenantCode}/${slug}` : '/');
+  const result = await fetchPrimaryPage(tenantCode);
+  // Always redirect to the canonical numeric-code URL to preserve link equity.
+  permanentRedirect(result ? `/clubs/${result.code}/${result.slug}` : '/');
 }

@@ -1059,11 +1059,24 @@ export class PublicController {
     });
   }
 
+  // Accepts either the numeric tenant code (e.g. "18285255") or a published page slug
+  // (e.g. "gakuori") so that human-readable URLs like /clubs/gakuori resolve correctly.
+  private tenantByCodeOrSlug(codeOrSlug: string) {
+    return {
+      deletedAt: null as null,
+      bannedAt: null as null,
+      OR: [
+        { code: codeOrSlug },
+        { publicPages: { some: { slug: codeOrSlug, status: 'published' as const } } },
+      ],
+    };
+  }
+
   @Get('tenants/:tenantCode')
   async getTenantByCode(@Param('tenantCode') tenantCode: string) {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const tenant = await this.prisma.tenant.findFirst({
-      where: { code: tenantCode, deletedAt: null, bannedAt: null },
+      where: this.tenantByCodeOrSlug(tenantCode),
       include: {
         _count: {
           select: {
@@ -1176,7 +1189,7 @@ export class PublicController {
       where: {
         slug,
         status: 'published',
-        tenant: { code: tenantCode, deletedAt: null, bannedAt: null },
+        tenant: this.tenantByCodeOrSlug(tenantCode),
       },
       include: {
         tenant: {
@@ -1273,7 +1286,7 @@ export class PublicController {
     const reviews = await this.prisma.tenantReview.findMany({
       where: {
         isPublished: true,
-        tenant: { code: tenantCode, deletedAt: null, bannedAt: null },
+        tenant: this.tenantByCodeOrSlug(tenantCode),
       },
       include: {
         member: {
@@ -1299,7 +1312,7 @@ export class PublicController {
     const posts = await this.prisma.blogPost.findMany({
       where: {
         status: 'published',
-        tenant: { code: tenantCode, deletedAt: null, bannedAt: null },
+        tenant: this.tenantByCodeOrSlug(tenantCode),
       },
       orderBy: { publishedAt: 'desc' },
       select: {
