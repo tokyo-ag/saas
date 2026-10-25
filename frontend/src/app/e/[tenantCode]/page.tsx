@@ -8,6 +8,16 @@ import Link from 'next/link';
 import { ActivityTicker } from '@/components/liff/ActivityTicker';
 import { BellSchoolBreakdownSections } from '@/components/public/BellSchoolBreakdownSections';
 import {
+  UNIVERSITY_NATIONAL_COED,
+  UNIVERSITY_PRIVATE_COED,
+  UNIVERSITY_WOMENS,
+  UNIVERSITY_JUNIOR_COLLEGE,
+  VOCATIONAL_TOKYO,
+  VOCATIONAL_SAITAMA,
+  VOCATIONAL_CHIBA,
+  VOCATIONAL_KANAGAWA,
+} from '@/components/public/bellSchoolData';
+import {
   UnifiedReservationSchedule,
   UnifiedScheduleEvent,
 } from '@/components/public/UnifiedReservationSchedule';
@@ -313,7 +323,30 @@ export default async function TenantEventsPage({
           />
         </div>
 
-        {tenantCode === BELL_TENANT_CODE && <BellSchoolBreakdownSections />}
+        {tenantCode === BELL_TENANT_CODE && (
+          <>
+            <div className="sr-only">
+              <h2>インカレサークルBELLの大学・専門学校 参加分布</h2>
+              <h3>国公立・共学大学</h3>
+              <ul>{UNIVERSITY_NATIONAL_COED.map((s) => <li key={s.name}>{s.name}</li>)}</ul>
+              <h3>私立・共学大学</h3>
+              <ul>{UNIVERSITY_PRIVATE_COED.map((s) => <li key={s.name}>{s.name}</li>)}</ul>
+              <h3>女子大学</h3>
+              <ul>{UNIVERSITY_WOMENS.map((s) => <li key={s.name}>{s.name}</li>)}</ul>
+              <h3>短期大学</h3>
+              <ul>{UNIVERSITY_JUNIOR_COLLEGE.map((s) => <li key={s.name}>{s.name}</li>)}</ul>
+              <h3>東京エリアの専門学校</h3>
+              <ul>{VOCATIONAL_TOKYO.map((s) => <li key={s.name}>{s.name}</li>)}</ul>
+              <h3>埼玉エリアの専門学校</h3>
+              <ul>{VOCATIONAL_SAITAMA.map((s) => <li key={s.name}>{s.name}</li>)}</ul>
+              <h3>千葉エリアの専門学校</h3>
+              <ul>{VOCATIONAL_CHIBA.map((s) => <li key={s.name}>{s.name}</li>)}</ul>
+              <h3>神奈川エリアの専門学校</h3>
+              <ul>{VOCATIONAL_KANAGAWA.map((s) => <li key={s.name}>{s.name}</li>)}</ul>
+            </div>
+            <BellSchoolBreakdownSections />
+          </>
+        )}
       </div>
     </div>
   );
