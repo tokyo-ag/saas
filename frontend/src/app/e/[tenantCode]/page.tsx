@@ -189,13 +189,13 @@ function eventJsonLd(event: UnifiedScheduleEvent, tenantCode: string, tenantName
   };
 }
 
-function breadcrumbJsonLd(tenantCode: string, tenantName: string) {
+function breadcrumbJsonLd(tenantCode: string, tenantName: string, slug: string | undefined) {
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'ホーム', item: SITE_URL },
-      { '@type': 'ListItem', position: 2, name: tenantName, item: `${SITE_URL}/clubs/${tenantCode}` },
+      { '@type': 'ListItem', position: 2, name: tenantName, item: slug ? `${SITE_URL}/clubs/${tenantCode}/${slug}` : `${SITE_URL}/e/${tenantCode}` },
       { '@type': 'ListItem', position: 3, name: '予約スケジュール', item: `${SITE_URL}/e/${tenantCode}` },
     ],
   };
@@ -224,7 +224,7 @@ export default async function TenantEventsPage({
   const icon = tenant.linePictureUrl;
   const events = tenant.events ?? [];
   const eventsJsonLd = events.map((event) => eventJsonLd(event, tenantCode, name, icon));
-  const jsonLd = [breadcrumbJsonLd(tenantCode, name), ...eventsJsonLd];
+  const jsonLd = [breadcrumbJsonLd(tenantCode, name, slug), ...eventsJsonLd];
 
   return (
     <div className="min-h-screen w-full min-w-0 max-w-[100vw] overflow-x-hidden sm:bg-gray-200" style={{ backgroundColor }}>
@@ -238,7 +238,7 @@ export default async function TenantEventsPage({
       >
         <header className="sticky top-0 z-10 border-b border-gray-100" style={{ backgroundColor: navBg }}>
           <div className="flex items-center justify-between gap-2 px-4 pb-3 pt-12 sm:pt-4">
-            <Link href={`/clubs/${tenantCode}`} className="-m-2 flex min-w-0 items-center gap-2.5 rounded-xl p-2 active:bg-black/5">
+            <Link href={slug ? `/clubs/${tenantCode}/${slug}` : '/'} className="-m-2 flex min-w-0 items-center gap-2.5 rounded-xl p-2 active:bg-black/5">
               {icon ? (
                 <Image
                   src={imgUrl(icon, API_URL)!}
