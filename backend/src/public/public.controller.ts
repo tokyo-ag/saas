@@ -700,7 +700,6 @@ export class PublicController {
         deletedAt: null,
         bannedAt: null,
         code: { not: null },
-        events: { some: { status: 'open', heldAt: { gte: new Date() } } },
       },
       select: { code: true, updatedAt: true },
       orderBy: { updatedAt: 'desc' },
