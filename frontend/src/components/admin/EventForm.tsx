@@ -40,6 +40,7 @@ type EventFormData = {
   reminderMessageTemplate: string;
   levelEnabled: boolean;
   rosterShareEnabled: boolean;
+  rosterGenderSort: boolean;
   reserveActionStyle: '' | 'comiu' | 'line';
   imageUrl: string;
   iconUrl: string;
