@@ -165,7 +165,7 @@ function buildDescription(event: EventDetail) {
   return `${event.locationHint || event.location}で開催。参加費は${priceText(event)}。COMIUでイベント詳細を確認できます。`;
 }
 
-function buildJsonLd(event: EventDetail) {
+function buildJsonLd(event: EventDetail, tenantSlug: string | undefined) {
   const priceSpec =
     event.priceMale != null && event.priceFemale != null
       ? [
@@ -412,7 +412,7 @@ export default async function PublicEventPage({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(buildJsonLd(event)).replace(/</g, '\\u003c'),
+          __html: JSON.stringify(buildJsonLd(event, tenantSlug)).replace(/</g, '\\u003c'),
         }}
       />
 
