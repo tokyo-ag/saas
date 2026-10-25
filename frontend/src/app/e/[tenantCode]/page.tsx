@@ -284,6 +284,21 @@ export default async function TenantEventsPage({
           <p className="px-4 pb-2 text-sm leading-relaxed text-gray-500">{eventsIntroText(tenant)}</p>
         )}
 
+        {events.length > 0 && (
+          <ul className="sr-only">
+            {events.map((event) => (
+              <li key={event.id}>
+                <a href={`/e/${tenantCode}/${event.id}`}>
+                  {event.title}
+                  {event.heldAt && `　${new Date(event.heldAt).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}`}
+                  {(event.locationHint || event.location) && `　${event.locationHint || event.location}`}
+                  {event.category && `　${event.category}`}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+
         <div className="p-2">
           <UnifiedReservationSchedule
             accentColor={accentColor}
