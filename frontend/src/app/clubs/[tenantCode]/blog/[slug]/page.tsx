@@ -106,7 +106,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { tenantCode, slug } = await params;
   const post = await fetchPost(tenantCode, slug);
-  if (!post) return {};
+  if (!post) return { robots: { index: false, follow: false } };
   const tenantName = post.tenant?.name ?? post.tenant?.lineDisplayName ?? tenantCode;
   const description = post.excerpt ?? cleanDescription(post.body);
   const image =
@@ -122,6 +122,7 @@ export async function generateMetadata({
       description,
       type: 'article',
       publishedTime: post.publishedAt ?? undefined,
+      modifiedTime: post.updatedAt ?? undefined,
       url: `${SITE_URL}/clubs/${tenantCode}/blog/${slug}`,
       locale: 'ja_JP',
       images: [{ url: image, width: 1200, height: 630 }],

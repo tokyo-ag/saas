@@ -44,7 +44,10 @@ export async function generateMetadata({
   const data = await fetchPosts(tenantCode);
   const tenantName = data?.tenantName ?? tenantCode;
   const title = `ブログ | ${tenantName}`;
-  const description = `${tenantName}の活動ブログ・お知らせ一覧`;
+  const postCount = data?.posts?.length ?? 0;
+  const description = postCount > 0
+    ? `${tenantName}の活動ブログ・お知らせ一覧。最新${postCount}件の記事を掲載しています。`
+    : `${tenantName}の活動ブログ・お知らせ一覧。`;
   const image = data?.tenantIcon ?? `${SITE_URL}/opengraph-image`;
   return {
     title,
@@ -83,8 +86,22 @@ export default async function BlogListPage({
   if (!data) notFound();
   const { posts, tenantName, homeHref, tenantIcon } = data;
 
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'ホーム', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: tenantName, item: `${SITE_URL}${homeHref}` },
+      { '@type': 'ListItem', position: 3, name: 'ブログ', item: `${SITE_URL}/clubs/${tenantCode}/blog` },
+    ],
+  };
+
   return (
     <main className="min-h-screen bg-[#F7F8FA]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, '\\u003c') }}
+      />
       <div className="mx-auto max-w-2xl px-4 py-10">
         <div className="mb-8 flex items-center gap-3">
           <Link href={homeHref} className="text-sm text-[#06C755] hover:underline">

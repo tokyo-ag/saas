@@ -10,11 +10,13 @@ type SitemapEvent = { id: string; tenantCode: string; updatedAt: string };
 type SitemapPage = { tenantCode: string; slug: string; updatedAt: string };
 type SitemapBlogPost = { tenantCode: string; slug: string; updatedAt: string };
 type SitemapOfficialArticle = { slug: string; category?: string | null; areaTags?: string[]; updatedAt: string };
+type SitemapTenant = { tenantCode: string; updatedAt: string };
 
 let lastSuccessfulEvents: SitemapEvent[] = [];
 let lastSuccessfulPages: SitemapPage[] = [];
 let lastSuccessfulBlogPosts: SitemapBlogPost[] = [];
 let lastSuccessfulOfficialArticles: SitemapOfficialArticle[] = [];
+let lastSuccessfulTenants: SitemapTenant[] = [];
 
 function staticLastModified() {
   const value = process.env.NEXT_PUBLIC_SITE_LAST_MODIFIED;
@@ -84,13 +86,32 @@ async function fetchSitemapOfficialArticles(): Promise<SitemapOfficialArticle[]>
   }
 }
 
+async function fetchSitemapTenants(): Promise<SitemapTenant[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/public/sitemap-tenants`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`sitemap-tenants returned ${res.status}`);
+    const tenants = (await res.json()) as SitemapTenant[];
+    lastSuccessfulTenants = tenants;
+    return tenants;
+  } catch (error) {
+    if (lastSuccessfulTenants.length > 0) {
+      console.warn('[sitemap] using cached tenants after API failure', error);
+    }
+    return lastSuccessfulTenants;
+  }
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [events, pages, blogPosts, officialArticles] = await Promise.all([
+  const [events, pages, blogPosts, officialArticles, tenants] = await Promise.all([
     fetchSitemapEvents(),
     fetchSitemapPages(),
     fetchSitemapBlogPosts(),
     fetchSitemapOfficialArticles(),
+    fetchSitemapTenants(),
   ]);
+
+  // Tenant codes that already have a publicPage (and thus appear in cmsPages, reviewsIndexPages, eventsIndexPages)
+  const pagesTenantCodes = new Set(pages.map((p) => p.tenantCode));
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: SITE_URL, changeFrequency: 'daily', priority: 1, lastModified: STATIC_LAST_MODIFIED },
@@ -127,19 +148,38 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  const reviewsIndexPages: MetadataRoute.Sitemap = pages.map((p) => ({
-    url: `${SITE_URL}/clubs/${p.tenantCode}/reviews`,
-    lastModified: p.updatedAt ? new Date(p.updatedAt) : STATIC_LAST_MODIFIED,
-    changeFrequency: 'weekly' as const,
-    priority: 0.65,
-  }));
+  // Tenants without a publicPage also need their events index and reviews in the sitemap.
+  const tenantsWithoutPage = tenants.filter((t) => !pagesTenantCodes.has(t.tenantCode));
 
-  const eventsIndexPages: MetadataRoute.Sitemap = pages.map((p) => ({
-    url: `${SITE_URL}/e/${p.tenantCode}`,
-    lastModified: p.updatedAt ? new Date(p.updatedAt) : STATIC_LAST_MODIFIED,
-    changeFrequency: 'daily' as const,
-    priority: 0.7,
-  }));
+  const reviewsIndexPages: MetadataRoute.Sitemap = [
+    ...pages.map((p) => ({
+      url: `${SITE_URL}/clubs/${p.tenantCode}/reviews`,
+      lastModified: p.updatedAt ? new Date(p.updatedAt) : STATIC_LAST_MODIFIED,
+      changeFrequency: 'weekly' as const,
+      priority: 0.65,
+    })),
+    ...tenantsWithoutPage.map((t) => ({
+      url: `${SITE_URL}/clubs/${t.tenantCode}/reviews`,
+      lastModified: t.updatedAt ? new Date(t.updatedAt) : STATIC_LAST_MODIFIED,
+      changeFrequency: 'weekly' as const,
+      priority: 0.65,
+    })),
+  ];
+
+  const eventsIndexPages: MetadataRoute.Sitemap = [
+    ...pages.map((p) => ({
+      url: `${SITE_URL}/e/${p.tenantCode}`,
+      lastModified: p.updatedAt ? new Date(p.updatedAt) : STATIC_LAST_MODIFIED,
+      changeFrequency: 'daily' as const,
+      priority: 0.7,
+    })),
+    ...tenantsWithoutPage.map((t) => ({
+      url: `${SITE_URL}/e/${t.tenantCode}`,
+      lastModified: t.updatedAt ? new Date(t.updatedAt) : STATIC_LAST_MODIFIED,
+      changeFrequency: 'daily' as const,
+      priority: 0.7,
+    })),
+  ];
 
   const blogIndexByTenant = new Map<string, Date>();
   for (const post of blogPosts) {

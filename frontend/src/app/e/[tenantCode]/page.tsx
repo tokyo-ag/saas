@@ -9,7 +9,7 @@ import {
   UnifiedReservationSchedule,
   UnifiedScheduleEvent,
 } from '@/components/public/UnifiedReservationSchedule';
-import { SITE_URL, API_URL } from '@/lib/config';
+import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 
 // インカレサークルBELL専用のカスタマイズ（大学・専門学校の参加分布グラフ）
@@ -134,7 +134,7 @@ export async function generateMetadata({
   const description = bio
     ? `${bio}／${name}が開催するイベントの予約スケジュール一覧です。LINEなしでもご覧いただけます。`
     : `${name}が開催するイベントの予約スケジュール一覧です。LINEなしでもご覧いただけます。`;
-  const image = imgUrl(tenant.linePictureUrl, API_URL) ?? `${SITE_URL}/opengraph-image`;
+  const image = imgUrl(tenant.linePictureUrl, IMAGE_BASE_URL) ?? `${SITE_URL}/opengraph-image`;
   return {
     title,
     description,
@@ -168,7 +168,7 @@ function eventJsonLd(event: UnifiedScheduleEvent, tenantCode: string, tenantName
       : event.price != null
         ? { '@type': 'Offer', price: String(event.price), priceCurrency: 'JPY', availability: isFull ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock', url }
         : undefined;
-  const image = imgUrl(event.imageUrl, API_URL) ?? imgUrl(tenantIcon, API_URL) ?? `${SITE_URL}/opengraph-image`;
+  const image = imgUrl(event.imageUrl, IMAGE_BASE_URL) ?? imgUrl(tenantIcon, IMAGE_BASE_URL) ?? `${SITE_URL}/opengraph-image`;
 
   return {
     '@context': 'https://schema.org',

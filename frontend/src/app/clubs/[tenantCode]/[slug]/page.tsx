@@ -310,7 +310,7 @@ export async function generateMetadata({
       title,
       description,
       locale: 'ja_JP',
-      type: 'article',
+      type: 'website',
       url,
       images: [{ url: image, width: 1200, height: 630 }],
     },
@@ -527,14 +527,24 @@ export default async function ClubCmsPage({
   );
 
   const instagramUrl = sectionCopy.instagram?.trim() || '';
+  const canonicalTenantCode = page.tenant.code ?? tenantCode;
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'SportsOrganization',
     name: tenantName,
     description: descriptionFromPage(page),
-    url: `${SITE_URL}/clubs/${page.tenant.code ?? tenantCode}/${page.slug}`,
+    url: `${SITE_URL}/clubs/${canonicalTenantCode}/${page.slug}`,
     ...(image ? { image, logo: image } : {}),
     ...(instagramUrl ? { sameAs: [instagramUrl] } : {}),
+  };
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'ホーム', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: tenantName, item: `${SITE_URL}/clubs/${canonicalTenantCode}/${page.slug}` },
+    ],
   };
 
   const faqItems = ((page.blocks as any[]) ?? [])
@@ -776,6 +786,7 @@ export default async function ClubCmsPage({
     <main className="min-h-screen sm:bg-gray-200" style={{ fontFamily, backgroundColor: bgColor }}>
       <div className="mx-auto w-full max-w-[480px] sm:my-8 sm:overflow-hidden sm:rounded-3xl sm:shadow-2xl" style={{ backgroundColor: bgColor, minHeight: '100dvh' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, '\\u003c') }} />
       {faqJsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd).replace(/</g, '\\u003c') }} />
       )}
