@@ -292,8 +292,8 @@ export default async function TenantEventsPage({
         </div>
 
         <h1 className="sr-only">{name}の予約スケジュール</h1>
-        {tenant.showEventsIntroText !== false && eventsIntroText(tenant) && (
-          <p className="px-4 pb-2 text-sm leading-relaxed text-gray-500">{eventsIntroText(tenant)}</p>
+        {eventsIntroText(tenant) && (
+          <p className="sr-only">{eventsIntroText(tenant)}</p>
         )}
 
         {events.length > 0 && (
