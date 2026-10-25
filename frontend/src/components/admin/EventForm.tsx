@@ -365,6 +365,7 @@ export default function EventForm({
   hideLineNotify,
   onSaved,
   onDeleted,
+  onCancel,
 }: {
   initial?: Event;
   simplified?: boolean;
@@ -372,6 +373,7 @@ export default function EventForm({
   hideLineNotify?: boolean;
   onSaved?: () => void;
   onDeleted?: () => void;
+  onCancel?: () => void;
 }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -781,9 +783,8 @@ export default function EventForm({
       } else {
         await api.events.create(body);
       }
-      router.refresh();
       if (onSaved) onSaved();
-      else router.push('/admin/events');
+      else { router.refresh(); router.push('/admin/events'); }
     } catch (err: any) {
       if (err.message?.includes('スタンダード') || err.message?.includes('プラン')) setUpgradeRequired(true);
       else setError(err.message);
@@ -835,7 +836,7 @@ export default function EventForm({
       {upgradeRequired && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           フリープランの上限に達しました。
-          <Link href="/admin/settings/plan" className="ml-1 font-medium underline">プランを確認する</Link>
+          {!simplified && <Link href="/admin/settings/plan" className="ml-1 font-medium underline">プランを確認する</Link>}
         </div>
       )}
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
@@ -1391,7 +1392,7 @@ export default function EventForm({
         <button type="submit" disabled={submitting} className="rounded-lg bg-[#06C755] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#05a847] disabled:opacity-50">
           {submitting ? '保存中...' : '保存'}
         </button>
-        <button type="button" onClick={() => router.back()} className="rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50">
+        <button type="button" onClick={() => onCancel ? onCancel() : router.back()} className="rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50">
           キャンセル
         </button>
         {initial && (

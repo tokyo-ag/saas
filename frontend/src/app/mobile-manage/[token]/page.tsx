@@ -105,7 +105,7 @@ export default function MobileManagePage() {
           <button
             key={item.key}
             type="button"
-            onClick={() => setSection(item.key)}
+            onClick={() => { setSection(item.key); setScreen({ name: 'list' }); }}
             className={`shrink-0 border-b-2 -mb-px px-4 py-2.5 text-sm font-medium transition-colors ${
               section === item.key ? 'border-[#06C755] text-[#06C755]' : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
@@ -128,7 +128,7 @@ export default function MobileManagePage() {
             {screen.name === 'create' && (
               <div>
                 <ScreenHeader title="新規作成" onBack={() => setScreen({ name: 'list' })} />
-                <EventForm simplified hideLevel={session.hideLevel} hideLineNotify={session.hideLineNotify} onSaved={() => setScreen({ name: 'list' })} />
+                <EventForm simplified hideLevel={session.hideLevel} hideLineNotify={session.hideLineNotify} onSaved={() => setScreen({ name: 'list' })} onCancel={() => setScreen({ name: 'list' })} />
               </div>
             )}
             {screen.name === 'edit' && (
@@ -157,12 +157,15 @@ function ScreenHeader({ title, onBack }: { title: string; onBack: () => void }) 
 
 function EditScreen({ eventId, session, onDone }: { eventId: string; session: Session; onDone: () => void }) {
   const [event, setEvent] = useState<Event | null>(null);
-  useEffect(() => { api.events.get(eventId).then(setEvent).catch(() => {}); }, [eventId]);
+  const [loadError, setLoadError] = useState(false);
+  useEffect(() => { api.events.get(eventId).then(setEvent).catch(() => setLoadError(true)); }, [eventId]);
   return (
     <div>
       <ScreenHeader title="編集" onBack={onDone} />
-      {event ? (
-        <EventForm initial={event} simplified hideLevel={session.hideLevel} hideLineNotify={session.hideLineNotify} onSaved={onDone} onDeleted={onDone} />
+      {loadError ? (
+        <p className="text-sm text-red-500 px-4 py-8">読み込みに失敗しました。戻って再度お試しください。</p>
+      ) : event ? (
+        <EventForm initial={event} simplified hideLevel={session.hideLevel} hideLineNotify={session.hideLineNotify} onSaved={onDone} onDeleted={onDone} onCancel={onDone} />
       ) : (
         <p className="text-sm text-gray-400">読み込み中...</p>
       )}
@@ -236,7 +239,7 @@ function EventListScreen({
   const now = new Date();
   const filtered = events
     .filter((event) => {
-      if (tab === 'upcoming') return new Date(event.heldAt) > now && event.status !== 'draft';
+      if (tab === 'upcoming') return new Date(event.heldAt) > now && event.status !== 'draft' && event.status !== 'closed';
       if (tab === 'past') return new Date(event.heldAt) <= now || event.status === 'closed';
       return event.status === 'draft';
     })
@@ -305,6 +308,8 @@ function DetailScreen({ eventId, onBack, onEdit }: { eventId: string; onBack: ()
   const [reservations, setReservations] = useState<EventReservation[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [loadError, setLoadError] = useState(false);
+
   const load = useCallback(async () => {
     const [eventData, reservationList] = await Promise.all([
       api.events.get(eventId),
@@ -314,7 +319,7 @@ function DetailScreen({ eventId, onBack, onEdit }: { eventId: string; onBack: ()
     setReservations(reservationList as EventReservation[]);
   }, [eventId]);
 
-  useEffect(() => { load().catch(() => {}).finally(() => setLoading(false)); }, [load]);
+  useEffect(() => { load().catch(() => setLoadError(true)).finally(() => setLoading(false)); }, [load]);
 
   async function updateStatus(reservationId: string, status: string) {
     try {
@@ -327,6 +332,7 @@ function DetailScreen({ eventId, onBack, onEdit }: { eventId: string; onBack: ()
   }
 
   if (loading) return <p className="text-sm text-gray-400">読み込み中...</p>;
+  if (loadError) return <p className="text-sm text-red-500">読み込みに失敗しました。時間をおいて再度お試しください。</p>;
   if (!event) return <p className="text-sm text-red-500">イベントが見つかりません</p>;
 
   return (
@@ -593,11 +599,11 @@ function BlogEditScreen({ session, post, onDone }: { session: Session; post: Blo
           />
         </div>
         <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
-          <button type="button" onClick={() => void handleSave(false)} disabled={saving} className="rounded-lg border border-gray-200 px-5 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50">
-            下書き保存
+          <button type="button" onClick={() => void handleSave(false)} disabled={saving || uploading} className="rounded-lg border border-gray-200 px-5 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50">
+            {saving ? '保存中...' : '下書き保存'}
           </button>
-          <button type="button" onClick={() => void handleSave(true)} disabled={saving} className="rounded-lg bg-[#06C755] px-5 py-2 text-sm font-bold text-white hover:bg-[#05a847] disabled:opacity-50">
-            {saving ? '保存中...' : '公開する'}
+          <button type="button" onClick={() => void handleSave(true)} disabled={saving || uploading} className="rounded-lg bg-[#06C755] px-5 py-2 text-sm font-bold text-white hover:bg-[#05a847] disabled:opacity-50">
+            {saving ? '保存中...' : uploading ? 'アップロード中...' : '公開する'}
           </button>
         </div>
       </div>
