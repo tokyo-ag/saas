@@ -132,13 +132,13 @@ function formatDate(iso: string | null | undefined) {
   return new Date(iso).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-function breadcrumbJsonLd(tenantCode: string, tenantName: string) {
+function breadcrumbJsonLd(tenantCode: string, tenantName: string, slug: string | undefined) {
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'ホーム', item: SITE_URL },
-      { '@type': 'ListItem', position: 2, name: tenantName, item: `${SITE_URL}/clubs/${tenantCode}` },
+      { '@type': 'ListItem', position: 2, name: tenantName, item: slug ? `${SITE_URL}/clubs/${tenantCode}/${slug}` : `${SITE_URL}/e/${tenantCode}` },
       { '@type': 'ListItem', position: 3, name: '口コミ・評判', item: `${SITE_URL}/clubs/${tenantCode}/reviews` },
     ],
   };
@@ -170,7 +170,7 @@ export default async function ReviewsListPage({
     <div style={{ backgroundColor, minHeight: '100vh' }}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(tenantCode, name)) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(tenantCode, name, slug)) }}
       />
       <div className="mx-auto max-w-lg px-4 py-8">
         <div className="mb-6 flex items-center gap-3">

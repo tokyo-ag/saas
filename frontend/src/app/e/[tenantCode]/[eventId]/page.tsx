@@ -58,19 +58,19 @@ async function fetchEvent(eventId: string): Promise<EventDetail | null> {
   }
 }
 
-async function fetchTenantStyling(tenantCode: string): Promise<{ backgroundColor: string | null; accentColor: string | null }> {
+async function fetchTenantStyling(tenantCode: string): Promise<{ backgroundColor: string | null; accentColor: string | null; slug: string | undefined }> {
   try {
     const tenantRes = await fetch(`${API_URL}/api/public/tenants/${tenantCode}`, { next: { revalidate: 60 } });
-    if (!tenantRes.ok) return { backgroundColor: null, accentColor: null };
+    if (!tenantRes.ok) return { backgroundColor: null, accentColor: null, slug: undefined };
     const tenant = (await tenantRes.json()) as { pages?: Array<{ slug: string }> };
     const slug = tenant.pages?.[0]?.slug;
-    if (!slug) return { backgroundColor: null, accentColor: null };
+    if (!slug) return { backgroundColor: null, accentColor: null, slug: undefined };
     const pageRes = await fetch(`${API_URL}/api/public/tenants/${tenantCode}/pages/${slug}`, { next: { revalidate: 60 } });
-    if (!pageRes.ok) return { backgroundColor: null, accentColor: null };
+    if (!pageRes.ok) return { backgroundColor: null, accentColor: null, slug };
     const page = (await pageRes.json()) as { backgroundColor?: string | null; accentColor?: string | null };
-    return { backgroundColor: page.backgroundColor ?? null, accentColor: page.accentColor ?? null };
+    return { backgroundColor: page.backgroundColor ?? null, accentColor: page.accentColor ?? null, slug };
   } catch {
-    return { backgroundColor: null, accentColor: null };
+    return { backgroundColor: null, accentColor: null, slug: undefined };
   }
 }
 
@@ -153,7 +153,7 @@ function titleContext(event: EventDetail): string {
     day: 'numeric',
     timeZone: 'Asia/Tokyo',
   });
-  const area = event.tags && event.tags.length > 0 ? event.tags.slice(0, 2).join('・') : null;
+  const area = event.tags && event.tags.length > 0 ? event.tags.slice(0, 2).join('・') : (event.locationHint || event.location || null);
   return area ? `${date}開催・${area}` : `${date}開催`;
 }
 
@@ -278,7 +278,7 @@ function buildJsonLd(event: EventDetail) {
                   '@type': 'ListItem',
                   position: 2,
                   name: event.tenantName,
-                  item: `${SITE_URL}/clubs/${event.tenantCode}`,
+                  item: tenantSlug ? `${SITE_URL}/clubs/${event.tenantCode}/${tenantSlug}` : `${SITE_URL}/e/${event.tenantCode}`,
                 },
               ]
             : []),
@@ -354,7 +354,7 @@ export default async function PublicEventPage({
 
   if (!event || !event.tenantCode || event.tenantCode !== tenantCode) notFound();
 
-  const { backgroundColor, accentColor: tenantAccentColor } = await fetchTenantStyling(tenantCode);
+  const { backgroundColor, accentColor: tenantAccentColor, slug: tenantSlug } = await fetchTenantStyling(tenantCode);
   const rawAccentColor = tenantAccentColor || '#06C755';
   // アクセントカラーが白系だと、カード上のバッジやボタンの塗りに使うと文字ごと
   // 見えなくなるため、その場合は濃色にフォールバックする。

@@ -113,14 +113,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Tenant codes that already have a publicPage (and thus appear in cmsPages, reviewsIndexPages, eventsIndexPages)
   const pagesTenantCodes = new Set(pages.map((p) => p.tenantCode));
 
+  const discoveryLocked = process.env.NEXT_PUBLIC_DISCOVERY_LOCKED === 'true';
   const staticPages: MetadataRoute.Sitemap = [
     { url: SITE_URL, changeFrequency: 'daily', priority: 1, lastModified: STATIC_LAST_MODIFIED },
-    { url: `${SITE_URL}/events/meetup`, changeFrequency: 'daily', priority: 0.85, lastModified: STATIC_LAST_MODIFIED },
-    { url: `${SITE_URL}/sports/badminton`, changeFrequency: 'daily', priority: 0.85, lastModified: STATIC_LAST_MODIFIED },
-    { url: `${SITE_URL}/sports/basketball`, changeFrequency: 'daily', priority: 0.85, lastModified: STATIC_LAST_MODIFIED },
-    { url: `${SITE_URL}/sports/futsal`, changeFrequency: 'daily', priority: 0.85, lastModified: STATIC_LAST_MODIFIED },
-    { url: `${SITE_URL}/sports/volleyball`, changeFrequency: 'daily', priority: 0.85, lastModified: STATIC_LAST_MODIFIED },
-    { url: `${SITE_URL}/sports/tabletennis`, changeFrequency: 'daily', priority: 0.85, lastModified: STATIC_LAST_MODIFIED },
+    ...(!discoveryLocked
+      ? [
+          { url: `${SITE_URL}/events/meetup`, changeFrequency: 'daily' as const, priority: 0.85, lastModified: STATIC_LAST_MODIFIED },
+          { url: `${SITE_URL}/sports/badminton`, changeFrequency: 'daily' as const, priority: 0.85, lastModified: STATIC_LAST_MODIFIED },
+          { url: `${SITE_URL}/sports/basketball`, changeFrequency: 'daily' as const, priority: 0.85, lastModified: STATIC_LAST_MODIFIED },
+          { url: `${SITE_URL}/sports/futsal`, changeFrequency: 'daily' as const, priority: 0.85, lastModified: STATIC_LAST_MODIFIED },
+          { url: `${SITE_URL}/sports/volleyball`, changeFrequency: 'daily' as const, priority: 0.85, lastModified: STATIC_LAST_MODIFIED },
+          { url: `${SITE_URL}/sports/tabletennis`, changeFrequency: 'daily' as const, priority: 0.85, lastModified: STATIC_LAST_MODIFIED },
+        ]
+      : []),
     { url: `${SITE_URL}/use-cases`, changeFrequency: 'monthly', priority: 0.7, lastModified: STATIC_LAST_MODIFIED },
     { url: `${SITE_URL}/use-cases/badminton-tokyo`, changeFrequency: 'weekly', priority: 0.9, lastModified: STATIC_LAST_MODIFIED },
     { url: `${SITE_URL}/use-cases/basketball-tokyo`, changeFrequency: 'weekly', priority: 0.9, lastModified: STATIC_LAST_MODIFIED },
