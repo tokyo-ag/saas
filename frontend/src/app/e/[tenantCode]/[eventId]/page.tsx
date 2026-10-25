@@ -503,6 +503,7 @@ export default async function PublicEventPage({
               )}
             </div>
 
+            <h2 className="sr-only">開催情報</h2>
             <div className="mt-4 grid gap-2 rounded-2xl bg-gray-50 p-3 text-sm">
               <div className="flex items-start gap-2">
                 <span className="mt-0.5 text-gray-400">日</span>

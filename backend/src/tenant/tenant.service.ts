@@ -122,6 +122,7 @@ export class UpdateTenantDto {
   @IsOptional() @IsString() reservationMessageTemplate?: string;
   @IsOptional() @IsString() reminderMessageTemplate?: string;
   @IsOptional() @IsBoolean() activityTickerEnabled?: boolean;
+  @IsOptional() @IsBoolean() showEventsIntroText?: boolean;
   @IsOptional() @IsObject() eventSocialProofSettings?: Record<string, unknown>;
   @IsOptional() @IsBoolean() requireName?: boolean;
   @IsOptional() @IsBoolean() requireGrade?: boolean;
@@ -432,6 +433,9 @@ export class TenantService {
         }),
         ...(dto.activityTickerEnabled !== undefined && {
           activityTickerEnabled: dto.activityTickerEnabled,
+        }),
+        ...(dto.showEventsIntroText !== undefined && {
+          showEventsIntroText: dto.showEventsIntroText,
         }),
         ...(dto.eventSocialProofSettings !== undefined && {
           eventSocialProofSettings: normalizeEventSocialProofSettings(

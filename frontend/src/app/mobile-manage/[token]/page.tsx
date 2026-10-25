@@ -518,10 +518,6 @@ function BlogEditScreen({ session, post, onDone }: { session: Session; post: Blo
       setError('タイトルと文章は必須です');
       return;
     }
-    if (session.tenantTags.length === 0) {
-      setError('団体設定で団体種別・活動タグを設定してください');
-      return;
-    }
     setSaving(true);
     setError('');
     try {

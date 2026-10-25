@@ -983,6 +983,7 @@ export interface Tenant {
   reservationMessageTemplate?: string | null;
   reminderMessageTemplate?: string | null;
   activityTickerEnabled?: boolean;
+  showEventsIntroText?: boolean;
   eventSocialProofSettings?: EventSocialProofSettings | null;
   requireName?: boolean;
   requireGrade?: boolean;
@@ -1027,6 +1028,7 @@ export interface TenantInput {
   reservationMessageTemplate?: string;
   reminderMessageTemplate?: string;
   activityTickerEnabled?: boolean;
+  showEventsIntroText?: boolean;
   eventSocialProofSettings?: EventSocialProofSettings;
   requireName?: boolean;
   requireGrade?: boolean;

@@ -1109,7 +1109,7 @@ export default function EventForm({
             </div>
           </Field>
           <Field label="終了日時">
-            <div className={simplified ? '' : 'grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center'}>
+            <div className={simplified ? 'w-[140px]' : 'grid gap-2 sm:grid-cols-[180px_1fr] sm:items-center'}>
               <select
                 disabled={!form.heldAt}
                 value={timeFromLocalDatetime(form.endAt)}

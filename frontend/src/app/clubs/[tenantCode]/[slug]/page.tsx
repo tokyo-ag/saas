@@ -948,7 +948,7 @@ export default async function ClubCmsPage({
         <div id="reserve" className={`relative ${isFirstItem('reserve') ? '' : 'mt-8'} scroll-mt-6 px-5 py-6 shadow-sm`} style={{ backgroundColor: navBg, ...cardBorderStyle }}>
           <div className="relative">
             {reserveSectionTitle && (
-              <p className="text-lg font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</p>
+              <h2 className="text-lg font-bold" style={{ color: reserveTitleColor }}>{reserveSectionTitle}</h2>
             )}
             {reserveSectionLead && (
               <p className="mt-2 text-sm leading-7" style={{ color: reserveLeadColor }}>{reserveSectionLead}</p>
@@ -1002,7 +1002,7 @@ export default async function ClubCmsPage({
           <Link href={navBlogUrl} className="absolute inset-0 rounded-xl" aria-label={navLabels.blog} />
           <div className="relative">
             {blogSectionTitle && (
-              <p className="text-lg font-bold" style={{ color: blogTitleColor }}>{blogSectionTitle}</p>
+              <h2 className="text-lg font-bold" style={{ color: blogTitleColor }}>{blogSectionTitle}</h2>
             )}
             {blogSectionLead && (
               <p className="mt-2 text-sm leading-7" style={{ color: blogLeadColor }}>{blogSectionLead}</p>
@@ -1045,7 +1045,7 @@ export default async function ClubCmsPage({
           <Link href={`/clubs/${page.tenant.code ?? tenantCode}/reviews`} className="absolute inset-0 rounded-xl" aria-label="口コミ・評判を見る" />
           <div className="relative">
             {reviewsSectionTitle && (
-              <p className="text-lg font-bold" style={{ color: reviewsTitleColor }}>{reviewsSectionTitle}</p>
+              <h2 className="text-lg font-bold" style={{ color: reviewsTitleColor }}>{reviewsSectionTitle}</h2>
             )}
             {reviewsSectionLead && (
               <p className="mt-2 text-sm leading-7" style={{ color: reviewsLeadColor }}>{reviewsSectionLead}</p>

@@ -20,6 +20,7 @@ type TenantEventsData = {
   name: string;
   description?: string | null;
   eventsSeoDescription?: string | null;
+  showEventsIntroText?: boolean | null;
   lineDisplayName?: string | null;
   linePictureUrl?: string | null;
   liffId?: string | null;
@@ -42,7 +43,7 @@ function shortDescription(description: string | null | undefined): string {
 // meta description用：改行を含め1行に平坦化する。
 function flattenForMeta(description: string | null | undefined): string {
   if (!description) return '';
-  return description.trim().replace(/\s+/g, ' ').slice(0, 150);
+  return description.trim().replace(/\s+/g, ' ').slice(0, 100);
 }
 
 // 予約スケジュールページ専用のSEO文言があれば優先し、無ければ団体の紹介文にフォールバックする。
@@ -129,7 +130,7 @@ export async function generateMetadata({
     return { title: '団体が見つかりません', robots: { index: false, follow: false } };
   }
   const name = tenant.lineDisplayName || tenant.name;
-  const title = `${name}の予約スケジュール`;
+  const title = `${name}のイベント・予約一覧`;
   const bio = eventsMetaDescriptionSource(tenant);
   const description = bio
     ? `${bio}／${name}が開催するイベントの予約スケジュール一覧です。LINEなしでもご覧いただけます。`
@@ -279,7 +280,9 @@ export default async function TenantEventsPage({
         </div>
 
         <h1 className="sr-only">{name}の予約スケジュール</h1>
-        {eventsIntroText(tenant) && <p className="sr-only">{eventsIntroText(tenant)}</p>}
+        {tenant.showEventsIntroText !== false && eventsIntroText(tenant) && (
+          <p className="px-4 pb-2 text-sm leading-relaxed text-gray-500">{eventsIntroText(tenant)}</p>
+        )}
 
         <div className="p-2">
           <UnifiedReservationSchedule

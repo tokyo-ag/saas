@@ -98,6 +98,7 @@ export default function EventsPage() {
   const [reservationLineUrl, setReservationLineUrl] = useState('');
   const [displayFields, setDisplayFields] = useState<DisplayFields>(DEFAULT_DISPLAY_FIELDS);
   const [activityTickerEnabled, setActivityTickerEnabled] = useState(true);
+  const [showEventsIntroText, setShowEventsIntroText] = useState(true);
   const [socialProofSettings, setSocialProofSettings] = useState<EventSocialProofSettings>(DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS);
   const [savingSocialProof, setSavingSocialProof] = useState(false);
   const [socialProofSaved, setSocialProofSaved] = useState(false);
@@ -133,6 +134,7 @@ export default function EventsPage() {
           : 'card',
       );
       setActivityTickerEnabled(t.activityTickerEnabled !== false);
+      setShowEventsIntroText(t.showEventsIntroText !== false);
       setSocialProofSettings(normalizeEventSocialProofSettings(t.eventSocialProofSettings));
       setEventsSeoDescription(t.eventsSeoDescription ?? '');
       setStaffViewEnabled(!!t.staffViewEnabled);
@@ -188,6 +190,15 @@ export default function EventsPage() {
     setActivityTickerEnabled(next);
     try {
       await api.tenant.update({ activityTickerEnabled: next });
+      setIframeKey((k) => k + 1);
+    } catch { /* silent */ }
+  }
+
+  async function toggleShowEventsIntroText() {
+    const next = !showEventsIntroText;
+    setShowEventsIntroText(next);
+    try {
+      await api.tenant.update({ showEventsIntroText: next });
       setIframeKey((k) => k + 1);
     } catch { /* silent */ }
   }
@@ -694,6 +705,27 @@ export default function EventsPage() {
                 }`}
               >
                 {activityTickerEnabled ? 'ON' : 'OFF'}
+              </button>
+            </div>
+          </div>
+
+          {/* 紹介文の表示 */}
+          <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold text-gray-500">予約ページの紹介文</p>
+                <p className="mt-0.5 text-[11px] text-gray-400">SEO文言（下で設定）を予約スケジュールページ上部に表示します</p>
+              </div>
+              <button
+                type="button"
+                onClick={toggleShowEventsIntroText}
+                className={`shrink-0 rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
+                  showEventsIntroText
+                    ? 'border-[#06C755] bg-[#06C755]/8 text-[#06C755]'
+                    : 'border-gray-200 bg-gray-50 text-gray-400'
+                }`}
+              >
+                {showEventsIntroText ? 'ON' : 'OFF'}
               </button>
             </div>
           </div>
