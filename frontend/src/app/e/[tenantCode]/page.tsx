@@ -8,16 +8,6 @@ import Link from 'next/link';
 import { ActivityTicker } from '@/components/liff/ActivityTicker';
 import { BellSchoolBreakdownSections } from '@/components/public/BellSchoolBreakdownSections';
 import {
-  UNIVERSITY_NATIONAL_COED,
-  UNIVERSITY_PRIVATE_COED,
-  UNIVERSITY_WOMENS,
-  UNIVERSITY_JUNIOR_COLLEGE,
-  VOCATIONAL_TOKYO,
-  VOCATIONAL_SAITAMA,
-  VOCATIONAL_CHIBA,
-  VOCATIONAL_KANAGAWA,
-} from '@/components/public/bellSchoolData';
-import {
   UnifiedReservationSchedule,
   UnifiedScheduleEvent,
 } from '@/components/public/UnifiedReservationSchedule';
@@ -324,51 +314,7 @@ export default async function TenantEventsPage({
         </div>
 
         {tenantCode === BELL_TENANT_CODE && (
-          <>
-            <BellSchoolBreakdownSections />
-            <details className="mx-3 mb-6 mt-2 rounded-2xl border border-gray-100 bg-white/70 text-xs text-gray-400">
-              <summary className="cursor-pointer select-none px-4 py-3 text-[11px] text-gray-400 marker:content-none">
-                参加者統計データ
-              </summary>
-              <div className="px-4 pb-4 pt-1 leading-relaxed">
-                <p className="mb-2 text-[11px] text-gray-400">過去の参加実績をもとにした概算です。</p>
-                <div className="space-y-2">
-                  <div>
-                    <p className="font-medium text-gray-500">国公立・共学大学</p>
-                    <p>{UNIVERSITY_NATIONAL_COED.map((s) => s.name).join('、')}</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-500">私立・共学大学</p>
-                    <p>{UNIVERSITY_PRIVATE_COED.map((s) => s.name).join('、')}</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-500">女子大学</p>
-                    <p>{UNIVERSITY_WOMENS.map((s) => s.name).join('、')}</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-500">短期大学</p>
-                    <p>{UNIVERSITY_JUNIOR_COLLEGE.map((s) => s.name).join('、')}</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-500">東京エリアの専門学校</p>
-                    <p>{VOCATIONAL_TOKYO.map((s) => s.name).join('、')}</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-500">埼玉エリアの専門学校</p>
-                    <p>{VOCATIONAL_SAITAMA.map((s) => s.name).join('、')}</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-500">千葉エリアの専門学校</p>
-                    <p>{VOCATIONAL_CHIBA.map((s) => s.name).join('、')}</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-500">神奈川エリアの専門学校</p>
-                    <p>{VOCATIONAL_KANAGAWA.map((s) => s.name).join('、')}</p>
-                  </div>
-                </div>
-              </div>
-            </details>
-          </>
+          <BellSchoolBreakdownSections />
         )}
       </div>
     </div>
