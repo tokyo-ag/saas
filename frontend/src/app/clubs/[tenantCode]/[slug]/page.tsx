@@ -9,6 +9,7 @@ import { imgUrl } from '@/lib/imgUrl';
 import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
 import { ReservationViewShowcase, ReservationButton } from '@/components/public/ReservationViewShowcase';
 import { SnsBlock } from '@/components/public/SnsBlock';
+import { BellSchoolBreakdownSections } from '@/components/public/BellSchoolBreakdownSections';
 import { buildAutoSeoTitle, buildAutoSeoDescription, buildSeoProfileFromTenant, type TenantSeoProfile } from '@/lib/tenantSeo';
 import { isLightHexColor } from '@/lib/color';
 
@@ -1149,6 +1150,8 @@ export default async function ClubCmsPage({
           })()}
         </div>}
       </article>
+
+      {tenantCode === '11221185' && <BellSchoolBreakdownSections />}
 
       {/* Footer */}
       {(() => {
