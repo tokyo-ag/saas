@@ -292,10 +292,12 @@ export async function generateMetadata({
   }
 
   const tenantName = page.tenant.lineDisplayName || page.tenant.name;
+  const canonicalCode = page.tenant.code ?? tenantCode;
   const needsAutoSeo = !page.seoTitle || !page.seoDescription;
-  const seoProfile = needsAutoSeo ? await fetchTenantSeoProfile(page.tenant.code ?? tenantCode) : null;
-  const title = page.seoTitle || buildAutoSeoTitle(tenantName, seoProfile);
-  const description = page.seoDescription || buildAutoSeoDescription(tenantName, seoProfile);
+  const seoProfile = needsAutoSeo ? await fetchTenantSeoProfile(canonicalCode) : null;
+  const isBell = canonicalCode === '11221185';
+  const title = page.seoTitle || (isBell ? 'インカレサークルBELL｜東京No.1インカレ・初参加歓迎' : buildAutoSeoTitle(tenantName, seoProfile));
+  const description = page.seoDescription || (isBell ? '東京No.1インカレサークルBELL。国公立・私立・女子大・専門学校など100校以上から参加。初参加・1人参加大歓迎、ノンアル参加OK。東京・埼玉・千葉・神奈川エリアの大学生が集まるインカレサークル。' : buildAutoSeoDescription(tenantName, seoProfile));
   const image =
     imgUrl(page.imageUrls?.[0] ?? page.coverImageUrl ?? page.tenant.linePictureUrl ?? page.tenant.iconUrl, IMAGE_BASE_URL) ??
     `${SITE_URL}/opengraph-image`;
