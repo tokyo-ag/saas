@@ -128,11 +128,16 @@ export async function generateMetadata({
     return { title: '団体が見つかりません', robots: { index: false, follow: false } };
   }
   const name = tenant.lineDisplayName || tenant.name;
-  const title = `${name}のイベント・予約一覧`;
+  const isBell = tenantCode === '11221185';
+  const title = isBell
+    ? '【初参加歓迎】インカレサークルBELL｜イベント参加・予約一覧'
+    : `${name}のイベント・予約一覧`;
   const bio = eventsMetaDescriptionSource(tenant);
-  const description = bio
-    ? `${bio}／${name}が開催するイベントの予約スケジュール一覧です。LINEなしでもご覧いただけます。`
-    : `${name}が開催するイベントの予約スケジュール一覧です。LINEなしでもご覧いただけます。`;
+  const description = isBell
+    ? '東京No.1インカレサークルBELLのイベント一覧。ハロウィン・クリスマスなど季節イベント多数。初参加・1人参加OK、ノンアル参加可。国公立・私立・専門学校など100校以上から参加する東京のインカレサークル。'
+    : bio
+      ? `${bio}／${name}が開催するイベントの予約スケジュール一覧です。LINEなしでもご覧いただけます。`
+      : `${name}が開催するイベントの予約スケジュール一覧です。LINEなしでもご覧いただけます。`;
   const image = imgUrl(tenant.linePictureUrl, IMAGE_BASE_URL) ?? `${SITE_URL}/opengraph-image`;
   return {
     title,
