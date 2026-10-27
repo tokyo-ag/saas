@@ -220,6 +220,7 @@ export default async function TenantEventsPage({
   const tenant = await fetchTenant(tenantCode);
   if (!tenant) notFound();
 
+  const isBell = tenantCode === '11221185';
   const slug = tenant.pages?.[0]?.slug;
   const page = slug ? await fetchPageStyle(tenantCode, slug) : null;
 
@@ -290,7 +291,11 @@ export default async function TenantEventsPage({
 
         <h1 className="sr-only">{name}の予約スケジュール</h1>
         {eventsIntroText(tenant) && (
-          <p className="sr-only">{eventsIntroText(tenant)}</p>
+          isBell ? (
+            <p className="mx-4 mb-2 mt-3 text-xs leading-relaxed text-gray-500">{eventsIntroText(tenant)}</p>
+          ) : (
+            <p className="sr-only">{eventsIntroText(tenant)}</p>
+          )
         )}
 
         {events.length > 0 && (
