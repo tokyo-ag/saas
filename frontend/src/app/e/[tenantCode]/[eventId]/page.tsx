@@ -157,6 +157,12 @@ function titleContext(event: EventDetail): string {
   return area ? `${date}開催・${area}` : `${date}開催`;
 }
 
+function toJstIso(utcStr: string): string {
+  const d = new Date(utcStr);
+  const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+  return jst.toISOString().replace('Z', '+09:00');
+}
+
 function buildDescription(event: EventDetail) {
   const base = event.description?.trim() || event.descriptionMale?.trim() || event.descriptionFemale?.trim();
   if (base) {
@@ -227,8 +233,8 @@ function buildJsonLd(event: EventDetail, tenantSlug: string | undefined) {
         '@type': 'Event',
         name: event.title,
         description: buildDescription(event),
-        startDate: event.heldAt,
-        ...(endAt ? { endDate: endAt } : {}),
+        startDate: toJstIso(event.heldAt),
+        ...(endAt ? { endDate: toJstIso(endAt) } : {}),
         image: [image],
         location: {
           '@type': 'Place',

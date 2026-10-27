@@ -160,6 +160,12 @@ export async function generateMetadata({
   };
 }
 
+function toJstIso(utcStr: string): string {
+  const d = new Date(utcStr);
+  const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+  return jst.toISOString().replace('Z', '+09:00');
+}
+
 function eventJsonLd(event: UnifiedScheduleEvent, tenantCode: string, tenantName: string, tenantIcon: string | null | undefined) {
   const isFull = event.capacity != null && (event.reservedCount ?? 0) >= event.capacity;
   const url = `${SITE_URL}/e/${tenantCode}/${event.id}`;
@@ -178,8 +184,8 @@ function eventJsonLd(event: UnifiedScheduleEvent, tenantCode: string, tenantName
     '@context': 'https://schema.org',
     '@type': 'Event',
     name: event.title,
-    startDate: event.heldAt,
-    ...(event.endAt && { endDate: event.endAt }),
+    startDate: toJstIso(event.heldAt),
+    ...(event.endAt && { endDate: toJstIso(event.endAt) }),
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     eventStatus: 'https://schema.org/EventScheduled',
     location: {
