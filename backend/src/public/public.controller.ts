@@ -349,11 +349,12 @@ export class PublicController {
     if (!tenant) throw new NotFoundException('リンクが見つかりません');
 
     const now = new Date();
+    const fourHoursAgo = new Date(now.getTime() - 4 * 60 * 60 * 1000);
     const events = await this.prisma.event.findMany({
       where: {
         tenantId: tenant.id,
         status: { not: 'draft' },
-        OR: [{ endAt: { gte: now } }, { endAt: null, heldAt: { gte: now } }],
+        OR: [{ endAt: { gte: now } }, { endAt: null, heldAt: { gte: fourHoursAgo } }],
       },
       include: {
         reservations: {
@@ -391,12 +392,13 @@ export class PublicController {
     if (!tenant) throw new NotFoundException('リンクが見つかりません');
 
     const now = new Date();
+    const fourHoursAgo = new Date(now.getTime() - 4 * 60 * 60 * 1000);
     const event = await this.prisma.event.findFirst({
       where: {
         id: eventId,
         tenantId: tenant.id,
         status: { not: 'draft' },
-        OR: [{ endAt: { gte: now } }, { endAt: null, heldAt: { gte: now } }],
+        OR: [{ endAt: { gte: now } }, { endAt: null, heldAt: { gte: fourHoursAgo } }],
       },
     });
     if (!event) throw new NotFoundException('イベントが見つかりません');
@@ -1085,7 +1087,7 @@ export class PublicController {
           },
         },
         events: {
-          where: { status: 'open', heldAt: { gte: new Date() } },
+          where: { status: 'open', OR: [{ endAt: { gte: new Date() } }, { endAt: null, heldAt: { gte: new Date(Date.now() - 4 * 60 * 60 * 1000) } }] },
           orderBy: { heldAt: 'asc' },
           include: {
             reservations: {

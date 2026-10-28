@@ -198,11 +198,7 @@ export class AuthService {
       throw new UnauthorizedException('スーパー管理者権限がありません');
     }
 
-    return {
-      token: this.issueToken(account.tenantId, account.id, true),
-      tenantId: account.tenantId,
-      emailVerified: true,
-    };
+    return this.issuePendingTwoFactor(account);
   }
 
   async verifyTwoFactor(pendingToken: string, code: string) {
