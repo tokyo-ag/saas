@@ -41,6 +41,16 @@ export default function SuperadminLoginPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message ?? 'ログインに失敗しました');
+      // 旧バックエンド互換：tokenが直接返ってきた場合はそのままログイン
+      if (data.token) {
+        const payload = decodeJwt<{ isSuperadmin?: boolean }>(data.token);
+        if (!payload?.isSuperadmin) throw new Error('スーパー管理者権限がありません');
+        setToken(data.token);
+        applySuperadminSession(data.token);
+        router.replace('/superadmin');
+        return;
+      }
+      if (!data.pendingToken) throw new Error('サーバーエラーが発生しました。しばらく後でお試しください。');
       setPendingToken(data.pendingToken);
       setMaskedDestination(data.maskedDestination ?? email);
     } catch (err: unknown) {
