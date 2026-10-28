@@ -240,6 +240,14 @@ function buildJsonLd(event: EventDetail, tenantSlug: string | undefined) {
           '@type': 'Place',
           name: event.locationHint || event.location,
           ...(!event.locationHint && event.locationUrl ? { url: event.locationUrl } : {}),
+          ...(event.tenantCode === '11221185' && {
+            address: {
+              '@type': 'PostalAddress',
+              addressLocality: '豊島区',
+              addressRegion: '東京都',
+              addressCountry: 'JP',
+            },
+          }),
         },
         organizer: {
           '@type': 'Organization',

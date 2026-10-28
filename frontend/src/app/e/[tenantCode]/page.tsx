@@ -191,6 +191,14 @@ function eventJsonLd(event: UnifiedScheduleEvent, tenantCode: string, tenantName
     location: {
       '@type': 'Place',
       name: event.locationHint || event.location || tenantName,
+      ...(tenantCode === '11221185' && {
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: '豊島区',
+          addressRegion: '東京都',
+          addressCountry: 'JP',
+        },
+      }),
     },
     image: [image],
     organizer: { '@type': 'Organization', name: tenantName },
