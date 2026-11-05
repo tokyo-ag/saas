@@ -1149,7 +1149,7 @@ export default function EventForm({
           <Field label="場所の目安表示（駅からの距離など）">
             <input maxLength={200} value={form.locationHint} onChange={(e) => set('locationHint', e.target.value)} placeholder="例: 渋谷駅から徒歩5分" className={inputClass} />
             <p className="text-xs leading-5 text-gray-500">
-              予約前の方や検索エンジンには、場所名の代わりにこの目安が表示されます。未入力の場合は場所名がそのまま表示されます。予約済みの方には常に正式な場所名が表示されます。
+              ログインされてないユーザーに表示する内容です。
             </p>
           </Field>
         )}
