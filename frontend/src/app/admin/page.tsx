@@ -146,9 +146,6 @@ export default function DashboardPage() {
               {atLimit && <span className="text-xs font-semibold text-red-600">上限に達しています</span>}
               {nearLimit && <span className="text-xs font-semibold text-amber-600">上限に近づいています</span>}
             </div>
-            <button onClick={() => setShowUpgradeModal(true)} className="w-fit text-xs font-semibold text-[#06C755] hover:underline">
-              アップグレード
-            </button>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
