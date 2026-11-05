@@ -439,24 +439,6 @@ export default function EventForm({
     tags: normalizeEventTags(initial?.tags ?? []),
   });
 
-  // 既存イベントが定員・通知・参加者情報などを個別設定済みの場合は、
-  // その内容を見失わないよう詳細設定を開いた状態にする。新規作成時や
-  // すでにデフォルトのままのイベントでは閉じておき、画面をシンプルに保つ。
-  const hasAdvancedData = Boolean(
-    initial && (
-      initial.capacity != null ||
-      initial.capacityMale != null ||
-      initial.capacityFemale != null ||
-      initial.bellGenderRatioAuto ||
-      initial.bellApprovalRequired ||
-      (initial.paymentTiming && initial.paymentTiming !== 'onsite') ||
-      initial.notifyOnReserve === false ||
-      initial.remindEnabled ||
-      initial.reservationMessageTemplate?.trim() ||
-      initial.reminderMessageTemplate?.trim()
-    ),
-  );
-  const [advancedOpen, setAdvancedOpen] = useState(hasAdvancedData);
 
   useEffect(() => {
     // 超簡単モバイル管理のセッションには/admin/tenantへのアクセス権がなく、
@@ -1210,20 +1192,15 @@ export default function EventForm({
       </Section>
 
       {!simplified && (
-        <button
-          type="button"
-          onClick={() => setAdvancedOpen((v) => !v)}
-          className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-left hover:bg-gray-100"
-        >
+        <div className="flex w-full items-center rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
           <span>
             <span className="text-sm font-bold text-gray-700">詳細設定</span>
             <span className="ml-2 text-xs text-gray-400">定員・通知（通常は変更不要です）</span>
           </span>
-          <span className="shrink-0 text-xs font-medium text-gray-500">{advancedOpen ? '閉じる ▲' : '開く ▼'}</span>
-        </button>
+        </div>
       )}
 
-      {(simplified || advancedOpen) && (
+      {(simplified || true) && (
       <>
       <Section title="定員">
         <RadioGroup
