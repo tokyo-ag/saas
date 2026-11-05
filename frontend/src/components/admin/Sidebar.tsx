@@ -29,7 +29,6 @@ export default function Sidebar() {
     { href: '/admin/profile-form', label: '参加者フォーム', icon: 'F' },
     { href: '/admin/blog', label: 'ブログ', icon: 'B' },
     { href: '/admin/reviews', label: '口コミ', icon: 'R' },
-    { href: '/admin/messages', label: 'お問い合わせ', icon: 'C' },
     { href: '/admin', label: 'ダッシュボード', icon: 'D' },
     { href: '/admin/members', label: '参加者名簿', icon: 'U' },
     { href: '/admin/mobile-manage', label: '超簡単モバイル管理', icon: 'M' },
