@@ -6,10 +6,8 @@ import { api, formatDate, PublicRoster } from '@/lib/api';
 import { ReservationBadge } from '@/components/ui/StatusBadge';
 
 const POLL_INTERVAL_MS = 15000;
-const NO_REFERRER_KEY = '';
-const NO_REFERRER_LABEL = '紹介者未設定';
 
-type EditableField = 'referrer' | 'staffNote';
+type EditableField = 'staffNote';
 type Reservation = PublicRoster['reservations'][number];
 
 function summarize(reservations: Reservation[]) {
@@ -22,21 +20,6 @@ function summarize(reservations: Reservation[]) {
     pending: reservations.filter((r) => r.status === 'pending_approval').length,
     waitlisted: reservations.filter((r) => r.status === 'waitlisted').length,
   };
-}
-
-function groupByReferrer(reservations: Reservation[]) {
-  const groups = new Map<string, Reservation[]>();
-  for (const r of reservations) {
-    const key = r.referrer?.trim() || NO_REFERRER_KEY;
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(r);
-  }
-  return Array.from(groups.entries()).sort(([a], [b]) => {
-    if (a === b) return 0;
-    if (a === NO_REFERRER_KEY) return 1;
-    if (b === NO_REFERRER_KEY) return -1;
-    return a.localeCompare(b, 'ja');
-  });
 }
 
 function SummaryBar({ stats, approvalMode }: { stats: ReturnType<typeof summarize>; approvalMode: boolean }) {
@@ -119,38 +102,6 @@ export default function RosterSharePage() {
     setEdits((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
   }
 
-  async function handleReferrerChange(id: string, value: string) {
-    setEdits((prev) => ({ ...prev, [id]: { ...prev[id], referrer: value } }));
-    setSavingId(id);
-    try {
-      await api.public.updateRosterReservation(token, id, { referrer: value });
-      setRoster((prev) =>
-        prev
-          ? {
-              ...prev,
-              reservations: prev.reservations.map((r) =>
-                r.id === id ? { ...r, referrer: value.trim() || null } : r,
-              ),
-            }
-          : prev,
-      );
-      setEdits((prev) => {
-        const next = { ...prev };
-        if (next[id]) {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { referrer: _r, ...rest } = next[id]!;
-          if (Object.keys(rest).length === 0) delete next[id];
-          else next[id] = rest;
-        }
-        return next;
-      });
-    } catch {
-      alert('保存に失敗しました');
-    } finally {
-      setSavingId(null);
-    }
-  }
-
   async function handleFieldBlur(id: string, field: EditableField) {
     const value = edits[id]?.[field];
     if (value === undefined) return;
@@ -213,7 +164,6 @@ export default function RosterSharePage() {
 
   const { event, reservations } = roster;
   const overallStats = summarize(reservations);
-  const referrerGroups = groupByReferrer(reservations);
 
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
@@ -234,96 +184,63 @@ export default function RosterSharePage() {
             <div className="p-8 text-center text-sm text-gray-400">まだ参加者はいません</div>
           ) : (
             <>
-              {/* モバイル：紹介者グループごとに見出し＋カード */}
-              <div className="md:hidden">
-                {referrerGroups.map(([referrerKey, group]) => {
-                  const groupStats = summarize(group);
-                  return (
-                    <div key={referrerKey || '__none__'} className="border-t border-gray-100">
-                      <div className="flex items-center justify-between gap-2 bg-gray-50 px-4 py-2">
-                        <span className="text-xs font-bold text-gray-700">{referrerKey || NO_REFERRER_LABEL}</span>
-                        <span className="text-[11px] text-gray-500">
-                          {groupStats.total}人（男{groupStats.male}・女{groupStats.female}）
-                          {groupStats.waitlisted > 0 && ` ・未確定${groupStats.waitlisted}`}
-                        </span>
-                      </div>
-                      <div className="divide-y divide-gray-100">
-                        {group.map((r) => (
-                          <div key={r.id} className="p-4">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex items-start gap-2">
-                                {r.linePictureUrl ? (
-                                  <img src={r.linePictureUrl} alt="" className="mt-0.5 h-6 w-6 shrink-0 rounded-full object-cover" />
-                                ) : (
-                                  <span className="mt-0.5 h-6 w-6 shrink-0 rounded-full bg-gray-200" />
-                                )}
-                                <div>
-                                  <p className="text-sm font-bold text-gray-900">{r.name ?? '未入力'}</p>
-                                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
-                                    <span>{r.grade ?? '-'}</span>
-                                    <span>{r.gender ?? '-'}</span>
-                                    {event.levelEnabled && <span>{r.level ?? '-'}</span>}
-                                  </div>
-                                </div>
-                              </div>
-                              <ReservationBadge status={r.status} />
-                            </div>
-                            <div className="mt-2 grid grid-cols-2 gap-2 pl-8">
-                              <label className="block">
-                                <span className="text-[10px] font-semibold text-gray-400">紹介者</span>
-                                <select
-                                  value={fieldValue(r, 'referrer')}
-                                  onChange={(e) => handleReferrerChange(r.id, e.target.value)}
-                                  disabled={savingId === r.id}
-                                  className="mt-0.5 w-full rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755]"
-                                >
-                                  <option value="">紹介者なし</option>
-                                  {(() => {
-                                    const current = fieldValue(r, 'referrer');
-                                    const options = event.referrerOptions ?? [];
-                                    const extra = current && !options.includes(current) ? current : null;
-                                    return (<>{extra && <option value={extra}>{extra}</option>}{options.map((o) => <option key={o} value={o}>{o}</option>)}</>);
-                                  })()}
-                                </select>
-                              </label>
-                              <label className="block">
-                                <span className="text-[10px] font-semibold text-gray-400">備考</span>
-                                <input
-                                  value={fieldValue(r, 'staffNote')}
-                                  onChange={(e) => handleFieldChange(r.id, 'staffNote', e.target.value)}
-                                  onBlur={() => handleFieldBlur(r.id, 'staffNote')}
-                                  disabled={savingId === r.id}
-                                  className="mt-0.5 w-full rounded-lg border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755]"
-                                />
-                              </label>
-                            </div>
-                            {event.bellApprovalRequired && r.status === 'pending_approval' && (
-                              <div className="mt-3 flex gap-2 pl-8">
-                                <button
-                                  onClick={() => handleApproval(r.id, 'reserved')}
-                                  disabled={approvalSavingId === r.id}
-                                  className="rounded-lg bg-purple-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
-                                >
-                                  承認して通知
-                                </button>
-                                <button
-                                  onClick={() => handleApproval(r.id, 'cancelled')}
-                                  disabled={approvalSavingId === r.id}
-                                  className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 disabled:opacity-50"
-                                >
-                                  キャンセルして通知
-                                </button>
-                              </div>
-                            )}
+              {/* モバイル：カード一覧 */}
+              <div className="md:hidden divide-y divide-gray-100">
+                {reservations.map((r) => (
+                  <div key={r.id} className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-2">
+                        {r.linePictureUrl ? (
+                          <img src={r.linePictureUrl} alt="" className="mt-0.5 h-6 w-6 shrink-0 rounded-full object-cover" />
+                        ) : (
+                          <span className="mt-0.5 h-6 w-6 shrink-0 rounded-full bg-gray-200" />
+                        )}
+                        <div>
+                          <p className="text-sm font-bold text-gray-900">{r.name ?? '未入力'}</p>
+                          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
+                            <span>{r.grade ?? '-'}</span>
+                            <span>{r.gender ?? '-'}</span>
+                            {event.levelEnabled && <span>{r.level ?? '-'}</span>}
                           </div>
-                        ))}
+                        </div>
                       </div>
+                      <ReservationBadge status={r.status} />
                     </div>
-                  );
-                })}
+                    <div className="mt-2 pl-8">
+                      <label className="block">
+                        <span className="text-[10px] font-semibold text-gray-400">備考</span>
+                        <input
+                          value={fieldValue(r, 'staffNote')}
+                          onChange={(e) => handleFieldChange(r.id, 'staffNote', e.target.value)}
+                          onBlur={() => handleFieldBlur(r.id, 'staffNote')}
+                          disabled={savingId === r.id}
+                          className="mt-0.5 w-full rounded-lg border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755]"
+                        />
+                      </label>
+                    </div>
+                    {event.bellApprovalRequired && r.status === 'pending_approval' && (
+                      <div className="mt-3 flex gap-2 pl-8">
+                        <button
+                          onClick={() => handleApproval(r.id, 'reserved')}
+                          disabled={approvalSavingId === r.id}
+                          className="rounded-lg bg-purple-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
+                        >
+                          承認して通知
+                        </button>
+                        <button
+                          onClick={() => handleApproval(r.id, 'cancelled')}
+                          disabled={approvalSavingId === r.id}
+                          className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 disabled:opacity-50"
+                        >
+                          キャンセルして通知
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
 
-              {/* デスクトップ：1つの表の中で紹介者グループごとにtbodyを分ける */}
+              {/* デスクトップ：テーブル */}
               <div className="hidden overflow-x-auto md:block">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
@@ -333,86 +250,52 @@ export default function RosterSharePage() {
                       <th className="px-6 py-3 text-left">性別</th>
                       {event.levelEnabled && <th className="px-6 py-3 text-left">レベル</th>}
                       <th className="px-6 py-3 text-left">ステータス</th>
-                      <th className="px-6 py-3 text-left">紹介者</th>
                       <th className="px-6 py-3 text-left">備考</th>
                       {event.bellApprovalRequired && <th className="px-6 py-3 text-left">承認操作</th>}
                     </tr>
                   </thead>
-                  {referrerGroups.map(([referrerKey, group]) => {
-                    const groupStats = summarize(group);
-                    const colCount = (event.levelEnabled ? 7 : 6) + (event.bellApprovalRequired ? 1 : 0);
-                    return (
-                      <tbody key={referrerKey || '__none__'} className="divide-y divide-gray-100">
-                        <tr className="bg-gray-50">
-                          <td colSpan={colCount} className="px-6 py-2">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-xs font-bold text-gray-700">{referrerKey || NO_REFERRER_LABEL}</span>
-                              <span className="text-[11px] text-gray-500">
-                                {groupStats.total}人（男{groupStats.male}・女{groupStats.female}）
-                                {groupStats.waitlisted > 0 && ` ・未確定${groupStats.waitlisted}`}
-                              </span>
-                            </div>
-                          </td>
-                        </tr>
-                        {group.map((r) => (
-                          <tr key={r.id}>
-                            <td className="px-6 py-4 font-medium text-gray-900">
-                              <div className="flex items-center gap-2">
-                                {r.linePictureUrl ? (
-                                  <img src={r.linePictureUrl} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
-                                ) : (
-                                  <span className="h-6 w-6 shrink-0 rounded-full bg-gray-200" />
-                                )}
-                                {r.name ?? '未入力'}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-gray-600">{r.grade ?? '-'}</td>
-                            <td className="px-6 py-4 text-gray-600">{r.gender ?? '-'}</td>
-                            {event.levelEnabled && <td className="px-6 py-4 text-gray-600">{r.level ?? '-'}</td>}
-                            <td className="px-6 py-4">
-                              <ReservationBadge status={r.status} />
-                            </td>
-                            {event.bellApprovalRequired && (
-                              <td className="whitespace-nowrap px-6 py-4">
-                                {r.status === 'pending_approval' ? (
-                                  <div className="flex gap-2">
-                                    <button onClick={() => handleApproval(r.id, 'reserved')} disabled={approvalSavingId === r.id} className="text-xs font-bold text-purple-600 disabled:opacity-50">承認して通知</button>
-                                    <button onClick={() => handleApproval(r.id, 'cancelled')} disabled={approvalSavingId === r.id} className="text-xs text-red-600 disabled:opacity-50">キャンセルして通知</button>
-                                  </div>
-                                ) : <span className="text-xs text-gray-400">処理済み</span>}
-                              </td>
+                  <tbody className="divide-y divide-gray-100">
+                    {reservations.map((r) => (
+                      <tr key={r.id}>
+                        <td className="px-6 py-4 font-medium text-gray-900">
+                          <div className="flex items-center gap-2">
+                            {r.linePictureUrl ? (
+                              <img src={r.linePictureUrl} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
+                            ) : (
+                              <span className="h-6 w-6 shrink-0 rounded-full bg-gray-200" />
                             )}
-                            <td className="px-6 py-4">
-                              <select
-                                value={fieldValue(r, 'referrer')}
-                                onChange={(e) => handleReferrerChange(r.id, e.target.value)}
-                                disabled={savingId === r.id}
-                                className="w-32 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755]"
-                              >
-                                <option value="">紹介者なし</option>
-                                {(() => {
-                                  const current = fieldValue(r, 'referrer');
-                                  const options = event.referrerOptions ?? [];
-                                  const extra = current && !options.includes(current) ? current : null;
-                                  return (<>{extra && <option value={extra}>{extra}</option>}{options.map((o) => <option key={o} value={o}>{o}</option>)}</>);
-                                })()}
-                              </select>
-                            </td>
-                            <td className="px-6 py-4">
-                              <input
-                                value={fieldValue(r, 'staffNote')}
-                                onChange={(e) => handleFieldChange(r.id, 'staffNote', e.target.value)}
-                                onBlur={() => handleFieldBlur(r.id, 'staffNote')}
-                                disabled={savingId === r.id}
-                                placeholder="備考"
-                                className="w-40 rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755]"
-                              />
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    );
-                  })}
+                            {r.name ?? '未入力'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-gray-600">{r.grade ?? '-'}</td>
+                        <td className="px-6 py-4 text-gray-600">{r.gender ?? '-'}</td>
+                        {event.levelEnabled && <td className="px-6 py-4 text-gray-600">{r.level ?? '-'}</td>}
+                        <td className="px-6 py-4">
+                          <ReservationBadge status={r.status} />
+                        </td>
+                        <td className="px-6 py-4">
+                          <input
+                            value={fieldValue(r, 'staffNote')}
+                            onChange={(e) => handleFieldChange(r.id, 'staffNote', e.target.value)}
+                            onBlur={() => handleFieldBlur(r.id, 'staffNote')}
+                            disabled={savingId === r.id}
+                            placeholder="備考"
+                            className="w-40 rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#06C755]"
+                          />
+                        </td>
+                        {event.bellApprovalRequired && (
+                          <td className="whitespace-nowrap px-6 py-4">
+                            {r.status === 'pending_approval' ? (
+                              <div className="flex gap-2">
+                                <button onClick={() => handleApproval(r.id, 'reserved')} disabled={approvalSavingId === r.id} className="text-xs font-bold text-purple-600 disabled:opacity-50">承認して通知</button>
+                                <button onClick={() => handleApproval(r.id, 'cancelled')} disabled={approvalSavingId === r.id} className="text-xs text-red-600 disabled:opacity-50">キャンセルして通知</button>
+                              </div>
+                            ) : <span className="text-xs text-gray-400">処理済み</span>}
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
                 </table>
               </div>
             </>

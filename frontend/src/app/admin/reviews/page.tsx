@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { api, AdminTenantReview, formatDate } from '@/lib/api';
 import { SITE_URL } from '@/lib/config';
-import { TenantSeoTextSection } from '@/components/admin/TenantSeoTextSection';
 
 function TenantReviewSection({
   rows,
@@ -66,46 +65,6 @@ function TenantReviewSection({
   );
 }
 
-function ReviewsSeoPreview({
-  previewUrl,
-  iframeKey,
-  onReload,
-}: {
-  previewUrl: string;
-  iframeKey: number;
-  onReload: () => void;
-}) {
-  if (!previewUrl) return null;
-  return (
-    <aside className="hidden shrink-0 lg:block">
-      <div className="sticky top-4">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <p className="text-[11px] font-bold text-gray-400">🔍 SEOページはこう見えます</p>
-          <button
-            type="button"
-            onClick={onReload}
-            className="text-[10px] text-gray-400 hover:text-gray-600 underline"
-          >
-            再読込
-          </button>
-        </div>
-        <div className="overflow-hidden rounded-[2.5rem] border-[6px] border-gray-800 bg-white shadow-2xl" style={{ width: '220px' }}>
-          <div className="flex items-center justify-center gap-2 bg-gray-800 py-2">
-            <div className="h-1.5 w-12 rounded-full bg-gray-600" />
-          </div>
-          <iframe
-            key={iframeKey}
-            src={previewUrl}
-            width="375"
-            height="667"
-            style={{ zoom: 0.587, border: 'none', display: 'block' }}
-            title="SEOページプレビュー"
-          />
-        </div>
-      </div>
-    </aside>
-  );
-}
 
 export default function AdminReviewsPage() {
   const [rows, setRows] = useState<AdminTenantReview[]>([]);
@@ -113,8 +72,6 @@ export default function AdminReviewsPage() {
   const [error, setError] = useState('');
   const [tenantCode, setTenantCode] = useState('');
   const [copied, setCopied] = useState(false);
-  const [seoDescription, setSeoDescription] = useState<string | null>(null);
-  const [iframeKey, setIframeKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -125,7 +82,6 @@ export default function AdminReviewsPage() {
     api.tenant.get().then((t) => {
       if (!active) return;
       setTenantCode(t.code ?? t.id);
-      setSeoDescription(t.reviewsSeoDescription ?? '');
     }).catch(() => {});
     return () => { active = false; };
   }, []);
@@ -177,32 +133,12 @@ export default function AdminReviewsPage() {
         </div>
       )}
 
-      {seoDescription !== null && (
-        <TenantSeoTextSection
-          field="reviewsSeoDescription"
-          title="口コミページのSEO文言"
-          helpText="公開用の口コミページの見出し下とmeta descriptionに使われます。空欄の場合は団体の紹介文が使われます。「評判」「口コミ」で検索して不安を持っている人に向けて、団体の雰囲気や安心して参加できる理由を書くのがおすすめです。"
-          placeholder="例：飲み会中心の雰囲気ではなく、初参加や1人参加の方でも安心して楽しめるサークルです。"
-          initialValue={seoDescription}
-          onSaved={(value) => { setSeoDescription(value); setIframeKey((k) => k + 1); }}
-        />
-      )}
-
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-        <div className="min-w-0 flex-1">
-          <TenantReviewSection
-            rows={rows}
-            loading={loading}
-            error={error}
-            onDelete={handleDelete}
-          />
-        </div>
-        <ReviewsSeoPreview
-          previewUrl={tenantCode ? `/clubs/${tenantCode}/reviews` : ''}
-          iframeKey={iframeKey}
-          onReload={() => setIframeKey((k) => k + 1)}
-        />
-      </div>
+      <TenantReviewSection
+        rows={rows}
+        loading={loading}
+        error={error}
+        onDelete={handleDelete}
+      />
     </div>
   );
 }

@@ -7,12 +7,7 @@ import { api, formatDate } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { SITE_URL } from '@/lib/config';
 import { EventStatusBadge } from '@/components/ui/StatusBadge';
-import { TenantSeoTextSection } from '@/components/admin/TenantSeoTextSection';
-import {
-  DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS,
-  normalizeEventSocialProofSettings,
-} from '@/lib/eventSocialProof';
-import type { Event, EventSocialProofRule, EventSocialProofSettings } from '@/lib/api';
+import type { Event } from '@/lib/api';
 
 const reserveViewOptions = [
   { label: 'カレンダー', value: 'calendar' },
@@ -22,8 +17,6 @@ const reserveViewOptions = [
 
 type ReservationActionStyle = 'comiu' | 'line';
 type DisplayFields = { location: boolean; price: boolean; capacity: boolean; description: boolean };
-type SocialProofRuleKey = 'balanced' | 'ratio32';
-
 const DEFAULT_DISPLAY_FIELDS: DisplayFields = { location: true, price: true, capacity: false, description: true };
 
 const reservationActionOptions: { label: string; value: ReservationActionStyle }[] = [
@@ -98,14 +91,9 @@ export default function EventsPage() {
   const [reservationLineUrl, setReservationLineUrl] = useState('');
   const [displayFields, setDisplayFields] = useState<DisplayFields>(DEFAULT_DISPLAY_FIELDS);
   const [activityTickerEnabled, setActivityTickerEnabled] = useState(true);
-  const [showEventsIntroText, setShowEventsIntroText] = useState(true);
-  const [socialProofSettings, setSocialProofSettings] = useState<EventSocialProofSettings>(DEFAULT_EVENT_SOCIAL_PROOF_SETTINGS);
-  const [savingSocialProof, setSavingSocialProof] = useState(false);
-  const [socialProofSaved, setSocialProofSaved] = useState(false);
   const [savingStyle, setSavingStyle] = useState(false);
   const [reflected, setReflected] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
-  const [eventsSeoDescription, setEventsSeoDescription] = useState<string | null>(null);
   const [staffViewEnabled, setStaffViewEnabled] = useState(false);
   const [staffViewToken, setStaffViewToken] = useState<string | null>(null);
   const [savingStaffView, setSavingStaffView] = useState(false);
@@ -134,9 +122,6 @@ export default function EventsPage() {
           : 'card',
       );
       setActivityTickerEnabled(t.activityTickerEnabled !== false);
-      setShowEventsIntroText(t.showEventsIntroText !== false);
-      setSocialProofSettings(normalizeEventSocialProofSettings(t.eventSocialProofSettings));
-      setEventsSeoDescription(t.eventsSeoDescription ?? '');
       setStaffViewEnabled(!!t.staffViewEnabled);
       setStaffViewToken(t.staffViewToken ?? null);
     }).catch(() => {});
@@ -194,15 +179,6 @@ export default function EventsPage() {
     } catch { /* silent */ }
   }
 
-  async function toggleShowEventsIntroText() {
-    const next = !showEventsIntroText;
-    setShowEventsIntroText(next);
-    try {
-      await api.tenant.update({ showEventsIntroText: next });
-      setIframeKey((k) => k + 1);
-    } catch { /* silent */ }
-  }
-
   async function toggleDisplayField(key: keyof DisplayFields) {
     const next = { ...displayFields, [key]: !displayFields[key] };
     setDisplayFields(next);
@@ -221,30 +197,6 @@ export default function EventsPage() {
       headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: JSON.stringify({ tenantCode, ...(slug ? { slug } : {}) }),
     }).catch(() => null);
-  }
-
-  function updateSocialProofRule(key: SocialProofRuleKey, patch: Partial<EventSocialProofRule>) {
-    setSocialProofSettings((current) => ({
-      ...current,
-      [key]: { ...current[key], ...patch },
-    }));
-  }
-
-  async function saveSocialProofSettings() {
-    setSavingSocialProof(true);
-    setSocialProofSaved(false);
-    try {
-      const updated = await api.tenant.update({ eventSocialProofSettings: socialProofSettings });
-      setSocialProofSettings(normalizeEventSocialProofSettings(updated.eventSocialProofSettings));
-      await revalidate(tenantId, publicPageData?.slug);
-      setIframeKey((key) => key + 1);
-      setSocialProofSaved(true);
-      setTimeout(() => setSocialProofSaved(false), 2500);
-    } catch (error: any) {
-      alert(error?.message ?? '注目表示の設定を保存できませんでした');
-    } finally {
-      setSavingSocialProof(false);
-    }
   }
 
   async function saveAndReflect() {
@@ -517,177 +469,6 @@ export default function EventsPage() {
             </div>
           </div>
 
-          {/* イベントカードの注目表示 */}
-          <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold text-gray-700">イベントカードの注目表示</p>
-                <p className="mt-0.5 text-[11px] leading-relaxed text-gray-400">
-                  定員を設定しているイベントは「男性／女性募集中」→残りわずかで具体的な残数、満員で満員表示に切り替わります。
-                  定員がないイベントは、はっきり判定できる男女比（半々・約3:2）と、現在の参加予定人数を表示します。
-                </p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={socialProofSettings.enabled}
-                onClick={() => setSocialProofSettings((current) => ({ ...current, enabled: !current.enabled }))}
-                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${socialProofSettings.enabled ? 'bg-[#06C755]' : 'bg-gray-300'}`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${socialProofSettings.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-            </div>
-
-            {socialProofSettings.enabled && (
-              <div className="mt-4 space-y-4 border-t border-gray-100 pt-4">
-                <div>
-                  <p className="mb-2 text-[11px] font-bold text-gray-500">男女比の表示（定員がないイベントのみ）</p>
-                  <div className="flex flex-wrap gap-2">
-                    {([
-                      ['balanced', '男女比半々'],
-                      ['ratio32', '男女比約3:2'],
-                    ] as const).map(([key, label]) => {
-                      const enabled = socialProofSettings[key].enabled;
-                      return (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => updateSocialProofRule(key, { enabled: !enabled })}
-                          className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${enabled ? 'border-[#06C755] bg-[#06C755]/8 text-[#06C755]' : 'border-gray-200 bg-gray-50 text-gray-400 line-through'}`}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <p className="mt-2 text-[10px] leading-relaxed text-gray-400">
-                    上記のどちらにも当てはまらないくらい偏っている場合は、何も表示しません。
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="text-[11px] font-medium text-gray-500">
-                    「現在◯人参加予定！」を出す最低人数
-                    <input
-                      type="number"
-                      min={1}
-                      max={1000}
-                      value={socialProofSettings.minParticipantsForVolume}
-                      onChange={(event) => setSocialProofSettings((current) => ({
-                        ...current,
-                        minParticipantsForVolume: Number(event.target.value),
-                      }))}
-                      className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
-                    />
-                  </label>
-                  <label className="text-[11px] font-medium text-gray-500">
-                    定員設定時、残り枠の人数を出し始める残数
-                    <input
-                      type="number"
-                      min={0}
-                      max={1000}
-                      value={socialProofSettings.genderCapacityRevealThreshold}
-                      onChange={(event) => setSocialProofSettings((current) => ({
-                        ...current,
-                        genderCapacityRevealThreshold: Number(event.target.value),
-                      }))}
-                      className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
-                    />
-                  </label>
-                </div>
-
-                <details className="rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2">
-                  <summary className="cursor-pointer text-xs font-bold text-gray-600">表示文言を編集</summary>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    {([
-                      ['balanced', '男女比が半々'],
-                      ['ratio32', '男女比が約3:2'],
-                    ] as const).map(([key, label]) => (
-                      <label key={key} className="text-[11px] font-medium text-gray-500">
-                        {label}
-                        <input
-                          type="text"
-                          maxLength={40}
-                          value={socialProofSettings[key].label}
-                          onChange={(event) => updateSocialProofRule(key, { label: event.target.value })}
-                          className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
-                        />
-                      </label>
-                    ))}
-                  </div>
-                </details>
-
-                <details className="rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2">
-                  <summary className="cursor-pointer text-xs font-bold text-gray-600">判定条件の詳細</summary>
-                  <p className="mt-2 text-[10px] leading-relaxed text-gray-400">
-                    性別未回答者は参加規模には含め、男女比の計算からは除外します。1～3人では性別を推測されないよう男女比を表示しません。
-                  </p>
-                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {([
-                      ['minGenderSample', '男女比を出す最低人数', 4, 100],
-                      ['balanceDifference4To9', '4～9人の許容差', 0, 9],
-                      ['balanceDifference10To39', '10～39人の許容差', 0, 39],
-                      ['balanceDifference40To69', '40～69人の許容差', 0, 69],
-                      ['balanceDifference70To99', '70～99人の許容差', 0, 99],
-                      ['balanceDifference100PlusPercent', '100人以上の許容率（%）', 0, 50],
-                      ['ratio32MinMalePercent', '3:2 男性比率 最小（%）', 50, 100],
-                      ['ratio32MaxMalePercent', '3:2 男性比率 最大（%）', 50, 100],
-                    ] as const).map(([key, label, min, max]) => (
-                      <label key={key} className="text-[10px] font-medium text-gray-500">
-                        {label}
-                        <input
-                          type="number"
-                          min={min}
-                          max={max}
-                          value={socialProofSettings[key]}
-                          onChange={(event) => setSocialProofSettings((current) => ({
-                            ...current,
-                            [key]: Number(event.target.value),
-                          }))}
-                          className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:border-[#06C755] focus:outline-none"
-                        />
-                      </label>
-                    ))}
-                  </div>
-                </details>
-
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#06C755]/20 bg-[#06C755]/5 px-3 py-2">
-                  <div>
-                    <p className="text-[10px] font-bold text-gray-400">表示例</p>
-                    <p className="text-xs font-bold text-[#06C755]">{socialProofSettings.balanced.label}</p>
-                    <p className="text-xs font-bold text-[#06C755]">
-                      現在{socialProofSettings.minParticipantsForVolume}人参加予定！
-                    </p>
-                    <p className="text-xs font-bold text-[#06C755]">
-                      男性残り枠{socialProofSettings.genderCapacityRevealThreshold}名（定員設定時）
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={saveSocialProofSettings}
-                    disabled={savingSocialProof}
-                    className="rounded-lg bg-[#06C755] px-4 py-2 text-xs font-bold text-white hover:bg-[#05a847] disabled:opacity-50"
-                  >
-                    {savingSocialProof ? '保存中...' : socialProofSaved ? '保存しました ✓' : '設定を保存'}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {!socialProofSettings.enabled && (
-              <div className="mt-3 flex justify-end">
-                <button
-                  type="button"
-                  onClick={saveSocialProofSettings}
-                  disabled={savingSocialProof}
-                  className="rounded-lg bg-[#06C755] px-4 py-2 text-xs font-bold text-white hover:bg-[#05a847] disabled:opacity-50"
-                >
-                  {savingSocialProof ? '保存中...' : socialProofSaved ? '保存しました ✓' : '設定を保存'}
-                </button>
-              </div>
-            )}
-          </div>
-
           {/* ライブフィード */}
           <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
             <div className="flex items-center justify-between gap-3">
@@ -705,27 +486,6 @@ export default function EventsPage() {
                 }`}
               >
                 {activityTickerEnabled ? 'ON' : 'OFF'}
-              </button>
-            </div>
-          </div>
-
-          {/* 紹介文の表示 */}
-          <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold text-gray-500">予約ページの紹介文</p>
-                <p className="mt-0.5 text-[11px] text-gray-400">SEO文言（下で設定）を予約スケジュールページ上部に表示します</p>
-              </div>
-              <button
-                type="button"
-                onClick={toggleShowEventsIntroText}
-                className={`shrink-0 rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
-                  showEventsIntroText
-                    ? 'border-[#06C755] bg-[#06C755]/8 text-[#06C755]'
-                    : 'border-gray-200 bg-gray-50 text-gray-400'
-                }`}
-              >
-                {showEventsIntroText ? 'ON' : 'OFF'}
               </button>
             </div>
           </div>
@@ -844,18 +604,6 @@ export default function EventsPage() {
       </div>
     )}
 
-    {eventsSeoDescription !== null && (
-      <div className="px-4 pb-6 md:px-6 max-w-5xl">
-        <TenantSeoTextSection
-          field="eventsSeoDescription"
-          title="予約スケジュールページのSEO文言"
-          helpText="公開用の予約スケジュールページの見出し下とmeta descriptionに使われます。空欄の場合は団体の紹介文が使われます。"
-          placeholder="例：池袋・新宿・渋谷で活動するインカレサークルBELL。初参加・一人参加も大歓迎です。"
-          initialValue={eventsSeoDescription}
-          onSaved={setEventsSeoDescription}
-        />
-      </div>
-    )}
     </>
   );
 }

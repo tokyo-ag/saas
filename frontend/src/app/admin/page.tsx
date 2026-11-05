@@ -86,7 +86,6 @@ export default function DashboardPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -257,59 +256,6 @@ export default function DashboardPage() {
       </section>
 
 
-      {isFree && (
-        <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
-          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-sm font-semibold text-gray-700">スタンダードプランで使える機能</h2>
-            <button onClick={() => setShowUpgradeModal(true)} className="w-fit text-xs font-semibold text-[#06C755] hover:underline">確認する</button>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {[
-              ['リマインド通知', '前日・当日に自動送信'],
-              ['イベント作成数アップ', '月2件以上の運用に対応'],
-              ['参加者上限アップ', '50人を超える団体向け'],
-              ['CSVエクスポート', '名簿や予約一覧を出力'],
-            ].map(([label, desc]) => (
-              <div key={label} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                <p className="text-xs font-semibold text-gray-700">{label}</p>
-                <p className="mt-0.5 text-[11px] leading-relaxed text-gray-400">{desc}</p>
-              </div>
-            ))}
-          </div>
-          <button
-            onClick={() => setShowUpgradeModal(true)}
-            className="mt-4 w-full rounded-xl bg-[#06C755] py-3 text-sm font-bold text-white transition-colors hover:bg-[#05a847]"
-          >
-            プランを確認する
-          </button>
-        </section>
-      )}
-
-      {showUpgradeModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center" onClick={() => setShowUpgradeModal(false)}>
-          <div className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="text-center">
-              <h2 className="text-lg font-bold text-gray-900">スタンダードプランへ</h2>
-              <p className="mt-1 text-sm leading-relaxed text-gray-500">イベント運営に必要な機能を制限なく使えます。</p>
-            </div>
-            <ul className="space-y-2 text-sm text-gray-700">
-              <li>イベント作成数の上限アップ</li>
-              <li>参加者上限アップ</li>
-              <li>リマインド通知</li>
-              <li>Stripe決済連携</li>
-              <li>CSVエクスポート</li>
-            </ul>
-            <Link
-              href="/admin/settings/plan"
-              onClick={() => setShowUpgradeModal(false)}
-              className="block w-full rounded-xl bg-[#06C755] py-3.5 text-center text-sm font-bold text-white transition-colors hover:bg-[#05a847]"
-            >
-              プランを見る
-            </Link>
-            <button onClick={() => setShowUpgradeModal(false)} className="w-full text-xs text-gray-400 hover:text-gray-600">あとで</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

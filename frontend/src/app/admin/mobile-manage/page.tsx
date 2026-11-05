@@ -60,8 +60,13 @@ export default function AdminMobileManagePage() {
       <div>
         <h1 className="text-xl font-bold text-gray-900">超簡単モバイル管理</h1>
         <p className="mt-1 text-sm text-gray-500">
-          スマホからパスワード不要で予約ページだけを管理できる、専用のリンクを発行できます。主催者本人がスマホのホーム画面に保存しておく用途を想定しています。
+          スマホからパスワード不要で団体を管理できる、専用のリンクを発行できます。ホーム画面に保存しておくと便利です。
         </p>
+        <ul className="mt-2 space-y-0.5 text-xs text-gray-400">
+          <li>・予約ページの作成・編集・削除、参加者一覧の確認とステータス変更</li>
+          <li>・ブログ記事の投稿・編集・削除</li>
+          <li>・口コミの確認・削除</li>
+        </ul>
       </div>
 
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
