@@ -450,9 +450,6 @@ export default function EventForm({
       initial.bellGenderRatioAuto ||
       initial.bellApprovalRequired ||
       (initial.paymentTiming && initial.paymentTiming !== 'onsite') ||
-      initial.levelEnabled ||
-      initial.rosterShareEnabled ||
-      initial.reserveActionStyle ||
       initial.notifyOnReserve === false ||
       initial.remindEnabled ||
       initial.reservationMessageTemplate?.trim() ||
@@ -1220,7 +1217,7 @@ export default function EventForm({
         >
           <span>
             <span className="text-sm font-bold text-gray-700">詳細設定</span>
-            <span className="ml-2 text-xs text-gray-400">定員・参加者情報・通知（通常は変更不要です）</span>
+            <span className="ml-2 text-xs text-gray-400">定員・通知（通常は変更不要です）</span>
           </span>
           <span className="shrink-0 text-xs font-medium text-gray-500">{advancedOpen ? '閉じる ▲' : '開く ▼'}</span>
         </button>
@@ -1269,57 +1266,6 @@ export default function EventForm({
           </div>
         )}
       </Section>
-
-      {!simplified && (
-      <Section title="参加者情報">
-        {tenant?.code === '11221185' && (
-          <div className="mb-4 rounded-lg border border-purple-200 bg-purple-50 p-3">
-            <Check
-              label="BELL専用：予約を承認制にする"
-              checked={form.bellApprovalRequired}
-              onChange={(checked) => {
-                set('bellApprovalRequired', checked);
-                if (checked) set('paymentTiming', 'onsite');
-              }}
-            />
-            <p className="mt-1 text-xs leading-5 text-purple-700">
-              申込は承認待ちになり、管理画面または参加者名簿の共有リンクから承認・キャンセルできます。操作時に参加者へLINE通知を送ります（当日払いのみ）。
-            </p>
-          </div>
-        )}
-        <div className="mb-3">
-          <p className="mb-2 text-xs text-gray-500">予約スタイル</p>
-          <RadioGroup
-            value={form.reserveActionStyle}
-            onChange={(value) => set('reserveActionStyle', value)}
-            options={[
-              ['', `団体の設定に従う（現在：${tenantReserveActionStyle === 'line' ? 'LINEで予約する' : 'COMIUで予約する'}）`],
-              ['comiu', 'COMIUで予約する'],
-              ['line', 'LINEで予約する'],
-            ]}
-          />
-        </div>
-        {!hideLevel && (
-          <Check
-            label="予約時にレベル（初心者・中級・上級）を確認する"
-            checked={form.levelEnabled}
-            onChange={(checked) => set('levelEnabled', checked)}
-          />
-        )}
-        <Check
-          label="参加者名簿を公開する（ログイン不要の共有リンクを発行）"
-          checked={form.rosterShareEnabled}
-          onChange={(checked) => set('rosterShareEnabled', checked)}
-        />
-        {form.rosterShareEnabled && (
-          <Check
-            label="名簿を男女別に並べる（同性内は予約順）"
-            checked={form.rosterGenderSort}
-            onChange={(checked) => set('rosterGenderSort', checked)}
-          />
-        )}
-      </Section>
-      )}
 
       {!hideLineNotify && (
       <Section title="通知">
