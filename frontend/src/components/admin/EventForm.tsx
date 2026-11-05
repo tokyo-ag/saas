@@ -1167,7 +1167,7 @@ export default function EventForm({
             </Field>
           </div>
         )}
-        {!simplified && advancedOpen && (
+        {!simplified && (
           <div>
             <p className="mb-2 text-xs text-gray-500">支払いタイミング</p>
             <div className="flex flex-wrap gap-3">
@@ -1326,7 +1326,7 @@ export default function EventForm({
       </div>
       </div>
 
-      {!hideLineNotify && (simplified || advancedOpen) && (form.notifyOnReserve || form.remindEnabled) && (
+      {!hideLineNotify && (form.notifyOnReserve || form.remindEnabled) && (
         <aside className="space-y-5 xl:sticky xl:top-6">
           {form.notifyOnReserve && (
             <LineMessageEditor
