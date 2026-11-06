@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 @Injectable()
 export class EmailService {
@@ -9,13 +9,14 @@ export class EmailService {
   constructor(private config: ConfigService) {}
 
   private async send(to: string, subject: string, html: string): Promise<void> {
-    const user = this.config.get<string>('EMAIL_USER');
-    const pass = this.config.get<string>('EMAIL_PASS');
+    const apiKey = this.config.get<string>('RESEND_API_KEY');
+    const fromAddress =
+      this.config.get<string>('RESEND_FROM') ?? 'noreply@comiu.link';
 
-    if (!user || !pass) {
+    if (!apiKey) {
       if (process.env.NODE_ENV === 'production') {
         this.logger.error(
-          'EMAIL_USER/EMAIL_PASS not configured; cannot send email in production',
+          'RESEND_API_KEY is not configured; cannot send email in production',
         );
         throw new Error('メール送信の設定が正しくありません');
       }
@@ -23,15 +24,17 @@ export class EmailService {
       return;
     }
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user, pass },
+    const resend = new Resend(apiKey);
+
+    const { error } = await resend.emails.send({
+      from: fromAddress,
+      to,
+      subject,
+      html,
     });
 
-    try {
-      await transporter.sendMail({ from: user, to, subject, html });
-    } catch (err: any) {
-      this.logger.error(`Email send failed: ${err?.message ?? err}`);
+    if (error) {
+      this.logger.error(`Email send failed: ${error.message}`);
       throw new Error('メール送信に失敗しました');
     }
   }
