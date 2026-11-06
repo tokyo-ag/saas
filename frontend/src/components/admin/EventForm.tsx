@@ -1200,7 +1200,6 @@ export default function EventForm({
         </div>
       )}
 
-      {(simplified || true) && (
       <>
       <Section title="定員">
         <RadioGroup
@@ -1309,7 +1308,6 @@ export default function EventForm({
       </Section>
       )}
       </>
-      )}
 
       <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center">
         <button type="submit" disabled={submitting} className="rounded-lg bg-[#06C755] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#05a847] disabled:opacity-50">

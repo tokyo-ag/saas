@@ -308,9 +308,16 @@ export default function EventsPage() {
         imageUrl: ev.imageUrl,
         iconUrl: ev.iconUrl,
         category: ev.category ?? null,
+        categories: ev.categories ?? [],
         tags: ev.tags ?? [],
+        descriptionMale: ev.descriptionMale ?? null,
+        descriptionFemale: ev.descriptionFemale ?? null,
+        maleDelayMinutes: ev.maleDelayMinutes ?? null,
+        bellGenderRatioAuto: ev.bellGenderRatioAuto,
+        bellApprovalRequired: ev.bellApprovalRequired,
         levelEnabled: ev.levelEnabled,
         rosterShareEnabled: ev.rosterShareEnabled,
+        rosterGenderSort: ev.rosterGenderSort,
         reserveActionStyle: ev.reserveActionStyle ?? null,
       });
       router.push(`/admin/events/${created.id}/edit`);
