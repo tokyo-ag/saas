@@ -76,7 +76,8 @@ export class ReservationsService {
       where: { id: tenantId },
     });
     if (
-      reservation.status === ReservationStatus.pending_approval &&
+      (reservation.status === ReservationStatus.pending_approval ||
+        reservation.status === ReservationStatus.waitlisted) &&
       status === ReservationStatus.reserved
     ) {
       await this.lineMessaging.sendReservationConfirm(
