@@ -5,7 +5,7 @@ import NextImage from 'next/image';
 import Link from 'next/link';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
-import { api, Tenant, TenantInput } from '@/lib/api';
+import { api, Tenant, TenantInput, getActiveAdminToken } from '@/lib/api';
 import { SaveToast } from '@/components/ui/SaveToast';
 
 const tabs = [
@@ -61,10 +61,11 @@ async function getCroppedBlob(imageSrc: string, pixelCrop: Area): Promise<Blob> 
 
 async function uploadIconBlob(blob: Blob): Promise<string> {
   const filename = `icon-${Date.now()}.jpg`;
+  const token = getActiveAdminToken();
   const res = await fetch(`/api/upload?filename=${encodeURIComponent(filename)}`, {
     method: 'POST',
     body: blob,
-    headers: { 'content-type': 'image/jpeg' },
+    headers: { 'content-type': 'image/jpeg', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
   const data = await res.json() as { url?: string; error?: string };
   if (!res.ok) throw new Error(data.error ?? '画像のアップロードに失敗しました');
@@ -138,6 +139,8 @@ export default function SettingsPage() {
         typeTags: filterKnownTags(tenantData.typeTags, TENANT_TYPE_TAGS),
         activityTags: filterKnownTags(tenantData.activityTags ?? tenantData.tags, TENANT_ACTIVITY_TAGS),
       });
+    }).catch((err: any) => {
+      setError(err?.message ?? '読み込みに失敗しました');
     });
   }, []);
 

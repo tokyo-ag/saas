@@ -46,6 +46,13 @@ export class ReservationsService {
       await this.assertApprovalCapacity(reservation);
     }
 
+    if (
+      reservation.status === ReservationStatus.waitlisted &&
+      status === ReservationStatus.reserved
+    ) {
+      await this.assertApprovalCapacity(reservation);
+    }
+
     const updated = await this.prisma.reservation
       .update({
         where: { id },
