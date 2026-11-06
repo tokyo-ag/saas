@@ -297,7 +297,10 @@ function TenantModal({
     setError('');
     try {
       if (initial) {
-        await api.superadmin.update(initial.id, { name, description, plan });
+        await api.superadmin.update(initial.id, {
+          name, description, plan,
+          ...(email && password ? { email, password } : {}),
+        });
       } else {
         await api.superadmin.create({
           name,
@@ -345,7 +348,27 @@ function TenantModal({
               <p className="text-sm font-mono bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-600">{initial.code}</p>
             </div>
           )}
-          {!initial && (
+          {initial ? (
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-3">
+              <p className="text-sm font-medium text-gray-700">管理者アカウント設定（変更する場合のみ入力）</p>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-600">メールアドレス</label>
+                <input
+                  type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                  placeholder={initial.organizerEmail ?? 'admin@example.com'}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-600">パスワード（8文字以上）</label>
+                <input
+                  type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+          ) : (
             <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
               <label className="flex cursor-pointer items-start gap-2.5">
                 <input

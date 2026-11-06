@@ -486,6 +486,8 @@ export const api = {
         description?: string;
         plan?: 'free' | 'standard' | 'pro';
         code?: string;
+        email?: string;
+        password?: string;
       },
     ) =>
       request<Tenant>(`/superadmin/tenants/${id}`, {

@@ -67,6 +67,8 @@ export class UpdateTenantDto {
   @IsOptional() @IsString() lineChannelSecret?: string;
   @IsOptional() @IsString() lineChannelAccessToken?: string;
   @IsOptional() @IsString() liffId?: string;
+  @IsOptional() @IsEmail() email?: string;
+  @IsOptional() @IsString() @MinLength(8) password?: string;
 }
 
 export class BanUserDto {
@@ -293,6 +295,36 @@ export class SuperadminService implements OnApplicationBootstrap {
   async updateTenant(id: string, dto: UpdateTenantDto) {
     const tenant = await this.prisma.tenant.findUnique({ where: { id } });
     if (!tenant) throw new NotFoundException('Tenant not found');
+
+    if (dto.email !== undefined || dto.password !== undefined) {
+      const normalizedEmail = dto.email?.trim().toLowerCase() || null;
+      const password = dto.password || null;
+      if (Boolean(normalizedEmail) !== Boolean(password)) {
+        throw new BadRequestException(
+          'メールアドレスとパスワードを両方入力してください',
+        );
+      }
+      if (normalizedEmail && password) {
+        const existing = await this.prisma.organizerAccount.findFirst({
+          where: { email: { equals: normalizedEmail, mode: 'insensitive' }, tenantId: { not: id } },
+          select: { id: true },
+        });
+        if (existing) throw new ConflictException('このメールアドレスは既に使用されています');
+        const passwordHash = await bcrypt.hash(password, 10);
+        const account = await this.prisma.organizerAccount.findFirst({ where: { tenantId: id }, select: { id: true } });
+        if (account) {
+          await this.prisma.organizerAccount.update({
+            where: { id: account.id },
+            data: { email: normalizedEmail, passwordHash, emailVerifiedAt: new Date() },
+          });
+        } else {
+          await this.prisma.organizerAccount.create({
+            data: { tenantId: id, email: normalizedEmail, passwordHash, emailVerifiedAt: new Date() },
+          });
+        }
+      }
+    }
+
     return this.prisma.tenant.update({
       where: { id },
       data: {
