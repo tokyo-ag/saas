@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { google } from 'googleapis';
+import { Resend } from 'resend';
 
 @Injectable()
 export class EmailService {
@@ -9,15 +9,14 @@ export class EmailService {
   constructor(private config: ConfigService) {}
 
   private async send(to: string, subject: string, html: string): Promise<void> {
-    const clientId = this.config.get<string>('GMAIL_CLIENT_ID');
-    const clientSecret = this.config.get<string>('GMAIL_CLIENT_SECRET');
-    const refreshToken = this.config.get<string>('GMAIL_REFRESH_TOKEN');
-    const gmailUser = this.config.get<string>('GMAIL_USER');
+    const apiKey = this.config.get<string>('RESEND_API_KEY');
+    const fromAddress =
+      this.config.get<string>('RESEND_FROM') ?? 'noreply@comiu.link';
 
-    if (!clientId || !clientSecret || !refreshToken || !gmailUser) {
+    if (!apiKey) {
       if (process.env.NODE_ENV === 'production') {
         this.logger.error(
-          'Gmail credentials are not configured; cannot send email in production',
+          'RESEND_API_KEY is not configured; cannot send email in production',
         );
         throw new Error('メール送信の設定が正しくありません');
       }
@@ -25,30 +24,17 @@ export class EmailService {
       return;
     }
 
-    const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
-    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    const resend = new Resend(apiKey);
 
-    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
-
-    const encodedSubject = `=?UTF-8?B?${Buffer.from(subject).toString('base64')}?=`;
-    const messageParts = [
-      `From: ${gmailUser}`,
-      `To: ${to}`,
-      `Subject: ${encodedSubject}`,
-      'MIME-Version: 1.0',
-      'Content-Type: text/html; charset=UTF-8',
-      '',
+    const { error } = await resend.emails.send({
+      from: fromAddress,
+      to,
+      subject,
       html,
-    ];
-    const raw = Buffer.from(messageParts.join('\r\n')).toString('base64url');
+    });
 
-    try {
-      await gmail.users.messages.send({
-        userId: 'me',
-        requestBody: { raw },
-      });
-    } catch (err: any) {
-      this.logger.error(`Email send failed: ${err?.message ?? err}`);
+    if (error) {
+      this.logger.error(`Email send failed: ${error.message}`);
       throw new Error('メール送信に失敗しました');
     }
   }
