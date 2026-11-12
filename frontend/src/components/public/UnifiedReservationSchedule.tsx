@@ -320,7 +320,7 @@ function CalendarView({ events, tenantCode, accentColor }: Omit<Props, 'viewStyl
                         >
                           <p className="truncate text-[9px] font-bold leading-tight">{event.title}</p>
                           <p className="mt-0.5 truncate text-[8px] font-semibold leading-none opacity-95">{timeRange(event)}</p>
-                          <p className="mt-0.5 truncate text-[8px] font-semibold leading-none opacity-95">{statusLabel(event)}</p>
+                          <p className="mt-0.5 truncate text-[8px] font-semibold leading-none opacity-95">{priceLabel(event).replace(',', '') || '無料'}</p>
                         </Link>
                       ))}
                       {dayEvents.length > 1 && <p className="text-center text-[9px] font-bold text-gray-400">+{dayEvents.length - 1}</p>}
