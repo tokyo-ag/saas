@@ -58,19 +58,42 @@ async function fetchEvent(eventId: string): Promise<EventDetail | null> {
   }
 }
 
-async function fetchTenantStyling(tenantCode: string): Promise<{ backgroundColor: string | null; accentColor: string | null; slug: string | undefined }> {
+const FONT_FAMILIES: Record<string, string> = {
+  mincho: '"Yu Mincho", "Hiragino Mincho ProN", serif',
+  handwriting: '"Hachi Maru Pop", "Comic Sans MS", "Yu Gothic", cursive',
+  marker: '"Arial Rounded MT Bold", "Arial Black", "Yu Gothic", sans-serif',
+};
+
+type TenantStyling = {
+  backgroundColor: string | null;
+  accentColor: string | null;
+  fontFamily: string | null;
+  buttonRadius: number | null;
+  buttonStyle: string | null;
+  slug: string | undefined;
+};
+
+async function fetchTenantStyling(tenantCode: string): Promise<TenantStyling> {
+  const fallback: TenantStyling = { backgroundColor: null, accentColor: null, fontFamily: null, buttonRadius: null, buttonStyle: null, slug: undefined };
   try {
     const tenantRes = await fetch(`${API_URL}/api/public/tenants/${tenantCode}`, { next: { revalidate: 60 } });
-    if (!tenantRes.ok) return { backgroundColor: null, accentColor: null, slug: undefined };
+    if (!tenantRes.ok) return fallback;
     const tenant = (await tenantRes.json()) as { pages?: Array<{ slug: string }> };
     const slug = tenant.pages?.[0]?.slug;
-    if (!slug) return { backgroundColor: null, accentColor: null, slug: undefined };
+    if (!slug) return { ...fallback, slug: undefined };
     const pageRes = await fetch(`${API_URL}/api/public/tenants/${tenantCode}/pages/${slug}`, { next: { revalidate: 60 } });
-    if (!pageRes.ok) return { backgroundColor: null, accentColor: null, slug };
-    const page = (await pageRes.json()) as { backgroundColor?: string | null; accentColor?: string | null };
-    return { backgroundColor: page.backgroundColor ?? null, accentColor: page.accentColor ?? null, slug };
+    if (!pageRes.ok) return { ...fallback, slug };
+    const page = (await pageRes.json()) as { backgroundColor?: string | null; accentColor?: string | null; fontFamily?: string | null; buttonRadius?: number | null; buttonStyle?: string | null };
+    return {
+      backgroundColor: page.backgroundColor ?? null,
+      accentColor: page.accentColor ?? null,
+      fontFamily: page.fontFamily ? (FONT_FAMILIES[page.fontFamily] ?? null) : null,
+      buttonRadius: page.buttonRadius ?? null,
+      buttonStyle: page.buttonStyle ?? null,
+      slug,
+    };
   } catch {
-    return { backgroundColor: null, accentColor: null, slug: undefined };
+    return fallback;
   }
 }
 
@@ -368,11 +391,15 @@ export default async function PublicEventPage({
 
   if (!event || !event.tenantCode || event.tenantCode !== tenantCode) notFound();
 
-  const { backgroundColor, accentColor: tenantAccentColor, slug: tenantSlug } = await fetchTenantStyling(tenantCode);
+  const { backgroundColor, accentColor: tenantAccentColor, fontFamily, buttonRadius, buttonStyle, slug: tenantSlug } = await fetchTenantStyling(tenantCode);
   const rawAccentColor = tenantAccentColor || '#06C755';
   // アクセントカラーが白系だと、カード上のバッジやボタンの塗りに使うと文字ごと
   // 見えなくなるため、その場合は濃色にフォールバックする。
   const accentColor = isLightHexColor(rawAccentColor) ? '#111827' : rawAccentColor;
+  const btnBorderRadius = buttonStyle === 'circle' ? 9999 : (buttonRadius ?? 12);
+  const btnStyle = buttonStyle === 'double'
+    ? { border: `2px solid ${accentColor}`, backgroundColor: 'transparent', color: accentColor }
+    : { backgroundColor: accentColor, color: readableTextColor(accentColor) };
 
   const footerSettings = (() => {
     try {
@@ -421,7 +448,7 @@ export default async function PublicEventPage({
   const schedule = formatEventScheduleParts(event.heldAt, endAt);
 
   return (
-    <main className="min-h-screen sm:bg-gray-200" style={{ backgroundColor: backgroundColor || '#F9FAFB' }}>
+    <main className="min-h-screen sm:bg-gray-200" style={{ backgroundColor: backgroundColor || '#F9FAFB', ...(fontFamily ? { fontFamily } : {}) }}>
     <div className="mx-auto w-full max-w-[480px] sm:my-8 sm:overflow-hidden sm:rounded-3xl sm:shadow-2xl" style={{ backgroundColor: backgroundColor || '#F9FAFB', minHeight: '100dvh' }}>
       <script
         type="application/ld+json"
@@ -438,8 +465,8 @@ export default async function PublicEventPage({
           <SmartLiffButton
             href={reserveUrl}
             directHref={`${SITE_URL}${loginPath}`}
-            className="rounded-full px-4 py-1.5 text-sm font-semibold hover:opacity-90"
-            style={{ backgroundColor: accentColor, color: readableTextColor(accentColor) }}
+            className="px-4 py-1.5 text-sm font-semibold hover:opacity-90"
+            style={{ ...btnStyle, borderRadius: btnBorderRadius }}
           >
             予約する
           </SmartLiffButton>
@@ -673,10 +700,10 @@ export default async function PublicEventPage({
               isExternalLineUrl ? (
                 <Link
                   href={reserveUrl}
-                  className={`mt-5 block w-full rounded-xl py-3.5 text-center text-sm font-bold transition-colors ${
+                  className={`mt-5 block w-full py-3.5 text-center text-sm font-bold transition-colors ${
                     isFull ? 'bg-gray-400 text-white pointer-events-none' : 'hover:opacity-90'
                   }`}
-                  style={isFull ? undefined : { backgroundColor: accentColor, color: readableTextColor(accentColor) }}
+                  style={isFull ? { borderRadius: btnBorderRadius } : { ...btnStyle, borderRadius: btnBorderRadius }}
                 >
                   {isFull ? '満席のため受付終了' : 'LINEで予約する'}
                 </Link>
@@ -684,10 +711,10 @@ export default async function PublicEventPage({
                 <SmartLiffButton
                   href={reserveUrl}
                   directHref={`${SITE_URL}${loginPath}`}
-                  className={`mt-5 block w-full rounded-xl py-3.5 text-center text-sm font-bold transition-colors ${
+                  className={`mt-5 block w-full py-3.5 text-center text-sm font-bold transition-colors ${
                     isFull ? 'bg-gray-400 text-white pointer-events-none' : 'hover:opacity-90'
                   }`}
-                  style={isFull ? undefined : { backgroundColor: accentColor, color: readableTextColor(accentColor) }}
+                  style={isFull ? { borderRadius: btnBorderRadius } : { ...btnStyle, borderRadius: btnBorderRadius }}
                 >
                   {isFull ? '満席のため受付終了' : '予約する'}
                 </SmartLiffButton>
