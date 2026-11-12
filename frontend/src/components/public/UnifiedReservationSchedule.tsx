@@ -318,9 +318,9 @@ function CalendarView({ events, tenantCode, accentColor }: Omit<Props, 'viewStyl
                           className="block overflow-hidden rounded-md px-1 py-1 text-white active:opacity-80"
                           style={{ backgroundColor: eventChipBg }}
                         >
-                          <p className="truncate text-[9px] font-bold leading-tight">{displayLocation(event).trim().slice(0, 6)}</p>
+                          <p className="truncate text-[9px] font-bold leading-tight">{event.title}</p>
                           <p className="mt-0.5 truncate text-[8px] font-semibold leading-none opacity-95">{timeRange(event)}</p>
-                          <p className="mt-0.5 truncate text-[8px] font-semibold leading-none opacity-95">{priceLabel(event).replace(',', '')}</p>
+                          <p className="mt-0.5 truncate text-[8px] font-semibold leading-none opacity-95">{statusLabel(event)}</p>
                         </Link>
                       ))}
                       {dayEvents.length > 1 && <p className="text-center text-[9px] font-bold text-gray-400">+{dayEvents.length - 1}</p>}
