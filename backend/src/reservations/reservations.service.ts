@@ -111,6 +111,11 @@ export class ReservationsService {
         reservation.event.title,
       );
     } else if (status === ReservationStatus.cancelled) {
+      await this.lineMessaging.sendReservationCancelled(
+        tenant?.lineChannelAccessToken ?? '',
+        reservation.member.lineUserId,
+        reservation.event.title,
+      );
       await this.lineMessaging.sendCancelNotifyToOrganizer(
         tenant?.lineChannelAccessToken ?? '',
         tenant?.organizerLineUserId ?? '',

@@ -297,6 +297,15 @@ export const api = {
       ),
     staffViewEvents: (token: string) => request<StaffViewEventList>(`/public/staff-view/${token}/events`),
     staffViewEvent: (token: string, eventId: string) => request<StaffViewEventDetail>(`/public/staff-view/${token}/events/${eventId}`),
+    updateStaffViewReservationStatus: (token: string, eventId: string, reservationId: string, status: 'reserved' | 'cancelled') =>
+      request<Reservation>(`/public/staff-view/${token}/events/${eventId}/reservations/${reservationId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      }),
+    cancelAllStaffViewReservations: (token: string, eventId: string) =>
+      request<{ cancelled: number; notificationErrors: number }>(`/public/staff-view/${token}/events/${eventId}/reservations/cancel-all`, {
+        method: 'PATCH',
+      }),
     collabRoster: (token: string) => request<CollabRoster>(`/public/collab-roster/${token}`),
     updateCollabRosterReservation: (token: string, reservationId: string, data: { referrer?: string; staffNote?: string }, options?: { keepalive?: boolean }) =>
       request<{
@@ -1632,6 +1641,7 @@ export interface CollabGroupAdmin {
 // 運営専用リンク（ログイン不要だが参加者へは共有しないURL）でのみ、学校名などの
 // カスタム質問回答や予約日時まで見せる。参加者向けのPublicRosterには含めない。
 export interface StaffViewReservation {
+  id: string;
   name: string | null;
   grade: string | null;
   gender: string | null;

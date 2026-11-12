@@ -16,6 +16,7 @@ describe('PublicController', () => {
     {} as never,
     { buildForEvents: jest.fn().mockResolvedValue(new Map()) } as never,
     {} as never,
+    {} as never,
   );
 
   beforeEach(() => {

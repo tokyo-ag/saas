@@ -17,6 +17,8 @@ export default function StaffViewEventPage() {
   const [data, setData] = useState<StaffViewEventDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [cancellingAll, setCancellingAll] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,6 +32,37 @@ export default function StaffViewEventPage() {
     const id = setInterval(load, POLL_INTERVAL_MS);
     return () => { cancelled = true; clearInterval(id); };
   }, [token, eventId]);
+
+  async function handleStatus(reservationId: string, status: 'reserved' | 'cancelled') {
+    const message = status === 'reserved'
+      ? 'この参加者を承認して、予約完了通知を送りますか？'
+      : 'この参加者をキャンセルして、キャンセル通知を送りますか？';
+    if (!window.confirm(message)) return;
+    setSavingId(reservationId);
+    try {
+      await api.public.updateStaffViewReservationStatus(token, eventId, reservationId, status);
+      setData(await api.public.staffViewEvent(token, eventId));
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '処理に失敗しました');
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function handleCancelAll() {
+    if (!window.confirm(`表示中の参加者${reservations.length}名を全員キャンセルし、通知を送ります。元に戻せません。実行しますか？`)) return;
+    if (!window.confirm('本当に全員キャンセルしますか？')) return;
+    setCancellingAll(true);
+    try {
+      const result = await api.public.cancelAllStaffViewReservations(token, eventId);
+      setData(await api.public.staffViewEvent(token, eventId));
+      alert(`${result.cancelled}名をキャンセルしました。${result.notificationErrors ? `（通知エラー：${result.notificationErrors}件）` : ''}`);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '一括キャンセルに失敗しました');
+    } finally {
+      setCancellingAll(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -82,9 +115,16 @@ export default function StaffViewEventPage() {
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+          <div className="flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-3">
             <h2 className="text-sm font-semibold text-gray-900">予約者一覧 ({reservations.length}件)</h2>
-            <span className="text-[11px] text-gray-400">自動更新中</span>
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] text-gray-400">自動更新中</span>
+              {reservations.length > 0 && (
+                <button onClick={handleCancelAll} disabled={cancellingAll} className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 disabled:opacity-50">
+                  {cancellingAll ? '処理中...' : '全員キャンセル'}
+                </button>
+              )}
+            </div>
           </div>
 
           {reservations.length === 0 ? (
@@ -121,6 +161,12 @@ export default function StaffViewEventPage() {
                       </div>
                     )}
                     <p className="mt-2 pl-8 text-[11px] text-gray-400">予約：{formatDate(r.reservedAt)}</p>
+                    <div className="mt-3 flex gap-2 pl-8">
+                      {r.status === 'pending_approval' && (
+                        <button onClick={() => handleStatus(r.id, 'reserved')} disabled={savingId === r.id} className="rounded-lg bg-purple-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">承認して通知</button>
+                      )}
+                      <button onClick={() => handleStatus(r.id, 'cancelled')} disabled={savingId === r.id} className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-600 disabled:opacity-50">キャンセルして通知</button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -136,6 +182,7 @@ export default function StaffViewEventPage() {
                       <th className="px-6 py-3 text-left">回答</th>
                       <th className="px-6 py-3 text-left">予約日時</th>
                       <th className="px-6 py-3 text-left">ステータス</th>
+                      <th className="px-6 py-3 text-left">操作</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -163,6 +210,14 @@ export default function StaffViewEventPage() {
                         <td className="px-6 py-4 text-xs text-gray-500">{formatDate(r.reservedAt)}</td>
                         <td className="px-6 py-4">
                           <ReservationBadge status={r.status} />
+                        </td>
+                        <td className="whitespace-nowrap px-6 py-4">
+                          <div className="flex gap-3">
+                            {r.status === 'pending_approval' && (
+                              <button onClick={() => handleStatus(r.id, 'reserved')} disabled={savingId === r.id} className="text-xs font-bold text-purple-600 disabled:opacity-50">承認して通知</button>
+                            )}
+                            <button onClick={() => handleStatus(r.id, 'cancelled')} disabled={savingId === r.id} className="text-xs font-bold text-red-600 disabled:opacity-50">キャンセルして通知</button>
+                          </div>
                         </td>
                       </tr>
                     ))}

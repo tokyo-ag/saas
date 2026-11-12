@@ -440,6 +440,7 @@ export class PublicController {
       },
       summary: this.genderSummary(reservations),
       reservations: reservations.map((r) => ({
+        id: r.id,
         name: r.member.name,
         grade: r.member.grade,
         gender: r.member.gender,
@@ -454,6 +455,65 @@ export class PublicController {
         waitlistOrder: r.waitlistOrder,
         reservedAt: r.reservedAt,
       })),
+    };
+  }
+
+  @Patch('staff-view/:token/events/:eventId/reservations/:reservationId/status')
+  async updateStaffViewReservationStatus(
+    @Param('token') token: string,
+    @Param('eventId') eventId: string,
+    @Param('reservationId') reservationId: string,
+    @Body() dto: UpdateRosterApprovalDto,
+  ) {
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { staffViewToken: token, staffViewEnabled: true },
+      select: { id: true },
+    });
+    if (!tenant) throw new NotFoundException('リンクが見つかりません');
+    const reservation = await this.prisma.reservation.findFirst({
+      where: { id: reservationId, eventId, tenantId: tenant.id },
+      select: { id: true },
+    });
+    if (!reservation) throw new NotFoundException('予約が見つかりません');
+    return this.reservationsService.updateStatus(
+      tenant.id,
+      reservationId,
+      dto.status,
+    );
+  }
+
+  @Patch('staff-view/:token/events/:eventId/reservations/cancel-all')
+  async cancelAllStaffViewReservations(
+    @Param('token') token: string,
+    @Param('eventId') eventId: string,
+  ) {
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { staffViewToken: token, staffViewEnabled: true },
+      select: { id: true },
+    });
+    if (!tenant) throw new NotFoundException('リンクが見つかりません');
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId, tenantId: tenant.id },
+      select: { id: true },
+    });
+    if (!event) throw new NotFoundException('イベントが見つかりません');
+    const reservations = await this.prisma.reservation.findMany({
+      where: { eventId, tenantId: tenant.id, status: { not: 'cancelled' } },
+      select: { id: true },
+    });
+    const results = await Promise.allSettled(
+      reservations.map((reservation) =>
+        this.reservationsService.updateStatus(
+          tenant.id,
+          reservation.id,
+          ReservationStatus.cancelled,
+        ),
+      ),
+    );
+    return {
+      cancelled: results.length,
+      notificationErrors: results.filter((result) => result.status === 'rejected')
+        .length,
     };
   }
 

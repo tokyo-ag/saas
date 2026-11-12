@@ -156,6 +156,7 @@ describe('ReservationsService identity invariants', () => {
     const lineMessaging = {
       sendWaitlistPromoted: jest.fn(),
       sendCancelNotifyToOrganizer: jest.fn(),
+      sendReservationCancelled: jest.fn(),
     };
     const service = new ReservationsService(
       prisma as never,
