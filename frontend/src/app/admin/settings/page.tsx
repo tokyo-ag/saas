@@ -119,8 +119,24 @@ export default function SettingsPage() {
     try {
       const blob = await getCroppedBlob(cropSrc, croppedAreaPixels);
       const url = await uploadIconBlob(blob);
-      setForm((prev) => ({ ...prev, iconUrl: url }));
       setCropSrc(null);
+      // アップロード後すぐ保存まで走らせる（保存ボタン押し忘れ防止）
+      setForm((prev) => {
+        const next = { ...prev, iconUrl: url };
+        api.tenant.update({
+          name: next.name,
+          description: next.description,
+          iconUrl: next.iconUrl,
+          typeTags: next.typeTags ?? [],
+          activityTags: next.activityTags ?? [],
+          tags: next.activityTags ?? [],
+        }).then((updated) => {
+          setTenant(updated);
+          setSaved(true);
+          setTimeout(() => setSaved(false), 3000);
+        }).catch((err: any) => setError(err.message ?? '保存に失敗しました'));
+        return next;
+      });
     } catch (err: any) {
       setError(err.message ?? '画像のアップロードに失敗しました');
     } finally {
