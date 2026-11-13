@@ -331,7 +331,8 @@ export default function AdminBlogPage() {
 
   function openEdit(post: BlogPost) {
     setEditing(post);
-    setForm({ title: post.title, body: post.body, excerpt: post.excerpt ?? '', tags: post.tags ?? [], status: post.status });
+    const pub = post.publishedAt ? new Date(post.publishedAt).toISOString().slice(0, 10) : '';
+    setForm({ title: post.title, body: post.body, excerpt: post.excerpt ?? '', tags: post.tags ?? [], status: post.status, publishedAt: pub });
     const parsed = parseBlogBody(post.body);
     setBodyText(parsed.text);
     setImageUrl(parsed.imageUrl);
@@ -366,7 +367,7 @@ export default function AdminBlogPage() {
     }
     setSaving(true); setError('');
     try {
-      const payload: BlogPostInput = { ...form, tags: tenantTags, body, status: publish ? 'published' : 'draft' };
+      const payload: BlogPostInput = { ...form, tags: tenantTags, body, status: publish ? 'published' : 'draft', ...(form.publishedAt ? { publishedAt: form.publishedAt + 'T10:00:00+09:00' } : {}) };
       let savedPost: BlogPost;
       if (editing) {
         savedPost = await api.blog.update(editing.id, payload);
@@ -508,6 +509,19 @@ export default function AdminBlogPage() {
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#06C755]"
             />
           </div>
+
+          {/* 公開日（編集時のみ表示） */}
+          {editing && form.status === 'published' && (
+            <div>
+              <span className="mb-1 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-500">公開日</span>
+              <input
+                type="date"
+                value={form.publishedAt ?? ''}
+                onChange={(e) => setForm((p) => ({ ...p, publishedAt: e.target.value }))}
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]"
+              />
+            </div>
+          )}
 
           {/* 画像（任意・1枚まで） */}
           <div>

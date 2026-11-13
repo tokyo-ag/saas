@@ -1487,6 +1487,7 @@ export interface BlogPostInput {
   excerpt?: string;
   tags?: string[];
   status?: 'draft' | 'published';
+  publishedAt?: string;
 }
 
 export interface PublicCmsPage {
