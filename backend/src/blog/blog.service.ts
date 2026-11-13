@@ -4,6 +4,7 @@ import {
   ArrayMinSize,
   IsArray,
   IsIn,
+  IsISO8601,
   IsOptional,
   IsString,
   MaxLength,
@@ -37,6 +38,10 @@ export class UpsertBlogPostDto {
   @IsOptional()
   @IsIn(POST_STATUS)
   status?: PostStatus;
+
+  @IsOptional()
+  @IsISO8601()
+  publishedAt?: string;
 }
 
 @Injectable()
@@ -145,7 +150,7 @@ export class BlogService {
         excerpt: dto.excerpt?.trim() || null,
         tags: dto.tags?.map((t: string) => t.trim()).filter(Boolean) ?? [],
         status,
-        ...(isPublishing ? { publishedAt: new Date() } : {}),
+        ...(dto.publishedAt ? { publishedAt: new Date(dto.publishedAt) } : isPublishing ? { publishedAt: new Date() } : {}),
         ...(status === 'draft' ? { publishedAt: null } : {}),
       },
     });
