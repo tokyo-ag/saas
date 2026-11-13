@@ -10,6 +10,11 @@ import { SITE_URL } from '@/lib/config';
 import { EventBadge, ReservationBadge } from '@/components/ui/StatusBadge';
 
 
+type CollabTenantOption = {
+  id: string;
+  name: string;
+};
+
 type EventReservation = Reservation & {
   member: {
     id: string;
@@ -45,6 +50,14 @@ export default function EventDetailPage() {
   const [loading, setLoading] = useState(true);
   const [rosterCopied, setRosterCopied] = useState(false);
   const [savingRosterShare, setSavingRosterShare] = useState(false);
+  const [collabCopied, setCollabCopied] = useState(false);
+  const [sendingCollab, setSendingCollab] = useState(false);
+  const [collabRequested, setCollabRequested] = useState(false);
+  const [collabTenants, setCollabTenants] = useState<CollabTenantOption[]>([]);
+  const [collabTenantsLoading, setCollabTenantsLoading] = useState(true);
+  const [collabTenantsError, setCollabTenantsError] = useState(false);
+  const [collabTargetIds, setCollabTargetIds] = useState<string[]>([]);
+  const [currentTenantId, setCurrentTenantId] = useState('');
 
   const load = useCallback(async () => {
     const [eventData, reservationList] = await Promise.all([
@@ -60,8 +73,14 @@ export default function EventDetailPage() {
     api.tenant.get()
       .then((tenant) => {
         setCustomQuestions(tenant.customProfileQuestions ?? []);
+        setCurrentTenantId(tenant.id);
+        setCollabTargetIds((current) => current.filter((id) => id !== tenant.id));
       })
       .catch(() => {});
+    api.tenant.listForCollab()
+      .then(setCollabTenants)
+      .catch(() => setCollabTenantsError(true))
+      .finally(() => setCollabTenantsLoading(false));
   }, [load]);
 
   async function updateStatus(reservationId: string, status: string) {
@@ -72,6 +91,39 @@ export default function EventDetailPage() {
     } catch {
       alert('ステータスの更新に失敗しました');
     }
+  }
+
+  function copyCollabUrl() {
+    if (!event?.collab?.viewToken) return;
+    navigator.clipboard.writeText(`${SITE_URL}/collab-roster/${event.collab.viewToken}`).then(() => {
+      setCollabCopied(true);
+      setTimeout(() => setCollabCopied(false), 2000);
+    });
+  }
+
+  async function submitCollabRequest() {
+    const targetTenantIds = collabTargetIds.filter((id) => id !== currentTenantId);
+    if (targetTenantIds.length === 0) return;
+    setSendingCollab(true);
+    try {
+      await api.events.requestCollab(eventId, targetTenantIds);
+      setCollabRequested(true);
+    } catch (e: any) {
+      alert(e.message ?? '送信に失敗しました');
+    } finally {
+      setSendingCollab(false);
+    }
+  }
+
+  function addCollabTenant(tenantId: string) {
+    if (!tenantId) return;
+    setCollabTargetIds((current) =>
+      current.length >= 4 || current.includes(tenantId) ? current : [...current, tenantId],
+    );
+  }
+
+  function removeCollabTenant(tenantId: string) {
+    setCollabTargetIds((current) => current.filter((id) => id !== tenantId));
   }
 
   async function toggleRosterShare(enabled: boolean) {
@@ -319,6 +371,85 @@ export default function EventDetailPage() {
           </div>
         )}
       </section>}
+
+      {!event.collabReadOnly && (
+        <section className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
+          <h2 className="text-sm font-semibold text-gray-800">コラボ申請</h2>
+          {event.collab ? (
+            <div className="mt-2 space-y-2">
+              <p className="text-xs leading-relaxed text-gray-400">
+                他団体との合同開催として連携されています{!event.collab.active && '（現在は無効化されています）'}。以下のリンクで参加者名簿を統合して確認できます。
+              </p>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <input
+                  readOnly
+                  value={`${SITE_URL}/collab-roster/${event.collab.viewToken}`}
+                  className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600"
+                  onFocus={(e) => e.target.select()}
+                />
+                <button
+                  onClick={copyCollabUrl}
+                  className="shrink-0 rounded-lg border border-gray-300 px-4 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                >
+                  {collabCopied ? 'コピーしました' : 'コピー'}
+                </button>
+              </div>
+            </div>
+          ) : collabRequested ? (
+            <p className="mt-2 text-xs text-gray-500">申請しました</p>
+          ) : (
+            <div className="mt-2 space-y-2">
+              {(() => {
+                const availableCollabTenants = collabTenants.filter(
+                  (t) => t.id !== currentTenantId && !collabTargetIds.includes(t.id),
+                );
+                let label = '団体を選択（最大4つ）';
+                if (collabTenantsLoading) label = '団体を読み込み中...';
+                else if (collabTenantsError) label = '団体一覧を取得できませんでした';
+                else if (collabTenants.length === 0) label = '選択できる団体がありません';
+                else if (collabTargetIds.length >= 4) label = '4団体を選択済み';
+                else if (availableCollabTenants.length === 0) label = '選択できる団体はありません';
+                return (
+                  <>
+                    <select
+                      value=""
+                      onChange={(e) => addCollabTenant(e.target.value)}
+                      disabled={collabTenantsLoading || collabTenantsError || availableCollabTenants.length === 0 || collabTargetIds.length >= 4}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                    >
+                      <option value="">{label}</option>
+                      {availableCollabTenants.map((t) => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                    {collabTargetIds.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {collabTargetIds.map((id) => {
+                          const t = collabTenants.find((item) => item.id === id);
+                          if (!t) return null;
+                          return (
+                            <button key={t.id} type="button" onClick={() => removeCollabTenant(t.id)}
+                              className="rounded-full bg-gray-100 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-200">
+                              {t.name} ×
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+              <button
+                onClick={submitCollabRequest}
+                disabled={sendingCollab || collabTargetIds.length === 0}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+              >
+                {sendingCollab ? '送信中...' : 'コラボ申請'}
+              </button>
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
         <h2 className="text-sm font-semibold text-gray-800">データエクスポート</h2>
