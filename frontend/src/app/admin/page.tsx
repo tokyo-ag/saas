@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
-import type { Event, Tenant } from '@/lib/api';
+import type { Event, SupportMessage, Tenant } from '@/lib/api';
+import { isPendingCollabRequest } from '@/lib/supportMessage';
 import {
   Area,
   AreaChart,
@@ -86,6 +87,7 @@ export default function DashboardPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pendingCollabMessages, setPendingCollabMessages] = useState<SupportMessage[]>([]);
 
   useEffect(() => {
     Promise.all([
@@ -94,13 +96,15 @@ export default function DashboardPage() {
       api.tenant.get(),
       api.tenant.growth(),
       api.tenant.activity(),
+      api.tenant.supportMessages().catch(() => [] as SupportMessage[]),
     ])
-      .then(([eventList, statData, tenantData, growthData, activityData]) => {
+      .then(([eventList, statData, tenantData, growthData, activityData, messages]) => {
         setEvents(eventList);
         setStats(statData);
         setTenant(tenantData);
         setGrowth(growthData);
         setActivities(activityData);
+        setPendingCollabMessages((messages as SupportMessage[]).filter((m) => isPendingCollabRequest(m.content)));
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -137,6 +141,19 @@ export default function DashboardPage() {
           イベントを作成
         </Link>
       </div>
+
+      {pendingCollabMessages.length > 0 && (
+        <Link
+          href="/admin/support"
+          className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 hover:bg-blue-100 transition-colors"
+        >
+          <span className="text-lg">📨</span>
+          <div className="flex-1">
+            <span className="font-semibold">コラボ申請が{pendingCollabMessages.length}件届いています</span>
+            <span className="ml-2 text-xs text-blue-600">承認・辞退はこちら →</span>
+          </div>
+        </Link>
+      )}
 
       {isFree && stats && (
         <section className={`rounded-xl border p-4 ${atLimit ? 'border-red-200 bg-red-50' : nearLimit ? 'border-amber-200 bg-amber-50' : 'border-gray-200 bg-gray-50'}`}>
