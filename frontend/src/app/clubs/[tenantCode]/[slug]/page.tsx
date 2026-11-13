@@ -859,14 +859,14 @@ export default async function ClubCmsPage({
         <div className="border-b border-gray-100">
           {sectionOrder.map((key) => {
             if (shouldRenderInlineTitleLogo && key === 'name') return (
-              <div key="name" className="px-5 pt-3 pb-1">
+              <div key="name" className="px-5 pt-3 pb-0">
                 {renderInlineTitleLogo(false)}
               </div>
             );
             if (shouldRenderInlineTitleLogo && key === 'logo') return null;
             if (key === 'name') return orgDisplayType !== 'image' ? (
-              <div key="name" className="px-5 pt-3 pb-1">
-                <h1 className="font-bold leading-tight" style={{ ...titleTextStyle, lineHeight: 1.25, margin: 0 }}>
+              <div key="name" className="px-5 pt-3 pb-0">
+                <h1 className="font-bold" style={{ ...titleTextStyle, lineHeight: 1.1, margin: 0 }}>
                   <Link href={clubHref} className="block" style={{ color: 'inherit' }}>
                     {tenantName}
                   </Link>
