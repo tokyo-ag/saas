@@ -5,7 +5,7 @@ import NextImage from 'next/image';
 import Link from 'next/link';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
-import { api, Tenant, TenantInput, getActiveAdminToken } from '@/lib/api';
+import { api, Tenant, TenantInput } from '@/lib/api';
 import { SaveToast } from '@/components/ui/SaveToast';
 
 const tabs = [
@@ -44,7 +44,7 @@ function SettingsTabs() {
   );
 }
 
-async function getCroppedBlob(imageSrc: string, pixelCrop: Area): Promise<Blob> {
+async function getCroppedDataUrl(imageSrc: string, pixelCrop: Area): Promise<string> {
   const image = new Image();
   image.src = imageSrc;
   await new Promise<void>((resolve) => { image.onload = () => resolve(); });
@@ -54,22 +54,7 @@ async function getCroppedBlob(imageSrc: string, pixelCrop: Area): Promise<Blob> 
   canvas.height = size;
   const ctx = canvas.getContext('2d')!;
   ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, size, size);
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('crop failed')), 'image/jpeg', 0.9);
-  });
-}
-
-async function uploadIconBlob(blob: Blob): Promise<string> {
-  const filename = `icon-${Date.now()}.jpg`;
-  const token = getActiveAdminToken();
-  const res = await fetch(`/api/upload?filename=${encodeURIComponent(filename)}`, {
-    method: 'POST',
-    body: blob,
-    headers: { 'content-type': 'image/jpeg', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-  });
-  const data = await res.json() as { url?: string; error?: string };
-  if (!res.ok) throw new Error(data.error ?? '画像のアップロードに失敗しました');
-  return data.url!;
+  return canvas.toDataURL('image/jpeg', 0.85);
 }
 
 export default function SettingsPage() {
@@ -117,19 +102,17 @@ export default function SettingsPage() {
     setUploading(true);
     setError('');
     try {
-      const blob = await getCroppedBlob(cropSrc, croppedAreaPixels);
-      const url = await uploadIconBlob(blob);
+      const dataUrl = await getCroppedDataUrl(cropSrc, croppedAreaPixels);
       setCropSrc(null);
-      // アップロード後すぐ保存まで走らせる（保存ボタン押し忘れ防止）
       setForm((prev) => {
-        const next = { ...prev, iconUrl: url };
+        const next = { ...prev, iconUrl: dataUrl };
         api.tenant.update({
           name: next.name,
           description: next.description,
           iconUrl: next.iconUrl,
           typeTags: next.typeTags ?? [],
           activityTags: next.activityTags ?? [],
-          tags: next.activityTags ?? [],
+          tags: next.tags ?? [],
         }).then((updated) => {
           setTenant(updated);
           setSaved(true);
@@ -138,7 +121,7 @@ export default function SettingsPage() {
         return next;
       });
     } catch (err: any) {
-      setError(err.message ?? '画像のアップロードに失敗しました');
+      setError(err.message ?? '画像の処理に失敗しました');
     } finally {
       setUploading(false);
     }
