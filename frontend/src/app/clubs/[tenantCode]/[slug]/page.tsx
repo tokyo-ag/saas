@@ -291,7 +291,7 @@ export async function generateMetadata({
     return primarySlug ? { robots: { index: false, follow: true } } : { robots: { index: false, follow: false } };
   }
 
-  const tenantName = page.tenant.lineDisplayName || page.tenant.name;
+  const tenantName = page.tenant.name || page.tenant.lineDisplayName;
   const canonicalCode = page.tenant.code ?? tenantCode;
   const needsAutoSeo = !page.seoTitle || !page.seoDescription;
   const seoProfile = needsAutoSeo ? await fetchTenantSeoProfile(canonicalCode) : null;
@@ -702,7 +702,7 @@ export default async function ClubCmsPage({
         <div className={`flex items-start gap-3 ${!isLeft ? 'flex-row-reverse' : ''}`}>
           {block.imageUrl && imgUrl(block.imageUrl, IMAGE_BASE_URL) && (
             <div className="relative shrink-0 overflow-hidden rounded-xl" style={{ height: mediaTextPx, width: mediaTextPx }}>
-              <Image src={imgUrl(block.imageUrl, IMAGE_BASE_URL)!} alt={block.content?.split('\n')[0]?.trim() || ''} fill className="object-cover" sizes={`${mediaTextPx}px`} style={{ objectPosition: block.imageFocal ?? 'center center' }} />
+              <Image src={imgUrl(block.imageUrl, IMAGE_BASE_URL)!} alt={block.content?.split('\n')[0]?.trim().replace(/^#+\s*/, '') || ''} fill className="object-cover" sizes={`${mediaTextPx}px`} style={{ objectPosition: block.imageFocal ?? 'center center' }} />
             </div>
           )}
           <div className={`min-w-0 flex-1 space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>
@@ -716,7 +716,7 @@ export default async function ClubCmsPage({
         <div className="flex gap-4">
           {block.imageUrl && imgUrl(block.imageUrl, IMAGE_BASE_URL) && (
             <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full">
-              <Image src={imgUrl(block.imageUrl, IMAGE_BASE_URL)!} alt={block.content?.split('\n')[0]?.trim() || ''} fill className="object-cover" sizes="80px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
+              <Image src={imgUrl(block.imageUrl, IMAGE_BASE_URL)!} alt={block.content?.split('\n')[0]?.trim().replace(/^#+\s*/, '') || ''} fill className="object-cover" sizes="80px" style={{ objectPosition: block.imageFocal ?? 'center center' }} />
             </div>
           )}
           <div className={`min-w-0 space-y-1 ${blockBodyClass}`} style={{ color: bodyTextColor, ...blockTextStyle }}>
