@@ -373,6 +373,7 @@ function simpleTemplateValues(template: SimpleSiteTemplate, contentBlockCount: n
 const SIMPLE_COLOR_THEMES = [
   { key: 'green', label: 'グリーン', accent: '#06C755', background: '#F7FAF8', surface: '#EAF8EF', border: '#B9E8C9', text: '#17201B' },
   { key: 'blue', label: 'ブルー', accent: '#2563EB', background: '#F6F8FC', surface: '#EAF1FF', border: '#C8D8FA', text: '#172033' },
+  { key: 'peach', label: 'ピーチ', accent: '#F8D4AD', background: '#FDFBF8', surface: '#F8D4AD', border: '#E8B88A', text: '#3D2B1A' },
   { key: 'pink', label: 'ピンク', accent: '#DB2777', background: '#FFF7FA', surface: '#FDE8F1', border: '#F5C2D8', text: '#2B1720' },
   { key: 'yellow', label: 'イエロー', accent: '#A67C00', background: '#FFFBEB', surface: '#FFF1B8', border: '#E8CF78', text: '#2B2412' },
   { key: 'mono', label: 'モノトーン', accent: '#374151', background: '#F8FAFC', surface: '#FFFFFF', border: '#D1D5DB', text: '#111827' },
