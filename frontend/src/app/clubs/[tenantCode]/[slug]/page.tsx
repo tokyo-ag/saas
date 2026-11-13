@@ -291,7 +291,7 @@ export async function generateMetadata({
     return primarySlug ? { robots: { index: false, follow: true } } : { robots: { index: false, follow: false } };
   }
 
-  const tenantName = page.tenant.name || page.tenant.lineDisplayName;
+  const tenantName = page.tenant.name || page.tenant.lineDisplayName || '';
   const canonicalCode = page.tenant.code ?? tenantCode;
   const needsAutoSeo = !page.seoTitle || !page.seoDescription;
   const seoProfile = needsAutoSeo ? await fetchTenantSeoProfile(canonicalCode) : null;
