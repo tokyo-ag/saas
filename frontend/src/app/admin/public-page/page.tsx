@@ -1596,7 +1596,17 @@ export default function AdminPublicPage() {
                 className="min-w-0 flex-1 rounded border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
             )}
             {form.slugLocked && (
-              <span className="shrink-0 text-[10px] text-gray-400">設定済み（編集不可）</span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm('URLを変更すると、既存のリンクやQRコードが使えなくなります。変更しますか？')) {
+                    setForm((p) => ({ ...p, slugLocked: false }));
+                  }
+                }}
+                className="shrink-0 rounded border border-gray-200 px-2 py-1 text-[10px] text-gray-500 hover:border-gray-300 hover:text-gray-700"
+              >
+                変更する
+              </button>
             )}
           </div>
         )}
