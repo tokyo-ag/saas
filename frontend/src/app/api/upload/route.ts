@@ -4,6 +4,11 @@ import { put } from '@vercel/blob';
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) {
+    return NextResponse.json({ error: 'BLOB_READ_WRITE_TOKEN not set' }, { status: 500 });
+  }
+
   try {
     const contentType = request.headers.get('content-type') ?? '';
     if (!contentType.startsWith('image/')) {
@@ -21,10 +26,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const blob = await put(`icons/${filename}`, buffer, {
       access: 'public',
       contentType,
+      token,
     });
 
     return NextResponse.json({ url: blob.url });
-  } catch {
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Upload failed';
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
