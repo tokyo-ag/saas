@@ -344,6 +344,9 @@ export default async function ClubCmsPage({
     notFound();
   }
 
+  const canonicalTenantCode = page.tenant.code ?? tenantCode;
+  if (canonicalTenantCode !== tenantCode) permanentRedirect(`/clubs/${canonicalTenantCode}/${slug}`);
+
   const tenantName = page.title?.trim() || page.tenant.lineDisplayName || page.tenant.name;
   const orgDisplayType = (page as any).orgNameDisplayType ?? 'text';
   const orgLogoUrl = (page as any).orgLogoWordmarkUrl as string | null;
