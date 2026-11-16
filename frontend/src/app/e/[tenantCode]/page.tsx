@@ -1,6 +1,6 @@
 export const revalidate = 60;
 
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -14,6 +14,7 @@ import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 
 type TenantEventsData = {
+  id?: string | null;
   code?: string | null;
   name: string;
   description?: string | null;
@@ -127,8 +128,9 @@ export async function generateMetadata({
   if (!tenant) {
     return { title: '団体が見つかりません', robots: { index: false, follow: false } };
   }
+  const canonicalCode = tenant.code || tenantCode;
   const name = tenant.lineDisplayName || tenant.name;
-  const isBell = tenantCode === '11221185';
+  const isBell = canonicalCode === '11221185';
   const title = isBell
     ? '【初参加歓迎】インカレサークルBELL｜イベント参加・予約一覧'
     : `${name}のイベント・予約一覧`;
@@ -142,11 +144,11 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: `${SITE_URL}/e/${tenantCode}` },
+    alternates: { canonical: `${SITE_URL}/e/${canonicalCode}` },
     openGraph: {
       title,
       description,
-      url: `${SITE_URL}/e/${tenantCode}`,
+      url: `${SITE_URL}/e/${canonicalCode}`,
       locale: 'ja_JP',
       type: 'website',
       images: [{ url: image, width: 1200, height: 630 }],
@@ -228,7 +230,10 @@ export default async function TenantEventsPage({
   const tenant = await fetchTenant(tenantCode);
   if (!tenant) notFound();
 
-  const isBell = tenantCode === '11221185';
+  const canonicalCode = tenant.code || tenantCode;
+  if (canonicalCode !== tenantCode) permanentRedirect(`/e/${canonicalCode}`);
+
+  const isBell = canonicalCode === '11221185';
   const slug = tenant.pages?.[0]?.slug;
   const page = slug ? await fetchPageStyle(tenantCode, slug) : null;
 
@@ -242,8 +247,8 @@ export default async function TenantEventsPage({
   const name = tenant.lineDisplayName || tenant.name;
   const icon = tenant.linePictureUrl;
   const events = tenant.events ?? [];
-  const eventsJsonLd = events.map((event) => eventJsonLd(event, tenantCode, name, icon));
-  const jsonLd = [breadcrumbJsonLd(tenantCode, name, slug), ...eventsJsonLd];
+  const eventsJsonLd = events.map((event) => eventJsonLd(event, canonicalCode, name, icon));
+  const jsonLd = [breadcrumbJsonLd(canonicalCode, name, slug), ...eventsJsonLd];
 
   return (
     <div className="min-h-screen w-full min-w-0 max-w-[100vw] overflow-x-hidden sm:bg-gray-200" style={{ backgroundColor }}>
