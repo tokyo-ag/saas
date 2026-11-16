@@ -194,13 +194,24 @@ function ReservePageInner() {
       if (!initOk) {
         // LINEアプリ外（Android Chrome Custom Tabs等）でのliff.init()失敗は
         // liff.line.meで開き直すと解決することが多い。1回だけ自動でリダイレクトを試みる。
+        // Android CCTはバックグラウンドで殺されるとsessionStorageが消えるため、
+        // 2分TTL付きlocalStorageで制御する（sessionStorageだと無限ループになる）。
         if (!isInLineInAppBrowser()) {
           const STEP1_REDIRECT_KEY = 'liff-step1-redirected';
-          if (!sessionStorage.getItem(STEP1_REDIRECT_KEY)) {
-            sessionStorage.setItem(STEP1_REDIRECT_KEY, '1');
+          const STEP1_TTL_MS = 2 * 60 * 1000;
+          const existing = (() => {
+            try {
+              const raw = localStorage.getItem(STEP1_REDIRECT_KEY);
+              if (!raw) return null;
+              const { ts } = JSON.parse(raw) as { ts: number };
+              return Date.now() - ts < STEP1_TTL_MS ? ts : null;
+            } catch { return null; }
+          })();
+          if (existing === null) {
+            try { localStorage.setItem(STEP1_REDIRECT_KEY, JSON.stringify({ ts: Date.now() })); } catch { /* ignore */ }
             if (redirectToLiffApp()) return;
           }
-          sessionStorage.removeItem(STEP1_REDIRECT_KEY);
+          try { localStorage.removeItem(STEP1_REDIRECT_KEY); } catch { /* ignore */ }
         }
         setAuthError(`Step1: ${getInitError() ?? '不明'}`);
         setAuthStatus('error');
@@ -489,6 +500,9 @@ function ReservePageInner() {
       window.location.reload();
       return;
     }
+    // 再試行前に前回ログイン試行のブロックフラグをクリアする。
+    // 残ったまま戻ってくるとhasRecentLoginAttempt()が即エラーにするため。
+    localStorage.removeItem('liff-login-tried');
     // liff.line.me経由だとLINEアプリを強制的に開こうとするため、
     // ブラウザ内で完結するliff.login()を優先する。
     try {

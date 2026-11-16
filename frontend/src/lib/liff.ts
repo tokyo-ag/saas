@@ -154,7 +154,7 @@ export async function initLiff(liffIdOverride?: string): Promise<boolean> {
   try {
     await withTimeout(
       liff.init({ liffId: id }),
-      10000,
+      20000,
       'LIFF初期化がタイムアウトしました',
     );
     initialized = true;
