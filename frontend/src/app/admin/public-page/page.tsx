@@ -638,7 +638,7 @@ export default function AdminPublicPage() {
   const toggleSection = (key: string) => setOpenSections(p => ({ ...p, [key]: !p[key] }));
   // GAKUORI keeps the detailed CMS: Q&A editing and per-section font sizing.
   // Every other tenant continues to use the current simplified CMS unchanged.
-  const showLegacyCustomizer = tenantCode === '18285255';
+  const showLegacyCustomizer = tenantCode === '18285255' || tenantCode === '45801967';
 
   const displayName = tenant?.name ?? tenant?.lineDisplayName ?? '公開サイト';
   const siteTitle = form.title?.trim() || displayName;
