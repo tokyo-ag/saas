@@ -9,15 +9,22 @@ name: DB Backup (Daily)
 #   手動テスト: Actions タブ > DB Backup (Daily) > Run workflow で即座に実行できます。
 #   タイムアウト: timeout-minutes: 30 設定済み（タイムアウト時も failure 扱い）。
 #
-# 【必要な Secrets】（GitHub > Settings > Secrets and variables > Actions で設定）
+# 【必須 Secrets】（GitHub > Settings > Secrets and variables > Actions で設定）
 #   PGBACKUP_DATABASE_URL : postgresql://postgres:PASSWORD@host:port/railway
 #   GPG_PASSPHRASE        : バックアップ暗号化パスフレーズ（強いランダム文字列）
 #                           生成例: openssl rand -base64 32
 #                           ※ パスワードマネージャー等に必ず保管してください
+#
+# 【外部ストレージ Secrets（任意・未設定時は GitHub Artifacts に自動フォールバック）】
 #   R2_ACCESS_KEY_ID      : Cloudflare R2 Access Key ID
 #   R2_SECRET_ACCESS_KEY  : Cloudflare R2 Secret Access Key
 #   R2_BUCKET             : R2バケット名（例: comiu-db-backup）
 #   R2_ENDPOINT           : R2エンドポイント（例: https://<ACCOUNT_ID>.r2.cloudflarestorage.com）
+#
+# 【フォールバック動作】
+#   R2 Secrets 未設定 → GitHub Artifacts に暗号化バックアップを保存（90日保持）
+#   GitHub Artifacts は外部ストレージの代替として機能するが、90日で自動削除されるため
+#   長期保管には R2（または Backblaze B2 等）の設定を推奨します。
 on:
   schedule:
     - cron: '0 17 * * *'
@@ -202,7 +209,19 @@ jobs:
           echo "復号検証: OK（SHA256一致: ${VERIFY_SHA256}）"
           echo "このバックアップは正常に復元可能であることが確認されました。"
 
-      - name: R2へアップロード
+      - name: 外部ストレージ判定
+        run: |
+          if [ -n "${{ secrets.R2_ACCESS_KEY_ID }}" ] && [ -n "${{ secrets.R2_BUCKET }}" ]; then
+            echo "STORAGE_BACKEND=r2" >> "$GITHUB_ENV"
+            echo "ストレージ: Cloudflare R2"
+          else
+            echo "STORAGE_BACKEND=github_artifacts" >> "$GITHUB_ENV"
+            echo "::notice::R2 Secrets 未設定。GitHub Artifacts にフォールバックします（90日保持）。"
+            echo "長期保管のため R2 または Backblaze B2 の設定を推奨します。"
+          fi
+
+      - name: R2へアップロード（R2設定済み時）
+        if: env.STORAGE_BACKEND == 'r2'
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -240,6 +259,7 @@ jobs:
           echo "IS_MONTHLY=${IS_MONTHLY}" >> "$GITHUB_ENV"
 
       - name: 世代管理（daily: 30日以上を削除、monthly: 12ヶ月以上を削除）
+        if: env.STORAGE_BACKEND == 'r2'
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -248,17 +268,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          # 注意: 今回アップロードしたファイルは TS=${TS} を含む名前のため、
-          # CUTOFF（30日前）より新しく、削除対象にはならない。
-          # 削除対象は CUTOFF より日付が古いファイルのみ。
           CUTOFF=$(date -u -d '30 days ago' +%Y%m%d 2>/dev/null || date -u -v-30d +%Y%m%d)
           echo "30日以上前（< ${CUTOFF}）の daily バックアップを削除します"
 
           DELETED=0
 
-          # daily/ 内の古いファイルを列挙して削除
           while IFS= read -r key; do
-            # ファイル名から日付部分を抽出（pgdump_YYYYMMDD_HHMMSS.sql.gz.gpg）
             FILE_DATE=$(echo "$key" | grep -oP '\d{8}' | head -1 || true)
             if [ -n "$FILE_DATE" ] && [ "$FILE_DATE" -lt "$CUTOFF" ]; then
               aws s3 rm "s3://${R2_BUCKET}/${key}" --endpoint-url "$R2_ENDPOINT" --quiet
@@ -267,8 +282,6 @@ jobs:
             fi
           done < <(aws s3 ls "s3://${R2_BUCKET}/daily/" --endpoint-url "$R2_ENDPOINT" | awk '{print "daily/"$4}')
 
-          # monthly/ は12ヶ月（365日）以上前を削除
-          # 注意: 月次バックアップは毎月1日のものを保持。12ヶ月分 = 最大12ファイル。
           MONTHLY_CUTOFF=$(date -u -d '365 days ago' +%Y%m%d 2>/dev/null || date -u -v-365d +%Y%m%d)
           while IFS= read -r key; do
             FILE_DATE=$(echo "$key" | grep -oP '\d{8}' | head -1 || true)
@@ -281,6 +294,23 @@ jobs:
 
           echo "世代管理完了: ${DELETED} 件削除"
           echo "DELETED_COUNT=${DELETED}" >> "$GITHUB_ENV"
+
+      - name: GitHub Artifactsへアップロード（R2未設定時フォールバック）
+        if: env.STORAGE_BACKEND == 'github_artifacts'
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ env.TS }}
+          path: ${{ env.GPG_FILE }}
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: GitHub Artifacts フォールバック情報をセット
+        if: env.STORAGE_BACKEND == 'github_artifacts'
+        run: |
+          echo "DAILY_KEY=github-artifacts/db-backup-${TS}" >> "$GITHUB_ENV"
+          echo "IS_MONTHLY=false" >> "$GITHUB_ENV"
+          echo "DELETED_COUNT=0" >> "$GITHUB_ENV"
+          echo "フォールバック: GitHub Artifacts に保存完了（90日保持）"
 
       - name: Job Summary 出力
         if: always()

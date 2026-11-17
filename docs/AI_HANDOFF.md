@@ -6,19 +6,44 @@ or finishing.
 
 ## Current objective
 
-- FONEのPROプラン課金フローを完成させる。スーパーアドミンで支払いURL発行→FONEに送信→FONE側でカード入力。
+バックアップ基盤の完成（復元テスト合格）。次の中断点まで完了してから課金フローに戻る。
 
 ## Status
 
-- 課金管理機能を `3c0315a` でデプロイ済み。Railwayデプロイ進行中。
-- Stripeのテスト環境（サンドボックス）が開いている状態。本番環境への切り替えが必要な場合は確認。
+- バックアップ基盤: 暗号化バックアップ取得済み、WSLローカルPostgreSQLサーバーインストール中（復元テスト未実施）
+- 課金管理機能デプロイ済み（commit 3c0315a）。Stripe本番切り替えは保留。
+- FONE 12月イベント10件を本番DBに投入済み（2026-11-18）
 
 ## Next action
 
-1. Railwayデプロイ完了後、スーパーアドミン（/superadmin）でFONEテナントの「課金管理 ▾」→「プロ 支払いURL発行」をクリック
-2. コピーされたStripe Checkout URLをFONEに送信
-3. FONEがURLからクレカ入力→完了でプランがPROに自動更新される
-4. Stripeは現在サンドボックスモードのため、本番課金には本番環境への切り替えが必要（`STRIPE_BILLING_SECRET_KEY`・`STRIPE_PRO_PRICE_ID`等の本番値をRailway環境変数にセット）
+### バックアップ基盤（最優先）
+
+1. **復元テスト（ユーザーが実行）:**
+   ```
+   wsl bash /mnt/c/saas/backend/decrypt_test.sh
+   ```
+   前提: `wsl bash -c "sudo service postgresql start"` でローカルPostgres起動が必要
+   ※ WSL上でpostgresqlサーバーインストールが必要な場合: `sudo apt-get install -y postgresql`
+
+2. **GitHub Secrets設定（ユーザーが実施）:**
+   - `PGBACKUP_DATABASE_URL`: turntable.proxy.rlwy.net の接続URL（.env.backupから取得）
+   - `GPG_PASSPHRASE`: .env.backupから取得（`grep GPG_PASSPHRASE /mnt/c/saas/backend/.env.backup`）
+   - R2 Secrets（任意。未設定時はGitHub Artifactsにフォールバック）
+
+3. **GPGパスフレーズのパスワードマネージャー登録（ユーザーが実施）:**
+   ```
+   grep GPG_PASSPHRASE /mnt/c/saas/backend/.env.backup
+   ```
+   → Bitwarden等に「COMIU GPG Backup Passphrase」として登録
+
+4. **GitHub Actions手動トリガーテスト:**
+   Actions > DB Backup (Daily) > Run workflow
+
+### 課金フロー（バックアップ完了後）
+
+1. /superadmin でFONEテナント「課金管理」→「プロ 支払いURL発行」
+2. URLをFONEに送信 → カード入力
+3. Stripe本番切り替え（`STRIPE_BILLING_SECRET_KEY`等をRailway環境変数にセット）
 
 ## Pending: リマインドが届かない問題
 
@@ -26,7 +51,25 @@ FONEのLINE設定完了後にリマインドが届かない可能性。
 - 診断：ブラウザコンソールで `fetch('/api/admin/events').then(r=>r.json()).then(d=>console.log(d.events?.map(e=>({title:e.title,remindAt:e.remindAt,remindedAt:e.remindedAt}))))` を実行
 - `remindedAt`がセット済みならDBで`null`にリセットが必要
 
-## Completed changes (2026-11-18, Claude Code)
+## Completed changes (2026-11-18 session 2, Claude Code)
+
+### バックアップ基盤整備続き (commits 246de96)
+
+- `.claude/settings.local.json`: PowerShell toolをPreToolUseフックに追加（PowerShell経由のDB操作も自動バックアップ対象に）
+- `backend/pre_psql_backup.sh`: `railway run` + SQL操作の検出、`prisma migrate reset`検出を追加
+- `.github/workflows/db-backup.yml`: R2未設定時にGitHub Artifactsへ自動フォールバック。外部ストレージなしでもワークフローが成功するように変更。
+- `backend/.env.backup`: 本番DB接続URL（turntable.proxy.rlwy.net）とGPG_PASSPHRASEを設定済み（Gitコミット対象外）
+- `backup/pgdump_20261118_044429.sql.gz.gpg`: 初回暗号化バックアップ取得済み、SHA256検証済み
+
+**未完了（ユーザーアクションが必要）:**
+- WSLローカルPostgreSQLサーバーインストール（`sudo apt-get install -y postgresql`がタイムアウト繰り返し中）
+- 復元テスト（`decrypt_test.sh`）はPostgreSQLサーバー起動後に実施
+- GitHub Secrets設定
+- GPGパスフレーズのパスワードマネージャー登録
+
+---
+
+## Completed changes (2026-11-18 session 1, Claude Code)
 
 ### バックアップ基盤改善 (commit eca35ac)
 
