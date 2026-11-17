@@ -17,7 +17,8 @@ import {
   AdminTenantReview,
 } from '@/lib/api';
 import { imgUrl } from '@/lib/imgUrl';
-import { buildBlogBody, firstBlogImage, parseBlogBody } from '@/lib/blogBody';
+import { AI_DRAFT_PROMPT, buildBlogBody, firstBlogImage, parseBlogBody } from '@/lib/blogBody';
+import { SITE_URL } from '@/lib/config';
 import { EventStatusBadge, ReservationBadge } from '@/components/ui/StatusBadge';
 import EventForm from '@/components/admin/EventForm';
 
@@ -507,6 +508,8 @@ function BlogEditScreen({ session, post, onDone }: { session: Session; post: Blo
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [promptCopied, setPromptCopied] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
 
   async function handleImageFile(file: File) {
     setUploading(true);
@@ -550,6 +553,32 @@ function BlogEditScreen({ session, post, onDone }: { session: Session; post: Blo
   return (
     <div>
       <ScreenHeader title={post ? '記事を編集' : '新しい記事'} onBack={onDone} />
+      <div className="mb-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={async () => {
+            await navigator.clipboard.writeText(AI_DRAFT_PROMPT);
+            setPromptCopied(true);
+            setTimeout(() => setPromptCopied(false), 1600);
+          }}
+          className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-bold text-violet-700"
+        >
+          {promptCopied ? 'コピー済み ✓' : 'AI指示文コピー'}
+        </button>
+        {post && (
+          <button
+            type="button"
+            onClick={async () => {
+              await navigator.clipboard.writeText(`${SITE_URL}/clubs/${session.tenantCode}/blog/${post.slug}`);
+              setUrlCopied(true);
+              setTimeout(() => setUrlCopied(false), 1600);
+            }}
+            className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-600"
+          >
+            {urlCopied ? 'コピー済み ✓' : '記事URLコピー'}
+          </button>
+        )}
+      </div>
       {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
       <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4">
         <div>
