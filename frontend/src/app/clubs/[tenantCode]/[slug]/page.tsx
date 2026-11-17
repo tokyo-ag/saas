@@ -533,7 +533,6 @@ export default async function ClubCmsPage({
   );
 
   const instagramUrl = sectionCopy.instagram?.trim() || '';
-  const canonicalTenantCode = page.tenant.code ?? tenantCode;
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'SportsOrganization',
