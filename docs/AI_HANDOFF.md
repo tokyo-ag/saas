@@ -18,12 +18,23 @@ or finishing.
 
 ### バックアップ基盤（最優先）
 
-1. **復元テスト（ユーザーが実行）:**
-   ```
+1. **復元テスト（ユーザーが手動実行）:**
+   ```bash
+   # WSLターミナルで直接実行（sudoパスワード入力が必要）
+   sudo apt-get install -y postgresql-18   # サーバーがなければインストール
+   sudo service postgresql start
    wsl bash /mnt/c/saas/backend/decrypt_test.sh
    ```
-   前提: `wsl bash -c "sudo service postgresql start"` でローカルPostgres起動が必要
-   ※ WSL上でpostgresqlサーバーインストールが必要な場合: `sudo apt-get install -y postgresql`
+   ※ Claude CodeのWSL経由ではsudoパスワード入力不可のため自動化不可
+
+   **静的解析で確認済みの項目（2026-11-18）:**
+   - テーブル数: 26（全COPY文と一致）
+   - 総行数: 11,913行
+   - FK制約数: 22、インデックス数: 38
+   - エンコーディング: UTF8（`SET client_encoding = 'UTF8'`）
+   - FK整合性: 孤立レコード0件（reservations/members/blog_posts）
+   - Prismaマイグレーション: 105件（最新: 20261022000000_add_roster_gender_sort）
+   - ダンプ終端マーカー: `-- PostgreSQL database dump complete --` 確認済み
 
 2. **GitHub Secrets設定（ユーザーが実施）:**
    - `PGBACKUP_DATABASE_URL`: turntable.proxy.rlwy.net の接続URL（.env.backupから取得）
