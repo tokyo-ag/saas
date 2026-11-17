@@ -2,6 +2,22 @@ name: DB Backup (Daily)
 
 # 毎日 02:00 JST（UTC 17:00）に実行
 # workflow_dispatch で手動実行も可能
+#
+# 【失敗検知】
+#   ジョブ失敗時: GitHub がリポジトリオーナーに自動でメール通知します。
+#   通知設定: GitHub > Settings > Notifications > GitHub Actions で確認・変更できます。
+#   手動テスト: Actions タブ > DB Backup (Daily) > Run workflow で即座に実行できます。
+#   タイムアウト: timeout-minutes: 30 設定済み（タイムアウト時も failure 扱い）。
+#
+# 【必要な Secrets】（GitHub > Settings > Secrets and variables > Actions で設定）
+#   PGBACKUP_DATABASE_URL : postgresql://postgres:PASSWORD@host:port/railway
+#   GPG_PASSPHRASE        : バックアップ暗号化パスフレーズ（強いランダム文字列）
+#                           生成例: openssl rand -base64 32
+#                           ※ パスワードマネージャー等に必ず保管してください
+#   R2_ACCESS_KEY_ID      : Cloudflare R2 Access Key ID
+#   R2_SECRET_ACCESS_KEY  : Cloudflare R2 Secret Access Key
+#   R2_BUCKET             : R2バケット名（例: comiu-db-backup）
+#   R2_ENDPOINT           : R2エンドポイント（例: https://<ACCOUNT_ID>.r2.cloudflarestorage.com）
 on:
   schedule:
     - cron: '0 17 * * *'
@@ -20,13 +36,6 @@ jobs:
     timeout-minutes: 30
 
     env:
-      # 必要な Secrets（GitHub > Settings > Secrets and variables > Actions で設定してください）
-      #   PGBACKUP_DATABASE_URL : postgresql://postgres:PASSWORD@host:port/railway
-      #   GPG_PASSPHRASE        : バックアップ暗号化パスフレーズ（強いランダム文字列）
-      #   R2_ACCESS_KEY_ID      : Cloudflare R2 Access Key ID
-      #   R2_SECRET_ACCESS_KEY  : Cloudflare R2 Secret Access Key
-      #   R2_BUCKET             : R2バケット名（例: comiu-db-backup）
-      #   R2_ENDPOINT           : R2エンドポイント（例: https://<ACCOUNT_ID>.r2.cloudflarestorage.com）
       BACKUP_DIR: /tmp/db-backup
 
     steps:
@@ -44,7 +53,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          # URLから接続情報を分解
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::PGBACKUP_DATABASE_URL が設定されていません。GitHub Settings > Secrets に追加してください。"
+            exit 1
+          fi
+
+          # URLから接続情報を分解（パスワードをコマンド引数に残さない）
           DB_URL_PARSED=$(python3 - <<PYEOF
           import urllib.parse, sys
           u = urllib.parse.urlparse("${DATABASE_URL}")
@@ -101,17 +115,25 @@ jobs:
           echo "TS=${TS}" >> "$GITHUB_ENV"
           echo "OUT_FILE=${OUT_FILE}" >> "$GITHUB_ENV"
 
-      - name: SHA256チェックサム計算
+      - name: SHA256チェックサム計算（平文）
         run: |
           SHA256=$(sha256sum "$OUT_FILE" | cut -d' ' -f1)
           echo "SHA256=${SHA256}" >> "$GITHUB_ENV"
           echo "平文 SHA256: ${SHA256}"
 
-      - name: GPG暗号化
+      - name: GPG暗号化（必須・失敗時停止）
         env:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
           set -euo pipefail
+
+          # GPG_PASSPHRASEが未設定の場合は必ず失敗停止
+          if [ -z "${GPG_PASSPHRASE:-}" ]; then
+            echo "::error::GPG_PASSPHRASE が設定されていません。GitHub Settings > Secrets に GPG_PASSPHRASE を追加してください。"
+            echo "::error::生成例: openssl rand -base64 32"
+            exit 1
+          fi
+
           GPG_FILE="${OUT_FILE}.gpg"
 
           echo "$GPG_PASSPHRASE" | gpg \
@@ -124,6 +146,12 @@ jobs:
             --output "$GPG_FILE" \
             "$OUT_FILE"
 
+          # 暗号化ファイルが空でないことを確認
+          if [ ! -s "$GPG_FILE" ]; then
+            echo "::error::暗号化ファイルが空です。GPG処理に失敗した可能性があります。"
+            exit 1
+          fi
+
           GPG_SHA256=$(sha256sum "$GPG_FILE" | cut -d' ' -f1)
           GPG_SIZE=$(stat -c%s "$GPG_FILE")
 
@@ -131,6 +159,48 @@ jobs:
           echo "GPG_SHA256=${GPG_SHA256}" >> "$GITHUB_ENV"
           echo "GPG_SIZE=${GPG_SIZE}" >> "$GITHUB_ENV"
           echo "暗号化完了: $(numfmt --to=iec $GPG_SIZE), SHA256: $GPG_SHA256"
+
+          # 暗号化成功後に平文ファイルを削除（runner上に平文を残さない）
+          rm -f "$OUT_FILE"
+          echo "平文バックアップを削除しました: $(basename $OUT_FILE)"
+
+      - name: 復号検証（暗号化の可逆性を確認）
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+
+          # 暗号化ファイルを復号して SHA256 が元の平文と一致することを確認
+          # これにより「復号できないバックアップ」を作成しないことを保証する
+          VERIFY_FILE="${BACKUP_DIR}/verify_$$.sql.gz"
+
+          echo "$GPG_PASSPHRASE" | gpg \
+            --batch \
+            --yes \
+            --passphrase-fd 0 \
+            --decrypt \
+            --output "$VERIFY_FILE" \
+            "$GPG_FILE" 2>/tmp/gpg_verify_err.txt
+
+          if [ $? -ne 0 ]; then
+            echo "::error::復号検証失敗: GPGファイルが復号できません。バックアップは使用不能です。"
+            cat /tmp/gpg_verify_err.txt
+            rm -f "$VERIFY_FILE"
+            exit 1
+          fi
+
+          VERIFY_SHA256=$(sha256sum "$VERIFY_FILE" | cut -d' ' -f1)
+          rm -f "$VERIFY_FILE"
+
+          if [ "$VERIFY_SHA256" != "$SHA256" ]; then
+            echo "::error::SHA256不一致: 復号後のデータが元の平文と一致しません。"
+            echo "::error::  元の SHA256: ${SHA256}"
+            echo "::error::  復号の SHA256: ${VERIFY_SHA256}"
+            exit 1
+          fi
+
+          echo "復号検証: OK（SHA256一致: ${VERIFY_SHA256}）"
+          echo "このバックアップは正常に復元可能であることが確認されました。"
 
       - name: R2へアップロード
         env:
@@ -157,7 +227,7 @@ jobs:
 
           echo "daily/ にアップロード完了: ${DAILY_KEY}"
 
-          # 月次コピー
+          # 月次コピー（毎月1日のバックアップを monthly/ にも保存）
           if $IS_MONTHLY; then
             MONTHLY_KEY="monthly/pgdump_${TS}.sql.gz.gpg"
             aws s3 cp "s3://${R2_BUCKET}/${DAILY_KEY}" "s3://${R2_BUCKET}/${MONTHLY_KEY}" \
@@ -169,7 +239,7 @@ jobs:
           echo "DAILY_KEY=${DAILY_KEY}" >> "$GITHUB_ENV"
           echo "IS_MONTHLY=${IS_MONTHLY}" >> "$GITHUB_ENV"
 
-      - name: 世代管理（daily: 30日以上を削除）
+      - name: 世代管理（daily: 30日以上を削除、monthly: 12ヶ月以上を削除）
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -178,11 +248,15 @@ jobs:
         run: |
           set -euo pipefail
 
+          # 注意: 今回アップロードしたファイルは TS=${TS} を含む名前のため、
+          # CUTOFF（30日前）より新しく、削除対象にはならない。
+          # 削除対象は CUTOFF より日付が古いファイルのみ。
           CUTOFF=$(date -u -d '30 days ago' +%Y%m%d 2>/dev/null || date -u -v-30d +%Y%m%d)
-          echo "30日以上前（<${CUTOFF}）の daily バックアップを削除します"
+          echo "30日以上前（< ${CUTOFF}）の daily バックアップを削除します"
+
+          DELETED=0
 
           # daily/ 内の古いファイルを列挙して削除
-          DELETED=0
           while IFS= read -r key; do
             # ファイル名から日付部分を抽出（pgdump_YYYYMMDD_HHMMSS.sql.gz.gpg）
             FILE_DATE=$(echo "$key" | grep -oP '\d{8}' | head -1 || true)
@@ -193,7 +267,8 @@ jobs:
             fi
           done < <(aws s3 ls "s3://${R2_BUCKET}/daily/" --endpoint-url "$R2_ENDPOINT" | awk '{print "daily/"$4}')
 
-          # monthly/ は12ヶ月以上前を削除
+          # monthly/ は12ヶ月（365日）以上前を削除
+          # 注意: 月次バックアップは毎月1日のものを保持。12ヶ月分 = 最大12ファイル。
           MONTHLY_CUTOFF=$(date -u -d '365 days ago' +%Y%m%d 2>/dev/null || date -u -v-365d +%Y%m%d)
           while IFS= read -r key; do
             FILE_DATE=$(echo "$key" | grep -oP '\d{8}' | head -1 || true)
@@ -226,6 +301,9 @@ jobs:
 
           EOF
 
-      - name: ローカルの一時ファイルを削除
+      - name: 一時ファイルを削除（異常終了時も実行）
         if: always()
-        run: rm -rf "$BACKUP_DIR"
+        run: |
+          # 異常終了時も /tmp/db-backup/ と平文ファイルを確実に削除する
+          rm -rf "$BACKUP_DIR"
+          echo "一時ファイル削除完了"

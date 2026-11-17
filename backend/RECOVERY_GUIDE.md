@@ -15,20 +15,61 @@
 
 ## セットアップ（初回のみ）
 
-### 1. .env.backup の作成
+### 1. GPGパスフレーズの生成と保管
+
+**⚠️ 最重要: パスフレーズを紛失するとバックアップが永久に復元不能になります。**
+
+#### パスフレーズの生成
+```bash
+# 十分にランダムなパスフレーズを生成する（例）
+wsl bash -c "openssl rand -base64 32"
+# または
+wsl bash -c "cat /dev/urandom | tr -dc 'A-Za-z0-9!@#%^&*' | head -c 40; echo"
+```
+
+生成した値は**絶対にチャット・ターミナルログ・GitHubに貼り付けない**でください。
+
+#### パスフレーズの三重保管（必須）
+
+| 保管場所 | 方法 | 目的 |
+|---|---|---|
+| **1. パスワードマネージャー** | Bitwarden（無料）/ 1Password 等に「COMIU GPG Backup Passphrase」として保存 | 日常的な参照・復旧 |
+| **2. ローカル `.env.backup`** | `C:\saas\backend\.env.backup` の `GPG_PASSPHRASE=` 行 | ローカルバックアップ・手動復号 |
+| **3. GitHub Secrets** | `GPG_PASSPHRASE` Secret | GitHub Actions による自動バックアップ |
+
+> **推奨**: さらに印刷または手書きで物理的な安全な場所（鍵のかかる引き出し等）に保管。
+
+**保管確認チェックリスト（セットアップ後に必ず実施）:**
+- [ ] パスワードマネージャーで参照できることを確認
+- [ ] `.env.backup` から手動で復号できることを確認（後述の復号テスト参照）
+- [ ] GitHub Secrets に設定済みであることを確認
+
+### 2. .env.backup の作成
 ```bash
 cp /mnt/c/saas/backend/.env.backup.template /mnt/c/saas/backend/.env.backup
 # .env.backup を編集して実際の接続情報とGPGパスフレーズを設定
+# （生成したパスフレーズをGPG_PASSPHRASE= の行に設定する）
 ```
 
-### 2. GitHub Secrets の設定
+### 3. GitHub Secrets の設定
 GitHub > Settings > Secrets and variables > Actions で以下を設定:
 - `PGBACKUP_DATABASE_URL` : Railway の DATABASE_URL
-- `GPG_PASSPHRASE` : バックアップ暗号化パスフレーズ（強いランダム文字列）
+- `GPG_PASSPHRASE` : バックアップ暗号化パスフレーズ（生成した値）
 - `R2_ACCESS_KEY_ID` : Cloudflare R2 Access Key ID
 - `R2_SECRET_ACCESS_KEY` : Cloudflare R2 Secret Access Key
 - `R2_BUCKET` : R2バケット名
 - `R2_ENDPOINT` : `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`
+
+### 4. 初回の暗号化・復号・復元テスト（必須）
+
+**新方式のバックアップが正常に復元できることを確認してから、旧方式のバックアップを削除してください。**
+
+```bash
+# ローカル復号テストスクリプトを実行
+wsl bash /mnt/c/saas/backend/decrypt_test.sh
+```
+
+詳細は「暗号化バックアップの復号テスト」セクションを参照。
 
 ---
 
@@ -130,6 +171,74 @@ ORDER BY reserved_at;
 -- 2. 復元DBには存在せず本番DBにある正常予約をINSERT
 -- （行ごとに確認してからINSERT）
 ```
+
+---
+
+## 暗号化バックアップの復号テスト
+
+GPG暗号化バックアップが実際に復号・復元できるかを確認するテストです。
+新方式（GitHub Actions + R2）を導入したら必ず実施してください。
+
+```bash
+# decrypt_test.sh を使って一括テスト
+wsl bash /mnt/c/saas/backend/decrypt_test.sh /path/to/pgdump_YYYYMMDD_HHMMSS.sql.gz.gpg
+```
+
+このスクリプトは以下を行います:
+1. `.env.backup` からGPGパスフレーズを読み込む
+2. 暗号化ファイルを復号して `.sql.gz` を生成
+3. SHA256で整合性を検証（メタファイルがある場合）
+4. ローカルPostgreSQLに復元
+5. テーブル数・行数・制約を確認
+6. テストDBを削除
+7. 一時ファイル（復号した `.sql.gz`）を削除
+
+**いずれかのステップが失敗した場合は、バックアップは復元不能と判断してください。**
+
+---
+
+## 鍵紛失・障害発生時の緊急復旧手順
+
+### ケース1: GPGパスフレーズを忘れた / 紛失した
+
+**復号は不可能です。** 以下の順序で代替を探してください:
+
+1. パスワードマネージャー（Bitwarden等）を確認
+2. `.env.backup` ファイルを確認: `cat /mnt/c/saas/backend/.env.backup | grep GPG_PASSPHRASE`
+3. 物理的な保管場所（印刷・手書きメモ）を確認
+4. GitHub Secrets は**読み取りできない**（設定した値を確認する方法はない）
+
+**どこにも残っていない場合:**
+- 暗号化バックアップからの復元は不可能
+- ローカルの平文バックアップ（`C:\saas\backup\pgdump_*.sql.gz`）があれば平文から復元できる
+- 今後のバックアップ用に新しいパスフレーズを生成し、全保管場所を更新する
+
+### ケース2: GitHubアカウントが使えなくなった / GitHub Actionsが止まった
+
+GitHub Actionsが停止しても、以下で対応できます:
+
+1. **R2に保存済みのバックアップは引き続きアクセス可能**（R2の認証情報でアクセス）
+2. **ローカルバックアップ**（`C:\saas\backup\`）から復元可能
+3. **新しいGitHubリポジトリ**に `.github/workflows/db-backup.yml` をコピーして再設定
+4. 緊急時: WSLで手動バックアップ `wsl bash /mnt/c/saas/backend/pg_backup.sh`
+
+### ケース3: Windows PCが故障した
+
+**ローカルバックアップは失われます。** R2のクラウドバックアップのみ残ります。
+
+復旧手順:
+1. 新しいPCにWSLをインストール
+2. GitHubからリポジトリをクローン
+3. パスワードマネージャーからGPGパスフレーズを取得
+4. `.env.backup` を再作成（Railway DashboardでDATABASE_URLを確認）
+5. R2から最新の暗号化バックアップをダウンロード
+6. `wsl bash /mnt/c/saas/backend/decrypt_test.sh <ダウンロードしたファイル>` で復元
+
+### ケース4: Cloudflare R2が使えなくなった
+
+1. ローカルバックアップ（`C:\saas\backup\`）から復元
+2. R2に代わるストレージへの移行: Backblaze B2、AWS S3等
+3. `.github/workflows/db-backup.yml` のアップロード先を変更
 
 ---
 
