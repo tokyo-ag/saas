@@ -265,7 +265,7 @@ export default function AdminBlogPage() {
   const [mode, setMode] = useState<Mode>('list');
   const [editing, setEditing] = useState<BlogPost | null>(null);
   const [form, setForm] = useState<BlogPostInput>({ title: '', body: '', excerpt: '', tags: [], status: 'draft' });
-  const [bodyText, setBodyText] = useState('');
+  const [unifiedText, setUnifiedText] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [extraImages, setExtraImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -276,6 +276,7 @@ export default function AdminBlogPage() {
   const [tenantTags, setTenantTags] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
   const [promptCopied, setPromptCopied] = useState(false);
+  const [fullCopied, setFullCopied] = useState(false);
   const [regeneratingSlugs, setRegeneratingSlugs] = useState(false);
   const [regeneratingExcerpts, setRegeneratingExcerpts] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -322,7 +323,7 @@ export default function AdminBlogPage() {
   function openNew() {
     setEditing(null);
     setForm({ title: '', body: '', excerpt: '', tags: [], status: 'draft' });
-    setBodyText('');
+    setUnifiedText('');
     setImageUrl(null);
     setExtraImages([]);
     setError('');
@@ -334,32 +335,20 @@ export default function AdminBlogPage() {
     const pub = post.publishedAt ? new Date(post.publishedAt).toISOString().slice(0, 10) : '';
     setForm({ title: post.title, body: post.body, excerpt: post.excerpt ?? '', tags: post.tags ?? [], status: post.status, publishedAt: pub });
     const parsed = parseBlogBody(post.body);
-    setBodyText(parsed.text);
     setImageUrl(parsed.imageUrl);
     setExtraImages(parsed.extraImages);
+    const parts: string[] = [post.title];
+    if (post.excerpt?.trim()) parts.push('', post.excerpt);
+    if (parsed.text.trim()) parts.push('', parsed.text);
+    setUnifiedText(parts.join('\n'));
     setError('');
     setMode('edit');
   }
 
-  // 文章欄が空の状態でAI原稿をまるごと貼り付けたときだけ、
-  // 1行目=タイトル、続く段落=概要として自動で抜き出す
-  function handleBodyPaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
-    if (bodyText.trim() !== '') return;
-    const pasted = e.clipboardData.getData('text');
-    if (!pasted.includes('\n')) return;
-    const { title, excerpt, body } = parseAiDraft(pasted);
-    if (!title && !body) return;
-    e.preventDefault();
-    setForm((p) => ({ ...p, title: title || p.title, excerpt: excerpt || p.excerpt }));
-    const parsed = parseBlogBody(body);
-    setBodyText(parsed.text);
-    if (parsed.imageUrl && !imageUrl) setImageUrl(parsed.imageUrl);
-    if (parsed.extraImages.length > 0) setExtraImages((prev) => [...prev, ...parsed.extraImages]);
-  }
-
   async function handleSave(publish: boolean) {
-    const body = buildBlogBody(imageUrl, bodyText, extraImages);
-    if (!form.title.trim() || !bodyText.trim()) {
+    const { title, excerpt, body: parsedBody } = parseAiDraft(unifiedText);
+    const body = buildBlogBody(imageUrl, parsedBody, extraImages);
+    if (!title.trim() || !parsedBody.trim()) {
       setError('タイトルと本文は必須です'); return;
     }
     if (tenantTags.length === 0) {
@@ -367,7 +356,7 @@ export default function AdminBlogPage() {
     }
     setSaving(true); setError('');
     try {
-      const payload: BlogPostInput = { ...form, tags: tenantTags, body, status: publish ? 'published' : 'draft', ...(form.publishedAt ? { publishedAt: form.publishedAt + 'T10:00:00+09:00' } : {}) };
+      const payload: BlogPostInput = { ...form, title, excerpt, tags: tenantTags, body, status: publish ? 'published' : 'draft', ...(form.publishedAt ? { publishedAt: form.publishedAt + 'T10:00:00+09:00' } : {}) };
       let savedPost: BlogPost;
       if (editing) {
         savedPost = await api.blog.update(editing.id, payload);
@@ -457,58 +446,53 @@ export default function AdminBlogPage() {
           />
         )}
 
-        <div className="mb-5 flex items-center gap-3">
+        <div className="mb-5 flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => setMode('list')} className="text-sm text-gray-500 hover:text-gray-700">
             ← 一覧
           </button>
           <h1 className="text-xl font-bold text-gray-900">{editing ? '記事を編集' : '新しい記事'}</h1>
-          {editing && tenantCode && (
+          <div className="ml-auto flex flex-wrap gap-2">
             <button
               type="button"
               onClick={async () => {
-                await navigator.clipboard.writeText(`${SITE_URL}/clubs/${tenantCode}/blog/${editing.slug}`);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 1600);
+                await navigator.clipboard.writeText(AI_DRAFT_PROMPT);
+                setPromptCopied(true);
+                setTimeout(() => setPromptCopied(false), 1600);
               }}
-              className="ml-auto rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50"
+              className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-bold text-violet-700 hover:bg-violet-100"
             >
-              {copied ? 'コピー済み' : 'URLコピー'}
+              {promptCopied ? 'コピー済み ✓' : 'AI指示文コピー'}
             </button>
-          )}
+            <button
+              type="button"
+              onClick={async () => {
+                await navigator.clipboard.writeText(unifiedText);
+                setFullCopied(true);
+                setTimeout(() => setFullCopied(false), 1600);
+              }}
+              className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50"
+            >
+              {fullCopied ? 'コピー済み ✓' : '記事全文コピー'}
+            </button>
+            {editing && tenantCode && (
+              <button
+                type="button"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(`${SITE_URL}/clubs/${tenantCode}/blog/${editing.slug}`);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1600);
+                }}
+                className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50"
+              >
+                {copied ? 'コピー済み ✓' : '記事URLコピー'}
+              </button>
+            )}
+          </div>
         </div>
 
         {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
-        <div className="mb-4 flex items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-violet-50 to-fuchsia-50 border border-violet-200 p-4">
-          <div>
-            <p className="text-sm font-bold text-violet-700">🤖 AIに記事を書かせる時の指示文</p>
-            <p className="mt-0.5 text-xs text-violet-400">この指示文をコピーしてChatGPTなどに貼り付けてから、記事の内容を伝えてください</p>
-          </div>
-          <button
-            type="button"
-            onClick={async () => {
-              await navigator.clipboard.writeText(AI_DRAFT_PROMPT);
-              setPromptCopied(true);
-              setTimeout(() => setPromptCopied(false), 1600);
-            }}
-            className="shrink-0 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-violet-700"
-          >
-            {promptCopied ? 'コピー済み ✓' : '指示文をコピー'}
-          </button>
-        </div>
-
         <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-5">
-
-          {/* タイトル */}
-          <div>
-            <span className="mb-1 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-500">タイトル</span>
-            <input
-              value={form.title}
-              onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-              placeholder="記事のタイトル（AI原稿を貼り付けると1行目が自動で入ります）"
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#06C755]"
-            />
-          </div>
 
           {/* 公開日（編集時のみ表示） */}
           {editing && form.status === 'published' && (
@@ -568,17 +552,16 @@ export default function AdminBlogPage() {
             )}
           </div>
 
-          {/* 文章 */}
+          {/* 文章（タイトル・概要・本文を一体で入力） */}
           <div>
             <span className="mb-1 inline-block rounded-full bg-[#06C755]/10 px-2 py-0.5 text-[10px] font-bold text-[#06C755]">文章</span>
-            <p className="mb-1 text-xs text-gray-400">AIに書かせた原稿をそのまま貼り付けると、1行目→タイトル、2行目以降の段落→概要に自動で振り分けられます。本文中の「# 見出し」「**太字**」「- 箇条書き」「1. 番号リスト」「&gt; 引用」「Q: 質問 / A: 回答」「!ヒント」「表（Markdown表記法）」「---区切り線」「公式LINEのURL（1行単独）」「内容19:00のような時刻付きの行（タイムスケジュール）」「InstagramやThreadsの「埋め込みコードをコピー」で取得できるコード（そのまま貼り付けでOK）」はそのまま装飾・ボタン・埋め込みとして表示されます</p>
+            <p className="mb-1 text-xs text-gray-400">1行目にタイトルを書き、1行空けて概要（2〜3行）、もう1行空けて本文を書いてください。AIに書かせた原稿をそのまま貼り付けるだけでタイトル・概要・本文が自動で振り分けられます。本文中の「# 見出し」「**太字**」「- 箇条書き」「1. 番号リスト」「&gt; 引用」「Q: 質問 / A: 回答」「!ヒント」「表（Markdown表記）」「---区切り線」「公式LINEのURL（1行単独）」「内容19:00のような時刻付きの行」「InstagramやThreadsの埋め込みコード」はそのまま装飾・ボタン・埋め込みとして表示されます</p>
             <div className="rounded-xl border border-[#06C755] p-1">
               <textarea
-                value={bodyText}
-                onChange={(e) => setBodyText(e.target.value)}
-                onPaste={handleBodyPaste}
-                placeholder={'活動の様子やお知らせを書いてください（AI原稿をそのまま貼り付けてもOK）\n\n入力例:\n# 見出しにしたい文\n本文はこのように普通に書きます。\n\n- 箇条書きにしたい項目\n- もうひとつの項目\n\n1. 番号リストの項目\n2. 次の項目'}
-                rows={Math.max(8, (bodyText.split('\n').length || 1) + 1)}
+                value={unifiedText}
+                onChange={(e) => setUnifiedText(e.target.value)}
+                placeholder={'記事タイトル（1行目）\n\n概要を2〜3行で書く（省略可）\n\n## 本文はここから\n本文を書いてください。AIに書かせた原稿をそのまま貼り付けてもOKです。'}
+                rows={Math.max(10, (unifiedText.split('\n').length || 1) + 2)}
                 className="w-full resize-none rounded-lg bg-transparent px-3 py-2 text-sm leading-7 text-gray-800 outline-none placeholder:text-gray-300 focus:bg-gray-50/60"
               />
             </div>
