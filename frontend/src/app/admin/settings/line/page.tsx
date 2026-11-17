@@ -232,8 +232,8 @@ export default function LineSettingsPage() {
             <div className="space-y-3">
               <SetupGuide
                 title="Webhook URL"
-                place="LINE Developers > Provider > Messaging APIチャネル > Messaging APIタブ > Webhook settings"
-                detail="Webhook URLに貼り付けて、Use webhookをONにしてからVerifyを押します。"
+                place="LINE公式アカウントマネージャー（manager.line.biz）の設定 > Messaging API、またはLINE Developers > Messaging APIチャネル > Messaging APIタブ > Webhook settings"
+                detail="Webhook URLに貼り付けて保存します。LINE Developersからの場合はUse webhookをONにしてVerifyを押します。"
               >
                 <CopyBox value={webhookUrl} />
               </SetupGuide>
