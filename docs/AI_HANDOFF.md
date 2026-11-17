@@ -26,6 +26,28 @@ FONEのLINE設定完了後にリマインドが届かない可能性。
 - 診断：ブラウザコンソールで `fetch('/api/admin/events').then(r=>r.json()).then(d=>console.log(d.events?.map(e=>({title:e.title,remindAt:e.remindAt,remindedAt:e.remindedAt}))))` を実行
 - `remindedAt`がセット済みならDBで`null`にリセットが必要
 
+## Completed changes (2026-11-18, Claude Code)
+
+### バックアップ基盤改善 (commit eca35ac)
+
+- `backend/pg_backup.sh`: check_bell.cjs依存を排除。`PGBACKUP_DATABASE_URL`環境変数または`.env.backup`から接続情報を取得。GPG対称暗号化（AES256）を追加（`GPG_PASSPHRASE`が設定されている場合）。
+- `backend/pre_psql_backup.sh`: prisma migrate deploy/dev・prisma db pushも自動バックアップのトリガーに追加。
+- `backend/.env.backup.template`: 接続情報テンプレート（Git管理、シークレットなし）。
+- `.gitignore`: `.env.backup.template`を除外対象外に追加（`.env.backup`は引き続き除外）。
+- `.github/workflows/db-backup.yml`: GitHub Actions日次バックアップ（Cloudflare R2への暗号化保存）。毎日02:00 JST実行・30日世代管理・月次12ヶ月保持。
+- `backend/RECOVERY_GUIDE.md`: バックアップ体制・復旧手順を最新アーキテクチャに更新。
+
+**次のアクション（バックアップ関連）:**
+1. GitHub Secretsを設定（`PGBACKUP_DATABASE_URL`, `GPG_PASSPHRASE`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_ENDPOINT`）
+2. Cloudflare R2バケットを作成（無料枠: 10GB/月、エグレス無料）
+3. `.env.backup`を作成（`cp .env.backup.template .env.backup`して実際の値を設定）
+4. Railway PostgreSQLダッシュボードでPITRを有効化（Backups タブ > Enable PITR）
+5. 復元テスト（WSLローカルPostgreSQLで）: `wsl bash /mnt/c/saas/backend/pg_backup.sh`実行後 `RECOVERY_GUIDE.md`の定期復元テスト手順を参照
+
+**ローカル復元テストについて:** WSL上のPostgreSQL 18サーバーインストールが完了していない（インストール試行中）。完了後は`RECOVERY_GUIDE.md`の定期復元テスト手順で実施可能。
+
+---
+
 ## Completed changes (2026-11-17 session 2, Claude Code)
 
 ### 課金管理機能追加 (commit 3c0315a)
