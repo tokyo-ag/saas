@@ -29,20 +29,26 @@ wsl bash -c "cat /dev/urandom | tr -dc 'A-Za-z0-9!@#%^&*' | head -c 40; echo"
 
 生成した値は**絶対にチャット・ターミナルログ・GitHubに貼り付けない**でください。
 
-#### パスフレーズの三重保管（必須）
+#### パスフレーズの保管戦略
+
+**GitHub Secrets はバックアップ保管先として数えない。**
+GitHub Secrets に設定した値は「読み取り不可」のため、GitHubアカウントを失うと参照できません。
+自動実行の「使用先」であり、「保管先」ではありません。
 
 | 保管場所 | 方法 | 目的 |
 |---|---|---|
-| **1. パスワードマネージャー** | Bitwarden（無料）/ 1Password 等に「COMIU GPG Backup Passphrase」として保存 | 日常的な参照・復旧 |
-| **2. ローカル `.env.backup`** | `C:\saas\backend\.env.backup` の `GPG_PASSPHRASE=` 行 | ローカルバックアップ・手動復号 |
-| **3. GitHub Secrets** | `GPG_PASSPHRASE` Secret | GitHub Actions による自動バックアップ |
+| **1. パスワードマネージャー（主保管）** | Bitwarden（無料）/ 1Password 等に「COMIU GPG Backup Passphrase」として保存 | 主な参照・復旧 |
+| **2. オフライン物理保管（必須）** | 印刷または手書きで紙に記録し、鍵のかかる引き出しや金庫に保管 | PC・クラウド全滅時の最終手段 |
+| **3. ローカル `.env.backup`（作業用）** | `C:\saas\backend\.env.backup` の `GPG_PASSPHRASE=` 行 | ローカルバックアップ・手動復号・decrypt_test.sh |
 
-> **推奨**: さらに印刷または手書きで物理的な安全な場所（鍵のかかる引き出し等）に保管。
+> GitHub Secrets の `GPG_PASSPHRASE` は「自動バックアップの実行に使う」だけです。  
+> 設定した値を後から確認する方法はないため、上記の①②を必ず先に確保してください。
 
 **保管確認チェックリスト（セットアップ後に必ず実施）:**
 - [ ] パスワードマネージャーで参照できることを確認
+- [ ] 物理的な保管場所（紙・金庫等）に記録済みであることを確認
 - [ ] `.env.backup` から手動で復号できることを確認（後述の復号テスト参照）
-- [ ] GitHub Secrets に設定済みであることを確認
+- [ ] GitHub Secrets への設定（確認不可なので設定操作が完了した直後に記録）
 
 ### 2. .env.backup の作成
 ```bash

@@ -39,6 +39,26 @@ TEMP_DIR=$(mktemp -d /tmp/comiu_decrypt_test_XXXXXX)
 TEST_DB="comiu_decrypt_test"
 PASS=true
 
+# ======================================================
+# 【安全確認】このスクリプトはローカルPostgreSQLのみに接続します。
+# Railway本番DB / turntable.proxy.rlwy.net には一切接続しません。
+# 環境変数 PGBACKUP_DATABASE_URL / DATABASE_URL は使用しません。
+# 接続方式: sudo -u postgres psql（Unixソケット、ローカルのみ）
+# ======================================================
+
+# 本番DB接続防止: 環境変数で本番ホストが指定されていても無効化する
+# PGHOST が Railway ホストを指している場合はブロック
+_PGHOST="${PGHOST:-}"
+if echo "$_PGHOST" | grep -qiE '(railway|rlwy\.net|\.proxy\.)'; then
+  echo "[ERROR] 環境変数 PGHOST が本番DBホスト（Railway）を指しています: $_PGHOST"
+  echo "[ERROR] このスクリプトはローカルPostgreSQLのみ使用します。PGHOST をクリアしてください。"
+  exit 1
+fi
+
+# 環境変数 DATABASE_URL / PGBACKUP_DATABASE_URL が本番を指していても、
+# このスクリプトは使用しない（念のためアンセット）
+unset DATABASE_URL PGBACKUP_DATABASE_URL PGHOST PGPASSWORD 2>/dev/null || true
+
 # 終了時のクリーンアップ（成功・失敗にかかわらず実行）
 cleanup() {
   echo ""
@@ -187,18 +207,27 @@ fi
 echo ""
 echo "[STEP 5] ローカルPostgreSQLへの復元..."
 
-# PostgreSQLサーバーの確認・起動
+# PostgreSQLサーバーの確認・起動（ローカルのみ）
+echo "  接続方式: Unix ソケット（ローカル PostgreSQL のみ）"
+echo "  本番DB（Railway）には接続しません。"
 if ! sudo -u postgres pg_isready -q 2>/dev/null; then
   echo "  PostgreSQLを起動中..."
   sudo service postgresql start 2>/dev/null || true
   sleep 3
   if ! sudo -u postgres pg_isready -q 2>/dev/null; then
-    echo "  [ERROR] PostgreSQLが起動しません。sudo apt-get install -y postgresql を実行してください。"
+    echo "  [ERROR] ローカルPostgreSQLが起動しません。"
+    echo "  インストール: sudo apt-get install -y postgresql"
+    echo "  起動確認:    sudo service postgresql start"
     PASS=false
     exit 1
   fi
 fi
-echo "  PostgreSQL: $(sudo -u postgres psql -c 'SELECT version();' -t 2>/dev/null | head -1 | xargs)"
+
+# 接続確認: ローカルソケット経由であることを確認
+PG_VERSION=$(sudo -u postgres psql -t -c 'SELECT version();' 2>/dev/null | head -1 | xargs || echo "")
+PG_HOST=$(sudo -u postgres psql -t -c 'SHOW unix_socket_directories;' 2>/dev/null | head -1 | xargs || echo "")
+echo "  PostgreSQL: $PG_VERSION"
+echo "  ソケット: $PG_HOST （ローカル接続を確認）"
 
 # テストDB作成
 sudo -u postgres psql -c "DROP DATABASE IF EXISTS ${TEST_DB};" 2>/dev/null
