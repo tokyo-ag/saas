@@ -3,9 +3,11 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  InternalServerErrorException,
   OnApplicationBootstrap,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import Stripe from 'stripe';
 import {
   IsString,
   IsOptional,
@@ -365,6 +367,39 @@ export class SuperadminService implements OnApplicationBootstrap {
       create: { lineUserId: dto.lineUserId, reason: dto.reason },
       update: { reason: dto.reason, bannedAt: new Date() },
     });
+  }
+
+  async createBillingCheckoutForTenant(tenantId: string, plan: 'standard' | 'pro') {
+    const secretKey = process.env.STRIPE_BILLING_SECRET_KEY;
+    if (!secretKey)
+      throw new InternalServerErrorException('Stripe Billing not configured');
+
+    const priceId =
+      plan === 'pro'
+        ? process.env.STRIPE_PRO_PRICE_ID
+        : process.env.STRIPE_STANDARD_PRICE_ID;
+    if (!priceId)
+      throw new InternalServerErrorException(`Price ID for plan "${plan}" not configured`);
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { id: true, stripeCustomerId: true },
+    });
+    if (!tenant) throw new NotFoundException('Tenant not found');
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const stripe = new Stripe(secretKey, { apiVersion: '2026-04-22.dahlia' });
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      line_items: [{ price: priceId, quantity: 1 }],
+      customer: tenant.stripeCustomerId ?? undefined,
+      success_url: `${frontendUrl}/admin/settings/plan?success=true`,
+      cancel_url: `${frontendUrl}/admin/settings/plan`,
+      metadata: { tenantId, plan },
+      subscription_data: { metadata: { tenantId, plan } },
+    });
+
+    return { url: session.url };
   }
 
   async impersonate(tenantId: string): Promise<{ token: string }> {

@@ -101,6 +101,22 @@ export class StripeWebhookController {
       }
     }
 
+    if (event.type === 'invoice.payment_failed') {
+      const invoice = event.data.object as {
+        customer?: string | { id: string } | null;
+      };
+      const customerId =
+        typeof invoice.customer === 'string'
+          ? invoice.customer
+          : (invoice.customer as { id: string } | null)?.id;
+      if (customerId) {
+        await this.prisma.tenant.updateMany({
+          where: { stripeCustomerId: customerId },
+          data: { plan: Plan.free, stripeSubscriptionId: null },
+        });
+      }
+    }
+
     return { received: true };
   }
 

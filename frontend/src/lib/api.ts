@@ -550,6 +550,11 @@ export const api = {
     errorLogs: () => request<ErrorLog[]>('/superadmin/errors'),
     clearErrorLogs: () => request<void>('/superadmin/errors', { method: 'DELETE' }),
     backfillPublicPageCardColors: () => request<{ total: number; updated: number }>('/superadmin/public-pages/backfill-card-colors', { method: 'PUT' }),
+    billingCheckout: (id: string, plan: 'standard' | 'pro') =>
+      request<{ url: string | null }>(`/superadmin/tenants/${id}/billing-checkout`, {
+        method: 'POST',
+        body: JSON.stringify({ plan }),
+      }),
     officialSite: () => request<OfficialSiteSettings>('/superadmin/official-site'),
     updateOfficialSite: (data: OfficialSiteInput) =>
       request<OfficialSiteSettings>('/superadmin/official-site', {
@@ -1016,6 +1021,8 @@ export interface Tenant {
 export interface TenantWithStats extends Tenant {
   memberCount: number;
   organizerEmail?: string | null;
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
 }
 
 export interface TenantInput {

@@ -196,6 +196,9 @@ export default function SuperadminPage() {
                       >管理画面 →</button>
                     )}
                     {!isBanned && <button onClick={() => setEditTarget(t)} className="text-sm text-gray-600 hover:underline">編集</button>}
+                    {!isBanned && !t.deletedAt && (
+                      <BillingMenu tenantId={t.id} tenantName={t.name} hasSubscription={!!t.stripeSubscriptionId} onChanged={load} />
+                    )}
                     {isBanned ? (
                       <button onClick={() => handlePurge(t.id, t.name)} className="text-sm text-red-500 hover:underline">完全削除</button>
                     ) : isDeactivated ? (
@@ -548,6 +551,96 @@ function BanUserModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
           </div>
         </form>
       </div>
+    </div>
+  );
+}
+
+function BillingMenu({
+  tenantId,
+  tenantName,
+  hasSubscription,
+  onChanged,
+}: {
+  tenantId: string;
+  tenantName: string;
+  hasSubscription: boolean;
+  onChanged: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function handleGenUrl(plan: 'standard' | 'pro') {
+    setLoading(true);
+    try {
+      const { url } = await api.superadmin.billingCheckout(tenantId, plan);
+      if (!url) { alert('URLの取得に失敗しました'); return; }
+      await navigator.clipboard.writeText(url);
+      alert(`${plan === 'pro' ? 'プロ' : 'スタンダード'}プランの支払いURLをコピーしました。\n\n${url}`);
+    } catch (e: any) {
+      alert(e.message ?? 'エラーが発生しました');
+    } finally {
+      setLoading(false);
+      setOpen(false);
+    }
+  }
+
+  async function handleDowngrade() {
+    if (!confirm(`「${tenantName}」をフリープランに変更しますか？`)) return;
+    setLoading(true);
+    try {
+      await api.superadmin.update(tenantId, { plan: 'free' });
+      onChanged();
+    } catch (e: any) {
+      alert(e.message ?? 'エラーが発生しました');
+    } finally {
+      setLoading(false);
+      setOpen(false);
+    }
+  }
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        disabled={loading}
+        className="text-sm text-purple-600 hover:underline disabled:opacity-50"
+      >
+        課金管理 ▾
+      </button>
+      {open && (
+        <div className="absolute left-0 top-6 z-10 bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-[180px]">
+          <button
+            onClick={() => handleGenUrl('standard')}
+            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          >
+            スタンダード 支払いURL発行
+          </button>
+          <button
+            onClick={() => handleGenUrl('pro')}
+            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          >
+            プロ 支払いURL発行
+          </button>
+          {hasSubscription && (
+            <>
+              <div className="border-t border-gray-100 my-1" />
+              <button
+                onClick={handleDowngrade}
+                className="w-full text-left px-4 py-2 text-sm text-orange-600 hover:bg-orange-50"
+              >
+                フリーに変更（停止）
+              </button>
+            </>
+          )}
+          <div className="border-t border-gray-100 my-1" />
+          <button
+            onClick={() => setOpen(false)}
+            className="w-full text-left px-4 py-2 text-xs text-gray-400 hover:bg-gray-50"
+          >
+            閉じる
+          </button>
+        </div>
+      )}
     </div>
   );
 }

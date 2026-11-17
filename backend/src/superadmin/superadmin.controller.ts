@@ -9,6 +9,7 @@ import {
   Param,
   Query,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import { SuperadminGuard } from '../auth/superadmin.guard';
 import {
@@ -64,6 +65,14 @@ export class SuperadminController {
   @Get('tenants/:id/impersonate')
   impersonate(@Param('id') id: string) {
     return this.service.impersonate(id);
+  }
+
+  @Post('tenants/:id/billing-checkout')
+  billingCheckout(@Param('id') id: string, @Body('plan') plan: string) {
+    if (plan !== 'standard' && plan !== 'pro') {
+      throw new BadRequestException('plan must be standard or pro');
+    }
+    return this.service.createBillingCheckoutForTenant(id, plan as 'standard' | 'pro');
   }
 
   @Get('banned-users')
