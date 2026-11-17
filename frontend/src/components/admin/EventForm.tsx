@@ -417,7 +417,7 @@ export default function EventForm({
     paymentTiming: (initial?.paymentTiming ?? 'onsite') as 'onsite' | 'prepay' | 'both',
     notifyOnReserve: initial?.notifyOnReserve ?? true,
     reservationMessageTemplate: initial?.reservationMessageTemplate ?? '',
-    remindEnabled: initial?.remindEnabled ?? false,
+    remindEnabled: initial?.remindEnabled ?? true,
     remindPreset: inferRemindPreset(initial?.remindAt, initial?.heldAt),
     remindAt: toLocalDatetimeValue(initial?.remindAt),
     reminderMessageTemplate: initial?.reminderMessageTemplate ?? '',
