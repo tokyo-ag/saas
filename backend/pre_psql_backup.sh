@@ -39,6 +39,17 @@ if echo "$COMMAND" | grep -qi "prisma db push"; then
   NEEDS_BACKUP=true
 fi
 
+# railway run + SQL操作（PowerShellからのDB操作を含む）
+if echo "$COMMAND" | grep -qi "railway run" && \
+   echo "$COMMAND" | grep -qiE "(\.sql|psql|INSERT|UPDATE|DELETE|migrate)"; then
+  NEEDS_BACKUP=true
+fi
+
+# prisma migrate reset（危険操作）
+if echo "$COMMAND" | grep -qiE "prisma migrate reset"; then
+  NEEDS_BACKUP=true
+fi
+
 if $NEEDS_BACKUP; then
   LOG="/mnt/c/saas/backup/pre_psql_backup.log"
   mkdir -p /mnt/c/saas/backup

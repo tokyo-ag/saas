@@ -3,5 +3,29 @@
     "allow": [
       "Bash(npx prisma *)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "wsl bash /mnt/c/saas/backend/pre_psql_backup.sh",
+            "timeout": 120
+          }
+        ]
+      },
+      {
+        "matcher": "PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "wsl bash /mnt/c/saas/backend/pre_psql_backup.sh",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
   }
 }
