@@ -6,12 +6,39 @@ or finishing.
 
 ## Current objective
 
-- Routine maintenance. All planned features are deployed.
+- FONEのPROプラン課金フローを完成させる。スーパーアドミンで支払いURL発行→FONEに送信→FONE側でカード入力。
 
 ## Status
 
-- Staff-view cancellation controls committed as `ba46791` on 2026-11-12,
-  pushed to `main`, Vercel deploying.
+- 課金管理機能を `3c0315a` でデプロイ済み。Railwayデプロイ進行中。
+- Stripeのテスト環境（サンドボックス）が開いている状態。本番環境への切り替えが必要な場合は確認。
+
+## Next action
+
+1. Railwayデプロイ完了後、スーパーアドミン（/superadmin）でFONEテナントの「課金管理 ▾」→「プロ 支払いURL発行」をクリック
+2. コピーされたStripe Checkout URLをFONEに送信
+3. FONEがURLからクレカ入力→完了でプランがPROに自動更新される
+4. Stripeは現在サンドボックスモードのため、本番課金には本番環境への切り替えが必要（`STRIPE_BILLING_SECRET_KEY`・`STRIPE_PRO_PRICE_ID`等の本番値をRailway環境変数にセット）
+
+## Pending: リマインドが届かない問題
+
+FONEのLINE設定完了後にリマインドが届かない可能性。
+- 診断：ブラウザコンソールで `fetch('/api/admin/events').then(r=>r.json()).then(d=>console.log(d.events?.map(e=>({title:e.title,remindAt:e.remindAt,remindedAt:e.remindedAt}))))` を実行
+- `remindedAt`がセット済みならDBで`null`にリセットが必要
+
+## Completed changes (2026-11-17 session 2, Claude Code)
+
+### 課金管理機能追加 (commit 3c0315a)
+- `backend/src/stripe/stripe-webhook.controller.ts`: `invoice.payment_failed` Webhook追加 → プランをfreeに自動ダウングレード
+- `backend/src/superadmin/superadmin.controller.ts`: `POST /superadmin/tenants/:id/billing-checkout` エンドポイント追加
+- `backend/src/superadmin/superadmin.service.ts`: `createBillingCheckoutForTenant()` メソッド追加（COMIUのStripe Billingで任意テナント向けCheckout URLを発行）
+- `frontend/src/lib/api.ts`: `api.superadmin.billingCheckout(id, plan)` 追加・`TenantWithStats`に`stripeSubscriptionId`追加
+- `frontend/src/app/superadmin/page.tsx`: `BillingMenu`コンポーネント追加（支払いURL発行・フリー強制変更）
+
+### その他完了（session 1）
+- FONEをフルカスタマイザー（showLegacyCustomizer）に追加 (commit b33deb4)
+- EventFormのremindEnabledデフォルトをtrueに変更 (commit ae2918c)
+- LINE設定ガイドのWebhook URL説明修正 (commit 62a1359)
 
 ## Completed changes (2026-11-17, Claude Code)
 
