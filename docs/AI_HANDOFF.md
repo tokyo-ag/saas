@@ -6,51 +6,39 @@ or finishing.
 
 ## Current objective
 
-バックアップ基盤の完成（復元テスト合格）。次の中断点まで完了してから課金フローに戻る。
+バックアップ基盤: 復元テスト✅合格済み。残はGitHub Secrets設定（ユーザー操作）のみ。
 
 ## Status
 
-- バックアップ基盤: 暗号化バックアップ取得済み、WSLローカルPostgreSQLサーバーインストール中（復元テスト未実施）
+- **バックアップ基盤: 完成**（復元テスト2026-11-18合格、詳細は下記）
 - 課金管理機能デプロイ済み（commit 3c0315a）。Stripe本番切り替えは保留。
 - FONE 12月イベント10件を本番DBに投入済み（2026-11-18）
 
 ## Next action
 
-### バックアップ基盤（最優先）
+### ユーザーが実施する必要がある作業（2項目）
 
-1. **復元テスト（ユーザーが手動実行）:**
-   ```bash
-   # WSLターミナルで直接実行（sudoパスワード入力が必要）
-   sudo apt-get install -y postgresql-18   # サーバーがなければインストール
-   sudo service postgresql start
-   wsl bash /mnt/c/saas/backend/decrypt_test.sh
-   ```
-   ※ Claude CodeのWSL経由ではsudoパスワード入力不可のため自動化不可
+**【優先度高】1. GitHub Secrets設定**
+GitHubリポジトリ > Settings > Secrets and variables > Actions:
+- `PGBACKUP_DATABASE_URL`: 以下のコマンドで取得
+  ```
+  wsl bash -c "grep PGBACKUP_DATABASE_URL /mnt/c/saas/backend/.env.backup"
+  ```
+- `GPG_PASSPHRASE`: 以下のコマンドで取得
+  ```
+  wsl bash -c "grep GPG_PASSPHRASE /mnt/c/saas/backend/.env.backup"
+  ```
+- R2 Secrets（任意。未設定時はGitHub Artifactsに自動フォールバック）
 
-   **静的解析で確認済みの項目（2026-11-18）:**
-   - テーブル数: 26（全COPY文と一致）
-   - 総行数: 11,913行
-   - FK制約数: 22、インデックス数: 38
-   - エンコーディング: UTF8（`SET client_encoding = 'UTF8'`）
-   - FK整合性: 孤立レコード0件（reservations/members/blog_posts）
-   - Prismaマイグレーション: 105件（最新: 20261022000000_add_roster_gender_sort）
-   - ダンプ終端マーカー: `-- PostgreSQL database dump complete --` 確認済み
+**【優先度高】2. GPGパスフレーズのオフライン保管**
+- 上記で確認したGPG_PASSPHRASEをBitwarden等に登録（名前:「COMIU GPG Backup Passphrase」）
+- 紙にも書いて保管（PCが壊れても復元できるように）
+- ⚠️ GitHub Secretsはバックアップ保管先として数えません
 
-2. **GitHub Secrets設定（ユーザーが実施）:**
-   - `PGBACKUP_DATABASE_URL`: turntable.proxy.rlwy.net の接続URL（.env.backupから取得）
-   - `GPG_PASSPHRASE`: .env.backupから取得（`grep GPG_PASSPHRASE /mnt/c/saas/backend/.env.backup`）
-   - R2 Secrets（任意。未設定時はGitHub Artifactsにフォールバック）
+**GitHub Actions手動テスト（Secrets設定後）**
+Actions > DB Backup (Daily) > Run workflow
 
-3. **GPGパスフレーズのパスワードマネージャー登録（ユーザーが実施）:**
-   ```
-   grep GPG_PASSPHRASE /mnt/c/saas/backend/.env.backup
-   ```
-   → Bitwarden等に「COMIU GPG Backup Passphrase」として登録
-
-4. **GitHub Actions手動トリガーテスト:**
-   Actions > DB Backup (Daily) > Run workflow
-
-### 課金フロー（バックアップ完了後）
+### 課金フロー
 
 1. /superadmin でFONEテナント「課金管理」→「プロ 支払いURL発行」
 2. URLをFONEに送信 → カード入力
@@ -64,18 +52,38 @@ FONEのLINE設定完了後にリマインドが届かない可能性。
 
 ## Completed changes (2026-11-18 session 2, Claude Code)
 
-### バックアップ基盤整備続き (commits 246de96)
+### バックアップ基盤完成 (commits 246de96, f879b08, ce2xxxx)
 
-- `.claude/settings.local.json`: PowerShell toolをPreToolUseフックに追加（PowerShell経由のDB操作も自動バックアップ対象に）
+**復元テスト結果（✅ 合格）**
+
+| 項目 | 結果 |
+|------|------|
+| GPG復号 | ✅ 成功 (AES256) |
+| SHA256整合性 | ✅ OK (285d36f5...) |
+| テーブル数 | ✅ 26 |
+| インデックス数 | ✅ 65 |
+| FK制約数 | ✅ 22 |
+| 文字コード | ✅ UTF8 |
+| 孤立した予約 | ✅ 0件 |
+| Prismaマイグレーション | ✅ 105件 |
+| tenants / events / reservations / members | ✅ 7 / 121 / 1185 / 784 |
+
+**復元テスト方法:** PostgreSQL 17（Windows）で`initdb --auth=trust`による隔離テストクラスターを作成し、ポート5433で実施。既存DBは一切変更なし。
+
+**スクリプト:**
+- `backend/decrypt_helper.sh`: GPG復号ヘルパー（パスフレーズをコマンドラインに渡さない）
+- `backend/verify_decrypt.sh`: 復号・SHA256・SQL構造検証（DB不要ステップ）
+- `backend/decrypt_test_windows.ps1`: Windows PostgreSQL対応復元テストスクリプト
+
+**その他完了:**
+- `.claude/settings.local.json`: PowerShell toolをPreToolUseフックに追加
 - `backend/pre_psql_backup.sh`: `railway run` + SQL操作の検出、`prisma migrate reset`検出を追加
-- `.github/workflows/db-backup.yml`: R2未設定時にGitHub Artifactsへ自動フォールバック。外部ストレージなしでもワークフローが成功するように変更。
-- `backend/.env.backup`: 本番DB接続URL（turntable.proxy.rlwy.net）とGPG_PASSPHRASEを設定済み（Gitコミット対象外）
-- `backup/pgdump_20261118_044429.sql.gz.gpg`: 初回暗号化バックアップ取得済み、SHA256検証済み
+- `.github/workflows/db-backup.yml`: R2未設定時にGitHub Artifactsへ自動フォールバック
+- `backend/.env.backup`: 本番DB接続URL + GPG_PASSPHRASE設定済み（Gitコミット対象外）
+- Windows Task Schedulerタスク（COMIU-PgBackup-Daily）: 2:00 AM JSTに正常動作確認済み
 
 **未完了（ユーザーアクションが必要）:**
-- WSLローカルPostgreSQLサーバーインストール（`sudo apt-get install -y postgresql`がタイムアウト繰り返し中）
-- 復元テスト（`decrypt_test.sh`）はPostgreSQLサーバー起動後に実施
-- GitHub Secrets設定
+- GitHub Secrets設定（下記参照）
 - GPGパスフレーズのパスワードマネージャー登録
 
 ---
