@@ -1,0 +1,231 @@
+name: DB Backup (Daily)
+
+# 毎日 02:00 JST（UTC 17:00）に実行
+# workflow_dispatch で手動実行も可能
+on:
+  schedule:
+    - cron: '0 17 * * *'
+  workflow_dispatch:
+    inputs:
+      force_monthly:
+        description: '月次バックアップとして保存する（通常は不要）'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  backup:
+    name: PostgreSQL Backup to R2
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      # 必要な Secrets（GitHub > Settings > Secrets and variables > Actions で設定してください）
+      #   PGBACKUP_DATABASE_URL : postgresql://postgres:PASSWORD@host:port/railway
+      #   GPG_PASSPHRASE        : バックアップ暗号化パスフレーズ（強いランダム文字列）
+      #   R2_ACCESS_KEY_ID      : Cloudflare R2 Access Key ID
+      #   R2_SECRET_ACCESS_KEY  : Cloudflare R2 Secret Access Key
+      #   R2_BUCKET             : R2バケット名（例: comiu-db-backup）
+      #   R2_ENDPOINT           : R2エンドポイント（例: https://<ACCOUNT_ID>.r2.cloudflarestorage.com）
+      BACKUP_DIR: /tmp/db-backup
+
+    steps:
+      - name: 環境セットアップ
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client gnupg2 awscli
+
+      - name: バックアップディレクトリ作成
+        run: mkdir -p "$BACKUP_DIR"
+
+      - name: pg_dump 実行
+        env:
+          DATABASE_URL: ${{ secrets.PGBACKUP_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+
+          # URLから接続情報を分解
+          DB_URL_PARSED=$(python3 - <<PYEOF
+          import urllib.parse, sys
+          u = urllib.parse.urlparse("${DATABASE_URL}")
+          print(u.hostname or '')
+          print(str(u.port or 5432))
+          print(u.username or '')
+          print(u.path.lstrip('/') or 'railway')
+          print(u.password or '')
+          PYEOF
+          )
+
+          HOST=$(echo "$DB_URL_PARSED" | sed -n '1p')
+          PORT=$(echo "$DB_URL_PARSED" | sed -n '2p')
+          DB_USER=$(echo "$DB_URL_PARSED" | sed -n '3p')
+          DB_NAME=$(echo "$DB_URL_PARSED" | sed -n '4p')
+          PW=$(echo "$DB_URL_PARSED" | sed -n '5p')
+
+          TS=$(date -u +%Y%m%d_%H%M%S)
+          OUT_FILE="${BACKUP_DIR}/pgdump_${TS}.sql.gz"
+
+          echo "バックアップ開始: $(date -u)"
+          echo "接続先: ${HOST}:${PORT}/${DB_NAME}"
+
+          PGPASSWORD="$PW" PGSSLMODE=require pg_dump \
+            --host="$HOST" \
+            --port="$PORT" \
+            --username="$DB_USER" \
+            --dbname="$DB_NAME" \
+            --no-password \
+            --format=plain \
+            --no-owner \
+            --no-privileges \
+            --schema=public \
+            2>/tmp/pg_backup_err.txt \
+            | gzip -9 > "$OUT_FILE"
+
+          DUMP_EXIT=${PIPESTATUS[0]}
+
+          if [ $DUMP_EXIT -ne 0 ]; then
+            echo "::error::pg_dump 失敗 (exit=$DUMP_EXIT)"
+            cat /tmp/pg_backup_err.txt
+            exit 1
+          fi
+
+          if [ -s /tmp/pg_backup_err.txt ]; then
+            echo "::warning::pg_dump stderr:"
+            cat /tmp/pg_backup_err.txt
+          fi
+
+          FILE_SIZE=$(stat -c%s "$OUT_FILE")
+          echo "平文バックアップ完了: $(numfmt --to=iec $FILE_SIZE)"
+
+          # GitHub Actionsの後続ステップに渡す
+          echo "TS=${TS}" >> "$GITHUB_ENV"
+          echo "OUT_FILE=${OUT_FILE}" >> "$GITHUB_ENV"
+
+      - name: SHA256チェックサム計算
+        run: |
+          SHA256=$(sha256sum "$OUT_FILE" | cut -d' ' -f1)
+          echo "SHA256=${SHA256}" >> "$GITHUB_ENV"
+          echo "平文 SHA256: ${SHA256}"
+
+      - name: GPG暗号化
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          GPG_FILE="${OUT_FILE}.gpg"
+
+          echo "$GPG_PASSPHRASE" | gpg \
+            --batch \
+            --yes \
+            --passphrase-fd 0 \
+            --symmetric \
+            --cipher-algo AES256 \
+            --compress-algo none \
+            --output "$GPG_FILE" \
+            "$OUT_FILE"
+
+          GPG_SHA256=$(sha256sum "$GPG_FILE" | cut -d' ' -f1)
+          GPG_SIZE=$(stat -c%s "$GPG_FILE")
+
+          echo "GPG_FILE=${GPG_FILE}" >> "$GITHUB_ENV"
+          echo "GPG_SHA256=${GPG_SHA256}" >> "$GITHUB_ENV"
+          echo "GPG_SIZE=${GPG_SIZE}" >> "$GITHUB_ENV"
+          echo "暗号化完了: $(numfmt --to=iec $GPG_SIZE), SHA256: $GPG_SHA256"
+
+      - name: R2へアップロード
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+        run: |
+          set -euo pipefail
+
+          # 月次バックアップの判定（毎月1日 or 手動指定）
+          DAY=$(date -u +%d)
+          IS_MONTHLY=false
+          if [ "$DAY" = "01" ] || [ "${{ inputs.force_monthly }}" = "true" ]; then
+            IS_MONTHLY=true
+          fi
+
+          # アップロード先パス
+          DAILY_KEY="daily/pgdump_${TS}.sql.gz.gpg"
+
+          aws s3 cp "$GPG_FILE" "s3://${R2_BUCKET}/${DAILY_KEY}" \
+            --endpoint-url "$R2_ENDPOINT" \
+            --no-progress
+
+          echo "daily/ にアップロード完了: ${DAILY_KEY}"
+
+          # 月次コピー
+          if $IS_MONTHLY; then
+            MONTHLY_KEY="monthly/pgdump_${TS}.sql.gz.gpg"
+            aws s3 cp "s3://${R2_BUCKET}/${DAILY_KEY}" "s3://${R2_BUCKET}/${MONTHLY_KEY}" \
+              --endpoint-url "$R2_ENDPOINT"
+            echo "monthly/ にコピー完了: ${MONTHLY_KEY}"
+            echo "MONTHLY_KEY=${MONTHLY_KEY}" >> "$GITHUB_ENV"
+          fi
+
+          echo "DAILY_KEY=${DAILY_KEY}" >> "$GITHUB_ENV"
+          echo "IS_MONTHLY=${IS_MONTHLY}" >> "$GITHUB_ENV"
+
+      - name: 世代管理（daily: 30日以上を削除）
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+        run: |
+          set -euo pipefail
+
+          CUTOFF=$(date -u -d '30 days ago' +%Y%m%d 2>/dev/null || date -u -v-30d +%Y%m%d)
+          echo "30日以上前（<${CUTOFF}）の daily バックアップを削除します"
+
+          # daily/ 内の古いファイルを列挙して削除
+          DELETED=0
+          while IFS= read -r key; do
+            # ファイル名から日付部分を抽出（pgdump_YYYYMMDD_HHMMSS.sql.gz.gpg）
+            FILE_DATE=$(echo "$key" | grep -oP '\d{8}' | head -1 || true)
+            if [ -n "$FILE_DATE" ] && [ "$FILE_DATE" -lt "$CUTOFF" ]; then
+              aws s3 rm "s3://${R2_BUCKET}/${key}" --endpoint-url "$R2_ENDPOINT" --quiet
+              echo "削除: ${key}"
+              DELETED=$((DELETED + 1))
+            fi
+          done < <(aws s3 ls "s3://${R2_BUCKET}/daily/" --endpoint-url "$R2_ENDPOINT" | awk '{print "daily/"$4}')
+
+          # monthly/ は12ヶ月以上前を削除
+          MONTHLY_CUTOFF=$(date -u -d '365 days ago' +%Y%m%d 2>/dev/null || date -u -v-365d +%Y%m%d)
+          while IFS= read -r key; do
+            FILE_DATE=$(echo "$key" | grep -oP '\d{8}' | head -1 || true)
+            if [ -n "$FILE_DATE" ] && [ "$FILE_DATE" -lt "$MONTHLY_CUTOFF" ]; then
+              aws s3 rm "s3://${R2_BUCKET}/${key}" --endpoint-url "$R2_ENDPOINT" --quiet
+              echo "削除(monthly): ${key}"
+              DELETED=$((DELETED + 1))
+            fi
+          done < <(aws s3 ls "s3://${R2_BUCKET}/monthly/" --endpoint-url "$R2_ENDPOINT" 2>/dev/null | awk '{print "monthly/"$4}' || true)
+
+          echo "世代管理完了: ${DELETED} 件削除"
+          echo "DELETED_COUNT=${DELETED}" >> "$GITHUB_ENV"
+
+      - name: Job Summary 出力
+        if: always()
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## DB Backup Summary
+
+          | 項目 | 値 |
+          |---|---|
+          | 実行時刻 (UTC) | $(date -u) |
+          | タイムスタンプ | ${TS:-N/A} |
+          | 平文 SHA256 | ${SHA256:-N/A} |
+          | 暗号化 SHA256 | ${GPG_SHA256:-N/A} |
+          | 暗号化サイズ | $(numfmt --to=iec ${GPG_SIZE:-0} 2>/dev/null || echo ${GPG_SIZE:-0} bytes) |
+          | アップロード先 | ${DAILY_KEY:-N/A} |
+          | 月次コピー | ${IS_MONTHLY:-false} |
+          | 世代管理削除数 | ${DELETED_COUNT:-0} |
+
+          EOF
+
+      - name: ローカルの一時ファイルを削除
+        if: always()
+        run: rm -rf "$BACKUP_DIR"
