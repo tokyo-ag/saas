@@ -50,6 +50,41 @@ FONEのLINE設定完了後にリマインドが届かない可能性。
 - 診断：ブラウザコンソールで `fetch('/api/admin/events').then(r=>r.json()).then(d=>console.log(d.events?.map(e=>({title:e.title,remindAt:e.remindAt,remindedAt:e.remindedAt}))))` を実行
 - `remindedAt`がセット済みならDBで`null`にリセットが必要
 
+## Completed changes (2026-11-18 session 4, Claude Code)
+
+### COMIU独立監査 追加確認・ファイル整備
+
+**監査ファイル完全整備（C:\saas\audit\）**
+- audit_inventory.md, audit_timeline.md, audit_findings.md, audit_evidence.md, audit_unresolved.md, audit_final_report.md 全6ファイル確認・更新済み
+
+**f→one 12月イベント確認（確定）**
+- tenant-1779403327733（FONE正テナント）に12月イベント10件存在（12/03〜12/29）
+- BELLのdead events内のf→one系は「誤テナント作成後削除」の痕跡と確定。現在のFONEイベントに問題なし
+
+**過去報告の訂正（確定）**
+- 「技術的に不可能（確定）」→ 「調査範囲（バックアップ・PITR・dead tuple・セッションログ）においては追加復元経路は確認できない」が正確な表現
+- U2（f→one系dead events原因）をLowに格下げ・解決済みとしてマーク
+
+---
+
+## Completed changes (2026-11-18 session 4, Claude Code)
+
+### COMIU特別監査 完了
+
+**監査ファイル群（C:\saas\audit\ ）:**
+- audit_inventory.md, audit_timeline.md, audit_findings.md, audit_evidence.md, audit_unresolved.md, audit_final_report.md 全6ファイル作成済み
+- F02（e43c2f1b 17件内訳）：4件null-staff_note = bell_audit_report.jsonのC分類（事故後新規）と完全一致確認済み→ **解決済み**
+- F03（09:21=独立スキャンでなかった）: find_bell_dec_members.cjsのコード確認により確定
+- f→one系dead events（BELL tenant-001に6件）: FONEイベント誤テナント作成後削除の痕跡（現FONEテナントに正常な10件存在）
+- e43c2f1b reserved_at: 再構築11件全件 2026-11-17T06:21:26.206Z（同一）、4件は事故後新規
+
+**未解決（調査継続中）:**
+- U2: f→one系dead eventsの作成経緯（意図的テストか誤操作か：ユーザー確認待ち）
+- U4: 再構築11件のreserved_at同一タイムスタンプの実務影響（ユーザーへの正式通知が必要）
+- U5: 「28人/19人/47人」は証明されていない（ユーザー申告のみ）
+
+---
+
 ## Completed changes (2026-11-18 session 3, Claude Code)
 
 ### バックアップ強化・BELL事故調査最終監査
