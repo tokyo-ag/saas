@@ -50,6 +50,39 @@ FONEのLINE設定完了後にリマインドが届かない可能性。
 - 診断：ブラウザコンソールで `fetch('/api/admin/events').then(r=>r.json()).then(d=>console.log(d.events?.map(e=>({title:e.title,remindAt:e.remindAt,remindedAt:e.remindedAt}))))` を実行
 - `remindedAt`がセット済みならDBで`null`にリセットが必要
 
+## Completed changes (2026-11-18 session 3, Claude Code)
+
+### バックアップ強化・BELL事故調査最終監査
+
+**新規バックアップ取得（2026-11-18 09:40 JST）**
+
+| 項目 | 値 |
+|------|-----|
+| ファイル | `backup/backup_full_2026-11-18T00-40-08.sql` |
+| サイズ | 3.72 MB |
+| SHA256 | `2858cad8ba3f00eb9c2975eda455056a8d2a46a6430651e7806202a844032e7f` |
+| 総行数 | 11,963行 |
+| reservations | 1,188件 |
+| BELL 12/01予約 | 17件（現在DBの実際の件数） |
+| BELL 12/23予約 | 7件（現在DBの実際の件数） |
+
+**復元テスト（部分的）**
+- ローカルPostgresのパスワード不明のためpsql復元は未実施
+- SQLファイル整合性確認済み: BEGIN/COMMIT=1/1、INSERT文数=11,963、主要テーブル全件確認済み
+- `run_restore_test.ps1`でローカルPostgresパスワード入力すれば完全テスト可能
+
+**復旧手順書作成**
+- `docs/RECOVERY_PROCEDURE.md`: バックアップ取得・通常復元・事故後新規予約を消さない部分復元手順を記載
+
+**BELL事故最終監査（JSONLログ実証）**
+- recover_v3.cjsの09:12 UTC生出力をJSONLログ（Line 15642）で確認
+- 15件全件のevent_id・member_idが確定（12/01×11, 12/23×2, b6154fac×1, 他テナント×1）
+- 「14件→9件」はrestore_reservations.cjsのスクリプト実装差が原因（autovacuumではない）
+- 「10件→11件」は生ログで直接確認できない（コンテキスト圧縮前のやり取りに含まれる）
+- 13件に含まれなかったレコード: b6154fac（11/17当日イベント/ゆき）が1件除外済み
+
+---
+
 ## Completed changes (2026-11-18 session 2, Claude Code)
 
 ### バックアップ基盤完成 (commits 246de96, f879b08, ce2xxxx)
