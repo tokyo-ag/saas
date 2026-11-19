@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
       { protocol: 'http', hostname: 'localhost', port: '3001' },
       { protocol: 'http', hostname: '127.0.0.1', port: '3001' },
     ],
-    minimumCacheTTL: 86400,
+    minimumCacheTTL: 3600,
   },
   async headers() {
     return [

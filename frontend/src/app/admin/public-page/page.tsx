@@ -1165,7 +1165,7 @@ export default function AdminPublicPage() {
             seoTitle: first.seoTitle ?? '',
             seoDescription: first.seoDescription ?? '',
             orgNameDisplayType: (first as any).orgNameDisplayType ?? 'text',
-            orgLogoWordmarkUrl: (first as any).orgLogoWordmarkUrl ?? '',
+            orgLogoWordmarkUrl: ((first as any).orgLogoWordmarkUrl ?? '').startsWith('http') ? (first as any).orgLogoWordmarkUrl : '',
             orgLogoWordmarkAlt: (first as any).orgLogoWordmarkAlt ?? '',
             orgLogoWordmarkSize: (first as any).orgLogoWordmarkSize ?? 60,
             status: 'published',
