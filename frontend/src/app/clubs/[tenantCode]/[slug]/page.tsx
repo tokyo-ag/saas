@@ -166,8 +166,10 @@ function renderLine(line: string, index: number, textColor: string, bodyClassNam
   const baseFontSize = typeof textStyle.fontSize === 'number' ? textStyle.fontSize : 16;
   const h3Match = line.match(/^###\s*(.*)$/);
   if (h3Match) return <h3 key={index} className={`font-bold ${index === 0 ? '' : 'mt-7'}`} style={{ color: textColor, fontSize: Math.round(baseFontSize * 1.25), letterSpacing: textStyle.letterSpacing }}>{h3Match[1]}</h3>;
-  const h2Match = line.match(/^#{1,2}\s*(.*)$/);
+  const h2Match = line.match(/^##\s*(.*)$/);
   if (h2Match) return <h2 key={index} className={`font-bold ${index === 0 ? '' : 'mt-9'}`} style={{ color: textColor, fontSize: Math.round(baseFontSize * 1.5), letterSpacing: textStyle.letterSpacing }}>{h2Match[1]}</h2>;
+  const h1Match = line.match(/^#\s*(.*)$/);
+  if (h1Match) return <h1 key={index} className={`font-bold ${index === 0 ? '' : 'mt-10'}`} style={{ color: textColor, fontSize: Math.round(baseFontSize * 1.75), letterSpacing: textStyle.letterSpacing }}>{h1Match[1]}</h1>;
   if (line.startsWith('- ')) return <li key={index} className="ml-5 list-disc break-words" style={style}>{linkifyText(line.slice(2), `line-${index}`)}</li>;
   if (!line.trim()) return <div key={index} className="h-3" />;
   return <p key={index} className={`${bodyClassName} break-words`} style={style}>{linkifyText(line, `line-${index}`)}</p>;
