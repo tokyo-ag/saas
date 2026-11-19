@@ -2018,7 +2018,7 @@ export default function AdminPublicPage() {
               <span className="text-[11px] text-gray-500">ナビボタン・予約ボタン・お問い合わせボタンの文字色を一括で変更します</span>
             </div>
           </div>
-          {/* 全体の外枠色 */}
+          {/* 全体の外枠色・丸み */}
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <span className="w-16 shrink-0 text-xs font-bold text-gray-500">外枠色</span>
@@ -2030,6 +2030,14 @@ export default function AdminPublicPage() {
                 className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
               <span className="text-[11px] text-gray-400">ナビボタン・予約ボタン・お問い合わせボタンなど、サイト全体のボタンの外枠に使われます</span>
             </div>
+            <div className="flex items-center gap-3">
+              <span className="w-16 shrink-0 text-xs font-bold text-gray-500">外枠の丸み</span>
+              <input type="range" min="0" max="50" step="1" value={btnRadius}
+                onChange={(e) => setForm((p) => ({ ...p, buttonRadius: Number(e.target.value) }))}
+                className="flex-1 accent-[#06C755]" />
+              <span className="w-10 text-right text-xs text-gray-400">{btnRadius}px</span>
+            </div>
+            <span className="text-[11px] text-gray-400">ボタン・ナビの角丸を一括で変更します</span>
           </div>
           {/* カードの角の丸み・枠線の太さ */}
           <div className="space-y-2">
@@ -2057,6 +2065,20 @@ export default function AdminPublicPage() {
                 onChange={(e) => setForm((p) => ({ ...p, textColor: e.target.value }))}
                 className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
               <span className="text-[11px] text-gray-400">個別に色指定していないタイトル・本文すべてに使われます</span>
+            </div>
+          </div>
+          {/* セクション見出し色（一括） */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <span className="w-16 shrink-0 text-xs font-bold text-gray-500">見出し色</span>
+              <input type="color"
+                value={form.reserveTitleColor || form.blogTitleColor || form.reviewsTitleColor || textColor}
+                onChange={(e) => {
+                  const color = e.target.value;
+                  setForm((p) => ({ ...p, reserveTitleColor: color, blogTitleColor: color, reviewsTitleColor: color }));
+                }}
+                className="h-9 w-12 cursor-pointer rounded-lg border border-gray-200 bg-white p-1" />
+              <span className="text-[11px] text-gray-400">募集中の活動・活動実績・参加者の声のセクション見出しを一括で変更します</span>
             </div>
           </div>
           {/* 全体のフォント */}
@@ -3016,13 +3038,21 @@ export default function AdminPublicPage() {
               </div>
               <div className="space-y-3 rounded-lg bg-gray-50 p-3">
                 <p className="text-[11px] font-bold text-gray-400">セクションのタイトル・説明文</p>
-                <label className="block space-y-1">
-                  <span className="text-[11px] text-gray-500">タイトル(空欄: 非表示)</span>
-                  <input value={form.reserveTitle ?? ''}
-                    onChange={(e) => setForm((p) => ({ ...p, reserveTitle: e.target.value }))}
-                    placeholder="例：予約する"
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-                </label>
+                <div className="flex items-center gap-2">
+                  <label className="block flex-1 space-y-1">
+                    <span className="text-[11px] text-gray-500">タイトル(空欄: 非表示)</span>
+                    <input value={form.reserveTitle ?? ''}
+                      onChange={(e) => setForm((p) => ({ ...p, reserveTitle: e.target.value }))}
+                      placeholder="例：予約する"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                  </label>
+                  <label className="shrink-0 space-y-1 text-center">
+                    <span className="block text-[11px] text-gray-500">色</span>
+                    <input type="color" value={form.reserveTitleColor || textColor}
+                      onChange={(e) => setForm((p) => ({ ...p, reserveTitleColor: e.target.value }))}
+                      className="h-9 w-9 cursor-pointer rounded-lg border border-gray-200 bg-white p-0.5" />
+                  </label>
+                </div>
                 <label className="block space-y-1">
                   <span className="text-[11px] text-gray-500">説明文</span>
                   <textarea value={form.reserveLead ?? ''}
@@ -3122,13 +3152,21 @@ export default function AdminPublicPage() {
               </div>
               <div className="space-y-3 rounded-lg bg-gray-50 p-3">
                 <p className="text-[11px] font-bold text-gray-400">セクションのタイトル・説明文</p>
-                <label className="block space-y-1">
-                  <span className="text-[11px] text-gray-500">タイトル(空欄: 非表示)</span>
-                  <input value={form.blogTitle ?? ''}
-                    onChange={(e) => setForm((p) => ({ ...p, blogTitle: e.target.value }))}
-                    placeholder="例：活動ブログ"
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-                </label>
+                <div className="flex items-center gap-2">
+                  <label className="block flex-1 space-y-1">
+                    <span className="text-[11px] text-gray-500">タイトル(空欄: 非表示)</span>
+                    <input value={form.blogTitle ?? ''}
+                      onChange={(e) => setForm((p) => ({ ...p, blogTitle: e.target.value }))}
+                      placeholder="例：活動ブログ"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                  </label>
+                  <label className="shrink-0 space-y-1 text-center">
+                    <span className="block text-[11px] text-gray-500">色</span>
+                    <input type="color" value={form.blogTitleColor || textColor}
+                      onChange={(e) => setForm((p) => ({ ...p, blogTitleColor: e.target.value }))}
+                      className="h-9 w-9 cursor-pointer rounded-lg border border-gray-200 bg-white p-0.5" />
+                  </label>
+                </div>
                 <label className="block space-y-1">
                   <span className="text-[11px] text-gray-500">説明文</span>
                   <textarea value={form.blogLead ?? ''}
@@ -3198,13 +3236,21 @@ export default function AdminPublicPage() {
               </label>
               <div className="space-y-3 rounded-lg bg-gray-50 p-3">
                 <p className="text-[11px] font-bold text-gray-400">セクションのタイトル・説明文</p>
-                <label className="block space-y-1">
-                  <span className="text-[11px] text-gray-500">タイトル(空欄: 非表示)</span>
-                  <input value={form.reviewsTitle ?? ''}
-                    onChange={(e) => setForm((p) => ({ ...p, reviewsTitle: e.target.value }))}
-                    placeholder="例：参加者の声"
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
-                </label>
+                <div className="flex items-center gap-2">
+                  <label className="block flex-1 space-y-1">
+                    <span className="text-[11px] text-gray-500">タイトル(空欄: 非表示)</span>
+                    <input value={form.reviewsTitle ?? ''}
+                      onChange={(e) => setForm((p) => ({ ...p, reviewsTitle: e.target.value }))}
+                      placeholder="例：参加者の声"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#06C755]" />
+                  </label>
+                  <label className="shrink-0 space-y-1 text-center">
+                    <span className="block text-[11px] text-gray-500">色</span>
+                    <input type="color" value={form.reviewsTitleColor || textColor}
+                      onChange={(e) => setForm((p) => ({ ...p, reviewsTitleColor: e.target.value }))}
+                      className="h-9 w-9 cursor-pointer rounded-lg border border-gray-200 bg-white p-0.5" />
+                  </label>
+                </div>
                 <label className="block space-y-1">
                   <span className="text-[11px] text-gray-500">説明文</span>
                   <textarea value={form.reviewsLead ?? ''}

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { put } from '@vercel/blob';
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
@@ -31,10 +32,64 @@ function detectMimeFromBytes(buf: ArrayBuffer): string | null {
   return null;
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+function getR2Client(): S3Client {
+  const accountId = process.env.R2_ACCOUNT_ID;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+  if (!accountId || !accessKeyId || !secretAccessKey) {
+    throw new Error('R2 credentials not configured');
+  }
+  return new S3Client({
+    region: 'auto',
+    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    credentials: { accessKeyId, secretAccessKey },
+  });
+}
+
+async function uploadToR2(filename: string, buffer: ArrayBuffer, contentType: string): Promise<string> {
+  const bucket = process.env.R2_BUCKET_NAME;
+  const publicUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
+  if (!bucket || !publicUrl) {
+    throw new Error('R2_BUCKET_NAME or NEXT_PUBLIC_R2_PUBLIC_URL not configured');
+  }
+  const key = `icons/${filename}`;
+  await getR2Client().send(new PutObjectCommand({
+    Bucket: bucket,
+    Key: key,
+    Body: Buffer.from(buffer),
+    ContentType: contentType,
+  }));
+  return `${publicUrl.replace(/\/$/, '')}/${key}`;
+}
+
+async function uploadToVercelBlob(filename: string, buffer: ArrayBuffer, contentType: string): Promise<string> {
   const token = process.env.BLOB_READ_WRITE_TOKEN;
   if (!token) {
-    return NextResponse.json({ error: 'BLOB_READ_WRITE_TOKEN not set' }, { status: 500 });
+    throw new Error('BLOB_READ_WRITE_TOKEN not set');
+  }
+  const blob = await put(`icons/${filename}`, buffer, {
+    access: 'public',
+    contentType,
+    token,
+  });
+  return blob.url;
+}
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  // STORAGE_PROVIDER=r2 → Cloudflare R2, それ以外 → Vercel Blob (後方互換)
+  const storageProvider = process.env.STORAGE_PROVIDER ?? 'vercel';
+
+  if (storageProvider === 'r2') {
+    if (!process.env.R2_ACCOUNT_ID || !process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY) {
+      return NextResponse.json({ error: 'R2 credentials not configured' }, { status: 500 });
+    }
+    if (!process.env.R2_BUCKET_NAME || !process.env.NEXT_PUBLIC_R2_PUBLIC_URL) {
+      return NextResponse.json({ error: 'R2 bucket configuration missing' }, { status: 500 });
+    }
+  } else {
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      return NextResponse.json({ error: 'BLOB_READ_WRITE_TOKEN not set' }, { status: 500 });
+    }
   }
 
   try {
@@ -49,7 +104,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const buffer = await request.arrayBuffer();
 
-    // Validate actual file format via magic bytes
     const detectedMime = detectMimeFromBytes(buffer);
     if (!detectedMime) {
       return NextResponse.json(
@@ -70,13 +124,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const { searchParams } = new URL(request.url);
     const filename = searchParams.get('filename') ?? `upload-${Date.now()}.jpg`;
 
-    const blob = await put(`icons/${filename}`, buffer, {
-      access: 'public',
-      contentType,
-      token,
-    });
+    const url = storageProvider === 'r2'
+      ? await uploadToR2(filename, buffer, contentType)
+      : await uploadToVercelBlob(filename, buffer, contentType);
 
-    return NextResponse.json({ url: blob.url });
+    return NextResponse.json({ url });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Upload failed';
     return NextResponse.json({ error: msg }, { status: 500 });
