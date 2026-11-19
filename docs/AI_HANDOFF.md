@@ -6,15 +6,78 @@ or finishing.
 
 ## Current objective
 
-バックアップ基盤: 復元テスト✅合格済み。残はGitHub Secrets設定（ユーザー操作）のみ。
+comiu.link の Railway への移行完了。Vercel完全依存解消は後日タスク。
 
 ## Status
 
 - **バックアップ基盤: 完成**（復元テスト2026-11-18合格、詳細は下記）
 - 課金管理機能デプロイ済み（commit 3c0315a）。Stripe本番切り替えは保留。
 - FONE 12月イベント10件を本番DBに投入済み（2026-11-18）
+- **Railway frontendデプロイ: 完了** `https://frontend-production-5b197303.up.railway.app`（HTTP 200確認済み）
+- **comiu.link Cloudflare+Railway移行: 完了**（2026-11-19）
+
+## インフラ構成（2026-11-19時点）
+
+| レイヤー | サービス | 用途 |
+|---------|---------|------|
+| ドメイン契約・更新 | お名前.com | comiu.link |
+| DNS管理 | Cloudflare（Freeプラン） | damon.ns.cloudflare.com / mallory.ns.cloudflare.com |
+| フロントエンド | Railway（frontendサービス） | Next.js |
+| バックエンド | Railway（saasサービス） | NestJS API |
+| DB | Railway（Postgresサービス） | PostgreSQL |
+| ソースコード | GitHub（tokyo-ag/saas） | mainブランチ |
+
+**Cloudflare DNS設定（comiu.link）：**
+- CNAME `@` → `g91ksdkb.up.railway.app`（Proxy: DNS only）
+- TXT `_railway-verify` → Railway指定の認証値
+
+**Railway環境変数（frontendサービス）：**
+- `NEXT_PUBLIC_API_URL=https://comiu.up.railway.app`
+- `NEXT_PUBLIC_SITE_URL=https://comiu.link`
+- `NEXT_PUBLIC_SUPPORT_EMAIL=comiunoreply@gmail.com`
 
 ## Next action
+
+### 未完了タスク（後日）
+
+- Vercelからの完全移行・依存関係調査（`BLOB_READ_WRITE_TOKEN`等）
+- `NEXT_PUBLIC_LIFF_ID` 設定（LINE LIFFログイン用。DBのtenant.liffIdで確認可）
+- Stripe本番切り替え（`STRIPE_BILLING_SECRET_KEY`等をRailway環境変数にセット）
+
+### 旧DNS設定記録（移行前・参考）
+
+**移行前（お名前.com DNS）：**
+- A レコード: `comiu.link` → `153.52.255.100`
+- お名前.com DNS（01-04.dnsv.jp）
+
+**移行後（Cloudflare DNS）：**
+- CNAME `@` → `g91ksdkb.up.railway.app`（CNAMEフラットニング）
+- TXT `_railway-verify` → Railway認証値
+
+---
+
+### 旧: comiu.link復旧（移行済み・参考）
+
+**旧DNS設定（お名前.com・削除済み）：**
+```
+nslookup comiu.link
+```
+`153.52.255.100` が返ったら `https://comiu.link` で動作確認。
+
+**TXTレコード注意：**
+Railwayは `_railway-verify.comiu.link` を要求するが、`railway-verify.comiu.link`（アンダースコアなし）で登録済み。
+ドメイン検証が通らない場合は、お名前.comでTXTレコードを削除→ `_railway-verify` で再登録が必要。
+
+**Railway環境変数（設定済み）：**
+- `NEXT_PUBLIC_API_URL=https://comiu.up.railway.app`
+- `NEXT_PUBLIC_SITE_URL=https://comiu.link`
+- `NEXT_PUBLIC_SUPPORT_EMAIL=comiunoreply@gmail.com`
+
+**未設定（必要に応じて）：**
+- `NEXT_PUBLIC_LIFF_ID`: LINE LIFF ID（DBのtenant.liffIdで確認可）
+- `BLOB_READ_WRITE_TOKEN`: Vercel Blob token（画像アップロード用）
+
+---
 
 ### ユーザーが実施する必要がある作業（2項目）
 
@@ -49,6 +112,174 @@ Actions > DB Backup (Daily) > Run workflow
 FONEのLINE設定完了後にリマインドが届かない可能性。
 - 診断：ブラウザコンソールで `fetch('/api/admin/events').then(r=>r.json()).then(d=>console.log(d.events?.map(e=>({title:e.title,remindAt:e.remindAt,remindedAt:e.remindedAt}))))` を実行
 - `remindedAt`がセット済みならDBで`null`にリセットが必要
+
+## Completed changes (2026-11-19 session 9, Claude Code)
+
+### Android LIFF認証調査（3点追加検証）
+
+**調査指示:** 原因確定までコード変更・コミット・本番デプロイ禁止。
+
+#### 「INTO1」の正体（確定）
+コードに `"INTO1"` という文字列は存在しない。`reserve/page.tsx:216` の `setAuthError(\`Step1: ${getInitError() ?? '不明'}\`)` が表示する **「Step1:」** が誤読されている。
+
+#### ① clearLiffSdkState() の影響
+
+削除されるキー: `/^LIFF[_:]/` パターン（`LIFF_STORE:{liffId}:xxx` 等）をlocalStorage・sessionStorage両方から削除（liff.ts:67）。PKCE verifier も含まれる可能性あり。
+
+**呼び出しタイミングが問題:**
+1. `initLiff()` 失敗後（liff.ts:180）→ SDKストレージ全消去
+2. `redirectToLiffApp()` → liff.line.me → LINEがOAuth `code`+`state`付きでコールバック
+3. コールバックで再び `liff.init()` → **PKCE verifierが消えているため検証失敗 → 再びStep1エラー**
+
+**コード確認済み証拠:** clearLiffSdkState() はinit失敗後とリダイレクト前の両方で呼ばれる。  
+**未確認:** LIFF SDK 2.28.0がPKCE verifierを `LIFF_STORE:` キーで保存するか（dist/が存在しない）。
+
+#### ② LIFFリダイレクト処理（iPhone vs Android）
+
+**iPhone成功・Android失敗を説明できる根拠:**
+- iPhone LINEアプリ内→ `liff.isInClient()` = true → Step2別フロー → init()失敗でもOAuthリダイレクトしない
+- Android外部アプリ（WebView）→ `liff.isInClient()` = false → init()失敗 → clearLiffSdkState() → PKCEなしでOAuth往復 → 失敗ループ
+- `isInLineInAppBrowser()` は `/\bLine\//i` のみ検出（config.ts:65）→ Android WebView（サークルブック等）は検出されない
+
+**「Chrome/LINE/サードパーティすべて失敗」の意味:**
+- ブラウザ固有の問題ではなく、`liff.init()` 自体が失敗し続けている
+- 765471c修正（sessionStorage→localStorage）でループは止まったが、init()失敗の根本原因は未解決の可能性
+
+#### ③ LIFF設定の整合性
+
+コードで確認済み: LIFF IDはDBのtenant.liffIdから取得・SITE_URL=`https://comiu.link`・エンドポイント構築は `liff.line.me/{liffId}/{suffix}`  
+**未確認:** LINE Developersコンソールの実際のエンドポイントURL設定
+
+#### 原因確定に必要な次の確認（コード変更なし）
+
+1. **Android実機** → ブラウザ開発者ツールで `window.__LIFF_INIT_ERROR` の値確認
+2. **LINE Developersコンソール** → テナントのLIFFアプリのエンドポイントURL確認
+3. **LIFF SDK npm展開** → `LIFF_STORE:{liffId}:codeVerifier` 等のキーが存在するか確認
+
+**コード変更禁止継続（指示遵守）**
+
+---
+
+## Completed changes (2026-11-18 session 8, Claude Code)
+
+### COMIU 未特定人数 再計算・全件分類検証
+
+**訂正推移:**
+- 旧: 34未特定（47 - 13 dead tuple = 34）
+- session 8第1報: **21未特定**（誤り：事後新規3人を含む総数を使用）
+- **正確な数字: 24未特定**（47 - 23 = 24）
+
+**根拠:**
+読み取り専用DBクエリで `xmin`（PostgreSQL行挿入トランザクションID）と `staff_note` を確認：
+
+| イベント | Dead tuple復元 | バッチ移行（xmin=21443） | その他 | 合計（DB在籍） | 未特定 |
+|---------|---:|---:|---:|---:|---:|
+| 12/01（28人） | 11 | 4 | 1（北 cancelled） | **16** | **12** |
+| 12/23（19人） | 2 | 4（うち1 cancelled） | 1（石井） | **7** | **12** |
+| **合計** | **13** | **8** | **2** | **23** | **24** |
+
+**重要発見 — xmin=21443:**  
+8件（12/01: 北村瞬典・椿公介・吉田巧歩・菅原大知、12/23: 佐々木拓海・梶浦主之和・佐藤光翼・高橋琉貴斗）が同一 xmin=21443 を共有。12/01・12/23の**異なる2イベントにまたがる**ため、これらはユーザーが個別予約したものではなく**バッチスクリプトによる一括挿入**。reserved_atが事故前の値なのは、移行時に元の予約時刻が設定されたためと考えられる。
+
+**旧audit CSVの誤り:**  
+bell_audit_12_01.csv・12_23.csvで「事故後予約（JST 12:42）」等と記録されていたが、12:42 JSTは事故時刻（17:46 JST）より前であり誤分類。
+
+**作成ファイル:**
+- `audit/reservation_classification_verified.md` — 全件分類（xmin・staff_note根拠）・計算訂正・旧CSV誤り記録
+- `audit/reservation_matching_procedure.md` — LINE照合・復元手順書
+
+**承認待ち（BELL運営の承認が必要）:**
+1. 参加者への告知送信（LINE一斉送信）
+2. xmin=21443バッチ移行の経緯確認（誰がいつ何のスクリプトで実行したか）
+3. 本番DBへの予約復元（照合後）
+
+---
+
+## Completed changes (2026-11-18 session 7, Claude Code)
+
+### COMIU 最終技術調査 完了
+
+**作成ファイル:** `audit/final_recovery_report.md` — A〜E全項目・最終集計表・調査済み証拠ソース一覧を含む確定版
+
+**GitHub Actions db-backup.yml の重要事実（新確認）:**  
+全8回の実行が `push` イベント（事故後push）。ワークフロー自体が事故後に追加されたため、事故前にバックアップが実行されたことは一度もない。GitHub Artifactsにも事前バックアップなし。
+
+**B（13件原因）新重要発見（a09536a4フォーク確認）:**
+- `last_autovacuum: 2026-10-29` — 事故当日にautovacuumは一度も動いていなかった（確定）。autovacuum主因説は証拠なし
+- `last_autoanalyze: 2026-11-17T08:47:29Z` — 削除完了と同時刻にautoanalyzeが起動（大量削除がトリガー）。ただしanalyzeは統計収集のみでデータは消さない
+- 15件→9件差異・47件→13件差異の真因は依然未解明
+
+**C（データ探索）a338be67フォーク完了:**
+- JSONL L1〜L13000・c--newprogramプロジェクト全JSONL・Downloads・C:\newprogram\comiu\ → 予約データ新発見なし
+- `bell_restore_candidates.json` の `dead_tuple_comparison`: 1回目スキャン(recover_v3)=15件 → 2回目スキャン=9件。差異-6件の原因は未解明（autoanalyzeはdead tupleを削除しない）
+- ローカルPostgreSQL 17（postgresql-x64-17）: Running状態だが認証パスワード不明で接続不可
+
+**調査結論（確定）:**  
+技術的回収経路は全て枯渇。残21人の特定は参加者のLINE予約確認通知からの手動申告照合のみ。
+
+---
+
+## Completed changes (2026-11-18 session 6, Claude Code)
+
+### COMIU未復元34人 最終技術調査
+
+**更新ファイル:** `audit/missing_reservations_recovery.md`
+
+**最終確認事項（A〜E）:**
+
+**A. Railway PITR 事故前の復元ポイント: 存在しない（確定）**
+- RECOVERY_GUIDE.md の「強く推奨します」は事故後に追加された推奨文言（未設定時の文言）
+- GitHub Actions db-backup.yml: 全8回の実行が `push` イベント（事故後push）。ワークフロー自体が事故後に追加されたため JST 02:00 の定時バックアップは一度も実行されていない。GitHub Artifactsにも事前バックアップなし。
+- backup/ ディレクトリ最古ファイル: JST 2026-11-17 21:05（事故後）
+
+**B. 13/47の原因: 新たな証拠なし（依然未解明）**
+- recover_v2 と recover_v3 の差異を発見: v2 に `t_xmax >= 21000` フィルターあり（v3 はなし）
+- bell_recovery_evidence.json は「recover_v3で前セッション取得」と明記 → v2フィルターは今回の13件に影響なし
+- 事故から約40分後（JST 18:20）のスキャン時点で既に14件（tenant-001）しか存在しなかった。残34件消失の原因は未解明。
+
+**C. 新たに特定された未特定34人: 0人**
+- 全調査ソース（JSONL全範囲・旧セッション・forensicファイル群）で予約データ新発見なし
+
+**D. 新たに発見された復元可能な場所: なし**
+- 全ルートが枯渇または確認不可（Railway PITR未設定、GitHub Artifacts未存在、backup/事故後のみ）
+
+**E. 技術ルート枯渇後に残る未確認事項（ユーザー対応が必要）:**
+1. Railwayダッシュボード → Backupsタブ → PITR有効化状態の直接確認
+2. Railwayダッシュボード → 旧Volume・旧Database の残存確認
+3. BELL運営から参加者への告知（「12/01・12/23に事故前予約していた方は申し出てください」）→ LINE通知経由で申告可能
+
+**最終サマリー:**
+| 対象 | 事故前 | 既に再構築 | 新たに特定 | 未特定 |
+|------|-------|----------|-----------|-------|
+| 12/01 | 28人 | 11人 | 0人 | **17人** |
+| 12/23 | 19人 | 2人 | 0人 | **17人** |
+| 合計 | 47人 | 13人 | 0人 | **34人** |
+
+---
+
+## Completed changes (2026-11-18 session 5, Claude Code)
+
+### COMIU事故原因の完全解明と未復元34人の調査
+
+**作成済みファイル:**
+- `C:\saas\audit\incident_cause.md` - 事故原因の完全報告（削除コード全文・操作タイムライン・予約消失の仕組み）
+- `C:\saas\audit\missing_reservations_recovery.md` - 未特定34人の調査報告
+
+**incident_cause.md の主要確認事項（全て確認済み）:**
+- L14991: 10件の個別IDリスト削除スクリプト（全ID確認済み）
+- L15010/L15018/L15040: `filter(heldAt.startsWith('2026-12'))` による全削除スクリプト（全文確認済み）
+- `events.service.ts:570`: `reservation.deleteMany({ where: { eventId: id } })` → Event削除前に全予約を削除
+- Prisma schema: `Reservation → Event` の onDelete は NoAction（Cascade なし）→ Service層で先行削除
+- 削除された元イベント: e43c2f1b（12/01）, 20eae236（12/23）, 1b017dcd（12/30）
+
+**missing_reservations_recovery.md の主要確認事項:**
+- dead tupleで確認: 13人（12/01: 11人 + 12/23: 2人）
+- 未特定: 34人（47人 - 13人）
+- dead tupleが見つからなかった原因: PostgreSQLのpage pruneの可能性
+- 追加復元経路: LINE Messaging API送信履歴、Railwayアクセスログ（Claude Codeでは調査不可）
+- バックアップは事故後取得のため、削除済み予約データは含まれていない
+
+---
 
 ## Completed changes (2026-11-18 session 4, Claude Code)
 
