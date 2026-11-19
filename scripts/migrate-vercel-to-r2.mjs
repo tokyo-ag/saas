@@ -75,18 +75,17 @@ async function fetchImageUrlsFromDb() {
     await client.connect();
     const result = await client.query(`
       SELECT
-        t.id AS tenant_id, t.name, t.code,
-        t.icon_url,
-        pp.header_image_url,
-        pp.logo_url
-      FROM tenants t
-      LEFT JOIN public_pages pp ON pp.tenant_id = t.id
-      WHERE t.icon_url LIKE '%blob.vercel-storage.com%'
-         OR pp.header_image_url LIKE '%blob.vercel-storage.com%'
-         OR pp.logo_url LIKE '%blob.vercel-storage.com%'
+        e.id, e.title,
+        e.image_url AS url,
+        t.name AS tenant,
+        'events.image_url' AS field
+      FROM events e
+      JOIN tenants t ON t.id = e.tenant_id
+      WHERE e.image_url LIKE '%blob.vercel-storage.com%'
     `);
     await client.end();
-    return result.rows;
+    // { url, tenant, field } 形式に正規化
+    return result.rows.map(r => ({ url: r.url, tenant: r.tenant, field: r.field, title: r.title }));
   } catch (e) {
     console.warn('DB 接続エラー:', e.message);
     return null;
@@ -119,13 +118,8 @@ async function fetchImageUrlsFromBackup() {
 async function collectUrls() {
   const dbRows = await fetchImageUrlsFromDb();
   if (dbRows) {
-    const urls = [];
-    for (const row of dbRows) {
-      if (row.icon_url) urls.push({ url: row.icon_url, tenant: row.name, field: 'icon_url' });
-      if (row.header_image_url) urls.push({ url: row.header_image_url, tenant: row.name, field: 'header_image_url' });
-      if (row.logo_url) urls.push({ url: row.logo_url, tenant: row.name, field: 'logo_url' });
-    }
-    return urls;
+    // fetchImageUrlsFromDb はすでに { url, tenant, field } 形式で返す
+    return dbRows;
   }
   return await fetchImageUrlsFromBackup();
 }
