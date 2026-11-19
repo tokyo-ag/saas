@@ -608,6 +608,7 @@ export class PublicController {
       where: {
         status: 'open',
         heldAt: { gte: new Date() },
+        collabReadOnly: false,
         tenant: {
           deletedAt: null,
           bannedAt: null,
@@ -737,6 +738,7 @@ export class PublicController {
       where: {
         status: 'open',
         heldAt: { gte: new Date() },
+        collabReadOnly: false,
         tenant: { deletedAt: null, bannedAt: null, code: { not: null } },
       },
       select: {
