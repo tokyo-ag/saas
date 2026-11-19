@@ -439,8 +439,7 @@ Root cause: Androidユーザーが予約ページで"ずっとログインでき
 
 ### メディア対応
 - LaBOLA ユーザー名 → 放課後ばすけ に変更（画像は要確認）
-- Meetup 放課後ばすけアカウント名変更完了、BELLは要ログイン（hCaptchaで自動化不可）
-- Meetup は無料プランでは価値なしとユーザー判断
+- Meetup: 無料プランでは価値なしとユーザー判断 → **対応終了・タスク外**
 
 ## Completed changes (2026-11-14, Claude Code)
 
@@ -464,8 +463,6 @@ Root cause: Androidユーザーが予約ページで"ずっとログインでき
   (bell/gakuori/yurubado — set `"enabled": true`). Conditions met as of
   2026-11-04 (credentials saved, posts created). Blocked by auto mode classifier;
   requires user approval or manual edit.
-- bell:meetup session expired — user must manually log in on port 19283
-  (hCaptcha prevents automation).
 
 ## Prior deployed state
 
