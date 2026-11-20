@@ -18,8 +18,8 @@
  *   --dry-run    : デフォルト。URL一覧・変換対象のみ出力
  *   --copy       : Vercel Blob → R2 コピー（R2認証情報必須）
  *   --verify     : コピー済みオブジェクトのハッシュ・サイズ照合
- *   --update-db  : --verify 全件PASS後にDB URLを更新（DATABASE_URL必須）
- *   --rollback   : migration_log.jsonl から旧URLに戻す
+ *   --update-db  : --verify 全件PASS後にDB URLを更新（DATABASE_URL必須、R2認証不要）
+ *   --rollback   : rollback_snapshot.jsonlからDB URLを旧URLに戻す（DATABASE_URL必須、R2認証不要）
  *   --force      : --copy 時に既存R2オブジェクトを上書き
  *
  * 使用方法:
@@ -497,13 +497,7 @@ async function runUpdateDb(items, dbClient, publicUrl) {
     process.exit(1);
   }
 
-  // ロールバック用の旧URL記録
   const rollbackFile = path.join(__dirname, '..', 'rollback_snapshot.jsonl');
-  for (const item of items) {
-    if (item.url) {
-      fs.appendFileSync(rollbackFile, JSON.stringify({ vercel_url: item.url, r2_url: urlMap.get(item.url), refs: item.refs }) + '\n', 'utf8');
-    }
-  }
 
   // トランザクション内で更新
   await dbClient.query('BEGIN');
@@ -516,7 +510,9 @@ async function runUpdateDb(items, dbClient, publicUrl) {
       if (!oldUrl || !newUrl) continue;
 
       let result;
-      const { table_name, column_name, record_id, array_index } = item.refs[0];
+      // refs は deduplicateByUrl が {table, column, ...} で作成するため table/column を使う
+      const { table: table_name, column: column_name, record_id, array_index } = item.refs[0];
+      const ALLOWED_PP_COLS = ['cover_image_url', 'org_logo_wordmark_url', 'og_image_url'];
 
       if (table_name === 'events' && column_name === 'image_url') {
         result = await dbClient.query(
@@ -543,6 +539,9 @@ async function runUpdateDb(items, dbClient, publicUrl) {
           WHERE blocks::text LIKE '%' || $1 || '%'
         `, [oldUrl, newUrl]);
       } else if (table_name === 'public_pages') {
+        if (!ALLOWED_PP_COLS.includes(column_name)) {
+          throw new Error(`不正なカラム名: ${column_name}（許可: ${ALLOWED_PP_COLS.join(', ')}）`);
+        }
         result = await dbClient.query(
           `UPDATE public_pages SET ${column_name} = $1 WHERE ${column_name} = $2`,
           [newUrl, oldUrl]
@@ -564,13 +563,29 @@ async function runUpdateDb(items, dbClient, publicUrl) {
         );
       }
 
-      if (result?.rowCount > 0) {
+      if (result === undefined) {
+        console.warn(`⚠️  未対応: ${table_name}.${column_name} - スキップ`);
+      } else if (result.rowCount > 0) {
         console.log(`✅ ${table_name}.${column_name}: ${oldUrl.slice(-40)} → ${newUrl.slice(-40)} (${result.rowCount}行)`);
         totalUpdated += result.rowCount;
       }
     }
 
     await dbClient.query('COMMIT');
+
+    // COMMIT成功後にロールバック用スナップショットを記録（重複排除）
+    const existingSnapshotUrls = new Set();
+    if (fs.existsSync(rollbackFile)) {
+      for (const line of fs.readFileSync(rollbackFile, 'utf8').split('\n').filter(Boolean)) {
+        try { const e = JSON.parse(line); if (e.vercel_url) existingSnapshotUrls.add(e.vercel_url); } catch {}
+      }
+    }
+    for (const item of items) {
+      if (item.url && !existingSnapshotUrls.has(item.url)) {
+        fs.appendFileSync(rollbackFile, JSON.stringify({ vercel_url: item.url, r2_url: urlMap.get(item.url), refs: item.refs }) + '\n', 'utf8');
+      }
+    }
+
     console.log(`\n=== update-db完了: ${totalUpdated}行更新 ===`);
     console.log(`ロールバック用スナップショット: rollback_snapshot.jsonl`);
 
@@ -590,7 +605,19 @@ async function runRollback(dbClient) {
     process.exit(1);
   }
 
-  const entries = fs.readFileSync(rollbackFile, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l));
+  const rawLines = fs.readFileSync(rollbackFile, 'utf8').split('\n').filter(Boolean);
+  if (rawLines.length === 0) {
+    console.error('ERROR: rollback_snapshot.jsonl が空です。');
+    process.exit(1);
+  }
+  const entries = rawLines.map(l => JSON.parse(l));
+  const incompleteEntries = entries.filter(e => !e.vercel_url || !e.r2_url || !Array.isArray(e.refs) || e.refs.length === 0);
+  if (incompleteEntries.length > 0) {
+    console.error(`ERROR: rollback_snapshot.jsonl に不完全なエントリが ${incompleteEntries.length} 件あります。手動確認が必要です。`);
+    for (const e of incompleteEntries) console.error('  ', JSON.stringify(e));
+    process.exit(1);
+  }
+  console.log(`スナップショット: ${entries.length}件のURL復旧対象\n`);
 
   await dbClient.query('BEGIN');
   let totalRolledBack = 0;
@@ -598,7 +625,8 @@ async function runRollback(dbClient) {
     for (const entry of entries) {
       if (!entry.vercel_url || !entry.r2_url) continue;
       for (const ref of (entry.refs ?? [])) {
-        const { table_name: t, column_name: c } = ref;
+        // refs は {table, column, ...} 形式（deduplicateByUrl / migration_log.jsonl 由来）
+        const { table: t, column: c } = ref;
         let result;
         if (t === 'events') {
           result = await dbClient.query(`UPDATE events SET image_url=$1 WHERE image_url=$2`, [entry.vercel_url, entry.r2_url]);
@@ -607,6 +635,8 @@ async function runRollback(dbClient) {
         } else if (t === 'public_pages' && c === 'blocks') {
           result = await dbClient.query(`UPDATE public_pages SET blocks=(SELECT jsonb_agg(CASE WHEN blk->>'imageUrl'=$1 THEN jsonb_set(blk,'{imageUrl}',to_jsonb($2::text)) ELSE blk END) FROM jsonb_array_elements(CASE jsonb_typeof(blocks) WHEN 'array' THEN blocks ELSE '[]'::jsonb END) AS blk) WHERE blocks::text LIKE '%'||$1||'%'`, [entry.r2_url, entry.vercel_url]);
         } else if (t === 'public_pages') {
+          const ALLOWED_PP_COLS = ['cover_image_url', 'org_logo_wordmark_url', 'og_image_url'];
+          if (!ALLOWED_PP_COLS.includes(c)) throw new Error(`不正なカラム名: ${c}（許可: ${ALLOWED_PP_COLS.join(', ')}）`);
           result = await dbClient.query(`UPDATE public_pages SET ${c}=$1 WHERE ${c}=$2`, [entry.vercel_url, entry.r2_url]);
         } else if (t === 'tenants') {
           result = await dbClient.query(`UPDATE tenants SET icon_url=$1 WHERE icon_url=$2`, [entry.vercel_url, entry.r2_url]);
@@ -615,7 +645,9 @@ async function runRollback(dbClient) {
         } else if (t === 'blog_posts') {
           result = await dbClient.query(`UPDATE blog_posts SET body=replace(body,$1,$2) WHERE body LIKE '%'||$1||'%'`, [entry.r2_url, entry.vercel_url]);
         }
-        if (result?.rowCount > 0) {
+        if (result === undefined) {
+          console.warn(`⚠️  未対応: ${t}.${c} - スキップ`);
+        } else if (result.rowCount > 0) {
           console.log(`↩️  ${t}.${c}: R2→Vercel (${result.rowCount}行)`);
           totalRolledBack += result.rowCount;
         }
@@ -676,10 +708,9 @@ async function main() {
     return;
   }
 
-  // copy / verify / update-db / rollback
-  const bucket    = requireEnv('R2_BUCKET_NAME');
-
+  // --copy / --verify のみ R2 認証情報が必要。--update-db / --rollback は DATABASE_URL のみ。
   if (isCopy || isVerify) {
+    const bucket = requireEnv('R2_BUCKET_NAME');
     const r2 = getR2Client();
     if (isCopy)   await runCopy(items, r2, bucket, r2PublicUrl);
     if (isVerify) await runVerify(items, r2, bucket, r2PublicUrl);
