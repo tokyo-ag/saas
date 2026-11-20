@@ -497,7 +497,37 @@ async function runUpdateDb(items, dbClient, publicUrl) {
     process.exit(1);
   }
 
+  // --- ロールバック用スナップショットをBEGIN前に永続化 ---
+  // COMMIT後にプロセスが異常終了しても旧URLへ確実に復元できるよう、
+  // DB更新の開始前にスナップショットを書き込む。
   const rollbackFile = path.join(__dirname, '..', 'rollback_snapshot.jsonl');
+  const existingSnapshotUrls = new Set();
+  if (fs.existsSync(rollbackFile)) {
+    for (const line of fs.readFileSync(rollbackFile, 'utf8').split('\n').filter(Boolean)) {
+      try { const e = JSON.parse(line); if (e.vercel_url) existingSnapshotUrls.add(e.vercel_url); } catch {}
+    }
+  }
+  for (const item of items) {
+    if (item.url && !existingSnapshotUrls.has(item.url)) {
+      fs.appendFileSync(rollbackFile,
+        JSON.stringify({ vercel_url: item.url, r2_url: urlMap.get(item.url), refs: item.refs }) + '\n',
+        'utf8'
+      );
+    }
+  }
+
+  // スナップショット完全性確認：全URLが記録されているか検証
+  const snapshotUrls = new Set();
+  for (const line of fs.readFileSync(rollbackFile, 'utf8').split('\n').filter(Boolean)) {
+    try { const e = JSON.parse(line); if (e.vercel_url) snapshotUrls.add(e.vercel_url); } catch {}
+  }
+  const missingFromSnapshot = items.filter(i => i.url && !snapshotUrls.has(i.url));
+  if (missingFromSnapshot.length > 0) {
+    console.error(`ERROR: スナップショットに ${missingFromSnapshot.length} 件のURLが記録されていません。`);
+    for (const m of missingFromSnapshot) console.error('  ', m.url);
+    process.exit(1);
+  }
+  console.log(`✅ ロールバック用スナップショット: ${snapshotUrls.size}件記録済み\n`);
 
   // トランザクション内で更新
   await dbClient.query('BEGIN');
@@ -572,22 +602,8 @@ async function runUpdateDb(items, dbClient, publicUrl) {
     }
 
     await dbClient.query('COMMIT');
-
-    // COMMIT成功後にロールバック用スナップショットを記録（重複排除）
-    const existingSnapshotUrls = new Set();
-    if (fs.existsSync(rollbackFile)) {
-      for (const line of fs.readFileSync(rollbackFile, 'utf8').split('\n').filter(Boolean)) {
-        try { const e = JSON.parse(line); if (e.vercel_url) existingSnapshotUrls.add(e.vercel_url); } catch {}
-      }
-    }
-    for (const item of items) {
-      if (item.url && !existingSnapshotUrls.has(item.url)) {
-        fs.appendFileSync(rollbackFile, JSON.stringify({ vercel_url: item.url, r2_url: urlMap.get(item.url), refs: item.refs }) + '\n', 'utf8');
-      }
-    }
-
     console.log(`\n=== update-db完了: ${totalUpdated}行更新 ===`);
-    console.log(`ロールバック用スナップショット: rollback_snapshot.jsonl`);
+    console.log(`ロールバック用スナップショット: rollback_snapshot.jsonl（${snapshotUrls.size}件）`);
 
   } catch (e) {
     await dbClient.query('ROLLBACK');
