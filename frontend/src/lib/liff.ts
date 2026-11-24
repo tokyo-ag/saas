@@ -292,7 +292,19 @@ export function currentRedirectUri(): string {
   return stripLiffCallbackParams(new URL(window.location.href)).toString();
 }
 
+// iPhoneでは liff.login() が LINE Universal Links (liff.line.me) を経由して
+// LINE アプリを起動させてしまい、PKCE verifier が Safari の localStorage に
+// 残ったままコールバックが LINE IAB に来て verifier が見つからなくなる。
+// iOS Safari からは liff.line.me へ直接リダイレクトし、LINE IAB で
+// ネイティブ認証させることで PKCE context switching を回避する。
 export function loginWithRedirect(): void {
+  if (
+    typeof navigator !== 'undefined' &&
+    /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+    !isInLineInAppBrowser()
+  ) {
+    if (redirectToLiffApp()) return;
+  }
   liff.login({ redirectUri: currentRedirectUri() });
 }
 

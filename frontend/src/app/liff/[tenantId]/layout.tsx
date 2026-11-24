@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import { API_URL } from '@/lib/config';
 import { LiffThemeProvider, DEFAULT_LIFF_THEME, type LiffTheme } from '@/components/liff/LiffThemeProvider';
 
@@ -83,8 +84,36 @@ export async function generateMetadata({ params }: { params: Promise<{ tenantId:
   }
 }
 
+// LINE IAB (WKWebView) はキャッシュ制御ヘッダーを無視して古いHTMLを返すことがある。
+// ビルドIDをページに埋め込み、sessionStorageの値と照合して不一致なら強制リロードする。
+// これにより古い LIFF SDK バンドルが読み込まれる問題を回避する。
+const LIFF_BUILD_ID = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.slice(0, 8) ??
+  process.env.NEXT_BUILD_ID ?? Date.now().toString();
+
+const cacheCheckScript = `
+(function() {
+  try {
+    var k = '__liff_build';
+    var v = ${JSON.stringify(LIFF_BUILD_ID)};
+    var stored = sessionStorage.getItem(k);
+    if (stored && stored !== v) {
+      sessionStorage.setItem(k, v);
+      window.location.reload();
+    } else {
+      sessionStorage.setItem(k, v);
+    }
+  } catch(e) {}
+})();
+`;
+
 export default async function LiffLayout({ children, params }: { children: React.ReactNode; params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
   const theme = await fetchTheme(tenantId);
-  return <LiffThemeProvider theme={theme}>{children}</LiffThemeProvider>;
+  return (
+    <LiffThemeProvider theme={theme}>
+      {/* eslint-disable-next-line @next/next/no-before-interactive-script-outside-document */}
+      <Script id="liff-cache-check" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: cacheCheckScript }} />
+      {children}
+    </LiffThemeProvider>
+  );
 }
