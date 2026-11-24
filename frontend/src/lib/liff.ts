@@ -191,7 +191,9 @@ export async function initLiff(liffIdOverride?: string): Promise<boolean> {
 // LINEログインの往復でURLに付与されるOAuthコールバック用パラメータ。
 // これらを残したままredirectUriに使い回すと、古い認可コードを次回のログインに
 // 巻き込んでしまいstate検証が失敗し続け、再ログインしても同じ画面に戻るループになる。
-const LIFF_CALLBACK_PARAM_KEYS = ['code', 'state', 'liff.state', 'liffClientId', 'liffRedirectUri', 'liff.referrer'];
+// _v はミドルウェアが付加するキャッシュ破棄用パラメータ。
+// redirectUri や LINE コールバック URL に混入しないように除去リストに追加する。
+const LIFF_CALLBACK_PARAM_KEYS = ['code', 'state', 'liff.state', 'liffClientId', 'liffRedirectUri', 'liff.referrer', '_v'];
 
 function stripLiffCallbackParams(url: URL): URL {
   for (const key of LIFF_CALLBACK_PARAM_KEYS) url.searchParams.delete(key);
