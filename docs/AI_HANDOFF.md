@@ -113,6 +113,23 @@ FONEのLINE設定完了後にリマインドが届かない可能性。
 - 診断：ブラウザコンソールで `fetch('/api/admin/events').then(r=>r.json()).then(d=>console.log(d.events?.map(e=>({title:e.title,remindAt:e.remindAt,remindedAt:e.remindedAt}))))` を実行
 - `remindedAt`がセット済みならDBで`null`にリセットが必要
 
+## Completed changes (2026-11-24 session 10, Claude Code)
+
+### LINE予約認証400エラー修正（fdb8abe）
+
+**根拠:** AI_HANDOFF session 9の調査で特定済みの根本原因を修正。
+
+**原因:** `initLiff()` の catch ブロックが `clearLiffSdkState()` を無条件呼び出し → PKCE code_verifier（`LIFF[_:]` パターンのキー）を消去 → LINEがOAuthコールバック後のcode交換でverifier照合失敗 → HTTP 400。
+
+**修正:** `frontend/src/lib/liff.ts` lines 181-186  
+URLに `code` パラメータがある場合（OAuthコールバック処理中）は `clearLiffSdkState()` をスキップ。コールバック以外のinit失敗時は従来通りクリア。
+
+**TypeScriptコンパイル:** エラーなし（`tsc --noEmit`）
+
+**未デプロイ:** デプロイ承認待ち。現在本番は `comiu-6sojy3t2s` ロールバック済み。
+
+---
+
 ## Completed changes (2026-11-19 session 9, Claude Code)
 
 ### Android LIFF認証調査（3点追加検証）
