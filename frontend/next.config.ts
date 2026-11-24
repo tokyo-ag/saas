@@ -69,8 +69,7 @@ const nextConfig: NextConfig = {
     ];
   },
   async redirects() {
-    type Redirect = { source: string; destination: string; permanent: boolean; has?: { type: string; value?: string }[] };
-    const redirects: Redirect[] = [
+    const redirects = [
       {
         // 旧スラッグ生成ロジックがタイトル全文をそのままURL化してしまい、
         // 既にGoogleにインデックスされてしまったため、短縮後のスラッグへ301する。
@@ -81,7 +80,7 @@ const nextConfig: NextConfig = {
       // Railway旧フロントエンドURLからcomiu.linkへリダイレクト（PKCE domain mismatch防止）
       {
         source: "/:path*",
-        has: [{ type: "host", value: "frontend-production-5b197303.up.railway.app" }],
+        has: [{ type: "host" as const, value: "frontend-production-5b197303.up.railway.app" }],
         destination: "https://comiu.link/:path*",
         permanent: true,
       },
