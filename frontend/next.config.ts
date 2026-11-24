@@ -69,7 +69,8 @@ const nextConfig: NextConfig = {
     ];
   },
   async redirects() {
-    const redirects = [
+    type Redirect = { source: string; destination: string; permanent: boolean; has?: { type: string; value?: string }[] };
+    const redirects: Redirect[] = [
       {
         // 旧スラッグ生成ロジックがタイトル全文をそのままURL化してしまい、
         // 既にGoogleにインデックスされてしまったため、短縮後のスラッグへ301する。
@@ -77,16 +78,14 @@ const nextConfig: NextConfig = {
         destination: "/clubs/36842231/blog/raketto-o-nigitta-koto-ga-naku-te-mo-dai-kangei-toshima-ku",
         permanent: true,
       },
+      // Railway旧フロントエンドURLからcomiu.linkへリダイレクト（PKCE domain mismatch防止）
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "frontend-production-5b197303.up.railway.app" }],
+        destination: "https://comiu.link/:path*",
+        permanent: true,
+      },
     ];
-
-    // Railway旧フロントエンドURLからcomiu.linkへリダイレクト（PKCE domain mismatch防止）
-    const railwayFrontendHost = "frontend-production-5b197303.up.railway.app";
-    redirects.push({
-      source: "/:path*",
-      has: [{ type: "host", value: railwayFrontendHost }],
-      destination: "https://comiu.link/:path*",
-      permanent: true,
-    });
 
     if (process.env.CANONICAL_REDIRECT_ENABLED !== "true") return redirects;
 
