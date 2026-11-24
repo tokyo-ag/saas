@@ -6,35 +6,44 @@ or finishing.
 
 ## Current objective
 
-comiu.link の Railway への移行完了。Vercel完全依存解消は後日タスク。
+LINE予約認証400エラー修正・comiu.link Vercel正常化 完了。次回作業不要。
 
 ## Status
 
 - **バックアップ基盤: 完成**（復元テスト2026-11-18合格、詳細は下記）
 - 課金管理機能デプロイ済み（commit 3c0315a）。Stripe本番切り替えは保留。
 - FONE 12月イベント10件を本番DBに投入済み（2026-11-18）
-- **Railway frontendデプロイ: 完了** `https://frontend-production-5b197303.up.railway.app`（HTTP 200確認済み）
-- **comiu.link Cloudflare+Railway移行: 完了**（2026-11-19）
+- **LINE予約認証400エラー修正: 完了**（2026-11-24、commit fdb8abe）
+- **comiu.link → Vercel正常化: 完了**（2026-11-24、commit b978190）
 
-## インフラ構成（2026-11-19時点）
+## インフラ構成（2026-11-24時点・正規構成）
 
 | レイヤー | サービス | 用途 |
 |---------|---------|------|
 | ドメイン契約・更新 | お名前.com | comiu.link |
-| DNS管理 | Cloudflare（Freeプラン） | damon.ns.cloudflare.com / mallory.ns.cloudflare.com |
-| フロントエンド | Railway（frontendサービス） | Next.js |
+| DNS管理 | Vercel DNS（ns1/ns2.vercel-dns.com） | comiu.linkのNS |
+| フロントエンド | **Vercel Pro** | Next.js（comiu-aodc0fi7k デプロイ） |
 | バックエンド | Railway（saasサービス） | NestJS API |
 | DB | Railway（Postgresサービス） | PostgreSQL |
+| 画像 | Vercel Blob | pc2eyeqk22ch6su6.public.blob.vercel-storage.com |
 | ソースコード | GitHub（tokyo-ag/saas） | mainブランチ |
 
-**Cloudflare DNS設定（comiu.link）：**
-- CNAME `@` → `g91ksdkb.up.railway.app`（Proxy: DNS only）
-- TXT `_railway-verify` → Railway指定の認証値
+**DNS設定（comiu.link）：**
+- NS: `ns1.vercel-dns.com` / `ns2.vercel-dns.com`
+- ALIAS `comiu.link` → `0e8939d2ff862540.vercel-dns-017.com`（Vercel edge）
+- CNAME `*.comiu.link` → `cname.vercel-dns-016.com`（Vercel edge）
 
-**Railway環境変数（frontendサービス）：**
-- `NEXT_PUBLIC_API_URL=https://comiu.up.railway.app`
-- `NEXT_PUBLIC_SITE_URL=https://comiu.link`
-- `NEXT_PUBLIC_SUPPORT_EMAIL=comiunoreply@gmail.com`
+**Vercel Production（現行）：**
+- デプロイID: `comiu-aodc0fi7k`（`dpl_6RMMHsGnstLoE7V9xaq325zZWq7L`）
+- バックエンドAPIは `next.config.ts` の `/api/backend/:path*` → Railway rewrite で疎通
+- `frontend/vercel.json` = `{}` （experimentalServices 削除済み）
+
+**ロールバック手順（緊急時）：**
+```
+vercel rollback https://comiu-9zfwyh0fw-ktgw-s-projects.vercel.app  # 直前の本番
+# または
+vercel rollback https://comiu-6sojy3t2s-ktgw-s-projects.vercel.app  # 1つ前の安定版
+```
 
 ## Next action
 
@@ -113,20 +122,36 @@ FONEのLINE設定完了後にリマインドが届かない可能性。
 - 診断：ブラウザコンソールで `fetch('/api/admin/events').then(r=>r.json()).then(d=>console.log(d.events?.map(e=>({title:e.title,remindAt:e.remindAt,remindedAt:e.remindedAt}))))` を実行
 - `remindedAt`がセット済みならDBで`null`にリセットが必要
 
-## Completed changes (2026-11-24 session 10, Claude Code)
+## Completed changes (2026-11-24 session 10/11, Claude Code)
 
-### LINE予約認証400エラー修正（fdb8abe）
+### LINE予約認証400エラー修正（fdb8abe）＋comiu.link Vercel正常化（b978190）
 
-**根拠:** AI_HANDOFF session 9の調査で特定済みの根本原因を修正。
+**根本原因A（PKCE 400エラー）:**  
+`initLiff()` の catch ブロックが `clearLiffSdkState()` を無条件呼び出し → PKCE code_verifier（`LIFF[_:]` パターンのキー）を消去 → LINEがOAuthコールバック後のcode交換でverifier照合失敗 → HTTP 400。
 
-**原因:** `initLiff()` の catch ブロックが `clearLiffSdkState()` を無条件呼び出し → PKCE code_verifier（`LIFF[_:]` パターンのキー）を消去 → LINEがOAuthコールバック後のcode交換でverifier照合失敗 → HTTP 400。
+**修正A:** `frontend/src/lib/liff.ts` lines 181-186  
+URLに `code` パラメータがある場合（OAuthコールバック処理中）は `clearLiffSdkState()` をスキップ。  
+Vercel production JSバンドル（`0uf_c16o5xe93.js`）で fix 確認済み: `has("code")||r7()`。
 
-**修正:** `frontend/src/lib/liff.ts` lines 181-186  
-URLに `code` パラメータがある場合（OAuthコールバック処理中）は `clearLiffSdkState()` をスキップ。コールバック以外のinit失敗時は従来通りクリア。
+**根本原因B（fix が本番に届かなかった問題）:**  
+`frontend/vercel.json` に `experimentalServices` があり、VercelのProduction deploy が `Services` env var（Railway URL）経由でRailwayにプロキシされていた。  
+結果: `comiu.link` → `Server: railway-hikari`（Railway旧フロントエンド配信）。
 
-**TypeScriptコンパイル:** エラーなし（`tsc --noEmit`）
+**修正B:**
+1. `frontend/vercel.json` の `experimentalServices` を削除（commit `b978190`）
+2. `vercel env rm Services production` で環境変数削除
+3. `vercel redeploy` → 新デプロイ `comiu-aodc0fi7k`
+4. `vercel alias set comiu-aodc0fi7k-... comiu.link` → Success
 
-**未デプロイ:** デプロイ承認待ち。現在本番は `comiu-6sojy3t2s` ロールバック済み。
+**最終確認（2026-11-24）:**
+- DNS: `216.150.16.193`（Vercel edge IP）✓
+- `Server: Vercel` ✓
+- バックエンドAPI `/api/backend/public/events` 200 OK ✓
+- SSRページ `/sports/basketball` 200 OK ✓
+- Vercel Blob画像URL レスポンスに含む ✓
+- PKCE fix Vercel JSバンドルで確認 ✓
+
+**ユーザー実施予定:** 実機でLINE予約認証をテストして400エラー解消を確認。
 
 ---
 
