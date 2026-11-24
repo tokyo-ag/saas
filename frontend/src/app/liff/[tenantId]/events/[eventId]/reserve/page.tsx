@@ -512,12 +512,24 @@ function ReservePageInner() {
     }
   }
 
+  // Step1（liff.init失敗）かつエラー文字列に400が含まれる場合はLINEキャッシュ問題の可能性が高い
+  const isLiffInitError = authError.startsWith('Step1:');
+
   if (authStatus === 'error') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center gap-5" style={{ backgroundColor: theme.backgroundColor }}>
         <p className="text-sm text-gray-500">認証に失敗しました。もう一度お試しください。</p>
         {authError && (
           <p className="text-xs text-red-400 bg-red-50 px-3 py-2 rounded-lg font-mono break-all">{authError}</p>
+        )}
+        {isLiffInitError && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-left max-w-xs">
+            <p className="text-xs font-bold text-amber-800 mb-1">LINEキャッシュが原因の場合</p>
+            <p className="text-xs text-amber-700 leading-relaxed">
+              LINE アプリ → 設定 → 通話/その他 → データの管理 → キャッシュデータを削除
+              してから、もう一度お試しください。
+            </p>
+          </div>
         )}
         {loginRequired ? (
           <button

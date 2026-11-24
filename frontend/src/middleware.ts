@@ -25,7 +25,11 @@ export function middleware(request: NextRequest) {
 
   const url = request.nextUrl.clone();
   url.searchParams.set('_v', BUILD_ID);
-  return NextResponse.redirect(url, { status: 302 });
+  const res = NextResponse.redirect(url, { status: 302 });
+  // LINE IAB (WKWebView) は 302 レスポンスもキャッシュすることがあるため、
+  // リダイレクト自体がキャッシュされて古い _v に固定されないよう no-store を付ける。
+  res.headers.set('Cache-Control', 'no-store, no-cache');
+  return res;
 }
 
 export const config = {
