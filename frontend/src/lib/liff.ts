@@ -175,9 +175,15 @@ export async function initLiff(liffIdOverride?: string): Promise<boolean> {
     initInfo = { ok: false, hasId: Boolean(id), loggedIn: false };
     exposeDebugValue('__LIFF_INIT_ERROR', lastError);
     exposeDebugValue('__LIFF_INIT_INFO', initInfo);
-    // 古いLIFFセッション状態による誤認が原因の可能性があるため、次の初期化
-    // （再試行）が同じ失敗を繰り返さないよう、ここで必ずクリアしておく。
-    clearLiffSdkState();
+    // OAuthコールバック処理中（URLにcodeパラメータあり）はPKCE verifierを
+    // 消さない。消すとLINEがコード交換時にverifierを照合できず400を返す。
+    // コールバック以外のinit失敗時は古いセッション状態をクリアして次回再試行を安全にする。
+    const inOAuthCallback =
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).has('code');
+    if (!inOAuthCallback) {
+      clearLiffSdkState();
+    }
     return false;
   }
 }
