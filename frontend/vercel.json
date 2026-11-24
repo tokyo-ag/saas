@@ -1,8 +1,1 @@
-{
-  "experimentalServices": {
-    "web": {
-      "routePrefix": "/",
-      "framework": "nextjs"
-    }
-  }
-}
+{}
