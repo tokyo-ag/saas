@@ -79,6 +79,15 @@ const nextConfig: NextConfig = {
       },
     ];
 
+    // Railway旧フロントエンドURLからcomiu.linkへリダイレクト（PKCE domain mismatch防止）
+    const railwayFrontendHost = "frontend-production-5b197303.up.railway.app";
+    redirects.push({
+      source: "/:path*",
+      has: [{ type: "host", value: railwayFrontendHost }],
+      destination: "https://comiu.link/:path*",
+      permanent: true,
+    });
+
     if (process.env.CANONICAL_REDIRECT_ENABLED !== "true") return redirects;
 
     const canonical = getCanonicalUrl();
