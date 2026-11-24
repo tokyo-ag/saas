@@ -1,0 +1,9 @@
+node_modules
+.next
+*.tsbuildinfo
+migration_log.jsonl
+.verify_passed
+dev.log
+.env.local
+.env.production.local
+.env.railway

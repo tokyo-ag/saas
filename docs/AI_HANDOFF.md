@@ -6,15 +6,18 @@ or finishing.
 
 ## Current objective
 
-LINE予約認証400エラー修正・comiu.link Vercel正常化 完了。次回作業不要。
+LINE予約認証400エラー根本修正完了。次回作業不要。
 
 ## Status
 
 - **バックアップ基盤: 完成**（復元テスト2026-11-18合格、詳細は下記）
 - 課金管理機能デプロイ済み（commit 3c0315a）。Stripe本番切り替えは保留。
 - FONE 12月イベント10件を本番DBに投入済み（2026-11-18）
-- **LINE予約認証400エラー修正: 完了**（2026-11-24、commit fdb8abe）
 - **comiu.link → Vercel正常化: 完了**（2026-11-24、commit b978190）
+- **LINE予約認証400エラー根本修正: 完了**（2026-11-24、commit fc96090e）
+  - 根本原因: `@line/liff` v2.28.0がLINEに廃止（`/liff/v1/authorize`がexternal browserで400）
+  - 修正: `@line/liff` v2.28.0 → v2.32.0 にアップデート
+  - 副次対応: Railway旧フロントエンドURLをcomiu.linkへ308リダイレクト（commit 714f8eaf）
 
 ## インフラ構成（2026-11-24時点・正規構成）
 
