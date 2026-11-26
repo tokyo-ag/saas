@@ -432,12 +432,31 @@ export class PublicController {
 
     // コラボイベントなら同グループ全イベントの予約を合算する
     let eventIds = [event.id];
+    // eventId → tenantName のマップ（コラボ時の団体別表示用）
+    const tenantNameByEventId = new Map<string, string>([[event.id, tenant.id]]);
+    let collabTenants: { tenantId: string; tenantName: string }[] = [];
+
     if (event.collabLink) {
       const groupLinks = await this.prisma.collabEventLink.findMany({
         where: { collabGroupId: event.collabLink.collabGroupId },
-        select: { eventId: true },
+        select: {
+          eventId: true,
+          event: {
+            select: {
+              tenantId: true,
+              tenant: { select: { id: true, name: true, lineDisplayName: true } },
+            },
+          },
+        },
       });
       eventIds = groupLinks.map((l) => l.eventId);
+      const seenTenants = new Map<string, string>();
+      for (const l of groupLinks) {
+        const name = l.event.tenant.lineDisplayName ?? l.event.tenant.name ?? l.event.tenantId;
+        tenantNameByEventId.set(l.eventId, l.event.tenantId);
+        seenTenants.set(l.event.tenantId, name);
+      }
+      collabTenants = [...seenTenants.entries()].map(([tenantId, tenantName]) => ({ tenantId, tenantName }));
     }
 
     const reservations = await this.prisma.reservation.findMany({
@@ -474,6 +493,8 @@ export class PublicController {
         capacityFemale: event.capacityFemale,
         levelEnabled: event.levelEnabled,
         status: event.status,
+        isCollab: !!event.collabLink,
+        collabTenants,
       },
       summary: this.genderSummary(reservations),
       reservations: reservations.map((r) => ({
@@ -491,6 +512,7 @@ export class PublicController {
         status: r.status,
         waitlistOrder: r.waitlistOrder,
         reservedAt: r.reservedAt,
+        tenantId: tenantNameByEventId.get(r.eventId),
       })),
     };
   }

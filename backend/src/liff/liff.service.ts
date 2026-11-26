@@ -187,6 +187,10 @@ export class LiffService {
       tenant?.eventSocialProofSettings,
       socialProofInputs,
     );
+    // コラボ合算後の予約数をeventIdで引けるようにする
+    const combinedCountByEventId = new Map(
+      socialProofInputs.map((s) => [s.id, s.reservations.length]),
+    );
 
     return events.map((e) => ({
       id: e.id,
@@ -204,7 +208,7 @@ export class LiffService {
       priceMale: e.priceMale,
       priceFemale: e.priceFemale,
       paymentRequired: e.paymentRequired,
-      reservedCount: e.reservations.length,
+      reservedCount: combinedCountByEventId.get(e.id) ?? e.reservations.length,
       socialProof: socialProofByEvent.get(e.id) ?? null,
       imageUrl: e.imageUrl,
       iconUrl: e.iconUrl,
@@ -325,12 +329,23 @@ export class LiffService {
     tenantId = await this.resolveTenantId(tenantId);
     const event = await this.prisma.event.findFirst({
       where: { id: eventId, tenantId },
+      include: { collabLink: { select: { collabGroupId: true } } },
     });
     if (!event) throw new NotFoundException('Event not found');
 
+    // コラボグループに属する場合は全イベントIDを収集して合算する
+    let countEventIds = [eventId];
+    if (event.collabLink) {
+      const groupLinks = await this.prisma.collabEventLink.findMany({
+        where: { collabGroupId: event.collabLink.collabGroupId },
+        select: { eventId: true },
+      });
+      countEventIds = groupLinks.map((l) => l.eventId);
+    }
+
     const reservations = await this.prisma.reservation.findMany({
       where: {
-        eventId,
+        eventId: { in: countEventIds },
         status: { in: ['reserved', 'attended', 'waiting_payment'] },
       },
       select: { member: { select: { gender: true } } },

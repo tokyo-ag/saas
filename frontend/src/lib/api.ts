@@ -1696,6 +1696,7 @@ export interface StaffViewReservation {
   status: ReservationStatus;
   waitlistOrder: number | null;
   reservedAt: string;
+  tenantId?: string | null;
 }
 
 export interface StaffViewGenderSummary {
@@ -1730,6 +1731,8 @@ export interface StaffViewEventDetail {
     capacityFemale: number | null;
     levelEnabled: boolean;
     status: EventStatus;
+    isCollab?: boolean;
+    collabTenants?: { tenantId: string; tenantName: string }[];
   };
   summary: StaffViewGenderSummary;
   reservations: StaffViewReservation[];
