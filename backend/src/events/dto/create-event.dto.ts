@@ -124,6 +124,14 @@ export class CreateEventDto {
   )
   priceFemale?: number | null;
 
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Transform(({ value }) =>
+    value === null || value === '' ? null : Number(value),
+  )
+  advancePrice?: number | null;
+
   @IsBoolean()
   @Transform(({ value }) => Boolean(value))
   paymentRequired: boolean;

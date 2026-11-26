@@ -37,6 +37,30 @@ export class StripeService {
     });
   }
 
+  async createPaymentLink(
+    secretKey: string,
+    opts: {
+      label: string;
+      amount: number;
+      tenantId: string;
+    },
+  ) {
+    const stripe = this.getClient(secretKey);
+    return stripe.paymentLinks.create({
+      line_items: [
+        {
+          price_data: {
+            currency: 'jpy',
+            product_data: { name: opts.label },
+            unit_amount: opts.amount,
+          },
+          quantity: 1,
+        },
+      ],
+      metadata: { tenantId: opts.tenantId },
+    });
+  }
+
   constructEvent(webhookSecret: string, payload: Buffer, signature: string) {
     const stripe = new Stripe('dummy', { apiVersion: '2026-04-22.dahlia' });
     return stripe.webhooks.constructEvent(payload, signature, webhookSecret);

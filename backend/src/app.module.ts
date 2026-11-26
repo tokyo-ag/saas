@@ -21,6 +21,7 @@ import { PublicPagesModule } from './public-pages/public-pages.module';
 import { BlogModule } from './blog/blog.module';
 import { MobileManageModule } from './mobile-manage/mobile-manage.module';
 import { CollabModule } from './collab/collab.module';
+import { ComiuPayModule } from './comiu-pay/comiu-pay.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -44,6 +45,7 @@ import { CollabModule } from './collab/collab.module';
     BlogModule,
     MobileManageModule,
     CollabModule,
+    ComiuPayModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

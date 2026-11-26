@@ -333,6 +333,7 @@ export class EventsService {
         price: dto.price,
         priceMale: dto.priceMale ?? null,
         priceFemale: dto.priceFemale ?? null,
+        advancePrice: dto.advancePrice ?? null,
         paymentRequired: dto.paymentTiming === 'prepay',
         paymentTiming: dto.paymentTiming ?? 'onsite',
         notifyOnReserve: dto.notifyOnReserve,
@@ -472,6 +473,9 @@ export class EventsService {
         }),
         ...(dto.priceFemale !== undefined && {
           priceFemale: dto.priceFemale ?? null,
+        }),
+        ...(dto.advancePrice !== undefined && {
+          advancePrice: dto.advancePrice ?? null,
         }),
         ...(dto.paymentTiming !== undefined && {
           paymentTiming: dto.paymentTiming,

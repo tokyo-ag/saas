@@ -83,6 +83,7 @@ model Tenant {
   members           Member[]
   organizerAccounts OrganizerAccount[]
   liffAccesses      TenantLiffAccess[]
+  paymentLinks      PaymentLink[]
   publicPages       PublicPage[]
   blogPosts         BlogPost[]
   tenantReviews     TenantReview[]
@@ -302,6 +303,7 @@ model Event {
   price                      Int         @default(0)
   priceMale                  Int?        @map("price_male")
   priceFemale                Int?        @map("price_female")
+  advancePrice               Int?        @map("advance_price")
   paymentRequired            Boolean     @default(false) @map("payment_required")
   paymentTiming              String      @default("onsite") @map("payment_timing")
   notifyOnReserve            Boolean     @default(true) @map("notify_on_reserve")
@@ -515,4 +517,20 @@ model ErrorLog {
 
   @@index([createdAt])
   @@map("error_logs")
+}
+
+model PaymentLink {
+  id                  String   @id @default(uuid())
+  tenantId            String   @map("tenant_id")
+  label               String   @db.VarChar(100)
+  amount              Int
+  stripePaymentLinkId String   @map("stripe_payment_link_id") @db.VarChar(100)
+  url                 String   @db.VarChar(500)
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@map("payment_links")
 }

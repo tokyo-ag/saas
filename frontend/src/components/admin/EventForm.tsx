@@ -31,6 +31,7 @@ type EventFormData = {
   price: string;
   priceMale: string;
   priceFemale: string;
+  advancePrice: string;
   paymentTiming: 'onsite' | 'prepay' | 'both';
   notifyOnReserve: boolean;
   reservationMessageTemplate: string;
@@ -414,6 +415,7 @@ export default function EventForm({
     price: initial?.price?.toString() ?? '0',
     priceMale: initial?.priceMale?.toString() ?? '0',
     priceFemale: initial?.priceFemale?.toString() ?? '0',
+    advancePrice: initial?.advancePrice?.toString() ?? '',
     paymentTiming: (initial?.paymentTiming ?? 'onsite') as 'onsite' | 'prepay' | 'both',
     notifyOnReserve: initial?.notifyOnReserve ?? true,
     reservationMessageTemplate: initial?.reservationMessageTemplate ?? '',
@@ -737,6 +739,7 @@ export default function EventForm({
       price: Number(form.price),
       priceMale: form.priceMode === 'gender' ? numOrNull(form.priceMale) : null,
       priceFemale: form.priceMode === 'gender' ? numOrNull(form.priceFemale) : null,
+      advancePrice: form.paymentTiming !== 'onsite' && form.advancePrice !== '' ? numOrNull(form.advancePrice) : null,
       paymentRequired: form.paymentTiming === 'prepay',
       paymentTiming: form.paymentTiming,
       notifyOnReserve: form.notifyOnReserve,
@@ -1186,6 +1189,24 @@ export default function EventForm({
                 事前決済にはStripe設定が必要です。
                 <Link href="/admin/settings/stripe" className="ml-1 underline">Stripe設定へ</Link>
               </p>
+            )}
+            {(form.paymentTiming === 'prepay' || form.paymentTiming === 'both') && (
+              <div className="mt-3">
+                <p className="mb-1 text-xs font-medium text-gray-600">事前決済 割引金額（COMIU PAY）</p>
+                <div className="flex max-w-44 items-center gap-2">
+                  <span className="text-sm text-gray-500">¥</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={100}
+                    placeholder={form.price || '0'}
+                    value={form.advancePrice}
+                    onChange={(e) => set('advancePrice', e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <p className="mt-1 text-[11px] text-gray-400">空欄なら通常金額をそのまま使用します</p>
+              </div>
             )}
           </div>
         )}

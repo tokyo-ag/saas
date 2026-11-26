@@ -32,6 +32,7 @@ export default function Sidebar() {
     { href: '/admin', label: 'ダッシュボード', icon: 'D' },
     { href: '/admin/members', label: '参加者名簿', icon: 'U' },
     { href: '/admin/mobile-manage', label: '超簡単モバイル管理', icon: 'M' },
+    { href: '/admin/comiu-pay', label: 'COMIU PAY', icon: '¥' },
     { href: '/admin/settings', label: '設定', icon: 'S' },
   ];
 

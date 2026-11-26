@@ -584,6 +584,20 @@ export const api = {
         body: JSON.stringify(data),
       }),
   },
+  comiuPay: {
+    listLinks: () => request<PaymentLink[]>('/admin/comiu-pay/links'),
+    createLink: (data: { label: string; amount: number }) =>
+      request<PaymentLink>('/admin/comiu-pay/links', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    deactivateLink: (linkId: string) =>
+      request<PaymentLink>(`/admin/comiu-pay/links/${linkId}/deactivate`, {
+        method: 'PATCH',
+      }),
+    listPayments: () =>
+      request<{ payments: ComiuPayment[]; total: number }>('/admin/comiu-pay/payments'),
+  },
 };
 
 // ---- 型定義 ----
@@ -611,6 +625,7 @@ export interface Event {
   price: number;
   priceMale?: number;
   priceFemale?: number;
+  advancePrice?: number | null;
   paymentRequired: boolean;
   paymentTiming?: string;
   notifyOnReserve: boolean;
@@ -662,6 +677,7 @@ export interface EventInput {
   price: number;
   priceMale?: number | null;
   priceFemale?: number | null;
+  advancePrice?: number | null;
   paymentRequired?: boolean;
   paymentTiming?: string;
   notifyOnReserve?: boolean;
@@ -889,6 +905,26 @@ export interface LiffEvent {
   categories?: string[];
   socialProof?: EventSocialProof | null;
   genderCapacityRevealThreshold?: number;
+}
+
+export interface PaymentLink {
+  id: string;
+  tenantId: string;
+  label: string;
+  amount: number;
+  stripePaymentLinkId: string;
+  url: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface ComiuPayment {
+  id: string;
+  amount: number;
+  description: string;
+  createdAt: string;
+  status: string;
+  receiptUrl: string | null;
 }
 
 export type EventSocialProofKind = 'balanced' | 'ratio_3_2' | 'size' | 'combined' | 'bell_gender_ratio_auto';

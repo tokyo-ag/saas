@@ -594,7 +594,7 @@ export class LiffService {
     if (member.blockedAt)
       throw new ForbiddenException('この団体から利用制限されています');
 
-    const effectivePrice =
+    const basePrice =
       event.priceMale != null && event.priceFemale != null
         ? member.gender === '男性'
           ? event.priceMale
@@ -602,6 +602,12 @@ export class LiffService {
             ? event.priceFemale
             : Math.max(event.priceMale, event.priceFemale)
         : event.price;
+    // prepay タイミングかつ advancePrice が設定されている場合は割引価格を使用
+    const effectivePrice =
+      (event as { advancePrice?: number | null }).advancePrice != null &&
+      (event.paymentTiming === 'prepay')
+        ? (event as { advancePrice: number }).advancePrice
+        : basePrice;
 
     // イベント単位で定員判定と保存を直列化し、空いた枠は予約操作の先着順で確定する。
     const slotReservation = await this.prisma
