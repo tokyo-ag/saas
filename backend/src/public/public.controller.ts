@@ -361,22 +361,48 @@ export class PublicController {
           where: { status: { not: 'cancelled' } },
           select: { status: true, member: { select: { gender: true } } },
         },
+        collabLink: {
+          include: {
+            collabGroup: {
+              include: {
+                eventLinks: {
+                  include: {
+                    event: {
+                      include: {
+                        reservations: {
+                          where: { status: { not: 'cancelled' } },
+                          select: { status: true, member: { select: { gender: true } } },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: { heldAt: 'asc' },
     });
 
     return {
       tenantName: tenant.name ?? tenant.lineDisplayName,
-      events: events.map((e) => ({
-        id: e.id,
-        title: e.title,
-        status: e.status,
-        heldAt: e.heldAt,
-        location: e.location,
-        locationHint: e.locationHint,
-        capacity: e.capacity,
-        ...this.genderSummary(e.reservations),
-      })),
+      events: events.map((e) => {
+        const allReservations = e.collabLink
+          ? e.collabLink.collabGroup.eventLinks.flatMap((l) => l.event.reservations)
+          : e.reservations;
+        return {
+          id: e.id,
+          title: e.title,
+          status: e.status,
+          heldAt: e.heldAt,
+          location: e.location,
+          locationHint: e.locationHint,
+          capacity: e.capacity,
+          isCollab: !!e.collabLink,
+          ...this.genderSummary(allReservations),
+        };
+      }),
     };
   }
 
@@ -400,11 +426,22 @@ export class PublicController {
         status: { not: 'draft' },
         OR: [{ endAt: { gte: now } }, { endAt: null, heldAt: { gte: fourHoursAgo } }],
       },
+      include: { collabLink: { select: { collabGroupId: true } } },
     });
     if (!event) throw new NotFoundException('イベントが見つかりません');
 
+    // コラボイベントなら同グループ全イベントの予約を合算する
+    let eventIds = [event.id];
+    if (event.collabLink) {
+      const groupLinks = await this.prisma.collabEventLink.findMany({
+        where: { collabGroupId: event.collabLink.collabGroupId },
+        select: { eventId: true },
+      });
+      eventIds = groupLinks.map((l) => l.eventId);
+    }
+
     const reservations = await this.prisma.reservation.findMany({
-      where: { eventId: event.id, status: { not: 'cancelled' } },
+      where: { eventId: { in: eventIds }, status: { not: 'cancelled' } },
       include: {
         member: {
           select: {
