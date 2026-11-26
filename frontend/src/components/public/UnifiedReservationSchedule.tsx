@@ -32,6 +32,7 @@ type Props = {
   viewStyle?: string | null;
   accentColor: string;
   cardBg: string;
+  reservedEventIds?: Set<string>;
 };
 
 function eventHref(tenantCode: string, eventId: string) {
@@ -74,11 +75,12 @@ function priceLabel(event: UnifiedScheduleEvent) {
   return event.price === 0 ? '無料' : `¥${event.price.toLocaleString()}`;
 }
 
-function CardView({ events, tenantCode, accentColor, cardBg }: Omit<Props, 'viewStyle'>) {
+function CardView({ events, tenantCode, accentColor, cardBg, reservedEventIds }: Omit<Props, 'viewStyle'>) {
   return (
     <div className="grid min-w-0 grid-cols-2 gap-2">
       {events.map((event) => {
         const image = imgUrl(event.imageUrl, API_URL);
+        const reserved = reservedEventIds?.has(event.id) ?? false;
         const status = statusLabel(event);
         const full = status === '満席';
         return (
@@ -110,12 +112,18 @@ function CardView({ events, tenantCode, accentColor, cardBg }: Omit<Props, 'view
                   {event.title}
                 </p>
               </div>
-              <span
-                className={`absolute right-2 top-2 rounded-full px-2 py-1 text-[9px] font-bold ${full ? 'bg-gray-100 text-gray-500' : ''}`}
-                style={full ? undefined : { backgroundColor: accentColor, color: readableTextColor(accentColor) }}
-              >
-                {status}
-              </span>
+              {reserved ? (
+                <span className="absolute right-2 top-2 rounded-full bg-[#06C755] px-2 py-1 text-[9px] font-bold text-white">
+                  参加確定！
+                </span>
+              ) : (
+                <span
+                  className={`absolute right-2 top-2 rounded-full px-2 py-1 text-[9px] font-bold ${full ? 'bg-gray-100 text-gray-500' : ''}`}
+                  style={full ? undefined : { backgroundColor: accentColor, color: readableTextColor(accentColor) }}
+                >
+                  {status}
+                </span>
+              )}
             </div>
 
             <div className="space-y-1 px-2.5 pb-2.5 pt-2">
@@ -166,7 +174,7 @@ function monthLabel(date: string) {
   });
 }
 
-function ThreadView({ events, tenantCode, accentColor, cardBg }: Omit<Props, 'viewStyle'>) {
+function ThreadView({ events, tenantCode, accentColor, cardBg, reservedEventIds }: Omit<Props, 'viewStyle'>) {
   const groups = events.reduce<Record<string, UnifiedScheduleEvent[]>>((result, event) => {
     const key = monthLabel(event.heldAt);
     (result[key] ??= []).push(event);
@@ -183,6 +191,7 @@ function ThreadView({ events, tenantCode, accentColor, cardBg }: Omit<Props, 'vi
           </div>
           <div className="space-y-2">
             {monthEvents.map((event) => {
+              const reserved = reservedEventIds?.has(event.id) ?? false;
               const status = statusLabel(event);
               const full = status === '満席';
               return (
@@ -202,12 +211,18 @@ function ThreadView({ events, tenantCode, accentColor, cardBg }: Omit<Props, 'vi
                       </div>
                     </div>
                     <div className="flex shrink-0 self-stretch flex-col items-end justify-between gap-3">
-                      <span
-                        className={`rounded-full px-3 py-1.5 text-[13px] font-bold ${full ? 'bg-gray-100 text-gray-400' : ''}`}
-                        style={full ? undefined : { backgroundColor: `${accentColor}1a`, color: accentColor }}
-                      >
-                        {status}
-                      </span>
+                      {reserved ? (
+                        <span className="rounded-full bg-[#06C755] px-3 py-1.5 text-[13px] font-bold text-white">
+                          参加確定！
+                        </span>
+                      ) : (
+                        <span
+                          className={`rounded-full px-3 py-1.5 text-[13px] font-bold ${full ? 'bg-gray-100 text-gray-400' : ''}`}
+                          style={full ? undefined : { backgroundColor: `${accentColor}1a`, color: accentColor }}
+                        >
+                          {status}
+                        </span>
+                      )}
                       {event.socialProof?.text && (
                         <span
                           className="max-w-[140px] whitespace-pre-line text-right text-[10px] font-bold leading-snug"

@@ -7,9 +7,9 @@ import Link from 'next/link';
 
 import { ActivityTicker } from '@/components/liff/ActivityTicker';
 import {
-  UnifiedReservationSchedule,
-  UnifiedScheduleEvent,
+  type UnifiedScheduleEvent,
 } from '@/components/public/UnifiedReservationSchedule';
+import { TenantEventsClient } from '@/components/public/TenantEventsClient';
 import { SITE_URL, API_URL, IMAGE_BASE_URL } from '@/lib/config';
 import { imgUrl } from '@/lib/imgUrl';
 
@@ -329,12 +329,13 @@ export default async function TenantEventsPage({
         )}
 
         <div className="p-2">
-          <UnifiedReservationSchedule
+          <TenantEventsClient
             accentColor={accentColor}
             cardBg={reservationColors.eventCardBg}
             viewStyle={tenant.liffEventView}
             events={events}
             tenantCode={tenantCode}
+            liffId={tenant.liffId}
           />
         </div>
 
