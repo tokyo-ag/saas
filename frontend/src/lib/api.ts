@@ -306,6 +306,11 @@ export const api = {
       request<{ cancelled: number; notificationErrors: number }>(`/public/staff-view/${token}/events/${eventId}/reservations/cancel-all`, {
         method: 'PATCH',
       }),
+    assignStaffViewReservationTenant: (token: string, eventId: string, reservationId: string, tenantId: string) =>
+      request<{ reservationId: string; tenantId: string }>(`/public/staff-view/${token}/events/${eventId}/reservations/${reservationId}/assign-tenant`, {
+        method: 'PATCH',
+        body: JSON.stringify({ tenantId }),
+      }),
     collabRoster: (token: string) => request<CollabRoster>(`/public/collab-roster/${token}`),
     updateCollabRosterReservation: (token: string, reservationId: string, data: { referrer?: string; staffNote?: string }, options?: { keepalive?: boolean }) =>
       request<{
@@ -1697,6 +1702,7 @@ export interface StaffViewReservation {
   waitlistOrder: number | null;
   reservedAt: string;
   tenantId?: string | null;
+  isDuplicate?: boolean;
 }
 
 export interface StaffViewGenderSummary {
@@ -1704,6 +1710,7 @@ export interface StaffViewGenderSummary {
   male: number;
   female: number;
   waitlisted: number;
+  duplicateCount?: number;
 }
 
 export interface StaffViewEventList {
@@ -1733,6 +1740,7 @@ export interface StaffViewEventDetail {
     status: EventStatus;
     isCollab?: boolean;
     collabTenants?: { tenantId: string; tenantName: string }[];
+    collabGroupId?: string | null;
   };
   summary: StaffViewGenderSummary;
   reservations: StaffViewReservation[];

@@ -459,6 +459,9 @@ export class PublicController {
       collabTenants = [...seenTenants.entries()].map(([tenantId, tenantName]) => ({ tenantId, tenantName }));
     }
 
+    const collabGroupId = event.collabLink?.collabGroupId ?? null;
+
+    // 重複判定に必要なフィールドも取得する
     const reservations = await this.prisma.reservation.findMany({
       where: { eventId: { in: eventIds }, status: { not: 'cancelled' } },
       include: {
@@ -471,15 +474,78 @@ export class PublicController {
             comment: true,
             customAnswers: true,
             linePictureUrl: true,
+            lineUserId: true,
+            lineDisplayName: true,
           },
         },
       },
       orderBy: [{ status: 'asc' }, { reservedAt: 'asc' }],
     });
+
+    // コラボ名簿と同じロジックで重複を検出する
+    const normalize = (v?: string | null) =>
+      (v ?? '').normalize('NFKC').replace(/[\s　]+/g, '').toLowerCase();
+    const identityKeys = (r: typeof reservations[number]) => {
+      const keys: string[] = [];
+      if (r.member.lineUserId) keys.push(`line:${r.member.lineUserId}`);
+      if (r.member.linePictureUrl) keys.push(`pic:${r.member.linePictureUrl}`);
+      const dn = normalize(r.member.lineDisplayName);
+      const nm = normalize(r.member.name);
+      const gd = normalize(r.member.gender);
+      if (dn && nm && gd) keys.push(`profile:${dn}:${nm}:${gd}`);
+      return keys;
+    };
+    const byKey = new Map<string, string[]>();
+    for (const r of reservations) {
+      for (const key of identityKeys(r)) {
+        const list = byKey.get(key) ?? [];
+        list.push(r.id);
+        byKey.set(key, list);
+      }
+    }
+    const autoDupIds = new Set<string>();
+    for (const ids of byKey.values()) {
+      if (ids.length > 1) ids.forEach((id) => autoDupIds.add(id));
+    }
+
+    // 手動振り分け overrides（collabグループがある場合のみ）
+    const overrides = collabGroupId
+      ? await this.prisma.collabDuplicateOverride.findMany({
+          where: { collabGroupId },
+          select: { reservationId: true, assignedTenantId: true, isDuplicate: true },
+        })
+      : [];
+    const overrideById = new Map(overrides.map((o) => [o.reservationId, o]));
+
     const customQuestions =
       (tenant.customProfileQuestions as
         | { id: string; label: string }[]
         | null) ?? [];
+
+    const mappedReservations = reservations.map((r) => {
+      const override = overrideById.get(r.id) ?? null;
+      const assignedTenantId = override?.assignedTenantId ?? tenantNameByEventId.get(r.eventId) ?? null;
+      return {
+        id: r.id,
+        name: r.member.name,
+        grade: r.member.grade,
+        gender: r.member.gender,
+        level: r.member.level,
+        comment: r.member.comment,
+        customAnswers: this.mapCustomAnswers(
+          customQuestions,
+          r.member.customAnswers as Record<string, string | string[]> | null,
+        ),
+        linePictureUrl: r.member.linePictureUrl,
+        status: r.status,
+        waitlistOrder: r.waitlistOrder,
+        reservedAt: r.reservedAt,
+        tenantId: assignedTenantId,
+        isDuplicate: override?.isDuplicate ?? autoDupIds.has(r.id),
+      };
+    });
+
+    const duplicateCount = mappedReservations.filter((r) => r.isDuplicate).length;
 
     return {
       event: {
@@ -495,26 +561,48 @@ export class PublicController {
         status: event.status,
         isCollab: !!event.collabLink,
         collabTenants,
+        collabGroupId,
       },
-      summary: this.genderSummary(reservations),
-      reservations: reservations.map((r) => ({
-        id: r.id,
-        name: r.member.name,
-        grade: r.member.grade,
-        gender: r.member.gender,
-        level: r.member.level,
-        comment: r.member.comment,
-        customAnswers: this.mapCustomAnswers(
-          customQuestions,
-          r.member.customAnswers as Record<string, string | string[]> | null,
-        ),
-        linePictureUrl: r.member.linePictureUrl,
-        status: r.status,
-        waitlistOrder: r.waitlistOrder,
-        reservedAt: r.reservedAt,
-        tenantId: tenantNameByEventId.get(r.eventId),
-      })),
+      summary: { ...this.genderSummary(reservations), duplicateCount },
+      reservations: mappedReservations,
     };
+  }
+
+  @Patch('staff-view/:token/events/:eventId/reservations/:reservationId/assign-tenant')
+  async assignStaffViewReservationTenant(
+    @Param('token') token: string,
+    @Param('eventId') eventId: string,
+    @Param('reservationId') reservationId: string,
+    @Body() body: { tenantId: string },
+  ) {
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { staffViewToken: token, staffViewEnabled: true },
+      select: { id: true },
+    });
+    if (!tenant) throw new NotFoundException('リンクが見つかりません');
+
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId, tenantId: tenant.id },
+      include: { collabLink: { select: { collabGroupId: true } } },
+    });
+    if (!event?.collabLink) throw new NotFoundException('コラボグループが見つかりません');
+
+    const { collabGroupId } = event.collabLink;
+    const groupLinks = await this.prisma.collabEventLink.findMany({
+      where: { collabGroupId },
+      select: { event: { select: { tenantId: true } } },
+    });
+    const validTenantIds = new Set(groupLinks.map((l) => l.event.tenantId));
+    if (!validTenantIds.has(body.tenantId)) {
+      throw new NotFoundException('振り分け先の団体が見つかりません');
+    }
+
+    await this.prisma.collabDuplicateOverride.upsert({
+      where: { reservationId },
+      create: { collabGroupId, reservationId, isDuplicate: false, assignedTenantId: body.tenantId },
+      update: { isDuplicate: false, assignedTenantId: body.tenantId },
+    });
+    return { reservationId, tenantId: body.tenantId };
   }
 
   @Patch('staff-view/:token/events/:eventId/reservations/:reservationId/status')
