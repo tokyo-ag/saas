@@ -63,31 +63,40 @@ function AssignTenantDropdown({ reservation, collabTenants, token, eventId, onAs
   onAssigned: (reservationId: string, tenantId: string) => void;
 }) {
   const [saving, setSaving] = useState(false);
+  const [selected, setSelected] = useState(reservation.tenantId ?? '');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   async function handleChange(tenantId: string) {
+    setSelected(tenantId);
+    setErrorMsg(null);
     setSaving(true);
     try {
       await api.public.assignStaffViewReservationTenant(token, eventId, reservation.id, tenantId);
       onAssigned(reservation.id, tenantId);
-    } catch {
-      // silent
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : '振り分けに失敗しました';
+      setErrorMsg(msg);
+      setSelected(reservation.tenantId ?? '');
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <select
-      value={reservation.tenantId ?? ''}
-      onChange={(e) => handleChange(e.target.value)}
-      disabled={saving}
-      className="mt-1.5 w-full rounded-lg border border-orange-200 bg-orange-50 px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-orange-400"
-    >
-      <option value="" disabled>振り分け先を選択</option>
-      {collabTenants.map((t) => (
-        <option key={t.tenantId} value={t.tenantId}>{t.tenantName}</option>
-      ))}
-    </select>
+    <div>
+      <select
+        value={selected}
+        onChange={(e) => handleChange(e.target.value)}
+        disabled={saving}
+        className="mt-1.5 w-full rounded-lg border border-orange-200 bg-orange-50 px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-orange-400 disabled:opacity-60"
+      >
+        <option value="" disabled>振り分け先を選択</option>
+        {collabTenants.map((t) => (
+          <option key={t.tenantId} value={t.tenantId}>{t.tenantName}</option>
+        ))}
+      </select>
+      {errorMsg && <p className="mt-0.5 text-[10px] text-red-500">{errorMsg}</p>}
+    </div>
   );
 }
 

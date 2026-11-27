@@ -34,6 +34,10 @@ class AssignCollabTenantDto {
   @IsString() tenantId: string;
 }
 
+class AssignStaffViewTenantDto {
+  @IsString() tenantId: string;
+}
+
 // Mirrors frontend/src/lib/lpTags.ts LOCATION_TAGS - kept in sync manually since Event.tags
 // mixes location tags together with other tag groups (search tags etc.) in one flat array.
 const LOCATION_TAG_SET = new Set([
@@ -573,7 +577,7 @@ export class PublicController {
     @Param('token') token: string,
     @Param('eventId') eventId: string,
     @Param('reservationId') reservationId: string,
-    @Body() body: { tenantId: string },
+    @Body() body: AssignStaffViewTenantDto,
   ) {
     const tenant = await this.prisma.tenant.findFirst({
       where: { staffViewToken: token, staffViewEnabled: true },
