@@ -46,17 +46,15 @@ export class StripeService {
     },
   ) {
     const stripe = this.getClient(secretKey);
+    // Payment Links API does not support inline price_data; must pre-create Product + Price
+    const product = await stripe.products.create({ name: opts.label });
+    const price = await stripe.prices.create({
+      currency: 'jpy',
+      unit_amount: opts.amount,
+      product: product.id,
+    });
     return stripe.paymentLinks.create({
-      line_items: [
-        {
-          price_data: {
-            currency: 'jpy',
-            product_data: { name: opts.label },
-            unit_amount: opts.amount,
-          },
-          quantity: 1,
-        },
-      ],
+      line_items: [{ price: price.id, quantity: 1 }],
       metadata: { tenantId: opts.tenantId },
     });
   }

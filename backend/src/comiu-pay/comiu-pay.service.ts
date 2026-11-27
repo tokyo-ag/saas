@@ -86,21 +86,34 @@ export class ComiuPayService {
     });
     if (!tenant?.stripeSecretKey) return { payments: [], total: 0 };
 
-    const stripe = this.stripe.getClient(tenant.stripeSecretKey);
-    const charges = await stripe.charges.list({
-      limit: 50,
+    const dbLinks = await this.prisma.paymentLink.findMany({
+      where: { tenantId },
+      select: { stripePaymentLinkId: true, label: true },
     });
+    if (dbLinks.length === 0) return { payments: [], total: 0 };
+
+    const linkIdSet = new Set(dbLinks.map((l) => l.stripePaymentLinkId));
+    const linkLabelMap = new Map(dbLinks.map((l) => [l.stripePaymentLinkId, l.label]));
+
+    const stripe = this.stripe.getClient(tenant.stripeSecretKey);
+    const charges = await stripe.charges.list({ limit: 100 });
 
     const payments = charges.data
-      .filter((c) => c.paid && !c.refunded)
-      .map((c) => ({
-        id: c.id,
-        amount: c.amount,
-        description: c.description ?? '',
-        createdAt: new Date(c.created * 1000).toISOString(),
-        status: c.status,
-        receiptUrl: c.receipt_url,
-      }));
+      .filter((c) => {
+        const paymentLink = (c as unknown as { payment_link?: string | null }).payment_link;
+        return c.paid && !c.refunded && paymentLink != null && linkIdSet.has(paymentLink);
+      })
+      .map((c) => {
+        const paymentLink = (c as unknown as { payment_link?: string }).payment_link ?? '';
+        return {
+          id: c.id,
+          amount: c.amount,
+          label: linkLabelMap.get(paymentLink) ?? '',
+          createdAt: new Date(c.created * 1000).toISOString(),
+          status: c.status,
+          receiptUrl: c.receipt_url,
+        };
+      });
 
     const total = payments.reduce((sum, p) => sum + p.amount, 0);
     return { payments, total };
